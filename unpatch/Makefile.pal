@@ -1,0 +1,5 @@
+EE_ELF = unpatch-pal.elf
+EE_BIN = unpatch-pal.bin
+EE_LIBS = -luyapal
+
+include ${CURDIR}/Makefile.defs

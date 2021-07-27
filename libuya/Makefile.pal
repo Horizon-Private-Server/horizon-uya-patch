@@ -1,0 +1,6 @@
+EE_LIB_NAME = libuyapal.a
+EE_DEFS = -DUYA_PAL
+
+include ${CURDIR}/Makefile.defs
+include $(PS2SDK)/samples/Makefile.pref
+include ${CURDIR}/Makefile.eeglobal

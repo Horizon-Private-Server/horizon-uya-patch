@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.cds": "mips",
+        "time.h": "c",
+        "stdio.h": "c",
+        "uya.h": "c",
+        "player.h": "c"
+    }
+}
