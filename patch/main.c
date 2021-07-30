@@ -16,6 +16,7 @@
 #include <libuya/string.h>
 #include <libuya/stdio.h>
 #include <libuya/uya.h>
+#include <libuya/math3d.h>
 #include "module.h"
 
 /*
