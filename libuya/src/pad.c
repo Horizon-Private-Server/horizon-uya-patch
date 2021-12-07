@@ -10,8 +10,11 @@
 #else
 
 // NTSC
-#define P1_PAD                              ((PadButtonStatus*)0x001EE600)
-#define P2_PAD                              ((PadButtonStatus*)0x001EFD00)
+#define PAD_POINTER                         ((PadButtonStatus**)0x002412e4)
+#define P1_PAD                              ((PadButtonStatus*)0x00225900)
+#define P2_PAD                              ((PadButtonStatus*)0x00227000)
+#define P3_PAD                              ((PadButtonStatus*)0x00228700)
+
 
 #endif
 
