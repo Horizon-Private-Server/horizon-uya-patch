@@ -77,11 +77,22 @@ typedef struct Player
 {
     struct Guber Guber;                                             // 0x00
 
-    char UNK0[0x328];
+    VECTOR PlayerPosition;                                          // 0xA0
+
+    char UNK6[0x80];
+
+    VECTOR PlayerVelocity;                                          // 0x120
+
+    char UNK0[0x328];// Needs corrct offset
 
     float WeaponCooldownTimer;                                      // 0x328
 
-    char UNK3[0xE58];
+    char UNK5[0x130];
+
+    // is 1 is player is shooting
+    int IsShooting;                                                 // 0x458
+
+    char UNK3[0xD28];
 
     VECTOR CameraPos;                                               // 0x1180
 
@@ -101,9 +112,29 @@ typedef struct Player
 
     float CameraDistance;                                           // 0x1260
 
+    char UNK7[0x7A8];
+
+    char HideWeapon;                                                // 0x1A08
+    char HidePlayer;                                                // 0x1A09
+    char UNK8[0x4];
+    char WrenchOnly;                                                // 0x1A0D
+    char UNK9[0x1];
+    char SwingShotOnly;                                             // 0x1A10
+    char ForceWrenchSwitch;                                         // 0x1A11
+    char UNK10[0x4];
+    char ShieldTrigger;                                             // 0x1A15
+
+
     char UNK5[0x12D8];
 
-    VECTOR PlayerPosition;                                          // 0x2538
+    // When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
+    char StartMenuTimer;                                            // 0x251A
+    // If greater than 0, fade to black.
+    char FadeToBlack;                                               // 0x251B
+    char UNK11[0x4];
+    char ForceHoldFlag;                                             // 0x251F
+
+    VECTOR PlayerPosition2;                                         // 0x2538
     
 } Player;
 
