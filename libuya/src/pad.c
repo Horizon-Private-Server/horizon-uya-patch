@@ -4,8 +4,10 @@
 #ifdef UYA_PAL
 
 // PAL
-#define P1_PAD                              ((PadButtonStatus*)0x001EE600)
-#define P2_PAD                              ((PadButtonStatus*)0x001EFD00)
+#define PAD_POINTER                         ((PadButtonStatus**)0x00241164)
+#define P1_PAD                              ((PadButtonStatus*)0x00225780)
+#define P2_PAD                              ((PadButtonStatus*)0x00226E80)
+#define P3_PAD                              ((PadButtonStatus*)0x00228580)
 
 #else
 

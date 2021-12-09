@@ -19,6 +19,12 @@ name:	j address;              \
 
 #ifdef UYA_PAL
 
+FUNCTION(printf, 0x0011e718)
+FUNCTION(sprintf, 0x00120048)
+FUNCTION(memset, 0x0011d534)
+FUNCTION(memcpy, 0x0011d380)
+FUNCTION(strncpy, 0x00120d28)
+
 #else
 # NTSC Functions
 FUNCTION(printf, 0x0011e718)
