@@ -125,7 +125,7 @@ typedef struct Player
     char ShieldTrigger;                                             // 0x1A15
 
 
-    char UNK5[0x12D8];
+    char UNK12[0x12D8];
 
     // When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
     char StartMenuTimer;                                            // 0x251A
