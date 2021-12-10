@@ -44,26 +44,26 @@ void playerSetLocalEquipslot(int localPlayerId, int slot, int weaponId)
 }
 
 //--------------------------------------------------------------------------------
-void playerSetWeapon(Player * player, int weaponId)
-{
-    if (!player)
-        return;
+// void playerSetWeapon(Player * player, int weaponId)
+// {
+//     if (!player)
+//         return;
 
-    player->ChangeWeaponHeldId = weaponId;
-}
+//     player->ChangeWeaponHeldId = weaponId;
+// }
 
 //--------------------------------------------------------------------------------
-void playerSetTeam(Player * player, int teamId)
-{
-    if (!player)
-        return;
+// void playerSetTeam(Player * player, int teamId)
+// {
+//     if (!player)
+//         return;
 
     
-    player->Team = teamId;
-    //player->PlayerMoby->SecondaryColor = TEAM_COLORS[teamId];
-    //player->SkinMoby->TextureId = 0x80 + (8 * teamId);
-    //player->SkinMoby->UNK_BE = 0;
-}
+//     player->Team = teamId;
+//     //player->PlayerMoby->SecondaryColor = TEAM_COLORS[teamId];
+//     //player->SkinMoby->TextureId = 0x80 + (8 * teamId);
+//     //player->SkinMoby->UNK_BE = 0;
+// }
 
 //--------------------------------------------------------------------------------
 int playerIsLocal(Player * player)
@@ -72,84 +72,84 @@ int playerIsLocal(Player * player)
 }
 
 //--------------------------------------------------------------------------------
-PadButtonStatus * playerGetPad(Player * player)
-{
-    if (!player)
-        return 0;
+// PadButtonStatus * playerGetPad(Player * player)
+// {
+//     if (!player)
+//         return 0;
 
-    if (playerIsLocal(player))
-    {
-        return player->Paddata;
-    }
-    else
-    {
-        u8 * remotePadInfo = player->RemotePadInfo;
-        if (!remotePadInfo)
-            return 0;
+//     if (playerIsLocal(player))
+//     {
+//         return player->Paddata;
+//     }
+//     else
+//     {
+//         u8 * remotePadInfo = player->RemotePadInfo;
+//         if (!remotePadInfo)
+//             return 0;
 
-        return (PadButtonStatus*)(remotePadInfo + 0x70);
-    }
-}
-
-//--------------------------------------------------------------------------------
-void playerPadUpdate(void)
-{
-    int i;
-    PadButtonStatus * playerPad;
-    struct PadHistory * padHistory;
-    Player ** players = playerGetAll();
-    Player * player;
-
-    // Update player pad
-    for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-    {
-        player = players[i];
-        padHistory = &PlayerPadHistory[i];
-        playerPad = playerGetPad(player);
-
-        // Copy last player pad
-        if (playerPad)
-        {
-            memcpy(padHistory, &playerPad->btns, sizeof(struct PadHistory));
-            padHistory->id = player->PlayerId;
-        }
-        // Reset pad if no player
-        else if (padHistory->id >= 0)
-        {
-            memcpy(padHistory, &DefaultPadHistory, sizeof(struct PadHistory));
-        }
-    }
-}
+//         return (PadButtonStatus*)(remotePadInfo + 0x70);
+//     }
+// }
 
 //--------------------------------------------------------------------------------
-int playerPadGetButton(Player * player, u16 buttonMask)
-{
-    if (!player)
-        return 0;
+// void playerPadUpdate(void)
+// {
+//     int i;
+//     PadButtonStatus * playerPad;
+//     struct PadHistory * padHistory;
+//     Player ** players = playerGetAll();
+//     Player * player;
 
-    PadButtonStatus * paddata = playerGetPad(player);
-    if (!paddata)
-        return 0;
+//     // Update player pad
+//     for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+//     {
+//         player = players[i];
+//         padHistory = &PlayerPadHistory[i];
+//         playerPad = playerGetPad(player);
 
-    return (paddata->btns & buttonMask) == 0;
-}
+//         // Copy last player pad
+//         if (playerPad)
+//         {
+//             memcpy(padHistory, &playerPad->btns, sizeof(struct PadHistory));
+//             padHistory->id = player->PlayerId;
+//         }
+//         // Reset pad if no player
+//         else if (padHistory->id >= 0)
+//         {
+//             memcpy(padHistory, &DefaultPadHistory, sizeof(struct PadHistory));
+//         }
+//     }
+// }
 
 //--------------------------------------------------------------------------------
-int playerPadGetButtonDown(Player * player, u16 buttonMask)
-{
-    if (!player)
-        return 0;
+// int playerPadGetButton(Player * player, u16 buttonMask)
+// {
+//     if (!player)
+//         return 0;
 
-    return playerPadGetButton(player, buttonMask) &&
-            (PlayerPadHistory[player->PlayerId].btns & buttonMask) != 0;
-}
+//     PadButtonStatus * paddata = playerGetPad(player);
+//     if (!paddata)
+//         return 0;
+
+//     return (paddata->btns & buttonMask) == 0;
+// }
 
 //--------------------------------------------------------------------------------
-int playerPadGetButtonUp(Player * player, u16 buttonMask)
-{
-    if (!player)
-        return 0;
+// int playerPadGetButtonDown(Player * player, u16 buttonMask)
+// {
+//     if (!player)
+//         return 0;
 
-    return !playerPadGetButton(player, buttonMask) &&
-        (PlayerPadHistory[player->PlayerId].btns & buttonMask) != 0;
-}
+//     return playerPadGetButton(player, buttonMask) &&
+//             (PlayerPadHistory[player->PlayerId].btns & buttonMask) != 0;
+// }
+
+//--------------------------------------------------------------------------------
+// int playerPadGetButtonUp(Player * player, u16 buttonMask)
+// {
+//     if (!player)
+//         return 0;
+
+//     return !playerPadGetButton(player, buttonMask) &&
+//         (PlayerPadHistory[player->PlayerId].btns & buttonMask) != 0;
+// }
