@@ -16,24 +16,14 @@ name:	j address;              \
 #--------------------------------------------------------
 #------------------- STANDARD LIBRARY -------------------
 #--------------------------------------------------------
-
-#ifdef UYA_PAL
-
+#
+# NTSC and PAL address' are the same.
+#
 FUNCTION(printf, 0x0011e718)
 FUNCTION(sprintf, 0x00120048)
 FUNCTION(memset, 0x0011d534)
 FUNCTION(memcpy, 0x0011d380)
 FUNCTION(strncpy, 0x00120d28)
-
-#else
-# NTSC Functions
-FUNCTION(printf, 0x0011e718)
-FUNCTION(sprintf, 0x00120048)
-FUNCTION(memset, 0x0011d534)
-FUNCTION(memcpy, 0x0011d380)
-FUNCTION(strncpy, 0x00120d28)
-
-#endif
 
 #--------------------------------------------------------
 #------------------------- MATH -------------------------
@@ -51,10 +41,46 @@ FUNCTION(floorf, 0x001359A8) # not ported
 #endif
 
 #--------------------------------------------------------
-#------------------------- SHA1 -------------------------
+#----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
 #ifdef UYA_PAL
 
 #else
-FUNCTION(sha1, 0x01EB30C8) # not ported
+FUNCTION(internal_drawFunc_inGame, 0x004D8420) # not ported
+FUNCTION(internal_drawFunc_inLobby, 0x005BE058) # not ported
+FUNCTION(internal_widthFunc_inGame, 0x004D8130) # not ported
+FUNCTION(internal_widthFunc_inLobby, 0x005BDC90) # not ported
+FUNCTION(internal_drawBox_inGame, 0x005BE610) # not ported
+FUNCTION(internal_drawBox_inLobby, 0x00699C08) # not ported
 #endif
+#--------------------------------------------------------
+#------------------------- SHA1 -------------------------
+#--------------------------------------------------------
+#
+# NTSC and PAL address' are the same.
+#
+FUNCTION(sha1, 0x0015de28)
+
+#--------------------------------------------------------
+#------------------------- SIF --------------------------
+#--------------------------------------------------------
+#
+# NTSC and PAL address' are the same.
+#
+FUNCTION(SifInitRpc, 0x00129490)
+FUNCTION(SifExitRpc, 0x00129630)
+FUNCTION(SifRpcGetOtherData, 0x00129970)
+FUNCTION(SifBindRpc, 0x00129c38)
+FUNCTION(SifCallRpc, 0x00129e18)
+
+FUNCTION(SifCheckStatRpc, 0x0012a018)
+FUNCTION(SifInitIopHeap, 0x0012b8b8)
+FUNCTION(SifAllocIopHeap, 0x0012b940)
+FUNCTION(SifFreeIopHeap, 0x0012baa8)
+FUNCTION(SifIopReset, 0x0012c570)
+FUNCTION(SifIopSync, 0x0012c6f0)
+FUNCTION(_SifLoadModuleBuffer, 0x0012c2c0)
+
+FUNCTION(SifWriteBackDCache, 0x001293e0)
+FUNCTION(SifSetDma, 0x00126620)
+FUNCTION(SifDmaStat, 0x00126600)
