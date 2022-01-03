@@ -50,8 +50,8 @@ FUNCTION(internal_drawFunc_inGame, 0x004D8420) # not ported
 FUNCTION(internal_drawFunc_inLobby, 0x005BE058) # not ported
 FUNCTION(internal_widthFunc_inGame, 0x004D8130) # not ported
 FUNCTION(internal_widthFunc_inLobby, 0x005BDC90) # not ported
-FUNCTION(internal_drawBox_inGame, 0x005BE610) # not ported
-FUNCTION(internal_drawBox_inLobby, 0x00699C08) # not ported
+FUNCTION(internal_drawBox_inGame, 0x005BE610) # This changes each FREAKING MAP >:(
+FUNCTION(internal_drawBox_inLobby, 0x00616BF0) #untested
 #endif
 #--------------------------------------------------------
 #------------------------- SHA1 -------------------------
