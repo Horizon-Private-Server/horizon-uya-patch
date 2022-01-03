@@ -44,14 +44,15 @@ FUNCTION(floorf, 0x001359A8) # not ported
 #----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
 #ifdef UYA_PAL
-
+# all InGame function address' change per map :(
+FUNCTION(internal_drawFunc_inLobby, 0x00592238) #untested in libuya
+FUNCTION(internal_widthFunc_inLobby, 0x005946B0) #untested in libuya
+FUNCTION(internal_drawBox_inLobby, 0x00619308) #untested in libuya
 #else
-FUNCTION(internal_drawFunc_inGame, 0x004D8420) # not ported
-FUNCTION(internal_drawFunc_inLobby, 0x005BE058) # not ported
-FUNCTION(internal_widthFunc_inGame, 0x004D8130) # not ported
-FUNCTION(internal_widthFunc_inLobby, 0x005BDC90) # not ported
-FUNCTION(internal_drawBox_inGame, 0x005BE610) # This changes each FREAKING MAP >:(
-FUNCTION(internal_drawBox_inLobby, 0x00616BF0) #untested
+# all InGame function address' change per map :(
+FUNCTION(internal_drawFunc_inLobby, 0x00590F90) #untested in libuya
+FUNCTION(internal_widthFunc_inLobby, 0x00593400) #untested in libuya
+FUNCTION(internal_drawBox_inLobby, 0x00616BF0) #untested in libuya
 #endif
 #--------------------------------------------------------
 #------------------------- SHA1 -------------------------
