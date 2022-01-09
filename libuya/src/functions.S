@@ -85,3 +85,11 @@ FUNCTION(_SifLoadModuleBuffer, 0x0012c2c0)
 FUNCTION(SifWriteBackDCache, 0x001293e0)
 FUNCTION(SifSetDma, 0x00126620)
 FUNCTION(SifDmaStat, 0x00126600)
+
+#--------------------------------------------------------
+#-------------------------- UI --------------------------
+#--------------------------------------------------------
+FUNCTION(internal_uiDialog, 0x006847C8)
+FUNCTION(uiShowPopup, 0x00540170) # Not Ported
+FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported
+FUNCTION(uiMsgString,  0x004E4180) # Not Ported
