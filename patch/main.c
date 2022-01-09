@@ -14,10 +14,13 @@
 #include <tamtypes.h>
 
 #include <libuya/string.h>
+#include <libuya/pad.h>
 #include <libuya/stdio.h>
 #include <libuya/uya.h>
 #include <libuya/math3d.h>
+#include <libuya/ui.h>
 #include "module.h"
+
 
 /*
  * Array of game modules.
@@ -45,7 +48,15 @@ int hasInitialized = 0;
  */
 void onOnlineMenu(void)
 {
-	
+	if (!hasInitialized)
+	{
+		hasInitialized = 1;
+	}
+	if (hasInitialized == 1 && GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0)
+	{
+		uiShowOkDialog("System", "Patch has been successfully loaded.");
+		hasInitialized = 2;
+	}
 }
 
 /*
@@ -66,6 +77,9 @@ int main (void)
 {
 	// Call this first
 	uyaPreUpdate();
+
+    // Currently Freezes
+    // onOnlineMenu();
 
 	// Call this last
 	uyaPostUpdate();
