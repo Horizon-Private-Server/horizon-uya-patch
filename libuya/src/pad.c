@@ -8,6 +8,8 @@
 #define P1_PAD                              ((PadButtonStatus*)0x00225780)
 #define P2_PAD                              ((PadButtonStatus*)0x00226E80)
 #define P3_PAD                              ((PadButtonStatus*)0x00228580)
+#define PAD_PROCESS_ADDR                    (*(u32*)0x00683A24) #Not Implamented Yet
+#define PAD_PROCESS_VALUE                   (0x0C1A13B0) # Not Implamented Yet
 
 #else
 
@@ -16,7 +18,8 @@
 #define P1_PAD                              ((PadButtonStatus*)0x00225900)
 #define P2_PAD                              ((PadButtonStatus*)0x00227000)
 #define P3_PAD                              ((PadButtonStatus*)0x00228700)
-
+#define PAD_PROCESS_ADDR                    (*(u32*)0x00683A24)
+#define PAD_PROCESS_VALUE                   (0x0C1A13B0)
 
 #endif
 
@@ -159,4 +162,61 @@ void padResetInput(int port)
     u64 defaultValue = 0x7F7F7F7FFFFF7900;
     *(u64*)((u32)pad + 0x00) = defaultValue;
     *(u64*)((u32)pad + 0x80) = defaultValue;
+}
+
+/*
+ * NAME :		padDisableInput
+ * 
+ * DESCRIPTION :
+ * 			Disables the pad input.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void padDisableInput(void)
+{
+    if (PAD_PROCESS_ADDR == PAD_PROCESS_VALUE)
+        PAD_PROCESS_ADDR = 0;
+
+    // if (gameIsIn())
+    // {
+    //     // no input timer
+    //     *(u16*)(0x00347AA0 + 0x3BA) = 0x7FFF;
+
+    //     // no cam
+    //     *(u16*)(0x00347AA0 + 0x402) = 0x7FFF;
+    // }
+}
+
+/*
+ * NAME :		padEnableInput
+ * 
+ * DESCRIPTION :
+ * 			Enables the pad input.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void padEnableInput(void)
+{
+    PAD_PROCESS_ADDR = PAD_PROCESS_VALUE;
+
+    // if (gameIsIn())
+    // {
+    //     // no input timer
+    //     *(u16*)(0x00347AA0 + 0x3BA) = 0;
+
+    //     // no cam
+    //     *(u16*)(0x00347AA0 + 0x402) = 0;
+    // }
 }

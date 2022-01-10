@@ -20,5 +20,20 @@
  */
 #define GAME_MAX_PLAYERS                (8)
 
+/*
+ * NAME :		gameIsIn
+ * 
+ * DESCRIPTION :
+ * 			Whether the client is currently in a game.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+__LIBUYA_GETTER__ int gameIsIn(void);
 
 #endif // _LIBUYA_GAME_H_
