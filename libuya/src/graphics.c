@@ -1,11 +1,8 @@
 #include "graphics.h"
 #include "game.h"
 
-int internal_drawFunc_inGame(u32,const char*,long,u64,u64,u64,float,float,float,float,float,float);
 int internal_drawFunc_inLobby(u32,const char*,long,u64,u64,u64,float,float,float,float,float,float);
-int internal_widthFunc_inGame(const char*,long,float);
 int internal_widthFunc_inLobby(const char*,long,float);
-void internal_drawBox_inGame(void *, void *);
 void internal_drawBox_inLobby(void *, void *);
 
 //--------------------------------------------------------
@@ -77,30 +74,15 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 //--------------------------------------------------------
 int gfxGetFontWidth(const char * string, int length, float scale)
 {
-    if (gameIsIn())
-    {
-        return internal_widthFunc_inGame(string, length, scale);
-    }
-    else
-    {
-        return internal_widthFunc_inLobby(string, length, scale);
-    }
+    return internal_widthFunc_inLobby(string, length, scale);
 }
 
 //--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment)
 {
     // draw
-    if (gameIsIn())
-    {
-        internal_drawFunc_inGame(color, string, length, alignment, 0, 0x80000000, x, y, scaleX, scaleY, 0, 0);
-        return x + internal_widthFunc_inGame(string, length, scaleX);
-    }
-    else
-    {
-        internal_drawFunc_inLobby(color, string, length, alignment, 0, 0x80000000, x, y, scaleX, scaleY, 0, 0);
-        return x + internal_widthFunc_inLobby(string, length, scaleX);
-    }
+    internal_drawFunc_inLobby(color, string, length, alignment, 0, 0x80000000, x, y, scaleX, scaleY, 0, 0);
+    return x + internal_widthFunc_inLobby(string, length, scaleX);
 }
 
 //--------------------------------------------------------
@@ -119,14 +101,7 @@ void gfxScreenSpaceQuad(RECT * rect, u32 colorTL, u32 colorTR, u32 colorBL, u32 
     buffer[9] = colorBR;
     buffer[10] = 2;
 
-    if (gameIsIn())
-    {
-        internal_drawBox_inGame(rect, buffer);
-    }
-    else
-    {
-        internal_drawBox_inLobby(rect, buffer);
-    }
+    internal_drawBox_inLobby(rect, buffer);
 }
 
 //--------------------------------------------------------
@@ -160,10 +135,7 @@ void gfxScreenSpacePIF(RECT * rect)
     buffer[9] = 0x33010101;
     buffer[10] = 0x8;
 
-    if (inGame)
-        internal_drawBox_inGame(rect, buffer);
-    else
-        internal_drawBox_inLobby(rect, buffer);
+    internal_drawBox_inLobby(rect, buffer);
 
     buffer[0] = 0x9;
     buffer[1] = 0;
@@ -177,8 +149,5 @@ void gfxScreenSpacePIF(RECT * rect)
     buffer[9] = 0x80808080;
     buffer[10] = 0xE;
 
-    if (inGame)
-        internal_drawBox_inGame(rect, buffer);
-    else
-        internal_drawBox_inLobby(rect, buffer);
+    internal_drawBox_inLobby(rect, buffer);
 }
