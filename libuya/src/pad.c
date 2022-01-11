@@ -8,8 +8,8 @@
 #define P1_PAD                              ((PadButtonStatus*)0x00225780)
 #define P2_PAD                              ((PadButtonStatus*)0x00226E80)
 #define P3_PAD                              ((PadButtonStatus*)0x00228580)
-#define PAD_PROCESS_ADDR                    (*(u32*)0x00683A24) #Not Implamented Yet
-#define PAD_PROCESS_VALUE                   (0x0C1A13B0) # Not Implamented Yet
+#define PAD_PROCESS_ADDR                    (*(u32*)0x00683A24) // Not Implamented Yet
+#define PAD_PROCESS_VALUE                   (0x0C1A13B0) // Not Implamented Yet
 
 #else
 
