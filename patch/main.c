@@ -21,12 +21,14 @@
 #include <libuya/math3d.h>
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
+#include <libuya/time.h>
 #include "module.h"
 
 // void onConfigOnlineMenu(void);
 // void onConfigGameMenu(void);
 // void configMenuEnable(void);
 // void configMenuDisable(void);
+int GetActiveUIPointer(int);
 
 /*
  * Array of game modules.
@@ -42,6 +44,9 @@
 
 // 
 int hasInitialized = 0;
+int lastMenuInvokedTime = 0;
+int lastGameState = 0;
+int isInStaging = 0;
 
 /*
  * NAME :		onOnlineMenu
@@ -60,22 +65,24 @@ int hasInitialized = 0;
 void onOnlineMenu(void)
 {
 	// call normal draw routine
-	((void (*)(void))0x00679F08)();
+	drawFunction();
+
+	lastMenuInvokedTime = gameGetTime();
 
 	if (!hasInitialized)
 	{
-		printf("Init 1\n");
-		// padEnableInput();
+		padEnableInput();
 		// onConfigInitialize();
 		hasInitialized = 1;
 	}
-	if (hasInitialized == 1/* && GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0 */)
+	if (hasInitialized == 1 && GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0)
 	{
-		printf("Init 2\n");
-		// uiShowOkDialog("System", "Patch has been successfully loaded.");
+		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
 	}
-	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.855, 1, 1, 0x80FFFFFF, "\x18 + \x19 Open Mod Menu", -1, 4);
+
+	if(GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0)
+		gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.85, 1, 1, 0x80FFFFFF, "\x1f Open Config Menu", -1, 4);
 }
 
 /*
@@ -92,10 +99,17 @@ void onOnlineMenu(void)
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-int main (void)
+int main(void)
 {
 	// Call this first
 	uyaPreUpdate();
+
+	// auto enable pad input to prevent freezing when popup shows
+	if (lastMenuInvokedTime > 0 && gameGetTime() - lastMenuInvokedTime > TIME_SECOND)
+	{
+		padEnableInput();
+		lastMenuInvokedTime = 0;
+	}
 
 	if (*(u32*)0x005753E0 == 0)
 		*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
