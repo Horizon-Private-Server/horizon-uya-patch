@@ -30,6 +30,21 @@ typedef struct RECT
     POINT BottomRight;
 } RECT;
 
+/*
+ * NAME :		drawFunction
+ * 
+ * DESCRIPTION :
+ * 			Calls the normal draw function.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void drawFunction(void);
 
 /*
  * NAME :		gfxScreenSpaceText
