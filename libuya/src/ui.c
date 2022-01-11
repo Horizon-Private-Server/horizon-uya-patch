@@ -15,7 +15,7 @@ int GetActiveUIPointer(int UI)
 	{
 		return Pointer;
     }
-    else if (ActiveUIPointer_1 == Pointer)
+    else if (ActiveUIPointer_1 == Pointer && ActiveUIPointer_2 == 0)
     {
         return Pointer;
     }
