@@ -36,4 +36,20 @@
  */
 __LIBUYA_GETTER__ int gameIsIn(void);
 
+/*
+ * NAME :		gameGetTime
+ * 
+ * DESCRIPTION :
+ * 			Gets the current game time in milliseconds.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+__LIBUYA_GETTER__ int gameGetTime(void);
+
 #endif // _LIBUYA_GAME_H_
