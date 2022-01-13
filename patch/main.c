@@ -48,6 +48,30 @@ int lastMenuInvokedTime = 0;
 int lastGameState = 0;
 int isInStaging = 0;
 
+
+/*
+ * NAME :		drawFunction
+ * 
+ * DESCRIPTION :
+ * 			Calls the normal draw function.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void drawFunction(void)
+{
+#ifdef UYA_PAL
+    ((void (*)(void))0x0067C9C0)();
+#else
+	((void (*)(void))0x00679F08)();
+#endif
+}
+
 /*
  * NAME :		onOnlineMenu
  * 
@@ -111,8 +135,14 @@ int main(void)
 		lastMenuInvokedTime = 0;
 	}
 
-	if (*(u32*)0x005753E0 == 0)
-		*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+		// Hook menu loop
+		#ifdef UYA_PAL
+		if (*(u32*)0x00576120 == 0)
+			*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+		#else
+		if (*(u32*)0x005753E0 == 0)
+			*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+		#endif
 
 	// Call this last
 	uyaPostUpdate();

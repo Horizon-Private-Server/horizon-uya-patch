@@ -34,6 +34,29 @@ const int clears[][2] = {
 int hasClearedMemory = 0;
 
 /*
+ * NAME :		drawFunction
+ * 
+ * DESCRIPTION :
+ * 			Calls the normal draw function.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void drawFunction(void)
+{
+#ifdef UYA_PAL
+    ((void (*)(void))0x0067C9C0)();
+#else
+	((void (*)(void))0x00679F08)();
+#endif
+}
+
+/*
  * NAME :		onOnlineMenu
  * 
  * DESCRIPTION :
@@ -113,7 +136,11 @@ int main (void)
 	if (!inGame)
 	{
 		// Hook menu loop
+		#ifdef UYA_PAL
+		*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+		#else
 		*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+		#endif
 
 		// disable pad on online main menu
 		if (GetActiveUIPointer(UIP_ONLINE_LOBBY) == 0)
