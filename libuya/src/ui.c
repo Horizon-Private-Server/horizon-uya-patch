@@ -1,7 +1,7 @@
 #include "ui.h"
 
 #define UI_ACTIVE_ID                            (*(int*)0x003434B8)
-#define UI_DIALOG_A0                            ((void*)0x01C5C000)
+#define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
 
 int internal_uiDialog(void *, const char *, const char *, int, int);
 
