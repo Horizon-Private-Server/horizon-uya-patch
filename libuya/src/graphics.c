@@ -5,11 +5,6 @@ int internal_drawFunc_inLobby(u32,const char*,long,u64,u64,u64,float,float,float
 int internal_widthFunc_inLobby(const char*,long,float);
 void internal_drawBox_inLobby(void *, void *);
 
-void drawFunction(void)
-{
-    ((void (*)(void))0x00679F08)(); // NTSC
-}
-
 //--------------------------------------------------------
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 {
