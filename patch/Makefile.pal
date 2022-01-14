@@ -1,5 +1,6 @@
 EE_ELF = patch-pal.elf
 EE_BIN = patch-pal.bin
 EE_LIBS = -luyapal
+EE_DEFS = -DUYA_PAL
 
 include ${CURDIR}/Makefile.defs

@@ -1,5 +1,6 @@
 EE_ELF = patch-ntsc.elf
 EE_BIN = patch-ntsc.bin
 EE_LIBS = -luyantsc
+EE_DEFS = -DUYA_NTSC
 
 include ${CURDIR}/Makefile.defs
