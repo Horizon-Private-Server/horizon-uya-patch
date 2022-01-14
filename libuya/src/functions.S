@@ -89,7 +89,11 @@ FUNCTION(SifDmaStat, 0x00126600)
 #--------------------------------------------------------
 #-------------------------- UI --------------------------
 #--------------------------------------------------------
+#ifdef UYA_PAL
+FUNCTION(internal_uiDialog, 0x006872E8)
+#else
 FUNCTION(internal_uiDialog, 0x006847C8)
+#endif
 FUNCTION(uiShowPopup, 0x00540170) # Not Ported
 FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported
 FUNCTION(uiMsgString,  0x004E4180) # Not Ported
