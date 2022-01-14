@@ -135,14 +135,14 @@ int main(void)
 		lastMenuInvokedTime = 0;
 	}
 
-		// Hook menu loop
-		#ifdef UYA_PAL
-		if (*(u32*)0x00576120 == 0)
-			*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-		#else
-		if (*(u32*)0x005753E0 == 0)
-			*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-		#endif
+	// Hook menu loop
+	#ifdef UYA_PAL
+	if (*(u32*)0x00576120 == 0)
+		*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+	#else
+	if (*(u32*)0x005753E0 == 0)
+		*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+	#endif
 
 	// Call this last
 	uyaPostUpdate();
