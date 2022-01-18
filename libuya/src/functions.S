@@ -28,6 +28,7 @@ FUNCTION(strncpy, 0x00120d28)
 #--------------------------------------------------------
 #------------------------- MATH -------------------------
 #--------------------------------------------------------
+# Currently not ported.
 #ifdef UYA_PAL
 
 #else
@@ -44,15 +45,15 @@ FUNCTION(floorf, 0x001359A8) # not ported
 #----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
 #ifdef UYA_PAL
-# all InGame function address' change per map :(
-FUNCTION(internal_drawFunc_inLobby, 0x00592238) #untested in libuya
-FUNCTION(internal_widthFunc_inLobby, 0x005946B0) #untested in libuya
-FUNCTION(internal_drawBox_inLobby, 0x00619308) #untested in libuya
+	# all InGame function address' change per map :(
+	FUNCTION(internal_drawFunc_inLobby, 0x00592238)
+	FUNCTION(internal_widthFunc_inLobby, 0x005946B0)
+	FUNCTION(internal_drawBox_inLobby, 0x00619308)
 #else
-# all InGame function address' change per map :(
-FUNCTION(internal_drawFunc_inLobby, 0x00590F90) #untested in libuya
-FUNCTION(internal_widthFunc_inLobby, 0x00593400) #untested in libuya
-FUNCTION(internal_drawBox_inLobby, 0x00616BF0) #untested in libuya
+	# all InGame function address' change per map :(
+	FUNCTION(internal_drawFunc_inLobby, 0x00590F90)
+	FUNCTION(internal_widthFunc_inLobby, 0x00593400)
+	FUNCTION(internal_drawBox_inLobby, 0x00616BF0)
 #endif
 #--------------------------------------------------------
 #------------------------- SHA1 -------------------------
@@ -90,10 +91,16 @@ FUNCTION(SifDmaStat, 0x00126600)
 #-------------------------- UI --------------------------
 #--------------------------------------------------------
 #ifdef UYA_PAL
-FUNCTION(internal_uiDialog, 0x006872E8)
+	FUNCTION(internal_uiDialog, 0x006872E8)
 #else
-FUNCTION(internal_uiDialog, 0x006847C8)
+	FUNCTION(internal_uiDialog, 0x006847C8)
 #endif
-FUNCTION(uiShowPopup, 0x00540170) # Not Ported
-FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported
-FUNCTION(uiMsgString,  0x004E4180) # Not Ported
+FUNCTION(uiShowPopup, 0x00540170) # Not Ported (For in game)
+FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported (For in game)
+FUNCTION(uiMsgString,  0x004E4180) # Not Ported (For in game)
+
+#--------------------------------------------------------
+#-------------------------- NET -------------------------
+#--------------------------------------------------------
+FUNCTION(internal_netSendMediusAppMessage, 0x01E9E198)  # Not Ported
+FUNCTION(internal_netBroadcastMediusAppMessage, 0x01E9E270)  # Not Ported
