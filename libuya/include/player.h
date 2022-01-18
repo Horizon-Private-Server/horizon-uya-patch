@@ -23,6 +23,9 @@
  */
 #define PLAYER_MAX_HEALTH                   (50)
 
+#define PLAYER_STRUCT_POINTER               (*(u32*)0x00225e70)
+#define PLAYER_STRUCT                       (PLAYER_STRUCT_POINTER - 0x430C)
+
 /*
  * NAME :		PlayerCameraType
  * 
@@ -74,7 +77,7 @@ typedef struct CameraAngle
 typedef struct Functions
 {
     int UNK0[0x33];
-    int Player                                                      // 0x34
+    int Player;                                                      // 0x34
 } Functions;
 
 /*
