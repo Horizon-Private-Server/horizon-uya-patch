@@ -62,6 +62,22 @@ typedef struct CameraAngle
 } CameraAngle;
 
 /*
+ * NAME :		Functions
+ * 
+ * DESCRIPTION :
+ * 			Contains Functions.  Unsure what all functions.
+ * 
+ * NOTES :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+typedef struct Functions
+{
+    int UNK0[0x33];
+    int Player                                                      // 0x34
+} Functions;
+
+/*
  * NAME :		Player
  * 
  * DESCRIPTION :
@@ -75,7 +91,11 @@ typedef struct CameraAngle
  */
 typedef struct Player
 {
-    struct Guber Guber;                                             // 0x00
+    char UNK13[0x13];                                               // 0x00
+
+    Functions Function;                                             // 0x14
+
+    char UNK14[0x8C];
 
     VECTOR PlayerPosition;                                          // 0xA0
 
