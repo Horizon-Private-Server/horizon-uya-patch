@@ -2,7 +2,7 @@
  * FILENAME :		main.c
  * 
  * DESCRIPTION :
- * 		Manages and applies all Deadlocked patches.
+ * 		Manages and applies all UYA patches.
  * 
  * NOTES :
  * 		Each offset is determined per game region.
@@ -23,11 +23,12 @@
 #include <libuya/graphics.h>
 #include <libuya/time.h>
 #include "module.h"
+#include "config.h"
 
-// void onConfigOnlineMenu(void);
-// void onConfigGameMenu(void);
-// void configMenuEnable(void);
-// void configMenuDisable(void);
+void onConfigOnlineMenu(void);
+void onConfigGameMenu(void);
+void configMenuEnable(void);
+void configMenuDisable(void);
 int GetActiveUIPointer(int);
 
 /*
@@ -38,9 +39,9 @@ int GetActiveUIPointer(int);
 #define EXCEPTION_DISPLAY_ADDR			(0x000BA000)
 
 // config
-// PatchConfig_t config __attribute__((section(".config"))) = {
-// 	0
-// };
+PatchConfig_t config __attribute__((section(".config"))) = {
+	0 // enableInfiniteHealth
+};
 
 // 
 int hasInitialized = 0;
@@ -48,6 +49,70 @@ int lastMenuInvokedTime = 0;
 int lastGameState = 0;
 int isInStaging = 0;
 
+// Disable Weapon Pack
+int GetLevel(void * GameplayFilePointer)
+{
+    int WeaponPack_Func = 0;
+    switch((u32)GameplayFilePointer)
+    {
+        // Outpost X12
+        case 0x0043A288:
+            WeaponPack_Func = 0x004EF540;
+            break;
+        // Korgon Outpost
+        case 0x00437EC8:
+            WeaponPack_Func = 0x004ECD58;
+            break;
+        // Metropolis
+        case 0x00437208:
+            WeaponPack_Func = 0x004EC0A8;
+            break;
+        // Blackwater City
+        case 0x00434988:
+            WeaponPack_Func = 0x004E98C0;
+            break;
+        // Command Center
+        case 0x004357C8:
+            WeaponPack_Func = 0x004E9A48;
+            break;
+        // Blackwater Docks
+        case 0x00438008:
+            WeaponPack_Func = 0x004EC288;
+            break;
+        // Aquatos Sewers
+        case 0x00437348:
+            WeaponPack_Func = 0x004EB5C8;
+            break;
+        // Marcadia Palace
+        case 0x00436C88:
+            WeaponPack_Func = 0x004EAF08;
+            break;
+        // Bakisi Isle
+        case 0x00441988:
+            WeaponPack_Func = 0x004F7BD0;
+            break;
+        // Hoven Gorge
+        case 0x00443448:
+            WeaponPack_Func = 0x004F9C28;
+            break;
+    }
+	return WeaponPack_Func;
+}
+void DisableWeaponPack(void)
+{
+	// Grab GameplayFile Pointer.
+	// This is where all the functions for the game are kept.
+	void * GameplayFilePointer = (void*)(*(u32*)0x01FFFD00);
+	// If pointer doesn't equel Online Lobby Pointer, proceed.
+	if (GameplayFilePointer != 0x00574F88)
+	{
+		// Check which Level we are on.  Function returns the address of the Weapon Pack function.
+		int WeaponPack = GetLevel(GameplayFilePointer);
+		// If WeaponPack function isn't Zero, make it zero.
+		if (*(u32*)WeaponPack != 0)
+			*(u32*)WeaponPack = 0;
+	}
+}
 
 /*
  * NAME :		drawFunction
@@ -142,6 +207,11 @@ int main(void)
 	#else
 	if (*(u32*)0x005753E0 == 0)
 		*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+	#endif
+
+	// this version of disable weapon pack only works in NTSC.
+	#ifdef UYA_NTSC
+	DisableWeaponPack();
 	#endif
 
 	// Call this last
