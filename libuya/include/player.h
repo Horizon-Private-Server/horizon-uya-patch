@@ -95,11 +95,11 @@ typedef struct Functions
  */
 typedef struct Player
 {
-    char UNK13[0x13];                                               // 0x00
+    char UNK15[0x13];                                               // 0x00
 
     Functions Function;                                             // 0x14
 
-    char UNK14[0x8C];
+    char UNK16[0x8C];
 
     VECTOR PlayerPosition;                                          // 0xA0
 
@@ -107,11 +107,19 @@ typedef struct Player
 
     VECTOR PlayerVelocity;                                          // 0x120
 
-    char UNK0[0x328];// Needs corrct offset
+    char UNK0[0x200];
+    
+    short CantMoveTimer;                                            // 0x320
+
+    char UNK13[0x06];
 
     float WeaponCooldownTimer;                                      // 0x328
 
-    char UNK5[0x130];
+    char UNK14[0x16];
+
+    short GravityWallTimer;                                         // 0x33E
+
+    char UNK5[0x11A];
 
     // is 1 is player is shooting
     int IsShooting;                                                 // 0x458
