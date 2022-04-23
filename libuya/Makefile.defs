@@ -6,7 +6,7 @@ EE_INCS += -I./include -I$(EE_SRC_DIR)
 EE_LIB = $(EE_LIB_DIR)$(EE_LIB_NAME)
 
 # Objects
-EE_OBJS = functions.o math.o math3d.o pad.o uya.o player.o ui.o graphics.o game.o gamesettings.o
+EE_OBJS = functions.o math.o math3d.o pad.o uya.o player.o ui.o graphics.o game.o gamesettings.o color.o
 
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
