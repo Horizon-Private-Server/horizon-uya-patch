@@ -1,12 +1,12 @@
 #include <libuya/pad.h>
+#include "config.h"
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
 #include <libuya/stdio.h>
-//#include <libuya/color.h>
+#include <libuya/color.h>
 #include <libuya/string.h>
 #include <libuya/game.h>
 #include <libuya/gamesettings.h>
-#include "config.h"
 
 #define LINE_HEIGHT         (0.05)
 #define LINE_HEIGHT_3_2     (0.075)
@@ -595,10 +595,6 @@ void drawTab(TabElem_t* tab)
   if ((state & ELEMENT_VISIBLE) == 0 || (state & ELEMENT_SELECTABLE) == 0)
     navMenu(tab, 1, 1);
 
-  // Don't move cursor if saving
-  if (Saving != 0)
-    return;
-
   // nav down
   if (padGetButtonDown(0, PAD_DOWN) > 0)
   {
@@ -627,10 +623,6 @@ void drawTab(TabElem_t* tab)
     if (state & ELEMENT_EDITABLE)
       currentElement->handler(tab, currentElement, ACTIONTYPE_DECREMENT, NULL);
   }
-  else if (padGetButtonDown(0, PAD_SQUARE) > 0)
-  {
-    RunSavingPopup(); // do something
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -652,10 +644,6 @@ void onMenuUpdate(int inGame)
 			// draw tab
 			drawTab(tab);
 		}
-
-    // Don't switch tabs if saving
-    if (Saving != 0)
-      return;
 
 		// nav tab right
 		if (padGetButtonDown(0, PAD_R1) > 0)
@@ -679,7 +667,7 @@ void onMenuUpdate(int inGame)
 		{
 			// render message
 			gfxScreenSpaceBox(0.1, 0.855, 0.4, 0.05, colorOpenBg);
-			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.855, 1, 1, 0x80FFFFFF, "\x18 + \x19 Open Mod Menu", -1, 4);
+	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.85, 1, 1, 0x80FFFFFF, "\x1f Open Config Menu", -1, 4);
 		}
 
 		// check for pad input
