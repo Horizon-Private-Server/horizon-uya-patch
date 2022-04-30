@@ -12,6 +12,7 @@
 #ifndef _LIBUYA_PLAYER_H_
 #define _LIBUYA_PLAYER_H_
 
+#include "vehicle.h"
 #include "math.h"
 #include "pad.h"
 #include "math3d.h"
@@ -156,8 +157,15 @@ typedef struct Player
     char UNK10[0x4];
     char ShieldTrigger;                                             // 0x1A15
 
+    char UNK12[0x993];
 
-    char UNK12[0x12D8];
+    Vehicle * Vehicle;                                              // 0x23A8
+
+    char UNK18[0xC];
+
+    PadButtonStatus * Paddata;                                      // 0x23B4 (Online: 0x2534)
+
+    char UNK17[0x166];
 
     // When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
     char StartMenuTimer;                                            // 0x251A
