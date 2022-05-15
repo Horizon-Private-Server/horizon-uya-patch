@@ -12,6 +12,7 @@
 #ifndef _LIBUYA_PLAYER_H_
 #define _LIBUYA_PLAYER_H_
 
+#include "vehicle.h"
 #include "math.h"
 #include "pad.h"
 #include "math3d.h"
@@ -133,7 +134,12 @@ typedef struct Player
     CameraAngle CameraYaw;                                          // 0x11E0
     CameraAngle CameraPitch;                                        // 0x1200
 
-    char UNK4[0x54];
+    char UNk_1204[0x2c];
+
+    // Moby * LookAtMoby not implamented yet.
+    int LookAtMoby;                                                 // 0x122C
+
+    char UNK4[0x28];
 
     float CameraPitchMin;                                           // 0x1254
     float CameraPitchMax;                                           // 0x1258
@@ -144,7 +150,15 @@ typedef struct Player
 
     float CameraDistance;                                           // 0x1260
 
-    char UNK7[0x7A8];
+    char UNK_1260[0x6c];
+
+    int LocalPlayerIndex;                                           // 0x12CC
+
+    char UNK_12CC[0xC];
+
+    int PlayerId;                                                   // 0x12D8
+
+    char UNK7[0x730];
 
     char HideWeapon;                                                // 0x1A08
     char HidePlayer;                                                // 0x1A09
@@ -156,8 +170,15 @@ typedef struct Player
     char UNK10[0x4];
     char ShieldTrigger;                                             // 0x1A15
 
+    char UNK12[0x993];
 
-    char UNK12[0x12D8];
+    Vehicle * Vehicle;                                              // 0x23A8 (Online: 0x2528)
+
+    char UNK18[0xC];
+
+    PadButtonStatus * Paddata;                                      // 0x23B4 (Online: 0x2534)
+
+    char UNK17[0x166];
 
     // When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
     char StartMenuTimer;                                            // 0x251A

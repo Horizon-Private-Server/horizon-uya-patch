@@ -22,15 +22,18 @@
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
 #include <libuya/pad.h>
+#include <libuya/player.h>
+#include <libuya/gamesettings.h>
 
 const int patches[][2] = {
 	
 };
 
 const int clears[][2] = {
-	{ 0x000D0000, 0x00008000 } // patch
+	{ 0x000D0000, 0x00008000 }, // patch
+	{ 0x000C8000, 0x00007000 }, // gamerules
+	{ 0x000CF000, 0x00001000 }, // module definitions
 };
-
 int hasClearedMemory = 0;
 
 /*
@@ -143,7 +146,7 @@ int main (void)
 		#endif
 
 		// disable pad on online main menu
-		if (GetActiveUIPointer(UIP_ONLINE_LOBBY) == 0)
+		if (GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0)
 			padDisableInput();
 	}
 
