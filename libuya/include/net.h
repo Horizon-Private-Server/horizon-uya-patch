@@ -25,7 +25,7 @@
 // int netBroadcastMediusAppMessage(void * connection, int msgId, int msgSize, void * payload);
 // int netBroadcastCustomAppMessage(void * connection, u8 customMsgId, int msgSize, void * payload);
 
-__LIBDL_GETTER__ void* netGetLobbyServerConnection(void);
-__LIBDL_GETTER__ void* netGetDmeServerConnection(void);
+// __LIBDL_GETTER__ void* netGetLobbyServerConnection(void);
+// __LIBDL_GETTER__ void* netGetDmeServerConnection(void);
 
 #endif // _LIBDL_NET_H_

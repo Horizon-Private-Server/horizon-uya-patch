@@ -17,7 +17,6 @@
 
 #include <tamtypes.h>
 
-
 // Forward declarations
 struct GameModule;
 

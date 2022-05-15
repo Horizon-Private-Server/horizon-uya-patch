@@ -15,7 +15,7 @@ Uncommented stuff is correct.
 // #define DME_CALLBACK_TABLE                  ((u32*)0x00212148)
 
 #define NET_LOBBY_CONNECTION                ((void*)(*(u32*)0x001CD64C)) // Not Ported to PAL
-#define NET_DME_CONNECTION                  ((void*)(*(u32*)0x001CD64C)) // Not Ported to PAL
+#define NET_DME_CONNECTION                  ((void*)(*(u32*)0x001CD650)) // Not Ported to PAL
 
 // #define NET_GLOBAL_CALLBACKS_PTR            ((NET_CALLBACK_DELEGATE*)(*(u32*)0x00211E64))
 
@@ -104,12 +104,12 @@ Uncommented stuff is correct.
 //     return netBroadcastMediusAppMessage(connection, NET_CUSTOM_MESSAGE_ID, msgSize + 4, buffer);
 // }
 
-void* netGetLobbyServerConnection(void)
-{
-    return NET_LOBBY_CONNECTION;
-}
+// void* netGetLobbyServerConnection(void)
+// {
+//     return NET_LOBBY_CONNECTION;
+// }
 
-void* netGetDmeServerConnection(void)
-{
-    return NET_DME_CONNECTION;
-}
+// void* netGetDmeServerConnection(void)
+// {
+//     return NET_DME_CONNECTION;
+// }
