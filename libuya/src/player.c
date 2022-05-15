@@ -5,6 +5,8 @@
 /*
  * 
  */
+
+// PAD STRUCT ARAY MESSES UP CODE WHILE ON ONLINE MENU
 #define PLAYER_STRUCT_ARRAY                         ((Player**)0x002495a0) // Outpost X12 Only
 
 /*
@@ -101,24 +103,33 @@ void playerPadUpdate(void)
     Player ** players = playerGetAll();
     Player * player;
 
-    // Update player pad
-    for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+    // Update player pad in game
+    if (gameIsIn())
     {
-        player = players[i];
-        padHistory = &PlayerPadHistory[i];
-        playerPad = playerGetPad(player);
+        for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+        {
+            player = players[i];
+            padHistory = &PlayerPadHistory[i];
+            playerPad = playerGetPad(player);
 
-        // Copy last player pad
-        if (playerPad)
-        {
-            memcpy(padHistory, &playerPad->btns, sizeof(struct PadHistory));
-            padHistory->id = player->PlayerId;
+            // Copy last player pad
+            if (playerPad)
+            {
+                memcpy(padHistory, &playerPad->btns, sizeof(struct PadHistory));
+                padHistory->id = player->PlayerId;
+            }
+            // Reset pad if no player
+            else if (padHistory->id >= 0)
+            {
+                memcpy(padHistory, &DefaultPadHistory, sizeof(struct PadHistory));
+            }
         }
-        // Reset pad if no player
-        else if (padHistory->id >= 0)
-        {
-            memcpy(padHistory, &DefaultPadHistory, sizeof(struct PadHistory));
-        }
+    }
+    // Reset player pad history when not in game
+    else if (PlayerPadHistory[0].id >= 0)
+    {
+        for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+            memcpy(PlayerPadHistory + i, &DefaultPadHistory, sizeof(struct PadHistory));
     }
 }
 
