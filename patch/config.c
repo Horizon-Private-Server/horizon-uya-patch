@@ -663,18 +663,26 @@ void onMenuUpdate(int inGame)
 	}
 	else if (!inGame)
   {
+    printf("config.c: onmenuupdate - if !inGame START\n");
 		if (GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0)
 		{
 			// render message
-			gfxScreenSpaceBox(0.1, 0.855, 0.4, 0.05, colorOpenBg);
+      /*
+
+      internal_drawBox_inLobby = PROBLEM
+      NEEDS FIXED. DO SO FUTURE SELF
+
+      */
+			//gfxScreenSpaceBox(0.1, 0.855, 0.4, 0.05, colorOpenBg);
 	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.85, 1, 1, 0x80FFFFFF, "\x1f Open Config Menu", -1, 4);
 		}
-
+    printf("config.c: onmenuupdate - if !inGame MIDDLE\n");
 		// check for pad input
 		if (padGetButtonDown(0, PAD_START) > 0)
 		{
 			configMenuEnable();
 		}
+    printf("config.c: onmenuupdate - if !inGame END\n");
 	}
 }
 
@@ -766,6 +774,7 @@ void onConfigGameMenu(void)
 //------------------------------------------------------------------------------
 void onConfigOnlineMenu(void)
 {
+  printf("config.c: onConfigOnlineMenu\n");
   onMenuUpdate(0);
 }
 
