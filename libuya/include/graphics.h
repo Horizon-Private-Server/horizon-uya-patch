@@ -117,8 +117,6 @@ void gfxScreenSpaceBox(float x, float y, float w, float h, u32 color);
  */
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y);
 
-void gfxScreenSpacePIF(RECT * rect);
-
 int gfxGetFontWidth(const char * string, int length, float scale);
 
 #endif // _LIBUYA_GRAPHICS_H_

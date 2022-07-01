@@ -47,13 +47,13 @@ FUNCTION(floorf, 0x001359A8) # not ported
 #ifdef UYA_PAL
 	# all InGame function address' change per map :(
 	FUNCTION(internal_drawFunc_inLobby, 0x00592238)
-	FUNCTION(internal_widthFunc_inLobby, 0x005946B0)
-	FUNCTION(internal_drawBox_inLobby, 0x00619308)
+	FUNCTION(internal_widthFunc_inLobby, 0x005946B0) # address is not correct for PAL
+	FUNCTION(internal_drawBox_inLobby, 0x00619308) # address is not correct for PAL
 #else
 	# all InGame function address' change per map :(
 	FUNCTION(internal_drawFunc_inLobby, 0x00590F90)
-	FUNCTION(internal_widthFunc_inLobby, 0x00593400)
-	FUNCTION(internal_drawBox_inLobby, 0x00616BF0)
+	FUNCTION(internal_widthFunc_inLobby, 0x00590cf0)
+	FUNCTION(internal_drawBox_inLobby, 0x00615078)
 #endif
 #--------------------------------------------------------
 #------------------------- SHA1 -------------------------
@@ -93,7 +93,7 @@ FUNCTION(SifDmaStat, 0x00126600)
 # FUNCTION(internal_colorLerp_inGame, 0x004d75e0)
 
 # Not ported to PAL yet
-FUNCTION(internal_colorLerp_inLobby, 0x005bd140) # Not Ported (For in game)
+FUNCTION(internal_colorLerp_inLobby, 0x00590438) # Not Ported (For in game)
 
 #--------------------------------------------------------
 #-------------------------- UI --------------------------

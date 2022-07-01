@@ -18,8 +18,8 @@
 #define P1_PAD                              ((PadButtonStatus*)0x00225900)
 #define P2_PAD                              ((PadButtonStatus*)0x00227000)
 #define P3_PAD                              ((PadButtonStatus*)0x00228700)
-#define PAD_PROCESS_ADDR                    (*(u32*)0x00683A24)
-#define PAD_PROCESS_VALUE                   (0x0C1A13B0)
+#define PAD_PROCESS_ADDR                    (*(u32*)0x006837E0)
+#define PAD_PROCESS_VALUE                   (0x0C1A0D86)
 
 #endif
 
@@ -134,7 +134,7 @@ int padGetButtonUp(int port, u16 buttonMask)
         return -1;
 
     return !padGetButton(port, buttonMask) &&
-        (LocalPadHistory[port].btns & buttonMask) != 0;
+        (LocalPadHistory[port].btns & buttonMask) == 0;
 }
 
 /*
@@ -181,7 +181,7 @@ void padResetInput(int port)
 void padDisableInput(void)
 {
     if (PAD_PROCESS_ADDR == PAD_PROCESS_VALUE)
-        PAD_PROCESS_ADDR = 0;
+        PAD_PROCESS_ADDR = 0x24020000;
 
     // if (gameIsIn())
     // {

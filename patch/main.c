@@ -68,7 +68,7 @@ void drawFunction(void)
 #ifdef UYA_PAL
     ((void (*)(void))0x0067C9C0)();
 #else
-	printf("onOnlineMenu - run draw function\n");
+	//printf("onOnlineMenu - run draw function\n");
 	((void (*)(void))0x00679F08)();
 #endif
 }
@@ -126,14 +126,14 @@ void onOnlineMenu(void)
  */
 int main(void)
 {
-	printf("begining of main\n");
+	//printf("begining of main\n");
 	// Call this first
 	uyaPreUpdate();
 
 	// auto enable pad input to prevent freezing when popup shows
 	if (lastMenuInvokedTime > 0 && gameGetTime() - lastMenuInvokedTime > TIME_SECOND)
 	{
-		printf("pad enable input\n");
+		//printf("pad enable input\n");
 		padEnableInput();
 		lastMenuInvokedTime = 0;
 	}
@@ -151,7 +151,7 @@ int main(void)
 		if (*(u32*)0x00576120 == 0)
 			*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 #else
-		printf("patching main menu\n");
+		//printf("patching main menu\n");
 		if (*(u32*)0x005753E0 == 0)
 			*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 #endif
@@ -159,7 +159,7 @@ int main(void)
 
 	// Call this last
 
-	printf("uyaPostUpdate\n");
+	//printf("uyaPostUpdate\n");
 	uyaPostUpdate();
 
 	return 0;

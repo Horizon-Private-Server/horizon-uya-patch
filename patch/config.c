@@ -656,33 +656,28 @@ void onMenuUpdate(int inGame)
 			navTab(-1);
 		}
 		// close
-		else if (padGetButtonUp(0, PAD_TRIANGLE) > 0 || padGetButtonDown(0, PAD_R3 | PAD_L3) > 0)
+		else if (padGetButtonUp(0, PAD_TRIANGLE) > 0 || padGetButtonDown(0, PAD_START) > 0)
 		{
+      printf("config.c: onmenuupdate - start down: %d || start %d \n", padGetButtonDown(0, PAD_START), padGetButton(0, PAD_START));
 			configMenuDisable();
 		}
 	}
 	else if (!inGame)
   {
-    printf("config.c: onmenuupdate - if !inGame START\n");
+    //printf("config.c: onmenuupdate - if !inGame START\n");
 		if (GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0)
 		{
 			// render message
-      /*
-
-      internal_drawBox_inLobby = PROBLEM
-      NEEDS FIXED. DO SO FUTURE SELF
-
-      */
-			//gfxScreenSpaceBox(0.1, 0.855, 0.4, 0.05, colorOpenBg);
+			gfxScreenSpaceBox(0.1, 0.825, 0.4, 0.05, colorOpenBg);
 	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.85, 1, 1, 0x80FFFFFF, "\x1f Open Config Menu", -1, 4);
 		}
-    printf("config.c: onmenuupdate - if !inGame MIDDLE\n");
+    //printf("config.c: onmenuupdate - if !inGame MIDDLE\n");
 		// check for pad input
 		if (padGetButtonDown(0, PAD_START) > 0)
 		{
 			configMenuEnable();
 		}
-    printf("config.c: onmenuupdate - if !inGame END\n");
+    //printf("config.c: onmenuupdate - if !inGame END\n");
 	}
 }
 
@@ -774,7 +769,7 @@ void onConfigGameMenu(void)
 //------------------------------------------------------------------------------
 void onConfigOnlineMenu(void)
 {
-  printf("config.c: onConfigOnlineMenu\n");
+  //printf("config.c: onConfigOnlineMenu\n");
   onMenuUpdate(0);
 }
 

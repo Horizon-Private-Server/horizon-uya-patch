@@ -88,66 +88,83 @@ int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, 
 //--------------------------------------------------------
 void gfxScreenSpaceQuad(RECT * rect, u32 colorTL, u32 colorTR, u32 colorBL, u32 colorBR)
 {
-    u32 buffer[11];
-    buffer[0] = 8;
-    buffer[1] = 0;
-    buffer[2] = 0x005C97AC;
-    buffer[3] = 0;
-    buffer[4] = 0;
-    buffer[5] = 0xBE130000;
-    buffer[6] = colorTL;
-    buffer[7] = colorTR;
-    buffer[8] = colorBL;
-    buffer[9] = colorBR;
-    buffer[10] = 2;
+    // crop (xOff, yOff, width, height)
+    float arg2[4] = {
+        0, 0, 1, 1
+    };
+    u32 buffer[25];
 
-    internal_drawBox_inLobby(rect, buffer);
+    float centerX = (rect->TopLeft[0] + rect->BottomRight[0]) * 0.5;
+    float centerY = (rect->TopLeft[1] + rect->BottomRight[1]) * 0.5;
+    float width = rect->BottomRight[0] - rect->TopLeft[0];
+    float height = rect->BottomRight[1] - rect->TopLeft[1];
+
+    buffer[0] = 1;
+    buffer[1] = 0;
+    buffer[2] = 0x00245E88;
+    buffer[3] = 0x00009E0D;
+    buffer[4] = *(u32*)(&centerX);
+    buffer[5] = *(u32*)(&centerY);
+    buffer[6] = *(u32*)(&width);
+    buffer[7] = *(u32*)(&height);
+    buffer[8] = 0;
+    buffer[9] = 0;
+    buffer[10] = 0x40000000;
+    buffer[11] = 0;
+    buffer[12] = 0;
+    buffer[13] = 0;
+    buffer[14] = colorTL;
+    buffer[15] = colorTR;
+    buffer[16] = colorBL;
+    buffer[17] = colorBR;
+    buffer[18] = 0;
+    buffer[19] = 10;
+    buffer[20] = 0; //0x002B5960;
+    buffer[21] = 0;
+    buffer[22] = 0;
+    buffer[23] = 0;
+    buffer[24] = 0;
+
+    internal_drawBox_inLobby(buffer, arg2);
 }
 
 //--------------------------------------------------------
 void gfxScreenSpaceBox(float x, float y, float w, float h, u32 color)
 {
-    RECT r = {
-        { x, y },
-        { x + w, y },
-        { x, y + h },
-        { x + w, y + h}
+    // crop (xOff, yOff, width, height)
+    float arg2[4] = {
+        0, 0, 1, 1
     };
+    u32 buffer[25];
 
-    gfxScreenSpaceQuad(&r, color, color, color, color);
-}
+    float centerX = x + w*0.5;
+    float centerY = y + h*0.5;
 
-void gfxScreenSpacePIF(RECT * rect)
-{
-    u32 buffer[11];
-    int inGame = gameIsIn();
-    u32 pifAddr = inGame ? 0x01E72C00 : 0x0036DED0;
-    
-    buffer[0] = 0x8;
+    buffer[0] = 1;
     buffer[1] = 0;
-    buffer[2] = 0xD0;
-    buffer[3] = 0;
-    buffer[4] = 0x006A8D5C;
-    buffer[5] = 0;
-    buffer[6] = 0x33010101;
-    buffer[7] = 0x33010101;
-    buffer[8] = 0x33010101;
-    buffer[9] = 0x33010101;
-    buffer[10] = 0x8;
+    buffer[2] = 0x00245E88;
+    buffer[3] = 0x00009E0D;
+    buffer[4] = *(u32*)(&centerX);
+    buffer[5] = *(u32*)(&centerY);
+    buffer[6] = *(u32*)(&w);
+    buffer[7] = *(u32*)(&h);
+    buffer[8] = 0;
+    buffer[9] = 0;
+    buffer[10] = 0x40000000;
+    buffer[11] = 0;
+    buffer[12] = 0;
+    buffer[13] = 0;
+    buffer[14] = color;
+    buffer[15] = color;
+    buffer[16] = color;
+    buffer[17] = color;
+    buffer[18] = 0;
+    buffer[19] = 10;
+    buffer[20] = 0; //0x002B5960;
+    buffer[21] = 0;
+    buffer[22] = 0;
+    buffer[23] = 0;
+    buffer[24] = 0;
 
-    internal_drawBox_inLobby(rect, buffer);
-
-    buffer[0] = 0x9;
-    buffer[1] = 0;
-    buffer[2] = pifAddr;
-    buffer[3] = 0;
-    buffer[4] = 0x006A8D5C;
-    buffer[5] = 0;
-    buffer[6] = 0x80808080;
-    buffer[7] = 0x80808080;
-    buffer[8] = 0x80808080;
-    buffer[9] = 0x80808080;
-    buffer[10] = 0xE;
-
-    internal_drawBox_inLobby(rect, buffer);
+    internal_drawBox_inLobby(buffer, arg2);
 }
