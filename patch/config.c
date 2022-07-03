@@ -24,15 +24,15 @@ const char footerText[] = "\x14 \x15 TAB     \x10 SELECT     \x12 BACK";
 
 // menu display properties
 const u32 colorBlack = 0x80000000;
-const u32 colorBg = 0x80404040;
-const u32 colorContentBg = 0x80202020;
-const u32 colorTabBg = 0x80404040;
-const u32 colorTabBarBg = 0x80101010;
-const u32 colorRed = 0x80000040;
-const u32 colorSelected = 0x80606060;
+const u32 colorBg = 0x8018608f;
+const u32 colorContentBg = 0x80123251;
+const u32 colorTabBg = 0x8018608f;
+const u32 colorTabBarBg = 0x8004223f;
+const u32 colorRed = 0x8018608f;
+const u32 colorSelected = 0x8018608f;
 const u32 colorButtonBg = 0x80303030;
 const u32 colorButtonFg = 0x80505050;
-const u32 colorText = 0x80FFFFFF;
+const u32 colorText = 0x8069cbf2;
 const u32 colorOpenBg = 0x20000000;
 
 const float frameX = 0.1;
@@ -65,19 +65,32 @@ void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* sta
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 
 void tabDefaultStateHandler(TabElem_t* tab, int * state);
+void tabGameSettingsStateHandler(TabElem_t* tab, int * state);
 
 void navMenu(TabElem_t* tab, int direction, int loop);
 void navTab(int direction);
+
+// General
+MenuElem_t menuElementsGeneral[] = {
+  { "TESTING", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL }
+};
+
+// Game Settings
+MenuElem_t menuElementsGameSettings[] = {
+  { "TESTING", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL }
+};
 
 // Credits
 MenuElem_t menuElementsCredits[] = {
   { "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Dnawrkshp:  Mod Menu's UI and much more", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Agent Moose/Metroynome: Codes and modded UI", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL }
+  { "Agent Moose: Codes and modded UI", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL }
 };
 
 // tab items
 TabElem_t tabElements[] = {
+  { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
+  { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
   { "Credits", tabDefaultStateHandler, menuElementsCredits, sizeof(menuElementsCredits)/sizeof(MenuElem_t) }
 };
 
@@ -87,6 +100,30 @@ const int tabsCount = sizeof(tabElements)/sizeof(TabElem_t);
 void tabDefaultStateHandler(TabElem_t* tab, int * state)
 {
   *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+//
+/*
+
+NOT UPDATED TO MATCH UYA YET
+
+*/
+tabGameSettingsStateHandlervoid (TabElem_t* tab, int * state)
+{
+  GameSettings * gameSettings = gameGetSettings();
+  if (!gameSettings)
+  {
+    *state = ELEMENT_VISIBLE;
+  }
+  // if game has started or not the host, disable editing
+  else if (gameSettings->GameLoadStartTime > 0 || *(u8*)0x00172170 != 0)
+  {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
+  }
+  else
+  {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -467,7 +504,7 @@ void drawFrame(void)
   gfxScreenSpaceBox(frameX, frameY, frameW, frameTitleH, colorRed);
 
   // title
-  gfxScreenSpaceText(0.5 * SCREEN_WIDTH, (frameY + frameTitleH * 0.5) * SCREEN_HEIGHT, 1, 1, colorText, "Mod Menu", -1, 4);
+  gfxScreenSpaceText(0.5 * SCREEN_WIDTH, (frameY + frameTitleH * 0.5) * SCREEN_HEIGHT, 1, 1, colorText, "Patch Config", -1, 4);
 
   // footer bg
   gfxScreenSpaceBox(frameX, frameY + frameH - frameFooterH, frameW, frameFooterH, colorRed);
