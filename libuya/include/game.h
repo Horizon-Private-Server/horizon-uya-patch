@@ -52,4 +52,36 @@ __LIBUYA_GETTER__ int gameIsIn(void);
  */
 __LIBUYA_GETTER__ int gameGetTime(void);
 
+/*
+ * NAME :		gameAmIHost
+ * 
+ * DESCRIPTION :
+ * 			Whether the current client is also the game host.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+int gameAmIHost(void);
+
+/*
+ * NAME :		gameGetMyClientId
+ * 
+ * DESCRIPTION :
+ * 			Returns the current client's game/dme id.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+int gameGetMyClientId(void);
+
 #endif // _LIBUYA_GAME_H_

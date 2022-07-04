@@ -1,6 +1,14 @@
 #include "graphics.h"
 #include "game.h"
 
+#if UYA_PAL
+
+#define IS_PROGRESSIVE_SCAN					(*(int*)0)
+#else
+
+#define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
+#endif
+
 int internal_drawFunc_inLobby(u32,const char*,long,u64,u64,u64,float,float,float,float,float,float);
 int internal_widthFunc_inLobby(const char*,long,float);
 void internal_drawBox_inLobby(void *, void *);
@@ -167,4 +175,14 @@ void gfxScreenSpaceBox(float x, float y, float w, float h, u32 color)
     buffer[24] = 0;
 
     internal_drawBox_inLobby(buffer, arg2);
+}
+
+int gfxGetIsProgressiveScan(void)
+{
+    return IS_PROGRESSIVE_SCAN;
+}
+
+void gfxSetIsProgressiveScan(int on)
+{
+    IS_PROGRESSIVE_SCAN = on;
 }

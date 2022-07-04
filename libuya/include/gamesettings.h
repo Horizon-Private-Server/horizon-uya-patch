@@ -44,10 +44,10 @@ typedef struct GameSettings
 {
     char PlayerNames[GAME_MAX_PLAYERS][16];
     char PlayerClanTags[GAME_MAX_PLAYERS][8];
-    char PlayerSkins[GAME_MAX_PLAYERS];
-    char PlayerTeams[GAME_MAX_PLAYERS];
-    char PlayerClients[GAME_MAX_PLAYERS];
-    char PlayerStates[GAME_MAX_PLAYERS];
+    short PlayerSkins[GAME_MAX_PLAYERS];
+    short PlayerTeams[GAME_MAX_PLAYERS];
+    short PlayerClients[GAME_MAX_PLAYERS];
+    short PlayerStates[GAME_MAX_PLAYERS];
     char UNK_OFFSET_100[16];
     float PlayerRanks[GAME_MAX_PLAYERS];
     float PlayerRankDeviations[GAME_MAX_PLAYERS];
@@ -98,5 +98,22 @@ typedef struct GameOptions
         } MultiplayerGameFlags;
     } GameFlags;
 } GameOptions;
+
+/*
+ * NAME :		gameGetSettings
+ * 
+ * DESCRIPTION :
+ * 			Returns a pointer to the active tNW_GameSettings object.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ *          Returns NULL if no lobby.
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+GameSettings * gameGetSettings(void);
 
 #endif // _LIBUYA_GAMESETTINGS_H_

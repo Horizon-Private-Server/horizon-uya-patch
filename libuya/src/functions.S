@@ -110,5 +110,16 @@ FUNCTION(uiMsgString,  0x004E4180) # Not Ported (For in game)
 #--------------------------------------------------------
 #-------------------------- NET -------------------------
 #--------------------------------------------------------
-FUNCTION(internal_netSendMediusAppMessage, 0x01E9E198)  # Not Ported
-FUNCTION(internal_netBroadcastMediusAppMessage, 0x01E9E270)  # Not Ported
+FUNCTION(internal_netSendMessage, 0x0014ac48)
+FUNCTION(internal_netSendAppMessage, 0x0014ad08)
+
+#--------------------------------------------------------
+#------------------------- HELP -------------------------
+#--------------------------------------------------------
+#ifdef UYA_PAL
+	FUNCTION(internal_helpGetString_inLobby, 0)
+	FUNCTION(internal_helpGetString_inGame, 0)
+#else
+	FUNCTION(internal_helpGetString_inLobby, 0x00599618)
+	FUNCTION(internal_helpGetString_inGame, 0)
+#endif

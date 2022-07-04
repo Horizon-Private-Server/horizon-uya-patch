@@ -1,5 +1,4 @@
 #include <libuya/pad.h>
-#include "config.h"
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
 #include <libuya/stdio.h>
@@ -7,10 +6,22 @@
 #include <libuya/string.h>
 #include <libuya/game.h>
 #include <libuya/gamesettings.h>
+#include <libuya/net.h>
+#include "config.h"
+#include "messageid.h"
+#include "include/config.h"
 
 #define LINE_HEIGHT         (0.05)
 #define LINE_HEIGHT_3_2     (0.075)
 #define DEFAULT_GAMEMODE    (0)
+
+#if UYA_PAL
+
+#define IS_PROGRESSIVE_SCAN					(*(int*)0)
+#else
+
+#define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
+#endif
 
 int isConfigMenuActive = 0;
 int selectedTabItem = 0;
@@ -18,6 +29,10 @@ u32 padPointer = 0;
 
 // Config
 extern PatchConfig_t config;
+
+// game config
+extern PatchGameConfig_t gameConfig;
+extern PatchGameConfig_t gameConfigHostBackup;
 
 // constants
 const char footerText[] = "\x14 \x15 TAB     \x10 SELECT     \x12 BACK";
@@ -63,11 +78,67 @@ void menuStateAlwaysHiddenHandler(TabElem_t* tab, MenuElem_t* element, int* stat
 void menuStateAlwaysDisabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
+int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value);
 
+// list select handlers
+void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
+void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element);
+
+// tab state handlers
 void tabDefaultStateHandler(TabElem_t* tab, int * state);
+void tabGameSettingsStateHandler(TabElem_t* tab, int * state);
+void tabCustomMapStateHandler(TabElem_t* tab, int * state);
 
+// navigation functions
 void navMenu(TabElem_t* tab, int direction, int loop);
 void navTab(int direction);
+
+// extern
+int mapsGetInstallationResult(void);
+int mapsPromptEnableCustomMaps(void);
+int mapsDownloadingModules(void);
+
+// map override list item
+MenuElem_ListData_t dataCustomMaps = {
+    &gameConfig.customMapId,
+    menuStateHandler_SelectedMapOverride,
+    CUSTOM_MAP_COUNT,
+    {
+      "None",
+      "Maraxus Prison",
+    }
+};
+
+// General
+MenuElem_t menuElementsGeneral[] = {
+  { "InfHealth+Moonjump", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableInfiniteHealthMoonjump },
+  { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
+};
+
+// Game Settings
+MenuElem_t menuElementsGameSettings[] = {
+  { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
+
+  // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
+  { "Map override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
+  // { "Gamemode override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
+
+  { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
+  { "Weapon packs", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableWeaponPacks },
+};
+
+// Custom Maps
+MenuElem_t menuElementsCustomMap[] = {
+  { "", labelActionHandler, menuStateHandler_InstalledCustomMaps, (void*)LABELTYPE_HEADER },
+  { "To play on custom maps you must first go to", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "rac-horizon.com/maps and download the maps.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "Then install the map files onto a USB drive", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "and insert it into your PS2.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "Finally install the custom maps modules here.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "Install custom map modules", buttonActionHandler, menuStateHandler_InstallCustomMaps, mapsSelectHandler },
+};
 
 // Credits
 MenuElem_t menuElementsCredits[] = {
@@ -78,12 +149,154 @@ MenuElem_t menuElementsCredits[] = {
 
 // tab items
 TabElem_t tabElements[] = {
+  { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
+  { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
+  { "Custom Maps", tabCustomMapStateHandler, menuElementsCustomMap, sizeof(menuElementsCustomMap)/sizeof(MenuElem_t) },
   { "Credits", tabDefaultStateHandler, menuElementsCredits, sizeof(menuElementsCredits)/sizeof(MenuElem_t) }
 };
 
 const int tabsCount = sizeof(tabElements)/sizeof(TabElem_t);
 
+
+//------------------------------------------------------------------------------
+//------------------------------ GAME SETTINGS TAB -----------------------------
+//------------------------------------------------------------------------------
+int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value)
+{
+  if (!value)
+    return 0;
+
+  char gm = gameConfig.customModeId;
+  char v = *value;
+
+  // here we can disable certain maps depending on the gamemode
+  /*
+  switch (gm)
+  {
+    case CUSTOM_MODE_SURVIVAL:
+    {
+      if (v >= CUSTOM_MAP_SURVIVAL_START && v <= CUSTOM_MAP_SURVIVAL_END)
+        return 1;
+
+      *value = CUSTOM_MAP_SURVIVAL_START;
+      return 0;
+    }
+    case CUSTOM_MODE_PAYLOAD:
+    {
+      if (v == CUSTOM_MAP_SARATHOS_SP || v == CUSTOM_MAP_DESERT_PRISON)
+        return 1;
+
+      *value = CUSTOM_MAP_DESERT_PRISON;
+      return 0;
+    }
+    default:
+    {
+      if (v < CUSTOM_MAP_SURVIVAL_START)
+        return 1;
+      
+      *value = CUSTOM_MAP_NONE;
+      return 0;
+    }
+  }
+  */
+
+  // success
+  return 1;
+}
+
 // 
+void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element)
+{
+  memset(&gameConfig, 0, sizeof(gameConfig));
+}
+
+// 
+void tabGameSettingsStateHandler(TabElem_t* tab, int * state)
+{
+  GameSettings * gameSettings = gameGetSettings();
+  if (!gameSettings)
+  {
+    *state = ELEMENT_VISIBLE;
+  }
+
+  // if game has started or not the host, disable editing
+  else if (gameSettings->GameLoadStartTime > 0 || !gameAmIHost())
+  {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
+  }
+  else
+  {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+  }
+}
+
+//------------------------------------------------------------------------------
+//------------------------------- CUSTOM MAPS TAB ------------------------------
+//------------------------------------------------------------------------------
+void tabCustomMapStateHandler(TabElem_t* tab, int * state)
+{
+  if (gameIsIn())
+  {
+    *state = ELEMENT_VISIBLE;
+  }
+  else
+  {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+  }
+}
+
+// 
+void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  *state = !gameIsIn() && mapsGetInstallationResult() == 0 ? (ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE) : ELEMENT_HIDDEN;
+}
+
+// 
+void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+  
+  int installResult = mapsGetInstallationResult();
+  switch (installResult)
+  {
+    case 1:
+    {
+      strncpy(element->name, "Custom map modules installed", 40);
+      break;
+    }
+    case 2:
+    {
+      strncpy(element->name, "There are custom map updates available", 40);
+      break;
+    }
+    case 255:
+    {
+      strncpy(element->name, "Error installing custom map modules", 40);
+      break;
+    }
+    default:
+    {
+      *state = ELEMENT_HIDDEN;
+      break;
+    }
+  }
+}
+
+// 
+void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
+{
+  // 
+  if (gameIsIn())
+    return;
+
+  // close menu
+  configMenuDisable();
+
+  // 
+  mapsPromptEnableCustomMaps();
+}
+
+//------------------------------------------------------------------------------
 void tabDefaultStateHandler(TabElem_t* tab, int * state)
 {
   *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
@@ -336,7 +549,8 @@ void listActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void
         newValue += 1;
         if (newValue >= itemCount)
           newValue = 0;
-        if (listData->stateHandler == NULL || listData->stateHandler(listData, newValue))
+        char tValue = newValue;
+        if (listData->stateHandler == NULL || listData->stateHandler(listData, &tValue))
           break;
       } while (newValue != *listData->value);
 
@@ -354,7 +568,8 @@ void listActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void
         newValue -= 1;
         if (newValue < 0)
           newValue = itemCount - 1;
-        if (listData->stateHandler == NULL || listData->stateHandler(listData, newValue))
+        char tValue = newValue;
+        if (listData->stateHandler == NULL || listData->stateHandler(listData, &tValue))
           break;
       } while (newValue != *listData->value);
 
@@ -373,8 +588,8 @@ void listActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void
     }
     case ACTIONTYPE_VALIDATE:
     {
-      if (listData->stateHandler != NULL && !listData->stateHandler(listData, *listData->value))
-        *listData->value = 0;
+      if (listData->stateHandler != NULL)
+        listData->stateHandler(listData, listData->value);
       break;
     }
   }
@@ -596,29 +811,29 @@ void drawTab(TabElem_t* tab)
     navMenu(tab, 1, 1);
 
   // nav down
-  if (padGetButtonDown(0, PAD_DOWN) > 0)
+  if (padGetButtonUp(0, PAD_DOWN) > 0)
   {
     navMenu(tab, 1, 0);
   }
   // nav up
-  else if (padGetButtonDown(0, PAD_UP) > 0)
+  else if (padGetButtonUp(0, PAD_UP) > 0)
   {
     navMenu(tab, -1, 0);
   }
   // nav select
-  else if (padGetButtonDown(0, PAD_CROSS) > 0)
+  else if (padGetButtonUp(0, PAD_CROSS) > 0)
   {
     if (state & ELEMENT_EDITABLE)
       currentElement->handler(tab, currentElement, ACTIONTYPE_SELECT, NULL);
   }
   // nav inc
-  else if (padGetButtonDown(0, PAD_RIGHT) > 0)
+  else if (padGetButtonUp(0, PAD_RIGHT) > 0)
   {
     if (state & ELEMENT_EDITABLE)
       currentElement->handler(tab, currentElement, ACTIONTYPE_INCREMENT, NULL);
   }
   // nav dec
-  else if (padGetButtonDown(0, PAD_LEFT) > 0)
+  else if (padGetButtonUp(0, PAD_LEFT) > 0)
   {
     if (state & ELEMENT_EDITABLE)
       currentElement->handler(tab, currentElement, ACTIONTYPE_DECREMENT, NULL);
@@ -636,7 +851,7 @@ void onMenuUpdate(int inGame)
 		padDisableInput();
 
 		// draw
-		if (padGetButton(0, PAD_L3) <= 0)
+		if (padGetButtonDown(0, PAD_L3) <= 0)
 		{
 			// draw frame
 			drawFrame();
@@ -646,20 +861,19 @@ void onMenuUpdate(int inGame)
 		}
 
 		// nav tab right
-		if (padGetButtonDown(0, PAD_R1) > 0)
+		if (padGetButtonUp(0, PAD_R1) > 0)
 		{
 			navTab(1);
 		}
 		// nav tab left
-		else if (padGetButtonDown(0, PAD_L1) > 0)
+		else if (padGetButtonUp(0, PAD_L1) > 0)
 		{
 			navTab(-1);
 		}
 		// close
-		else if (padGetButtonUp(0, PAD_TRIANGLE) > 0 || padGetButtonDown(0, PAD_START) > 0)
+		else if (padGetButtonUp(0, PAD_TRIANGLE) > 0 || padGetButtonUp(0, PAD_START) > 0)
 		{
-      printf("config.c: onmenuupdate - start down: %d || start %d \n", padGetButtonDown(0, PAD_START), padGetButton(0, PAD_START));
-			configMenuDisable();
+      configMenuDisable();
 		}
 	}
 	else if (!inGame)
@@ -673,7 +887,7 @@ void onMenuUpdate(int inGame)
 		}
     //printf("config.c: onmenuupdate - if !inGame MIDDLE\n");
 		// check for pad input
-		if (padGetButtonDown(0, PAD_START) > 0)
+		if (padGetButtonUp(0, PAD_START) > 0)
 		{
 			configMenuEnable();
 		}
@@ -761,6 +975,67 @@ void navTab(int direction)
 }
 
 //------------------------------------------------------------------------------
+int onSetGameConfig(void * connection, void * data)
+{
+  // copy it over
+  memcpy(&gameConfig, data, sizeof(PatchGameConfig_t));
+  DPRINTF("set gameconfig map:%d\n", gameConfig.customMapId);
+  return sizeof(PatchGameConfig_t);
+}
+
+//------------------------------------------------------------------------------
+void onConfigUpdate(void)
+{
+  int i;
+
+  // in staging, update game info
+  GameSettings * gameSettings = gameGetSettings();
+  if (gameSettings && gameSettings->GameLoadStartTime < 0 && netGetLobbyServerConnection())
+  {
+    // 
+    char * mapName = mapGetName(gameSettings->GameLevel);
+    // char * modeName = gameGetGameModeName(gameSettings->GameRules);
+
+    // get map override name
+    if (gameConfig.customMapId > 0)
+      mapName = dataCustomMaps.items[(int)gameConfig.customMapId];
+
+    // get mode override name
+    // if (gameConfig.customModeId > 0)
+    // {
+    //   modeName = (char*)CustomModeShortNames[(int)gameConfig.customModeId];
+    //   if (!modeName)
+    //     modeName = dataCustomModes.items[(int)gameConfig.customModeId];
+    // }
+
+    // override gamemode name with map if map has exclusive gamemode
+    // for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
+    // {
+    //   if (gameConfig.customMapId == dataCustomMapsWithExclusiveGameMode[i])
+    //   {
+    //     modeName = mapName;
+    //     break;
+    //   }
+    // }
+
+    u32 * stagingUiElements = (u32*)(GetActiveUIPointer(UIP_STAGING) + 0x110);
+    u32 * stagingDetailsUiElements = (u32*)(GetActiveUIPointer(UIP_STAGING_SECONDARY_PLAYER_OPTIONS) + 0x110);
+
+    // update ui strings
+    if ((u32)stagingUiElements > 0x100000)
+    {
+      strncpy((char*)(stagingUiElements[1] + 0x14), mapName, 32);
+      // strncpy((char*)(stagingUiElements[4] + 0x14), modeName, 32);
+    }
+    if ((u32)stagingDetailsUiElements > 0x100000)
+    {
+      // strncpy((char*)(stagingDetailsUiElements[2] + 0x14), mapName, 32);
+      // strncpy((char*)(stagingDetailsUiElements[3] + 0x14), modeName, 32);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 void onConfigGameMenu(void)
 {
   onMenuUpdate(1);
@@ -773,64 +1048,55 @@ void onConfigOnlineMenu(void)
   onMenuUpdate(0);
 }
 
-
-/*
-*
-* FOLLOWING COMMENTED SECTION IS NOT PORTED TO UYA
-*
-*/
 //------------------------------------------------------------------------------
-// void onConfigInitialize(void)
-// {
-// 	// install net handlers
-//   *(u32*)0x00211E64 = 0; // reset net callbacks
-// 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_SET_GAME_CONFIG, &onSetGameConfig);
-//   netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
+void onConfigInitialize(void)
+{
+	// install net handlers
+  netInstallCustomMsgHook(1);
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_SET_GAME_CONFIG, &onSetGameConfig);
 
-//   // reset game configs
-//   memset(&gameConfigHostBackup, 0, sizeof(gameConfigHostBackup));
-//   memset(&gameConfig, 0, sizeof(gameConfig));
+  // reset game configs
+  memset(&gameConfigHostBackup, 0, sizeof(gameConfigHostBackup));
+  memset(&gameConfig, 0, sizeof(gameConfig));
 
-//   // set defaults
-//   gameConfigHostBackup.survivalConfig.difficulty = 4;
-
-// #if DEFAULT_GAMEMODE > 0
-//   gameConfigHostBackup.customModeId = DEFAULT_GAMEMODE;
-//   gameConfig.customModeId = DEFAULT_GAMEMODE;
-// #endif
-// }
+  // set defaults
+#if DEFAULT_GAMEMODE > 0
+  gameConfigHostBackup.customModeId = DEFAULT_GAMEMODE;
+  gameConfig.customModeId = DEFAULT_GAMEMODE;
+#endif
+}
 
 // //------------------------------------------------------------------------------
-// void configTrySendGameConfig(void)
-// {
-//   int state = 0;
-//   int i = 0, j = 0;
+void configTrySendGameConfig(void)
+{
+  int state = 0;
+  int i = 0, j = 0;
 
-//   // send game config to server for saving if tab is enabled
-//   tabElements[1].stateHandler(&tabElements[1], &state);
-//   if (state & ELEMENT_EDITABLE)
-//   {
-//     // validate everything
-//     for (i = 0; i < tabsCount; ++i)
-//     {
-//       TabElem_t* tab = &tabElements[i];
-//       for (j = 0; j < tab->elementsCount; ++j)
-//       {
-//         MenuElem_t* elem = &tab->elements[j];
-//         if (elem->handler)
-//           elem->handler(tab, elem, ACTIONTYPE_VALIDATE, NULL);
-//       }
-//     }
+  // send game config to server for saving if tab is enabled
+  tabElements[1].stateHandler(&tabElements[1], &state);
+  if (state & ELEMENT_EDITABLE)
+  {
+    // validate everything
+    for (i = 0; i < tabsCount; ++i)
+    {
+      TabElem_t* tab = &tabElements[i];
+      for (j = 0; j < tab->elementsCount; ++j)
+      {
+        MenuElem_t* elem = &tab->elements[j];
+        if (elem->handler)
+          elem->handler(tab, elem, ACTIONTYPE_VALIDATE, NULL);
+      }
+    }
 
-//     // backup
-//     memcpy(&gameConfigHostBackup, &gameConfig, sizeof(PatchGameConfig_t));
+    // backup
+    memcpy(&gameConfigHostBackup, &gameConfig, sizeof(PatchGameConfig_t));
 
-//     // send
-//     void * lobbyConnection = netGetLobbyServerConnection();
-//     if (lobbyConnection)
-//       netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(PatchGameConfig_t), &gameConfig);
-//   }
-// }
+    // send
+    void * lobbyConnection = netGetLobbyServerConnection();
+    if (lobbyConnection)
+      netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(PatchGameConfig_t), &gameConfig);
+  }
+}
 
 //------------------------------------------------------------------------------
 void configMenuDisable(void)
@@ -839,6 +1105,14 @@ void configMenuDisable(void)
     return;
   
   isConfigMenuActive = 0;
+
+  // send config to server for saving
+  void * lobbyConnection = netGetLobbyServerConnection();
+  if (lobbyConnection)
+    netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_CONFIG, sizeof(PatchConfig_t), &config);
+
+  // 
+  configTrySendGameConfig();
 
   // re-enable pad
   padEnableInput();
@@ -853,6 +1127,6 @@ void configMenuEnable(void)
   // return to first tab if current is hidden
   int state = 0;
   tabElements[selectedTabItem].stateHandler(&tabElements[selectedTabItem], &state);
-  // if ((state & ELEMENT_SELECTABLE) == 0 || (state & ELEMENT_VISIBLE) == 0)
-  selectedTabItem = 0;
+  if ((state & ELEMENT_SELECTABLE) == 0 || (state & ELEMENT_VISIBLE) == 0)
+    selectedTabItem = 0;
 }

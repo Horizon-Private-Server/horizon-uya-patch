@@ -14,9 +14,10 @@
 ENTRY(_start);
 
 SECTIONS {
-	.text 0x000D0000: {
+	.text 0x000E0000: {
 		_ftext = . ;
 		*(.text)
+		KEEP(*(.config))
 		*(.text.*)
 		*(.gnu.linkonce.t*)
 		QUAD(0)

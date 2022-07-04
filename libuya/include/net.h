@@ -7,25 +7,26 @@
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
-#ifndef _LIBDL_NET_H_
-#define _LIBDL_NET_H_
+#ifndef _LIBUYA_NET_H_
+#define _LIBUYA_NET_H_
 
 #include <tamtypes.h>
 #include "common.h"
 
 #define NET_CUSTOM_MESSAGE_CLASS                    (0)
 #define NET_CUSTOM_MESSAGE_ID                       (7)
+#define NET_LOBBY_CLIENT_INDEX                      (0xFFFF)
 
-// typedef int (*NET_CALLBACK_DELEGATE)(void * connection, void * data);
+typedef int (*NET_CALLBACK_DELEGATE)(void * connection, void * data);
 
+void netInstallCustomMsgHook(int force);
+void netInstallCustomMsgHandler(u8 id, NET_CALLBACK_DELEGATE callback);
+int netSendMediusAppMessage(void * connection, int clientIndex, int msgClass, int msgId, int msgSize, void * payload);
+int netSendCustomAppMessage(void * connection, int clientIndex, u8 customMsgId, int msgSize, void * payload);
+int netBroadcastMediusAppMessage(void * connection, int msgId, int msgSize, void * payload);
+int netBroadcastCustomAppMessage(void * connection, u8 customMsgId, int msgSize, void * payload);
 
-// void netInstallCustomMsgHandler(u8 id, NET_CALLBACK_DELEGATE callback);
-// int netSendMediusAppMessage(void * connection, int msgClass, int msgId, int msgSize, void * payload);
-// int netSendCustomAppMessage(void * connection, u8 customMsgId, int msgSize, void * payload);
-// int netBroadcastMediusAppMessage(void * connection, int msgId, int msgSize, void * payload);
-// int netBroadcastCustomAppMessage(void * connection, u8 customMsgId, int msgSize, void * payload);
+void* netGetLobbyServerConnection(void);
+void* netGetDmeServerConnection(void);
 
-// __LIBDL_GETTER__ void* netGetLobbyServerConnection(void);
-// __LIBDL_GETTER__ void* netGetDmeServerConnection(void);
-
-#endif // _LIBDL_NET_H_
+#endif // _LIBUYA_NET_H_

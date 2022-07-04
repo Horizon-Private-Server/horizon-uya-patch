@@ -9,20 +9,12 @@ int GetActiveUIPointer(int UI)
 {
 	int UI_POINTERS = 0x01C5C064;
 	int Pointer = *(int*)(UI_POINTERS + (UI * 0x4));
-	int ActiveUIPointer_1 = *(int*)0x01C5C110;
-    int ActiveUIPointer_2 = *(int*)0x01C5C114;
-	if (ActiveUIPointer_2 == Pointer)
+	if (*(int*)0x01C5C110 == Pointer)
 	{
 		return Pointer;
     }
-    else if (ActiveUIPointer_1 == Pointer && ActiveUIPointer_2 == 0)
-    {
-        return Pointer;
-    }
-	else
-	{
-		return 0;
-	}
+    
+    return 0;
 }
 
 int uiGetActive(void)

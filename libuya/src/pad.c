@@ -209,8 +209,10 @@ void padDisableInput(void)
  */
 void padEnableInput(void)
 {
-    PAD_PROCESS_ADDR = PAD_PROCESS_VALUE;
-
+    if (!gameIsIn()) {
+        PAD_PROCESS_ADDR = PAD_PROCESS_VALUE;
+    }
+    
     // if (gameIsIn())
     // {
     //     // no input timer
