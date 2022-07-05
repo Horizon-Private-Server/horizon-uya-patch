@@ -1,0 +1,6 @@
+EE_ELF = oplfix-pal.elf
+EE_BIN = oplfix-pal.bin
+EE_LIBS = -luyapal
+EE_DEFS = -DUYA_NTSC
+
+include ${CURDIR}/Makefile.defs

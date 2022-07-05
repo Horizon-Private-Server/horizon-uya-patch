@@ -1,0 +1,6 @@
+EE_ELF = oplfix-ntsc.elf
+EE_BIN = oplfix-ntsc.bin
+EE_LIBS = -luyantsc
+EE_DEFS = -DUYA_NTSC -DDEBUG
+
+include ${CURDIR}/Makefile.defs
