@@ -1,16 +1,85 @@
 #include "graphics.h"
 #include "game.h"
+#include "interop.h"
 
 #if UYA_PAL
+
+VariableAddress_t DrawTextFuncVariableAddr = {
+	.Lobby = 0x00592238,
+	.Bakisi = 0,
+	.CommandCenter = 0,
+	.DocksSewersMarcadia = 0,
+	.Hoven = 0,
+	.KorgonBlackwaterCity = 0,
+	.Metropolis = 0,
+	.OutpostX12 = 0
+};
+
+VariableAddress_t TextWidthFuncVariableAddr = {
+	.Lobby = 0,
+	.Bakisi = 0,
+	.CommandCenter = 0,
+	.DocksSewersMarcadia = 0,
+	.Hoven = 0,
+	.KorgonBlackwaterCity = 0,
+	.Metropolis = 0,
+	.OutpostX12 = 0
+};
+
+VariableAddress_t DrawBoxFuncVariableAddr = {
+	.Lobby = 0,
+	.Bakisi = 0,
+	.CommandCenter = 0,
+	.DocksSewersMarcadia = 0,
+	.Hoven = 0,
+	.KorgonBlackwaterCity = 0,
+	.Metropolis = 0,
+	.OutpostX12 = 0
+};
+
 
 #define IS_PROGRESSIVE_SCAN					(*(int*)0)
 #else
 
+
+VariableAddress_t DrawTextFuncVariableAddr = {
+	.Lobby = 0x00590F90,
+	.Bakisi = 0x0045e300,
+	.CommandCenter = 0,
+	.DocksSewersMarcadia = 0,
+	.Hoven = 0,
+	.KorgonBlackwaterCity = 0,
+	.Metropolis = 0,
+	.OutpostX12 = 0
+};
+
+VariableAddress_t TextWidthFuncVariableAddr = {
+	.Lobby = 0x00590cf0,
+	.Bakisi = 0,
+	.CommandCenter = 0,
+	.DocksSewersMarcadia = 0,
+	.Hoven = 0,
+	.KorgonBlackwaterCity = 0,
+	.Metropolis = 0,
+	.OutpostX12 = 0
+};
+
+VariableAddress_t DrawBoxFuncVariableAddr = {
+	.Lobby = 0x00615078,
+	.Bakisi = 0,
+	.CommandCenter = 0,
+	.DocksSewersMarcadia = 0,
+	.Hoven = 0,
+	.KorgonBlackwaterCity = 0,
+	.Metropolis = 0,
+	.OutpostX12 = 0
+};
+
+
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
 #endif
 
-int internal_drawFunc_inLobby(u32,const char*,long,u64,u64,u64,float,float,float,float,float,float);
-int internal_widthFunc_inLobby(const char*,long,float);
+int internal_drawFunc(u32,const char*,long,u64,u64,u64,float,float,float,float,float,float);
 void internal_drawBox_inLobby(void *, void *);
 
 //--------------------------------------------------------
@@ -80,17 +149,11 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 }
 
 //--------------------------------------------------------
-int gfxGetFontWidth(const char * string, int length, float scale)
-{
-    return internal_widthFunc_inLobby(string, length, scale);
-}
-
-//--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment)
 {
     // draw
-    internal_drawFunc_inLobby(color, string, length, alignment, 0, 0x80000000, x, y, scaleX, scaleY, 0, 0);
-    return x + internal_widthFunc_inLobby(string, length, scaleX);
+    internal_drawFunc(color, string, length, alignment, 0, 0x80000000, x, y, scaleX, scaleY, 0, 0);
+    return x + gfxGetFontWidth(string, length, scaleX);
 }
 
 //--------------------------------------------------------

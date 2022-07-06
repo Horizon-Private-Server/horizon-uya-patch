@@ -1,5 +1,5 @@
 EE_LIB_NAME = libuyantsc.a
-EE_DEFS = -DUYA_NTSC -DDEBUG
+EE_DEFS = -DUYA_NTSC
 
 include ${CURDIR}/Makefile.defs
 include $(PS2SDK)/samples/Makefile.pref

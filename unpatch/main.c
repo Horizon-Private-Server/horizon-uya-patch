@@ -142,7 +142,7 @@ void onOnlineMenu(void)
 int main (void)
 {
 
-	int inGame = gameIsIn();
+	int inGame = isInGame();
 	int i;
 	const int patchesSize =  sizeof(patches) / (2 * sizeof(int));
 	const int clearsSize =  sizeof(clears) / (2 * sizeof(int));

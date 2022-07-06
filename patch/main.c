@@ -195,7 +195,7 @@ void runCheckGameMapInstalled(void)
 {
 	int i;
 	GameSettings* gs = gameGetSettings();
-	if (!gs || gameIsIn())
+	if (!gs || isInGame())
 		return;
 
 	// if start game button is enabled
@@ -368,7 +368,7 @@ int main(void)
 	onConfigUpdate();
 
 	// void * GameplayFilePointer = (void*)(*(u32*)0x01FFFD00);
-	if(gameIsIn())
+	if(isInGame())
 	{
 		// In game stuff
 	}

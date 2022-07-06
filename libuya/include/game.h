@@ -21,10 +21,10 @@
 #define GAME_MAX_PLAYERS                (8)
 
 /*
- * NAME :		gameIsIn
+ * NAME :		isInGame
  * 
  * DESCRIPTION :
- * 			Whether the client is currently in a game.
+ * 			Whether the client is currently in game world.
  * 
  * NOTES :
  * 
@@ -34,7 +34,39 @@
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-__LIBUYA_GETTER__ int gameIsIn(void);
+__LIBUYA_GETTER__ int isInGame(void);
+
+/*
+ * NAME :		isInMenus
+ * 
+ * DESCRIPTION :
+ * 			Whether the client is currently in the menus.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+__LIBUYA_GETTER__ int isInMenus(void);
+
+/*
+ * NAME :		isSceneLoading
+ * 
+ * DESCRIPTION :
+ * 			Whether the client is currently in a scene transition.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+__LIBUYA_GETTER__ int isSceneLoading(void);
 
 /*
  * NAME :		gameGetTime
@@ -83,5 +115,21 @@ int gameAmIHost(void);
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int gameGetMyClientId(void);
+
+/*
+ * NAME :		gameGetMyClientId
+ * 
+ * DESCRIPTION :
+ * 			Returns the currently loaded (or loading) map id.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+int gameGetCurrentMapId(void);
 
 #endif // _LIBUYA_GAME_H_

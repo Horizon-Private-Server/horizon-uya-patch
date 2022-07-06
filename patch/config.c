@@ -235,7 +235,7 @@ void tabGameSettingsStateHandler(TabElem_t* tab, int * state)
 //------------------------------------------------------------------------------
 void tabCustomMapStateHandler(TabElem_t* tab, int * state)
 {
-  if (gameIsIn())
+  if (isInGame())
   {
     *state = ELEMENT_VISIBLE;
   }
@@ -248,7 +248,7 @@ void tabCustomMapStateHandler(TabElem_t* tab, int * state)
 // 
 void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state)
 {
-  *state = !gameIsIn() && mapsGetInstallationResult() == 0 ? (ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE) : ELEMENT_HIDDEN;
+  *state = !isInGame() && mapsGetInstallationResult() == 0 ? (ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE) : ELEMENT_HIDDEN;
 }
 
 // 
@@ -286,7 +286,7 @@ void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, i
 void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   // 
-  if (gameIsIn())
+  if (isInGame())
     return;
 
   // close menu

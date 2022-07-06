@@ -104,7 +104,7 @@ void playerPadUpdate(void)
     Player * player;
 
     // Update player pad in game
-    if (gameIsIn())
+    if (isInGame())
     {
         for (i = 0; i < GAME_MAX_PLAYERS; ++i)
         {

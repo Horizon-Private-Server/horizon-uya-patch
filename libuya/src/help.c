@@ -8,7 +8,7 @@ char * internal_helpGetString_inLobby(int);
 //--------------------------------------------------------
 char * helpGetString(int stringId)
 {
-  if (gameIsIn())
+  if (isInGame())
   {
       return internal_helpGetString_inGame(stringId);
   }

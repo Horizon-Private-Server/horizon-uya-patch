@@ -3,7 +3,7 @@
 #define UI_ACTIVE_ID                            (*(int*)0x003434B8)
 #define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
 
-int internal_uiDialog(void *, const char *, const char *, int, int);
+int internal_uiDialog(void *, const char *, const char *, int, int, float);
 
 int GetActiveUIPointer(int UI)
 {
@@ -24,20 +24,10 @@ int uiGetActive(void)
 
 int uiShowYesNoDialog(const char * title, const char * description)
 {
-    asm __volatile__ (
-        "lui	$at, 0x3F19;"
-	    "ori	$at, $at, 0x999A;"
-	    "mtc1	$at, $f12;"
-    );
-    return internal_uiDialog(UI_DIALOG_A0, title, description, 3, 0);
+    return internal_uiDialog(UI_DIALOG_A0, title, description, 3, 0, 0.6);
 }
 
 int uiShowOkDialog(const char * title, const char * description)
 {
-    asm __volatile__ (
-        "lui	$at, 0x3F19;"
-	    "ori	$at, $at, 0x999A;"
-	    "mtc1	$at, $f12;"
-    );
-    return internal_uiDialog(UI_DIALOG_A0, title, description, 4, 0);
+    return internal_uiDialog(UI_DIALOG_A0, title, description, 4, 0, 0.6);
 }
