@@ -210,9 +210,9 @@ FUNCTION(floorf, 0x001359A8) # not ported
 #--------------------------------------------------------
 #----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
-VARIABLE_FUNCTION(internal_drawFunc, DrawTextFuncVariableAddr)
-VARIABLE_FUNCTION(gfxGetFontWidth, TextWidthFuncVariableAddr)
-VARIABLE_FUNCTION(internal_drawBox, DrawBoxFuncVariableAddr)
+VARIABLE_FUNCTION(internal_drawFunc, vaDrawTextFunc)
+VARIABLE_FUNCTION(gfxGetFontWidth, vaGetTextWidthFunc)
+VARIABLE_FUNCTION(internal_drawBox, vaDrawBoxFunc)
 
 #--------------------------------------------------------
 #------------------------- SHA1 -------------------------

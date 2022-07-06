@@ -4,7 +4,7 @@
 
 #if UYA_PAL
 
-VariableAddress_t DrawTextFuncVariableAddr = {
+VariableAddress_t vaDrawTextFunc = {
 	.Lobby = 0x00592238,
 	.Bakisi = 0,
 	.CommandCenter = 0,
@@ -15,7 +15,7 @@ VariableAddress_t DrawTextFuncVariableAddr = {
 	.OutpostX12 = 0
 };
 
-VariableAddress_t TextWidthFuncVariableAddr = {
+VariableAddress_t vaGetTextWidthFunc = {
 	.Lobby = 0,
 	.Bakisi = 0,
 	.CommandCenter = 0,
@@ -26,7 +26,7 @@ VariableAddress_t TextWidthFuncVariableAddr = {
 	.OutpostX12 = 0
 };
 
-VariableAddress_t DrawBoxFuncVariableAddr = {
+VariableAddress_t vaDrawBoxFunc = {
 	.Lobby = 0,
 	.Bakisi = 0,
 	.CommandCenter = 0,
@@ -42,7 +42,7 @@ VariableAddress_t DrawBoxFuncVariableAddr = {
 #else
 
 
-VariableAddress_t DrawTextFuncVariableAddr = {
+VariableAddress_t vaDrawTextFunc = {
 	.Lobby = 0x00590F90,
 	.Bakisi = 0x0045e300,
 	.CommandCenter = 0,
@@ -53,7 +53,7 @@ VariableAddress_t DrawTextFuncVariableAddr = {
 	.OutpostX12 = 0
 };
 
-VariableAddress_t TextWidthFuncVariableAddr = {
+VariableAddress_t vaGetTextWidthFunc = {
 	.Lobby = 0x00590cf0,
 	.Bakisi = 0,
 	.CommandCenter = 0,
@@ -64,7 +64,7 @@ VariableAddress_t TextWidthFuncVariableAddr = {
 	.OutpostX12 = 0
 };
 
-VariableAddress_t DrawBoxFuncVariableAddr = {
+VariableAddress_t vaDrawBoxFunc = {
 	.Lobby = 0x00615078,
 	.Bakisi = 0,
 	.CommandCenter = 0,
@@ -80,7 +80,7 @@ VariableAddress_t DrawBoxFuncVariableAddr = {
 #endif
 
 int internal_drawFunc(u32,const char*,long,u64,u64,u64,float,float,float,float,float,float);
-void internal_drawBox_inLobby(void *, void *);
+void internal_drawBox(void *, void *);
 
 //--------------------------------------------------------
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
@@ -196,7 +196,7 @@ void gfxScreenSpaceQuad(RECT * rect, u32 colorTL, u32 colorTR, u32 colorBL, u32 
     buffer[23] = 0;
     buffer[24] = 0;
 
-    internal_drawBox_inLobby(buffer, arg2);
+    internal_drawBox(buffer, arg2);
 }
 
 //--------------------------------------------------------
@@ -237,7 +237,7 @@ void gfxScreenSpaceBox(float x, float y, float w, float h, u32 color)
     buffer[23] = 0;
     buffer[24] = 0;
 
-    internal_drawBox_inLobby(buffer, arg2);
+    internal_drawBox(buffer, arg2);
 }
 
 int gfxGetIsProgressiveScan(void)
