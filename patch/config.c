@@ -39,15 +39,15 @@ const char footerText[] = "\x14 \x15 TAB     \x10 SELECT     \x12 BACK";
 
 // menu display properties
 const u32 colorBlack = 0x80000000;
-const u32 colorBg = 0x80404040;
-const u32 colorContentBg = 0x80202020;
-const u32 colorTabBg = 0x80404040;
-const u32 colorTabBarBg = 0x80101010;
-const u32 colorRed = 0x80000040;
-const u32 colorSelected = 0x80606060;
+const u32 colorBg = 0x8018608f;
+const u32 colorContentBg = 0x80123251;
+const u32 colorTabBg = 0x8018608f;
+const u32 colorTabBarBg = 0x8004223f;
+const u32 colorRed = 0x8018608f;
+const u32 colorSelected = 0x8018608f;
 const u32 colorButtonBg = 0x80303030;
 const u32 colorButtonFg = 0x80505050;
-const u32 colorText = 0x80FFFFFF;
+const u32 colorText = 0x8069cbf2;
 const u32 colorOpenBg = 0x20000000;
 
 const float frameX = 0.1;
@@ -88,70 +88,20 @@ void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element);
 
 // tab state handlers
 void tabDefaultStateHandler(TabElem_t* tab, int * state);
-void tabGameSettingsStateHandler(TabElem_t* tab, int * state);
-void tabCustomMapStateHandler(TabElem_t* tab, int * state);
 
 // navigation functions
 void navMenu(TabElem_t* tab, int direction, int loop);
 void navTab(int direction);
 
-// extern
-int mapsGetInstallationResult(void);
-int mapsPromptEnableCustomMaps(void);
-int mapsDownloadingModules(void);
-
-// map override list item
-MenuElem_ListData_t dataCustomMaps = {
-    &gameConfig.customMapId,
-    menuStateHandler_SelectedMapOverride,
-    CUSTOM_MAP_COUNT,
-    {
-      "None",
-      "Maraxus Prison",
-    }
-};
-
-// General
-MenuElem_t menuElementsGeneral[] = {
-  { "InfHealth+Moonjump", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableInfiniteHealthMoonjump },
-  { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
-};
-
-// Game Settings
-MenuElem_t menuElementsGameSettings[] = {
-  { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
-
-  // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Map override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
-  // { "Gamemode override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
-
-  { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Weapon packs", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableWeaponPacks },
-};
-
-// Custom Maps
-MenuElem_t menuElementsCustomMap[] = {
-  { "", labelActionHandler, menuStateHandler_InstalledCustomMaps, (void*)LABELTYPE_HEADER },
-  { "To play on custom maps you must first go to", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "rac-horizon.com/maps and download the maps.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Then install the map files onto a USB drive", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "and insert it into your PS2.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Finally install the custom maps modules here.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Install custom map modules", buttonActionHandler, menuStateHandler_InstallCustomMaps, mapsSelectHandler },
-};
-
 // Credits
 MenuElem_t menuElementsCredits[] = {
   { "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Dnawrkshp:  Mod Menu's UI and much more", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Agent Moose/Metroynome: Codes and modded UI", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL }
+  { "Agent Moose: Codes and modded UI", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL }
 };
 
 // tab items
 TabElem_t tabElements[] = {
-  { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
-  { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
-  { "Custom Maps", tabCustomMapStateHandler, menuElementsCustomMap, sizeof(menuElementsCustomMap)/sizeof(MenuElem_t) },
   { "Credits", tabDefaultStateHandler, menuElementsCredits, sizeof(menuElementsCredits)/sizeof(MenuElem_t) }
 };
 
@@ -300,6 +250,30 @@ void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
 void tabDefaultStateHandler(TabElem_t* tab, int * state)
 {
   *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+//
+/*
+
+NOT UPDATED TO MATCH UYA YET
+
+*/
+tabGameSettingsStateHandlervoid (TabElem_t* tab, int * state)
+{
+  GameSettings * gameSettings = gameGetSettings();
+  if (!gameSettings)
+  {
+    *state = ELEMENT_VISIBLE;
+  }
+  // if game has started or not the host, disable editing
+  else if (gameSettings->GameLoadStartTime > 0 || *(u8*)0x00172170 != 0)
+  {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
+  }
+  else
+  {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -682,7 +656,7 @@ void drawFrame(void)
   gfxScreenSpaceBox(frameX, frameY, frameW, frameTitleH, colorRed);
 
   // title
-  gfxScreenSpaceText(0.5 * SCREEN_WIDTH, (frameY + frameTitleH * 0.5) * SCREEN_HEIGHT, 1, 1, colorText, "Mod Menu", -1, 4);
+  gfxScreenSpaceText(0.5 * SCREEN_WIDTH, (frameY + frameTitleH * 0.5) * SCREEN_HEIGHT, 1, 1, colorText, "Patch Config", -1, 4);
 
   // footer bg
   gfxScreenSpaceBox(frameX, frameY + frameH - frameFooterH, frameW, frameFooterH, colorRed);
