@@ -1,4 +1,6 @@
 #include "game.h"
+#include "gamesettings.h"
+#include "ui.h"
 
 #if UYA_PAL
 
@@ -67,4 +69,15 @@ int gameAmIHost(void)
 int gameGetCurrentMapId(void)
 {
     return GAME_MAP_ID;
+}
+
+char* gameGetGameModeName(int gameModeId)
+{
+    switch (gameModeId)
+    {
+        case GAMERULE_SEIGE: return uiMsgString(0x1024);
+        case GAMERULE_CTF: return uiMsgString(0x10E2);
+        case GAMERULE_DM: return uiMsgString(0x1026);
+        default: return NULL;
+    }
 }

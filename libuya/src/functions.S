@@ -264,7 +264,7 @@ FUNCTION(internal_colorLerp_inLobby, 0x00590438) # Not Ported (For in game)
 #endif
 FUNCTION(uiShowPopup, 0x00540170) # Not Ported (For in game)
 FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported (For in game)
-FUNCTION(uiMsgString,  0x004E4180) # Not Ported (For in game)
+VARIABLE_FUNCTION(uiMsgString, vaUiMsgStringFunc)
 
 #--------------------------------------------------------
 #-------------------------- NET -------------------------

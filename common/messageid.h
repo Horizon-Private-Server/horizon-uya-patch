@@ -87,6 +87,11 @@ enum CustomMessageId
     CUSTOM_MSG_ID_GAME_LOBBY_ENDED = 12,
 
     /*
+     * Sent from the client to the server when the client wants to redownload the patch.
+     */
+    CUSTOM_MSG_ID_CLIENT_REQUEST_PATCH = 13,
+
+    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,

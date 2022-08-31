@@ -252,6 +252,74 @@ void drawFunction(void)
 }
 
 /*
+ * NAME :		processGameModules
+ * 
+ * DESCRIPTION :
+ * 
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void processGameModules()
+{
+	// Start at the first game module
+	GameModule * module = GLOBAL_GAME_MODULES_START;
+
+	// Game settings
+	GameSettings * gamesettings = gameGetSettings();
+
+	// Iterate through all the game modules until we hit an empty one
+	while (module->GameEntrypoint || module->LobbyEntrypoint)
+	{
+		// Ensure we have game settings
+		if (gamesettings)
+		{
+			// Check the module is enabled
+			if (module->State > GAMEMODULE_OFF)
+			{
+				// If in game, run game entrypoint
+				if (isInGame())
+				{
+					// Invoke module
+					if (module->GameEntrypoint)
+						module->GameEntrypoint(module, &config, &gameConfig);
+				}
+				else if (isInMenus())
+				{
+					// Invoke lobby module if still active
+					if (module->LobbyEntrypoint)
+					{
+						module->LobbyEntrypoint(module, &config, &gameConfig);
+					}
+				}
+			}
+
+		}
+		// If we aren't in a game then try to turn the module off
+		// ONLY if it's temporarily enabled
+		else if (module->State == GAMEMODULE_TEMP_ON)
+		{
+			module->State = GAMEMODULE_OFF;
+		}
+		else if (module->State == GAMEMODULE_ALWAYS_ON)
+		{
+			// Invoke lobby module if still active
+			if (isInMenus() && module->LobbyEntrypoint)
+			{
+				module->LobbyEntrypoint(module, &config, &gameConfig);
+			}
+		}
+
+		++module;
+	}
+}
+
+/*
  * NAME :		onOnlineMenu
  * 
  * DESCRIPTION :
@@ -406,6 +474,9 @@ int main(void)
 			isInStaging = 0;
 		}
 	}
+	
+	// process modules
+	processGameModules();
 
 	// Call this last
 

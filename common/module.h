@@ -16,14 +16,10 @@
 
 
 #include <tamtypes.h>
+#include "config.h"
 
 // Forward declarations
 struct GameModule;
-
-/*
- * Size of game module arg buffer.
- */
-#define GAME_MODULE_ARG_SIZE            (8)
 
 /*
  * NAME :		ModuleStart
@@ -38,7 +34,7 @@ struct GameModule;
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-typedef void (*ModuleStart)(struct GameModule * module);
+typedef void (*ModuleStart)(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig);
 
 
 /*
@@ -104,9 +100,9 @@ typedef struct GameModule
     ModuleStart LobbyEntrypoint;
 
     /*
-     * Buffer containing module specific arguments given by the server.
+     * Entrypoint of module to be invoked just before the level loads the map but after the map is read from the disc.
      */
-    char Argbuffer[GAME_MODULE_ARG_SIZE];
+    ModuleStart LoadEntrypoint;
 
 } GameModule;
 

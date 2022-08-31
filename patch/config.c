@@ -7,6 +7,7 @@
 #include <libuya/game.h>
 #include <libuya/gamesettings.h>
 #include <libuya/net.h>
+#include <libuya/map.h>
 #include "config.h"
 #include "messageid.h"
 #include "include/config.h"
@@ -80,29 +81,107 @@ void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* sta
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int* state);
+
 int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value);
+int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, char* value);
 
 // list select handlers
 void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element);
 
+#ifdef DEBUG
+void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
+#endif
+
 // tab state handlers
 void tabDefaultStateHandler(TabElem_t* tab, int * state);
+void tabGameSettingsStateHandler(TabElem_t* tab, int * state);
+void tabCustomMapStateHandler(TabElem_t* tab, int * state);
 
 // navigation functions
 void navMenu(TabElem_t* tab, int direction, int loop);
 void navTab(int direction);
 
-// Credits
-MenuElem_t menuElementsCredits[] = {
-  { "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Dnawrkshp:  Mod Menu's UI and much more", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Agent Moose: Codes and modded UI", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL }
+// extern
+int mapsGetInstallationResult(void);
+int mapsPromptEnableCustomMaps(void);
+int mapsDownloadingModules(void);
+
+// map override list item
+MenuElem_ListData_t dataCustomMaps = {
+    &gameConfig.customMapId,
+    menuStateHandler_SelectedMapOverride,
+    CUSTOM_MAP_COUNT,
+    {
+      "None",
+      "Maraxus Prison",
+    }
+};
+
+// maps with their own exclusive gamemode
+char dataCustomMapsWithExclusiveGameMode[] = {
+  // enter map id
+  // eg: CUSTOM_MAP_MARAXUS_PRISON
+};
+const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithExclusiveGameMode)/sizeof(char);
+
+// gamemode override list item
+MenuElem_ListData_t dataCustomModes = {
+    &gameConfig.customModeId,
+    menuStateHandler_SelectedGameModeOverride,
+    CUSTOM_MODE_COUNT,
+    {
+      "None",
+      "Example",
+    }
+};
+
+// array of alternative "short" names for game modes
+// used when displaying in areas with limited room
+// if the entry is NULL then the full name will be used
+const char* CustomModeShortNames[] = {
+  [CUSTOM_MODE_NONE] NULL,
+  [CUSTOM_MODE_EXAMPLE] "EX",
+};
+
+// General
+MenuElem_t menuElementsGeneral[] = {
+#ifdef DEBUG
+  { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
+#endif
+  { "InfHealth+Moonjump", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableInfiniteHealthMoonjump },
+  { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
+};
+
+// Game Settings
+MenuElem_t menuElementsGameSettings[] = {
+  { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
+
+  // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
+  { "Map override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
+  { "Gamemode override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
+
+  { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
+  { "Weapon packs", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableWeaponPacks },
+};
+
+// Custom Maps
+MenuElem_t menuElementsCustomMap[] = {
+  { "", labelActionHandler, menuStateHandler_InstalledCustomMaps, (void*)LABELTYPE_HEADER },
+  { "To play on custom maps you must first go to", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "rac-horizon.com/maps and download the maps.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "Then install the map files onto a USB drive", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "and insert it into your PS2.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "Finally install the custom maps modules here.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "Install custom map modules", buttonActionHandler, menuStateHandler_InstallCustomMaps, mapsSelectHandler },
 };
 
 // tab items
 TabElem_t tabElements[] = {
-  { "Credits", tabDefaultStateHandler, menuElementsCredits, sizeof(menuElementsCredits)/sizeof(MenuElem_t) }
+  { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
+  { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
+  { "Custom Maps", tabCustomMapStateHandler, menuElementsCustomMap, sizeof(menuElementsCustomMap)/sizeof(MenuElem_t) }
 };
 
 const int tabsCount = sizeof(tabElements)/sizeof(TabElem_t);
@@ -127,7 +206,6 @@ int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* va
     {
       if (v >= CUSTOM_MAP_SURVIVAL_START && v <= CUSTOM_MAP_SURVIVAL_END)
         return 1;
-
       *value = CUSTOM_MAP_SURVIVAL_START;
       return 0;
     }
@@ -135,7 +213,6 @@ int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* va
     {
       if (v == CUSTOM_MAP_SARATHOS_SP || v == CUSTOM_MAP_DESERT_PRISON)
         return 1;
-
       *value = CUSTOM_MAP_DESERT_PRISON;
       return 0;
     }
@@ -151,6 +228,35 @@ int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* va
   */
 
   // success
+  return 1;
+}
+
+// 
+int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, char* value)
+{
+  if (!value)
+    return 0;
+
+  GameSettings* gs = gameGetSettings();
+  char v = *value;
+
+  if (gs)
+  {
+    switch (v)
+    {
+      case CUSTOM_MODE_EXAMPLE:
+      {
+        // only allow deathmatch
+        if (gs->GameType == GAMERULE_DM)
+          return 1;
+        
+        // otherwise reject custom mode
+        *value = CUSTOM_MODE_NONE;
+        return 0;
+      }
+    }
+  }
+
   return 1;
 }
 
@@ -246,34 +352,26 @@ void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
   mapsPromptEnableCustomMaps();
 }
 
+#ifdef DEBUG
+
+// 
+void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element)
+{
+  // close menu
+  configMenuDisable();
+
+  // send request
+  void * lobbyConnection = netGetLobbyServerConnection();
+  if (lobbyConnection)
+    netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_PATCH, 0, (void*)element);
+}
+
+#endif
+
 //------------------------------------------------------------------------------
 void tabDefaultStateHandler(TabElem_t* tab, int * state)
 {
   *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
-}
-
-//
-/*
-
-NOT UPDATED TO MATCH UYA YET
-
-*/
-tabGameSettingsStateHandlervoid (TabElem_t* tab, int * state)
-{
-  GameSettings * gameSettings = gameGetSettings();
-  if (!gameSettings)
-  {
-    *state = ELEMENT_VISIBLE;
-  }
-  // if game has started or not the host, disable editing
-  else if (gameSettings->GameLoadStartTime > 0 || *(u8*)0x00172170 != 0)
-  {
-    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
-  }
-  else
-  {
-    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -292,6 +390,24 @@ void menuStateAlwaysDisabledHandler(TabElem_t* tab, MenuElem_t* element, int* st
 void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE;
+}
+
+// 
+void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  int i = 0;
+
+  // hide gamemode for maps with exclusive gamemode
+  for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
+  {
+    if (gameConfig.customMapId == dataCustomMapsWithExclusiveGameMode[i])
+    {
+      *state = ELEMENT_HIDDEN;
+      return;
+    }
+  }
+
+  *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 // 
@@ -570,6 +686,19 @@ void listActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void
 }
 
 //------------------------------------------------------------------------------
+void gmOverrideListActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg)
+{
+  // update name to be based on current gamemode
+  GameSettings* gs = gameGetSettings();
+  if (gs && actionType == ACTIONTYPE_DRAW) {
+    sprintf(element->name, "%s override", gameGetGameModeName(gs->GameType));
+  }
+
+  // pass to default list action handler
+  listActionHandler(tab, element, actionType, actionArg);
+}
+
+//------------------------------------------------------------------------------
 void toggleInvertedActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg)
 {
   // get element state
@@ -656,7 +785,7 @@ void drawFrame(void)
   gfxScreenSpaceBox(frameX, frameY, frameW, frameTitleH, colorRed);
 
   // title
-  gfxScreenSpaceText(0.5 * SCREEN_WIDTH, (frameY + frameTitleH * 0.5) * SCREEN_HEIGHT, 1, 1, colorText, "Patch Config", -1, 4);
+  gfxScreenSpaceText(0.5 * SCREEN_WIDTH, (frameY + frameTitleH * 0.5) * SCREEN_HEIGHT, 1, 1, colorText, "Mod Menu", -1, 4);
 
   // footer bg
   gfxScreenSpaceBox(frameX, frameY + frameH - frameFooterH, frameW, frameFooterH, colorRed);
@@ -968,29 +1097,29 @@ void onConfigUpdate(void)
   {
     // 
     char * mapName = mapGetName(gameSettings->GameLevel);
-    // char * modeName = gameGetGameModeName(gameSettings->GameRules);
+    char * modeName = gameGetGameModeName(gameSettings->GameType);
 
     // get map override name
     if (gameConfig.customMapId > 0)
       mapName = dataCustomMaps.items[(int)gameConfig.customMapId];
 
     // get mode override name
-    // if (gameConfig.customModeId > 0)
-    // {
-    //   modeName = (char*)CustomModeShortNames[(int)gameConfig.customModeId];
-    //   if (!modeName)
-    //     modeName = dataCustomModes.items[(int)gameConfig.customModeId];
-    // }
+    if (gameConfig.customModeId > 0)
+    {
+      modeName = (char*)CustomModeShortNames[(int)gameConfig.customModeId];
+      if (!modeName)
+        modeName = dataCustomModes.items[(int)gameConfig.customModeId];
+    }
 
     // override gamemode name with map if map has exclusive gamemode
-    // for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
-    // {
-    //   if (gameConfig.customMapId == dataCustomMapsWithExclusiveGameMode[i])
-    //   {
-    //     modeName = mapName;
-    //     break;
-    //   }
-    // }
+    for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
+    {
+      if (gameConfig.customMapId == dataCustomMapsWithExclusiveGameMode[i])
+      {
+        modeName = mapName;
+        break;
+      }
+    }
 
     u32 * stagingUiElements = (u32*)(GetActiveUIPointer(UIP_STAGING) + 0x110);
     u32 * stagingDetailsUiElements = (u32*)(GetActiveUIPointer(UIP_STAGING_SECONDARY_PLAYER_OPTIONS) + 0x110);
@@ -999,7 +1128,7 @@ void onConfigUpdate(void)
     if ((u32)stagingUiElements > 0x100000)
     {
       strncpy((char*)(stagingUiElements[1] + 0x14), mapName, 32);
-      // strncpy((char*)(stagingUiElements[4] + 0x14), modeName, 32);
+      strncpy((char*)(stagingUiElements[2] + 0x14), modeName, 32);
     }
     if ((u32)stagingDetailsUiElements > 0x100000)
     {

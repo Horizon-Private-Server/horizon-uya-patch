@@ -1,5 +1,5 @@
-EE_ELF = patch-10683.elf
-EE_BIN = patch-10683.bin
+EE_ELF = example-10683.elf
+EE_BIN = example-10683.bin
 EE_LIBS = -luyapal
 EE_DEFS = -DUYA_PAL
 

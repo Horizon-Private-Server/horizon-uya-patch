@@ -132,4 +132,21 @@ int gameGetMyClientId(void);
  */
 int gameGetCurrentMapId(void);
 
+/*
+ * NAME :		gameGetGameModeName
+ * 
+ * DESCRIPTION :
+ * 			Returns a pointer to the given gamemode's name.
+ *      Returns NULL if not a valid gamemode.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+char* gameGetGameModeName(int gameModeId);
+
 #endif // _LIBUYA_GAME_H_

@@ -26,6 +26,7 @@ enum CUSTOM_MAP_ID
 enum CUSTOM_MODE_ID
 {
   CUSTOM_MODE_NONE = 0,
+  CUSTOM_MODE_EXAMPLE = 1,
   
   // always at the end to indicate how many items there are
   CUSTOM_MODE_COUNT

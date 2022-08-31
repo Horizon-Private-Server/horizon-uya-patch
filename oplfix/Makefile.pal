@@ -1,5 +1,5 @@
-EE_ELF = oplfix-pal.elf
-EE_BIN = oplfix-pal.bin
+EE_ELF = oplfix-10683.elf
+EE_BIN = oplfix-10683.bin
 EE_LIBS = -luyapal
 EE_DEFS = -DUYA_NTSC
 

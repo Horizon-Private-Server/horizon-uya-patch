@@ -102,10 +102,10 @@ void drawFunction(void)
  */
 void onOnlineMenu(void)
 {
-	u32 bgColorDownload = 0x80000000;
-	u32 textColor = 0x80C0C0C0;
-	u32 barBgColor = 0x80202020;
-	u32 barFgColor = 0x80000040;
+	u32 bgColorDownload = 0x8004223f;
+	u32 textColor = 0x8069cbf2;
+	u32 barBgColor = 0x80123251;
+	u32 barFgColor = 0x8018608f;
 
 	// call normal draw routine
 	drawFunction();
