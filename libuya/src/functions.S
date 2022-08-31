@@ -1,5 +1,18 @@
+#if UYA_PAL
+	#define GAME_ACTIVE                         (0x01000000)
+	#define MENU_ACTIVE                         (0x01000000)
+	#define SCENE_LOADED                        (0x01000000)
+	#define GAME_MAP_ID                         (0x01000000)
+#else
+	#define GAME_ACTIVE                         (0x00241BD0)
+	#define MENU_ACTIVE                         (0x001C3CB0)
+	#define SCENE_LOADED                        (0x002459C8)
+	#define GAME_MAP_ID                         (0x001F8528)
+#endif
+
+// fixed address function
 #define FUNCTION(name, address) \
-    .set	push;		        \
+	.set	push;		        \
 	.set	noreorder;	        \
 	.section	.text.##name,"ax",@progbits; \
 	.align 2;		            \
@@ -12,6 +25,159 @@ name:	j address;              \
 	.size	name,.-name;	    \
 	.set	pop;
 
+// variable address function
+#define VARIABLE_FUNCTION(name, variable_address_struct) \
+	.set	push;		        				\
+	.set	noreorder;	        		\
+	.section	.text.##name,"ax",@progbits; \
+	.align 2;		            			\
+	.globl	name;		        			\
+	.type	name,@function;	    		\
+	.ent	name,0;		        			\
+	.extern variable_address_struct; \
+name:														\
+		addiu $sp, $sp, -0x40;			\
+		sq $ra, 0x00($sp);					\
+		sq $a0, 0x10($sp);					\
+		sq $a1, 0x20($sp);					\
+		sq $s0, 0x30($sp);					\
+		la $a0, variable_address_struct; \
+		la $a1, ##name##_return;				\
+		j __LocalGetAddress;        \
+		nop;			            			\
+##name##_return:										\
+		beq $zero, $v0, ##name##_exit;	\
+		nop;												\
+		lq $a1, 0x20($sp);					\
+		jalr $v0;										\
+		lq $a0, 0x10($sp);					\
+##name##_exit:											\
+		lq $ra, 0x00($sp);					\
+		lq $s0, 0x30($sp);					\
+		jr $ra;											\
+		addiu $sp, $sp, 0x40;				\
+	.end	name;		        				\
+	.size	name,.-name;	   			 	\
+	.set	pop;
+
+// 
+__LocalGetAddress_offsets:
+	.byte 4,8,12,16,20,16,24,28,28,28;
+
+// 
+	.set	push;
+	.set	noreorder;
+	.section	.text.##__LocalGetAddress,"ax",@progbits;
+	.align 2;
+	.globl	__LocalGetAddress;
+	.type	__LocalGetAddress,@function;
+	.ent	__LocalGetAddress,0;
+__LocalGetAddress:
+	// if scene is loading, then we have no address
+	li $v1, 1;
+	lw $v0, SCENE_LOADED;
+	bne $v0, $v1, __LocalGetAddress_exit;
+	li $v0, 0;
+
+	// if in menus then return lobby address
+	lw $v0, MENU_ACTIVE;
+	bne $v0, $zero, __LocalGetAddress_exit;
+	lw $v0, 0($a0)
+
+	// if not in game then no address
+	lw $v0, GAME_ACTIVE;
+	beq $v0, $zero, __LocalGetAddress_exit;
+	nop;
+
+	// otherwise in game
+	// return address by map
+	lw $v0, GAME_MAP_ID;
+	
+	// map local map ids (50+) to real map ids (40+)
+	addiu $v1, $v0, -10;
+	slti $s0, $v0, 50;
+	movz $v0, $v1, $s0;
+
+	// return 0 if map is not between 40 and 50
+	addiu $v1, $v0, -40
+	sltiu $v0, $v1, 10
+	beqzl $v0, __LocalGetAddress_exit;
+	move $v0, $zero;
+
+	// load offset into VariableAddress struct by map id
+	la $v0, __LocalGetAddress_offsets;
+	addu $v0, $v1;
+	lb $v0, 0($v0);
+
+	// load address from struct
+	addu $a0, $v0;
+	lw $v0, 0($a0);
+
+	// return to calling function
+__LocalGetAddress_exit:
+	jr $a1;
+	nop;
+	.end	__LocalGetAddress;
+	.size	__LocalGetAddress,.-__LocalGetAddress;
+	.set	pop;
+
+// 
+	.set	push;
+	.set	noreorder;
+	.section	.text.##GetAddress,"ax",@progbits;
+	.align 2;
+	.globl	GetAddress;
+	.type	GetAddress,@function;
+	.ent	GetAddress,0;
+GetAddress:
+	// if scene is loading, then we have no address
+	li $v1, 1;
+	lw $v0, SCENE_LOADED;
+	bne $v0, $v1, GetAddress_exit;
+	li $v0, 0;
+
+	// if in menus then return lobby address
+	lw $v0, MENU_ACTIVE;
+	bne $v0, $zero, GetAddress_exit;
+	lw $v0, 0($a0)
+
+	// if not in game then no address
+	lw $v0, GAME_ACTIVE;
+	beq $v0, $zero, GetAddress_exit;
+	nop;
+
+	// otherwise in game
+	// return address by map
+	lw $v0, GAME_MAP_ID;
+	
+	// map local map ids (50+) to real map ids (40+)
+	addiu $v1, $v0, -10;
+	slti $t0, $v0, 50;
+	movz $v0, $v1, $t0;
+
+	// return 0 if map is not between 40 and 50
+	addiu $v1, $v0, -40
+	sltiu $v0, $v1, 10
+	beqzl $v0, GetAddress_exit;
+	move $v0, $zero;
+
+	// load offset into VariableAddress struct by map id
+	la $v0, __LocalGetAddress_offsets;
+	addu $v0, $v1;
+	lb $v0, 0($v0);
+
+	// load address from struct
+	addu $a0, $v0;
+	lw $v0, 0($a0);
+
+	// return to calling function
+GetAddress_exit:
+	jr $ra;
+	nop;
+	.end	GetAddress;
+	.size	GetAddress,.-GetAddress;
+	.set	pop;
+
 
 #--------------------------------------------------------
 #------------------- STANDARD LIBRARY -------------------
@@ -19,7 +185,7 @@ name:	j address;              \
 #
 # NTSC and PAL address' are the same.
 #
-FUNCTION(printf, 0x0011e718)
+FUNCTION(printf, 0x00128BF0)
 FUNCTION(sprintf, 0x00120048)
 FUNCTION(memset, 0x0011d534)
 FUNCTION(memcpy, 0x0011d380)
@@ -44,17 +210,10 @@ FUNCTION(floorf, 0x001359A8) # not ported
 #--------------------------------------------------------
 #----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
-#ifdef UYA_PAL
-	# all InGame function address' change per map :(
-	FUNCTION(internal_drawFunc_inLobby, 0x00592238)
-	FUNCTION(internal_widthFunc_inLobby, 0x005946B0) # address is not correct for PAL
-	FUNCTION(internal_drawBox_inLobby, 0x00619308) # address is not correct for PAL
-#else
-	# all InGame function address' change per map :(
-	FUNCTION(internal_drawFunc_inLobby, 0x00590F90)
-	FUNCTION(internal_widthFunc_inLobby, 0x00590cf0)
-	FUNCTION(internal_drawBox_inLobby, 0x00615078)
-#endif
+VARIABLE_FUNCTION(internal_drawFunc, vaDrawTextFunc)
+VARIABLE_FUNCTION(gfxGetFontWidth, vaGetTextWidthFunc)
+VARIABLE_FUNCTION(internal_drawBox, vaDrawBoxFunc)
+
 #--------------------------------------------------------
 #------------------------- SHA1 -------------------------
 #--------------------------------------------------------
@@ -105,10 +264,21 @@ FUNCTION(internal_colorLerp_inLobby, 0x00590438) # Not Ported (For in game)
 #endif
 FUNCTION(uiShowPopup, 0x00540170) # Not Ported (For in game)
 FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported (For in game)
-FUNCTION(uiMsgString,  0x004E4180) # Not Ported (For in game)
+VARIABLE_FUNCTION(uiMsgString, vaUiMsgStringFunc)
 
 #--------------------------------------------------------
 #-------------------------- NET -------------------------
 #--------------------------------------------------------
-FUNCTION(internal_netSendMediusAppMessage, 0x01E9E198)  # Not Ported
-FUNCTION(internal_netBroadcastMediusAppMessage, 0x01E9E270)  # Not Ported
+FUNCTION(internal_netSendMessage, 0x0014ac48)
+FUNCTION(internal_netSendAppMessage, 0x0014ad08)
+
+#--------------------------------------------------------
+#------------------------- HELP -------------------------
+#--------------------------------------------------------
+#ifdef UYA_PAL
+	FUNCTION(internal_helpGetString_inLobby, 0)
+	FUNCTION(internal_helpGetString_inGame, 0)
+#else
+	FUNCTION(internal_helpGetString_inLobby, 0x00599618)
+	FUNCTION(internal_helpGetString_inGame, 0)
+#endif

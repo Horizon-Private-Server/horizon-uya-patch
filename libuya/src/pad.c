@@ -183,7 +183,7 @@ void padDisableInput(void)
     if (PAD_PROCESS_ADDR == PAD_PROCESS_VALUE)
         PAD_PROCESS_ADDR = 0x24020000;
 
-    // if (gameIsIn())
+    // if (isInGame())
     // {
     //     // no input timer
     //     *(u16*)(0x00347AA0 + 0x3BA) = 0x7FFF;
@@ -209,9 +209,11 @@ void padDisableInput(void)
  */
 void padEnableInput(void)
 {
-    PAD_PROCESS_ADDR = PAD_PROCESS_VALUE;
-
-    // if (gameIsIn())
+    if (!isInGame()) {
+        PAD_PROCESS_ADDR = PAD_PROCESS_VALUE;
+    }
+    
+    // if (isInGame())
     // {
     //     // no input timer
     //     *(u16*)(0x00347AA0 + 0x3BA) = 0;

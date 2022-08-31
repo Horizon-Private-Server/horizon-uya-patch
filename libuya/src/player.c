@@ -1,5 +1,6 @@
 #include "string.h"
 #include "player.h"
+#include "interop.h"
 #include "game.h"
 
 /*
@@ -7,7 +8,7 @@
  */
 
 // PAD STRUCT ARAY MESSES UP CODE WHILE ON ONLINE MENU
-#define PLAYER_STRUCT_ARRAY                         ((Player**)0x002495a0) // Outpost X12 Only
+#define PLAYER_STRUCT_ARRAY                         ((Player**)GetAddress(&vaPlayerStructArray))
 
 /*
  * Local player 1 dme player index.
@@ -25,6 +26,34 @@
 #define WEAPON_DATA_START                           (0x001D49C0)
 #define WEAPON_DATA_SIZE                            (0x12B0)
 #define WEAPON_EQUIPSLOT                            ((int*)0x0020C690)
+
+#if UYA_PAL
+
+VariableAddress_t vaPlayerStructArray = {
+	.Lobby = 0,
+	.Bakisi = 0,
+	.CommandCenter = 0,
+	.DocksSewersMarcadia = 0,
+	.Hoven = 0,
+	.KorgonBlackwaterCity = 0,
+	.Metropolis = 0,
+	.OutpostX12 = 0
+};
+
+#else
+
+VariableAddress_t vaPlayerStructArray = {
+	.Lobby = 0,
+	.Bakisi = 0x002494B0,
+	.CommandCenter = 0x00249020,
+	.DocksSewersMarcadia = 0x00249120,
+	.Hoven = 0x002496B0,
+	.KorgonBlackwaterCity = 0x00249420,
+	.Metropolis = 0x002494A0,
+	.OutpostX12 = 0x002495a0,
+};
+
+#endif
 
 // 
 extern const PadHistory DefaultPadHistory;
@@ -104,7 +133,7 @@ void playerPadUpdate(void)
     Player * player;
 
     // Update player pad in game
-    if (gameIsIn())
+    if (isInGame())
     {
         for (i = 0; i < GAME_MAX_PLAYERS; ++i)
         {

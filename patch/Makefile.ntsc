@@ -1,6 +1,6 @@
-EE_ELF = patch-ntsc.elf
-EE_BIN = patch-ntsc.bin
+EE_ELF = patch-10684.elf
+EE_BIN = patch-10684.bin
 EE_LIBS = -luyantsc
-EE_DEFS = -DUYA_NTSC
+EE_DEFS = -DUYA_NTSC -DDEBUG
 
 include ${CURDIR}/Makefile.defs

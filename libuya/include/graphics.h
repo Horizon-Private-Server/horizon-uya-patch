@@ -119,4 +119,7 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y);
 
 int gfxGetFontWidth(const char * string, int length, float scale);
 
+int gfxGetIsProgressiveScan(void);
+void gfxSetIsProgressiveScan(int on);
+
 #endif // _LIBUYA_GRAPHICS_H_
