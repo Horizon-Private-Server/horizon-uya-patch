@@ -2,3 +2,5 @@ docker run -v "${PWD}":/src ps2dev/ps2dev:v1.2.0 /bin/sh -c "cd src; sh containe
 
 cp bin/* ../horizon-server/docker/patch/
 
+cp misc/* ../horizon-server/docker/patch/
+
