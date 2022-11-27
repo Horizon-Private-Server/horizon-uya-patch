@@ -826,14 +826,14 @@ void runMapLoader(void)
 	// hook irx module loading 
 	hook();
 
-	if (padGetButtonDown(0, PAD_L1 | PAD_R1) > 0) {
+	/*if (padGetButtonDown(0, PAD_L1 | PAD_R1) > 0) {
 		MapOverrideMessage data = {
 			.MapId = 40,
 			.MapFileName = "maraxus",
 			.MapName = "Test"
 		};
 		onSetMapOverride(netGetLobbyServerConnection(), &data);
-	}
+	}*/
 
 	// 
 	if (!initialized)

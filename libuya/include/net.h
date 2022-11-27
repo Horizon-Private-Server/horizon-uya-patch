@@ -14,7 +14,7 @@
 #include "common.h"
 
 #define NET_CUSTOM_MESSAGE_CLASS                    (0)
-#define NET_CUSTOM_MESSAGE_ID                       (7)
+#define NET_CUSTOM_MESSAGE_ID                       (8)
 #define NET_LOBBY_CLIENT_INDEX                      (0xFFFF)
 
 typedef int (*NET_CALLBACK_DELEGATE)(void * connection, void * data);
