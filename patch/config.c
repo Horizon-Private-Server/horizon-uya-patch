@@ -1127,8 +1127,10 @@ void onConfigUpdate(void)
     // update ui strings
     if ((u32)stagingUiElements > 0x100000)
     {
-      strncpy((char*)(stagingUiElements[1] + 0x14), mapName, 32);
-      strncpy((char*)(stagingUiElements[2] + 0x14), modeName, 32);
+      if (mapName)
+        strncpy((char*)(stagingUiElements[1] + 0x14), mapName, 32);
+      if (modeName)
+        strncpy((char*)(stagingUiElements[2] + 0x14), modeName, 32);
     }
     if ((u32)stagingDetailsUiElements > 0x100000)
     {

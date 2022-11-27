@@ -247,7 +247,7 @@ void drawFunction(void)
     ((void (*)(void))0x0067C9C0)();
 #else
 	//printf("onOnlineMenu - run draw function\n");
-	((void (*)(void))0x00679F08)();
+	((void (*)(void))0x00679f08)();
 #endif
 }
 
