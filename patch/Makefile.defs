@@ -1,5 +1,5 @@
 BIN_PATH = ../bin/
-EE_OBJS = main.o config.o maploader.o rpc.o
+EE_OBJS = main.o config.o maploader.o rpc.o cheats.o
 EE_LIBS := $(EE_LIBS) -lkernel
 
 EE_INCS := -I../common -I../libuya/include
@@ -10,7 +10,7 @@ all: $(EE_BIN) clean copy
 
 copy:
 	mkdir -p $(CURDIR)/$(BIN_PATH)
-	cp $(CURDIR)/$(EE_ELF) $(CURDIR)/$(BIN_PATH)$(EE_ELF)
+	#cp $(CURDIR)/$(EE_ELF) $(CURDIR)/$(BIN_PATH)$(EE_ELF)
 	cp $(CURDIR)/$(EE_BIN) $(CURDIR)/$(BIN_PATH)$(EE_BIN)
 
 clean:

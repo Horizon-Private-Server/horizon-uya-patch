@@ -32,12 +32,15 @@
 VariableAddress_t vaPlayerStructArray = {
 	.Lobby = 0,
 	.Bakisi = 0,
-	.CommandCenter = 0,
-	.DocksSewersMarcadia = 0,
 	.Hoven = 0,
-	.KorgonBlackwaterCity = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
 	.Metropolis = 0,
-	.OutpostX12 = 0
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
 };
 
 #else
@@ -45,12 +48,15 @@ VariableAddress_t vaPlayerStructArray = {
 VariableAddress_t vaPlayerStructArray = {
 	.Lobby = 0,
 	.Bakisi = 0x002494B0,
-	.CommandCenter = 0x00249020,
-	.DocksSewersMarcadia = 0x00249120,
 	.Hoven = 0x002496B0,
-	.KorgonBlackwaterCity = 0x00249420,
-	.Metropolis = 0x002494A0,
 	.OutpostX12 = 0x002495a0,
+    .KorgonOutpost = 0x00249420,
+	.Metropolis = 0x002494A0,
+	.BlackwaterCity = 0x00249420,
+	.CommandCenter = 0x00249020,
+    .BlackwaterDocks = 0x00249120,
+    .AquatosSewers = 0x00249120,
+    .MarcadiaPalace = 0x00249120,
 };
 
 #endif

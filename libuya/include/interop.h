@@ -21,24 +21,14 @@ typedef struct VariableAddress
   u32 Bakisi;
   u32 Hoven;
   u32 OutpostX12;
-  u32 KorgonBlackwaterCity;
+  u32 KorgonOutpost;
   u32 Metropolis;
+  u32 BlackwaterCity;
   u32 CommandCenter;
-  u32 DocksSewersMarcadia;
+  u32 BlackwaterDocks;
+  u32 AquatosSewers;
+  u32 MarcadiaPalace;
 } VariableAddress_t;
-
-typedef union FixedAddress
-{
-  u32 Value;
-  u32 Lobby;
-  u32 Bakisi;
-  u32 Hoven;
-  u32 OutpostX12;
-  u32 KorgonBlackwaterCity;
-  u32 Metropolis;
-  u32 CommandCenter;
-  u32 DocksSewersMarcadia;
-} FixedAddress_t;
 
 u32 GetAddress(VariableAddress_t* address);
 

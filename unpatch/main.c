@@ -111,7 +111,7 @@ void onOnlineMenu(void)
 	drawFunction();
 
 	// only show on main menu
-	if (GetActiveUIPointer(UIP_ONLINE_LOBBY) == 0)
+	if (uiGetActivePointer(UIP_ONLINE_LOBBY) == 0)
 		return;
 
 	gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
@@ -173,11 +173,18 @@ int main (void)
 		#ifdef UYA_PAL
 		*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 		#else
+		*(u32*)0x005753A4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 		*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+		//*(u32*)0x0067A01C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+
+		//*(u32*)0x005758A0 = 0x0C16F5E6;
+		//*(u32*)0x005758d0 = 0x0C15D6E2;
+		*(u32*)0x005758d8 = 0x0C17E9E0;
+		//*(u32*)0x006837d0 = 0x0C1A1A9A;
 		#endif
 
 		// disable pad on online main menu
-		if (GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0)
+		if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
 			padDisableInput();
 	}
 

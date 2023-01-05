@@ -209,9 +209,8 @@ void padDisableInput(void)
  */
 void padEnableInput(void)
 {
-    if (!isInGame()) {
+    if (PAD_PROCESS_ADDR == 0x24020000)
         PAD_PROCESS_ADDR = PAD_PROCESS_VALUE;
-    }
     
     // if (isInGame())
     // {

@@ -44,6 +44,7 @@ const u32 colorBg = 0x8018608f;
 const u32 colorContentBg = 0x80123251;
 const u32 colorTabBg = 0x8018608f;
 const u32 colorTabBarBg = 0x8004223f;
+const u32 colorTabBarSelectedBg = 0x803880af;
 const u32 colorRed = 0x8018608f;
 const u32 colorSelected = 0x8018608f;
 const u32 colorButtonBg = 0x80303030;
@@ -150,8 +151,8 @@ MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
-  { "InfHealth+Moonjump", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableInfiniteHealthMoonjump },
-  { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
+  // { "InfHealth+Moonjump", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableInfiniteHealthMoonjump },
+  // { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 };
 
 // Game Settings
@@ -342,7 +343,7 @@ void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, i
 void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   // 
-  if (isInGame())
+  if (!isInMenus())
     return;
 
   // close menu
@@ -817,7 +818,7 @@ void drawFrame(void)
       u32 color = colorLerp(colorText, 0, lerp);
 
       // draw bar
-      u32 barColor = selectedTabItem == i ? colorSelected : colorTabBg;
+      u32 barColor = selectedTabItem == i ? colorTabBarSelectedBg : colorTabBg;
       gfxScreenSpaceBox(tabX + tabBarPaddingX, tabY, pWidth - (2 * tabBarPaddingX), tabBarH, barColor);
 
       // draw text
@@ -950,9 +951,6 @@ void onMenuUpdate(int inGame)
 
   if (isConfigMenuActive)
   {
-		// prevent pad from affecting menus
-		padDisableInput();
-
 		// draw
 		if (padGetButtonDown(0, PAD_L3) <= 0)
 		{
@@ -982,7 +980,7 @@ void onMenuUpdate(int inGame)
 	else if (!inGame)
   {
     //printf("config.c: onmenuupdate - if !inGame START\n");
-		if (GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0)
+		if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
 		{
 			// render message
 			gfxScreenSpaceBox(0.1, 0.825, 0.4, 0.05, colorOpenBg);
@@ -1121,8 +1119,8 @@ void onConfigUpdate(void)
       }
     }
 
-    u32 * stagingUiElements = (u32*)(GetActiveUIPointer(UIP_STAGING) + 0x110);
-    u32 * stagingDetailsUiElements = (u32*)(GetActiveUIPointer(UIP_STAGING_SECONDARY_PLAYER_OPTIONS) + 0x110);
+    u32 * stagingUiElements = (u32*)(uiGetActivePointer(UIP_STAGING) + 0x110);
+    u32 * stagingDetailsUiElements = (u32*)(uiGetActivePointer(UIP_STAGING_SECONDARY_PLAYER_OPTIONS) + 0x110);
 
     // update ui strings
     if ((u32)stagingUiElements > 0x100000)
@@ -1234,4 +1232,7 @@ void configMenuEnable(void)
   tabElements[selectedTabItem].stateHandler(&tabElements[selectedTabItem], &state);
   if ((state & ELEMENT_SELECTABLE) == 0 || (state & ELEMENT_VISIBLE) == 0)
     selectedTabItem = 0;
+  
+  // prevent pad from affecting menus
+  padDisableInput();
 }

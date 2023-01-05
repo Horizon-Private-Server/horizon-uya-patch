@@ -12,7 +12,7 @@ char * helpGetString(int stringId)
   {
       return internal_helpGetString_inGame(stringId);
   }
-  else
+  else if (isInMenus())
   {
       return internal_helpGetString_inLobby(stringId);
   }

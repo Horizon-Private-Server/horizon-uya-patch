@@ -24,10 +24,12 @@
 #include <libuya/graphics.h>
 #include <libuya/time.h>
 #include <libuya/net.h>
+#include <libuya/interop.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
 #include "include/config.h"
+#include "include/cheats.h"
 
 #if UYA_PAL
 
@@ -44,7 +46,6 @@ void onConfigGameMenu(void);
 void onConfigUpdate(void);
 void configMenuEnable(void);
 void configMenuDisable(void);
-int GetActiveUIPointer(int);
 
 void runMapLoader(void);
 void onMapLoaderOnlineMenu(void);
@@ -137,6 +138,155 @@ void runExceptionHandler(void)
 	}
 }
 
+
+/*
+ * NAME :		runGameSettings
+ * 
+ * DESCRIPTION :
+ * 
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void runGameSettings(void)
+{
+	if (!isInGame())
+		return;
+
+	// disable weapon packs toggle
+	if (gameConfig.disableWeaponPacks)
+		disableWeaponPacks();
+}
+
+/*
+ * NAME :		runCameraSpeedPatch
+ * 
+ * DESCRIPTION :
+ * 
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void runCameraSpeedPatch(void)
+{
+	char buf[12];
+	const short MAX_CAMERA_SPEED = 200;
+
+#if UYA_PAL
+	VariableAddress_t vaUpdateCameraSpeedIGFunc = {
+		.Lobby = 0,
+		.Bakisi = 0,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+    .KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
+	};
+	VariableAddress_t vaDrawCameraSpeedInputIGFunc = {
+		.Lobby = 0,
+		.Bakisi = 0,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+    .KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
+	};
+#else
+	VariableAddress_t vaUpdateCameraSpeedIGFunc = {
+		.Lobby = 0,
+		.Bakisi = 0x004BBC78,
+		.Hoven = 0x004BDCD0,
+		.OutpostX12 = 0x004B35E8,
+    .KorgonOutpost = 0x004B0E00,
+		.Metropolis = 0x004B0150,
+		.BlackwaterCity = 0x004AD968,
+		.CommandCenter = 0x004ADB20,
+    .BlackwaterDocks = 0x004B0360,
+    .AquatosSewers = 0x004AF6A0,
+    .MarcadiaPalace = 0x004AEFE0,
+	};
+	VariableAddress_t vaDrawCameraSpeedInputIGFunc = {
+		.Lobby = 0,
+		.Bakisi = 0x004BBE8C,
+		.Hoven = 0x004BDEE4,
+		.OutpostX12 = 0x004B37FC,
+    .KorgonOutpost = 0x004B1014,
+		.Metropolis = 0x004B0364,
+		.BlackwaterCity = 0x004ADB7C,
+		.CommandCenter = 0x004ADD34,
+    .BlackwaterDocks = 0x004B0574,
+    .AquatosSewers = 0x004AF8B4,
+    .MarcadiaPalace = 0x004AF1F4,
+	};
+#endif
+
+	if (isInMenus())
+	{
+		// overwrite menu camera controls max cam speed
+		// also display speed text next to input
+		u32 ui = uiGetPointer(UIP_CONTROLS);
+		if (ui && uiGetActivePointer(UIP_EDIT_PROFILE))
+		{
+			u32 cameraRotationUIPtr = *(u32*)(ui + 0x11C);
+			if (cameraRotationUIPtr)
+			{
+				// max speed
+				*(u32*)(cameraRotationUIPtr + 0x7C) = MAX_CAMERA_SPEED;
+
+				// draw %
+				if (uiGetActiveSubPointer(UIP_CONTROLS))
+				{
+					sprintf(buf, "%d%%", *(u32*)(cameraRotationUIPtr + 0x80));
+					gfxScreenSpaceText(340, 310, 1, 1, 0x8069cbf2, buf, -1, 2);
+				}
+			}
+		}
+
+	}
+	else if (isInGame())
+	{
+		// overwrite in game camera speed control max
+
+		// replaces limiter function so that input can go past default 100
+		u32 updateCameraSpeedIGFunc = GetAddress(&vaUpdateCameraSpeedIGFunc);
+		if (updateCameraSpeedIGFunc) {
+			*(u16*)(updateCameraSpeedIGFunc + 0x130) = MAX_CAMERA_SPEED;
+			*(u16*)(updateCameraSpeedIGFunc + 0x154) = MAX_CAMERA_SPEED+1;
+		}
+
+		// replace drawing function denominator to scale input down to 0 to our MAX
+		u32 drawCameraSpeedInputIGFunc = GetAddress(&vaDrawCameraSpeedInputIGFunc);
+		if (drawCameraSpeedInputIGFunc) {
+			asm __volatile(
+					"mtc1 %0, $f12\n"
+					"cvt.s.w $f12, $f12\n"
+					"mfc1 $t0, $f12\n"
+					"srl $t0, $t0, 16\n"
+					"sh $t0, 0(%1)"
+					: : "r" (MAX_CAMERA_SPEED), "r" (drawCameraSpeedInputIGFunc)
+			);
+		}
+	}
+}
+
 /*
  * NAME :		runGameStartMessager
  * 
@@ -158,7 +308,7 @@ void runGameStartMessager(void)
 		return;
 
 	// in staging
-	if (GetActiveUIPointer(UIP_STAGING) != 0)
+	if (uiGetActivePointer(UIP_STAGING) != 0)
 	{
 		// check if game started
 		if (!sentGameStart && gameSettings->GameLoadStartTime > 0)
@@ -195,7 +345,7 @@ void runCheckGameMapInstalled(void)
 {
 	int i;
 	GameSettings* gs = gameGetSettings();
-	if (!gs || isInGame())
+	if (!gs || !isInMenus())
 		return;
 
 	// if start game button is enabled
@@ -218,7 +368,7 @@ void runCheckGameMapInstalled(void)
 		{
 			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 6)
 			{
-				((void (*)(u32, u32, u32))0x006c17f0)(GetActiveUIPointer(UIP_STAGING), 5, 0);
+				((void (*)(u32, u32, u32))0x006c17f0)(uiGetActivePointer(UIP_STAGING), 5, 0);
 				gs->PlayerStates[i] = 0; // unready up
 				showNoMapPopup = 1;
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
@@ -336,21 +486,24 @@ void processGameModules()
 void onOnlineMenu(void)
 {
 	// call normal draw routine
-	drawFunction();
-
+	//drawFunction();
+	((void (*)(int))0x005fa780)(1);
+	
 	lastMenuInvokedTime = gameGetTime();
 	if (!hasInitialized)
 	{
-		printf("onOnlinemenu - pad enable input\n");
+		DPRINTF("onOnlinemenu - pad enable input\n");
 		padEnableInput();
 		onConfigInitialize();
 		hasInitialized = 1;
 	}
-	if (hasInitialized == 1 && GetActiveUIPointer(UIP_ONLINE_LOBBY) != 0)
+	if (hasInitialized == 1 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
 	{
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
 	}
+
+	//gfxScreenSpaceBox(0.2, 0.2, 0.5, 0.5, 0x40FFFFFF);
 
 	// map loader
 	onMapLoaderOnlineMenu();
@@ -408,7 +561,7 @@ int main(void)
 	uyaPreUpdate();
 
 	// auto enable pad input to prevent freezing when popup shows
-	if (lastMenuInvokedTime > 0 && gameGetTime() - lastMenuInvokedTime > TIME_SECOND)
+	if (isInMenus() && lastMenuInvokedTime > 0 && (gameGetTime() - lastMenuInvokedTime) > TIME_SECOND)
 	{
 		DPRINTF("pad enable input\n");
 		padEnableInput();
@@ -433,14 +586,17 @@ int main(void)
 	runCheckGameMapInstalled();
 
 	// 
+	runCameraSpeedPatch();
+
+	// 
 	onConfigUpdate();
 
 	// void * GameplayFilePointer = (void*)(*(u32*)0x01FFFD00);
 	if(isInGame())
 	{
-		// In game stuff
+		runGameSettings();
 	}
-	else
+	else if (isInMenus())
 	{
 		// Not In game stuff
 		// Hook menu loop
@@ -449,8 +605,17 @@ int main(void)
 			*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 #else
 		//printf("patching main menu\n");
-		if (*(u32*)0x005753E0 == 0)
-			*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+		if (*(u32*)0x005753E0 == 0) {
+			//*(u32*)0x005753A4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+			//*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+
+			*(u32*)0x005753A4 = 0x0C19E7C2;
+			*(u32*)0x005753DC = 0x0C19E7C2;
+			*(u32*)0x005758d8 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+			//*(u32*)0x0067A01C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+			//*(u32*)0x006837d0 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+			
+		}
 #endif
 
 		// send patch game config on create game

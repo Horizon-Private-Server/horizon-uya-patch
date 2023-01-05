@@ -7,72 +7,89 @@
 VariableAddress_t vaDrawTextFunc = {
 	.Lobby = 0x00592238,
 	.Bakisi = 0,
-	.CommandCenter = 0,
-	.DocksSewersMarcadia = 0,
 	.Hoven = 0,
-	.KorgonBlackwaterCity = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
 	.Metropolis = 0,
-	.OutpostX12 = 0
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
 };
 
 VariableAddress_t vaGetTextWidthFunc = {
 	.Lobby = 0,
 	.Bakisi = 0,
-	.CommandCenter = 0,
-	.DocksSewersMarcadia = 0,
 	.Hoven = 0,
-	.KorgonBlackwaterCity = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
 	.Metropolis = 0,
-	.OutpostX12 = 0
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
 };
 
 VariableAddress_t vaDrawBoxFunc = {
 	.Lobby = 0,
 	.Bakisi = 0,
-	.CommandCenter = 0,
-	.DocksSewersMarcadia = 0,
 	.Hoven = 0,
-	.KorgonBlackwaterCity = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
 	.Metropolis = 0,
-	.OutpostX12 = 0
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
 };
 
 
 #define IS_PROGRESSIVE_SCAN					(*(int*)0)
 #else
 
-
 VariableAddress_t vaDrawTextFunc = {
 	.Lobby = 0x00590F90,
 	.Bakisi = 0x0045e300,
-	.CommandCenter = 0,
-	.DocksSewersMarcadia = 0,
 	.Hoven = 0,
-	.KorgonBlackwaterCity = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
 	.Metropolis = 0,
-	.OutpostX12 = 0
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
 };
 
 VariableAddress_t vaGetTextWidthFunc = {
 	.Lobby = 0x00590cf0,
 	.Bakisi = 0,
-	.CommandCenter = 0,
-	.DocksSewersMarcadia = 0,
 	.Hoven = 0,
-	.KorgonBlackwaterCity = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
 	.Metropolis = 0,
-	.OutpostX12 = 0
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
 };
 
 VariableAddress_t vaDrawBoxFunc = {
 	.Lobby = 0x00615078,
 	.Bakisi = 0,
-	.CommandCenter = 0,
-	.DocksSewersMarcadia = 0,
 	.Hoven = 0,
-	.KorgonBlackwaterCity = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
 	.Metropolis = 0,
-	.OutpostX12 = 0
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
 };
 
 

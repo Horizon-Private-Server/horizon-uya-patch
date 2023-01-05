@@ -1,0 +1,4 @@
+
+
+
+void disableWeaponPacks(void);

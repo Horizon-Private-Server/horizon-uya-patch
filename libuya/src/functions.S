@@ -61,10 +61,6 @@ name:														\
 	.set	pop;
 
 // 
-__LocalGetAddress_offsets:
-	.byte 4,8,12,16,20,16,24,28,28,28;
-
-// 
 	.set	push;
 	.set	noreorder;
 	.section	.text.##__LocalGetAddress,"ax",@progbits;
@@ -105,9 +101,8 @@ __LocalGetAddress:
 	move $v0, $zero;
 
 	// load offset into VariableAddress struct by map id
-	la $v0, __LocalGetAddress_offsets;
-	addu $v0, $v1;
-	lb $v0, 0($v0);
+	sll $v1, $v1, 2; // multiply map id [0,9] by 4
+	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
 
 	// load address from struct
 	addu $a0, $v0;
@@ -162,9 +157,8 @@ GetAddress:
 	move $v0, $zero;
 
 	// load offset into VariableAddress struct by map id
-	la $v0, __LocalGetAddress_offsets;
-	addu $v0, $v1;
-	lb $v0, 0($v0);
+	sll $v1, $v1, 2; // multiply map id [0,9] by 4
+	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
 
 	// load address from struct
 	addu $a0, $v0;

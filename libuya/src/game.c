@@ -38,12 +38,12 @@
 
 __LIBUYA_GETTER__ int isInGame(void)
 {
-    return GAME_ACTIVE && SCENE_LOADED == 1;
+    return GAME_ACTIVE && GAME_MAP_ID != 0x27  && SCENE_LOADED == 1;
 }
 
 __LIBUYA_GETTER__ int isInMenus(void)
 {
-    return MENU_ACTIVE && SCENE_LOADED == 1;
+    return MENU_ACTIVE && GAME_MAP_ID == 0x27 && SCENE_LOADED == 1;
 }
 
 __LIBUYA_GETTER__ int isSceneLoading(void)

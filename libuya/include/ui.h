@@ -11,6 +11,7 @@
 #define _LIBUYA_UI_H_
 
 #include "common.h"
+#include <tamtypes.h>
 
 enum UiIds
 {
@@ -195,5 +196,9 @@ void uiShowHelpPopup(int localPlayerIndex, const char * message, int seconds);
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 char * uiMsgString(int textId);
+
+u32 uiGetPointer(int UI);
+u32 uiGetActivePointer(int UI);
+u32 uiGetActiveSubPointer(int UI);
 
 #endif // _LIBUYA_UI_H_
