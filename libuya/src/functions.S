@@ -1,8 +1,8 @@
 #if UYA_PAL
-	#define GAME_ACTIVE                         (0x01000000)
-	#define MENU_ACTIVE                         (0x01000000)
-	#define SCENE_LOADED                        (0x01000000)
-	#define GAME_MAP_ID                         (0x01000000)
+	#define GAME_ACTIVE                         (0x00241a50)
+	#define MENU_ACTIVE                         (0x001c3b30)
+	#define SCENE_LOADED                        (0x00245848)
+	#define GAME_MAP_ID                         (0x001f83a8)
 #else
 	#define GAME_ACTIVE                         (0x00241BD0)
 	#define MENU_ACTIVE                         (0x001C3CB0)
