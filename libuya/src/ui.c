@@ -6,19 +6,35 @@
 
 int internal_uiDialog(void *, const char *, const char *, int, int, float);
 
+#ifdef UYA_PAL
+VariableAddress_t vaUiMsgStringFunc = {
+	.Lobby = 0x0059a970,
+	.Bakisi = 0x00467388,
+	.Hoven = 0x00468f10,
+	.OutpostX12 = 0x0045fd10,
+	.KorgonOutpost = 0x0045d8a0,
+	.Metropolis = 0x0045cbe0,
+	.BlackwaterCity = 0x0045a410,
+	.CommandCenter = 0x0045ad08,
+	.BlackwaterDocks = 0x0045a410,
+	.AquatosSewers = 0x0045c888,
+	.MarcadiaPalace = 0x0045c208,
+};
+#else
 VariableAddress_t vaUiMsgStringFunc = {
 	.Lobby = 0x00599618,
-	.Bakisi = 0,
-	.Hoven = 0,
-	.OutpostX12 = 0,
-  .KorgonOutpost = 0,
-	.Metropolis = 0,
-	.BlackwaterCity = 0,
-	.CommandCenter = 0,
-  .BlackwaterDocks = 0,
-  .AquatosSewers = 0,
-  .MarcadiaPalace = 0,
+	.Bakisi = 0x00466108,
+	.Hoven = 0x00467bf8,
+	.OutpostX12 = 0x0045ea38,
+	.KorgonOutpost = 0x0045c648,
+	.Metropolis = 0x0045c648,
+	.BlackwaterCity = 0x00459138,
+	.CommandCenter = 0x00459bf0,
+	.BlackwaterDocks = 0x0045c430,
+	.AquatosSewers = 0x0045b770,
+	.MarcadiaPalace = 0x0045b0b0,
 };
+#endif
 
 u32 uiGetPointer(int UI)
 {
