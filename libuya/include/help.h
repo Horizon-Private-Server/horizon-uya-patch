@@ -14,7 +14,6 @@
 
 #include "common.h"
 
-
 /*
  *
  */
@@ -34,22 +33,5 @@ enum HELP_STRING_IDS
     HELP_STRING_ID_DEATHMATCH = 0x1026,
     HELP_STRING_ID_CTF = 0x10E2,
 };
-
-/*
- * NAME :		helpGetString
- * 
- * DESCRIPTION :
- * 			Gets the respective string from the locale.
- * 
- * NOTES :
- * 
- * ARGS : 
- *          stringId:           String index.
- * 
- * RETURN :
- * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
-char * helpGetString(int stringId);
 
 #endif // _LIBUYA_HELP_H_
