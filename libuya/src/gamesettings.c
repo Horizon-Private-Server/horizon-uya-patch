@@ -1,6 +1,7 @@
 #include <tamtypes.h>
 #include "gamesettings.h"
 #include "math.h"
+#include "help.h"
 
 /*
  * Points to the active game settings.
@@ -35,16 +36,13 @@ GameOptions * gameGetOptions(void)
 }
 
 //--------------------------------------------------------
-// Need to port over "helpGetString" function
-// char * gameGetGameModeName(int modeId)
-// {
-//   switch (modeId)
-//   {
-//       case GAMERULE_CQ: return helpGetString(HELP_STRING_ID_CONQUEST);
-//       case GAMERULE_CTF: return helpGetString(HELP_STRING_ID_CTF);
-//       case GAMERULE_DM: return helpGetString(HELP_STRING_ID_DEATHMATCH);
-//       case GAMERULE_JUGGY: return helpGetString(HELP_STRING_ID_JUGGERNAUT);
-//       case GAMERULE_KOTH: return helpGetString(HELP_STRING_ID_KING_OF_THE_HILL);
-//       default: return helpGetString(-1);
-//   }
-// }
+char * gameGetGameModeName(int modeId)
+{
+  switch (modeId)
+  {
+      case GAMERULE_SEIGE: return helpGetString(HELP_STRING_ID_SEIGE);
+      case GAMERULE_CTF: return helpGetString(HELP_STRING_ID_CTF);
+      case GAMERULE_DM: return helpGetString(HELP_STRING_ID_DEATHMATCH);
+      default: return NULL;
+  }
+}

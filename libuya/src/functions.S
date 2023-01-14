@@ -243,10 +243,7 @@ FUNCTION(SifDmaStat, 0x00126600)
 #--------------------------------------------------------
 #------------------------ COLOR -------------------------
 #--------------------------------------------------------
-# FUNCTION(internal_colorLerp_inGame, 0x004d75e0)
-
-# Not ported to PAL yet
-FUNCTION(internal_colorLerp_inLobby, 0x00590438) # Not Ported (For in game)
+VARIABLE_FUNCTION(internal_colorLerp, vaColorLerpFunc)
 
 #--------------------------------------------------------
 #-------------------------- UI --------------------------
@@ -265,14 +262,3 @@ VARIABLE_FUNCTION(uiMsgString, vaUiMsgStringFunc)
 #--------------------------------------------------------
 FUNCTION(internal_netSendMessage, 0x0014ac48)
 FUNCTION(internal_netSendAppMessage, 0x0014ad08)
-
-#--------------------------------------------------------
-#------------------------- HELP -------------------------
-#--------------------------------------------------------
-#ifdef UYA_PAL
-	FUNCTION(internal_helpGetString_inLobby, 0)
-	FUNCTION(internal_helpGetString_inGame, 0)
-#else
-	FUNCTION(internal_helpGetString_inLobby, 0x00599618)
-	FUNCTION(internal_helpGetString_inGame, 0)
-#endif

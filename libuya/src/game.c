@@ -1,22 +1,23 @@
 #include "game.h"
 #include "gamesettings.h"
 #include "ui.h"
+#include "help.h"
 
 #if UYA_PAL
 
-#define GAME_ACTIVE                         (*(int*)0x002357FC)
-#define MENU_ACTIVE                         (*(int*)0)
-#define SCENE_LOADED                        (*(int*)0)
+#define GAME_ACTIVE                         (*(int*)0x00241a50)
+#define MENU_ACTIVE                         (*(int*)0x001c3b30)
+#define SCENE_LOADED                        (*(int*)0x00245848)
 
 /*
  * Game time (ms).
  */
 #define GAME_TIME                           (*(int*)0x002257D8)
 
-#define GAME_MAP_ID                         (*(int*)0)
+#define GAME_MAP_ID                         (*(int*)0x001f83a8)
 
-#define GAME_CLIENT_ID                      (*(int*)0)
-#define GAME_HOST_ID                        (*(int*)0)
+#define GAME_CLIENT_ID                      (*(int*)0x001a5cd8)
+#define GAME_HOST_ID                        (*(int*)0x001a5e3c)
 
 #else
 
@@ -75,9 +76,9 @@ char* gameGetGameModeName(int gameModeId)
 {
     switch (gameModeId)
     {
-        case GAMERULE_SEIGE: return uiMsgString(0x1024);
-        case GAMERULE_CTF: return uiMsgString(0x10E2);
-        case GAMERULE_DM: return uiMsgString(0x1026);
+        case GAMERULE_SEIGE: return uiMsgString(HELP_STRING_ID_SEIGE);
+        case GAMERULE_CTF: return uiMsgString(HELP_STRING_ID_CTF);
+        case GAMERULE_DM: return uiMsgString(HELP_STRING_ID_DEATHMATCH);
         default: return NULL;
     }
 }
