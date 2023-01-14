@@ -23,9 +23,15 @@
  * Maximum health of player.
  */
 #define PLAYER_MAX_HEALTH                   (15)
-#define PLAYER_HEALTH_ADDR                  (*(float*)0x00235964)
 
+#ifdef UYA_PAL
+#define PLAYER_HEALTH_ADDR                  (*(float*)0)
+#define PLAYER_STRUCT_POINTER               (*(u32*)0x00225cf0)
+#else
+#define PLAYER_HEALTH_ADDR                  (*(float*)0x00235964)
 #define PLAYER_STRUCT_POINTER               (*(u32*)0x00225e70)
+#endif
+
 #define PLAYER_STRUCT                       (PLAYER_STRUCT_POINTER - 0x430C)
 
 /*

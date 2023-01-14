@@ -31,16 +31,16 @@
 
 VariableAddress_t vaPlayerStructArray = {
 	.Lobby = 0,
-	.Bakisi = 0,
-	.Hoven = 0,
-	.OutpostX12 = 0,
-    .KorgonOutpost = 0,
-	.Metropolis = 0,
-	.BlackwaterCity = 0,
-	.CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
+	.Bakisi = 0x00249330,
+	.Hoven = 0x00249530,
+	.OutpostX12 = 0x00249420,
+    .KorgonOutpost = 0x002492a0,
+	.Metropolis = 0x00249320,
+	.BlackwaterCity = 0x002492a0,
+	.CommandCenter = 0x00248ea0,
+    .BlackwaterDocks = 0x00248fa0,
+    .AquatosSewers = 0x00248fa0,
+    .MarcadiaPalace = 0x00248fa0,
 };
 
 #else
