@@ -50,16 +50,16 @@ char * mapGetName(int mapId)
 {
   switch (mapId)
   {
-      case MAP_ID_BAKISI: return helpGetString(HELP_STRING_ID_BAKISI_ISLES);
-      case MAP_ID_HOVEN: return helpGetString(HELP_STRING_ID_HOVEN_GORGE);
-      case MAP_ID_OUTPOST_X12: return helpGetString(HELP_STRING_ID_OUTPOST_X12);
-      case MAP_ID_KORGON: return helpGetString(HELP_STRING_ID_KORGON_OUTPOST);
-      case MAP_ID_METROPOLIS: return helpGetString(HELP_STRING_ID_METROPOLIS);
-      case MAP_ID_BLACKWATER_CITY: return helpGetString(HELP_STRING_ID_BLACKWATER_CITY);
-      case MAP_ID_COMMAND_CENTER: return helpGetString(HELP_STRING_ID_COMMAND_CENTER);
-      case MAP_ID_BLACKWATER_DOCKS: return helpGetString(HELP_STRING_ID_BLACKWATER_DOCKS);
-      case MAP_ID_AQUATOS_SEWERS: return helpGetString(HELP_STRING_ID_AQUATOS_SEWERS);
-      case MAP_ID_MARCADIA: return helpGetString(HELP_STRING_ID_MARCADIA_PALACE);
-      default: return helpGetString(-1);
+      case MAP_ID_BAKISI: return uiMsgString(HELP_STRING_ID_BAKISI_ISLES);
+      case MAP_ID_HOVEN: return uiMsgString(HELP_STRING_ID_HOVEN_GORGE);
+      case MAP_ID_OUTPOST_X12: return uiMsgString(HELP_STRING_ID_OUTPOST_X12);
+      case MAP_ID_KORGON: return uiMsgString(HELP_STRING_ID_KORGON_OUTPOST);
+      case MAP_ID_METROPOLIS: return uiMsgString(HELP_STRING_ID_METROPOLIS);
+      case MAP_ID_BLACKWATER_CITY: return uiMsgString(HELP_STRING_ID_BLACKWATER_CITY);
+      case MAP_ID_COMMAND_CENTER: return uiMsgString(HELP_STRING_ID_COMMAND_CENTER);
+      case MAP_ID_BLACKWATER_DOCKS: return uiMsgString(HELP_STRING_ID_BLACKWATER_DOCKS);
+      case MAP_ID_AQUATOS_SEWERS: return uiMsgString(HELP_STRING_ID_AQUATOS_SEWERS);
+      case MAP_ID_MARCADIA: return uiMsgString(HELP_STRING_ID_MARCADIA_PALACE);
+      default: return uiMsgString(-1);
   }
 }

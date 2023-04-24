@@ -34,15 +34,3 @@ GameOptions * gameGetOptions(void)
 {
     return GLOBAL_GAMEOPTIONS;
 }
-
-//--------------------------------------------------------
-char * gameGetGameModeName(int modeId)
-{
-  switch (modeId)
-  {
-      case GAMERULE_SEIGE: return helpGetString(HELP_STRING_ID_SEIGE);
-      case GAMERULE_CTF: return helpGetString(HELP_STRING_ID_CTF);
-      case GAMERULE_DM: return helpGetString(HELP_STRING_ID_DEATHMATCH);
-      default: return NULL;
-  }
-}

@@ -54,7 +54,7 @@ enum WeaponType {
     WEAPON_TYPE_MORPH = 9,
     WEAPON_TYPE_HOLO = 12
  //   WEAPON_TYPE_ = ,
-}
+};
 
 /*
  * NAME :		PlayerCameraType

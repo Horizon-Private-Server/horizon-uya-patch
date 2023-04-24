@@ -616,6 +616,12 @@ int main(void)
 			//*(u32*)0x006837d0 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 			
 		}
+
+    // popup is visible
+    if (*(u32*)0x0024693C == 1) {
+      configMenuDisable();
+      padEnableInput();
+    }
 #endif
 
 		// send patch game config on create game

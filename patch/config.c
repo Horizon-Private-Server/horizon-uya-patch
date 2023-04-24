@@ -1149,6 +1149,11 @@ void onConfigOnlineMenu(void)
 {
   //printf("config.c: onConfigOnlineMenu\n");
   onMenuUpdate(0);
+
+  if (isConfigMenuActive && !netGetLobbyServerConnection()) {
+    configMenuDisable();
+    padEnableInput();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1169,7 +1174,7 @@ void onConfigInitialize(void)
 #endif
 }
 
-// //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void configTrySendGameConfig(void)
 {
   int state = 0;
