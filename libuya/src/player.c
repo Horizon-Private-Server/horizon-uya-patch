@@ -6,8 +6,6 @@
 /*
  * 
  */
-
-// PAD STRUCT ARAY MESSES UP CODE WHILE ON ONLINE MENU
 #define PLAYER_STRUCT_ARRAY                         ((Player**)GetAddress(&vaPlayerStructArray))
 
 /*
@@ -23,9 +21,12 @@
 /*
  * Weapon stuff.
  */
-#define WEAPON_DATA_START                           (0x001D49C0)
-#define WEAPON_DATA_SIZE                            (0x12B0)
-#define WEAPON_EQUIPSLOT                            ((int*)0x0020C690)
+//
+// NOTE PORTED TO UYA
+//
+// #define WEAPON_DATA_START                           (0x001D49C0)
+// #define WEAPON_DATA_SIZE                            (0x12B0)
+// #define WEAPON_EQUIPSLOT                            ((int*)0x0020C690)
 
 #if UYA_PAL
 
