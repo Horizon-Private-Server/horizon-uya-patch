@@ -6,7 +6,6 @@
 #if UYA_PAL
 
 #define GAME_ACTIVE                         (*(int*)0x00241a50)
-#define MENU_ACTIVE                         (*(int*)0x001c3b30)
 #define SCENE_LOADED                        (*(int*)0x00245848)
 
 /*
@@ -22,7 +21,6 @@
 #else
 
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
-#define MENU_ACTIVE                         (*(int*)0x001C3CB0)
 #define SCENE_LOADED                        (*(int*)0x002459C8)
 
 /*
@@ -44,7 +42,7 @@ __LIBUYA_GETTER__ int isInGame(void)
 
 __LIBUYA_GETTER__ int isInMenus(void)
 {
-    return MENU_ACTIVE && GAME_MAP_ID == 0x27 && SCENE_LOADED == 1;
+    return !GAME_ACTIVE && GAME_MAP_ID == 0x27 && SCENE_LOADED == 1;
 }
 
 __LIBUYA_GETTER__ int isSceneLoading(void)

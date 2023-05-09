@@ -111,18 +111,18 @@ void onOnlineMenu(void)
 	drawFunction();
 
 	// only show on main menu
-	if (uiGetActivePointer(UIP_ONLINE_LOBBY) == 0)
-		return;
-
-	gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
-	gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
-	gfxScreenSpaceText(SCREEN_WIDTH * 0.35, SCREEN_HEIGHT * 0.4, 1, 1, textColor, "Downloading patch...", 17 + (gameGetTime()/240 % 4), 3);
-
-	if (totalBytes > 0)
+	if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
 	{
-		float w = (float)bytesReceived / (float)totalBytes;
-		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
-	}
+    gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
+    gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
+    gfxScreenSpaceText(SCREEN_WIDTH * 0.35, SCREEN_HEIGHT * 0.4, 1, 1, textColor, "Downloading patch...", 17 + (gameGetTime()/240 % 4), 3);
+
+    if (totalBytes > 0)
+    {
+      float w = (float)bytesReceived / (float)totalBytes;
+      gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
+    }
+  }
 }
 
 /*
@@ -175,12 +175,6 @@ int main (void)
 		#else
 		*(u32*)0x005753A4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 		*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-		//*(u32*)0x0067A01C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-
-		//*(u32*)0x005758A0 = 0x0C16F5E6;
-		//*(u32*)0x005758d0 = 0x0C15D6E2;
-		*(u32*)0x005758d8 = 0x0C17E9E0;
-		//*(u32*)0x006837d0 = 0x0C1A1A9A;
 		#endif
 
 		// disable pad on online main menu

@@ -40,6 +40,6 @@ void uyaPreUpdate(void)
  */
 void uyaPostUpdate(void)
 {
-    padUpdate();
-    //playerPadUpdate();
+  padUpdate();
+  //playerPadUpdate();
 }

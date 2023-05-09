@@ -171,7 +171,7 @@ MenuElem_t menuElementsGameSettings[] = {
 MenuElem_t menuElementsCustomMap[] = {
   { "", labelActionHandler, menuStateHandler_InstalledCustomMaps, (void*)LABELTYPE_HEADER },
   { "To play on custom maps you must first go to", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "rac-horizon.com/maps and download the maps.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "rac-horizon.com and download the maps.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
   { "Then install the map files onto a USB drive", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
   { "and insert it into your PS2.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
   { "Finally install the custom maps modules here.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
@@ -305,7 +305,7 @@ void tabCustomMapStateHandler(TabElem_t* tab, int * state)
 // 
 void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state)
 {
-  *state = !isInGame() && mapsGetInstallationResult() == 0 ? (ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE) : ELEMENT_HIDDEN;
+  *state = (!isInGame() && mapsGetInstallationResult() == 0) ? (ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE) : ELEMENT_HIDDEN;
 }
 
 // 
@@ -1224,6 +1224,7 @@ void configMenuDisable(void)
 
   // re-enable pad
   padEnableInput();
+  DPRINTF("patch menu closed\n");
 }
 
 //------------------------------------------------------------------------------
@@ -1240,4 +1241,5 @@ void configMenuEnable(void)
   
   // prevent pad from affecting menus
   padDisableInput();
+  DPRINTF("patch menu opened\n");
 }

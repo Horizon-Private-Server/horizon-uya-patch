@@ -1,11 +1,9 @@
 #if UYA_PAL
 	#define GAME_ACTIVE                         (0x00241a50)
-	#define MENU_ACTIVE                         (0x001c3b30)
 	#define SCENE_LOADED                        (0x00245848)
 	#define GAME_MAP_ID                         (0x001f83a8)
 #else
 	#define GAME_ACTIVE                         (0x00241BD0)
-	#define MENU_ACTIVE                         (0x001C3CB0)
 	#define SCENE_LOADED                        (0x002459C8)
 	#define GAME_MAP_ID                         (0x001F8528)
 #endif
@@ -76,8 +74,9 @@ __LocalGetAddress:
 	li $v0, 0;
 
 	// if in menus then return lobby address
-	lw $v0, MENU_ACTIVE;
-	bne $v0, $zero, __LocalGetAddress_exit;
+	lw $v0, GAME_MAP_ID;
+  li $v1, 39;
+	beq $v0, $v1, __LocalGetAddress_exit;
 	lw $v0, 0($a0)
 
 	// if not in game then no address
@@ -132,8 +131,9 @@ GetAddress:
 	li $v0, 0;
 
 	// if in menus then return lobby address
-	lw $v0, MENU_ACTIVE;
-	bne $v0, $zero, GetAddress_exit;
+	lw $v0, GAME_MAP_ID;
+  li $v1, 39;
+	beq $v0, $v1, GetAddress_exit;
 	lw $v0, 0($a0)
 
 	// if not in game then no address
@@ -205,6 +205,7 @@ FUNCTION(floorf, 0x001359A8) # not ported
 #----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(internal_drawFunc, vaDrawTextFunc)
+#FUNCTION(internal_drawFunc, 0x00590F90)
 VARIABLE_FUNCTION(gfxGetFontWidth, vaGetTextWidthFunc)
 VARIABLE_FUNCTION(internal_drawBox, vaDrawBoxFunc)
 

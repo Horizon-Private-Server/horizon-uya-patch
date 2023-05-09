@@ -56,13 +56,13 @@ VariableAddress_t vaDrawTextFunc = {
 	.Bakisi = 0x0045e300,
 	.Hoven = 0x0045FDF0,
 	.OutpostX12 = 0x00456c30,
-    .KorgonOutpost = 0x00454840,
+  .KorgonOutpost = 0x00454840,
 	.Metropolis = 0x00456c30,
 	.BlackwaterCity = 0x00451330,
 	.CommandCenter = 0x00451de8,
-    .BlackwaterDocks = 0x00454628,
-    .AquatosSewers = 0x00453968,
-    .MarcadiaPalace = 0x004532a8,
+  .BlackwaterDocks = 0x00454628,
+  .AquatosSewers = 0x00453968,
+  .MarcadiaPalace = 0x004532a8,
 };
 
 VariableAddress_t vaGetTextWidthFunc = {

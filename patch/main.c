@@ -486,8 +486,7 @@ void processGameModules()
 void onOnlineMenu(void)
 {
 	// call normal draw routine
-	//drawFunction();
-	((void (*)(int))0x005fa780)(1);
+	drawFunction();
 	
 	lastMenuInvokedTime = gameGetTime();
 	if (!hasInitialized)
@@ -502,9 +501,7 @@ void onOnlineMenu(void)
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
 	}
-
-	//gfxScreenSpaceBox(0.2, 0.2, 0.5, 0.5, 0x40FFFFFF);
-
+  
 	// map loader
 	onMapLoaderOnlineMenu();
 
@@ -601,20 +598,14 @@ int main(void)
 		// Not In game stuff
 		// Hook menu loop
 #ifdef UYA_PAL
-		if (*(u32*)0x00576120 == 0)
+		if (*(u32*)0x00576120 == 0) {
 			*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+    }
 #else
 		//printf("patching main menu\n");
 		if (*(u32*)0x005753E0 == 0) {
-			//*(u32*)0x005753A4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-			//*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-
-			*(u32*)0x005753A4 = 0x0C19E7C2;
-			*(u32*)0x005753DC = 0x0C19E7C2;
-			*(u32*)0x005758d8 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-			//*(u32*)0x0067A01C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-			//*(u32*)0x006837d0 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-			
+			*(u32*)0x005753A4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
+			*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 		}
 
     // popup is visible
@@ -645,13 +636,11 @@ int main(void)
 			isInStaging = 0;
 		}
 	}
-	
+
 	// process modules
 	processGameModules();
 
 	// Call this last
-
-	//printf("uyaPostUpdate\n");
 	uyaPostUpdate();
 
 	return 0;
