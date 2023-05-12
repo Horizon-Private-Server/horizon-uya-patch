@@ -46,6 +46,19 @@
 void disableWeaponPacks(void)
 {
   VariableAddress_t vaWeaponPackSpawnFunc = {
+#if UYA_PAL
+    .Lobby = 0,
+	  .Bakisi = 0x004FA350,
+	  .Hoven = 0x004FC468,
+	  .OutpostX12 = 0x004F1D40,
+    .KorgonOutpost = 0x004EF4D8,
+	  .Metropolis = 0x004EE828,
+	  .BlackwaterCity = 0x004EC0C0,
+	  .CommandCenter = 0x004EC088,
+    .BlackwaterDocks = 0x004EE908,
+    .AquatosSewers = 0x004EDC08,
+    .MarcadiaPalace = 0x004ED588,
+#else
     .Lobby = 0,
 	  .Bakisi = 0x004F7BD0,
 	  .Hoven = 0x004F9C28,
@@ -57,6 +70,7 @@ void disableWeaponPacks(void)
     .BlackwaterDocks = 0x004EC288,
     .AquatosSewers = 0x004EB5C8,
     .MarcadiaPalace = 0x004EAF08,
+#endif
   };
 
   u32 weaponPackSpawnFunc = GetAddress(&vaWeaponPackSpawnFunc);
