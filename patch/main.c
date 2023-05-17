@@ -33,7 +33,7 @@
 
 #if UYA_PAL
 
-#define STAGING_START_BUTTON_STATE							(*(short*)0)
+#define STAGING_START_BUTTON_STATE							(*(short*)0x01DC1FF4)
 
 #else
 
@@ -396,7 +396,6 @@ void drawFunction(void)
 #ifdef UYA_PAL
     ((void (*)(void))0x0067C9C0)();
 #else
-	//printf("onOnlineMenu - run draw function\n");
 	((void (*)(void))0x00679f08)();
 #endif
 }
@@ -553,7 +552,6 @@ void onOnlineMenu(void)
  */
 int main(void)
 {
-	//printf("begining of main\n");
 	// Call this first
 	uyaPreUpdate();
 
@@ -602,7 +600,6 @@ int main(void)
 			*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
     }
 #else
-		//printf("patching main menu\n");
 		if (*(u32*)0x005753E0 == 0) {
 			*(u32*)0x005753A4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 			*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
