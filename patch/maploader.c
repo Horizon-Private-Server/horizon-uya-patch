@@ -28,17 +28,35 @@
 #define USB_FS_ID                               (*(u8*)0x000CFFF4)
 #define USB_SRV_ID                              (*(u8*)0x000CFFF8)
 
-#define CDVD_LOAD_ASYNC_FUNC										(0x00194A60)
-#define LEVEL_CDVD_LOAD_ASYNC_FUNC							(0x005c09f8)
-#define CDVD_IS_LOADING_FUNC										(0x00194b28)
-#define READ_WAD_GETSECTORS_FUNC								(0x00194fc8)
+#if UYA_PAL
 
-#define LOAD_LEVEL_MAP_ID												(*(int*)0x0024145C)
-#define LOAD_LEVEL_PART_ID											(*(int*)0x00240408)
-#define LOAD_LEVEL_READ_WAD_HOOK								((u32*)0x005a2560)
-#define LOAD_LEVEL_CD_SYNC_HOOK									((u32*)0x005a2408)
-#define LOAD_LEVEL_READ_LEVEL_TOC_HOOK					((u32*)0x0019507c)
-#define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK		((u32*)0x00675dc0)
+#define CDVD_LOAD_ASYNC_FUNC					(0x00194970)
+#define LEVEL_CDVD_LOAD_ASYNC_FUNC				(0x005c2a40) // Unsure if this is correct
+#define CDVD_IS_LOADING_FUNC					(0x00194a38)
+#define READ_WAD_GETSECTORS_FUNC				(0x00194ed8)
+
+#define LOAD_LEVEL_MAP_ID						(*(int*)0x002412dc)
+#define LOAD_LEVEL_PART_ID						(*(int*)0x00240288)
+#define LOAD_LEVEL_READ_WAD_HOOK				((u32*)0x005a41c8)
+#define LOAD_LEVEL_CD_SYNC_HOOK					((u32*)0x005a4070)
+#define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x00194f8c)
+#define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x006787a8)
+
+#else
+
+#define CDVD_LOAD_ASYNC_FUNC					(0x00194A60)
+#define LEVEL_CDVD_LOAD_ASYNC_FUNC				(0x005c09f8)
+#define CDVD_IS_LOADING_FUNC					(0x00194b28)
+#define READ_WAD_GETSECTORS_FUNC				(0x00194fc8)
+
+#define LOAD_LEVEL_MAP_ID						(*(int*)0x0024145C)
+#define LOAD_LEVEL_PART_ID						(*(int*)0x00240408)
+#define LOAD_LEVEL_READ_WAD_HOOK				((u32*)0x005a2560)
+#define LOAD_LEVEL_CD_SYNC_HOOK					((u32*)0x005a2408)
+#define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x0019507c)
+#define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x00675dc0)
+
+#endif
 
 void hook(void);
 void loadModules(void);
