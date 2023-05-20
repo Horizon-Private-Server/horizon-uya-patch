@@ -149,4 +149,21 @@ int gameGetCurrentMapId(void);
  */
 char* gameGetGameModeName(int gameModeId);
 
+/*
+ * NAME :		gameEnd
+ * 
+ * DESCRIPTION :
+ * 			End game.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ *      reason :      Why the game ended.
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void gameEnd(int reason);
+
 #endif // _LIBUYA_GAME_H_

@@ -205,9 +205,13 @@ FUNCTION(floorf, 0x001359A8) # not ported
 #----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(internal_drawFunc, vaDrawTextFunc)
-#FUNCTION(internal_drawFunc, 0x00590F90)
 VARIABLE_FUNCTION(gfxGetFontWidth, vaGetTextWidthFunc)
 VARIABLE_FUNCTION(internal_drawBox, vaDrawBoxFunc)
+
+#--------------------------------------------------------
+#------------------------- GAME -------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(internal_gameEnd, vaGameEndFunc)
 
 #--------------------------------------------------------
 #------------------------- SHA1 -------------------------

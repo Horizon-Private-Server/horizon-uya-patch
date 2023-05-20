@@ -2,6 +2,7 @@
 #include "gamesettings.h"
 #include "ui.h"
 #include "help.h"
+#include "interop.h"
 
 #if UYA_PAL
 
@@ -33,6 +34,36 @@
 #define GAME_CLIENT_ID                      (*(int*)0x001a5e58)
 #define GAME_HOST_ID                        (*(int*)0x001a5fbc)
 
+#endif
+
+#ifdef UYA_PAL
+    VariableAddress_t vaGameEndFunc = {
+        .Lobby = 0,
+        .Bakisi = 0x005445f8,
+        .Hoven = 0x005467c0,
+        .OutpostX12 = 0x0053c098,
+        .KorgonOutpost = 0x00539780,
+        .Metropolis = 0x00538b80,
+        .BlackwaterCity = 0x00536368,
+        .CommandCenter = 0x00535bc0,
+        .BlackwaterDocks = 0x00538440,
+        .AquatosSewers = 0x00537740,
+        .MarcadiaPalace = 0x005370c0,
+    };
+#else
+    VariableAddress_t vaGameEndFunc = {
+        .Lobby = 0,
+        .Bakisi = 0x00541ce8,
+        .Hoven = 0x00543df0,
+        .OutpostX12 = 0x00539708,
+        .KorgonOutpost = 0x00536e70,
+        .Metropolis = 0x00536e70,
+        .BlackwaterCity = 0x005339d8,
+        .CommandCenter = 0x00533408,
+        .BlackwaterDocks = 0x00535c48,
+        .AquatosSewers = 0x00534f88,
+        .MarcadiaPalace = 0x005348c8,
+    };
 #endif
 
 __LIBUYA_GETTER__ int isInGame(void)
@@ -79,4 +110,9 @@ char* gameGetGameModeName(int gameModeId)
         case GAMERULE_DM: return uiMsgString(HELP_STRING_ID_DEATHMATCH);
         default: return NULL;
     }
+}
+
+void gameEnd(int reason)
+{
+    internal_gameEnd(reason);
 }
