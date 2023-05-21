@@ -31,5 +31,6 @@ typedef struct VariableAddress
 } VariableAddress_t;
 
 u32 GetAddress(VariableAddress_t* address);
+u32 GetAddressImmediate(VariableAddress_t* address);
 
 #endif // _LIBUYA_INTEROP_H_

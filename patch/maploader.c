@@ -9,6 +9,7 @@
 #include <libuya/pad.h>
 #include <libuya/gamesettings.h>
 #include <libuya/game.h>
+#include <libuya/interop.h>
 #include "config.h"
 
 #include <sifcmd.h>
@@ -42,6 +43,31 @@
 #define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x00194f8c)
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x006787a8)
 
+#define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193340)
+#define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00192F68)
+
+VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
+	.Lobby = 0,
+	.Bakisi = 0x004951A4,
+	.Hoven = 0x004972BC,
+	.OutpostX12 = 0x0048CB94,
+  .KorgonOutpost = 0x0048A264,
+	.Metropolis = 0x0048967C,
+	.BlackwaterCity = 0x00486F14,
+	.CommandCenter = 0x00486F0C,
+  .BlackwaterDocks = 0x0048978C,
+  .AquatosSewers = 0x00488A8C,
+  .MarcadiaPalace = 0x0048840C,
+};
+
+// paths for level specific files
+char * fWad = "uya/%s.pal.wad";
+char * fWorld = "uya/%s.pal.world";
+char * fBg = "uya/%s.pal.bg";
+char * fMap = "uya/%s.pal.map";
+char * fVersion = "uya/%s.pal.version";
+char * fGlobalVersion = "uya/version";
+
 #else
 
 #define CDVD_LOAD_ASYNC_FUNC					(0x00194A60)
@@ -55,6 +81,31 @@
 #define LOAD_LEVEL_CD_SYNC_HOOK					((u32*)0x005a2408)
 #define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x0019507c)
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x00675dc0)
+
+#define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193340)
+#define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00193058)
+
+VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
+	.Lobby = 0,
+	.Bakisi = 0x004931B4,
+	.Hoven = 0x0049520C,
+	.OutpostX12 = 0x0048AB24,
+  .KorgonOutpost = 0x00488274,
+	.Metropolis = 0x0048768C,
+	.BlackwaterCity = 0x00484EA4,
+	.CommandCenter = 0x0048505C,
+  .BlackwaterDocks = 0x0048789C,
+  .AquatosSewers = 0x00486BDC,
+  .MarcadiaPalace = 0x0048651C,
+};
+
+// paths for level specific files
+char * fWad = "uya/%s.wad";
+char * fWorld = "uya/%s.world";
+char * fBg = "uya/%s.bg";
+char * fMap = "uya/%s.map";
+char * fVersion = "uya/%s.version";
+char * fGlobalVersion = "uya/version";
 
 #endif
 
@@ -108,14 +159,6 @@ int rpcInit = 0;
 
 // 
 char membuffer[256];
-
-// paths for level specific files
-char * fWad = "uya/%s.wad";
-char * fWorld = "uya/%s.world";
-char * fBg = "uya/%s.bg";
-char * fMap = "uya/%s.map";
-char * fVersion = "uya/%s.version";
-char * fGlobalVersion = "uya/version";
 
 
 typedef struct MapOverrideMessage
@@ -526,6 +569,18 @@ void cdvdReadWadSectors(u32 startSector, u32 sectorCount, void * dest)
 }
 
 //------------------------------------------------------------------------------
+u64 hookedLevelExit(void)
+{
+  u64 r = ((u64 (*)(void))LEVEL_EXIT_FUNCTION_FUNC)();
+
+	// We try and hook here to just to make sure that after tha game loads
+	// We can still load our custom minimap
+  hook();
+
+  return r;
+}
+
+//------------------------------------------------------------------------------
 void hookedLoad(void * dest, u32 sectorStart, u32 sectorSize)
 {
 	char * filename = NULL;
@@ -653,20 +708,6 @@ void hookedGetTable(u32 startSector, u32 sectorCount, u8 * dest)
 }
 
 //------------------------------------------------------------------------------
-void hookedGetMap(u64 a0, void * dest, u32 startSector, u32 sectorCount, u64 t0, u64 t1, u64 t2)
-{
-	// Check if loading MP map
-	if (State.Enabled && HAS_LOADED_MODULES)
-	{
-		// We hardcode the size because that's the max that deadlocked can hold
-		if (readLevelMapUsb(dest, 0x27400))
-			return;
-	}
-
-	//((void (*)(u64, void*,u32,u32,u64,u64,u64))CDVD_LOAD_FUNC)(a0, dest, startSector, sectorCount, t0, t1, t2);
-}
-
-//------------------------------------------------------------------------------
 void hookedGetAudio(u64 a0, void * dest, u32 startSector, u32 sectorCount, u64 t0, u64 t1, u64 t2)
 {
 	//((void (*)(u64, void*,u32,u32,u64,u64,u64))CDVD_LOAD_FUNC)(a0, dest, startSector, sectorCount, t0, t1, t2);
@@ -721,6 +762,20 @@ char* hookedLoadScreenModeNameString(char * dest, char * src)
 	// 	strncpy(dest, src, 32);
 	
 	return dest;
+}
+
+//------------------------------------------------------------------------------
+void hookedGetMap(u32 sectorStart, u32 sectorSize, void * dest, void * a3)
+{
+	// Check if loading MP map
+	if (State.Enabled && HAS_LOADED_MODULES)
+	{
+		// We hardcode the size because that's the max that deadlocked can hold
+		if (readLevelMapUsb(dest, 0x21 * 0x800))
+			return;
+	}
+
+  cdvdLoad(sectorStart, sectorSize, dest, a3);
 }
 
 //------------------------------------------------------------------------------
@@ -826,12 +881,24 @@ void hook(void)
 		*LOAD_LEVEL_READ_LEVEL_TOC_HOOK = 0x0C000000 | ((u32)(&hookedGetTable) / 4);
 		*LOAD_LEVEL_CD_SYNC_HOOK = 0x0C000000 | ((u32)(&hookedCheck) / 4);
 		*LOAD_LEVEL_READ_WAD_HOOK = 0x0C000000 | ((u32)(&hookedLoad) / 4);
+		*LEVEL_EXIT_FUNCTION_HOOK = 0x0C000000 | ((u32)(&hookedLevelExit) / 4);
 	}
 
 	if (!initialized || *LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK == 0x03E00008)
 	{
 		*LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK = 0x08000000 | ((u32)(&hookedLoadScreenMapNameString) / 4);
 	}
+
+  // hook radar
+  // this needs to be hook when the level loads
+  u32 radarMapHookAddr = GetAddressImmediate(&LOAD_LEVEL_RADAR_MAP_HOOK);
+  if (radarMapHookAddr) {
+
+    u32 hookReplaceIfValueIs = 0x0C000000 | (CDVD_LOAD_ASYNC_FUNC >> 2);
+    if (*(u32*)radarMapHookAddr == hookReplaceIfValueIs) {
+      *(u32*)radarMapHookAddr = 0x0C000000 | ((u32)(&hookedGetMap) / 4);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

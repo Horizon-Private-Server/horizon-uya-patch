@@ -172,6 +172,63 @@ GetAddress_exit:
 	.size	GetAddress,.-GetAddress;
 	.set	pop;
 
+// 
+	.set	push;
+	.set	noreorder;
+	.section	.text.##GetAddress,"ax",@progbits;
+	.align 2;
+	.globl	GetAddressImmediate;
+	.type	GetAddressImmediate,@function;
+	.ent	GetAddressImmediate,0;
+GetAddressImmediate:
+	// if scene is loading, then we have no address
+	//li $v1, 1;
+	//lw $v0, SCENE_LOADED;
+	//bne $v0, $v1, GetAddressImmediate_exit;
+	//li $v0, 0;
+
+	// if in menus then return lobby address
+	lw $v0, GAME_MAP_ID;
+  li $v1, 39;
+	beq $v0, $v1, GetAddressImmediate_exit;
+	lw $v0, 0($a0)
+
+	// if not in game then no address
+	//lw $v0, GAME_ACTIVE;
+	//beq $v0, $zero, GetAddressImmediate_exit;
+	//nop;
+
+	// otherwise in game
+	// return address by map
+	lw $v0, GAME_MAP_ID;
+	
+	// map local map ids (50+) to real map ids (40+)
+	addiu $v1, $v0, -10;
+	slti $t0, $v0, 50;
+	movz $v0, $v1, $t0;
+
+	// return 0 if map is not between 40 and 50
+	addiu $v1, $v0, -40
+	sltiu $v0, $v1, 10
+	beqzl $v0, GetAddressImmediate_exit;
+	move $v0, $zero;
+
+	// load offset into VariableAddress struct by map id
+	sll $v1, $v1, 2; // multiply map id [0,9] by 4
+	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
+
+	// load address from struct
+	addu $a0, $v0;
+	lw $v0, 0($a0);
+
+	// return to calling function
+GetAddressImmediate_exit:
+	jr $ra;
+	nop;
+	.end	GetAddressImmediate;
+	.size	GetAddressImmediate,.-GetAddressImmediate;
+	.set	pop;
+
 
 #--------------------------------------------------------
 #------------------- STANDARD LIBRARY -------------------
