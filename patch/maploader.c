@@ -82,7 +82,7 @@ char * fGlobalVersion = "uya/version";
 #define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x0019507c)
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x00675dc0)
 
-#define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193340)
+#define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193430)
 #define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00193058)
 
 VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
@@ -876,7 +876,7 @@ void onMapLoaderOnlineMenu(void)
 void hook(void)
 {
 	// Install hooks
-	if (!initialized || *LOAD_LEVEL_READ_WAD_HOOK == 0x0C17027E)
+	if (*LOAD_LEVEL_READ_WAD_HOOK == 0x0C17027E)
 	{
 		*LOAD_LEVEL_READ_LEVEL_TOC_HOOK = 0x0C000000 | ((u32)(&hookedGetTable) / 4);
 		*LOAD_LEVEL_CD_SYNC_HOOK = 0x0C000000 | ((u32)(&hookedCheck) / 4);
@@ -884,7 +884,7 @@ void hook(void)
 		*LEVEL_EXIT_FUNCTION_HOOK = 0x0C000000 | ((u32)(&hookedLevelExit) / 4);
 	}
 
-	if (!initialized || *LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK == 0x03E00008)
+	if (*LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK == 0x03E00008)
 	{
 		*LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK = 0x08000000 | ((u32)(&hookedLoadScreenMapNameString) / 4);
 	}
