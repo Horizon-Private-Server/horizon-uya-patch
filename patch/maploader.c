@@ -765,17 +765,18 @@ char* hookedLoadScreenModeNameString(char * dest, char * src)
 }
 
 //------------------------------------------------------------------------------
-void hookedGetMap(u32 sectorStart, u32 sectorSize, void * dest, void * a3)
+int hookedGetMap(u32 sectorStart, u32 sectorSize, void * dest, void * a3)
 {
+
 	// Check if loading MP map
-	if (State.Enabled && HAS_LOADED_MODULES)
+	if (State.Enabled && HAS_LOADED_MODULES && sectorSize == 0x21)
 	{
 		// We hardcode the size because that's the max that deadlocked can hold
 		if (readLevelMapUsb(dest, 0x21 * 0x800))
-			return;
+		  return 0;
 	}
 
-  cdvdLoad(sectorStart, sectorSize, dest, a3);
+  return cdvdLoad(sectorStart, sectorSize, dest, a3);
 }
 
 //------------------------------------------------------------------------------
