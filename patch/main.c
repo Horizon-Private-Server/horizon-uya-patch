@@ -25,6 +25,7 @@
 #include <libuya/time.h>
 #include <libuya/net.h>
 #include <libuya/interop.h>
+#include <libuya/utils.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -74,7 +75,7 @@ int isInStaging = 0;
 int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 1;
 char showNoMapPopup = 0;
-
+const char * patchStr = "PATCH CONFIG";
 
 extern MenuElem_ListData_t dataCustomMaps;
 
@@ -377,6 +378,56 @@ void runCheckGameMapInstalled(void)
 	}
 }
 
+void setupPatchConfigInGame()
+{
+	VariableAddress_t vaPauseMenuAddr = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x003c073c,
+		.Hoven = 0x003bfd7c,
+		.OutpostX12 = 0x003b7c7c,
+		.KorgonOutpost = 0x003b7a38,
+		.Metropolis = 0x003b77bc,
+		.BlackwaterCity = 0x003b79fc,
+		.CommandCenter = 0x003c7f7c,
+		.BlackwaterDocks = 0x003c837c,
+		.AquatosSewers = 0x003c8afc,
+		.MarcadiaPalace = 0x003c807c,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x003c087c,
+		.Hoven = 0x003bfebc,
+		.OutpostX12 = 0x003b7dbc,
+		.KorgonOutpost = 0x003b7b7c,
+		.Metropolis = 0x003b78fc,
+		.BlackwaterCity = 0x003b7b3c,
+		.CommandCenter = 0x003c80bc,
+		.BlackwaterDocks = 0x003c84bc,
+		.AquatosSewers = 0x003c8c3c,
+		.MarcadiaPalace = 0x003c81bc,
+#endif
+	};
+
+	// Currently Freezes at Metropolis
+	// 	0012CD88 - Metropolis freezes at SYNC function
+	if (gameGetCurrentMapId() == 44)
+		return;
+
+    // Get Menu address via current map.
+    u32 Addr = GetAddress(&vaPauseMenuAddr);
+    // Insert needed ID, returns string.
+    int str = uiMsgString(0x1115); // Washington, D.C. string ID
+    // Replace "Washington, D.C." string with ours.
+    strncpy((char*)str, patchStr, 13);
+    // Set "CONTINUE" string ID to our ID.
+    *(u32*)Addr = 0x1115;
+    // Pointer to "CONTINUE" function
+    u32 ReturnFunction = *(u32*)(Addr + 0x8);
+    // Hook Patch Config into end of "CONTINUE" function.
+    // HOOK_J((ReturnFunction + 0x54), &func);
+    HOOK_J((ReturnFunction + 0x54), &configMenuEnable);
+}
+
 /*
  * NAME :		drawFunction
  * 
@@ -510,12 +561,12 @@ void onOnlineMenu(void)
   // draw download data box
 	if (dlTotalBytes > 0)
 	{
-    gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, 0x80000000);
-    gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, 0x80202020);
-    gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, 0x80FFFFFF, "Downloading...", 11 + (gameGetTime()/240 % 4), 3);
+    gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, 0x8004223f);
+    gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, 0x80123251);
+    gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, 0x8069cbf2, "Downloading...", 11 + (gameGetTime()/240 % 4), 3);
 
 		float w = (float)dlBytesReceived / (float)dlTotalBytes;
-		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, 0x80000040);
+		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, 0x8018608f);
 	}
 
 	// 
@@ -586,10 +637,22 @@ int main(void)
 	// 
 	onConfigUpdate();
 
-	// void * GameplayFilePointer = (void*)(*(u32*)0x01FFFD00);
 	if(isInGame())
 	{
 		runGameSettings();
+
+		// close config menu on transition to lobby
+		if (lastGameState != 1)
+			configMenuDisable();
+
+		// Updates Start Menu to have "Patch Config" option.
+		// Logic for opening menu as well.
+		setupPatchConfigInGame();
+
+		// trigger config menu update
+		onConfigGameMenu();
+
+		lastGameState = 1;
 	}
 	else if (isInMenus())
 	{
