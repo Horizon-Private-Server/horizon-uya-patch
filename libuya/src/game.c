@@ -57,7 +57,7 @@
         .Hoven = 0x00543df0,
         .OutpostX12 = 0x00539708,
         .KorgonOutpost = 0x00536e70,
-        .Metropolis = 0x00536e70,
+        .Metropolis = 0x00536270,
         .BlackwaterCity = 0x005339d8,
         .CommandCenter = 0x00533408,
         .BlackwaterDocks = 0x00535c48,
