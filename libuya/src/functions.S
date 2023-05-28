@@ -236,7 +236,7 @@ GetAddressImmediate_exit:
 #
 # NTSC and PAL address' are the same.
 #
-FUNCTION(printf, 0x00128BF0)
+FUNCTION(printf, 0x0011e718)
 FUNCTION(sprintf, 0x00120048)
 FUNCTION(memset, 0x0011d534)
 FUNCTION(memcpy, 0x0011d380)
