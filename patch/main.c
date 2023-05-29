@@ -408,11 +408,6 @@ void setupPatchConfigInGame()
 #endif
 	};
 
-	// Currently Freezes at Metropolis
-	// 	0012CD88 - Metropolis freezes at SYNC function
-	if (gameGetCurrentMapId() == 44)
-		return;
-
     // Get Menu address via current map.
     u32 Addr = GetAddress(&vaPauseMenuAddr);
     // Insert needed ID, returns string.
