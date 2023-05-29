@@ -3,34 +3,24 @@
 #include "net.h"
 #include "string.h"
 
-/*
-
-EVERYTHING THAT IS COMMENTED WILL NOT WORK YET.
-Uncommented stuff is correct.
-
-*/
-
 #if UYA_PAL
 
-#define GET_MEDIUS_APP_HANDLER_HOOK         (*(u32*)0)
-#define DME_CALLBACK_TABLE                  ((u32*)0)
+#define DME_CALLBACK_TABLE                  ((u32*)0x002405e8)
 
-#define NET_LOBBY_CONNECTION                ((void*)(*(u32*)0))
-#define NET_DME_CONNECTION                  ((void*)(*(u32*)0))
-
-#define NET_GLOBAL_CALLBACKS_PTR            ((NET_CALLBACK_DELEGATE*)(*(u32*)0))
+#define NET_LOBBY_CONNECTION                ((void*)(*(u32*)0x001cd4cc))
+#define NET_DME_CONNECTION                  ((void*)(*(u32*)0x001cd4d0))
 
 #else
 
-#define GET_MEDIUS_APP_HANDLER_HOOK         (*(u32*)0x00153248)
 #define DME_CALLBACK_TABLE                  ((u32*)0x00240768)
 
 #define NET_LOBBY_CONNECTION                ((void*)(*(u32*)0x001CD64C))
 #define NET_DME_CONNECTION                  ((void*)(*(u32*)0x001CD650))
 
-#define NET_GLOBAL_CALLBACKS_PTR            ((NET_CALLBACK_DELEGATE*)(*(u32*)0x000A0000))
-
 #endif
+
+#define GET_MEDIUS_APP_HANDLER_HOOK         (*(u32*)0x00153248)
+#define NET_GLOBAL_CALLBACKS_PTR            ((NET_CALLBACK_DELEGATE*)(*(u32*)0x000A0000))
 
 int internal_netSendMessage(int transport, void * connection, long clientIndex, int msgClass, int msgId, int msgSize, void * payload);
 int internal_netSendAppMessage(int transport, void * connection, long clientIndex, int msgId, int msgSize, void * payload);
