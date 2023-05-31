@@ -160,8 +160,15 @@ void runGameSettings(void)
 		return;
 
 	// disable weapon packs toggle
-	if (gameConfig.disableWeaponPacks)
+	if (gameConfig.disableWeaponPacks == 1)
+	{
 		disableWeaponPacks();
+	}
+	else if (gameConfig.disableWeaponPacks == 2)
+	{
+		spawnWeaponPackOnDeath();
+	}
+		
 }
 
 /*
@@ -407,6 +414,11 @@ void setupPatchConfigInGame()
 		.MarcadiaPalace = 0x003c81bc,
 #endif
 	};
+	
+	// Currently Freezes at Metropolis
+	// 	0012CD88 - Metropolis freezes at SYNC function
+	// if (gameGetCurrentMapId() == 44)
+	// 	return;
 
     // Get Menu address via current map.
     u32 Addr = GetAddress(&vaPauseMenuAddr);

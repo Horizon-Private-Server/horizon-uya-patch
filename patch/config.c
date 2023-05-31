@@ -18,7 +18,7 @@
 
 #if UYA_PAL
 
-#define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
+#define IS_PROGRESSIVE_SCAN					(*(int*)0)
 #else
 
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
@@ -155,6 +155,17 @@ MenuElem_t menuElementsGeneral[] = {
   // { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 };
 
+MenuElem_ListData_t dataWeaponPacks = {
+    &gameConfig.disableWeaponPacks,
+    NULL,
+    3,
+    {
+      "Default",
+      "Off",
+      "On Death",
+    }
+};
+
 // Game Settings
 MenuElem_t menuElementsGameSettings[] = {
   { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
@@ -164,7 +175,9 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Gamemode override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Weapon packs", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableWeaponPacks },
+  // { "Weapon packs", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableWeaponPacks },
+  { "Weapon Pack Spawning", listActionHandler, menuStateAlwaysEnabledHandler, &dataWeaponPacks },
+
 };
 
 // Custom Maps

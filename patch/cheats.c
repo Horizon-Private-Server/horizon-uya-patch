@@ -12,6 +12,8 @@
 #include <tamtypes.h>
 
 #include <libuya/string.h>
+#include <libuya/player.h>
+#include <libuya/utils.h>
 #include <libuya/game.h>
 #include <libuya/gamesettings.h>
 #include <libuya/pad.h>
@@ -78,4 +80,131 @@ void disableWeaponPacks(void)
     *(u32*)weaponPackSpawnFunc = 0;
     *(u32*)(weaponPackSpawnFunc - 0x7BF4) = 0;
   }
+}
+
+/*
+ * NAME :		spawnWeaponPackOnDeath
+ * 
+ * DESCRIPTION :
+ * 
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+
+char SpawnedPack = 0;
+void SpawnPack(u32 a0, u32 a1)
+{
+  VariableAddress_t vaRespawnFunc = {
+#if UYA_PAL
+    .Lobby = 0,
+	  .Bakisi = 0x0051a940,
+	  .Hoven = 0x0051ca58,
+	  .OutpostX12 = 0x00512330,
+    .KorgonOutpost = 0x0050fac8,
+	  .Metropolis = 0x0050ee18,
+	  .BlackwaterCity = 0x0050c6b0,
+	  .CommandCenter = 0x0050c470,
+    .BlackwaterDocks = 0x0050ecf0,
+    .AquatosSewers = 0x0050dff0,
+    .MarcadiaPalace = 0x0050d970,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x00518138,
+    .Hoven = 0x0051a190,
+    .OutpostX12 = 0x0050faa8,
+    .KorgonOutpost = 0x0050d2c0,
+    .Metropolis = 0x0050c610,
+    .BlackwaterCity = 0x00509e28,
+    .CommandCenter = 0x00509da8,
+    .BlackwaterDocks = 0x0050c5e8,
+    .AquatosSewers = 0x0050b928,
+    .MarcadiaPalace = 0x0050b268,
+#endif
+  };
+
+  VariableAddress_t vaSpawnWeaponPackFunc = {
+#if UYA_PAL
+    .Lobby = 0,
+	  .Bakisi = 0x004fb188,
+	  .Hoven = 0x004fd2a0,
+	  .OutpostX12 = 0x004f2b78,
+    .KorgonOutpost = 0x004f0310,
+	  .Metropolis = 0x004ef660,
+	  .BlackwaterCity = 0x004ecef8,
+	  .CommandCenter = 0x004ecec0,
+    .BlackwaterDocks = 0x004ef740,
+    .AquatosSewers = 0x004eea40,
+    .MarcadiaPalace = 0x004ee3c0,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x004f8a08,
+    .Hoven = 0x004faa60,
+    .OutpostX12 = 0x004f0378,
+    .KorgonOutpost = 0x004edb90,
+    .Metropolis = 0x004ecee0,
+    .BlackwaterCity = 0x004ea6f8,
+    .CommandCenter = 0x004ea880,
+    .BlackwaterDocks = 0x004ed0c0,
+    .AquatosSewers = 0x004ec400,
+    .MarcadiaPalace = 0x004ebd40,
+#endif
+  };
+  // Spawn Pack if Health <= zero and if not spawned already.
+  if (*(u32*)(TNW_PLAYERDATA + 0x44) <= 0 && SpawnedPack == 0)
+  {
+    SpawnedPack = 1;
+
+    // Run normal function
+    ((void (*)(u32, u32))GetAddress(&vaRespawnFunc))(a0, a1);
+
+    // Spawn Pack
+    ((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(PLAYER_STRUCT);
+  }
+}
+
+void spawnWeaponPackOnDeath(void)
+{
+  VariableAddress_t vaRespawnPlayerHook = {
+#if UYA_PAL
+    .Lobby = 0,
+	  .Bakisi = 0x0052a09c,
+	  .Hoven = 0x0052c1b4,
+	  .OutpostX12 = 0x00521a8c,
+    .KorgonOutpost = 0x0051f224,
+	  .Metropolis = 0x0051e574,
+	  .BlackwaterCity = 0x0051be0c,
+	  .CommandCenter = 0x0051bbcc,
+    .BlackwaterDocks = 0x0051e44c,
+    .AquatosSewers = 0x0051d74c,
+    .MarcadiaPalace = 0x0051d0cc,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0052781c,
+    .Hoven = 0x00529874,
+    .OutpostX12 = 0x0051f18c,
+    .KorgonOutpost = 0x0051c9a4,
+    .Metropolis = 0x0051bd08,
+    .BlackwaterCity = 0x0051950c,
+    .CommandCenter = 0x0051948c,
+    .BlackwaterDocks = 0x0051bccc,
+    .AquatosSewers = 0x0051b00c,
+    .MarcadiaPalace = 0x0051a94c,
+#endif
+  };
+
+  // Disable normal Weapon Pack spawns
+  disableWeaponPacks();
+
+  // if Health is greater than zero and pack has spawned
+  if (*(u32*)(TNW_PLAYERDATA + 0x44) > 0 && SpawnedPack == 1)
+    SpawnedPack = 0;
+
+  // Hook SpawnPack (On Outpost x12 address: 0x0051F18C)
+  HOOK_JAL(GetAddress(&vaRespawnPlayerHook), &SpawnPack);
 }
