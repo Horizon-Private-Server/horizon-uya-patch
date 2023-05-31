@@ -25,10 +25,10 @@
 #define PLAYER_MAX_HEALTH                   (15)
 
 #ifdef UYA_PAL
-#define TNW_PLAYERDATA                      (*(u32*)0)
+#define TNW_PLAYERDATA                      (*(u32*)0x0022f3d4)
 #define PLAYER_STRUCT_POINTER               (*(u32*)0x00225cf0)
 #else
-#define TNW_PLAYERDATA                      (*(u32*)0x0022F554)
+#define TNW_PLAYERDATA                      (*(u32*)0x0022f554)
 #define PLAYER_STRUCT_POINTER               (*(u32*)0x00225e70)
 #endif
 
