@@ -324,3 +324,8 @@ VARIABLE_FUNCTION(uiMsgString, vaUiMsgStringFunc)
 #--------------------------------------------------------
 FUNCTION(internal_netSendMessage, 0x0014ac48)
 FUNCTION(internal_netSendAppMessage, 0x0014ad08)
+
+#--------------------------------------------------------
+#------------------------- WAD --------------------------
+#--------------------------------------------------------
+FUNCTION(internal_wadGetSectors, 0x00194fc8)
