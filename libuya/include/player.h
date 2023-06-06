@@ -35,28 +35,6 @@
 #define PLAYER_STRUCT                       (PLAYER_STRUCT_POINTER - 0x430C)
 
 /*
- * Weapon Info
- * NOTE: Setting a value to this address may have odd effects
- * usually fires the selected weapon once then switches to the programatically
- * set weapon and continues firing. Does not update the currently selected weapon
- * image in the top corner and ammo count
- */
-//#define WEAPON_ADDRESS                      0x20301190
-
-enum WeaponType {
-    WEAPON_TYPE_N60 = 1,
-    WEAPON_TYPE_GBOMB = 5,
-    WEAPON_TYPE_ROCKET = 4,
-    WEAPON_TYPE_LAVA = 7,
-    WEAPON_TYPE_BLITZ = 2,
-    WEAPON_TYPE_MINE = 6,
-    WEAPON_TYPE_FLUX = 3,
-    WEAPON_TYPE_MORPH = 9,
-    WEAPON_TYPE_HOLO = 12
- //   WEAPON_TYPE_ = ,
-};
-
-/*
  * NAME :		PlayerCameraType
  * 
  * DESCRIPTION :
