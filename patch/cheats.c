@@ -242,7 +242,7 @@ void disableV2s(void)
         .Lobby = 0,
         .Bakisi = 0x004f8f50,
         .Hoven = 0x004fafa8,
-        .OutpostX12 = 0x005018C0,
+        .OutpostX12 = 0x004f08c0,
         .KorgonOutpost = 0x004ee0d8,
         .Metropolis = 0x004ed428,
         .BlackwaterCity = 0x004eac40,
