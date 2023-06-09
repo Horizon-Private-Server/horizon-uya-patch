@@ -168,7 +168,9 @@ void runGameSettings(void)
 	{
 		spawnWeaponPackOnDeath();
 	}
-		
+	
+	if (gameConfig.disableV2s)
+		disableV2s();
 }
 
 /*
