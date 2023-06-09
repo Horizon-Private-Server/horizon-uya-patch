@@ -177,7 +177,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   // { "Weapon packs", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableWeaponPacks },
   { "Weapon Pack Spawning", listActionHandler, menuStateAlwaysEnabledHandler, &dataWeaponPacks },
-  { "Disable V2s", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableV2s },
+  { "V2s", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableV2s },
 
 };
 
