@@ -18,7 +18,7 @@
 
 #if UYA_PAL
 
-#define IS_PROGRESSIVE_SCAN					(*(int*)0)
+#define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
 #else
 
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)

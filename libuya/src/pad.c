@@ -8,8 +8,8 @@
 #define P1_PAD                              ((PadButtonStatus*)0x00225780)
 #define P2_PAD                              ((PadButtonStatus*)0x00226E80)
 #define P3_PAD                              ((PadButtonStatus*)0x00228580)
-#define PAD_PROCESS_ADDR                    (*(u32*)0x00686544)
-#define PAD_PROCESS_VALUE                   (0x0C1A1E78)
+#define PAD_PROCESS_ADDR                    (*(u32*)0x00686300)
+#define PAD_PROCESS_VALUE                   (0x0c1a184e)
 
 #else
 

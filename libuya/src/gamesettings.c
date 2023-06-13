@@ -3,7 +3,7 @@
 #include "math.h"
 #include "help.h"
 
-#ifdef UYA_PAL
+#if UYA_PAL
 
 /*
  * Points to the active game settings.
