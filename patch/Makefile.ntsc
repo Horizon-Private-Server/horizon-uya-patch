@@ -1,6 +1,6 @@
 EE_ELF = patch-10684.elf
 EE_BIN = patch-10684.bin
 EE_LIBS = -luyantsc
-EE_DEFS = -DUYA_NTSC -DDEBUG
+EE_DEFS = -DUYA_NTSC
 
 include ${CURDIR}/Makefile.defs
