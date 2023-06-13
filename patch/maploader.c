@@ -32,16 +32,18 @@
 #if UYA_PAL
 
 #define CDVD_LOAD_ASYNC_FUNC					(0x00194970)
-#define LEVEL_CDVD_LOAD_ASYNC_FUNC				(0x005c2a40) // Unsure if this is correct
+#define LEVEL_CDVD_LOAD_ASYNC_FUNC				(0x005c2a40)
 #define CDVD_IS_LOADING_FUNC					(0x00194a38)
 #define READ_WAD_GETSECTORS_FUNC				(0x00194ed8)
 
 #define LOAD_LEVEL_MAP_ID						(*(int*)0x002412dc)
 #define LOAD_LEVEL_PART_ID						(*(int*)0x00240288)
 #define LOAD_LEVEL_READ_WAD_HOOK				((u32*)0x005a41c8)
+#define LOAD_LEVEL_READ_WAD_HOOK_VALUE			(0x0c170a90)
 #define LOAD_LEVEL_CD_SYNC_HOOK					((u32*)0x005a4070)
 #define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x00194f8c)
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x006787a8)
+#define LOAD_LEVEL_TRANSITION_MAPNAME			(0x00352D20)
 
 #define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193340)
 #define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00192F68)
@@ -51,13 +53,13 @@ VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
 	.Bakisi = 0x004951A4,
 	.Hoven = 0x004972BC,
 	.OutpostX12 = 0x0048CB94,
-  .KorgonOutpost = 0x0048A264,
+	.KorgonOutpost = 0x0048A264,
 	.Metropolis = 0x0048967C,
 	.BlackwaterCity = 0x00486F14,
 	.CommandCenter = 0x00486F0C,
-  .BlackwaterDocks = 0x0048978C,
-  .AquatosSewers = 0x00488A8C,
-  .MarcadiaPalace = 0x0048840C,
+	.BlackwaterDocks = 0x0048978C,
+	.AquatosSewers = 0x00488A8C,
+	.MarcadiaPalace = 0x0048840C,
 };
 
 // paths for level specific files
@@ -78,9 +80,11 @@ char * fGlobalVersion = "uya/version";
 #define LOAD_LEVEL_MAP_ID						(*(int*)0x0024145C)
 #define LOAD_LEVEL_PART_ID						(*(int*)0x00240408)
 #define LOAD_LEVEL_READ_WAD_HOOK				((u32*)0x005a2560)
+#define LOAD_LEVEL_READ_WAD_HOOK_VALUE			(0x0C17027E)
 #define LOAD_LEVEL_CD_SYNC_HOOK					((u32*)0x005a2408)
 #define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x0019507c)
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x00675dc0)
+#define LOAD_LEVEL_TRANSITION_MAPNAME			(0x00352e20)
 
 #define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193430)
 #define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00193058)
@@ -90,13 +94,13 @@ VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
 	.Bakisi = 0x004931B4,
 	.Hoven = 0x0049520C,
 	.OutpostX12 = 0x0048AB24,
-  .KorgonOutpost = 0x00488274,
+	.KorgonOutpost = 0x00488274,
 	.Metropolis = 0x0048768C,
 	.BlackwaterCity = 0x00484EA4,
 	.CommandCenter = 0x0048505C,
-  .BlackwaterDocks = 0x0048789C,
-  .AquatosSewers = 0x00486BDC,
-  .MarcadiaPalace = 0x0048651C,
+	.BlackwaterDocks = 0x0048789C,
+	.AquatosSewers = 0x00486BDC,
+	.MarcadiaPalace = 0x0048651C,
 };
 
 // paths for level specific files
@@ -190,7 +194,7 @@ struct MapLoaderState
 {
     u8 Enabled;
     u8 MapId;
-		u8 CheckState;
+	u8 CheckState;
     char MapName[32];
     char MapFileName[128];
     int LoadingFileSize;
@@ -731,7 +735,7 @@ int hookedLoadScreenMapNameString(void)
 	if (State.Enabled) {
 		int mapIdx = (LOAD_LEVEL_MAP_ID - 40) % 10;
 		if (mapIdx >= 0) {
-			strncpy(0x352e20 + (mapIdx * 0x20), State.MapName, 32);
+			strncpy(LOAD_LEVEL_TRANSITION_MAPNAME + (mapIdx * 0x20), State.MapName, 32);
 		}
 	}
 
@@ -877,7 +881,7 @@ void onMapLoaderOnlineMenu(void)
 void hook(void)
 {
 	// Install hooks
-	if (*LOAD_LEVEL_READ_WAD_HOOK == 0x0C17027E)
+	if (*LOAD_LEVEL_READ_WAD_HOOK == LOAD_LEVEL_READ_WAD_HOOK_VALUE)
 	{
 		*LOAD_LEVEL_READ_LEVEL_TOC_HOOK = 0x0C000000 | ((u32)(&hookedGetTable) / 4);
 		*LOAD_LEVEL_CD_SYNC_HOOK = 0x0C000000 | ((u32)(&hookedCheck) / 4);

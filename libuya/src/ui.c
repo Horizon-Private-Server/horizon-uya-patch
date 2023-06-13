@@ -9,14 +9,14 @@ int internal_uiDialog(void *, const char *, const char *, int, int, float);
 #ifdef UYA_PAL
 VariableAddress_t vaUiMsgStringFunc = {
 	.Lobby = 0x0059a970,
-	.Bakisi = 0x00467388,
+	.Bakisi = 0x00467360,
 	.Hoven = 0x00468f10,
 	.OutpostX12 = 0x0045fd10,
 	.KorgonOutpost = 0x0045d8a0,
 	.Metropolis = 0x0045cbe0,
 	.BlackwaterCity = 0x0045a410,
 	.CommandCenter = 0x0045ad08,
-	.BlackwaterDocks = 0x0045a410,
+	.BlackwaterDocks = 0x0045d588,
 	.AquatosSewers = 0x0045c888,
 	.MarcadiaPalace = 0x0045c208,
 };
