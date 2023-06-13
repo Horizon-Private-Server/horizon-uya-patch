@@ -390,7 +390,7 @@ void runCheckGameMapInstalled(void)
 void setupPatchConfigInGame()
 {
 	VariableAddress_t vaPauseMenuAddr = {
-#ifdef UYA_PAL
+#if UYA_PAL
 		.Lobby = 0,
 		.Bakisi = 0x003c073c,
 		.Hoven = 0x003bfd7c,
