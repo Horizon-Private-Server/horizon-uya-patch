@@ -190,7 +190,11 @@ void gfxScreenSpaceQuad(RECT * rect, u32 colorTL, u32 colorTR, u32 colorBL, u32 
 
     buffer[0] = 1;
     buffer[1] = 0;
+#if UYA_PAL
+    buffer[2] = 0x00245D08;
+#else
     buffer[2] = 0x00245E88;
+#endif
     buffer[3] = 0x00009E0D;
     buffer[4] = *(u32*)(&centerX);
     buffer[5] = *(u32*)(&centerY);
@@ -231,7 +235,11 @@ void gfxScreenSpaceBox(float x, float y, float w, float h, u32 color)
 
     buffer[0] = 1;
     buffer[1] = 0;
+#if UYA_PAL
+    buffer[2] = 0x00245D08;
+#else
     buffer[2] = 0x00245E88;
+#endif
     buffer[3] = 0x00009E0D;
     buffer[4] = *(u32*)(&centerX);
     buffer[5] = *(u32*)(&centerY);

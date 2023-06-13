@@ -92,7 +92,7 @@ int onServerDownloadDataRequest(void * connection, void * data)
 	dlTotalBytes = request->TotalSize;
 	dlBytesReceived += request->DataSize;
 	memcpy((void*)request->TargetAddress, request->Data, request->DataSize);
-	DPRINTF("DOWNLOAD: %d/%d, writing %d to %08X\n", dlBytesReceived, request->TotalSize, request->DataSize, request->TargetAddress);
+	printf("DOWNLOAD: %d/%d, writing %d to %08X\n", dlBytesReceived, request->TotalSize, request->DataSize, request->TargetAddress);
   
 	// respond
 	if (connection)
@@ -192,7 +192,7 @@ void runCameraSpeedPatch(void)
 	char buf[12];
 	const short MAX_CAMERA_SPEED = 200;
 
-#if UYA_PAL
+#ifdef UYA_PAL
 	VariableAddress_t vaUpdateCameraSpeedIGFunc = {
 		.Lobby = 0,
 		.Bakisi = 0x004be190,
@@ -390,7 +390,7 @@ void runCheckGameMapInstalled(void)
 void setupPatchConfigInGame()
 {
 	VariableAddress_t vaPauseMenuAddr = {
-#if UYA_PAL
+#ifdef UYA_PAL
 		.Lobby = 0,
 		.Bakisi = 0x003c073c,
 		.Hoven = 0x003bfd7c,
@@ -416,12 +416,6 @@ void setupPatchConfigInGame()
 		.MarcadiaPalace = 0x003c81bc,
 #endif
 	};
-	
-	// Currently Freezes at Metropolis
-	// 	0012CD88 - Metropolis freezes at SYNC function
-	// if (gameGetCurrentMapId() == 44)
-	// 	return;
-
     // Get Menu address via current map.
     u32 Addr = GetAddress(&vaPauseMenuAddr);
     // Insert needed ID, returns string.
@@ -433,7 +427,6 @@ void setupPatchConfigInGame()
     // Pointer to "CONTINUE" function
     u32 ReturnFunction = *(u32*)(Addr + 0x8);
     // Hook Patch Config into end of "CONTINUE" function.
-    // HOOK_J((ReturnFunction + 0x54), &func);
     HOOK_J((ReturnFunction + 0x54), &configMenuEnable);
 }
 
@@ -550,7 +543,7 @@ void onOnlineMenu(void)
 	lastMenuInvokedTime = gameGetTime();
 	if (!hasInitialized)
 	{
-		DPRINTF("onOnlinemenu - pad enable input\n");
+		printf("onOnlinemenu - pad enable input\n");
 		padEnableInput();
 		onConfigInitialize();
 		hasInitialized = 1;
@@ -567,12 +560,12 @@ void onOnlineMenu(void)
 	// settings
 	onConfigOnlineMenu();
 
-  // draw download data box
+	// draw download data box
 	if (dlTotalBytes > 0)
 	{
-    gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, 0x8004223f);
-    gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, 0x80123251);
-    gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, 0x8069cbf2, "Downloading...", 11 + (gameGetTime()/240 % 4), 3);
+		gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, 0x8004223f);
+		gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, 0x80123251);
+		gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, 0x8069cbf2, "Downloading...", 11 + (gameGetTime()/240 % 4), 3);
 
 		float w = (float)dlBytesReceived / (float)dlTotalBytes;
 		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, 0x8018608f);
@@ -624,7 +617,7 @@ int main(void)
 	}
 
 	//
-  netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
+  	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
 
 	// Run map loader
 	runMapLoader();
@@ -665,23 +658,28 @@ int main(void)
 	}
 	else if (isInMenus())
 	{
-		// Not In game stuff
-		// Hook menu loop
 #ifdef UYA_PAL
 		if (*(u32*)0x00576120 == 0) {
+			*(u32*)0x005760E4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 			*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
-    }
+		}
+
+		// popup is visible
+		if (*(u32*)0x002467dc == 1) {
+			configMenuDisable();
+			padEnableInput();
+		}
 #else
 		if (*(u32*)0x005753E0 == 0) {
 			*(u32*)0x005753A4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 			*(u32*)0x005753DC = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 		}
 
-    // popup is visible
-    if (*(u32*)0x0024693C == 1) {
-      configMenuDisable();
-      padEnableInput();
-    }
+		// popup is visible
+		if (*(u32*)0x0024693C == 1) {
+			configMenuDisable();
+			padEnableInput();
+		}
 #endif
 
 		// send patch game config on create game
