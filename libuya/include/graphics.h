@@ -15,8 +15,13 @@
 
 
 //--------------------------------------------------------
+#if UYA_PAL
+#define SCREEN_WIDTH           (512)
+#define SCREEN_HEIGHT          (448)
+#else
 #define SCREEN_WIDTH           (512)
 #define SCREEN_HEIGHT          (416)
+#endif
 
 //--------------------------------------------------------
 typedef float POINT[2] __attribute__((__aligned__(8)));
