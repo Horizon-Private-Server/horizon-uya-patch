@@ -430,5 +430,32 @@ void playerSetPlayerState(Player * player, u8 state);
  */
 void playerDecHealth(Player * player, u8 amount);
 
+/*
+ * NAME :		playerIncHealth
+ * DESCRIPTION :
+ * 			Increase a players health by a certain amount (1 to 15)
+ * NOTES :
+ * ARGS : 
+ *          player:                     Pointer to player's player object.
+ *          state:                 		Amount to give to player (1 to 15)
+ * RETURN :
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void playerIncHealth(Player * player, u8 amount);
+
+/*
+ * NAME :		playerSetHealth
+ * DESCRIPTION :
+ * 			Set a players health to a certain amount (1 to 15)
+ * NOTES :
+ * ARGS : 
+ *          player:                     Pointer to player's player object.
+ *          state:                 		Value to set health to (1 to 15)
+ * RETURN :
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void playerSetHealth(Player * player, u8 amount);
+
+
 
 #endif // _LIBUYA_PLAYER_H_

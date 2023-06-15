@@ -296,3 +296,32 @@ void playerDecHealth(Player * player, u8 amount)
 {
     internal_HurtPlayer(player, amount);
 }
+
+//--------------------------------------------------------------------------------
+void playerIncHealth(Player * player, u8 amount)
+{
+    // Grab address where math is done
+    int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
+    // Change to addition
+    *(u8*)math = 0;
+    // Run normal function
+    internal_HurtPlayer(player, amount);
+    // Revert back to subtraction
+    *(u8*)math = 1;
+}
+
+void playerSetHealth(Player * player, u8 amount)
+{
+    // Make sure amount is not more than the max health.
+    if (amount > PLAYER_MAX_HEALTH)
+        amount = 15;
+
+    // Grab address where math is done
+    int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
+    // Instead of subtracting, move f01 to f00.
+    *(u32*)math = 0x46000806; // mov.s $f0, $f1
+    // Run normal function
+    internal_HurtPlayer(player, amount);
+    // Revert back to subtraction
+    *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
+}
