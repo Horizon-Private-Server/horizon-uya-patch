@@ -329,3 +329,9 @@ FUNCTION(internal_netSendAppMessage, 0x0014ad08)
 #------------------------- WAD --------------------------
 #--------------------------------------------------------
 FUNCTION(internal_wadGetSectors, 0x00194fc8)
+
+#--------------------------------------------------------
+#------------------------ PLAYER ------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(internal_SetPlayerState, vaSetPlayerStateFunc)
+VARIABLE_FUNCTION(internal_HurtPlayer, vaHurtPlayerFunc)

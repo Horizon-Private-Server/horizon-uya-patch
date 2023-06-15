@@ -3,6 +3,35 @@
 #include "interop.h"
 #include "game.h"
 
+
+VariableAddress_t vaEmpty = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0,
+	.Hoven = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
+	.Metropolis = 0,
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
+#else
+	.Lobby = 0,
+	.Bakisi = 0,
+	.Hoven = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
+	.Metropolis = 0,
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
+#endif
+};
+
 /*
  * 
  */
@@ -200,4 +229,70 @@ int playerPadGetButtonUp(Player * player, u16 buttonMask)
 
     return !playerPadGetButton(player, buttonMask) &&
         (PlayerPadHistory[player->PlayerId].btns & buttonMask) != 0;
+}
+
+//--------------------------------------------------------------------------------
+VariableAddress_t vaSetPlayerStateFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00520b40,
+	.Hoven = 0x00522c58,
+	.OutpostX12 = 0x00518530,
+    .KorgonOutpost = 0x00515cc8,
+	.Metropolis = 0x00515018,
+	.BlackwaterCity = 0x005128b0,
+	.CommandCenter = 0x00512670,
+    .BlackwaterDocks = 0x00514ef0,
+    .AquatosSewers = 0x005141f0,
+    .MarcadiaPalace = 0x00513b70,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x0051e2f0,
+	.Hoven = 0x00520348,
+	.OutpostX12 = 0x00515c60,
+    .KorgonOutpost = 0x00513478,
+	.Metropolis = 0x005127c8,
+	.BlackwaterCity = 0x0050ffe0,
+	.CommandCenter = 0x0050ff60,
+    .BlackwaterDocks = 0x005127a0,
+    .AquatosSewers = 0x00511ae0,
+    .MarcadiaPalace = 0x00511420,
+#endif
+};
+void playerSetPlayerState(Player * player, u8 state)
+{
+    internal_SetPlayerState(player, state, 2, 0);
+}
+
+//--------------------------------------------------------------------------------
+VariableAddress_t vaHurtPlayerFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x0050d4d8,
+	.Hoven = 0x0050f5f0,
+	.OutpostX12 = 0x00504ec8,
+    .KorgonOutpost = 0x00502660,
+	.Metropolis = 0x005019b0,
+	.BlackwaterCity = 0x004ff248,
+	.CommandCenter = 0x004ff210,
+    .BlackwaterDocks = 0x00501a90,
+    .AquatosSewers = 0x00500d90,
+    .MarcadiaPalace = 0x00500710,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x0050ace8,
+	.Hoven = 0x0050cd40,
+	.OutpostX12 = 0x00502658,
+    .KorgonOutpost = 0x004ffe70,
+	.Metropolis = 0x004ff1c0,
+	.BlackwaterCity = 0x004fc9d8,
+	.CommandCenter = 0x004fcb60,
+    .BlackwaterDocks = 0x004ff3a0,
+    .AquatosSewers = 0x004fe6e0,
+    .MarcadiaPalace = 0x004fe020,
+#endif
+};
+void playerDecHealth(Player * player, u8 amount)
+{
+    internal_HurtPlayer(player, amount);
 }
