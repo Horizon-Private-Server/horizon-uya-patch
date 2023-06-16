@@ -300,14 +300,21 @@ void playerDecHealth(Player * player, u8 amount)
 //--------------------------------------------------------------------------------
 void playerIncHealth(Player * player, u8 amount)
 {
-    // Grab address where math is done
-    int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
-    // Change to addition
-    *(u8*)math = 0;
-    // Run normal function
-    internal_HurtPlayer(player, amount);
-    // Revert back to subtraction
-    *(u8*)math = 1;
+    if (playerGetHealth(player) >= 15)
+    {
+        playerSetHealth(player, 15);
+    }
+    else
+    {
+        // Grab address where math is done
+        int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
+        // Change to addition
+        *(u8*)math = 0;
+        // Run normal function
+        internal_HurtPlayer(player, amount);
+        // Revert back to subtraction
+        *(u8*)math = 1;
+    }
 }
 
 void playerSetHealth(Player * player, u8 amount)
@@ -324,4 +331,23 @@ void playerSetHealth(Player * player, u8 amount)
     internal_HurtPlayer(player, amount);
     // Revert back to subtraction
     *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
+}
+
+int playerGetHealth(Player * player)
+{
+    // Grab address where math is done
+    int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
+    // Remove math.
+    *(u32*)math = 0;
+    // Run normal function
+    internal_HurtPlayer(player, 1);
+    // Revert back to subtraction
+    *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
+    float CurrentHealth;
+    asm __volatile__ (
+        "swc1 $f0, 0x0(%0);"
+        : 
+        : "r" (&CurrentHealth)
+    );
+    return CurrentHealth;
 }

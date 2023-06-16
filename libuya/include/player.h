@@ -456,6 +456,17 @@ void playerIncHealth(Player * player, u8 amount);
  */
 void playerSetHealth(Player * player, u8 amount);
 
-
+/*
+ * NAME :		playerGetHealth
+ * DESCRIPTION :
+ * 				Get a players health
+ * NOTES :
+ * ARGS : 
+ *         		player:         Pointer to player's player object.
+ * RETURN :
+ * 				Returns players health in float value
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+float playerGetHealth(Player * player);
 
 #endif // _LIBUYA_PLAYER_H_
