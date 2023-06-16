@@ -467,6 +467,6 @@ void playerSetHealth(Player * player, u8 amount);
  * 				Returns players health in float value
  * AUTHOR :			Troy "Agent Moose" Pruitt
  */
-float playerGetHealth(Player * player);
+int playerGetHealth(Player * player);
 
 #endif // _LIBUYA_PLAYER_H_
