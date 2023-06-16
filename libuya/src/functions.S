@@ -335,3 +335,9 @@ FUNCTION(internal_wadGetSectors, 0x00194fc8)
 #--------------------------------------------------------
 VARIABLE_FUNCTION(internal_SetPlayerState, vaSetPlayerStateFunc)
 VARIABLE_FUNCTION(internal_HurtPlayer, vaHurtPlayerFunc)
+
+#--------------------------------------------------------
+#-------------------------- MOBY ------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(mobySpawn, vaMobyCreateFunc)
+VARIABLE_FUNCTION(mobyDestroy, vaMobyDeleteFunc)
