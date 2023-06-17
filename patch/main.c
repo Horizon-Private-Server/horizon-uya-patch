@@ -31,6 +31,7 @@
 #include "config.h"
 #include "include/config.h"
 #include "include/cheats.h"
+#include "gamesettings.h"
 
 #if UYA_PAL
 
@@ -50,6 +51,10 @@ void configMenuDisable(void);
 
 void runMapLoader(void);
 void onMapLoaderOnlineMenu(void);
+
+void grGameStart(void);
+void grLobbyStart(void);
+void grLoadStart(void);
 
 /*
  * Array of game modules.
@@ -137,40 +142,6 @@ void runExceptionHandler(void)
 			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F8) = 0x2278;
 		}
 	}
-}
-
-
-/*
- * NAME :		runGameSettings
- * 
- * DESCRIPTION :
- * 
- * 
- * NOTES :
- * 
- * ARGS : 
- * 
- * RETURN :
- * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
-void runGameSettings(void)
-{
-	if (!isInGame())
-		return;
-
-	// disable weapon packs toggle
-	if (gameConfig.disableWeaponPacks == 1)
-	{
-		disableWeaponPacks();
-	}
-	else if (gameConfig.disableWeaponPacks == 2)
-	{
-		spawnWeaponPackOnDeath();
-	}
-	
-	if (gameConfig.disableV2s)
-		disableV2s();
 }
 
 /*
@@ -641,7 +612,8 @@ int main(void)
 
 	if(isInGame())
 	{
-		runGameSettings();
+		// Run Game Rules if in game.
+		grGameStart();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
@@ -658,6 +630,9 @@ int main(void)
 	}
 	else if (isInMenus())
 	{
+		// If in Lobby, run these game rules.
+		grLobbyStart();
+
 #ifdef UYA_PAL
 		if (*(u32*)0x00576120 == 0) {
 			*(u32*)0x005760E4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
