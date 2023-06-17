@@ -230,50 +230,50 @@ typedef struct Functions
  */
 typedef struct Player
 {
-    char UNK15[0x13];                                               // 0x00
+    char unk_0[0x13];                                               // 0x00
 
     Functions Function;                                             // 0x14
 
-    char UNK16[0x8C];
+    char unk_18[0x8C];
 
     VECTOR PlayerPosition;                                          // 0xA0
 
-    char UNK6[0x80];
+    char unk_b0[0x80];
 
     VECTOR PlayerVelocity;                                          // 0x120
 
-    char UNK0[0x200];
+    char unk_130[0x200];
     
     short CantMoveTimer;                                            // 0x320
 
-    char UNK13[0x06];
+    char unk_323[0x06];
 
     float WeaponCooldownTimer;                                      // 0x328
 
-    char UNK14[0x16];
+    char unk_32c[0x16];
 
     short GravityWallTimer;                                         // 0x33E
 
-    char UNK5[0x11A];
+    char unk_340[0x11A];
 
     // is 1 is player is shooting
     int IsShooting;                                                 // 0x458
 
-    char UNK3[0xD28];
+    char unk_45c[0xD28];
 
     VECTOR CameraPos;                                               // 0x1180
 
-    char UNK1[0x50];
+    char unk_1190[0x50];
 
     CameraAngle CameraYaw;                                          // 0x11E0
     CameraAngle CameraPitch;                                        // 0x1200
 
-    char UNk_1204[0x2c];
+    char unk_1220[0x2c];
 
     // Moby * LookAtMoby not implamented yet.
     int LookAtMoby;                                                 // 0x122C
 
-    char UNK4[0x28];
+    char unk_1230[0x28];
 
     float CameraPitchMin;                                           // 0x1254
     float CameraPitchMax;                                           // 0x1258
@@ -284,15 +284,15 @@ typedef struct Player
 
     float CameraDistance;                                           // 0x1260
 
-    char UNK_1260[0x6c];
+    char unk_1264[0x6c];
 
     int LocalPlayerIndex;                                           // 0x12CC
 
-    char UNK_12CC[0xC];
+    char unk_12d0[0xC];
 
     int PlayerId;                                                   // 0x12D8
 
-    char UNK7[0x730];
+    char unk_12dc[0x730];
 
     char HideWeapon;                                                // 0x1A08
     char HidePlayer;                                                // 0x1A09
@@ -304,25 +304,29 @@ typedef struct Player
     char UNK10[0x4];
     char ShieldTrigger;                                             // 0x1A15
 
-    char UNK12[0x993];
-
-    Vehicle * Vehicle;                                              // 0x23A8 (Online: 0x2528)
-
-    char UNK18[0xC];
-
-    PadButtonStatus * Paddata;                                      // 0x23B4 (Online: 0x2534)
-
-    char UNK17[0x166];
-
-    // When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
+    // char UNK12[0xb05];
+	char unk_1a16[0x9c9];
+	
+	// When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
     char StartMenuTimer;                                            // 0x251A
     // If greater than 0, fade to black.
     char FadeToBlack;                                               // 0x251B
     char UNK11[0x4];
-    char ForceHoldFlag;                                             // 0x251F
+    char ForceHoldFlag;												// 0x251F
+	
+	char unk_2520[0x9];
 
-    VECTOR PlayerPosition2;                                         // 0x2538
+    Vehicle * Vehicle;                                              // 0x2528
     
+	char unk_2529[0xC];
+
+    PadButtonStatus * Paddata;                                      // 0x2534
+	
+	char unk_2538[0x24];
+	
+	int tNW_Pointer;												// 0x2558
+    
+	char unk_2559[0x166];
 } Player;
 
 /*
