@@ -175,9 +175,9 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Gamemode override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  // { "Weapon packs", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableWeaponPacks },
   { "Weapon Pack Spawning", listActionHandler, menuStateAlwaysEnabledHandler, &dataWeaponPacks },
   { "V2s", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableV2s },
+  { "Health Boxes", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableHealthBoxes },
 
 };
 

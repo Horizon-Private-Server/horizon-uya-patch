@@ -13,6 +13,7 @@ typedef struct PatchGameConfig
   char customModeId;
   char disableWeaponPacks;
   char disableV2s;
+  char disableHealthBoxes;
 } PatchGameConfig_t;
 
 enum CUSTOM_MAP_ID

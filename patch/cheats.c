@@ -25,6 +25,7 @@
 #include <libuya/time.h>
 #include <libuya/interop.h>
 #include <libuya/net.h>
+#include <libuya/moby.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -262,4 +263,36 @@ void disableV2s(void)
          // jal to fully upgrade to v2
         *(u32*)(addr + 0x16C) = 0;
     }
+}
+
+int disableHealthboxes(void)
+{
+    int count = 0;
+    Moby* moby = mobyListGetStart();
+
+    // Iterate through mobys and disable healthboxes
+    while ((moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP)))
+    {
+        // move to 0,0,0
+        memset(moby->Position, 0, sizeof(moby->Position));
+
+        // move orb to 0,0,0
+        if (moby->PVar)
+        {
+            void * subPtr = (void*)(*(u32*)(moby->PVar));
+            if (subPtr)
+            {
+                Moby * orb = (Moby*)(*(u32*)(subPtr + 0x48));
+                if (orb)
+                {
+                    memset(orb->Position, 0, sizeof(orb->Position));
+                    ++count;
+                }
+            }
+        }
+
+        ++moby; // increment moby
+    }
+    
+    return count;
 }
