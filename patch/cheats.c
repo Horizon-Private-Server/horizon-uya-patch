@@ -98,7 +98,7 @@ void disableWeaponPacks(void)
  * AUTHOR :			Troy "Agent Moose" Pruitt
  */
 
-char SpawnedPack = 0;
+int SpawnedPack = 0;
 void SpawnPack(u32 a0, u32 a1)
 {
   VariableAddress_t vaRespawnFunc = {
@@ -157,15 +157,18 @@ void SpawnPack(u32 a0, u32 a1)
 #endif
   };
   // Spawn Pack if Health <= zero and if not spawned already.
-  if (*(u32*)(TNW_PLAYERDATA + 0x44) <= 0 && SpawnedPack == 0)
+  Player * player = (Player*)PLAYER_STRUCT;
+  int p = *(u32*)((u32)(player->tNW_Pointer) + 0x4);
+  float health = *(float*)((u32)p + 0x44);
+  if (health <= 0 && !SpawnedPack)
   {
-    SpawnedPack = 1;
-
     // Run normal function
     ((void (*)(u32, u32))GetAddress(&vaRespawnFunc))(a0, a1);
 
     // Spawn Pack
     ((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(PLAYER_STRUCT);
+    // It now spawned pack, so set to true.
+    SpawnedPack = 1;
   }
 }
 
@@ -202,12 +205,17 @@ void spawnWeaponPackOnDeath(void)
   // Disable normal Weapon Pack spawns
   disableWeaponPacks();
 
+  // Hook SpawnPack (Currently Only for Siege)
+  if (*(u32*)GetAddress(&vaRespawnPlayerHook) != (0x0C000000 | ((u32)(&SpawnPack) >> 2)))
+    HOOK_JAL(GetAddress(&vaRespawnPlayerHook), &SpawnPack);
+
   // if Health is greater than zero and pack has spawned
-  if (*(u32*)(TNW_PLAYERDATA + 0x44) > 0 && SpawnedPack == 1)
+  Player * player = (Player*)PLAYER_STRUCT;
+  int p = *(u32*)((u32)(player->tNW_Pointer) + 0x4);
+  float health = *(float*)((u32)p + 0x44);
+  if (health > 0)
     SpawnedPack = 0;
 
-  // Hook SpawnPack (On Outpost x12 address: 0x0051F18C)
-  HOOK_JAL(GetAddress(&vaRespawnPlayerHook), &SpawnPack);
 }
 
 /*
