@@ -31,7 +31,6 @@
 #include "config.h"
 #include "include/config.h"
 #include "include/cheats.h"
-#include "gamesettings.h"
 
 #if UYA_PAL
 
