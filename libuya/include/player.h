@@ -467,27 +467,29 @@ typedef struct Player
 			float PlayerYaw;
 		};
 	};
-    char unk_c0[0x70];
+    char unk_c0[0x60];
     VECTOR Velocity;                                         		// 0x120
     char unk_130[0x1f0];											// 0x130
     short CantMoveTimer;                                            // 0x320
-    char unk_323[0x06];
+    char unk_322[0x06];
     float WeaponCooldownTimer;                                      // 0x328
-    char unk_32c[0x16];
-    short GravityWallTimer;                                         // 0x33E
-    char unk_340[0x11A];
+    char unk_32c[0x124];
 	HeroItem Weapon;												// 0x450
 	char unk_480[0x20];
 	HeroItem Boots;													// 0x4A0
-	char unk_4d0[0xcb0];
+	char unk_4d0[0x20];
+	char unk_4f0[0xc90];
+	// All offsets Above this is correct
+	
+	
     VECTOR CameraPos;                                               // 0x1180
 	VECTOR CameraDir;												// 0x1190
 	MATRIX CameraMatrix;											// 0x11A0
     CameraAngle CameraYaw;                                          // 0x11E0
     CameraAngle CameraPitch;                                        // 0x1200
-    char unk_1220[0x2c];
+    char unk_1220[0xc];
     Moby * LookAtMoby;                                              // 0x122C
-    char unk_1230[0x28];
+    char unk_1230[0x24];
     float CameraPitchMin;                                           // 0x1254
     float CameraPitchMax;                                           // 0x1258
     Moby * SkinMoby;                                                // 0x125C
@@ -496,6 +498,7 @@ typedef struct Player
 	short CameraType2;												// 0x1280
 	char unk_1282[0x2e];
 	VECTOR WeaponShotPosition;										// 0x12B0
+
 	float WeaponLockonDistance;										// 0x12C0
     char unk_12c4[0x8];
 	int LocalPlayerIndex;                                           // 0x12CC
@@ -523,8 +526,8 @@ typedef struct Player
             char CurSeg;											// 0x1A17
             char HandGadgetType;									// 0x1A18
             char ExternalUpdate;									// 0x1A19
-        };
-        char unk_1a1a[0x14];                                            
+            char unk_1a1a[0x14];
+		};
     };
 	char unk_1a2f[0x3];
 	WeaponQuickSelect QuickSelect;									// 0x1A32
@@ -556,7 +559,7 @@ typedef struct Player
 	int InOutVehicleTimer;											// 0x2550
 	char unk_2554[0x4];
 	struct tNW_Player * pNetPlayer;									// 0x2558
-    
+
 	char unk_2559[0x166];
 } Player;
 

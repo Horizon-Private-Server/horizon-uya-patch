@@ -54,9 +54,9 @@ enum WEAPON_IDS
 };
 
 typedef struct WeaponQuickSelect {
-    char slot1;
-    char slot2;
-    char slot3;
+    char Slot1;
+    char Slot2;
+    char Slot3;
 } WeaponQuickSelect;
 
 typedef struct WeaponAmmo {
