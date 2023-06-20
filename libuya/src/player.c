@@ -47,16 +47,6 @@ VariableAddress_t vaEmpty = {
  */
 #define PLAYER_2_ID                                 (*(u32*)0x001B6ED8)
 
-/*
- * Weapon stuff.
- */
-//
-// NOTE PORTED TO UYA
-//
-// #define WEAPON_DATA_START                           (0x001D49C0)
-// #define WEAPON_DATA_SIZE                            (0x12B0)
-// #define WEAPON_EQUIPSLOT                            ((int*)0x0020C690)
-
 #if UYA_PAL
 
 VariableAddress_t vaPlayerStructArray = {
@@ -120,22 +110,22 @@ Player ** playerGetAll(void)
 // }
 
 //--------------------------------------------------------------------------------
-// void playerSetTeam(Player * player, int teamId)
-// {
-//     if (!player)
-//         return;
+void playerSetTeam(Player * player, int teamId)
+{
+    if (!player)
+        return;
 
     
-//     player->Team = teamId;
-//     //player->PlayerMoby->SecondaryColor = TEAM_COLORS[teamId];
-//     //player->SkinMoby->TextureId = 0x80 + (8 * teamId);
-//     //player->SkinMoby->UNK_BE = 0;
-// }
+    player->Team = teamId;
+    //player->PlayerMoby->SecondaryColor = TEAM_COLORS[teamId];
+    //player->SkinMoby->TextureId = 0x80 + (8 * teamId);
+    //player->SkinMoby->UNK_BE = 0;
+}
 
 //--------------------------------------------------------------------------------
 int playerIsLocal(Player * player)
 {
-    return (int)player >= 0x00300000 && (int)player <= 0x00400000;
+    return player->IsLocal;
 }
 
 //--------------------------------------------------------------------------------
