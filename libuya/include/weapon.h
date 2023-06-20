@@ -53,4 +53,38 @@ enum WEAPON_IDS
     WEAPON_ID_WRENCH_V2 = 24,
 };
 
+typedef struct WeaponQuickSelect {
+    char slot1;
+    char slot2;
+    char slot3;
+} WeaponQuickSelect;
+
+typedef struct WeaponAmmo {
+    char N60;
+    char Blitz;
+    char Flux;
+    char Rocket;
+    char GBomb;
+    char Mine;
+    char Lava;
+    char Empty_1; // Morph-O-Ray
+    char Empty_2; // Wrench
+    char Empty_3; // Swingshot
+    char Holo;
+} WeaponAmmo;
+
+typedef struct WeaponMeter {
+    char N60;
+    char Blitz;
+    char Flux;
+    char Rocket;
+    char GBomb;
+    char Mine;
+    char Lava;
+    char Morph;
+    char Empty_1; // Wrench
+    char Empty_2; // Swingshot
+    char Holo;
+} WeaponMeter;
+
 #endif // _LIBUYA_WEAPON_H_
