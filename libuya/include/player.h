@@ -479,9 +479,6 @@ typedef struct Player
 	HeroItem Boots;													// 0x4A0
 	char unk_4d0[0x20];
 	char unk_4f0[0xc90];
-	// All offsets Above this is correct
-	
-	
     VECTOR CameraPos;                                               // 0x1180
 	VECTOR CameraDir;												// 0x1190
 	MATRIX CameraMatrix;											// 0x11A0
@@ -498,7 +495,6 @@ typedef struct Player
 	short CameraType2;												// 0x1280
 	char unk_1282[0x2e];
 	VECTOR WeaponShotPosition;										// 0x12B0
-
 	float WeaponLockonDistance;										// 0x12C0
     char unk_12c4[0x8];
 	int LocalPlayerIndex;                                           // 0x12CC
@@ -526,7 +522,7 @@ typedef struct Player
             char CurSeg;											// 0x1A17
             char HandGadgetType;									// 0x1A18
             char ExternalUpdate;									// 0x1A19
-            char unk_1a1a[0x14];
+            char unk_1a19[0x14];
 		};
     };
 	char unk_1a2f[0x3];
@@ -535,11 +531,16 @@ typedef struct Player
 	WeaponAmmo WeaponAmmo;											// 0x1A53
 	char unk_1a5f[0x4];
 	WeaponMeter WeaponMeter;										// 0x1A63
-	char unk_1a6f[0xaa9];
-	// If greater than 0, fade to black (Opens start menu if not open).
-    char FadeToBlack;                                               // 0x2518
+	char unk_1a6f[0xa8f];
+	char IsSquating;												// 0x24FD
+	char unk_24fe[0x2];
+	char Invisible2;												// 0x2500
+	char unk_2501[0x13];
+	char TimerShowHealth;											// 0x2514
+	char unk_2515[0x3];
+    char TimerFadeToBlack;                                          // 0x2518
 	// When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
-    char StartMenuTimer;                                            // 0x2519
+    char TimerStartMenu;                                            // 0x2519
 	char unk_251a[0x2];
 	Moby * HeldMoby;												// 0x251C
 	HeroPlayerConstants * PlayerConstants;							// 0x2520
@@ -560,7 +561,18 @@ typedef struct Player
 	char unk_2554[0x4];
 	struct tNW_Player * pNetPlayer;									// 0x2558
 
-	char unk_2559[0x166];
+	char unk_2559[0x26];
+	// This area changes if wrench is held.
+	char unk_2580[0x78f];
+	// All zeros (padding maybe?)
+	char unk_2d10[0xd7];
+	// Changes if wrench is out and jumping:
+	char unk_2de8[0xdb];
+	// this last char goes to end of struct.
+	char unk_2ec4[0x163b];
+
+	// FULL STRUCT SIZE: 0x44FF
+	// Next Player Struct (if Local): 0x4500
 } Player;
 
 typedef void (*PlayerUpdate_func)(Player * player);
