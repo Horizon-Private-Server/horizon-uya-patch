@@ -18,6 +18,9 @@
 #include "math3d.h"
 #include "common.h"
 #include "guber.h"
+#include "moby.h"
+#include "weapon.h"
+// #include "camera.h"
 
 /*
  * Maximum health of player.
@@ -200,21 +203,244 @@ typedef struct CameraAngle
     float UNK1[3];
 } CameraAngle;
 
+struct tNW_PlayerWarpMessage {
+	/*   0 */ char netPlayerIndex;
+	/*   1 */ char dontKillMeInBaseHack;
+	/*   2 */ char resetPadRing;
+	/*   3 */ char playerSeq;
+	/*   4 */ float playerPos[3];
+	/*  10 */ float playerRot[3];
+	/*  1c */ short int state;
+	/*  1e */ char isResurrecting;
+};
+
+struct tNW_PlayerData {
+	/*   0 */ VECTOR vPosition;
+	/*  10 */ float vRotation[3];
+	/*  1c */ int timeStamp;
+	/*  20 */ VECTOR vIdealVec;
+	/*  30 */ int idealVecTime;
+	/*  34 */ int accountId;
+	/*  38 */ unsigned int UID;
+	/*  3c */ int playerType;
+	/*  40 */ int playerTeam;
+	/*  44 */ float hitPoints;
+	/*  48 */ int handGadget;
+	/*  4c */ int lastKeepAlive;
+	/*  50 */ int remoteTarget;
+	/*  54 */ int playerIndex;
+	/*  58 */ int cameraElevationSettings[3];
+	/*  64 */ int cameraAzimuthSettings[3];
+	/*  70 */ int cameraRotationSettings[3];
+	/*  7c */ int rank[6];
+	/*  94 */ char cGadgetLevel[32];
+	/*  b4 */ unsigned int updated;
+	/*  b8 */ short unsigned int gadgetsWithAmmo;
+	/*  ba */ short unsigned int fpsMode;
+	/*  bc */ unsigned char flags;
+};
+
+struct tNW_PlayerPadInputMessage {
+	/*   0 */ int cameraRot[4];
+	/*  10 */ short unsigned int playerPos[3];
+	/*  16 */ unsigned char sequenceNum;
+	union
+	{
+		/*  17 */ unsigned char stateAndRotFlag : 1;
+		/*  17 */ unsigned char playerIndex : 1;
+		/*  17 */ unsigned char flags : 2;
+		/*  17 */ unsigned char framesWithButtonDiffs : 4;
+	};
+	/*  18 */ unsigned char pad_data[128];
+};
+
+struct tNW_PlayerPadInputMessageListElem {
+	/*   0 */ struct tNW_PlayerPadInputMessage msg;
+	/*  98 */ struct tNW_PlayerPadInputMessageListElem* pNext;
+	/*  9c */ struct tNW_PlayerPadInputMessageListElem* pPrev;
+	/*  a0 */ char inUse;
+};
+
 /*
- * NAME :		Functions
- * 
- * DESCRIPTION :
- * 			Contains Functions.  Unsure what all functions.
- * 
- * NOTES :
- * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ *
  */
-typedef struct Functions
-{
-    int UNK0[0x33];
-    int Player;                                                      // 0x34
-} Functions;
+struct tNW_Player {
+	/*   0 */ int netClientIndex;
+	/*   4 */ struct tNW_PlayerData* pNetPlayerData;
+	/*   8 */ short int bLocal;
+	/*   a */ short int bSpawned;
+	/*   c */ short int bGiveMeTheDasBoot;
+	/*   e */ short int bCallbackCalled;
+	/*  10 */ int latency;
+	/*  14 */ unsigned int flags;
+	/*  18 */ char accountName[32];
+	/*  38 */ struct tNW_PlayerWarpMessage warpMessage;
+	/*  58 */ struct tNW_PlayerPadInputMessageListElem padMessageElems[16];
+	/* a98 */ char padMessageCurDecodePos;
+	/* a99 */ char activePadFrame;
+	/* a9c */ int lastActiveSeqNum;
+	/* aa0 */ int numBufferedPadMessageElems;
+	/* aa4 */ int receivedActivePadMsgFrame;
+	/* aa8 */ char pullBack;
+	/* aa9 */ signed char jitterThrottleFrames;
+	/* aaa */ char numConseqSkips;
+	/* aac */ struct tNW_PlayerPadInputMessageListElem* pActivePadMsg;
+	/* ab0 */ struct tNW_PlayerPadInputMessageListElem* pPadMsgListTail;
+	/* ab4 */ unsigned char padFrame[20];
+	/* ac8 */ int homeBaseIndex;
+	/* acc */ int homeNodeIndex;
+};
+
+typedef struct HeroTimers {
+	/*   0 */ int state;
+	/*   4 */ int stateType;
+	/*   8 */ int subState;
+	/*   c */ int animState;
+	/*  10 */ int stickOn;
+	/*  14 */ int stickOff;
+	/*  18 */ short int noLedge;
+	/*  1a */ short int allowQuickSelect;
+	/*  1c */ int firing;
+	/*  20 */ int moveModifierTimer;
+	/*  24 */ int boltMultTimer;
+	/*  28 */ int wallJumpOk;
+	/*  2c */ short int postHitInvinc;
+	/*  2e */ short int ignoreHeroColl;
+	/*  30 */ short int collOff;
+	/*  32 */ short int invisible;
+	/*  34 */ short int slide;
+	/*  36 */ short int bezerker;
+	/*  38 */ short int noWallJump;
+	/*  3a */ short int noJumps;
+	/*  3c */ short int boxBreaking;
+	/*  3e */ short int noMag;
+	/*  40 */ short int noChargeJump;
+	/*  42 */ short int resurrectWait;
+	/*  44 */ int timeSinceStrafe;
+	/*  48 */ short int noHackerSwitch;
+	/*  4a */ short int noInput;
+	/*  4c */ short int noJumpLookBack;
+	/*  4e */ short int noShockAbort;
+	/*  50 */ short int stuck;
+	/*  52 */ short int noSwing;
+	/*  54 */ short int noWaterJump;
+	/*  56 */ short int noWaterDive;
+	/*  58 */ short int facialExpression;
+	/*  5a */ short int idle;
+	/*  5c */ short int bumpPushing;
+	/*  5e */ short int lookButton;
+	/*  60 */ short int edgeStop;
+	/*  62 */ short int clankRedEye;
+	/*  64 */ short int edgePath;
+	/*  66 */ short int magSlope;
+	/*  68 */ short int ledgeCamAdj;
+	/*  6a */ short int screenFlashRed;
+	/*  6c */ short int holdDeathPose;
+	/*  6e */ short int strafeMove;
+	/*  70 */ short int noRaisedGunArm;
+	/*  72 */ short int noExternalRot;
+	/*  74 */ short int screenFlashOn;
+	/*  76 */ short int screenFadeOn;
+	/*  78 */ int lastVehicleTimer;
+	/*  7c */ float gadgetRefire;
+	/*  80 */ int timeAlive;
+	/*  84 */ int noFpsCamTimer;
+	/*  88 */ int endDeathEarly;
+	/*  8c */ short int forceGlide;
+	/*  8e */ short int noGrind;
+	/*  90 */ short int instaGrind;
+	/*  92 */ short int noCamInputTimer;
+	/*  94 */ short int postTeleportTimer;
+	/*  96 */ short int multiKillTimer;
+	/*  98 */ short int armorLevelTimer;
+	/*  9a */ short int damageMuliplierTimer;
+	/*  9c */ int powerupEffectTimer;
+	/*  a0 */ short int juggernautFadeTimer;
+	/*  a2 */ short int onFireTimer;
+	/*  a4 */ short int acidTimer;
+	/*  a6 */ short int freezeTimer;
+	/*  a8 */ short int noHelmTimer;
+	/*  aa */ short int elecTimer;
+	/*  ac */ short int boltDistMulTimer;
+	/*  ae */ short int explodeTimer;
+	/*  b0 */ short int noDeathTimer;
+	/*  b2 */ short int invincibilityTimer;
+} HeroTimers;
+
+typedef struct HeroGround {
+	/*   0 */ VECTOR normal;
+	/*  10 */ VECTOR waterNormal;
+	/*  20 */ VECTOR gravity;
+	/*  30 */ VECTOR point;
+	/*  40 */ VECTOR lastGoodPos;
+	/*  50 */ VECTOR externalBootGrav;
+	/*  60 */ float feetHeights[2];
+	/*  68 */ float pitchSlopes[2];
+	/*  70 */ float rollSlopes[2];
+	/*  78 */ float height;
+	/*  7c */ float dist;
+	/*  80 */ float slope;
+	/*  84 */ float pitchSlope;
+	/*  88 */ float rollSlope;
+	/*  8c */ float angz;
+	/*  90 */ float waterHeight;
+	/*  94 */ float quicksandHeight;
+	/*  98 */ int underWater;
+	/*  9c */ Moby* pMoby;
+	/*  a0 */ int onGood;
+	/*  a4 */ float speed;
+	/*  a8 */ short int magnetic;
+	/*  aa */ short int stickLanding;
+	/*  ac */ short int offAny;
+	/*  ae */ short int offGood;
+	/*  b0 */ int oscillating;
+	/*  b4 */ float oscPos1;
+	/*  b8 */ float oscPos2;
+	/*  bc */ int pad[1];
+} HeroGround;
+
+typedef struct HeroPlayerConstants {
+	/*   0 */ int mobyNum;
+	/*   4 */ float maxWalkSpeed;
+	/*   8 */ float kneeHeight;
+	/*   c */ float kneeCheckDist;
+	/*  10 */ float colRadius;
+	/*  14 */ float colTop;
+	/*  18 */ float colBot;
+	/*  1c */ float colBotFall;
+	/*  20 */ int jumpPushOffTime;
+	/*  24 */ float jumpPeakFrm;
+	/*  28 */ float jumpLandFrm;
+	/*  2c */ float jumpGameLandFrm;
+	/*  30 */ float jumpMaxHeight;
+	/*  34 */ float jumpMinHeight;
+	/*  38 */ int jumpMaxUpTime;
+	/*  3c */ float jumpGravity;
+	/*  40 */ float jumpMaxXySpeed;
+	/*  44 */ float fallGravity;
+	/*  48 */ float maxFallSpeed;
+	/*  4c */ float walkAnimSpeedMul;
+	/*  50 */ float walkAnimSpeedLimLower;
+	/*  54 */ float walkAnimSpeedLimUpper;
+	/*  58 */ float jogAnimSpeedMul;
+	/*  5c */ float jogAnimSpeedLimLower;
+	/*  60 */ float jogAnimSpeedLimUpper;
+	/*  64 */ int pad[3];
+} HeroPlayerConstants;
+
+typedef struct HeroItem {
+	/*  00 */ Moby * Moby1;
+	/*  04 */ Moby * Moby2;
+	/*  08 */ int IsActive; // Only changes if shooting
+	/*  0c */ char unk0[0xc];
+	/*  18 */ int ChangedCount;
+	/*  1c */ char unk_4b8[0x4];
+	/*  20 */ int TimeSinceChange;
+	/*  24 */ int State;
+	/*  28 */ int Index;
+	/*  2c */ char unk1[0x4];
+} HeroItem;
+
 
 /*
  * NAME :		Player
@@ -230,104 +456,132 @@ typedef struct Functions
  */
 typedef struct Player
 {
-    char unk_0[0x13];                                               // 0x00
-
-    Functions Function;                                             // 0x14
-
-    char unk_18[0x8C];
-
+    struct Guber Guber;                                             // 0x00
+    char unk_18[0x88];
     VECTOR PlayerPosition;                                          // 0xA0
-
-    char unk_b0[0x80];
-
-    VECTOR PlayerVelocity;                                          // 0x120
-
-    char unk_130[0x200];
-    
+	union {															// 0xB0
+		VECTOR PlayerRotation;
+		struct {
+			float PlayerRoll;
+			float PlayerPitch;
+			float PlayerYaw;
+		};
+	};
+    char unk_c0[0x70];
+    VECTOR Velocity;                                         		// 0x120
+    char unk_130[0x1f0];											// 0x130
     short CantMoveTimer;                                            // 0x320
-
     char unk_323[0x06];
-
     float WeaponCooldownTimer;                                      // 0x328
-
     char unk_32c[0x16];
-
     short GravityWallTimer;                                         // 0x33E
-
     char unk_340[0x11A];
-
-    // is 1 is player is shooting
-    int IsShooting;                                                 // 0x458
-
-    char unk_45c[0xD28];
-
+	HeroItem Weapon;												// 0x450
+	char unk_480[0x20];
+	HeroItem Boots;													// 0x4A0
+	char unk_4d0[0xcb0];
     VECTOR CameraPos;                                               // 0x1180
-
-    char unk_1190[0x50];
-
+	VECTOR CameraDir;												// 0x1190
+	MATRIX CameraMatrix;											// 0x11A0
     CameraAngle CameraYaw;                                          // 0x11E0
     CameraAngle CameraPitch;                                        // 0x1200
-
     char unk_1220[0x2c];
-
-    // Moby * LookAtMoby not implamented yet.
-    int LookAtMoby;                                                 // 0x122C
-
+    Moby * LookAtMoby;                                              // 0x122C
     char unk_1230[0x28];
-
     float CameraPitchMin;                                           // 0x1254
     float CameraPitchMax;                                           // 0x1258
-
-    // In libdl this is: Moby * SkinMoby;
-    // Using int for now because moby.h is not impamented yet.
-    int SkinMoby;                                                   // 0x125C
-
-    float CameraDistance;                                           // 0x1260
-
-    char unk_1264[0x6c];
-
-    int LocalPlayerIndex;                                           // 0x12CC
-
-    char unk_12d0[0xC];
-
+    Moby * SkinMoby;                                                // 0x125C
+    VECTOR CameraOffset;                                           	// 0x1260
+    char unk_1270[0x10];
+	short CameraType2;												// 0x1280
+	char unk_1282[0x2e];
+	VECTOR WeaponShotPosition;										// 0x12B0
+	float WeaponLockonDistance;										// 0x12C0
+    char unk_12c4[0x8];
+	int LocalPlayerIndex;                                           // 0x12CC
+	int TopOfPlayerStruct;											// 0x12D0
+    char unk_12d4[0x4];
     int PlayerId;                                                   // 0x12D8
-
-    char unk_12dc[0x730];
-
-    char HideWeapon;                                                // 0x1A08
-    char HidePlayer;                                                // 0x1A09
-    char UNK8[0x4];
-    char WrenchOnly;                                                // 0x1A0D
-    char UNK9[0x1];
-    char SwingShotOnly;                                             // 0x1A10
-    char ForceWrenchSwitch;                                         // 0x1A11
-    char UNK10[0x4];
-    char ShieldTrigger;                                             // 0x1A15
-
-    // char UNK12[0xb05];
-	char unk_1a16[0x9c9];
-	
+    char unk_12dc[0x72c];
+	union {
+        struct {
+            char RaisedGunArm;										// 0x1A08
+            char InShallowWater;									// 0x1A09
+            char Invisible;											// 0x1A0A
+            char HideWeapon;										// 0x1A0B
+            char GadgetsOff;										// 0x1A0C
+            char GadgetNotReady;									// 0x1A0D
+            char WrenchOnly;										// 0x1A0E
+            char HideWrench;										// 0x1A0F
+            char SpawnBoltsToMe;									// 0x1A10
+            char AiFollowingMe;										// 0x1A11
+            char ForceWrenchSwitch;									// 0x1A12
+            char ForceSwingSwitch;									// 0x1A13
+            char IsLocal;											// 0x1A14
+            char InBaseHack;										// 0x1A15
+            char ShieldTrigger;										// 0x1A16
+            char CurSeg;											// 0x1A17
+            char HandGadgetType;									// 0x1A18
+            char ExternalUpdate;									// 0x1A19
+        };
+        char unk_1a1a[0x14];                                            
+    };
+	char unk_1a2f[0x3];
+	WeaponQuickSelect QuickSelect;									// 0x1A32
+	char unk_1a35[0x1e];
+	WeaponAmmo WeaponAmmo;											// 0x1A53
+	char unk_1a5f[0x4];
+	WeaponMeter WeaponMeter;										// 0x1A63
+	char unk_1a6f[0xaa9];
+	// If greater than 0, fade to black (Opens start menu if not open).
+    char FadeToBlack;                                               // 0x2518
 	// When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
-    char StartMenuTimer;                                            // 0x251A
-    // If greater than 0, fade to black.
-    char FadeToBlack;                                               // 0x251B
-    char UNK11[0x4];
-    char ForceHoldFlag;												// 0x251F
-	
-	char unk_2520[0x9];
-
+    char StartMenuTimer;                                            // 0x2519
+	char unk_251a[0x2];
+	Moby * HeldMoby;												// 0x251C
+	HeroPlayerConstants * PlayerConstants;							// 0x2520
+	Moby * PlayerMoby;												// 0x2524
     Vehicle * Vehicle;                                              // 0x2528
-    
-	char unk_2529[0xC];
-
-    PadButtonStatus * Paddata;                                      // 0x2534
-	
-	char unk_2538[0x24];
-	
-	int tNW_Pointer;												// 0x2558
+	char unk_252c[0x4];
+	// GameCamera * Camera;											// 0x2530
+    int Camera;
+	PadButtonStatus * Paddata;                                      // 0x2534
+	float PlayerPositionX;											// 0x2538
+	float PlayerPositionZ;											// 0x253C
+	float PlayerPositionY;											// 0x2540
+	int MpIndex;													// 0x2444
+	int Team;														// 0x2548
+	int InVehicle;													// 0x254C
+	// timer gets reset if entering or exiting a vehicle, will always count up.
+	int InOutVehicleTimer;											// 0x2550
+	char unk_2554[0x4];
+	struct tNW_Player * pNetPlayer;									// 0x2558
     
 	char unk_2559[0x166];
 } Player;
+
+typedef void (*PlayerUpdate_func)(Player * player);
+typedef void (*PlayerUpdateState_func)(Player * player, int stateId, int a2, int a3, int t0);
+
+typedef struct PlayerVTable
+{
+    void * FUNC_00;
+    void * FUNC_04;
+    void * FUNC_08;
+    PlayerUpdate_func Update;
+    void * FUNC_10;
+    void * FUNC_14;
+    void * FUNC_18;
+    void * FUNC_1C;
+    void * FUNC_20;
+    void * FUNC_24;
+    void * FUNC_28;
+    void * FUNC_2C;
+    void * FUNC_30;
+    void * FUNC_34;
+    void * FUNC_38;
+    PlayerUpdateState_func UpdateState;
+} PlayerVTable;
 
 /*
  * NAME :		playerGetPad

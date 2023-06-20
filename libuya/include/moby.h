@@ -18,6 +18,7 @@
 #include "math3d.h"
 #include "common.h"
 #include "gid.h"
+// #include "camera.h"
 
 struct GuberMoby;
 struct GuberEvent;
