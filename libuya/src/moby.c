@@ -93,6 +93,34 @@ VariableAddress_t vaMobyDeleteFunc = {
 #endif
 };
 
+VariableAddress_t vaMobyGetDamageFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00483608,
+	.Hoven = 0x004851c8,
+	.OutpostX12 = 0x0047bfc8,
+    .KorgonOutpost = 0x00479b48,
+	.Metropolis = 0x00478e88,
+	.BlackwaterCity = 0x00476440,
+	.CommandCenter = 0x00476f88,
+    .BlackwaterDocks = 0x00479808,
+    .AquatosSewers = 0x00478b08,
+    .MarcadiaPalace = 0x00478488,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00481810,
+	.Hoven = 0x00483310,
+	.OutpostX12 = 0x0047a150,
+    .KorgonOutpost = 0x00477d50,
+	.Metropolis = 0x00477090,
+	.BlackwaterCity = 0x004745c8,
+	.CommandCenter = 0x004752d0,
+    .BlackwaterDocks = 0x00477b10,
+    .AquatosSewers = 0x00476e50,
+    .MarcadiaPalace = 0x00476790,
+#endif
+};
+
 /*
  * Returns pointer to the start of the moby list.
  */

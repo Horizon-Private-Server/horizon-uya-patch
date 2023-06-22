@@ -215,16 +215,36 @@ enum MobyId
  */
 typedef struct Moby
 {
+	// Current Swingshot Moby at Metro: 21C5E640
 	/*   0 */ VECTOR BSphere;
 	/*  10 */ VECTOR Position;
 	/*  20 */ char State;
-	/*     */ char unk_21[0x47];
+	/*  21 */ u8 Group;
+	/*  22 */ char MClass;
+	/*  23 */ u8 Opacity;
+	/*  24 */ void * PClass;
+	/*  28 */ struct Moby * PChain;
+	/*  2c */ float Scale;
+	/*  30 */ char UpdateDist;
+    /*  31 */ char Drawn;
+    /*  32 */ short DrawDist;
+	/*  34 */ char unk_34[0x8];
+	/*  3c */ u32 PrimaryColor;
+	/*     */ char unk_40[0x24];
+	/*  64 */ void * PUpdate;
 	/*  68 */ void * PVar;
-	/*     */ char unk_6c[0x3c];
-	/*  a8 */ char Triggers;
+	/*     */ char unk_6c[0x14];
+	/*  80 */ VECTOR LSphere;
+	/*     */ char unk_90[0x14];
+	/*  a4 */ struct Moby * PParent;
+	/*  a8 */ char Trigger;
     /*  a9 */ char StandardDeathCalled;
 	/*  aa */ short OClass;
-	/*  ac */ char unk_ac[0x54];
+	/*     */ char unk_ac[0x14];
+    /*  c0 */ VECTOR M0_03;
+    /*  d0 */ VECTOR M1_03;
+    /*  e0 */ VECTOR M2_03;
+    /*  f0 */ VECTOR Rotation;
 } Moby;
 
 typedef struct MobyColDamageIn {

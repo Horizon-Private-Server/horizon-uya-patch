@@ -341,3 +341,4 @@ VARIABLE_FUNCTION(internal_HurtPlayer, vaHurtPlayerFunc)
 #--------------------------------------------------------
 VARIABLE_FUNCTION(mobySpawn, vaMobyCreateFunc)
 VARIABLE_FUNCTION(mobyDestroy, vaMobyDeleteFunc)
+VARIABLE_FUNCTION(mobyGetDamage, vaMobyGetDamageFunc)
