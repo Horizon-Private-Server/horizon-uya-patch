@@ -133,7 +133,7 @@ void gameEnd(int reason);
  * RETURN :
  * AUTHOR :			Troy "Agent Moose" Pruitt
  */
-__LIBUYA_GETTER__ void gameGetDeathHeight(void);
+__LIBUYA_GETTER__ float gameGetDeathHeight(void);
 
 /*
  * NAME :		gameSetDeathHeight
@@ -146,6 +146,6 @@ __LIBUYA_GETTER__ void gameGetDeathHeight(void);
  * RETURN :
  * AUTHOR :			Troy "Agent Moose" Pruitt
  */
-__LIBUYA_SETTER__ float gameSetDeathHeight(float height)
+__LIBUYA_SETTER__ void gameSetDeathHeight(float height);
 
 #endif // _LIBUYA_GAME_H_
