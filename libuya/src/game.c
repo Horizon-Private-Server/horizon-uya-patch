@@ -5,65 +5,85 @@
 #include "interop.h"
 
 #if UYA_PAL
-
 #define GAME_ACTIVE                         (*(int*)0x00241a50)
 #define SCENE_LOADED                        (*(int*)0x00245848)
-
 /*
  * Game time (ms).
  */
 #define GAME_TIME                           (*(int*)0x002257D8)
-
 #define GAME_MAP_ID                         (*(int*)0x001f83a8)
-
 #define GAME_CLIENT_ID                      (*(int*)0x001a5cd8)
 #define GAME_HOST_ID                        (*(int*)0x001a5e3c)
-
 #else
-
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
 #define SCENE_LOADED                        (*(int*)0x002459C8)
-
 /*
  * Game time (ms).
  */
 #define GAME_TIME                           (*(int*)0x00225958)
-
 #define GAME_MAP_ID                         (*(int*)0x001F8528)
-
 #define GAME_CLIENT_ID                      (*(int*)0x001a5e58)
 #define GAME_HOST_ID                        (*(int*)0x001a5fbc)
-
 #endif
 
-#ifdef UYA_PAL
-    VariableAddress_t vaGameEndFunc = {
-        .Lobby = 0,
-        .Bakisi = 0x005445f8,
-        .Hoven = 0x005467c0,
-        .OutpostX12 = 0x0053c098,
-        .KorgonOutpost = 0x00539780,
-        .Metropolis = 0x00538b80,
-        .BlackwaterCity = 0x00536368,
-        .CommandCenter = 0x00535bc0,
-        .BlackwaterDocks = 0x00538440,
-        .AquatosSewers = 0x00537740,
-        .MarcadiaPalace = 0x005370c0,
-    };
+#define GAME_DEATH_BARRIER                  (*(u32*)GetAddress(&vaDeathBarrier))
+
+VariableAddress_t vaDeathBarrier = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00248130,
+	.Hoven = 0x00248330,
+	.OutpostX12 = 0x00248230,
+    .KorgonOutpost = 0x002480b0,
+	.Metropolis = 0x00248130,
+	.BlackwaterCity = 0x002480b0,
+	.CommandCenter = 0x00247cb0,
+    .BlackwaterDocks = 0x00247db0,
+    .AquatosSewers = 0x00247db0,
+    .MarcadiaPalace = 0x00247db0,
 #else
-    VariableAddress_t vaGameEndFunc = {
-        .Lobby = 0,
-        .Bakisi = 0x00541ce8,
-        .Hoven = 0x00543df0,
-        .OutpostX12 = 0x00539708,
-        .KorgonOutpost = 0x00536e70,
-        .Metropolis = 0x00536270,
-        .BlackwaterCity = 0x005339d8,
-        .CommandCenter = 0x00533408,
-        .BlackwaterDocks = 0x00535c48,
-        .AquatosSewers = 0x00534f88,
-        .MarcadiaPalace = 0x005348c8,
-    };
+	.Lobby = 0,
+	.Bakisi = 0x002482b0,
+	.Hoven = 0x002484b0,
+	.OutpostX12 = 0x002483b0,
+    .KorgonOutpost = 0x00248230,
+	.Metropolis = 0x002482b0,
+	.BlackwaterCity = 0x00248230,
+	.CommandCenter = 0x00247e30,
+    .BlackwaterDocks = 0x00247f30,
+    .AquatosSewers = 0x00247f30,
+    .MarcadiaPalace = 0x00247f30,
+#endif
+};
+
+#ifdef UYA_PAL
+VariableAddress_t vaGameEndFunc = {
+    .Lobby = 0,
+    .Bakisi = 0x005445f8,
+    .Hoven = 0x005467c0,
+    .OutpostX12 = 0x0053c098,
+    .KorgonOutpost = 0x00539780,
+    .Metropolis = 0x00538b80,
+    .BlackwaterCity = 0x00536368,
+    .CommandCenter = 0x00535bc0,
+    .BlackwaterDocks = 0x00538440,
+    .AquatosSewers = 0x00537740,
+    .MarcadiaPalace = 0x005370c0,
+};
+#else
+VariableAddress_t vaGameEndFunc = {
+    .Lobby = 0,
+    .Bakisi = 0x00541ce8,
+    .Hoven = 0x00543df0,
+    .OutpostX12 = 0x00539708,
+    .KorgonOutpost = 0x00536e70,
+    .Metropolis = 0x00536270,
+    .BlackwaterCity = 0x005339d8,
+    .CommandCenter = 0x00533408,
+    .BlackwaterDocks = 0x00535c48,
+    .AquatosSewers = 0x00534f88,
+    .MarcadiaPalace = 0x005348c8,
+};
 #endif
 
 __LIBUYA_GETTER__ int isInGame(void)
@@ -115,4 +135,14 @@ char* gameGetGameModeName(int gameModeId)
 void gameEnd(int reason)
 {
     internal_gameEnd(reason);
+}
+
+float gameGetDeathHeight(void)
+{
+    return GAME_DEATH_BARRIER;
+}
+
+void gameSetDeathHeight(float height)
+{
+    GAME_DEATH_BARRIER = height;
 }
