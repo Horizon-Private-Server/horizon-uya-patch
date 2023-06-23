@@ -157,10 +157,7 @@ void SpawnPack(u32 a0, u32 a1)
 #endif
   };
   // Spawn Pack if Health <= zero and if not spawned already.
-  Player * player = (Player*)PLAYER_STRUCT;
-  int p = *(u32*)((u32)(player->tNW_Pointer) + 0x4);
-  float health = *(float*)((u32)p + 0x44);
-  if (health <= 0 && !SpawnedPack)
+  if (playerIsDead(PLAYER_STRUCT) && !SpawnedPack)
   {
     // Run normal function
     ((void (*)(u32, u32))GetAddress(&vaRespawnFunc))(a0, a1);
@@ -210,10 +207,7 @@ void spawnWeaponPackOnDeath(void)
     HOOK_JAL(GetAddress(&vaRespawnPlayerHook), &SpawnPack);
 
   // if Health is greater than zero and pack has spawned
-  Player * player = (Player*)PLAYER_STRUCT;
-  int p = *(u32*)((u32)(player->tNW_Pointer) + 0x4);
-  float health = *(float*)((u32)p + 0x44);
-  if (health > 0)
+  if (playerIsDead(PLAYER_STRUCT))
     SpawnedPack = 0;
 }
 

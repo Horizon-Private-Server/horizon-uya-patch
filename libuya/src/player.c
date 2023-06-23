@@ -47,9 +47,8 @@ VariableAddress_t vaEmpty = {
  */
 #define PLAYER_2_ID                                 (*(u32*)0x001B6ED8)
 
-#if UYA_PAL
-
 VariableAddress_t vaPlayerStructArray = {
+#if UYA_PAL
 	.Lobby = 0,
 	.Bakisi = 0x00249330,
 	.Hoven = 0x00249530,
@@ -61,11 +60,7 @@ VariableAddress_t vaPlayerStructArray = {
     .BlackwaterDocks = 0x00248fa0,
     .AquatosSewers = 0x00248fa0,
     .MarcadiaPalace = 0x00248fa0,
-};
-
 #else
-
-VariableAddress_t vaPlayerStructArray = {
 	.Lobby = 0,
 	.Bakisi = 0x002494B0,
 	.Hoven = 0x002496B0,
@@ -77,8 +72,9 @@ VariableAddress_t vaPlayerStructArray = {
     .BlackwaterDocks = 0x00249120,
     .AquatosSewers = 0x00249120,
     .MarcadiaPalace = 0x00249120,
-};
 #endif
+};
+
 
 VariableAddress_t vaPlayerRespawnFunc = {
 #if UYA_PAL
@@ -414,5 +410,5 @@ PlayerVTable * playerGetVTable(Player * player)
 //--------------------------------------------------------------------------------
 int playerIsDead(Player * player)
 {
-	return player->pNetPlayer->pNetPlayerData->hitPoints == 0;
+	return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
 }

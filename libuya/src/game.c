@@ -27,14 +27,16 @@
 #endif
 
 #define GAME_DEATH_BARRIER                  (*(u32*)GetAddress(&vaDeathBarrier))
-#define GAME_TIME_LIMIT                     (*(int*)GetAddress(&vaGAME_TIME_LIMIT))
-#define GAME_START_TIME                     (*(int*)((u32)GetAddress(&vaGAME_TIME_LIMIT) + 0x4))
-#define GAME_TIME_ENDGAME                   (*(u32*)((u32)GetAddress(&vaGAME_TIME_LIMIT) + 0x1f0))
+
+#define GAME_DATA                           ((GameData*)GetAddress(&vaGAME_DATA))
+#define GAME_TIME_LIMIT                     (*(int*)GetAddress(&vaGAME_DATA))
+#define GAME_START_TIME                     (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x4))
+#define GAME_TIME_ENDGAME                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x1f0))
 #define GAME_HAS_ENDED                      (GAME_TIME_ENDGAME > 0)
 // Set to Team ID that won.
-#define GAME_WINNER_TEAM_ID                 (*(int*)((u32)GetAddress(&vaGAME_TIME_LIMIT) + 0x10))
+#define GAME_WINNER_TEAM_ID                 (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x10))
 // Player id of the winner. Set to -1 for team win.
-#define GAME_WINNER_PLAYER_ID               (*(int*)((u32)GetAddress(&vaGAME_TIME_LIMIT) + 0x14))
+#define GAME_WINNER_PLAYER_ID               (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x14))
 
 VariableAddress_t vaDeathBarrier = {
 #if UYA_PAL
@@ -64,7 +66,7 @@ VariableAddress_t vaDeathBarrier = {
 #endif
 };
 
-VariableAddress_t vaGAME_TIME_LIMIT = {
+VariableAddress_t vaGAME_DATA = {
 #if UYA_PAL
 	.Lobby = 0,
 	.Bakisi = 0x00357260,
@@ -152,11 +154,6 @@ int gameGetTime(void)
     return GAME_TIME;
 }
 
-int gameGetMyClientId(void)
-{
-    return GAME_CLIENT_ID;
-}
-
 int gameIsHost(int hostId)
 {
     return hostId == GAME_HOST_ID;
@@ -212,4 +209,9 @@ void gameSetWinner(int teamOrPlayerId, int isTeam)
 {
     GAME_WINNER_TEAM_ID = teamOrPlayerId;
     GAME_WINNER_PLAYER_ID = isTeam ? -1 : teamOrPlayerId;
+}
+
+GameData* gameGetData(void)
+{
+    return GAME_DATA;
 }

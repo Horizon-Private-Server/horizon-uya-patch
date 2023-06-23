@@ -600,55 +600,40 @@ typedef struct PlayerVTable
 
 /*
  * NAME :		playerGetPad
- * 
  * DESCRIPTION :
  * 			Returns a pointer to the player's pad data.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          player:                     Target player.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_GETTER__ PadButtonStatus * playerGetPad(Player * player);
 
 /*
  * NAME :		playerPadGetButton
- * 
  * DESCRIPTION :
  * 			Returns 1 when the given player is pressing the given button combination.
  *          Returns negative on failure.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          player:                     Pointer to player's player object.
  *          buttonMask:                 Buttons to check.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_GETTER__ int playerPadGetButton(Player * player, u16 buttonMask);
 
 /*
  * NAME :		playerPadGetButtonDown
- * 
  * DESCRIPTION :
  * 			Returns 1 during the frame that the given player starts pressing the given button combination.
  *          Returns negative on failure.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          player:                     Pointer to player's player object.
  *          buttonMask:                 Buttons to check.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_GETTER__ int playerPadGetButtonDown(Player * player, u16 buttonMask);
@@ -659,33 +644,25 @@ __LIBUYA_GETTER__ int playerPadGetButtonDown(Player * player, u16 buttonMask);
  * DESCRIPTION :
  * 			Returns 1 during the frame that the given player releases the given button combination.
  *          Returns negative on failure.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          player:                     Pointer to player's player object.
  *          buttonMask:                 Buttons to check.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_GETTER__ int playerPadGetButtonUp(Player * player, u16 buttonMask);
 
 /*
  * NAME :		playerSetPlayerState
- * 
  * DESCRIPTION :
  * 			Set Player to a certain state.
  * 
  * NOTES :
- * 
  * ARGS : 
  *          player:                     Pointer to player's player object.
  *          state:                 		State to set player.
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Agent Moose" Pruitt
  */
 void playerSetPlayerState(Player * player, u8 state);
@@ -790,6 +767,6 @@ __LIBUYA_SETTER__ void playerSetPosRot(Player * player, u32 * position, u32 * ro
  * RETURN :
  * AUTHOR :			Troy "Agent Moose" Pruitt
  */
-int playerIsDead(Player * player)
+int playerIsDead(Player * player);
 
 #endif // _LIBUYA_PLAYER_H_

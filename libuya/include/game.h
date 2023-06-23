@@ -13,12 +13,146 @@
 #define _LIBUYA_GAME_H_
 
 #include <tamtypes.h>
+#include "moby.h"
 #include "common.h"
 
 /*
  * Maximum number of players in a game.
  */
 #define GAME_MAX_PLAYERS                (8)
+
+//--------------------------------------------------------
+typedef struct PlayerGameStats
+{
+    short WeaponKills[GAME_MAX_PLAYERS][7];
+    short WeaponDeaths[GAME_MAX_PLAYERS][7];
+    short WeaponShots[GAME_MAX_PLAYERS][7];
+    short WeaponShotsHitBy[GAME_MAX_PLAYERS][7];
+    float VehicleTime[GAME_MAX_PLAYERS];
+    short VehicleWeaponKills[GAME_MAX_PLAYERS];
+    short VehicleWeaponDeaths[GAME_MAX_PLAYERS];
+    short VehicleRoadKills[GAME_MAX_PLAYERS];
+    short VehicleRoadDeaths[GAME_MAX_PLAYERS];
+    short VehicleShotsFired[GAME_MAX_PLAYERS];
+    short VehicleShotsHit[GAME_MAX_PLAYERS];
+    short Kills[GAME_MAX_PLAYERS];
+    short Deaths[GAME_MAX_PLAYERS];
+    short Suicides[GAME_MAX_PLAYERS];
+    short MultiKills[GAME_MAX_PLAYERS];
+    short SniperKills[GAME_MAX_PLAYERS];
+    short WrenchKills[GAME_MAX_PLAYERS];
+    char ConquestNodesCaptured[GAME_MAX_PLAYERS];
+    char ConquestNodeSaves[GAME_MAX_PLAYERS];
+    char ConquestDefensiveKills[GAME_MAX_PLAYERS];
+    char ConquestPoints[GAME_MAX_PLAYERS];
+    char CtfFlagsCaptures[GAME_MAX_PLAYERS];
+    char CtfFlagsSaved[GAME_MAX_PLAYERS];
+    float KingHillHoldTime[GAME_MAX_PLAYERS];
+    float InternalKingHillHoldTime[GAME_MAX_PLAYERS];
+    float JuggernautTime[GAME_MAX_PLAYERS];
+    short Squats[GAME_MAX_PLAYERS];
+    short VehicleSquats[GAME_MAX_PLAYERS];
+    short TicketScore[GAME_MAX_PLAYERS];
+} PlayerGameStats;
+
+//--------------------------------------------------------
+typedef struct TeamGameStats
+{
+    short TeamTicketScore[GAME_MAX_PLAYERS];
+    char TeamUpgradesLevel1[GAME_MAX_PLAYERS];
+    char TeamUpgradesLevel2[GAME_MAX_PLAYERS];
+    char TeamUpgradesLevel3[GAME_MAX_PLAYERS];
+    float TeamCaptureTimer[GAME_MAX_PLAYERS];
+    short TeamCaptureTimerSettings[GAME_MAX_PLAYERS];
+    char NumNodesOwned[GAME_MAX_PLAYERS];
+    float PercentNodesCaptured[GAME_MAX_PLAYERS];
+    float NodeHoldTime[GAME_MAX_PLAYERS];
+    char FlagCaptureCounts[GAME_MAX_PLAYERS];
+} TeamGameStats;
+
+//--------------------------------------------------------
+typedef struct DeathMatchGameData
+{
+    int ResurrectionPts[64];
+    int Pad1;
+    int RandomSpawn;
+    int SmartSpawnPts;
+    int pad[13];
+} DeathMatchGameData;
+
+//--------------------------------------------------------
+typedef struct CTFGameData
+{
+    Moby* BlueFlagMoby[2];
+    Moby* RedFlagMoby[2];
+    Moby* GreenFlagMoby[2];
+    Moby* OrangeFlagMoby[2];
+    int TeamFlagPositions[4];
+    int pad[8];
+} CTFGameData;
+
+//--------------------------------------------------------
+typedef struct LocalPlayerYourBaseGameData
+{
+    int Team1_SpawnPts[3];
+    int Team2_SpawnPts[3];
+    int NodeResurrectionPts[8];
+    Moby* BaseMobys[8];
+    Moby* NodeMobys[8];
+    int Team1_StartBase;
+    int Team2_StartBase;
+    int BaseTeam[8];
+    int NodeTeam[8];
+    int OrigBaseTeam[8];
+    int BaseHealth[8];
+    float TotalHudHealth[8];
+    float PrevHudHealth[8];
+    float HudHealth[8];
+    int NumBases;
+    int WinScore;
+    int Team3_SpawnPts[3];
+    int Team4_SpawnPts[3];
+    Moby* HomeNodeMobys[2];
+    int pad[8];
+} LocalPlayerYourBaseGameData;
+
+//--------------------------------------------------------
+typedef struct ScoreboardItem
+{
+    int TeamId;
+    int UNK;
+    int Value;
+} ScoreboardItem;
+
+//--------------------------------------------------------
+typedef struct GameData
+{
+    int TimeEnd;
+    int TimeStart;
+    int GameState;
+    int NumTeams;
+    int WinningTeam;
+    int WinningPlayer;
+    int BaseHoldTime;
+    int FragDisplayCount;
+    char FragMsg[0x3C];
+    int GameEndReceived;
+    int GameEndReason;
+    int GameIsOver;
+    int NumNodes;
+    int NumStartPlayers;
+    int NumStartTeams;
+    int MyTotalSquats;
+    int MyTotalTimeSquatted;
+    int MyTotalGangSquats;
+    int TeamCaptain[GAME_MAX_PLAYERS];
+    PlayerGameStats PlayerStats;
+    TeamGameStats TeamStats;
+    LocalPlayerYourBaseGameData * AllYourBaseGameData;
+    CTFGameData * CtfGameData;
+    DeathMatchGameData * DeathmatchGameData;
+} GameData;
+//--------------------------------------------------------
 
 /*
  * NAME :		isInGame
@@ -120,7 +254,7 @@ int gameAmIHost(void);
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-__LIBUYA_GETTER__ int gameGetHostId(void)
+__LIBUYA_GETTER__ int gameGetHostId(void);
 
 /*
  * NAME :		gameGetMyClientId
@@ -192,5 +326,17 @@ __LIBUYA_GETTER__ float gameGetDeathHeight(void);
  * AUTHOR :			Troy "Agent Moose" Pruitt
  */
 __LIBUYA_SETTER__ void gameSetDeathHeight(float height);
+
+/*
+ * NAME :		gameGetData
+ * 
+ * DESCRIPTION :
+ * 			Gets the game data.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+__LIBUYA_GETTER__ GameData* gameGetData(void);
 
 #endif // _LIBUYA_GAME_H_

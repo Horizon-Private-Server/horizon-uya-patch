@@ -1,15 +1,6 @@
 #include "math.h"
 
 //--------------------------------------------------------
-#define MATH_COSF_FUNC                  (0x00135878)
-#define MATH_ASINF_FUNC                 (0x00136278)
-#define MATH_SQRTF_FUNC                 (0x00136C90) 
-#define MATH_POWF_FUNC                  (0x00136788)
-#define MATH_FABS_FUNC                  (0x00135300)
-#define MATH_FABSF_FUNC                 (0x00135960)
-#define MATH_FMOD_FUNC                  (0x00135C18)
-
-//--------------------------------------------------------
 // -- https://stackoverflow.com/a/28050328
 float cosf(float x)
 {

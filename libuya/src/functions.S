@@ -246,17 +246,13 @@ FUNCTION(strncpy, 0x00120d28)
 #------------------------- MATH -------------------------
 #--------------------------------------------------------
 # Currently not ported.
-#ifdef UYA_PAL
-
-#else
 # FUNCTION(cosf, 0x00136aa8)
 FUNCTION(asinf, 0x00136278) # not ported
-FUNCTION(sqrtf, 0x00136C90) # not ported
+FUNCTION(sqrtf, 0x0011a808)
 FUNCTION(powf, 0x00136788) # not ported
-FUNCTION(fabsf, 0x00135960) # not ported
-FUNCTION(fptodp, 0x00131918) # not ported
-FUNCTION(floorf, 0x001359A8) # not ported
-#endif
+FUNCTION(fabsf, 0x0011a550)
+FUNCTION(fptodp, 0x0011c428)
+FUNCTION(floorf, 0x00136ba8)
 
 #--------------------------------------------------------
 #----------------------- GRAPHICS -----------------------
