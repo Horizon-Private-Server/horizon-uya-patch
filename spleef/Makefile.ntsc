@@ -1,0 +1,6 @@
+EE_ELF = spleef-10684.elf
+EE_BIN = spleef-10684.bin
+EE_LIBS = -luyantsc
+EE_DEFS = -DUYA_NTSC -DDEBUG
+
+include ${CURDIR}/Makefile.defs

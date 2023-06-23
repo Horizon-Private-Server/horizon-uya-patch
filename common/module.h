@@ -16,6 +16,7 @@
 
 
 #include <tamtypes.h>
+#include <libuya/gamesettings.h>
 #include "config.h"
 
 // Forward declarations
@@ -106,6 +107,31 @@ typedef struct GameModule
 
 } GameModule;
 
+typedef struct UpdateGameStateRequest {
+	char TeamsEnabled;
+    char PADDING;
+    short Version;
+	int RoundNumber;
+	int TeamScores[GAME_MAX_PLAYERS];
+	char ClientIds[GAME_MAX_PLAYERS];
+	char Teams[GAME_MAX_PLAYERS];
+} UpdateGameStateRequest_t;
 
+typedef struct CustomGameModeStats
+{
+  u8 Payload[1024 * 6];
+} __attribute__((aligned(16))) CustomGameModeStats_t;
+
+typedef struct PatchStateContainer
+{
+    int UpdateGameState;
+    UpdateGameStateRequest_t GameStateUpdate;
+    int UpdateCustomGameStats;
+    CustomGameModeStats_t CustomGameStats;
+    GameSettings GameSettingsAtStart;
+    int CustomGameStatsSize;
+    int ClientsReadyMask;
+    int AllClientsReady;
+} PatchStateContainer_t;
 
 #endif // _MODULE_H_
