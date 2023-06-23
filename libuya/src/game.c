@@ -10,7 +10,7 @@
 /*
  * Game time (ms).
  */
-#define GAME_TIME                           (*(int*)0x002257D8)
+#define GAME_TIME                           (*(int*)0x001a5df8)
 #define GAME_MAP_ID                         (*(int*)0x001f83a8)
 #define GAME_CLIENT_ID                      (*(int*)0x001a5cd8)
 #define GAME_HOST_ID                        (*(int*)0x001a5e3c)
@@ -20,13 +20,21 @@
 /*
  * Game time (ms).
  */
-#define GAME_TIME                           (*(int*)0x00225958)
+#define GAME_TIME                           (*(int*)0x001a5f78)
 #define GAME_MAP_ID                         (*(int*)0x001F8528)
 #define GAME_CLIENT_ID                      (*(int*)0x001a5e58)
 #define GAME_HOST_ID                        (*(int*)0x001a5fbc)
 #endif
 
 #define GAME_DEATH_BARRIER                  (*(u32*)GetAddress(&vaDeathBarrier))
+#define GAME_TIME_LIMIT                     (*(int*)GetAddress(&vaGAME_TIME_LIMIT))
+#define GAME_START_TIME                     (*(int*)((u32)GetAddress(&vaGAME_TIME_LIMIT) + 0x4))
+#define GAME_TIME_ENDGAME                   (*(u32*)((u32)GetAddress(&vaGAME_TIME_LIMIT) + 0x1f0))
+#define GAME_HAS_ENDED                      (GAME_TIME_ENDGAME > 0)
+// Set to Team ID that won.
+#define GAME_WINNER_TEAM_ID                 (*(int*)((u32)GetAddress(&vaGAME_TIME_LIMIT) + 0x10))
+// Player id of the winner. Set to -1 for team win.
+#define GAME_WINNER_PLAYER_ID               (*(int*)((u32)GetAddress(&vaGAME_TIME_LIMIT) + 0x14))
 
 VariableAddress_t vaDeathBarrier = {
 #if UYA_PAL
@@ -53,6 +61,34 @@ VariableAddress_t vaDeathBarrier = {
     .BlackwaterDocks = 0x00247f30,
     .AquatosSewers = 0x00247f30,
     .MarcadiaPalace = 0x00247f30,
+#endif
+};
+
+VariableAddress_t vaGAME_TIME_LIMIT = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00357260,
+	.Hoven = 0x003573A0,
+	.OutpostX12 = 0x0034F2A0,
+    .KorgonOutpost = 0x0034F120,
+	.Metropolis = 0x0034F160,
+	.BlackwaterCity = 0x0034F120,
+	.CommandCenter = 0x0035FCE0,
+    .BlackwaterDocks = 0x0035FE20,
+    .AquatosSewers = 0x0035FE60,
+    .MarcadiaPalace = 0x0035FDE0,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x003573E0,
+	.Hoven = 0x00357520,
+	.OutpostX12 = 0x0034F420,
+    .KorgonOutpost = 0x0034F2A0,
+	.Metropolis = 0x0034F2E0,
+	.BlackwaterCity = 0x0034F2A0,
+	.CommandCenter = 0x0035FE60,
+    .BlackwaterDocks = 0x0035FFA0,
+    .AquatosSewers = 0x0035FFE0,
+    .MarcadiaPalace = 0x0035FF60,
 #endif
 };
 
@@ -101,6 +137,16 @@ __LIBUYA_GETTER__ int isSceneLoading(void)
     return SCENE_LOADED != 1;
 }
 
+int gameHasEnded(void)
+{
+    return GAME_HAS_ENDED;
+}
+
+int gameGetFinishedExitTime(void)
+{
+    return GAME_TIME_ENDGAME;
+}
+
 int gameGetTime(void)
 {
     return GAME_TIME;
@@ -111,9 +157,24 @@ int gameGetMyClientId(void)
     return GAME_CLIENT_ID;
 }
 
+int gameIsHost(int hostId)
+{
+    return hostId == GAME_HOST_ID;
+}
+
 int gameAmIHost(void)
 {
     return GAME_CLIENT_ID == GAME_HOST_ID;
+}
+
+int gameGetHostId(void)
+{
+    return GAME_HOST_ID;
+}
+
+int gameGetMyClientId(void)
+{
+    return GAME_CLIENT_ID;
 }
 
 int gameGetCurrentMapId(void)
@@ -145,4 +206,10 @@ float gameGetDeathHeight(void)
 void gameSetDeathHeight(float height)
 {
     GAME_DEATH_BARRIER = height;
+}
+
+void gameSetWinner(int teamOrPlayerId, int isTeam)
+{
+    GAME_WINNER_TEAM_ID = teamOrPlayerId;
+    GAME_WINNER_PLAYER_ID = isTeam ? -1 : teamOrPlayerId;
 }

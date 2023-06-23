@@ -335,6 +335,8 @@ FUNCTION(internal_wadGetSectors, 0x00194fc8)
 #--------------------------------------------------------
 VARIABLE_FUNCTION(internal_SetPlayerState, vaSetPlayerStateFunc)
 VARIABLE_FUNCTION(internal_HurtPlayer, vaHurtPlayerFunc)
+VARIABLE_FUNCTION(playerRespawn, vaPlayerRespawnFunc)
+VARIABLE_FUNCTION(internal_playerSetPosRot, vaPlayerSetPosRotFunc)
 
 #--------------------------------------------------------
 #-------------------------- MOBY ------------------------

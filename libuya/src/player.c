@@ -78,8 +78,35 @@ VariableAddress_t vaPlayerStructArray = {
     .AquatosSewers = 0x00249120,
     .MarcadiaPalace = 0x00249120,
 };
-
 #endif
+
+VariableAddress_t vaPlayerRespawnFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x004fa320,
+	.Hoven = 0x004fc438,
+	.OutpostX12 = 0x004f1d10,
+    .KorgonOutpost = 0x004ef4a8,
+	.Metropolis = 0x004ee7f8,
+	.BlackwaterCity = 0x004ec090,
+	.CommandCenter = 0x004ec058,
+    .BlackwaterDocks = 0x004ee8d8,
+    .AquatosSewers = 0x004edbd8,
+    .MarcadiaPalace = 0x004ed558,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004f7ba0,
+	.Hoven = 0x004f9bf8,
+	.OutpostX12 = 0x004ef510,
+    .KorgonOutpost = 0x004ecd28,
+	.Metropolis = 0x004ec078,
+	.BlackwaterCity = 0x004e9890,
+	.CommandCenter = 0x004e9a18,
+    .BlackwaterDocks = 0x004ec258,
+    .AquatosSewers = 0x004eb598,
+    .MarcadiaPalace = 0x004eaed8,
+#endif
+};
 
 // 
 extern const PadHistory DefaultPadHistory;
@@ -340,4 +367,52 @@ int playerGetHealth(Player * player)
         : "r" (&CurrentHealth)
     );
     return CurrentHealth;
+}
+
+//--------------------------------------------------------------------------------
+VariableAddress_t vaPlayerSetPosRotFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00509dc0,
+	.Hoven = 0x0050bed8,
+	.OutpostX12 = 0x005017b0,
+    .KorgonOutpost = 0x004fef48,
+	.Metropolis = 0x004fe298,
+	.BlackwaterCity = 0x004fbb30,
+	.CommandCenter = 0x004fbaf8,
+    .BlackwaterDocks = 0x004fe378,
+    .AquatosSewers = 0x004fd678,
+    .MarcadiaPalace = 0x004fcff8,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x005075d0,
+	.Hoven = 0x00509628,
+	.OutpostX12 = 0x004fef40,
+    .KorgonOutpost = 0x004fc758,
+	.Metropolis = 0x004fbaa8,
+	.BlackwaterCity = 0x004f92c0,
+	.CommandCenter = 0x004f9448,
+    .BlackwaterDocks = 0x004f92c0,
+    .AquatosSewers = 0x004fafc8,
+    .MarcadiaPalace = 0x004fa908,
+#endif
+};
+void playerSetPosRot(Player * player, u32 * position, u32 * rotation)
+{
+    internal_playerSetPosRot(player, position, rotation, 0, 1, 1, 1);
+}
+
+//--------------------------------------------------------------------------------
+PlayerVTable * playerGetVTable(Player * player)
+{
+    if (!player)
+        return NULL;
+
+    return (PlayerVTable*)player->Guber.Vtable;
+}
+
+//--------------------------------------------------------------------------------
+int playerIsDead(Player * player)
+{
+	return player->pNetPlayer->pNetPlayerData->hitPoints == 0;
 }

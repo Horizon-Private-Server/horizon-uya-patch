@@ -55,6 +55,30 @@ __LIBUYA_GETTER__ int isInMenus(void);
 __LIBUYA_GETTER__ int isSceneLoading(void);
 
 /*
+ * NAME :		gameHasEnded
+ * 
+ * DESCRIPTION :
+ * 			Whether the game has ended and/or is ending.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+__LIBUYA_GETTER__ int gameHasEnded(void);
+
+/*
+ * NAME :		gameGetFinishedExitTime
+ * DESCRIPTION :
+ * 			Gets the time when to leave after the game has ended.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ *          Returns 0 if the game has not ended.
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+__LIBUYA_GETTER__ int gameGetFinishedExitTime(void);
+
+/*
  * NAME :		gameGetTime
  * DESCRIPTION :
  * 			Gets the current game time in milliseconds.
@@ -64,6 +88,17 @@ __LIBUYA_GETTER__ int isSceneLoading(void);
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_GETTER__ int gameGetTime(void);
+
+/*
+ * NAME :		gameIsHost
+ * DESCRIPTION :
+ * 			Whether the given host id is the host of the game.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+int gameIsHost(int hostId);
 
 /*
  * NAME :		gameAmIHost
@@ -77,8 +112,18 @@ __LIBUYA_GETTER__ int gameGetTime(void);
 int gameAmIHost(void);
 
 /*
+ * NAME :		gameGetHostId
+ * DESCRIPTION :
+ * 			Returns the current game's host's client/dme id.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+__LIBUYA_GETTER__ int gameGetHostId(void)
+
+/*
  * NAME :		gameGetMyClientId
- * 
  * DESCRIPTION :
  * 			Returns the current client's game/dme id.
  * NOTES :
@@ -86,7 +131,7 @@ int gameAmIHost(void);
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-int gameGetMyClientId(void);
+__LIBUYA_GETTER__ int gameGetMyClientId(void);
 
 /*
  * NAME :		gameGetMyClientId

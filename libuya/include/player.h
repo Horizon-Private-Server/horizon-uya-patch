@@ -742,4 +742,54 @@ void playerSetHealth(Player * player, u8 amount);
  */
 int playerGetHealth(Player * player);
 
+/*
+ * NAME :		playerRespawn
+ * 
+ * DESCRIPTION :
+ * 			Respawns the given player.
+ * 
+ * NOTES :
+ *          Spawn point is determined internally.
+ *          This will freeze on CQ if the player hasn't picked a node to respawn to.
+ * 
+ * ARGS : 
+ *      player      :           Target player.
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void playerRespawn(Player * player);
+
+/*
+ * NAME :		playerSetPosRot
+ * 
+ * DESCRIPTION :
+ * 			Sets a given player's position and rotation.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ *      player      :           Target player.
+ *      position    :           Position.
+ *      rotation    :           Rotation.
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+__LIBUYA_SETTER__ void playerSetPosRot(Player * player, u32 * position, u32 * rotation);
+
+/*
+ * NAME :		playerIsDead
+ * DESCRIPTION :
+ * 			Returns non-zero if the given player is dead.
+ * NOTES :
+ * ARGS : 
+ *      player      :           Target player.
+ * RETURN :
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+int playerIsDead(Player * player)
+
 #endif // _LIBUYA_PLAYER_H_
