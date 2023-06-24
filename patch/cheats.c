@@ -99,116 +99,122 @@ void disableWeaponPacks(void)
  */
 
 int SpawnedPack = 0;
-void SpawnPack(u32 a0, u32 a1)
+void SpawnPack(int a0, int a1, int a2, int a3)
 {
-  VariableAddress_t vaRespawnFunc = {
+    VariableAddress_t vaRespawnTimerFunc = {
 #if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x0051a940,
-    .Hoven = 0x0051ca58,
-    .OutpostX12 = 0x00512330,
-    .KorgonOutpost = 0x0050fac8,
-    .Metropolis = 0x0050ee18,
-    .BlackwaterCity = 0x0050c6b0,
-    .CommandCenter = 0x0050c470,
-    .BlackwaterDocks = 0x0050ecf0,
-    .AquatosSewers = 0x0050dff0,
-    .MarcadiaPalace = 0x0050d970,
+        .Lobby = 0,
+        .Bakisi = 0x004e3690,
+        .Hoven = 0x004e57a8,
+        .OutpostX12 = 0x004db080,
+        .KorgonOutpost = 0x004d8818,
+        .Metropolis = 0x004d7b68,
+        .BlackwaterCity = 0x004d5400,
+        .CommandCenter = 0x004d53c8,
+        .BlackwaterDocks = 0x004d7c48,
+        .AquatosSewers = 0x004d6f48,
+        .MarcadiaPalace = 0x004d68c8,
 #else
-    .Lobby = 0,
-    .Bakisi = 0x00518138,
-    .Hoven = 0x0051a190,
-    .OutpostX12 = 0x0050faa8,
-    .KorgonOutpost = 0x0050d2c0,
-    .Metropolis = 0x0050c610,
-    .BlackwaterCity = 0x00509e28,
-    .CommandCenter = 0x00509da8,
-    .BlackwaterDocks = 0x0050c5e8,
-    .AquatosSewers = 0x0050b928,
-    .MarcadiaPalace = 0x0050b268,
+        .Lobby = 0,
+        .Bakisi = 0x004e0fd0,
+        .Hoven = 0x004e3028,
+        .OutpostX12 = 0x004D8940, // New address
+        .KorgonOutpost = 0x004d6158,
+        .Metropolis = 0x004d54a8,
+        .BlackwaterCity = 0x004d2cc0,
+        .CommandCenter = 0x004d2e48,
+        .BlackwaterDocks = 0x004d5688,
+        .AquatosSewers = 0x004d49c8,
+        .MarcadiaPalace = 0x004d4308,
 #endif
-  };
+    };
 
-  VariableAddress_t vaSpawnWeaponPackFunc = {
+    VariableAddress_t vaSpawnWeaponPackFunc = {
 #if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x004fb188,
-    .Hoven = 0x004fd2a0,
-    .OutpostX12 = 0x004f2b78,
-    .KorgonOutpost = 0x004f0310,
-    .Metropolis = 0x004ef660,
-    .BlackwaterCity = 0x004ecef8,
-    .CommandCenter = 0x004ecec0,
-    .BlackwaterDocks = 0x004ef740,
-    .AquatosSewers = 0x004eea40,
-    .MarcadiaPalace = 0x004ee3c0,
+        .Lobby = 0,
+        .Bakisi = 0x004fb188,
+        .Hoven = 0x004fd2a0,
+        .OutpostX12 = 0x004f2b78,
+        .KorgonOutpost = 0x004f0310,
+        .Metropolis = 0x004ef660,
+        .BlackwaterCity = 0x004ecef8,
+        .CommandCenter = 0x004ecec0,
+        .BlackwaterDocks = 0x004ef740,
+        .AquatosSewers = 0x004eea40,
+        .MarcadiaPalace = 0x004ee3c0,
 #else
-    .Lobby = 0,
-    .Bakisi = 0x004f8a08,
-    .Hoven = 0x004faa60,
-    .OutpostX12 = 0x004f0378,
-    .KorgonOutpost = 0x004edb90,
-    .Metropolis = 0x004ecee0,
-    .BlackwaterCity = 0x004ea6f8,
-    .CommandCenter = 0x004ea880,
-    .BlackwaterDocks = 0x004ed0c0,
-    .AquatosSewers = 0x004ec400,
-    .MarcadiaPalace = 0x004ebd40,
+        .Lobby = 0,
+        .Bakisi = 0x004f8a08,
+        .Hoven = 0x004faa60,
+        .OutpostX12 = 0x004f0378,
+        .KorgonOutpost = 0x004edb90,
+        .Metropolis = 0x004ecee0,
+        .BlackwaterCity = 0x004ea6f8,
+        .CommandCenter = 0x004ea880,
+        .BlackwaterDocks = 0x004ed0c0,
+        .AquatosSewers = 0x004ec400,
+        .MarcadiaPalace = 0x004ebd40,
 #endif
-  };
-  // Spawn Pack if Health <= zero and if not spawned already.
-  if (playerIsDead(PLAYER_STRUCT) && !SpawnedPack)
-  {
-    // Run normal function
-    ((void (*)(u32, u32))GetAddress(&vaRespawnFunc))(a0, a1);
+    };
 
-    // Spawn Pack
-    ((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(PLAYER_STRUCT);
-    // It now spawned pack, so set to true.
-    SpawnedPack = 1;
-  }
+    // Run Original Respawn Timer Hook
+	((void (*)(int, int, int, int))GetAddress(&vaRespawnTimerFunc))(a0, a1, a2, a3);
+
+    // Spawn Pack if Health <= zero and if not spawned already.
+    if (playerGetHealth(PLAYER_STRUCT) <= 0 && !SpawnedPack)
+    {
+        // Spawn Pack
+        ((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(PLAYER_STRUCT);
+        // It now spawned pack, so set to true.
+        SpawnedPack = 1;
+    }
 }
 
 void spawnWeaponPackOnDeath(void)
 {
-  VariableAddress_t vaRespawnPlayerHook = {
+    VariableAddress_t vaRespawnTimerHook = {
 #if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x00533900,
-    .Hoven = 0x00535a18,
-    .OutpostX12 = 0x0052b2f0,
-    .KorgonOutpost = 0x00528a88,
-    .Metropolis = 0x00527dd8,
-    .BlackwaterCity = 0x00525670,
-    .CommandCenter = 0x00525430,
-    .BlackwaterDocks = 0x00527cb0,
-    .AquatosSewers = 0x00526fb0,
-    .MarcadiaPalace = 0x00526930,
+        .Lobby = 0,
+        .Bakisi = 0x004b00f4,
+        .Hoven = 0x004b220c,
+        .OutpostX12 = 0x004a7ae4,
+        .KorgonOutpost = 0x004a527c,
+        .Metropolis = 0x004a45cc,
+        .BlackwaterCity = 0x004a1e64,
+        .CommandCenter = 0x004a1e5c,
+        .BlackwaterDocks = 0x004a46dc,
+        .AquatosSewers = 0x004a39dc,
+        .MarcadiaPalace = 0x004a335c,
 #else
-    .Lobby = 0,
-    .Bakisi = 0x00531080,
-    .Hoven = 0x005330d8,
-    .OutpostX12 = 0x005289f0,
-    .KorgonOutpost = 0x00526208,
-    .Metropolis = 0x00525558,
-    .BlackwaterCity = 0x00522d70,
-    .CommandCenter = 0x00522cf0,
-    .BlackwaterDocks = 0x00525530,
-    .AquatosSewers = 0x00524870,
-    .MarcadiaPalace = 0x005241b0,
+        .Lobby = 0,
+        .Bakisi = 0x004adba4,
+        .Hoven = 0x004afbfc,
+        .OutpostX12 = 0x004a5514, // New Hook
+        .KorgonOutpost = 0x004a2d2c,
+        .Metropolis = 0x004a207c,
+        .BlackwaterCity = 0x0049f894,
+        .CommandCenter = 0x0049fa4c,
+        .BlackwaterDocks = 0x004a228c,
+        .AquatosSewers = 0x004a15cc,
+        .MarcadiaPalace = 0x004a0f0c,
 #endif
-  };
+    };
 
-  // Disable normal Weapon Pack spawns
-  disableWeaponPacks();
+    // Disable normal Weapon Pack spawns
+    disableWeaponPacks();
 
-  // Hook SpawnPack
-  if (*(u32*)GetAddress(&vaRespawnPlayerHook) != (0x0C000000 | ((u32)(&SpawnPack) >> 2)))
-    HOOK_JAL(GetAddress(&vaRespawnPlayerHook), &SpawnPack);
+    // Hook CTF/Siege SpawnPack
+    if (*(u32*)GetAddress(&vaRespawnTimerHook) != (0x0C000000 | ((u32)(&SpawnPack) >> 2)))
+        HOOK_JAL(GetAddress(&vaRespawnTimerHook), &SpawnPack);
+    
+    // Hook DM SpawnPack
+    if (*(u32*)((u32)GetAddress(&vaRespawnTimerHook) + 0x2100) != (0x0C000000 | ((u32)(&SpawnPack) >> 2)))
+        HOOK_JAL(((u32)GetAddress(&vaRespawnTimerHook) + 0x2100), &SpawnPack);
 
-  // if Health is greater than zero and pack has spawned
-  if (playerIsDead(PLAYER_STRUCT))
-    SpawnedPack = 0;
+    // if Health is greater than zero and pack has spawned
+    // This will be checking constantly, instead of just when the player dies.
+    if (playerGetHealth(PLAYER_STRUCT) > 0)
+        SpawnedPack = 0;
 }
 
 /*
