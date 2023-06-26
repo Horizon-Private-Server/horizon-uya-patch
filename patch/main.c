@@ -820,7 +820,7 @@ int main(void)
 		// Patch Kill Stealing
 		// patchKillStealing();
 
-		// Patch Death Shooting
+		// Patch Dead Shooting
 		// patchDeadShooting();
 
 		// close config menu on transition to lobby
