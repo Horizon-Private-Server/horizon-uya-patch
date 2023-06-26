@@ -348,21 +348,28 @@ void playerSetHealth(Player * player, u8 amount)
 
 int playerGetHealth(Player * player)
 {
-    // Grab address where math is done
-    int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
-    // Remove math.
-    *(u32*)math = 0;
-    // Run normal function
-    internal_HurtPlayer(player, 1);
-    // Revert back to subtraction
-    *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
-    float CurrentHealth;
-    asm __volatile__ (
-        "swc1 $f0, 0x0(%0);"
-        : 
-        : "r" (&CurrentHealth)
-    );
-    return CurrentHealth;
+    // // Grab address where math is done
+    // int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
+    // // Remove math.
+    // *(u32*)math = 0;
+    // // Run normal function
+    // internal_HurtPlayer(player, 1);
+    // // Revert back to subtraction
+    // *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
+    // float CurrentHealth;
+    // asm __volatile__ (
+    //     "swc1 $f0, 0x0(%0);"
+    //     : 
+    //     : "r" (&CurrentHealth)
+    // );
+    // return CurrentHealth;
+    return player->pNetPlayer->pNetPlayerData->hitPoints;
+
+}
+//--------------------------------------------------------------------------------
+int playerIsDead(Player * player)
+{
+	return playerGetHealth(player) <= 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -405,10 +412,4 @@ PlayerVTable * playerGetVTable(Player * player)
         return NULL;
 
     return (PlayerVTable*)player->Guber.Vtable;
-}
-
-//--------------------------------------------------------------------------------
-int playerIsDead(Player * player)
-{
-	return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
 }
