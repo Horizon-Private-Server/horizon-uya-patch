@@ -311,7 +311,7 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
 #endif
 	};
 	// if player is already dead return 0
-	if (target->Health <= 0)
+	if (player->pNetPlayer->pNetPlayerData->hitPoints <= 0)
 		return 0;
 
 	// pass through

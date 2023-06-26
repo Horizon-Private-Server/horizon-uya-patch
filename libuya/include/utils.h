@@ -84,6 +84,6 @@ int isInIopMemory(void* p);
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-int ConvertJALtoAddress(int instruction)
+int ConvertJALtoAddress(int instruction);
 
 #endif // _LIBUYA_UTILS_H_
