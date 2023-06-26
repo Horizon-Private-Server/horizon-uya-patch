@@ -360,14 +360,114 @@ void patchKillStealing(void)
 		.MarcadiaPalace = 0x004ea190,
 #endif
 	};
-	static int the_hook = GetAddress(&vaWhoHitMeHook);
-	static int the_patch = 0x0C000000 | ((u32)&patchKillStealing_Hook >> 2);
+	int the_hook = GetAddress(&vaWhoHitMeHook);
+	int the_patch = 0x0C000000 | ((u32)&patchKillStealing_Hook >> 2);
 	// static int the_original_jal;
 	if (*(u32*)the_hook != the_patch)
 	{
 		// the_original_jal = ConvertJALtoAddress(*(u32*)the_hook);
 		*(u32*)the_hook = the_patch;
 	}
+}
+
+/*
+ * NAME :		patchDeadShooting_Hook
+ * 
+ * DESCRIPTION :
+ * 			If player is dead, don't let them shoot.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+int patchDeadShooting_Hook(int pad)
+{
+	VariableAddress_t vaShootingFunc = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x00495708,
+		.Hoven = 0x00497820,
+		.OutpostX12 = 0x0048d0f8,
+		.KorgonOutpost = 0x0048a7c8,
+		.Metropolis = 0x00489be0,
+		.BlackwaterCity = 0x00487478,
+		.CommandCenter = 0x00487470,
+		.BlackwaterDocks = 0x00489cf0,
+		.AquatosSewers = 0x00488ff0,
+		.MarcadiaPalace = 0x00488970,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00493718,
+		.Hoven = 0x00495770,
+		.OutpostX12 = 0x0048b088,
+		.KorgonOutpost = 0x004887d8,
+		.Metropolis = 0x00487bf0,
+		.BlackwaterCity = 0x00485408,
+		.CommandCenter = 0x004855c0,
+		.BlackwaterDocks = 0x00487e00,
+		.AquatosSewers = 0x00487140,
+		.MarcadiaPalace = 0x00486a80,
+#endif
+	};
+	// Get player struct from pad
+	int pStruct = (*(u32*)((u32)pad + 0x570)) - 0x430c;
+	Player * p = (Player*)pStruct;
+	// if player health is zero or less, return 0.
+	if (p->pNetPlayer->pNetPlayerData->hitPoints <= 0)
+		return 0;
+
+	// If not dead, run normal function.
+	return ((int (*)(int))GetAddress(&vaShootingFunc))(pad);
+}
+/*
+ * NAME :		patchDeathShooting
+ * 
+ * DESCRIPTION :
+ * 			Patches the shooting hook with patchDeadShooting_Hook
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void patchDeadShooting(void)
+{
+	VariableAddress_t vaShootingHook = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x00532a0c,
+		.Hoven = 0x00534b24,
+		.OutpostX12 = 0x0052a3fc,
+		.KorgonOutpost = 0x00527b94,
+		.Metropolis = 0x00526ee4,
+		.BlackwaterCity = 0x0052477c,
+		.CommandCenter = 0x0052453c,
+		.BlackwaterDocks = 0x00526dbc,
+		.AquatosSewers = 0x005260bc,
+		.MarcadiaPalace = 0x00525a3c,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x0053018c,
+		.Hoven = 0x005321e4,
+		.OutpostX12 = 0x00527afc,
+		.KorgonOutpost = 0x00525314,
+		.Metropolis = 0x00524664,
+		.BlackwaterCity = 0x00521e7c,
+		.CommandCenter = 0x00521dfc,
+		.BlackwaterDocks = 0x0052463c,
+		.AquatosSewers = 0x0052397c,
+		.MarcadiaPalace = 0x005232bc,
+#endif
+	};
+	if (*(u32*)GetAddress(&vaShootingHook) != 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2))
+		*(u32*)GetAddress(&vaShootingHook) = 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2);
 }
 
 /*
@@ -719,6 +819,9 @@ int main(void)
 
 		// Patch Kill Stealing
 		// patchKillStealing();
+
+		// Patch Death Shooting
+		// patchDeadShooting();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
