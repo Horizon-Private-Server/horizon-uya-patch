@@ -268,6 +268,109 @@ void runCameraSpeedPatch(void)
 }
 
 /*
+ * NAME :		patchKillStealing_Hook
+ * 
+ * DESCRIPTION :
+ * 			Filters out hits when player is already dead.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
+{
+	VariableAddress_t vaWhoHitMeFunc = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x004f8890,
+		.Hoven = 0x004fa9a8,
+		.OutpostX12 = 0x004f0280,
+		.KorgonOutpost = 0x004eda18,
+		.Metropolis = 0x004ecd68,
+		.BlackwaterCity = 0x004ea600,
+		.CommandCenter = 0x004ea5c8,
+		.BlackwaterDocks = 0x004ece48,
+		.AquatosSewers = 0x004ec148,
+		.MarcadiaPalace = 0x004ebac8,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x004f6110,
+		.Hoven = 0x004f8168,
+		.OutpostX12 = 0x004eda80,
+		.KorgonOutpost = 0x004eb298,
+		.Metropolis = 0x004ea5e8,
+		.BlackwaterCity = 0x004e7e00,
+		.CommandCenter = 0x004e7f88,
+		.BlackwaterDocks = 0x004ea7c8,
+		.AquatosSewers = 0x004e9b08,
+		.MarcadiaPalace = 0x004e9448,
+#endif
+	};
+	// if player is already dead return 0
+	if (target->Health <= 0)
+		return 0;
+
+	// pass through
+	return ((int (*)(Player *, Moby *, u64))GetAddress(&vaWhoHitMeFunc))(target, damageSource, a2);
+}
+/*
+ * NAME :		patchKillStealing
+ * 
+ * DESCRIPTION :
+ * 			Patches who hit me on weapon hit with patchKillStealing_Hook.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void patchKillStealing(void)
+{
+	VariableAddress_t vaWhoHitMeHook = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x004f95d8,
+		.Hoven = 0x004fb6f0,
+		.OutpostX12 = 0x004f0fc8,
+		.KorgonOutpost = 0x004ee760,
+		.Metropolis = 0x004edab0,
+		.BlackwaterCity = 0x004eb348,
+		.CommandCenter = 0x004eb310,
+		.BlackwaterDocks = 0x004edb90,
+		.AquatosSewers = 0x004ece90,
+		.MarcadiaPalace = 0x004ec810,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x004f6e58,
+		.Hoven = 0x004f8eb0,
+		.OutpostX12 = 0x004ee7C8,
+		.KorgonOutpost = 0x004ebfe0,
+		.Metropolis = 0x004eb330,
+		.BlackwaterCity = 0x004e8b48,
+		.CommandCenter = 0x004e8cd0,
+		.BlackwaterDocks = 0x004eb510,
+		.AquatosSewers = 0x004ea850,
+		.MarcadiaPalace = 0x004ea190,
+#endif
+	};
+	static int the_hook = GetAddress(&vaWhoHitMeHook);
+	static int the_patch = 0x0C000000 | ((u32)&patchKillStealing_Hook >> 2);
+	// static int the_original_jal;
+	if (*(u32*)the_hook != the_patch)
+	{
+		// the_original_jal = ConvertJALtoAddress(*(u32*)the_hook);
+		*(u32*)the_hook = the_patch;
+	}
+}
+
+/*
  * NAME :		runGameStartMessager
  * 
  * DESCRIPTION :
@@ -613,6 +716,9 @@ int main(void)
 	{
 		// Run Game Rules if in game.
 		grGameStart();
+
+		// Patch Kill Stealing
+		// patchKillStealing();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
