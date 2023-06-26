@@ -22,3 +22,9 @@ int isInIopMemory(void* p)
     u32 upper = (u32)p >> 16;
     return upper >= 0x1C00 && upper < 0x1C20;
 }
+
+//--------------------------------------------------------------------------------
+int ConvertJALtoAddress(int instruction)
+{
+	return ((instruction & 0x03FFFFFF) << 2);
+}

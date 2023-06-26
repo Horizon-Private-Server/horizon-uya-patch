@@ -469,11 +469,19 @@ typedef struct Player
 	};
     char unk_c0[0x60];
     VECTOR Velocity;                                         		// 0x120
-    char unk_130[0x1f0];											// 0x130
+    char unk_130[0x1c0];											// 0x130
+	int StateTimer;													// 0x2F0
+	int StateTypeTimer;												// 0x2F4
+	int SubStateTimer;												// 0x2F8
+	char unk_2fc[0x20];
+	short RespawnTimer;												// 0x31C
+	char unk_31e[0x2];
     short CantMoveTimer;                                            // 0x320
     char unk_322[0x06];
     float WeaponCooldownTimer;                                      // 0x328
-    char unk_32c[0x124];
+    char unk_32c[0x30];
+	int IsChargebooting;											// 0x35C
+	char unk_360[0xf0];
 	HeroItem Weapon;												// 0x450
 	char unk_480[0x20];
 	HeroItem Boots;													// 0x4A0
@@ -501,7 +509,10 @@ typedef struct Player
 	int TopOfPlayerStruct;											// 0x12D0
     char unk_12d4[0x4];
     int PlayerId;                                                   // 0x12D8
-    char unk_12dc[0x72c];
+	char unk_12dc[0x34];
+    // This int is checked when chargebooting
+	int unk_1310;													// 0x1310
+	char unk_1314[0x6f4];
 	union {
         struct {
             char RaisedGunArm;										// 0x1A08

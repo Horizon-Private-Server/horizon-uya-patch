@@ -69,4 +69,21 @@ int isInScratchpadMemory(void* p);
  */
 int isInIopMemory(void* p);
 
+/*
+ * NAME :		ConvertJALtoAddress
+ * 
+ * DESCRIPTION :
+ * 			Returns converted address from JAL.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ *          p     :           Pointer.
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+int ConvertJALtoAddress(int instruction)
+
 #endif // _LIBUYA_UTILS_H_
