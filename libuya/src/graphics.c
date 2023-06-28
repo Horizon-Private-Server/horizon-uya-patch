@@ -275,3 +275,36 @@ void gfxSetIsProgressiveScan(int on)
 {
     IS_PROGRESSIVE_SCAN = on;
 }
+
+void gfxOcclusion(int OnOff)
+{
+    VariableAddress_t vaOcclusionAddr = {
+#if UYA_PAL
+        .Lobby = 0,
+        .Bakisi = 0x00248094,
+        .Hoven = 0x00248294,
+        .OutpostX12 = 0x00248194,
+        .KorgonOutpost = 0x00248014,
+        .Metropolis = 0x00248094,
+        .BlackwaterCity = 0x00248014,
+        .CommandCenter = 0x00247c14,
+        .BlackwaterDocks = 0x00247d14,
+        .AquatosSewers = 0x00247d14,
+        .MarcadiaPalace = 0x00247d14,
+#else
+        .Lobby = 0,
+        .Bakisi = 0x00248214,
+        .Hoven = 0x00248414,
+        .OutpostX12 = 0x00248314,
+        .KorgonOutpost = 0x00248194,
+        .Metropolis = 0x00248214,
+        .BlackwaterCity = 0x00248194,
+        .CommandCenter = 0x00247d94,
+        .BlackwaterDocks = 0x00247e94,
+        .AquatosSewers = 0x00247e94,
+        .MarcadiaPalace = 0x00247e94,
+#endif
+    };
+    // int OnOff = (OnOff == 1) ? 2 : OnOff;
+    *(u32*)GetAddress(&vaOcclusionAddr) = OnOff;
+}

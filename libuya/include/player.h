@@ -374,9 +374,9 @@ typedef struct HeroGround {
 	/*  30 */ VECTOR point;
 	/*  40 */ VECTOR lastGoodPos;
 	/*  50 */ VECTOR externalBootGrav;
-	/*  60 */ float feetHeights[2];
-	/*  68 */ float pitchSlopes[2];
-	/*  70 */ float rollSlopes[2];
+	/*  60 */ float feetHeights[1];
+	/*  68 */ float pitchSlopes[1];
+	/*  70 */ float rollSlopes[1];
 	/*  78 */ float height;
 	/*  7c */ float dist;
 	/*  80 */ float slope;
@@ -469,7 +469,9 @@ typedef struct Player
 	};
     char unk_c0[0x60];
     VECTOR Velocity;                                         		// 0x120
-    char unk_130[0x1c0];											// 0x130
+    char unk_130[0x1b0];											// 0x130
+	int OnGround;													// 0x2E0
+	char unk_2e4[0xc];
 	int StateTimer;													// 0x2F0
 	int StateTypeTimer;												// 0x2F4
 	int SubStateTimer;												// 0x2F8
@@ -481,7 +483,13 @@ typedef struct Player
     float WeaponCooldownTimer;                                      // 0x328
     char unk_32c[0x30];
 	int IsChargebooting;											// 0x35C
-	char unk_360[0xf0];
+	char unk_360[0x10];
+	// Magnetgic: 0 = No, 2 = Yes.
+	short int magnetic;												// 0x370
+	char unk_372[0xae];
+	Moby * StandingOnMoby;											// 0x420
+	Moby * SkinMoby2;												// 0x424
+	char unk_428[0x28];
 	HeroItem Weapon;												// 0x450
 	char unk_480[0x20];
 	HeroItem Boots;													// 0x4A0

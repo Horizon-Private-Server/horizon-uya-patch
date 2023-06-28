@@ -127,4 +127,21 @@ int gfxGetFontWidth(const char * string, int length, float scale);
 int gfxGetIsProgressiveScan(void);
 void gfxSetIsProgressiveScan(int on);
 
+/*
+ * NAME :		gfxOcclusion
+ * 
+ * DESCRIPTION :
+ * 			Turn on/off Occlusion (Render All)
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ *          OnOff: 0 = Show All, 2 = Default
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void gfxOcclusion(int OnOff);
+
 #endif // _LIBUYA_GRAPHICS_H_
