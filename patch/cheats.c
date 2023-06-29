@@ -118,7 +118,7 @@ void SpawnPack(int a0, int a1, int a2, int a3)
         .Lobby = 0,
         .Bakisi = 0x004e0fd0,
         .Hoven = 0x004e3028,
-        .OutpostX12 = 0x004D8940, // New address
+        .OutpostX12 = 0x004D8940,
         .KorgonOutpost = 0x004d6158,
         .Metropolis = 0x004d54a8,
         .BlackwaterCity = 0x004d2cc0,
@@ -189,7 +189,7 @@ void spawnWeaponPackOnDeath(void)
         .Lobby = 0,
         .Bakisi = 0x004adba4,
         .Hoven = 0x004afbfc,
-        .OutpostX12 = 0x004a5514, // New Hook
+        .OutpostX12 = 0x004a5514,
         .KorgonOutpost = 0x004a2d2c,
         .Metropolis = 0x004a207c,
         .BlackwaterCity = 0x0049f894,
