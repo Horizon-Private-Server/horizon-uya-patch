@@ -116,4 +116,6 @@ typedef struct GameOptions
  */
 GameSettings * gameGetSettings(void);
 
+GameOptions * gameGetOptions(void);
+
 #endif // _LIBUYA_GAMESETTINGS_H_
