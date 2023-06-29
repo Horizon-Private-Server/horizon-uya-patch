@@ -26,6 +26,7 @@
 #include <libuya/net.h>
 #include <libuya/interop.h>
 #include <libuya/utils.h>
+#include <libuya/player.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -311,7 +312,7 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
 #endif
 	};
 	// if player is already dead return 0
-	if (player->pNetPlayer->pNetPlayerData->hitPoints <= 0)
+	if (target->pNetPlayer->pNetPlayerData->hitPoints <= 0)
 		return 0;
 
 	// pass through
@@ -423,6 +424,7 @@ int patchDeadShooting_Hook(int pad)
 	// If not dead, run normal function.
 	return ((int (*)(int))GetAddress(&vaShootingFunc))(pad);
 }
+
 /*
  * NAME :		patchDeathShooting
  * 
@@ -818,10 +820,10 @@ int main(void)
 		grGameStart();
 
 		// Patch Kill Stealing
-		// patchKillStealing();
+		patchKillStealing();
 
 		// Patch Dead Shooting
-		// patchDeadShooting();
+		patchDeadShooting();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
