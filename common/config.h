@@ -15,12 +15,14 @@ typedef struct PatchGameConfig
   char disableWeaponPacks;
   char disableV2s;
   char disableHealthBoxes;
+  char autoRespawn;
 } PatchGameConfig_t;
 
 enum CUSTOM_MAP_ID
 {
   CUSTOM_MAP_NONE = 0,
   CUSTOM_MAP_MARAXUS_PRISON,
+  CUSTOM_MAP_SPLEEF,
 
   // always at the end to indicate how many items there are
   CUSTOM_MAP_COUNT

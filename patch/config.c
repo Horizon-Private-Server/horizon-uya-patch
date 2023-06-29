@@ -85,6 +85,7 @@ void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, i
 void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int* state);
 
 int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value);
+int menuStateHandler_SelectedWorldOverride(MenuElem_ListData_t* listData, char* value);
 int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, char* value);
 
 // list select handlers
@@ -117,13 +118,24 @@ MenuElem_ListData_t dataCustomMaps = {
     {
       "None",
       "Maraxus Prison",
+      "Spleef",
+    }
+};
+
+// world override list item
+MenuElem_ListData_t dataCustomWorlds = {
+    &gameConfig.customWorld,
+    menuStateHandler_SelectedWorldOverride,
+    CUSTOM_WORLD_COUNT,
+    {
+      "Off",
+      "On",
     }
 };
 
 // maps with their own exclusive gamemode
 char dataCustomMapsWithExclusiveGameMode[] = {
-  // enter map id
-  // eg: CUSTOM_MAP_MARAXUS_PRISON
+  CUSTOM_MAP_SPLEEF,
 };
 const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithExclusiveGameMode)/sizeof(char);
 
@@ -171,13 +183,15 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Map override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
-  { "Gamemode override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
+  { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
+  // { "World Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomWorlds },
+  // { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Weapon Pack Spawning", listActionHandler, menuStateAlwaysEnabledHandler, &dataWeaponPacks },
   { "V2s", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableV2s },
   { "Health Boxes", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableHealthBoxes },
+  { "Auto Respawn", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.autoRespawn },
 
 };
 
@@ -207,6 +221,7 @@ const int tabsCount = sizeof(tabElements)/sizeof(TabElem_t);
 //------------------------------------------------------------------------------
 int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value)
 {
+  int i;
   if (!value)
     return 0;
 
@@ -241,6 +256,31 @@ int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* va
     }
   }
   */
+
+  // hide maps with gamemode override
+  if (gm > CUSTOM_MODE_NONE)
+  {
+    for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
+    {
+      if (v == dataCustomMapsWithExclusiveGameMode[i])
+      {
+        *value = CUSTOM_MAP_NONE;
+        return 0;
+      }
+    }
+  }
+
+  // success
+  return 1;
+}
+
+int menuStateHandler_SelectedWorldOverride(MenuElem_ListData_t* listData, char* value)
+{
+  if (!value)
+    return 0;
+
+  char gm = gameConfig.customModeId;
+  char v = *value;
 
   // success
   return 1;

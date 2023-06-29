@@ -303,3 +303,65 @@ int disableHealthboxes(void)
     
     return count;
 }
+
+/*
+ * NAME :		AutoRespawn
+ * 
+ * DESCRIPTION :
+ *              DM Only, Freezes in Siege and CTF due to nodes.
+ *              Respawns player automatically.
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void RespawnPlayer(void)
+{
+	register int player asm("v1");
+	playerRespawn(player);
+}
+void AutoRespawn(void)
+{
+	VariableAddress_t vaDM_PressXToRespawn = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x004b22b0,
+		.Hoven = 0x004b43c8,
+		.OutpostX12 = 0x004a9ca0,
+		.KorgonOutpost = 0x004a7438,
+		.Metropolis = 0x004a6788,
+		.BlackwaterCity = 0x004a4020,
+		.CommandCenter = 0x004a4018,
+		.BlackwaterDocks = 0x004a6898,
+		.AquatosSewers = 0x004a5b98,
+		.MarcadiaPalace = 0x004a5518,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x004afd60,
+		.Hoven = 0x004b1db8,
+		.OutpostX12 = 0x004a76d0,
+		.KorgonOutpost = 0x004a4ee8,
+		.Metropolis = 0x004a4238,
+		.BlackwaterCity = 0x004a1a50,
+		.CommandCenter = 0x004a1c08,
+		.BlackwaterDocks = 0x004a4448,
+		.AquatosSewers = 0x004a3788,
+		.MarcadiaPalace = 0x004a30c8,
+#endif
+	};
+	//GameOptions * gameOptions = (GameOptions*)0x002417C8;
+	//gameOptions->GameFlags.MultiplayerGameFlags.Nodes
+	// Siege & CTF: Press X to Respawn
+	// *(u32*)0x004A55C8 = (0x0C000000 | ((u32)(&RespawnPlayer) >> 2));
+
+	// DM: Press X To Respawn JAL
+	// Freezes in Siege and CTF due to needing to choose nodes, even if nodes are off.
+	int hook = GetAddress(&vaDM_PressXToRespawn);
+	int jal = (0x0C000000 | ((u32)(&RespawnPlayer) >> 2));
+	if (*(u32*)hook != jal)
+		*(u32*)hook = jal;
+
+}

@@ -106,6 +106,9 @@ void grGameStart(void)
     if (gameConfig.disableHealthBoxes && !HasDisabledHealthboxes)
 		HasDisabledHealthboxes = disableHealthboxes();
 
+	if (gameConfig.autoRespawn && gameSettings->GameType == GAMERULE_DM)
+		 AutoRespawn();
+
 	FirstPass = 0;
 }
 
