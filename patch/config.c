@@ -178,6 +178,16 @@ MenuElem_ListData_t dataWeaponPacks = {
     }
 };
 
+MenuElem_ListData_t dataAutoRespawn = {
+    &gameConfig.autoRespawn,
+    NULL,
+    2,
+    {
+      "Off",
+      "On",
+    }
+};
+
 // Game Settings
 MenuElem_t menuElementsGameSettings[] = {
   { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
@@ -191,7 +201,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Weapon Pack Spawning", listActionHandler, menuStateAlwaysEnabledHandler, &dataWeaponPacks },
   { "V2s", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableV2s },
   { "Health Boxes", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableHealthBoxes },
-  { "Auto Respawn", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.autoRespawn },
+  { "Auto Respawn", listActionHandler, menuStateAlwaysEnabledHandler, &dataAutoRespawn },
 
 };
 
