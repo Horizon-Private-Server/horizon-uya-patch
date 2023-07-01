@@ -365,3 +365,26 @@ void AutoRespawn(void)
 		*(u32*)hook = jal;
 
 }
+
+int setGattlingTurretHealth(int value)
+{
+    // if value equals 1, multiply it by 1.5, else use it's intended value.
+    int MultiplyBy = (value == 1) ? 1.5 : value;
+    int init = 0;
+    Moby * moby = mobyListGetStart();
+    // Iterate through mobys and change health
+    while ((moby = mobyFindNextByOClass(moby, MOBY_ID_GATTLING_TURRET)))
+    {
+        if (moby->PVar)
+        {
+			// Gattling Turret Health is stored as a float and as it's
+			// hexidecimal value.  We use the hex value and multiply it
+			// by our wanted value, then store it as it's float health
+			int HexHealth = *(u32*)((u32)moby->PVar + 0x34);
+			*(float*)((u32)moby->PVar + 0x30) = HexHealth * MultiplyBy;
+        }
+        ++moby; // next moby
+    }
+    init = 1;
+    return init;
+}

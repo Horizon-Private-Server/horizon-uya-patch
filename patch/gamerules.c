@@ -41,6 +41,7 @@ extern PatchConfig_t lobbyPlayerConfigs[GAME_MAX_PLAYERS];
 int GameRulesInitialized = 0;
 int FirstPass = 1;
 int HasDisabledHealthboxes = 0;
+int HasSetGattlingTurretHealth = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 
 
@@ -68,6 +69,7 @@ void grInitialize(void)
 		PlayerKills[i] = 0;
 
 	HasDisabledHealthboxes = 0;
+	HasSetGattlingTurretHealth = 0;
 	GameRulesInitialized = 1;
 }
 
@@ -108,6 +110,9 @@ void grGameStart(void)
 
 	if (gameConfig.autoRespawn && gameSettings->GameType == GAMERULE_DM)
 		 AutoRespawn();
+
+	if (gameConfig.setGattlingTurretHealth && !HasSetGattlingTurretHealth)
+		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.setGattlingTurretHealth);
 
 	FirstPass = 0;
 }

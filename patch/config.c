@@ -188,6 +188,19 @@ MenuElem_ListData_t dataAutoRespawn = {
     }
 };
 
+MenuElem_ListData_t dataSetGattlingTurretHealth = {
+    &gameConfig.setGattlingTurretHealth,
+    NULL,
+    5,
+    {
+      "Default",
+      "1.5x",
+      "2x",
+      "3x",
+      "4x",
+    }
+};
+
 // Game Settings
 MenuElem_t menuElementsGameSettings[] = {
   { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
@@ -202,6 +215,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "V2s", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableV2s },
   { "Health Boxes", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableHealthBoxes },
   { "Auto Respawn", listActionHandler, menuStateAlwaysEnabledHandler, &dataAutoRespawn },
+  { "Gattling Turret Health", listActionHandler, menuStateAlwaysEnabledHandler, &dataSetGattlingTurretHealth },
 
 };
 
