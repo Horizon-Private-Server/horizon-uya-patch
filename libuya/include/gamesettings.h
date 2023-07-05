@@ -24,7 +24,7 @@
 
 enum GameRuleIds
 {
-    GAMERULE_SEIGE,
+    GAMERULE_SIEGE,
     GAMERULE_CTF,
     GAMERULE_DM
 };
