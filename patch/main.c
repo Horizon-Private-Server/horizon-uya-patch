@@ -372,6 +372,37 @@ void patchKillStealing(void)
 }
 
 /*
+ * NAME :		patchDeathJumping
+ * 
+ * DESCRIPTION :
+ * 			Patches Dead Jumping by setting the can't move timer.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void patchDeadJumping(void)
+{
+	Player ** players = playerGetAll();
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+	{
+    	if (!players[i])
+    		continue;
+
+		Player * player = players[i];
+		if (playerIsLocal(player) && playerIsDead(player))
+		{
+			player->CantMoveTimer = 10;
+		}
+	}
+}
+
+/*
  * NAME :		patchDeadShooting_Hook
  * 
  * DESCRIPTION :
@@ -470,6 +501,56 @@ void patchDeadShooting(void)
 	};
 	if (*(u32*)GetAddress(&vaShootingHook) != 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2))
 		*(u32*)GetAddress(&vaShootingHook) = 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2);
+}
+
+/*
+ * NAME :		patchWeaponShotLag
+ * 
+ * DESCRIPTION :
+ * 			Send Weapon Shots more reliably.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchWeaponShotLag(void)
+{
+	VariableAddress_t vaFluxUDPtoTCP = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x0040931c,
+		.Hoven = 0x00408c84,
+		.OutpostX12 = 0x00400b7c,
+		.KorgonOutpost = 0x003fff5c,
+		.Metropolis = 0x003feb1c,
+		.BlackwaterCity = 0x003fb904,
+		.CommandCenter = 0x00409d0c,
+		.BlackwaterDocks = 0x0040bc6c,
+		.AquatosSewers = 0x0040b874,
+		.MarcadiaPalace = 0x0040a8ec,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00408c7c,
+		.Hoven = 0x00408564,
+		.OutpostX12 = 0x0040045c,
+		.KorgonOutpost = 0x003ff89c,
+		.Metropolis = 0x003fe47c,
+		.BlackwaterCity = 0x003fb204,
+		.CommandCenter = 0x00409654,
+		.BlackwaterDocks = 0x0040b5b4,
+		.AquatosSewers = 0x0040b1bc,
+		.MarcadiaPalace = 0x0040a234,
+#endif
+	};
+	// Send Flux shots reliably (Use TCP instead of UDP)
+	int Addr = GetAddress(&vaFluxUDPtoTCP);
+	int NewValue = 0x24040040;
+	if (*(u32*)GetAddress(&vaFluxUDPtoTCP) != NewValue)
+		*(u32*)Addr = NewValue;
 }
 
 /*
@@ -819,11 +900,17 @@ int main(void)
 		// Run Game Rules if in game.
 		grGameStart();
 
-		// Patch Kill Stealing
-		patchKillStealing();
+		// Patch Dead Jumping/Crouching
+		patchDeadJumping();
 
 		// Patch Dead Shooting
 		patchDeadShooting();
+
+		// Patch Kill Stealing
+		patchKillStealing();
+
+		// Patch flux nicking and other weapon shot lags
+		patchWeaponShotLag();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)

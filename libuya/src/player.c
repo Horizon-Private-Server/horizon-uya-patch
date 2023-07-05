@@ -369,7 +369,7 @@ int playerGetHealth(Player * player)
 //--------------------------------------------------------------------------------
 int playerIsDead(Player * player)
 {
-	return playerGetHealth(player) <= 0;
+	return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
 }
 
 //--------------------------------------------------------------------------------

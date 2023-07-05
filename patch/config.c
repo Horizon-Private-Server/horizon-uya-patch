@@ -83,10 +83,16 @@ void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_SiegeAndCTF(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
 
 int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value);
-int menuStateHandler_SelectedWorldOverride(MenuElem_ListData_t* listData, char* value);
+// int menuStateHandler_SelectedWorldOverride(MenuElem_ListData_t* listData, char* value);
 int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, char* value);
+
 
 // list select handlers
 void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
@@ -123,15 +129,15 @@ MenuElem_ListData_t dataCustomMaps = {
 };
 
 // world override list item
-MenuElem_ListData_t dataCustomWorlds = {
-    &gameConfig.customWorld,
-    menuStateHandler_SelectedWorldOverride,
-    CUSTOM_WORLD_COUNT,
-    {
-      "Off",
-      "On",
-    }
-};
+// MenuElem_ListData_t dataCustomWorlds = {
+//     &gameConfig.customWorld,
+//     menuStateHandler_SelectedWorldOverride,
+//     CUSTOM_WORLD_COUNT,
+//     {
+//       "Off",
+//       "On",
+//     }
+// };
 
 // maps with their own exclusive gamemode
 char dataCustomMapsWithExclusiveGameMode[] = {
@@ -182,23 +188,14 @@ MenuElem_ListData_t dataAutoRespawn = {
     &gameConfig.autoRespawn,
     NULL,
     2,
-    {
-      "Off",
-      "On",
-    }
+    { "Off", "On", }
 };
 
 MenuElem_ListData_t dataSetGattlingTurretHealth = {
     &gameConfig.setGattlingTurretHealth,
     NULL,
     5,
-    {
-      "Default",
-      "1.5x",
-      "2x",
-      "3x",
-      "4x",
-    }
+    { "Default", "1.5x", "2x", "3x", "4x", }
 };
 
 // Game Settings
@@ -211,11 +208,11 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Weapon Pack Spawning", listActionHandler, menuStateAlwaysEnabledHandler, &dataWeaponPacks },
-  { "V2s", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableV2s },
-  { "Health Boxes", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.disableHealthBoxes },
-  { "Auto Respawn", listActionHandler, menuStateAlwaysEnabledHandler, &dataAutoRespawn },
-  { "Gattling Turret Health", listActionHandler, menuStateAlwaysEnabledHandler, &dataSetGattlingTurretHealth },
+  { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
+  { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.disableV2s },
+  { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.disableHealthBoxes },
+  { "Auto Respawn", listActionHandler, menuStateHandler_Default, &dataAutoRespawn },
+  { "Gattling Turret Health", listActionHandler, menuStateHandler_Default, &dataSetGattlingTurretHealth },
 
 };
 
@@ -298,17 +295,17 @@ int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* va
   return 1;
 }
 
-int menuStateHandler_SelectedWorldOverride(MenuElem_ListData_t* listData, char* value)
-{
-  if (!value)
-    return 0;
+// int menuStateHandler_SelectedWorldOverride(MenuElem_ListData_t* listData, char* value)
+// {
+//   if (!value)
+//     return 0;
 
-  char gm = gameConfig.customModeId;
-  char v = *value;
+//   char gm = gameConfig.customModeId;
+//   char v = *value;
 
-  // success
-  return 1;
-}
+//   // success
+//   return 1;
+// }
 
 // 
 int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, char* value)
@@ -337,6 +334,51 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
   }
 
   return 1;
+}
+
+void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuStateHandler_SiegeAndCTF(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+
+  if (!gs || gs->GameType == GAMERULE_SIEGE || gs->GameType != GAMERULE_CTF)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+
+  if (!gs || gs->GameType != GAMERULE_SIEGE)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+
+  if (!gs || gs->GameType != GAMERULE_CTF)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+
+  if (!gs || gs->GameType != GAMERULE_DM)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 // 

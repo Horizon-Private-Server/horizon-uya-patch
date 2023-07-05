@@ -10,7 +10,7 @@ typedef struct PatchConfig
 typedef struct PatchGameConfig
 {
   char customMapId;
-  char customWorld;
+  // char customWorld;
   char customModeId;
   char disableWeaponPacks;
   char disableV2s;
@@ -29,14 +29,14 @@ enum CUSTOM_MAP_ID
   CUSTOM_MAP_COUNT
 };
 
-enum CUSTOM_WORLD_ID
-{
-  CUSTOM_WORLD_NONE = 0,
-  CUSTOM_WORLD_YES,
+// enum CUSTOM_WORLD_ID
+// {
+//   CUSTOM_WORLD_NONE = 0,
+//   CUSTOM_WORLD_YES,
 
-  // always at the end to indicate how many items there are
-  CUSTOM_WORLD_COUNT
-};
+//   // always at the end to indicate how many items there are
+//   CUSTOM_WORLD_COUNT
+// };
 
 enum CUSTOM_MODE_ID
 {

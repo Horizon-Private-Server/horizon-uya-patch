@@ -97,8 +97,11 @@ void disableWeaponPacks(void)
  * 
  * AUTHOR :			Troy "Agent Moose" Pruitt
  */
-
-int SpawnedPack = 0;
+// ======================================================================
+/*
+  MOST UP TO DATE SPAWN PACK
+*/
+int SpawnedPack[2] = {0,0};
 void SpawnPack(int a0, int a1, int a2, int a3)
 {
     VariableAddress_t vaRespawnTimerFunc = {
@@ -161,13 +164,24 @@ void SpawnPack(int a0, int a1, int a2, int a3)
 	((void (*)(int, int, int, int))GetAddress(&vaRespawnTimerFunc))(a0, a1, a2, a3);
 
     // Spawn Pack if Health <= zero and if not spawned already.
-    if (playerGetHealth(PLAYER_STRUCT) <= 0 && !SpawnedPack)
-    {
-        // Spawn Pack
-        ((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(PLAYER_STRUCT);
-        // It now spawned pack, so set to true.
-        SpawnedPack = 1;
-    }
+    // get all players
+    Player ** players = playerGetAll();
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+	{
+    	if (!players[i])
+    		continue;
+
+		Player * player = players[i];
+        // if player health is zero, and pack hasn't spawned, spawn pack
+		if (playerGetHealth(player) <= 0 && playerIsLocal(player) && SpawnedPack[i] == 0)
+		{
+            // Spawn Pack
+            ((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(player);
+            // It now spawned pack, so set to true.
+            SpawnedPack[i] = 1;
+        }
+	}
 }
 
 void spawnWeaponPackOnDeath(void)
@@ -213,9 +227,29 @@ void spawnWeaponPackOnDeath(void)
 
     // if Health is greater than zero and pack has spawned
     // This will be checking constantly, instead of just when the player dies.
-    if (playerGetHealth(PLAYER_STRUCT) > 0)
-        SpawnedPack = 0;
+    Player ** players = playerGetAll();
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+	{
+    	if (!players[i])
+    		continue;
+
+		Player * player = players[i];
+		if (playerGetHealth(player) > 0 && playerIsLocal(player))
+		{
+            SpawnedPack[i] = 0;
+		}
+	}
 }
+
+// ====================================================================
+
+/*
+    OLDER SPAWN PACK (but with local play support)
+*/
+
+
+// ====================================================================
 
 /*
  * NAME :		disableV2s
@@ -318,10 +352,14 @@ int disableHealthboxes(void)
  * 
  * AUTHOR :			Troy "Agent Moose" Pruitt
  */
-void RespawnPlayer(void)
+void RespawnPlayer(int a0)
 {
+	// set player to register v1's value.
 	register int player asm("v1");
 	playerRespawn(player);
+
+	// run original function
+	uiMsgString(a0);
 }
 void AutoRespawn(void)
 {
@@ -380,8 +418,10 @@ int setGattlingTurretHealth(int value)
 			// Gattling Turret Health is stored as a float and as it's
 			// hexidecimal value.  We use the hex value and multiply it
 			// by our wanted value, then store it as it's float health
-			int HexHealth = *(u32*)((u32)moby->PVar + 0x34);
-			*(float*)((u32)moby->PVar + 0x30) = HexHealth * MultiplyBy;
+			int HexHealth = ((u32)moby->PVar + 0x34);
+            int NewHealth = (u32)(*(u32*)HexHealth * MultiplyBy);
+			*(u32*)HexHealth = NewHealth;
+			*(float*)((u32)moby->PVar + 0x30) = NewHealth;
         }
         ++moby; // next moby
     }

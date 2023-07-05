@@ -38,6 +38,9 @@
 // Player id of the winner. Set to -1 for team win.
 #define GAME_WINNER_PLAYER_ID               (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x14))
 
+#define SPAWNPOINTS_SIEGE                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x20c))
+#define SPAWNPOINTS_CTF                     (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x210))
+#define SPAWNPOINTS_DM                      (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x214))
 VariableAddress_t vaDeathBarrier = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -183,7 +186,7 @@ char* gameGetGameModeName(int gameModeId)
 {
     switch (gameModeId)
     {
-        case GAMERULE_SEIGE: return uiMsgString(HELP_STRING_ID_SEIGE);
+        case GAMERULE_SIEGE: return uiMsgString(HELP_STRING_ID_SIEGE);
         case GAMERULE_CTF: return uiMsgString(HELP_STRING_ID_CTF);
         case GAMERULE_DM: return uiMsgString(HELP_STRING_ID_DEATHMATCH);
         default: return NULL;
