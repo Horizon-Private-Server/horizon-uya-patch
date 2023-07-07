@@ -518,7 +518,7 @@ typedef struct Player
     char unk_12d4[0x4];
     int PlayerId;                                                   // 0x12D8
 	char unk_12dc[0x34];
-    // This int is checked when chargebooting
+    // This int is checked when chargebooting, and shooting
 	int unk_1310;													// 0x1310
 	char unk_1314[0x6f4];
 	union {

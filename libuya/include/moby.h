@@ -242,12 +242,16 @@ typedef struct Moby
 	/*  68 */ void * PVar;
 	/*     */ char unk_6c[0x14];
 	/*  80 */ VECTOR LSphere;
-	/*     */ char unk_90[0x14];
+	/*     */ char unk_84[0xc];
+	/*  90 */ struct GuberMoby * GuberMoby;
+	/*     */ char unk_94[0x10];
 	/*  a4 */ struct Moby * PParent;
 	/*  a8 */ char Trigger;
     /*  a9 */ char StandardDeathCalled;
 	/*  aa */ short OClass;
-	/*     */ char unk_ac[0x14];
+	/*     */ char unk_ac[0xc];
+	/*  b8 */ Moby * VehicleOwner;
+	/*  bc */ char unk_bc[0x4];
     /*  c0 */ VECTOR M0_03;
     /*  d0 */ VECTOR M1_03;
     /*  e0 */ VECTOR M2_03;
