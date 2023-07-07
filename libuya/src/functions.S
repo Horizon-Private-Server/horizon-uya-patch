@@ -333,6 +333,10 @@ VARIABLE_FUNCTION(internal_SetPlayerState, vaSetPlayerStateFunc)
 VARIABLE_FUNCTION(internal_HurtPlayer, vaHurtPlayerFunc)
 VARIABLE_FUNCTION(playerRespawn, vaPlayerRespawnFunc)
 VARIABLE_FUNCTION(internal_playerSetPosRot, vaPlayerSetPosRotFunc)
+VARIABLE_FUNCTION(internal_playerGiveWeapon, vaGiveWeaponFunc)
+VARIABLE_FUNCTION(internal_playerEquipWeapon, vaEquipWeaponFunc)
+VARIABLE_FUNCTION(playerStripWeapons, vaWeaponStripMeFunc)
+VARIABLE_FUNCTION(internal_GiveMeRandomWeapons, vaGiveMeRandomWeapons)
 
 #--------------------------------------------------------
 #-------------------------- MOBY ------------------------

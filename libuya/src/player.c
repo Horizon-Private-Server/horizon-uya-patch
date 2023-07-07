@@ -75,7 +75,6 @@ VariableAddress_t vaPlayerStructArray = {
 #endif
 };
 
-
 VariableAddress_t vaPlayerRespawnFunc = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -101,6 +100,34 @@ VariableAddress_t vaPlayerRespawnFunc = {
     .BlackwaterDocks = 0x004ec258,
     .AquatosSewers = 0x004eb598,
     .MarcadiaPalace = 0x004eaed8,
+#endif
+};
+
+VariableAddress_t vaWeaponStripMeFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x004fa658,
+	.Hoven = 0x004fc770,
+	.OutpostX12 = 0x004f2048,
+    .KorgonOutpost = 0x004ef7e0,
+	.Metropolis = 0x004eeb30,
+	.BlackwaterCity = 0x004ec3c8,
+	.CommandCenter = 0x004ec390,
+    .BlackwaterDocks = 0x004eec10,
+    .AquatosSewers = 0x004edf10,
+    .MarcadiaPalace = 0x004ed890,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004f7ed8,
+	.Hoven = 0x004f9f30,
+	.OutpostX12 = 0x004ef848,
+    .KorgonOutpost = 0x004ed060,
+	.Metropolis = 0x004ec3b0,
+	.BlackwaterCity = 0x004e9bc8,
+	.CommandCenter = 0x004e9d50,
+    .BlackwaterDocks = 0x004ec590,
+    .AquatosSewers = 0x004eb8d0,
+    .MarcadiaPalace = 0x004eb210,
 #endif
 };
 
@@ -412,4 +439,100 @@ PlayerVTable * playerGetVTable(Player * player)
         return NULL;
 
     return (PlayerVTable*)player->Guber.Vtable;
+}
+
+VariableAddress_t vaGiveWeaponFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00546c78,
+	.Hoven = 0x00548e40,
+	.OutpostX12 = 0x0053e718,
+    .KorgonOutpost = 0x0053be00,
+	.Metropolis = 0x0053b200,
+	.BlackwaterCity = 0x005389e8,
+	.CommandCenter = 0x00538240,
+    .BlackwaterDocks = 0x0053aac0,
+    .AquatosSewers = 0x00539dc0,
+    .MarcadiaPalace = 0x00539740,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00544370,
+	.Hoven = 0x00546478,
+	.OutpostX12 = 0x0053bd90,
+    .KorgonOutpost = 0x005394f8,
+	.Metropolis = 0x005388f8,
+	.BlackwaterCity = 0x00536060,
+	.CommandCenter = 0x00535a90,
+    .BlackwaterDocks = 0x005382d0,
+    .AquatosSewers = 0x00537610,
+    .MarcadiaPalace = 0x00536f50,
+#endif
+};
+void playerGiveWeapon(Player * player, int weaponId)
+{
+    internal_playerGiveWeapon((u32)player + 0x1a40, weaponId, 2);
+}
+
+VariableAddress_t vaEquipWeaponFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x005471b8,
+	.Hoven = 0x00549380,
+	.OutpostX12 = 0x0053ec58,
+    .KorgonOutpost = 0x0053c340,
+	.Metropolis = 0x0053b740,
+	.BlackwaterCity = 0x00538f28,
+	.CommandCenter = 0x00538780,
+    .BlackwaterDocks = 0x0053b000,
+    .AquatosSewers = 0x0053a300,
+    .MarcadiaPalace = 0x00539c80,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x005448b0,
+	.Hoven = 0x005469b8,
+	.OutpostX12 = 0x0053c2d0,
+    .KorgonOutpost = 0x00539a38,
+	.Metropolis = 0x00538e38,
+	.BlackwaterCity = 0x005365a0,
+	.CommandCenter = 0x00535fd0,
+    .BlackwaterDocks = 0x00538810,
+    .AquatosSewers = 0x00537b50,
+    .MarcadiaPalace = 0x00537490,
+#endif
+};
+void playerEquipWeapon(Player * player, int weaponId)
+{
+    internal_playerEquipWeapon((u32)player + 0x1a40, weaponId, 2);
+}
+
+VariableAddress_t vaGiveMeRandomWeaponsFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00519bd0,
+	.Hoven = 0x0051bce8,
+	.OutpostX12 = 0x005115c0,
+    .KorgonOutpost = 0x0050ed58,
+	.Metropolis = 0x0050e0a8,
+	.BlackwaterCity = 0x0050b940,
+	.CommandCenter = 0x0050b700,
+    .BlackwaterDocks = 0x0050df80,
+    .AquatosSewers = 0x0050d280,
+    .MarcadiaPalace = 0x0050cc00,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x005173c8,
+	.Hoven = 0x00519420,
+	.OutpostX12 = 0x0050ed38,
+    .KorgonOutpost = 0x0050c550,
+	.Metropolis = 0x0050b8a0,
+	.BlackwaterCity = 0x005090b8,
+	.CommandCenter = 0x00509038,
+    .BlackwaterDocks = 0x0050b878,
+    .AquatosSewers = 0x0050abb8,
+    .MarcadiaPalace = 0x0050a4f8,
+#endif
+};
+void playerGiveRandomWeapons(Player * player, int amount)
+{
+    internal_GiveMeRandomWeapons(player, (!amount) ? 3 : amount);
 }

@@ -788,4 +788,55 @@ __LIBUYA_SETTER__ void playerSetPosRot(Player * player, u32 * position, u32 * ro
  */
 int playerIsDead(Player * player);
 
+/*
+ * NAME :		playerGiveWeapon
+ * DESCRIPTION :
+ * 			Give the target player the given weapon ID.
+ * NOTES :
+ * ARGS : 
+ *      player      :           Target player.
+ * 		weaponId	:			Weapon
+ * RETURN :
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void playerGiveWeapon(Player * player, int weaponId);
+
+/*
+ * NAME :		playerEquipWeapon
+ * DESCRIPTION :
+ * 			Equips the given weapon ID.
+ * NOTES :
+ * ARGS : 
+ *      player      :           Target player.
+ * 		weaponId	:			Weapon to be equiped
+ * RETURN :
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void playerEquipWeapon(Player * player, int weaponId);
+
+/*
+ * NAME :		playerStripWeapons
+ * DESCRIPTION :
+ * 			Removes all weapons from player.
+ * NOTES :
+ * ARGS : 
+ *      player      :           Target player.
+ * RETURN :
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void playerStripWeapons(Player * player);
+
+/*
+ * NAME :		playerGiveRandomWeapons
+ * DESCRIPTION :
+ * 			Gives Target player random weapons
+ * NOTES :
+ * ARGS : 
+ *      player      :           Target player.
+ * 		amount		:			Amount of weapons to give.  If left empty, will give 3 (default)
+ * RETURN :
+ * AUTHOR :			Troy "Agent Moose" Pruitt
+ */
+void playerGiveRandomWeapons(Player * player, int amount);
+
 #endif // _LIBUYA_PLAYER_H_
