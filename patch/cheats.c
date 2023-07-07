@@ -95,7 +95,7 @@ void disableWeaponPacks(void)
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 // ======================================================================
 /*
@@ -263,7 +263,7 @@ void spawnWeaponPackOnDeath(void)
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void disableV2s(void)
 {
@@ -350,7 +350,7 @@ int disableHealthboxes(void)
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void RespawnPlayer(int a0)
 {

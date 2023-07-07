@@ -280,7 +280,7 @@ void runCameraSpeedPatch(void)
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
 {
@@ -330,7 +330,7 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchKillStealing(void)
 {
@@ -383,7 +383,7 @@ void patchKillStealing(void)
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchDeadJumping(void)
 {
@@ -414,7 +414,7 @@ void patchDeadJumping(void)
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int patchDeadShooting_Hook(int pad)
 {
@@ -468,7 +468,7 @@ int patchDeadShooting_Hook(int pad)
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchDeadShooting(void)
 {
@@ -519,6 +519,34 @@ void patchDeadShooting(void)
  */
 void patchWeaponShotLag(void)
 {
+// 	VariableAddress_t vaAllWeaponsUDPtoTCP = {
+// #if UYA_PAL
+// 		.Lobby = 0,
+// 		.Bakisi = 0x00546760,
+// 		.Hoven = 0x00548928,
+// 		.OutpostX12 = 0x0053e200,
+// 		.KorgonOutpost = 0x0053b8e8,
+// 		.Metropolis = 0x0053ace8,
+// 		.BlackwaterCity = 0x005384d0,
+// 		.CommandCenter = 0x00537d28,
+// 		.BlackwaterDocks = 0x0053a5a8,
+// 		.AquatosSewers = 0x005398a8,
+// 		.MarcadiaPalace = 0x00539228,
+// #else
+// 		.Lobby = 0,
+// 		.Bakisi = 0x00543e54,
+// 		.Hoven = 0x00545f5c,
+// 		.OutpostX12 = 0x0053b874,
+// 		.KorgonOutpost = 0x00538fdc,
+// 		.Metropolis = 0x005383dc,
+// 		.BlackwaterCity = 0x00535b44,
+// 		.CommandCenter = 0x00535574,
+// 		.BlackwaterDocks = 0x00537db4,
+// 		.AquatosSewers = 0x005370f4,
+// 		.MarcadiaPalace = 0x00536a34,
+// #endif
+// 	};
+
 	VariableAddress_t vaFluxUDPtoTCP = {
 #if UYA_PAL
 		.Lobby = 0,
@@ -546,11 +574,17 @@ void patchWeaponShotLag(void)
 		.MarcadiaPalace = 0x0040a234,
 #endif
 	};
+	int TCP = 0x24040040;
+
+	// Send all weapon shots reliably (Use TCP instead of UDP)
+	// int AllWeaponsAddr = GetAddress(&vaAllWeaponsUDPtoTCP);
+	// if (*(u32*)AllWeaponsAddr == 0x906407D4)
+	// 	*(u32*)AllWeaponsAddr = TCP;
+
 	// Send Flux shots reliably (Use TCP instead of UDP)
-	int Addr = GetAddress(&vaFluxUDPtoTCP);
-	int NewValue = 0x24040040;
-	if (*(u32*)GetAddress(&vaFluxUDPtoTCP) != NewValue)
-		*(u32*)Addr = NewValue;
+	int FluxAddr = GetAddress(&vaFluxUDPtoTCP);
+	if (*(u32*)FluxAddr == 0x90A407D4)
+		*(u32*)FluxAddr = TCP;
 }
 
 /*
@@ -698,7 +732,7 @@ void setupPatchConfigInGame()
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void drawFunction(void)
 {

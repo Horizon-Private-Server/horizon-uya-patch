@@ -26,7 +26,7 @@
  * NOTES :
  *          
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 enum WEAPON_IDS
 {

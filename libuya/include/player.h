@@ -682,7 +682,7 @@ __LIBUYA_GETTER__ int playerPadGetButtonUp(Player * player, u16 buttonMask);
  *          player:                     Pointer to player's player object.
  *          state:                 		State to set player.
  * RETURN :
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void playerSetPlayerState(Player * player, u8 state);
 
@@ -695,7 +695,7 @@ void playerSetPlayerState(Player * player, u8 state);
  *          player:                     Pointer to player's player object.
  *          state:                 		Amount to hurt player (1 to 15)
  * RETURN :
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void playerDecHealth(Player * player, u8 amount);
 
@@ -708,7 +708,7 @@ void playerDecHealth(Player * player, u8 amount);
  *          player:                     Pointer to player's player object.
  *          state:                 		Amount to give to player (1 to 15)
  * RETURN :
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void playerIncHealth(Player * player, u8 amount);
 
@@ -721,7 +721,7 @@ void playerIncHealth(Player * player, u8 amount);
  *          player:                     Pointer to player's player object.
  *          state:                 		Value to set health to (1 to 15)
  * RETURN :
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void playerSetHealth(Player * player, u8 amount);
 
@@ -734,7 +734,7 @@ void playerSetHealth(Player * player, u8 amount);
  *         		player:         Pointer to player's player object.
  * RETURN :
  * 				Returns players health in float value
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int playerGetHealth(Player * player);
 
@@ -772,7 +772,7 @@ void playerRespawn(Player * player);
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 __LIBUYA_SETTER__ void playerSetPosRot(Player * player, u32 * position, u32 * rotation);
 
@@ -784,7 +784,7 @@ __LIBUYA_SETTER__ void playerSetPosRot(Player * player, u32 * position, u32 * ro
  * ARGS : 
  *      player      :           Target player.
  * RETURN :
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int playerIsDead(Player * player);
 
@@ -797,7 +797,7 @@ int playerIsDead(Player * player);
  *      player      :           Target player.
  * 		weaponId	:			Weapon
  * RETURN :
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void playerGiveWeapon(Player * player, int weaponId);
 
@@ -810,7 +810,7 @@ void playerGiveWeapon(Player * player, int weaponId);
  *      player      :           Target player.
  * 		weaponId	:			Weapon to be equiped
  * RETURN :
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void playerEquipWeapon(Player * player, int weaponId);
 
@@ -822,7 +822,7 @@ void playerEquipWeapon(Player * player, int weaponId);
  * ARGS : 
  *      player      :           Target player.
  * RETURN :
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void playerStripWeapons(Player * player);
 
@@ -835,7 +835,7 @@ void playerStripWeapons(Player * player);
  *      player      :           Target player.
  * 		amount		:			Amount of weapons to give.  If left empty, will give 3 (default)
  * RETURN :
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void playerGiveRandomWeapons(Player * player, int amount);
 

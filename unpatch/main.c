@@ -75,7 +75,7 @@ int onServerDownloadDataRequest(void * connection, void * data)
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void drawFunction(void)
 {

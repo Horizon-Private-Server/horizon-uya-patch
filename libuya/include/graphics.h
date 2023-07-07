@@ -47,7 +47,7 @@ typedef struct RECT
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void drawFunction(void);
 
@@ -140,7 +140,7 @@ void gfxSetIsProgressiveScan(int on);
  * 
  * RETURN :
  * 
- * AUTHOR :			Troy "Agent Moose" Pruitt
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void gfxOcclusion(int OnOff);
 
