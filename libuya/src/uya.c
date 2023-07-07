@@ -2,8 +2,8 @@
 #include "player.h"
 
 // 
-// extern void padUpdate(void);
-// extern void playerPadUpdate(void);
+extern void padUpdate(void);
+extern void playerPadUpdate(void);
 
 /*
  * NAME :		uyaPreUpdate
@@ -41,5 +41,5 @@ void uyaPreUpdate(void)
 void uyaPostUpdate(void)
 {
   padUpdate();
-  //playerPadUpdate();
+  playerPadUpdate();
 }

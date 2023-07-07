@@ -20,7 +20,7 @@
 #include "guber.h"
 #include "moby.h"
 #include "weapon.h"
-// #include "camera.h"
+#include "camera.h"
 
 /*
  * Maximum health of player.
@@ -566,8 +566,8 @@ typedef struct Player
 	Moby * PlayerMoby;												// 0x2524
     Vehicle * Vehicle;                                              // 0x2528
 	char unk_252c[0x4];
-	// GameCamera * Camera;											// 0x2530
-    int Camera;
+	GameCamera * Camera;											// 0x2530
+    // int Camera;
 	PadButtonStatus * Paddata;                                      // 0x2534
 	float PlayerPositionX;											// 0x2538
 	float PlayerPositionZ;											// 0x253C

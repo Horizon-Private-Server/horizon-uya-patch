@@ -3,6 +3,8 @@
 #include "interop.h"
 #include "game.h"
 
+void playerRespawn(Player * player);
+void playerStripWeapons(Player * player);
 
 VariableAddress_t vaEmpty = {
 #if UYA_PAL
@@ -184,19 +186,18 @@ PadButtonStatus * playerGetPad(Player * player)
     if (!player)
         return 0;
 
-    // if (playerIsLocal(player))
-    // {
-    //     return player->Paddata;
-    // }
-    // else
-    // {
-    //     u8 * remotePadInfo = player->RemotePadInfo;
-    //     if (!remotePadInfo)
-    //         return 0;
+    if (playerIsLocal(player))
+    {
+        return player->Paddata;
+    }
+    else
+    {
+        struct tNW_Player * netPlayer = player->pNetPlayer;
+        if (!netPlayer)
+            return 0;
 
-    //     return (PadButtonStatus*)(remotePadInfo + 0x70);
-    // }
-    return player->Paddata;
+        return (PadButtonStatus*)(&netPlayer->padMessageElems[0].msg.pad_data);
+    }
 }
 
 //--------------------------------------------------------------------------------
