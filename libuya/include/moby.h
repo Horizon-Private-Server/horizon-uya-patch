@@ -250,7 +250,7 @@ typedef struct Moby
     /*  a9 */ char StandardDeathCalled;
 	/*  aa */ short OClass;
 	/*     */ char unk_ac[0xc];
-	/*  b8 */ Moby * VehicleOwner;
+	/*  b8 */ struct Moby * VehicleOwner;
 	/*  bc */ char unk_bc[0x4];
     /*  c0 */ VECTOR M0_03;
     /*  d0 */ VECTOR M1_03;
