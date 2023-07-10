@@ -5,9 +5,9 @@
 
 // PAL
 #define PAD_POINTER                         ((PadButtonStatus**)0x00241164)
-#define P1_PAD                              ((PadButtonStatus*)0x00225780)
-#define P2_PAD                              ((PadButtonStatus*)0x00226E80)
-#define P3_PAD                              ((PadButtonStatus*)0x00228580)
+#define P1_PAD                              ((PadButtonStatus*)0x00225700 + 0x80)
+#define P2_PAD                              ((PadButtonStatus*)0x00226E00 + 0x80)
+#define P3_PAD                              ((PadButtonStatus*)0x00228500 + 0x80)
 #define PAD_PROCESS_ADDR                    (*(u32*)0x00686300)
 #define PAD_PROCESS_VALUE                   (0x0c1a184e)
 
@@ -15,9 +15,9 @@
 
 // NTSC
 #define PAD_POINTER                         ((PadButtonStatus**)0x002412e4)
-#define P1_PAD                              ((PadButtonStatus*)0x00225900)
-#define P2_PAD                              ((PadButtonStatus*)0x00227000)
-#define P3_PAD                              ((PadButtonStatus*)0x00228700)
+#define P1_PAD                              ((PadButtonStatus*)0x00225900 + 0x80)
+#define P2_PAD                              ((PadButtonStatus*)0x00227000 + 0x80)
+#define P3_PAD                              ((PadButtonStatus*)0x00228700 + 0x80)
 #define PAD_PROCESS_ADDR                    (*(u32*)0x006837E0)
 #define PAD_PROCESS_VALUE                   (0x0C1A0D86)
 
