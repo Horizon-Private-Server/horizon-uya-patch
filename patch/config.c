@@ -176,11 +176,11 @@ MenuElem_t menuElementsGeneral[] = {
 MenuElem_ListData_t dataWeaponPacks = {
     &gameConfig.disableWeaponPacks,
     NULL,
-    3,
+    2,
     {
       "Default",
       "Off",
-      "On Death",
+      // "On Death",
     }
 };
 
@@ -214,6 +214,8 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Auto Respawn", listActionHandler, menuStateHandler_Default, &dataAutoRespawn },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_Default, &dataSetGattlingTurretHealth },
 
+  { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
+  { "Chargeboot Forever", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.chargebootForever },
 };
 
 // Custom Maps

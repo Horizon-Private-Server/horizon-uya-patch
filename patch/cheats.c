@@ -428,3 +428,18 @@ int setGattlingTurretHealth(int value)
     init = 1;
     return init;
 }
+
+void chargebootForever(void)
+{
+	int i;
+	Player ** players = playerGetAll();
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+	{
+		Player * player = players[i];
+		if (!player)
+			continue;
+
+		if (player->IsChargebooting == 1 && playerPadGetButton(player, PAD_R2) > 0 && player->StateTimer > 55)
+			player->StateTimer = 55;
+	}
+}

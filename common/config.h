@@ -17,6 +17,7 @@ typedef struct PatchGameConfig
   char disableHealthBoxes;
   char autoRespawn;
   char setGattlingTurretHealth;
+  char chargebootForever;
 } PatchGameConfig_t;
 
 enum CUSTOM_MAP_ID

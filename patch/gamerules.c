@@ -114,6 +114,9 @@ void grGameStart(void)
 	if (gameConfig.setGattlingTurretHealth && !HasSetGattlingTurretHealth)
 		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.setGattlingTurretHealth);
 
+	if (gameConfig.chargebootForever)
+		chargebootForever();
+
 	FirstPass = 0;
 }
 
