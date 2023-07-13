@@ -509,7 +509,12 @@ typedef struct Player
     VECTOR CameraOffset;                                           	// 0x1260
     char unk_1270[0x10];
 	short CameraType2;												// 0x1280
-	char unk_1282[0x2e];
+	char unk_1282[0x2];
+	// jr ra'ing function messes with camera on metalic surfaces
+	int func_1284;													// 0x1284
+	void * CameraPtr1;												// 0x1288
+	void * CameraPtr2;												// 0x128C
+	char unk_1290[0x20];
 	VECTOR WeaponShotPosition;										// 0x12B0
 	float WeaponLockonDistance;										// 0x12C0
     char unk_12c4[0x8];
@@ -520,7 +525,11 @@ typedef struct Player
 	char unk_12dc[0x34];
     // This int is checked when chargebooting, and shooting
 	int unk_1310;													// 0x1310
-	char unk_1314[0x6f4];
+	char unk_1314[0x5b0];
+	Moby * WrenchThrown;											// 0x18C4
+	char unk_18c8[0x8];
+	int WeaponHeldId;												// 0x18D0
+	char unk_18d4[0x134];
 	union {
         struct {
             char RaisedGunArm;										// 0x1A08
@@ -550,7 +559,9 @@ typedef struct Player
 	WeaponAmmo WeaponAmmo;											// 0x1A53
 	char unk_1a5f[0x4];
 	WeaponMeter WeaponMeter;										// 0x1A63
-	char unk_1a6f[0xa8f];
+	char unk_1a6f[0x339];
+	int TopOfPlayerStruct2;											// 0x1DA8
+	char unk_1dac[0x751];
 	char IsSquating;												// 0x24FD
 	char unk_24fe[0x2];
 	char Invisible2;												// 0x2500
@@ -567,7 +578,6 @@ typedef struct Player
     Vehicle * Vehicle;                                              // 0x2528
 	char unk_252c[0x4];
 	GameCamera * Camera;											// 0x2530
-    // int Camera;
 	PadButtonStatus * Paddata;                                      // 0x2534
 	float PlayerPositionX;											// 0x2538
 	float PlayerPositionZ;											// 0x253C
