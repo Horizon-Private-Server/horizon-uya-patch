@@ -184,13 +184,6 @@ MenuElem_ListData_t dataWeaponPacks = {
     }
 };
 
-MenuElem_ListData_t dataAutoRespawn = {
-    &gameConfig.autoRespawn,
-    NULL,
-    2,
-    { "Off", "On", }
-};
-
 MenuElem_ListData_t dataSetGattlingTurretHealth = {
     &gameConfig.setGattlingTurretHealth,
     NULL,
@@ -211,11 +204,11 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
   { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.disableV2s },
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.disableHealthBoxes },
-  { "Auto Respawn", listActionHandler, menuStateHandler_Default, &dataAutoRespawn },
+  { "Auto Respawn", toggleActionHandler, menuStateHandler_Default, &gameConfig.autoRespawn },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_Default, &dataSetGattlingTurretHealth },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Chargeboot Forever", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.chargebootForever },
+  { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.chargebootForever },
 };
 
 // Custom Maps
