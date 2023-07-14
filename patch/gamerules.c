@@ -44,6 +44,11 @@ int HasDisabledHealthboxes = 0;
 int HasSetGattlingTurretHealth = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 
+float VampireHealRate[] = {
+	PLAYER_MAX_HEALTH * 0.25,
+	PLAYER_MAX_HEALTH * 0.50,
+	PLAYER_MAX_HEALTH * 1.00
+};
 
 /*
  * NAME :		grInitialize
@@ -97,25 +102,28 @@ void grGameStart(void)
 	if (GameRulesInitialized != 1)
 		grInitialize();
 
-	if (gameConfig.disableWeaponPacks == 1)
+	if (gameConfig.grDisableWeaponPacks == 1)
 		disableWeaponPacks();
-	else if (gameConfig.disableWeaponPacks == 2)
+	else if (gameConfig.grDisableWeaponPacks == 2)
 		spawnWeaponPackOnDeath();
 	
-	if (gameConfig.disableV2s)
+	if (gameConfig.grDisableV2s)
 		disableV2s();
 
-    if (gameConfig.disableHealthBoxes && !HasDisabledHealthboxes)
+    if (gameConfig.grDisableHealthBoxes && !HasDisabledHealthboxes)
 		HasDisabledHealthboxes = disableHealthboxes();
 
-	if (gameConfig.autoRespawn && gameSettings->GameType == GAMERULE_DM)
+	if (gameConfig.grAutoRespawn && gameSettings->GameType == GAMERULE_DM)
 		 AutoRespawn();
 
-	if (gameConfig.setGattlingTurretHealth && !HasSetGattlingTurretHealth)
-		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.setGattlingTurretHealth);
+	if (gameConfig.grSetGattlingTurretHealth && !HasSetGattlingTurretHealth)
+		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.grSetGattlingTurretHealth);
 
-	if (gameConfig.chargebootForever)
+	if (gameConfig.prChargebootForever)
 		chargebootForever();
+	
+	if (gameConfig.grVampire)
+		vampireLogic(VampireHealRate[gameConfig.grVampire - 1]);
 
 	FirstPass = 0;
 }

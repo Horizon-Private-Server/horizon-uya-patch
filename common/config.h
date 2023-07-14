@@ -10,15 +10,21 @@ typedef struct PatchConfig
 // Game Rules Tab
 typedef struct PatchGameConfig
 {
+  // Maps
   char customMapId;
   // char customWorld;
   char customModeId;
-  char disableWeaponPacks;
-  char disableV2s;
-  char disableHealthBoxes;
-  char autoRespawn;
-  char setGattlingTurretHealth;
-  char chargebootForever;
+
+  // Game Rules
+  char grDisableWeaponPacks;
+  char grDisableV2s;
+  char grDisableHealthBoxes;
+  char grAutoRespawn;
+  char grSetGattlingTurretHealth;
+  char grVampire;
+
+  // Party
+  char prChargebootForever;
 } PatchGameConfig_t;
 
 enum CUSTOM_MAP_ID

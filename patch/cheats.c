@@ -31,6 +31,7 @@
 #include "config.h"
 #include "include/config.h"
 
+extern PlayerKills[GAME_MAX_PLAYERS];
 
 /*
  * NAME :		disableWeaponPacks
@@ -306,6 +307,19 @@ void disableV2s(void)
     }
 }
 
+/*
+ * NAME :		disableHealthboxes
+ * 
+ * DESCRIPTION :
+ *              Removes all health boxes from the map.
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 int disableHealthboxes(void)
 {
     int count = 0;
@@ -429,6 +443,19 @@ int setGattlingTurretHealth(int value)
     return init;
 }
 
+/*
+ * NAME :		ChargebootForever
+ * 
+ * DESCRIPTION :
+ *              Lets Player keep Chargebooting if R2 is held.
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 void chargebootForever(void)
 {
 	int i;
@@ -441,5 +468,42 @@ void chargebootForever(void)
 
 		if (player->IsChargebooting == 1 && playerPadGetButton(player, PAD_R2) > 0 && player->StateTimer > 55)
 			player->StateTimer = 55;
+	}
+}
+
+/*
+ * NAME :		vampireLogic
+ * 
+ * DESCRIPTION :
+ *              Handles Vampire Logic.  Heals player if they kill another.
+
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void vampireLogic(float healRate)
+{
+	int i;
+	Player ** playerObjects = playerGetAll();
+	Player * player;
+	GameData * gameData = gameGetData();
+
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+	{
+		// Check if player has killed someone
+		if (gameData->PlayerStats[i].Kills > PlayerKills[i])
+		{
+			// Try to heal if player exists
+			player = playerObjects[i];
+			if (player)
+				playerSetHealth(player, clamp((u32)playerGetHealth(player) + healRate, 0, PLAYER_MAX_HEALTH));
+			
+			// Update our cached kills count
+			PlayerKills[i] = gameData->PlayerStats[i].Kills;
+		}
 	}
 }

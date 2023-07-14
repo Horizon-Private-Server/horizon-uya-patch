@@ -165,7 +165,7 @@ const char* CustomModeShortNames[] = {
 };
 
 MenuElem_ListData_t dataWeaponPacks = {
-    &gameConfig.disableWeaponPacks,
+    &gameConfig.grDisableWeaponPacks,
     NULL,
     2,
     {
@@ -175,8 +175,20 @@ MenuElem_ListData_t dataWeaponPacks = {
     }
 };
 
+MenuElem_ListData_t dataVampire = {
+    &gameConfig.grVampire,
+    NULL,
+    4,
+    {
+      "Off",
+      "Quarter Heal",
+      "Half Heal",
+      "Full Heal",
+    }
+};
+
 MenuElem_ListData_t dataSetGattlingTurretHealth = {
-    &gameConfig.setGattlingTurretHealth,
+    &gameConfig.grSetGattlingTurretHealth,
     NULL,
     5,
     { "Default", "1.5x", "2x", "3x", "4x", }
@@ -202,13 +214,14 @@ MenuElem_t menuElementsGameSettings[] = {
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
-  { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.disableV2s },
-  { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.disableHealthBoxes },
-  { "Auto Respawn", toggleActionHandler, menuStateHandler_Default, &gameConfig.autoRespawn },
+  { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableV2s },
+  { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
+  { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
+  { "Auto Respawn", toggleActionHandler, menuStateHandler_Default, &gameConfig.grAutoRespawn },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_Default, &dataSetGattlingTurretHealth },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.chargebootForever },
+  { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever },
 };
 
 // Custom Maps
