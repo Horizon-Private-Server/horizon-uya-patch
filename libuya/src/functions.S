@@ -246,7 +246,8 @@ FUNCTION(strncpy, 0x00120d28)
 #------------------------- MATH -------------------------
 #--------------------------------------------------------
 # Currently not ported.
-# FUNCTION(cosf, 0x00136aa8)
+VARIABLE_FUNCTION(cosf, vaFastCosf)
+VARIABLE_FUNCTION(sinf, vaFastSinf)
 FUNCTION(asinf, 0x00136278) # not ported
 FUNCTION(sqrtf, 0x0011a808)
 FUNCTION(powf, 0x00136788) # not ported

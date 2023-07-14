@@ -23,8 +23,8 @@
 #define MATH_DEG2RAD                    (MATH_PI / (float)180)
 
 //--------------------------------------------------------
-__LIBUYA_INLINE__ float cosf(float theta);
-__LIBUYA_INLINE__ float sinf(float theta);
+// __LIBUYA_INLINE__ float cosf(float theta);
+// __LIBUYA_INLINE__ float sinf(float theta);
 __LIBUYA_INLINE__ float acosf(float v);
 __LIBUYA_INLINE__ float asinf(float v);
 __LIBUYA_INLINE__ float sqrtf(float f);

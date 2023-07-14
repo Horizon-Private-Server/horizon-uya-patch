@@ -1,22 +1,79 @@
 #include "math.h"
+#include "interop.h"
+
+VariableAddress_t vaFastCosf = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x0045dcd8,
+	.Hoven = 0x0045f888,
+	.OutpostX12 = 0x00456688,
+    .KorgonOutpost = 0x00454218,
+	.Metropolis = 0x00453558,
+	.BlackwaterCity = 0x00450d88,
+	.CommandCenter = 0x00451680,
+    .BlackwaterDocks = 0x00453f00,
+    .AquatosSewers = 0x00453200,
+    .MarcadiaPalace = 0x00452b80,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x0045cc28,
+	.Hoven = 0x0045e718,
+	.OutpostX12 = 0x00455558,
+    .KorgonOutpost = 0x00453168,
+	.Metropolis = 0x004524a8,
+	.BlackwaterCity = 0x0044fc58,
+	.CommandCenter = 0x00450710,
+    .BlackwaterDocks = 0x00452f50,
+    .AquatosSewers = 0x00452290,
+    .MarcadiaPalace = 0x00451bd0,
+#endif
+};
+
+VariableAddress_t vaFastSinf = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x0045dcf0,
+	.Hoven = 0x0045f8a0,
+	.OutpostX12 = 0x004566a0,
+    .KorgonOutpost = 0x00454230,
+	.Metropolis = 0x00453570,
+	.BlackwaterCity = 0x00450da0,
+	.CommandCenter = 0x00451698,
+    .BlackwaterDocks = 0x00453f18,
+    .AquatosSewers = 0x00453218,
+    .MarcadiaPalace = 0x00452b98,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x0045cc40,
+	.Hoven = 0x0045e730,
+	.OutpostX12 = 0x00455570,
+    .KorgonOutpost = 0x00453180,
+	.Metropolis = 0x004524c0,
+	.BlackwaterCity = 0x0044fc70,
+	.CommandCenter = 0x00450728,
+    .BlackwaterDocks = 0x00452f68,
+    .AquatosSewers = 0x004522a8,
+    .MarcadiaPalace = 0x00451be8,
+#endif
+};
 
 //--------------------------------------------------------
 // -- https://stackoverflow.com/a/28050328
-float cosf(float x)
-{
-    const float tp = 1./(2.*MATH_PI);
-    x *= tp;
-    x -= .25 + floorf(x + .25);
-    x *= 16. * (fabsf(x) - .5);
-    x += .225 * x * (fabsf(x) - 1.);
-    return x;
-}
+// float cosf(float x)
+// {
+//     const float tp = 1./(2.*MATH_PI);
+//     x *= tp;
+//     x -= .25 + floorf(x + .25);
+//     x *= 16. * (fabsf(x) - .5);
+//     x += .225 * x * (fabsf(x) - 1.);
+//     return x;
+// }
 
 //--------------------------------------------------------
-float sinf(float theta)
-{
-    return cosf(clampAngle(theta - (MATH_PI / 2)));
-}
+// float sinf(float theta)
+// {
+//     return cosf(clampAngle(theta - (MATH_PI / 2)));
+// }
 
 //--------------------------------------------------------
 float acosf(float v)
