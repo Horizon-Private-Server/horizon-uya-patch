@@ -24,36 +24,43 @@
 //--------------------------------------------------------
 typedef struct PlayerGameStats
 {
-    short WeaponKills[GAME_MAX_PLAYERS][7];
-    short WeaponDeaths[GAME_MAX_PLAYERS][7];
-    short WeaponShots[GAME_MAX_PLAYERS][7];
-    short WeaponShotsHitBy[GAME_MAX_PLAYERS][7];
-    float VehicleTime[GAME_MAX_PLAYERS];
-    short VehicleWeaponKills[GAME_MAX_PLAYERS];
-    short VehicleWeaponDeaths[GAME_MAX_PLAYERS];
-    short VehicleRoadKills[GAME_MAX_PLAYERS];
-    short VehicleRoadDeaths[GAME_MAX_PLAYERS];
-    short VehicleShotsFired[GAME_MAX_PLAYERS];
-    short VehicleShotsHit[GAME_MAX_PLAYERS];
-    short Kills[GAME_MAX_PLAYERS];
-    short Deaths[GAME_MAX_PLAYERS];
-    short Suicides[GAME_MAX_PLAYERS];
-    short MultiKills[GAME_MAX_PLAYERS];
-    short SniperKills[GAME_MAX_PLAYERS];
-    short WrenchKills[GAME_MAX_PLAYERS];
-    char ConquestNodesCaptured[GAME_MAX_PLAYERS];
-    char ConquestNodeSaves[GAME_MAX_PLAYERS];
-    char ConquestDefensiveKills[GAME_MAX_PLAYERS];
-    char ConquestPoints[GAME_MAX_PLAYERS];
-    char CtfFlagsCaptures[GAME_MAX_PLAYERS];
-    char CtfFlagsSaved[GAME_MAX_PLAYERS];
-    float KingHillHoldTime[GAME_MAX_PLAYERS];
-    float InternalKingHillHoldTime[GAME_MAX_PLAYERS];
-    float JuggernautTime[GAME_MAX_PLAYERS];
-    short Squats[GAME_MAX_PLAYERS];
-    short VehicleSquats[GAME_MAX_PLAYERS];
-    short TicketScore[GAME_MAX_PLAYERS];
+    short Kills;
+    short Deaths;
 } PlayerGameStats;
+
+//=================   =For DL:
+// typedef struct PlayerGameStats
+// {
+//     short WeaponKills[GAME_MAX_PLAYERS][7];
+//     short WeaponDeaths[GAME_MAX_PLAYERS][7];
+//     short WeaponShots[GAME_MAX_PLAYERS][7];
+//     short WeaponShotsHitBy[GAME_MAX_PLAYERS][7];
+//     float VehicleTime[GAME_MAX_PLAYERS];
+//     short VehicleWeaponKills[GAME_MAX_PLAYERS];
+//     short VehicleWeaponDeaths[GAME_MAX_PLAYERS];
+//     short VehicleRoadKills[GAME_MAX_PLAYERS];
+//     short VehicleRoadDeaths[GAME_MAX_PLAYERS];
+//     short VehicleShotsFired[GAME_MAX_PLAYERS];
+//     short VehicleShotsHit[GAME_MAX_PLAYERS];
+//     short Kills[GAME_MAX_PLAYERS];
+//     short Deaths[GAME_MAX_PLAYERS];
+//     short Suicides[GAME_MAX_PLAYERS];
+//     short MultiKills[GAME_MAX_PLAYERS];
+//     short SniperKills[GAME_MAX_PLAYERS];
+//     short WrenchKills[GAME_MAX_PLAYERS];
+//     char ConquestNodesCaptured[GAME_MAX_PLAYERS];
+//     char ConquestNodeSaves[GAME_MAX_PLAYERS];
+//     char ConquestDefensiveKills[GAME_MAX_PLAYERS];
+//     char ConquestPoints[GAME_MAX_PLAYERS];
+//     char CtfFlagsCaptures[GAME_MAX_PLAYERS];
+//     char CtfFlagsSaved[GAME_MAX_PLAYERS];
+//     float KingHillHoldTime[GAME_MAX_PLAYERS];
+//     float InternalKingHillHoldTime[GAME_MAX_PLAYERS];
+//     float JuggernautTime[GAME_MAX_PLAYERS];
+//     short Squats[GAME_MAX_PLAYERS];
+//     short VehicleSquats[GAME_MAX_PLAYERS];
+//     short TicketScore[GAME_MAX_PLAYERS];
+// } PlayerGameStats;
 
 //--------------------------------------------------------
 typedef struct TeamGameStats
@@ -133,25 +140,37 @@ typedef struct GameData
     int NumTeams;
     int WinningTeam;
     int WinningPlayer;
-    int BaseHoldTime;
-    int FragDisplayCount;
-    char FragMsg[0x3C];
-    int GameEndReceived;
-    int GameEndReason;
-    int GameIsOver;
-    int NumNodes;
-    int NumStartPlayers;
-    int NumStartTeams;
-    int MyTotalSquats;
-    int MyTotalTimeSquatted;
-    int MyTotalGangSquats;
-    int TeamCaptain[GAME_MAX_PLAYERS];
-    PlayerGameStats PlayerStats;
-    TeamGameStats TeamStats;
-    LocalPlayerYourBaseGameData * AllYourBaseGameData;
-    CTFGameData * CtfGameData;
-    DeathMatchGameData * DeathmatchGameData;
+    PlayerGameStats PlayerStats[GAME_MAX_PLAYERS];
 } GameData;
+
+//=================   =For DL:
+// typedef struct GameData
+// {
+//     int TimeEnd;
+//     int TimeStart;
+//     int GameState;
+//     int NumTeams;
+//     int WinningTeam;
+//     int WinningPlayer;
+//     int BaseHoldTime;
+//     int FragDisplayCount;
+//     char FragMsg[0x3C];
+//     int GameEndReceived;
+//     int GameEndReason;
+//     int GameIsOver;
+//     int NumNodes;
+//     int NumStartPlayers;
+//     int NumStartTeams;
+//     int MyTotalSquats;
+//     int MyTotalTimeSquatted;
+//     int MyTotalGangSquats;
+//     int TeamCaptain[GAME_MAX_PLAYERS];
+//     PlayerGameStats PlayerStats;
+//     TeamGameStats TeamStats;
+//     LocalPlayerYourBaseGameData * AllYourBaseGameData;
+//     CTFGameData * CtfGameData;
+//     DeathMatchGameData * DeathmatchGameData;
+// } GameData;
 //--------------------------------------------------------
 
 /*
