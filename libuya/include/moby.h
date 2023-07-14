@@ -242,7 +242,6 @@ typedef struct Moby
 	/*  68 */ void * PVar;
 	/*     */ char unk_6c[0x14];
 	/*  80 */ VECTOR LSphere;
-	/*     */ char unk_84[0xc];
 	/*  90 */ struct GuberMoby * GuberMoby;
 	/*     */ char unk_94[0x10];
 	/*  a4 */ struct Moby * PParent;
