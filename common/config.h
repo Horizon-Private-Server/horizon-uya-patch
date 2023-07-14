@@ -1,12 +1,13 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+// General Tab
 typedef struct PatchConfig
 {
-  // In Game
-  char enableInfiniteHealthMoonjump;
+  char enableAutoMaps;
 } PatchConfig_t;
 
+// Game Rules Tab
 typedef struct PatchGameConfig
 {
   char customMapId;

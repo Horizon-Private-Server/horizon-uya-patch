@@ -164,15 +164,6 @@ const char* CustomModeShortNames[] = {
   [CUSTOM_MODE_EXAMPLE] "EX",
 };
 
-// General
-MenuElem_t menuElementsGeneral[] = {
-#ifdef DEBUG
-  { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
-#endif
-  // { "InfHealth+Moonjump", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableInfiniteHealthMoonjump },
-  // { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
-};
-
 MenuElem_ListData_t dataWeaponPacks = {
     &gameConfig.disableWeaponPacks,
     NULL,
@@ -189,6 +180,15 @@ MenuElem_ListData_t dataSetGattlingTurretHealth = {
     NULL,
     5,
     { "Default", "1.5x", "2x", "3x", "4x", }
+};
+
+// General
+MenuElem_t menuElementsGeneral[] = {
+#ifdef DEBUG
+  { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
+#endif
+  { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
+  { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 };
 
 // Game Settings
@@ -340,7 +340,7 @@ void menuStateHandler_SiegeAndCTF(TabElem_t* tab, MenuElem_t* element, int* stat
 {
   GameSettings * gs = gameGetSettings();
 
-  if (!gs || gs->GameType == GAMERULE_SIEGE || gs->GameType != GAMERULE_CTF)
+  if (!gs || (gs->GameType != GAMERULE_SIEGE) || (gs->GameType != GAMERULE_CTF))
     *state = ELEMENT_HIDDEN;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;

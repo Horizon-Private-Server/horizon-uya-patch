@@ -63,9 +63,8 @@ void grLoadStart(void);
 
 #define EXCEPTION_DISPLAY_ADDR			(0x000C8000)
 
-// config
 PatchConfig_t config __attribute__((section(".config"))) = {
-	0
+	.enableAutoMaps = 0,
 };
 
 PatchGameConfig_t gameConfig;
