@@ -333,15 +333,15 @@ VariableAddress_t vaHurtPlayerFunc = {
     .MarcadiaPalace = 0x004fe020,
 #endif
 };
-void playerDecHealth(Player * player, u8 amount)
+void playerDecHealth(Player * player, float amount)
 {
     internal_HurtPlayer(player, amount);
 }
 
 //--------------------------------------------------------------------------------
-void playerIncHealth(Player * player, u8 amount)
+void playerIncHealth(Player * player, float amount)
 {
-    if (playerGetHealth(player) >= 15)
+    if (((float)playerGetHealth(player) + amount) >= 15)
     {
         playerSetHealth(player, 15);
     }
@@ -358,7 +358,7 @@ void playerIncHealth(Player * player, u8 amount)
     }
 }
 
-void playerSetHealth(Player * player, u8 amount)
+void playerSetHealth(Player * player, float amount)
 {
     // Make sure amount is not more than the max health.
     if (amount > PLAYER_MAX_HEALTH)
@@ -430,6 +430,12 @@ VariableAddress_t vaPlayerSetPosRotFunc = {
 };
 void playerSetPosRot(Player * player, u32 * position, u32 * rotation)
 {
+    /*
+        a4: warpToState
+        t0: Unk
+        t1: resurrecting
+        t2: dropFlag
+    */
     internal_playerSetPosRot(player, position, rotation, 0, 1, 1, 1);
 }
 

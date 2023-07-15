@@ -707,7 +707,7 @@ void playerSetPlayerState(Player * player, u8 state);
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void playerDecHealth(Player * player, u8 amount);
+void playerDecHealth(Player * player, float amount);
 
 /*
  * NAME :		playerIncHealth
@@ -720,7 +720,7 @@ void playerDecHealth(Player * player, u8 amount);
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void playerIncHealth(Player * player, u8 amount);
+void playerIncHealth(Player * player, float amount);
 
 /*
  * NAME :		playerSetHealth
@@ -733,7 +733,7 @@ void playerIncHealth(Player * player, u8 amount);
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void playerSetHealth(Player * player, u8 amount);
+void playerSetHealth(Player * player, float amount);
 
 /*
  * NAME :		playerGetHealth
