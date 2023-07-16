@@ -334,13 +334,13 @@ VariableAddress_t vaHurtPlayerFunc = {
     .MarcadiaPalace = 0x004fe020,
 #endif
 };
-void playerDecHealth(Player * player, float amount)
+void playerDecHealth(Player * player, u8 amount)
 {
     internal_HurtPlayer(player, amount);
 }
 
 //--------------------------------------------------------------------------------
-void playerIncHealth(Player * player, float amount)
+void playerIncHealth(Player * player, u8 amount)
 {
     if (((float)playerGetHealth(player) + amount) >= 15)
     {
@@ -359,7 +359,7 @@ void playerIncHealth(Player * player, float amount)
     }
 }
 
-void playerSetHealth(Player * player, float amount)
+void playerSetHealth(Player * player, u8 amount)
 {
     // Make sure amount is not more than the max health.
     if (amount > PLAYER_MAX_HEALTH)
