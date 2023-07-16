@@ -350,3 +350,10 @@ VARIABLE_FUNCTION(mobyGetDamage, vaMobyGetDamageFunc)
 #----------------------- SPAWNPOINT ---------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(spawnPointGetRandom, vaGetRandomSpawnPointFunc)
+
+#--------------------------------------------------------
+#------------------------ SOUND -------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(soundHeroPlay, vaSoundHeroPlayFunc)
+VARIABLE_FUNCTION(soundMobyPlay, vaSoundMobyPlayFunc)
+VARIABLE_FUNCTION(soundPlay, vaSoundPlayFunc)
