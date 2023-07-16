@@ -2,6 +2,7 @@
 #include "player.h"
 #include "interop.h"
 #include "game.h"
+#include "spawnpoint.h"
 
 void playerRespawn(Player * player);
 void playerStripWeapons(Player * player);
@@ -428,7 +429,7 @@ VariableAddress_t vaPlayerSetPosRotFunc = {
     .MarcadiaPalace = 0x004fa908,
 #endif
 };
-void playerSetPosRot(Player * player, u32 * position, u32 * rotation)
+void playerSetPosRot(Player * player, u32 * vPosition, u32 * vRotation)
 {
     /*
         a4: warpToState
@@ -436,7 +437,15 @@ void playerSetPosRot(Player * player, u32 * position, u32 * rotation)
         t1: resurrecting
         t2: dropFlag
     */
-    internal_playerSetPosRot(player, position, rotation, 0, 1, 1, 1);
+    if (!vPosition || !vRotation)
+    {
+        SpawnPointPosRot pos;
+        spawnPointGetRandom(player, &pos.position, &pos.rotation);
+        internal_playerWarp(player, &pos.position, &pos.rotation, 0, 1, 1, 1);
+        return;
+    }
+
+    internal_playerWarp(player, vPosition, vRotation, 0, 1, 1, 1);
 }
 
 //--------------------------------------------------------------------------------

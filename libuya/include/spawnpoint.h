@@ -3,12 +3,19 @@
 
 #include "math3d.h"
 #include "common.h"
+#include "player.h"
 
 typedef struct SpawnPoint
 {
     MATRIX M0;
     MATRIX M1;
 } SpawnPoint;
+
+typedef struct SpawnPointPosRot
+{
+    VECTOR position;
+    VECTOR rotation;
+} SpawnPointPosRot;
 
 /*
  * NAME :		spawnPointGetCount
@@ -57,6 +64,25 @@ __LIBUYA_GETTER__ SpawnPoint * spawnPointGet(int index);
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_SETTER__ void spawnPointSet(SpawnPoint * sp, int index);
+
+/*
+ * NAME :		spawnPointGetRandom
+ * 
+ * DESCRIPTION :    Get a random spawnpoint and puts them into the vPosition
+ *                  pointer given and vRotation pointer given.
+ * 			
+ * 
+ * NOTES :          
+ * 
+ * ARGS :           Player * player: pointer to player struct.
+ *                  vPosition: Pointer, where position data is saved.
+ *                  vrotation: Pointer, where rotation data is saved.
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int spawnPointGetRandom(Player * player, u32 vPosition, u32 vRotation);
 
 
 #endif // _LIBUYA_SPAWNPOINT_H_

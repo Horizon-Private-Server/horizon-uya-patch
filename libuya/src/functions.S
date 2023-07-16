@@ -333,7 +333,7 @@ FUNCTION(internal_wadGetSectors, 0x00194fc8)
 VARIABLE_FUNCTION(internal_SetPlayerState, vaSetPlayerStateFunc)
 VARIABLE_FUNCTION(internal_HurtPlayer, vaHurtPlayerFunc)
 VARIABLE_FUNCTION(playerRespawn, vaPlayerRespawnFunc)
-VARIABLE_FUNCTION(internal_playerSetPosRot, vaPlayerSetPosRotFunc)
+VARIABLE_FUNCTION(internal_playerWarp, vaPlayerSetPosRotFunc)
 VARIABLE_FUNCTION(internal_playerGiveWeapon, vaGiveWeaponFunc)
 VARIABLE_FUNCTION(internal_playerEquipWeapon, vaEquipWeaponFunc)
 VARIABLE_FUNCTION(playerStripWeapons, vaWeaponStripMeFunc)
@@ -345,3 +345,8 @@ VARIABLE_FUNCTION(internal_GiveMeRandomWeapons, vaGiveMeRandomWeapons)
 VARIABLE_FUNCTION(mobySpawn, vaMobyCreateFunc)
 VARIABLE_FUNCTION(mobyDestroy, vaMobyDeleteFunc)
 VARIABLE_FUNCTION(mobyGetDamage, vaMobyGetDamageFunc)
+
+#--------------------------------------------------------
+#----------------------- SPAWNPOINT ---------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(spawnPointGetRandom, vaGetRandomSpawnPointFunc)
