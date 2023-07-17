@@ -168,11 +168,10 @@ void playerSetTeam(Player * player, int teamId)
     if (!player)
         return;
 
-    
     player->Team = teamId;
-    //player->PlayerMoby->SecondaryColor = TEAM_COLORS[teamId];
-    player->SkinMoby->TextureId = 0x80 + (0x10 * teamId);
-    //player->SkinMoby->UNK_BE = 0;
+    // player->PlayerMoby->GlowRGBA = TEAM_COLORS[teamId];
+    player->SkinMoby->ModeBits2 = player->SkinMoby->ModeBits2 & 0x8f | 0x80 | (teamId << 4);
+    // player->SkinMoby->Triggers = 0;
 }
 
 //--------------------------------------------------------------------------------
