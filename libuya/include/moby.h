@@ -240,7 +240,9 @@ typedef struct Moby
 	/*     */ char unk_40[0x24];
 	/*  64 */ void * PUpdate;
 	/*  68 */ void * PVar;
-	/*     */ char unk_6c[0x14];
+	/*     */ char unk_6c[0x12];
+	/*  7e */ char TextureId;
+	/*     */ char unk_7f;
 	/*  80 */ VECTOR LSphere;
 	/*  90 */ struct GuberMoby * GuberMoby;
 	/*     */ char unk_94[0x10];

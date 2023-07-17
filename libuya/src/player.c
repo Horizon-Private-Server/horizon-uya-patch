@@ -171,7 +171,7 @@ void playerSetTeam(Player * player, int teamId)
     
     player->Team = teamId;
     //player->PlayerMoby->SecondaryColor = TEAM_COLORS[teamId];
-    //player->SkinMoby->TextureId = 0x80 + (8 * teamId);
+    player->SkinMoby->TextureId = 0x80 + (0x10 * teamId);
     //player->SkinMoby->UNK_BE = 0;
 }
 

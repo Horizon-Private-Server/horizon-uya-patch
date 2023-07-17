@@ -622,9 +622,9 @@ typedef struct PlayerVTable
     void * FUNC_28;
     void * FUNC_2C;
     void * FUNC_30;
-    void * FUNC_34;
-    void * FUNC_38;
     PlayerUpdateState_func UpdateState;
+    void * FUNC_38;
+	void * FUNC_3C;
 } PlayerVTable;
 
 /*
