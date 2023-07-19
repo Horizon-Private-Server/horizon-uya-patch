@@ -43,6 +43,7 @@ int FirstPass = 1;
 int HasDisabledHealthboxes = 0;
 int HasSetGattlingTurretHealth = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
+short PlayerDeaths[GAME_MAX_PLAYERS];
 
 float VampireHealRate[] = {
 	PLAYER_MAX_HEALTH * 0.25,
@@ -69,9 +70,12 @@ void grInitialize(void)
 {
 	int i;
 
-	// Initialize player kills to 0
+	// Initialize player kills/deaths to 0
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+	{
 		PlayerKills[i] = 0;
+		PlayerDeaths[i] = 0;
+	}
 
 	HasDisabledHealthboxes = 0;
 	HasSetGattlingTurretHealth = 0;
@@ -124,6 +128,12 @@ void grGameStart(void)
 	
 	if (gameConfig.grVampire)
 		vampireLogic(VampireHealRate[gameConfig.grVampire - 1]);
+
+	if (config.disableCameraShake)
+		disableCameraShake();
+
+	if (gameConfig.prSurvivor)
+		survivor();
 
 	FirstPass = 0;
 }

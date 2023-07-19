@@ -32,6 +32,8 @@
 #include "include/config.h"
 
 extern PlayerKills[GAME_MAX_PLAYERS];
+extern PlayerDeaths[GAME_MAX_PLAYERS];
+extern VariableAddress_t vaPlayerRespawnFunc;
 
 /*
  * NAME :		disableWeaponPacks
@@ -500,10 +502,171 @@ void vampireLogic(float healRate)
 			// Try to heal if player exists
 			player = playerObjects[i];
 			if (player)
-				playerSetHealth(player, clamp((u32)playerGetHealth(player) + healRate, 0, PLAYER_MAX_HEALTH));
-			
+                playerIncHealth(player, healRate);
+                
 			// Update our cached kills count
 			PlayerKills[i] = gameData->PlayerStats[i].Kills;
 		}
 	}
+}
+
+/*
+ * NAME :		disableCameraShake
+ * 
+ * DESCRIPTION :
+ *              Removes Camera Shake
+
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void disableCameraShake(void)
+{
+	VariableAddress_t vaCameraShakeFunc = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x00446eb0,
+		.Hoven = 0x00448a30,
+		.OutpostX12 = 0x0043f830,
+		.KorgonOutpost = 0x0043d3f0,
+		.Metropolis = 0x0043c730,
+		.BlackwaterCity = 0x00439f30,
+		.CommandCenter = 0x0043abb0,
+		.BlackwaterDocks = 0x0043d430,
+		.AquatosSewers = 0x0043c730,
+		.MarcadiaPalace = 0x0043c0b0,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00446010,
+		.Hoven = 0x00447ad0,
+		.OutpostX12 = 0x0043e910,
+		.KorgonOutpost = 0x0043c550,
+		.Metropolis = 0x0043b890,
+		.BlackwaterCity = 0x00439010,
+		.CommandCenter = 0x0043c690,
+		.BlackwaterDocks = 0x0043c690,
+		.AquatosSewers = 0x0043b9d0,
+		.MarcadiaPalace = 0x0043b310,
+#endif
+	};
+	int CameraShake = GetAddress(&vaCameraShakeFunc);
+	if (*(u32*)CameraShake == 0x24030460)
+	{
+		*(u32*)CameraShake = 0x03e00008;
+		*(u32*)(CameraShake + 0x4) = 0;
+	}
+}
+
+/*
+ * NAME :		DisableRespawning
+ * 
+ * DESCRIPTION :
+ *              Only for DM.  Disables respawn timer and pressing x function.
+
+ * NOTES :      Only used as a cheat, doesn't get activated via patch menu.
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void disableRespawning(void)
+{
+    VariableAddress_t vaDM_RespawnUpdater = {
+#if UYA_PAL
+        .Lobby = 0,
+        .Bakisi = 0x004b21f4,
+        .Hoven = 0x004b430c,
+        .OutpostX12 = 0x004a9be4,
+        .KorgonOutpost = 0x004a737c,
+        .Metropolis = 0x004a66cc,
+        .BlackwaterCity = 0x004a3f64,
+        .CommandCenter = 0x004a3f5c,
+        .BlackwaterDocks = 0x004a67dc,
+        .AquatosSewers = 0x004a5adc,
+        .MarcadiaPalace = 0x004a545c,
+#else
+        .Lobby = 0,
+        .Bakisi = 0x004afca4,
+        .Hoven = 0x004b1cfc,
+        .OutpostX12 = 0x004a7614,
+        .KorgonOutpost = 0x004a4e2c,
+        .Metropolis = 0x004a417c,
+        .BlackwaterCity = 0x004a1994,
+        .CommandCenter = 0x004a1b4c,
+        .BlackwaterDocks = 0x004a438c,
+        .AquatosSewers = 0x004a36cc,
+        .MarcadiaPalace = 0x004a300c,
+#endif
+    };
+	// Disable Timer and respawn text.
+    int RespawnUpdater = GetAddress(&vaDM_RespawnUpdater);
+    if (*(u32*)RespawnUpdater != 0)
+        *(u32*)RespawnUpdater = 0;
+
+	// Disable Respawn Function
+	int RespawnFunc = GetAddress(&vaPlayerRespawnFunc);
+    if (*(u32*)RespawnFunc != 0)
+	{
+		*(u32*)RespawnFunc = 0x03e00008;
+        *(u32*)(RespawnFunc + 0x4) = 0;
+	}
+}
+
+/*
+ * NAME :		Survivor
+ * 
+ * DESCRIPTION :
+ *              Last Person standing wins!  Once a player is dead, they
+ *              can't respawn.
+
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void survivor(void)
+{
+    // Don't let players respawn
+    disableRespawning();
+
+    static int DeadPlayers = 0;
+    int i;
+	GameData * gameData = gameGetData();
+    GameSettings * gameSettings = gameGetSettings();
+    int playerCount = gameSettings->PlayerCount;
+    for (i = 0; i < playerCount; ++i)
+    {
+        // Save current deaths for all players, and how many players have died.
+        if (gameData->PlayerStats[i].Deaths > PlayerDeaths[i])
+        {
+            PlayerDeaths[i] = gameData->PlayerStats[i].Deaths;
+            ++DeadPlayers;
+        }
+
+        // If only one player in game, don't let game end until they die.
+        if (playerCount == 1 && DeadPlayers == 1)
+        {
+			gameData->TimeEnd = 0;
+            gameData->WinningTeam = i;
+        }
+        // if player count is greater than 1, and Dead Players == Player Count - 1
+        else if (playerCount > 1 && DeadPlayers == (playerCount - 1))
+        {
+            // Check to see who has not died
+            if (gameData->PlayerStats[i].Deaths == 0)
+            {
+				gameData->TimeEnd = 0;
+                gameData->WinningTeam = i;
+            }
+        }
+    }
 }

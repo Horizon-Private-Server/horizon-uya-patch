@@ -83,10 +83,11 @@ void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int* state);
-void menuStateHandler_SiegeAndCTF(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
 
 int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value);
@@ -201,6 +202,7 @@ MenuElem_t menuElementsGeneral[] = {
 #endif
   { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
+  { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake },
 };
 
 // Game Settings
@@ -217,10 +219,11 @@ MenuElem_t menuElementsGameSettings[] = {
   { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableV2s },
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
-  { "Auto Respawn", toggleActionHandler, menuStateHandler_Default, &gameConfig.grAutoRespawn },
-  { "Gattling Turret Health", listActionHandler, menuStateHandler_Default, &dataSetGattlingTurretHealth },
+  { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
+  { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
+  { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever },
 };
 
@@ -344,16 +347,11 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
   return 1;
 }
 
-void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state)
-{
-    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
-}
-
-void menuStateHandler_SiegeAndCTF(TabElem_t* tab, MenuElem_t* element, int* state)
+void menuStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
-
-  if (!gs || (gs->GameType != GAMERULE_SIEGE) || (gs->GameType != GAMERULE_CTF))
+  GameOptions * go = gameGetOptions();
+  if (!gs || (!go->GameFlags.MultiplayerGameFlags.BaseDefense_GatlinTurrets))
     *state = ELEMENT_HIDDEN;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
@@ -386,6 +384,22 @@ void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state)
   if (!gs || gs->GameType != GAMERULE_DM)
     *state = ELEMENT_HIDDEN;
   else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+  GameOptions * go = gameGetOptions();
+
+  if (!gs || (gs->GameType != GAMERULE_DM) || go->GameFlags.MultiplayerGameFlags.Teams)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state)
+{
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 

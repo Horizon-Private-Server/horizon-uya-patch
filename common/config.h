@@ -5,6 +5,7 @@
 typedef struct PatchConfig
 {
   char enableAutoMaps;
+  char disableCameraShake;
 } PatchConfig_t;
 
 // Game Rules Tab
@@ -24,6 +25,7 @@ typedef struct PatchGameConfig
   char grVampire;
 
   // Party
+  char prSurvivor;
   char prChargebootForever;
 } PatchGameConfig_t;
 
