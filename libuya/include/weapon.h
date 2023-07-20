@@ -88,6 +88,18 @@ typedef struct WeaponMeter {
     char Holo;
 } WeaponMeter;
 
+typedef struct tNW_GadgetEventMessage
+{
+	/*   0 */ short int GadgetId;
+	/*   2 */ char PlayerIndex;
+	/*   3 */ char GadgetEventType;
+	/*   4 */ char ExtraData;
+	/*   8 */ int ActiveTime;
+	/*   c */ unsigned int TargetUID;
+	/*  10 */ float FiringLoc[3];
+	/*  1c */ float TargetDir[3];
+} tNW_GadgetEventMessage;
+
 typedef struct GadgetDef { // 0x80
     /* 0x00 */ short int pickupTag;
     /* 0x02 */ short int quickSelectTag;
