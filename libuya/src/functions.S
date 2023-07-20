@@ -345,6 +345,8 @@ VARIABLE_FUNCTION(internal_GiveMeRandomWeapons, vaGiveMeRandomWeapons)
 VARIABLE_FUNCTION(mobySpawn, vaMobyCreateFunc)
 VARIABLE_FUNCTION(mobyDestroy, vaMobyDeleteFunc)
 VARIABLE_FUNCTION(mobyGetDamage, vaMobyGetDamageFunc)
+VARIABLE_FUNCTION(mobyGetDamager, vaGetDamager)
+VARIABLE_FUNCTION(mobyGetFunctions, vaGetMobyFunctions)
 
 #--------------------------------------------------------
 #----------------------- SPAWNPOINT ---------------------
@@ -364,3 +366,9 @@ VARIABLE_FUNCTION(soundPlay, vaSoundPlayFunc)
 VARIABLE_FUNCTION(musicPlayTrack, vaPlayTrackFunc)
 VARIABLE_FUNCTION(musicStopTrack, vaStopTrackFunc)
 VARIABLE_FUNCTION(musicTransitionTrack, vaTransitionTrackFunc)
+
+#--------------------------------------------------------
+#------------------------ GUBER -------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(guberGetObjectByMoby, vaGuberGetObjectByMoby)
+VARIABLE_FUNCTION(guberEventCreate, vaGuberEventCreate)
