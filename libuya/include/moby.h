@@ -283,7 +283,7 @@ typedef struct MobyColDamageIn {
 typedef struct MobyColDamage {
     VECTOR Ip;
     VECTOR Momentum;
-    Moby* Damager;
+    Moby * Damager;
     int DamageFlags;
     u8 DamageClass;
     u8 DamageStrength;
@@ -292,7 +292,7 @@ typedef struct MobyColDamage {
     int Flags;
     float DamageHeroHp;
     int ShotUID;
-    Moby* Moby;
+    Moby * Moby;
 } MobyColDamage;
 
 
@@ -321,7 +321,7 @@ struct TargetVars {
 	/*   e */ short int hitCount;
 	/*  10 */ int flags;
 	/*  14 */ float targetHeight;
-	/*  18 */ Moby* mobyThatHurtMeLast;
+	/*  18 */ Moby * mobyThatHurtMeLast;
 	/*  1c */ float camPushDist;
 	/*  20 */ float camPushHeight;
 	/*  24 */ short int damageCounter;
@@ -356,8 +356,8 @@ struct TargetVars {
 	/*  47 */ char invalidTarget;
 	/*  48 */ int maxDifficultySlotted;
 	/*  4c */ int curDifficultySlotted;
-	/*  50 */ Moby* pTargettedByBogeys[8];
-	/*  70 */ Moby* mobyThatFiredAtMe;
+	/*  50 */ Moby * pTargettedByBogeys[8];
+	/*  70 */ Moby * mobyThatFiredAtMe;
 	/*  74 */ int targetShadowMask;
 	/*  78 */ int damageTypes;
 	/*  7c */ int padA;
@@ -398,16 +398,16 @@ struct MoveVars_V2 {
 	/*  34 */ char blend;
 	/*  35 */ char lockAnim;
 	/*  36 */ short int numColl;
-	/*  38 */ struct MoveVarsAnimCache* pAnimCache;
-	/*  3c */ struct MoveVarsAnimCache* pAttachAnimCache;
-	/*  40 */ Moby** effectorOverrideList;
+	/*  38 */ struct MoveVarsAnimCache * pAnimCache;
+	/*  3c */ struct MoveVarsAnimCache * pAttachAnimCache;
+	/*  40 */ Moby ** effectorOverrideList;
 	/*  44 */ int effectorOverrideCount;
 	/*  48 */ int boundArea;
-	/*  4c */ Moby* pIgnoreCollMoby;
+	/*  4c */ Moby * pIgnoreCollMoby;
 	/*  50 */ Moby* pBumpMoby;
-	/*  54 */ Moby* pGroundMoby;
-	/*  58 */ Moby* pIgnoreEffector;
-	/*  5c */ Moby* pAttach;
+	/*  54 */ Moby * pGroundMoby;
+	/*  58 */ Moby * pIgnoreEffector;
+	/*  5c */ Moby * pAttach;
 	/*  60 */ int attachJoint;
 	/*  64 */ float attachMaxRot;
 	/*  68 */ float actionStartFrame;
@@ -453,7 +453,7 @@ struct MoveVars_V2 {
 	/* 108 */ short int moveDamperTimer;
 	/* 10a */ char curNode;
 	/* 10b */ char destNode;
-	/* 10c */ struct Path* pLastFollowPath;
+	/* 10c */ struct Path * pLastFollowPath;
 	/* 110 */ float walkTurnFactor;
 	/* 114 */ float desiredFacing;
 	/* 120 */ VECTOR vel;
@@ -471,6 +471,7 @@ struct MoveVars_V2 {
 typedef void (*MobyGetInterface_func)(int mobyId, int arg2, int arg3);
 typedef void (*MobyGetGuberObject_func)(Moby * moby);
 typedef void (*MobyEventHandler_func)(Moby * moby, struct GuberEvent * event);
+typedef void (*MobyGetDamager_func)(Moby * moby);
 
 typedef struct MobyFunctions
 {
@@ -480,9 +481,9 @@ typedef struct MobyFunctions
     void * FUNC_0C;
     MobyGetInterface_func GetMobyInterface;
     MobyEventHandler_func MobyEventHandler;
-    void * GetDamager;
+    void * FUNC_18;
     void * FUNC_1C;
-
+	MobyGetDamager_func GetDamager;
 } MobyFunctions;
 
 /*
@@ -508,13 +509,13 @@ __LIBUYA_GETTER__ u16 * mobyGetLoadedMobyClassList(void);
 /*
  * Returns non-zero if the given moby is destroyed.
  */
-__LIBUYA_GETTER__ int mobyIsDestroyed(Moby* moby);
+__LIBUYA_GETTER__ int mobyIsDestroyed(Moby * moby);
 
 /*
  * Returns a pointer to the next living moby of the given oclass.
  * Returns NULL if none found.
  */
-Moby* mobyFindNextByOClass(Moby* start, int oClass);
+Moby * mobyFindNextByOClass(Moby * start, int oClass);
 
 /*
  * Returns non-zero if the given o class is loaded in the map.
@@ -529,7 +530,7 @@ void mobyDestroy(Moby * moby);
 /*
  * Gets a pointer to the moby functions
  */
-// MobyFunctions * mobyGetFunctions(Moby * moby);
+MobyFunctions * mobyGetFunctions(Moby * moby);
 
 /*
  *
@@ -540,5 +541,17 @@ void mobyDestroy(Moby * moby);
  * 
  */
 // int mobyIsHero(Moby* moby);
+
+/*
+ * NAME :		mobyGetDamager
+ * DESCRIPTION :
+ * 				Returns damage value of given moby.
+ * NOTES :
+ * ARGS : 
+ *     			moby: moby damage value.
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int mobyGetDamager(Moby * moby);
 
 #endif // _LIBUYA_MOBY_H_

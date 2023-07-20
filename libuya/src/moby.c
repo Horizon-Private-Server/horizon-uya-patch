@@ -37,6 +37,34 @@ VariableAddress_t vaBEGIN_MOBY_PTR = {
 #endif
 };
 
+VariableAddress_t vaGetMobyFunctions = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00493810,
+	.Hoven = 0x00495928,
+	.OutpostX12 = 0x0048b200,
+    .KorgonOutpost = 0x004888d0,
+	.Metropolis = 0x00487ce8,
+	.BlackwaterCity = 0x00485580,
+	.CommandCenter = 0x00485578,
+    .BlackwaterDocks = 0x00487df8,
+    .AquatosSewers = 0x004870f8,
+    .MarcadiaPalace = 0x00486a7c,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004918a8,
+	.Hoven = 0x00493900,
+	.OutpostX12 = 0x00489218,
+    .KorgonOutpost = 0x00486968,
+	.Metropolis = 0x00485d80,
+	.BlackwaterCity = 0x00483598,
+	.CommandCenter = 0x00483750,
+    .BlackwaterDocks = 0x00485f90,
+    .AquatosSewers = 0x004852d0,
+    .MarcadiaPalace = 0x00484c10,
+#endif
+};
+
 VariableAddress_t vaMobyCreateFunc = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -118,6 +146,35 @@ VariableAddress_t vaMobyGetDamageFunc = {
     .BlackwaterDocks = 0x00477b10,
     .AquatosSewers = 0x00476e50,
     .MarcadiaPalace = 0x00476790,
+#endif
+};
+
+// Returns damagea amount of given moby.
+VariableAddress_t vaGetDamager = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x004eed98,
+	.Hoven = 0x004f0eb0,
+	.OutpostX12 = 0x004e6788,
+    .KorgonOutpost = 0x004e3f20,
+	.Metropolis = 0x004e3270,
+	.BlackwaterCity = 0x004e0b08,
+	.CommandCenter = 0x004e0ad0,
+    .BlackwaterDocks = 0x004e3350,
+    .AquatosSewers = 0x004e2650,
+    .MarcadiaPalace = 0x004e1fd0,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004ec678,
+	.Hoven = 0x004ee6d0,
+	.OutpostX12 = 0x004e3fe8,
+    .KorgonOutpost = 0x004e1800,
+	.Metropolis = 0x004e0b50,
+	.BlackwaterCity = 0x004de368,
+	.CommandCenter = 0x004de4f0,
+    .BlackwaterDocks = 0x004e0d30,
+    .AquatosSewers = 0x004e0070,
+    .MarcadiaPalace = 0x004df9b0,
 #endif
 };
 

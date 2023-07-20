@@ -16,6 +16,7 @@
 #include "math3d.h"
 #include "common.h"
 #include "gid.h"
+#include "moby.h"
 
 /*
  * NAME :		GuberDef
@@ -51,7 +52,7 @@ typedef struct Guber
 typedef struct GuberMoby
 {
     Guber Guber;
-    void * Moby;
+    Moby * Moby;
     short ModeBits;
     u8 PADDING_0[2];
     void * UpdateFunc;
@@ -71,9 +72,22 @@ typedef struct GuberMoby
     u8 PADDING_1[2];
 } GuberMoby;
 
+typedef struct NetEvent
+{
+    struct {
+        unsigned int EventID : 4;
+        unsigned int NetDataSize : 6;
+        unsigned int OriginClientIdx : 4;
+        unsigned int RelDispatchTime : 18;
+    };
+	int CreateTime;
+	unsigned int ObjUID;
+	char NetData[64];
+} NetEvent;
+
 typedef struct GuberEvent
 {
-    u8 NetEvent[0x4C];
+    NetEvent NetEvent;
     int NetSendTime;
     int NetSendTo;
     u8 NetDataOffset;
@@ -81,5 +95,8 @@ typedef struct GuberEvent
     u8 PADDING[2];
     void * NextEvent;
 } GuberEvent;
+
+Guber * guberGetObjectByMoby(Moby* moby);
+GuberEvent * guberEventCreate(Guber * guber, int eventId, int arg3, int arg4);
 
 #endif // _LIBUYA_GUBER_H_

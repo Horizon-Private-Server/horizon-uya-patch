@@ -554,12 +554,14 @@ typedef struct Player
 		};
     };
 	char unk_1a2f[0x3];
-	WeaponQuickSelect QuickSelect;									// 0x1A32
+	WeaponQuickSelect QuickSelect;									// 0x1A32 to 0x1A34
 	char unk_1a35[0x1e];
-	WeaponAmmo WeaponAmmo;											// 0x1A53
+	WeaponAmmo WeaponAmmo;											// 0x1A53 to 0x1A5E
 	char unk_1a5f[0x4];
-	WeaponMeter WeaponMeter;										// 0x1A63
-	char unk_1a6f[0x339];
+	WeaponMeter WeaponMeter;										// 0x1A63 to 0x1A6E
+	char unk_1a6f[0x11];
+	int GadgetBox;													// 0x1A80
+	char unk_1a84[0x324];
 	int TopOfPlayerStruct2;											// 0x1DA8
 	char unk_1dac[0x751];
 	char IsSquating;												// 0x24FD
