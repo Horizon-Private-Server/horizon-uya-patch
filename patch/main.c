@@ -35,7 +35,7 @@
 
 #if UYA_PAL
 
-#define STAGING_START_BUTTON_STATE							(*(short*)0x01DC1FF4)
+#define STAGING_START_BUTTON_STATE							(*(short*)0x006c2d80)
 
 #else
 
@@ -667,8 +667,11 @@ void runCheckGameMapInstalled(void)
 		{
 			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 6)
 			{
+		#if UYA_PAL
+				((void (*)(u32, u32, u32))0x006c4308)(uiGetActivePointer(UIP_STAGING), 5, 0);
+		#else
 				((void (*)(u32, u32, u32))0x006c17f0)(uiGetActivePointer(UIP_STAGING), 5, 0);
-				gs->PlayerStates[i] = 0; // unready up
+		#endif				gs->PlayerStates[i] = 0; // unready up
 				showNoMapPopup = 1;
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
 			}
