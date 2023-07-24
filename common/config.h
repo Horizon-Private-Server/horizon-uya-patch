@@ -33,7 +33,7 @@ enum CUSTOM_MAP_ID
 {
   CUSTOM_MAP_NONE = 0,
   CUSTOM_MAP_MARAXUS_PRISON,
-  CUSTOM_MAP_SPLEEF,
+  CUSTOM_MAP_SARATHOS_SWAMP,
 
   // always at the end to indicate how many items there are
   CUSTOM_MAP_COUNT

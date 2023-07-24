@@ -125,7 +125,7 @@ MenuElem_ListData_t dataCustomMaps = {
     {
       "None",
       "Maraxus Prison",
-      "Spleef",
+      "Sarathos Swamp",
     }
 };
 
@@ -142,7 +142,7 @@ MenuElem_ListData_t dataCustomMaps = {
 
 // maps with their own exclusive gamemode
 char dataCustomMapsWithExclusiveGameMode[] = {
-  CUSTOM_MAP_SPLEEF,
+  // CUSTOM_MAP_SPLEEF,
 };
 const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithExclusiveGameMode)/sizeof(char);
 
@@ -215,7 +215,7 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
+  { "Weapon Pack Spawning", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponPacks },
   { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableV2s },
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
