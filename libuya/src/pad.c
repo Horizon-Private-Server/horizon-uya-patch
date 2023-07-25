@@ -1,13 +1,15 @@
 #include "string.h"
 #include "pad.h"
+#include "game.h"
+#include "player.h"
 
 #ifdef UYA_PAL
 
 // PAL
 #define PAD_POINTER                         ((PadButtonStatus**)0x00241164)
-#define P1_PAD                              ((PadButtonStatus*)0x00225780)
-#define P2_PAD                              ((PadButtonStatus*)0x00226E80)
-#define P3_PAD                              ((PadButtonStatus*)0x00228580)
+#define P1_PAD                              ((PadButtonStatus*)0x00225800)
+#define P2_PAD                              ((PadButtonStatus*)0x00226F00)
+#define P3_PAD                              ((PadButtonStatus*)0x00228600)
 #define PAD_PROCESS_ADDR                    (*(u32*)0x00686300)
 #define PAD_PROCESS_VALUE                   (0x0c1a184e)
 
@@ -191,14 +193,20 @@ void padDisableInput(void)
     if (PAD_PROCESS_ADDR == PAD_PROCESS_VALUE)
         PAD_PROCESS_ADDR = 0x24020000;
 
-    // if (isInGame())
-    // {
-    //     // no input timer
-    //     *(u16*)(0x00347AA0 + 0x3BA) = 0x7FFF;
+    if (isInGame())
+    {
+        int i;
+        Player ** Players = playerGetAll();
+        for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+        {
+            Player * player = Players[i];
+            if (!player)
+                return;
 
-    //     // no cam
-    //     *(u16*)(0x00347AA0 + 0x402) = 0x7FFF;
-    // }
+            if (player->IsLocal)
+                player->CantMoveTimer = 0;
+        }
+    }
 }
 
 /*
@@ -219,13 +227,4 @@ void padEnableInput(void)
 {
     if (PAD_PROCESS_ADDR == 0x24020000)
         PAD_PROCESS_ADDR = PAD_PROCESS_VALUE;
-    
-    // if (isInGame())
-    // {
-    //     // no input timer
-    //     *(u16*)(0x00347AA0 + 0x3BA) = 0;
-
-    //     // no cam
-    //     *(u16*)(0x00347AA0 + 0x402) = 0;
-    // }
 }
