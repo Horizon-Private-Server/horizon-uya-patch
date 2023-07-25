@@ -65,6 +65,7 @@ void grLoadStart(void);
 
 PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableAutoMaps = 0,
+	.disableCameraShake = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -587,6 +588,125 @@ void patchWeaponShotLag(void)
 }
 
 /*
+ * NAME :		handleGadgetEvent
+ * 
+ * DESCRIPTION :
+ * 			Reads gadget events and patches them if needed.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short GadgetId, int t0, int StackPointer)
+{
+	VariableAddress_t vaGadgetEventFunc = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x00546510,
+		.Hoven = 0x005486d8,
+		.OutpostX12 = 0x0053dfb0,
+		.KorgonOutpost = 0x0053b698,
+		.Metropolis = 0x0053aa98,
+		.BlackwaterCity = 0x00538280,
+		.CommandCenter = 0x00537ad8,
+		.BlackwaterDocks = 0x0053a358,
+		.AquatosSewers = 0x00539658,
+		.MarcadiaPalace = 0x00538fd8,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00543c00,
+		.Hoven = 0x00545d08,
+		.OutpostX12 = 0x0053b620,
+		.KorgonOutpost = 0x00538d88,
+		.Metropolis = 0x00538188,
+		.BlackwaterCity = 0x005358f0,
+		.CommandCenter = 0x00535320,
+		.BlackwaterDocks = 0x00537b60,
+		.AquatosSewers = 0x00536ea0,
+		.MarcadiaPalace = 0x005367e0,
+#endif
+	};
+	int GEF = GetAddress(&vaGadgetEventFunc);
+	Player * player = (Player*)((u32)message - 0x1a40);
+	tNW_GadgetEventMessage * msg = (tNW_GadgetEventMessage*)message;
+	// GadgetEventType 7 = Niked, or splash damage.
+	if (msg && GadgetEventType == 7)
+	{
+		if(GadgetId == 3)
+		{
+			GadgetEventType = 8;
+		}
+	}
+	// GadgetEventType 8 = Hit Something
+	// else if (msg && msg->GadgetEventType == 8)
+	// {
+	// 	int delta = ActiveTime - gameGetTime();
+	// 	// Make player hold correct weapon.
+	// 	if (player->WeaponHeldId != msg->GadgetId)
+	// 	{
+	// 		playerEquipWeapon(player, msg->GadgetId);
+	// 	}
+	// 	// Set weapon shot event time to now if its in the future
+	// 	if (player->WeaponHeldId == msg->GadgetId && (delta > 0 || delta < -TIME_SECOND))
+	// 	{
+	// 		ActiveTime = gameGetTime();
+	// 	}
+	// }
+	// run base command
+	((void (*)(int, char, int, short, int, int))GEF)(message, GadgetEventType, ActiveTime, GadgetId, t0, StackPointer);
+}
+
+/*
+ * NAME :		patchGadgetEvents
+ * 
+ * DESCRIPTION :
+ * 			Hook for the handleGadgetEVentLag function.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchGadgetEvents(void)
+{
+	VariableAddress_t vaGadgetEventHook = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x0054b23c,
+		.Hoven = 0x0054d404,
+		.OutpostX12 = 0x00542cdc,
+		.KorgonOutpost = 0x005403c4,
+		.Metropolis = 0x0053f7c4,
+		.BlackwaterCity = 0x0053cfac,
+		.CommandCenter = 0x0053c804,
+		.BlackwaterDocks = 0x0053f084,
+		.AquatosSewers = 0x0053e384,
+		.MarcadiaPalace = 0x0053dd04,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00548894,
+		.Hoven = 0x0054a99c,
+		.OutpostX12 = 0x005402b4,
+		.KorgonOutpost = 0x0053da1c,
+		.Metropolis = 0x0053ce1c,
+		.BlackwaterCity = 0x0053a584,
+		.CommandCenter = 0x00539fb4,
+		.BlackwaterDocks = 0x0053c7f4,
+		.AquatosSewers = 0x0053bb34,
+		.MarcadiaPalace = 0x0053b474,
+#endif
+	};
+	HOOK_JAL(GetAddress(&vaGadgetEventHook), &handleGadgetEvents);
+}
+
+/*
  * NAME :		runGameStartMessager
  * 
  * DESCRIPTION :
@@ -792,7 +912,6 @@ void processGameModules()
 					}
 				}
 			}
-
 		}
 		// If we aren't in a game then try to turn the module off
 		// ONLY if it's temporarily enabled
@@ -945,8 +1064,11 @@ int main(void)
 		// Patch Kill Stealing
 		patchKillStealing();
 
-		// Patch flux nicking and other weapon shot lags
+		// Patch sending weapon shots via UDB to TCP.
 		patchWeaponShotLag();
+
+		// Patches gadget events as they come in.
+		// patchGadgetEvents();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
