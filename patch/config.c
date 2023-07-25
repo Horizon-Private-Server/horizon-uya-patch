@@ -87,6 +87,7 @@ void menuStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* sta
 void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
 
@@ -195,6 +196,13 @@ MenuElem_ListData_t dataSetGattlingTurretHealth = {
     { "Default", "1.5x", "2x", "3x", "4x", }
 };
 
+MenuElem_ListData_t dataRespawnTimer = {
+    &gameConfig.grRespawnTimer,
+    NULL,
+    12,
+    { "Default", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
+};
+
 // General
 MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
@@ -215,6 +223,8 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
+  { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer },
+  { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
   { "Weapon Pack Spawning", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponPacks },
   { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableV2s },
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
@@ -382,6 +392,16 @@ void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state)
   GameSettings * gs = gameGetSettings();
 
   if (!gs || gs->GameType != GAMERULE_DM)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+
+  if (!gs || gs->GameType == GAMERULE_DM)
     *state = ELEMENT_HIDDEN;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;

@@ -17,6 +17,8 @@ typedef struct PatchGameConfig
   char customModeId;
 
   // Game Rules
+  char grRespawnTimer;
+  char grDisablePenaltyTimers;
   char grDisableWeaponPacks;
   char grDisableV2s;
   char grDisableHealthBoxes;

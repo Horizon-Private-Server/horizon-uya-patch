@@ -9,7 +9,8 @@ int disableHealthBoxes(void);
 void AutoRespawn(void);
 int setGattlingTurretHealth(int value);
 void vampireLogic(float healRate);
-void survivor(void);
+void setRespawnTimer(void);
 
 // Party Game Rules
+void survivor(void);
 void chargebootForever(void);

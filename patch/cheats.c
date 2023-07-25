@@ -33,6 +33,7 @@
 
 extern PlayerKills[GAME_MAX_PLAYERS];
 extern PlayerDeaths[GAME_MAX_PLAYERS];
+extern PatchGameConfig_t gameConfig;
 extern VariableAddress_t vaPlayerRespawnFunc;
 
 /*
@@ -303,9 +304,9 @@ void disableV2s(void)
         // Meter Kills: 0 to 2:
         *(u32*)addr = 0xA1200000; // sw zero, 0x0(t0)
         // Meter Kills: 3:
-        *(u32*)(addr + 0x10) = 0xA1200000; // sw zero, 0x0(t0)
-         // jal to fully upgrade to v2
-        *(u32*)(addr + 0x16C) = 0;
+        // *(u32*)(addr + 0x10) = 0xA1200000; // sw zero, 0x0(t0)
+        // jal to fully upgrade to v2
+        // *(u32*)(addr + 0x16C) = 0;
     }
 }
 
@@ -619,7 +620,7 @@ void disableRespawning(void)
 }
 
 /*
- * NAME :		Survivor
+ * NAME :		survivor
  * 
  * DESCRIPTION :
  *              Last Person standing wins!  Once a player is dead, they
@@ -669,4 +670,79 @@ void survivor(void)
             }
         }
     }
+}
+
+/*
+ * NAME :		setRespawnTimer
+ * 
+ * DESCRIPTION :
+ *              Sets respawn timer to certain value.  Also can disable pentaly timers.
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void setRespawnTimer(void)
+{
+	VariableAddress_t vaRespawnTimerFunc = {
+	// Uses the start of the Respawn Timer Function
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x003f6098,
+		.Hoven = 0x003f4f20,
+		.OutpostX12 = 0x003ece18,
+		.KorgonOutpost = 0x003eccd8,
+		.Metropolis = 0x003eadb8,
+		.BlackwaterCity = 0x003e7ba0,
+		.CommandCenter = 0x003f6a88,
+		.BlackwaterDocks = 0x003f89e8,
+		.AquatosSewers = 0x003f85f0,
+		.MarcadiaPalace = 0x003f6b88,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x003f5ba8,
+		.Hoven = 0x003f49b0,
+		.OutpostX12 = 0x003ec8a8,
+		.KorgonOutpost = 0x003ec7c8,
+		.Metropolis = 0x003ea8c8,
+		.BlackwaterCity = 0x003e7650,
+		.CommandCenter = 0x003f6580,
+		.BlackwaterDocks = 0x003f84e0,
+		.AquatosSewers = 0x003f80e8,
+		.MarcadiaPalace = 0x003f6680,
+#endif
+	};
+    int RespawnAddr = GetAddress(&vaRespawnTimerFunc);
+	if (gameConfig.grRespawnTimer)
+	{
+#if UYA_PAL
+        static int FPS = 50;
+#else
+        static int FPS = 60;
+#endif
+        int Seconds = gameConfig.grRespawnTimer - 1;
+        int RespawnTime = Seconds * FPS;
+        
+		// Set Default Respawn Timer
+        if (*(u16*)(RespawnAddr + 0x10) != RespawnTime)
+		    *(u16*)(RespawnAddr + 0x10) = RespawnTime;
+
+		// Set Penalty Timer #1 based off of current respawn timer.
+		if (!gameConfig.grDisablePenaltyTimers)
+			*(u16*)(RespawnAddr + 0x78) = (Seconds + 1.5) * FPS;
+	}
+	if (gameConfig.grDisablePenaltyTimers)
+	{
+		// Jump to end of function after respawn timer is set.
+		if (*(u32*)(RespawnAddr + 0x28) == 0x14440003)
+			*(u32*)(RespawnAddr + 0x28) = 0x1000001A;
+
+		// Gatlin Turret Destroyed (RespawnTime + This)
+		// *(u16*)(RespawnAddr + 0x80) = RespawnTime;
+		// Anti-Air Turret Destroyed (RespawnTime + This)
+		// *(u16*)(RespawnAddr + 0x8c) = RespawnTime;
+	}
 }

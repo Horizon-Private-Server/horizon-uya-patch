@@ -24,6 +24,7 @@
 #include <libuya/math3d.h>
 #include <libuya/utils.h>
 #include <libuya/net.h>
+#include <libuya/gameplay.h>
 #include "module.h"
 #include "messageid.h"
 #include "include/config.h"
@@ -134,6 +135,9 @@ void grGameStart(void)
 
 	if (gameConfig.prSurvivor)
 		survivor();
+	
+	if (gameConfig.grRespawnTimer || gameConfig.grDisablePenaltyTimers)
+		setRespawnTimer();
 
 	FirstPass = 0;
 }
@@ -192,6 +196,8 @@ void grLoadStart(void)
   //gameGetOptions()->GameFlags.MultiplayerGameFlags.Timelimit = 1;
 
 	// Hook load gameplay file
-	// if (*(u32*)0x004EE598 == 0x0C13B1C8)
-	// 	*(u32*)0x004EE598 = 0x0C000000 | (u32)&onGameplayLoad / 4;
+	// int hook = GetAddress(&vaGamplayHook);
+	// int hookValue = GetAddress(&vaGamplayHookValue);
+	// if (*(u32*)hook == hookValue)
+	// 	*(u32*)hook = 0x0C000000 | (u32)&onGameplayLoad / 4;
 }
