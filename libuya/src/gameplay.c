@@ -1,4 +1,4 @@
-#include "gameplay.h"
+#include <tamtypes.h>
 #include "interop.h"
 
 VariableAddress_t vaGamplayHook = {
