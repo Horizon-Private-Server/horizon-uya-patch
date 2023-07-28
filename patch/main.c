@@ -81,6 +81,11 @@ int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 1;
 char showNoMapPopup = 0;
 const char * patchStr = "PATCH CONFIG";
+#if UYA_PAL
+const char * regionStr = "PAL:  ";
+#else
+const char * regionStr = "NTSC: ";
+#endif
 
 extern MenuElem_ListData_t dataCustomMaps;
 
@@ -119,6 +124,31 @@ int onServerDownloadDataRequest(void * connection, void * data)
 }
 
 //------------------------------------------------------------------------------
+char * checkMap(void)
+{
+	if (isInMenus())
+	{
+		u32 currentUI = *(u32*)0x01C5C110;
+		int UI = UIP_STAGING;
+		u32 Pointer = *(u32*)(0x01C5C064 + (UI * 0x4));
+		if (currentUI == Pointer)
+		{
+			return "Staging";
+		}
+		else
+		{
+			return "Online Lobby";
+		}
+	}
+	else if (isInGame())
+	{
+		return mapGetName(gameGetCurrentMapId());
+	}
+	else
+	{
+		return "Loading Screen";
+	}
+}
 void runExceptionHandler(void)
 {
 	// invoke exception display installer
@@ -129,6 +159,11 @@ void runExceptionHandler(void)
 			((void (*)(void))EXCEPTION_DISPLAY_ADDR)();
 			hasInstalledExceptionHandler = 1;
 		}
+		
+		// change "a fatal error as occured." to region and map.
+		char * mapStr = checkMap();
+		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x794), regionStr, 6);
+		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x79a), mapStr, 20);
 		
 		// change display to match progressive scan resolution
 		if (gfxGetIsProgressiveScan())
