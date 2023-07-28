@@ -46,7 +46,7 @@ int HasSetGattlingTurretHealth = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 short PlayerDeaths[GAME_MAX_PLAYERS];
 
-float VampireHealRate[] = {
+int VampireHealRate[] = {
 	PLAYER_MAX_HEALTH * 0.25,
 	PLAYER_MAX_HEALTH * 0.50,
 	PLAYER_MAX_HEALTH * 1.00
