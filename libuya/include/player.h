@@ -705,11 +705,11 @@ void playerSetPlayerState(Player * player, u8 state);
  * NOTES :
  * ARGS : 
  *          player:                     Pointer to player's player object.
- *          state:                 		Amount to hurt player (1 to 15)
+ *          health:                 		Amount to hurt player (1 to 15)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void playerDecHealth(Player * player, u8 amount);
+void playerDecHealth(Player * player, int health);
 
 /*
  * NAME :		playerIncHealth
@@ -718,11 +718,11 @@ void playerDecHealth(Player * player, u8 amount);
  * NOTES :
  * ARGS : 
  *          player:                     Pointer to player's player object.
- *          state:                 		Amount to give to player (1 to 15)
+ *          health:                 		Amount to give to player (1 to 15)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void playerIncHealth(Player * player, u8 amount);
+void playerIncHealth(Player * player, int health);
 
 /*
  * NAME :		playerSetHealth
@@ -731,11 +731,11 @@ void playerIncHealth(Player * player, u8 amount);
  * NOTES :
  * ARGS : 
  *          player:                     Pointer to player's player object.
- *          state:                 		Value to set health to (1 to 15)
+ *          health:                 		Value to set health to (1 to 15)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void playerSetHealth(Player * player, u8 amount);
+void playerSetHealth(Player * player, int health);
 
 /*
  * NAME :		playerGetHealth
@@ -748,7 +748,7 @@ void playerSetHealth(Player * player, u8 amount);
  * 				Returns players health in float value
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-int playerGetHealth(Player * player);
+float playerGetHealth(Player * player);
 
 /*
  * NAME :		playerRespawn

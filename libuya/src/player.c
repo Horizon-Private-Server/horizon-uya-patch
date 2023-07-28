@@ -6,6 +6,7 @@
 
 void playerRespawn(Player * player);
 void playerStripWeapons(Player * player);
+void internal_HurtPlayer(Player * player, float health);
 
 VariableAddress_t vaEmpty = {
 #if UYA_PAL
@@ -333,17 +334,18 @@ VariableAddress_t vaHurtPlayerFunc = {
     .MarcadiaPalace = 0x004fe020,
 #endif
 };
-void playerDecHealth(Player * player, u8 amount)
+void playerDecHealth(Player * player, int health)
 {
-    internal_HurtPlayer(player, amount);
+    internal_HurtPlayer(player, health);
 }
 
 //--------------------------------------------------------------------------------
-void playerIncHealth(Player * player, u8 amount)
+void playerIncHealth(Player * player, int health)
 {
-    if (((float)playerGetHealth(player) + amount) >= 15)
+    if (((int)playerGetHealth(player) + health) >= PLAYER_MAX_HEALTH)
     {
-        playerSetHealth(player, 15);
+        playerSetHealth(player, PLAYER_MAX_HEALTH);
+        return;
     }
     else
     {
@@ -352,47 +354,27 @@ void playerIncHealth(Player * player, u8 amount)
         // Change to addition
         *(u8*)math = 0;
         // Run normal function
-        internal_HurtPlayer(player, amount);
+        internal_HurtPlayer(player, health);
         // Revert back to subtraction
         *(u8*)math = 1;
     }
 }
 
-void playerSetHealth(Player * player, u8 amount)
+void playerSetHealth(Player * player, int health)
 {
-    // Make sure amount is not more than the max health.
-    if (amount > PLAYER_MAX_HEALTH)
-        amount = 15;
-
     // Grab address where math is done
     int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
     // Instead of subtracting, move f01 to f00.
     *(u32*)math = 0x46000806; // mov.s $f0, $f1
     // Run normal function
-    internal_HurtPlayer(player, amount);
+    internal_HurtPlayer(player, (health > PLAYER_MAX_HEALTH) ? PLAYER_MAX_HEALTH : health);
     // Revert back to subtraction
     *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
 }
 
-int playerGetHealth(Player * player)
+float playerGetHealth(Player * player)
 {
-    // // Grab address where math is done
-    // int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
-    // // Remove math.
-    // *(u32*)math = 0;
-    // // Run normal function
-    // internal_HurtPlayer(player, 1);
-    // // Revert back to subtraction
-    // *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
-    // float CurrentHealth;
-    // asm __volatile__ (
-    //     "swc1 $f0, 0x0(%0);"
-    //     : 
-    //     : "r" (&CurrentHealth)
-    // );
-    // return CurrentHealth;
     return player->pNetPlayer->pNetPlayerData->hitPoints;
-
 }
 //--------------------------------------------------------------------------------
 int playerIsDead(Player * player)
