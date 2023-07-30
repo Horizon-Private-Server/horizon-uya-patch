@@ -241,6 +241,10 @@ FUNCTION(sprintf, 0x00120048)
 FUNCTION(memset, 0x0011d534)
 FUNCTION(memcpy, 0x0011d380)
 FUNCTION(strncpy, 0x00120d28)
+FUNCTION(strcat, 0x001202f4)
+FUNCTION(strncat, 0x001209c0)
+FUNCTION(strcmp, 0x001205b0)
+FUNCTION(strncmp, 0x00120b70)
 
 #--------------------------------------------------------
 #------------------------- MATH -------------------------
