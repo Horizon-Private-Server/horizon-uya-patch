@@ -568,9 +568,8 @@ typedef struct Player
 	char unk_24fe[0x2];
 	char Invisible2;												// 0x2500
 	char unk_2501[0x13];
-	char TimerShowHealth;											// 0x2514
-	char unk_2515[0x3];
-    char TimerFadeToBlack;                                          // 0x2518
+	int TimerShowHealth;											// 0x2514
+	char TimerFadeToBlack;                                          // 0x2518
 	// When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
     char TimerStartMenu;                                            // 0x2519
 	char unk_251a[0x2];
