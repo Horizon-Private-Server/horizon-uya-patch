@@ -488,7 +488,7 @@ void chargebootForever(void)
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-void vampireLogic(float healRate)
+void vampireLogic(int healRate)
 {
 	int i;
 	Player ** playerObjects = playerGetAll();
@@ -503,8 +503,8 @@ void vampireLogic(float healRate)
 			// Try to heal if player exists
 			player = playerObjects[i];
 			if (player)
-                playerIncHealth(player, healRate);
-                
+                playerSetHealth(player, clamp(((int)player->pNetPlayer->pNetPlayerData->hitPoints + healRate), 0, PLAYER_MAX_HEALTH));
+
 			// Update our cached kills count
 			PlayerKills[i] = gameData->PlayerStats[i].Kills;
 		}
@@ -744,5 +744,29 @@ void setRespawnTimer(void)
 		// *(u16*)(RespawnAddr + 0x80) = RespawnTime;
 		// Anti-Air Turret Destroyed (RespawnTime + This)
 		// *(u16*)(RespawnAddr + 0x8c) = RespawnTime;
+	}
+}
+
+/*
+ * NAME :		disableDrones
+ * 
+ * DESCRIPTION :
+ *              Destroys the drones.
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void disableDrones(void)
+{
+    Moby * c = mobyListGetStart();
+	// Delete drones pvar pointer and destroy moby.
+	while ((c = mobyFindNextByOClass(c, MOBY_ID_DRONE_BOT))) {
+		c->PVar = 0;
+		mobyDestroy(c);
+		++c;
 	}
 }

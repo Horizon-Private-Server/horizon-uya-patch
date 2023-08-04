@@ -10,6 +10,7 @@ void AutoRespawn(void);
 int setGattlingTurretHealth(int value);
 void vampireLogic(float healRate);
 void setRespawnTimer(void);
+void disableDrones(void);
 
 // Party Game Rules
 void survivor(void);

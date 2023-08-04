@@ -139,6 +139,9 @@ void grGameStart(void)
 	if (gameConfig.grRespawnTimer || gameConfig.grDisablePenaltyTimers)
 		setRespawnTimer();
 
+	if (gameConfig.grAllowDrones)
+		disableDrones();
+
 	FirstPass = 0;
 }
 

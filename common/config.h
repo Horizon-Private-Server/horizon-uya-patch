@@ -24,6 +24,7 @@ typedef struct PatchGameConfig
   char grDisableHealthBoxes;
   char grAutoRespawn;
   char grSetGattlingTurretHealth;
+  char grAllowDrones;
   char grVampire;
 
   // Party
