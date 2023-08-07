@@ -847,7 +847,7 @@ void setupPatchConfigInGame()
 		.Bakisi = 0x003c073c,
 		.Hoven = 0x003bfd7c,
 		.OutpostX12 = 0x003b7c7c,
-		.KorgonOutpost = 0x003b7a38,
+		.KorgonOutpost = 0x003b7a3c,
 		.Metropolis = 0x003b77bc,
 		.BlackwaterCity = 0x003b79fc,
 		.CommandCenter = 0x003c7f7c,
