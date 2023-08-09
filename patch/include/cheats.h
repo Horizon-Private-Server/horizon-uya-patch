@@ -1,5 +1,5 @@
 // User Settings
-void disableCameraShake();
+void disableCameraShake(void);
 
 // General Game Rules
 void disableWeaponPacks(void);

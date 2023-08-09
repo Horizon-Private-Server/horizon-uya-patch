@@ -762,6 +762,16 @@ void setRespawnTimer(void)
  */
 void disableDrones(void)
 {
+    Moby * a = mobyListGetStart();
+	while ((a = mobyFindNextByOClass(a, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG))) {
+		a->PUpdate = 0;
+		++a;
+	}
+    Moby * b = mobyListGetStart();
+	while ((b = mobyFindNextByOClass(b, MOBY_ID_DRONE_BOT_CLUSTER_UPDATER))) {
+		b->PUpdate = 0;
+		++b;
+	}
     Moby * c = mobyListGetStart();
 	// Delete drones pvar pointer and destroy moby.
 	while ((c = mobyFindNextByOClass(c, MOBY_ID_DRONE_BOT))) {
