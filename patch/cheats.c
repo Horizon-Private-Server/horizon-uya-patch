@@ -274,40 +274,33 @@ void disableV2s(void)
     VariableAddress_t vaWeaponMeterAddress = {
 #ifdef UYA_PAL
         .Lobby = 0,
-        .Bakisi = 0x004fb6d0,
-        .Hoven = 0x004fd7e8,
-        .OutpostX12 = 0x004f30c0,
-        .KorgonOutpost = 0x004f0858,
-        .Metropolis = 0x004efba8,
-        .BlackwaterCity = 0x004ed440,
-        .CommandCenter = 0x004ed408,
-        .BlackwaterDocks = 0x004efc88,
-        .AquatosSewers = 0x004eef88,
-        .MarcadiaPalace = 0x004ee908,
+        .Bakisi = 0x00544508,
+        .Hoven = 0x005466d0,
+        .OutpostX12 = 0x0053bfa8,
+        .KorgonOutpost = 0x00539690,
+        .Metropolis = 0x00538a90,
+        .BlackwaterCity = 0x00536278,
+        .CommandCenter = 0x00535ad0,
+        .BlackwaterDocks = 0x00538350,
+        .AquatosSewers = 0x00537650,
+        .MarcadiaPalace = 0x00536fd0,
 #else
         .Lobby = 0,
-        .Bakisi = 0x004f8f50,
-        .Hoven = 0x004fafa8,
-        .OutpostX12 = 0x004f08c0,
-        .KorgonOutpost = 0x004ee0d8,
-        .Metropolis = 0x004ed428,
-        .BlackwaterCity = 0x004eac40,
-        .CommandCenter = 0x004eadc8,
-        .BlackwaterDocks = 0x004ed608,
-        .AquatosSewers = 0x004ec948,
-        .MarcadiaPalace = 0x004ec288,
+        .Bakisi = 0x00541bf8,
+        .Hoven = 0x00543d00,
+        .OutpostX12 = 0x00539618,
+        .KorgonOutpost = 0x00536d80,
+        .Metropolis = 0x00536180,
+        .BlackwaterCity = 0x005338e8,
+        .CommandCenter = 0x00533318,
+        .BlackwaterDocks = 0x00535b58,
+        .AquatosSewers = 0x00534e98,
+        .MarcadiaPalace = 0x005347d8,
 #endif
     };
     u32 addr = GetAddress(&vaWeaponMeterAddress);
-    if (*(u32*)addr == 0xA1220000) // sw v0, 0x0(t0)
-    {
-        // Meter Kills: 0 to 2:
-        *(u32*)addr = 0xA1200000; // sw zero, 0x0(t0)
-        // Meter Kills: 3:
-        // *(u32*)(addr + 0x10) = 0xA1200000; // sw zero, 0x0(t0)
-        // jal to fully upgrade to v2
-        // *(u32*)(addr + 0x16C) = 0;
-    }
+    if (*(u32*)addr == 0x10400003) // beq v0, zero
+		*(u32*)addr = 0x10000003;
 }
 
 /*
@@ -762,21 +755,71 @@ void setRespawnTimer(void)
  */
 void disableDrones(void)
 {
-    Moby * a = mobyListGetStart();
-	while ((a = mobyFindNextByOClass(a, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG))) {
-		a->PUpdate = 0;
-		++a;
-	}
-    Moby * b = mobyListGetStart();
-	while ((b = mobyFindNextByOClass(b, MOBY_ID_DRONE_BOT_CLUSTER_UPDATER))) {
-		b->PUpdate = 0;
-		++b;
-	}
-    Moby * c = mobyListGetStart();
-	// Delete drones pvar pointer and destroy moby.
+    // Moby * a = mobyListGetStart();
+    // // Remove drone cluster update function. (this is for main configuration)
+	// while ((a = mobyFindNextByOClass(a, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG))) {
+	// 	a->PUpdate = 0;
+	// 	++a;
+	// }
+    // Moby * b = mobyListGetStart();
+    // // Remove drone update function. (This is for the player activator)
+	// while ((b = mobyFindNextByOClass(b, MOBY_ID_DRONE_BOT_CLUSTER_UPDATER))) {
+	// 	b->PUpdate = 0;
+	// 	++b;
+	// }
+	Moby * c = mobyListGetStart();
+	// move drones to zero and delete pvar pointer.
 	while ((c = mobyFindNextByOClass(c, MOBY_ID_DRONE_BOT))) {
 		c->PVar = 0;
-		mobyDestroy(c);
+		// mobyDestroy(c);
+		memset(c->Position, 0, sizeof(c->Position));
 		++c;
 	}
+}
+
+/*
+ * NAME :		keepBaseHealthPadActive
+ * 
+ * DESCRIPTION :
+ *              Keeps Base Ammo/Health Pads Active even if Gatlin Turrets are destroyed.
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void keepBaseHealthPadActive(void)
+{
+	VariableAddress_t vaDisableAmmoHealthPad = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x003f62e8,
+		.Hoven = 0x003f5170,
+		.OutpostX12 = 0x003ed068,
+		.KorgonOutpost = 0x003ecf28,
+		.Metropolis = 0x003eb008,
+		.BlackwaterCity = 0x003e7df0,
+		.CommandCenter = 0x003f6cd8,
+		.BlackwaterDocks = 0x003f8c38,
+		.AquatosSewers = 0x003f8840,
+		.MarcadiaPalace = 0x003f6dd8,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x003f5dF8,
+		.Hoven = 0x003f4c00,
+		.OutpostX12 = 0x003ecaf8,
+		.KorgonOutpost = 0x003eca18,
+		.Metropolis = 0x003eab18,
+		.BlackwaterCity = 0x003e78a0,
+		.CommandCenter = 0x003f67d0,
+		.BlackwaterDocks = 0x003f8730,
+		.AquatosSewers = 0x003f8338,
+		.MarcadiaPalace = 0x003f68d0,
+#endif
+	};
+	int saveInstr = GetAddress(&vaDisableAmmoHealthPad);
+	if (*(u32*)saveInstr == 0xae040040)
+		*(u32*)saveInstr = 0;	
 }

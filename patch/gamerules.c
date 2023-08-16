@@ -102,6 +102,7 @@ void grGameStart(void)
 {
 	int i = 0;
 	GameSettings * gameSettings = gameGetSettings();
+	GameOptions * gameOptions = gameGetOptions();
 
 	// Initialize
 	if (GameRulesInitialized != 1)
@@ -141,6 +142,15 @@ void grGameStart(void)
 
 	if (gameConfig.grAllowDrones)
 		disableDrones();
+
+	if (gameConfig.grNoBaseDefense_Bots)
+		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = 0;
+
+	if (gameConfig.grNoBaseDefense_SmallTurrets)
+		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = 0;
+
+	if (gameConfig.grBaseHealthPadActive && gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth)
+		keepBaseHealthPadActive();
 
 	FirstPass = 0;
 }

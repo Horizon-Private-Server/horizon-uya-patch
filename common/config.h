@@ -25,6 +25,9 @@ typedef struct PatchGameConfig
   char grAutoRespawn;
   char grSetGattlingTurretHealth;
   char grAllowDrones;
+  char grNoBaseDefense_Bots;
+  char grNoBaseDefense_SmallTurrets;
+  char grBaseHealthPadActive;
   char grVampire;
 
   // Party

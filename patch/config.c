@@ -80,6 +80,7 @@ void menuStateAlwaysHiddenHandler(TabElem_t* tab, MenuElem_t* element, int* stat
 void menuStateAlwaysDisabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuLabelStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int* state);
@@ -231,7 +232,12 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
   { "Allow Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grAllowDrones },
+
+  { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_BaseDefenses, (void*)LABELTYPE_HEADER },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
+  { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive },
+  { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grNoBaseDefense_Bots },
+  { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grNoBaseDefense_SmallTurrets },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },
@@ -366,6 +372,16 @@ void menuStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* sta
     *state = ELEMENT_HIDDEN;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuLabelStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+  GameOptions * go = gameGetOptions();
+  if (!gs || (!go->GameFlags.MultiplayerGameFlags.BaseDefense_GatlinTurrets))
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state)
