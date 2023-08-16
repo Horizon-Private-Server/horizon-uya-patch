@@ -24,6 +24,13 @@
 #define GAME_MAP_ID                         (*(int*)0x001F8528)
 #define GAME_CLIENT_ID                      (*(int*)0x001a5e58)
 #define GAME_HOST_ID                        (*(int*)0x001a5fbc)
+/*
+ * Array of round trip time divided by 2.
+ */
+// #define GAME_PING_ARRAY                     ((int*)0x001B2420)
+// #define GAME_PING_CURRENT_INDEX             (*(int*)0x001B25B4)
+// Ping Array (Goes up every 1 second)
+// 0x001D3B58
 #endif
 
 #define GAME_DEATH_BARRIER                  (*(u32*)GetAddress(&vaDeathBarrier))

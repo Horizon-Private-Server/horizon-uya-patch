@@ -567,7 +567,8 @@ typedef struct Player
 	char IsSquating;												// 0x24FD
 	char unk_24fe[0x2];
 	char Invisible2;												// 0x2500
-	char unk_2501[0x13];
+	char DontSpawnWeaponPack;										// 0x2501
+	char unk_2502[0x12];
 	int TimerShowHealth;											// 0x2514
 	char TimerFadeToBlack;                                          // 0x2518
 	// When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
