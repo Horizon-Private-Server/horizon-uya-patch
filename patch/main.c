@@ -80,6 +80,8 @@ int isInStaging = 0;
 int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 1;
 char showNoMapPopup = 0;
+u32 currentUI = 0;
+u32 previousUI = 0;
 const char * patchStr = "PATCH CONFIG";
 #if UYA_PAL
 const char * regionStr = "PAL:  ";
@@ -124,14 +126,48 @@ int onServerDownloadDataRequest(void * connection, void * data)
 }
 
 //------------------------------------------------------------------------------
+int runCheckUI(void)
+{
+	if (isInMenus())
+	{
+		u32 MostCurrentUI = *(u32*)0x01C5C110;
+		if (currentUI == 0 && previousUI == 0)
+		{
+			currentUI = MostCurrentUI;
+			return 1;
+		}
+		else if (currentUI != MostCurrentUI)
+		{
+			previousUI = currentUI;
+			currentUI = MostCurrentUI;
+			return 1;
+		}
+	}
+	return 0;
+}
+char * checkGameType(void)
+{
+	if (isInMenus() || isInGame())
+	{
+		GameSettings * gs = gameGetSettings();
+		if (gs)
+		{
+			switch(gs->GameType)
+			{
+				case GAMERULE_SIEGE: return "Siege at ";
+				case GAMERULE_CTF:  return "CTF at ";
+				case GAMERULE_DM:  return "DM at ";
+			}
+		}
+	}
+	// if Not in in game or menus or gamesettings not found.
+	return "";
+}
 char * checkMap(void)
 {
 	if (isInMenus())
 	{
-		u32 currentUI = *(u32*)0x01C5C110;
-		int UI = UIP_STAGING;
-		u32 Pointer = *(u32*)(0x01C5C064 + (UI * 0x4));
-		if (currentUI == Pointer)
+		if (isInStaging)
 		{
 			return "Staging";
 		}
