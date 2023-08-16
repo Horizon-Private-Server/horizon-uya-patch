@@ -170,12 +170,8 @@ const char* CustomModeShortNames[] = {
 MenuElem_ListData_t dataWeaponPacks = {
     &gameConfig.grDisableWeaponPacks,
     NULL,
-    2,
-    {
-      "Default",
-      "Off",
-      // "On Death",
-    }
+    3,
+    { "Default", "Off", "On Death" }
 };
 
 MenuElem_ListData_t dataVampire = {
@@ -226,7 +222,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer },
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
-  { "Weapon Pack Spawning", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponPacks },
+  { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
   { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableV2s },
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },

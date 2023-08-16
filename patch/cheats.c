@@ -101,10 +101,6 @@ void disableWeaponPacks(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-// ======================================================================
-/*
-  MOST UP TO DATE SPAWN PACK
-*/
 int SpawnedPack[2] = {0,0};
 void SpawnPack(int a0, int a1, int a2, int a3)
 {
@@ -245,15 +241,6 @@ void spawnWeaponPackOnDeath(void)
 		}
 	}
 }
-
-// ====================================================================
-
-/*
-    OLDER SPAWN PACK (but with local play support)
-*/
-
-
-// ====================================================================
 
 /*
  * NAME :		disableV2s
@@ -755,24 +742,27 @@ void setRespawnTimer(void)
  */
 void disableDrones(void)
 {
-    // Moby * a = mobyListGetStart();
-    // // Remove drone cluster update function. (this is for main configuration)
+	// Moby * a = mobyListGetStart();
+	// // Remove drone cluster update function. (this is for main configuration)
 	// while ((a = mobyFindNextByOClass(a, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG))) {
 	// 	a->PUpdate = 0;
+	// 	mobyDestroy(a);
 	// 	++a;
 	// }
-    // Moby * b = mobyListGetStart();
-    // // Remove drone update function. (This is for the player activator)
+	// Moby * b = mobyListGetStart();
+	// // Remove drone update function. (This is for the player activator)
 	// while ((b = mobyFindNextByOClass(b, MOBY_ID_DRONE_BOT_CLUSTER_UPDATER))) {
 	// 	b->PUpdate = 0;
+	// 	mobyDestroy(b);
 	// 	++b;
 	// }
 	Moby * c = mobyListGetStart();
-	// move drones to zero and delete pvar pointer.
 	while ((c = mobyFindNextByOClass(c, MOBY_ID_DRONE_BOT))) {
 		c->PVar = 0;
-		// mobyDestroy(c);
-		memset(c->Position, 0, sizeof(c->Position));
+		c->PUpdate = 0;
+		c->Scale = 0;
+		memset(c->BSphere, 0, sizeof(c->BSphere));
+		//memset(c->Position, 0, sizeof(c->Position));
 		++c;
 	}
 }
