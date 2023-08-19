@@ -533,3 +533,52 @@ void playerGiveRandomWeapons(Player * player, int amount)
 {
     internal_GiveMeRandomWeapons(player, (!amount) ? 3 : amount);
 }
+
+VariableAddress_t vaPlayerObfuscateAddr = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x003bfe21,
+	.Hoven = 0x003bf461,
+	.OutpostX12 = 0x003b7361,
+    .KorgonOutpost = 0x003b7121,
+	.Metropolis = 0x003b6ea1,
+	.BlackwaterCity = 0x003b70e1,
+	.CommandCenter = 0x003c7661,
+    .BlackwaterDocks = 0x003c7a61,
+    .AquatosSewers = 0x003c81e1,
+    .MarcadiaPalace = 0x003c7761,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x003bff61,
+	.Hoven = 0x003bf5a1,
+	.OutpostX12 = 0x003b74a1,
+    .KorgonOutpost = 0x003b7261,
+	.Metropolis = 0x003b6fe1,
+	.BlackwaterCity = 0x003b7221,
+	.CommandCenter = 0x003c77a1,
+    .BlackwaterDocks = 0x003c7ba1,
+    .AquatosSewers = 0x003c8321,
+    .MarcadiaPalace = 0x003c78a1,
+#endif
+};
+u32 playerDeobfuscate(u32 src)
+{
+    static int StackAddr[1];
+    int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
+	u32 Player_Addr = src;
+    u32 Player_Value = *(u8*)src;
+    int n = 0;
+	int rawr = 0;
+	do {
+		u32 Offset = (u32)((int)Player_Addr - (u32)Player_Value & 7) + n;
+		n = n + 5;
+		*(u8*)((int)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff));
+		++rawr;
+	} while (n < 0x28);
+	// XORAddr (first 4 bytes of StackAddr)
+	StackAddr[0] = (u32)(StackAddr[0]) ^ (u32)Player_Addr;
+	// XORValue (second 4 bytes of StackAddr)
+	StackAddr[1] = (u32)((u32)StackAddr[1] ^ StackAddr[0]);
+	u32 Converted = StackAddr[1];
+	return Converted;
+}

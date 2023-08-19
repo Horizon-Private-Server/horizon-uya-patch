@@ -858,4 +858,17 @@ void playerStripWeapons(Player * player);
  */
 void playerGiveRandomWeapons(Player * player, int amount);
 
+/*
+ * NAME :		playerDeobfuscate
+ * DESCRIPTION :
+ * 			Gives Target player random weapons
+ * NOTES :
+ * ARGS : 
+ *      src      :           Source pointer from player struct of the data needed to deorbuscate.
+ * 							 Ex: &player->Health, &player->State
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+u32 playerDeobfuscate(u32 src);
+
 #endif // _LIBUYA_PLAYER_H_
