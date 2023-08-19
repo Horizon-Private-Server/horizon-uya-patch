@@ -529,7 +529,9 @@ typedef struct Player
 	Moby * WrenchThrown;											// 0x18C4
 	char unk_18c8[0x8];
 	int WeaponHeldId;												// 0x18D0
-	char unk_18d4[0x134];
+	char unk_18d4[0x110];
+	char State;														// 0x19E4
+	char unk_19e6[0x23];
 	union {
         struct {
             char RaisedGunArm;										// 0x1A08
@@ -563,7 +565,12 @@ typedef struct Player
 	int GadgetBox;													// 0x1A80
 	char unk_1a84[0x324];
 	int TopOfPlayerStruct2;											// 0x1DA8
-	char unk_1dac[0x751];
+	char unk_1dac[0x6ca];
+	// Unsure how to read health.
+	char Health;													// 0x2476
+	char unk_2477[0x5d];
+	char DamageTaken;												// 0x24D4
+	char unk_24d5[0x28];
 	char IsSquating;												// 0x24FD
 	char unk_24fe[0x2];
 	char Invisible2;												// 0x2500
