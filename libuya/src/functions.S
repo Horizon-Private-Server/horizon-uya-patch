@@ -238,6 +238,7 @@ GetAddressImmediate_exit:
 #
 FUNCTION(printf, 0x0011e718)
 FUNCTION(sprintf, 0x00120048)
+FUNCTION(snprintf, 0x0011ffa8)
 FUNCTION(memset, 0x0011d534)
 FUNCTION(memcpy, 0x0011d380)
 FUNCTION(strncpy, 0x00120d28)

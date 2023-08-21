@@ -15,6 +15,7 @@
 
 //--------------------------------------------------------
 __LIBUYA_INLINE__ int sprintf(char * buffer, const char * format, ...);
+__LIBUYA_INLINE__ int snprintf(char * buffer, long n, const char * format, ...);
 __LIBUYA_INLINE__ int printf(const char * format, ...);
 
 
