@@ -236,6 +236,8 @@ GetAddressImmediate_exit:
 #
 # NTSC and PAL address' are the same.
 #
+FUNCTION(sce_printf, 0x00128c70)
+FUNCTION(sce_snprintf, 0x00128ba8)
 FUNCTION(printf, 0x0011e718)
 FUNCTION(sprintf, 0x00120048)
 FUNCTION(snprintf, 0x0011ffa8)
@@ -377,3 +379,8 @@ VARIABLE_FUNCTION(musicTransitionTrack, vaTransitionTrackFunc)
 #--------------------------------------------------------
 VARIABLE_FUNCTION(guberGetObjectByMoby, vaGuberGetObjectByMoby)
 VARIABLE_FUNCTION(guberEventCreate, vaGuberEventCreate)
+
+#--------------------------------------------------------
+#------------------------- TIME -------------------------
+#--------------------------------------------------------
+FUNCTION(timerGetSystemTime, 0x0012dcb0)
