@@ -19,7 +19,15 @@
 /*
  * Maximum number of players in a game.
  */
-#define GAME_MAX_PLAYERS                (8)
+#define GAME_MAX_PLAYERS                    (8)
+/*
+ * Games FPS
+*/
+#if UYA_PAL
+#define GAME_FPS                            (50)
+#else
+#define GAME_FPS                            (60)
+#endif
 
 //--------------------------------------------------------
 typedef struct PlayerGameStats
