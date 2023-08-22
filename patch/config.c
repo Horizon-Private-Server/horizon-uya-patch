@@ -1154,20 +1154,21 @@ void onMenuUpdate(int inGame)
 	}
 	else if (!inGame)
   {
-    //printf("config.c: onmenuupdate - if !inGame START\n");
-		if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
+    // if in Online Lobby, and SubPointer equals zero (not on find game)
+		if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0 && *(u32*)0x01C5C114 == 0)
 		{
 			// render message
-			gfxScreenSpaceBox(0.1, 0.825, 0.4, 0.05, colorOpenBg);
-	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.85, 1, 1, 0x80FFFFFF, "\x1f Open Config Menu", -1, 4);
-		}
-    //printf("config.c: onmenuupdate - if !inGame MIDDLE\n");
+			// gfxScreenSpaceBox(SCREEN_WIDTH * 0.2, SCREEN_HEIGHT * 0.81, 0.4, 0.3, colorOpenBg);
+      float scale = .85;
+	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.77, scale, scale, 0x80FFFFFF, "Press START to", -1, 4);
+			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4);
+
+    }
 		// check for pad input
 		if (padGetButtonUp(0, PAD_START) > 0)
 		{
 			configMenuEnable();
 		}
-    //printf("config.c: onmenuupdate - if !inGame END\n");
 	}
 }
 
