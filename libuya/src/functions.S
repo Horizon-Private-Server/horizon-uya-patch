@@ -263,7 +263,7 @@ FUNCTION(floorf, 0x00136ba8)
 #--------------------------------------------------------
 #----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
-VARIABLE_FUNCTION(internal_drawFunc, vaDrawTextFunc)
+VARIABLE_FUNCTION(internal_drawFunc, vaFontPrintFunc)
 VARIABLE_FUNCTION(gfxGetFontWidth, vaGetTextWidthFunc)
 VARIABLE_FUNCTION(internal_drawBox, vaDrawBoxFunc)
 

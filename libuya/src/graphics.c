@@ -4,7 +4,7 @@
 
 #if UYA_PAL
 
-VariableAddress_t vaDrawTextFunc = {
+VariableAddress_t vaFontPrintFunc = {
 	.Lobby = 0x00592238,
 	.Bakisi = 0x0045f4a8,
 	.Hoven = 0x00461058,
@@ -51,7 +51,7 @@ VariableAddress_t vaDrawBoxFunc = {
 #else
 
 // drawTextFunc -> widthFunc Offset: -0x2a0
-VariableAddress_t vaDrawTextFunc = {
+VariableAddress_t vaFontPrintFunc = {
 	.Lobby = 0x00590F90,
 	.Bakisi = 0x0045e300,
 	.Hoven = 0x0045FDF0,
@@ -97,7 +97,7 @@ VariableAddress_t vaDrawBoxFunc = {
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
 #endif
 
-int internal_drawFunc(u32,const char*,long,u64,u64,u64,float,float,float,float,float,float);
+int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
 void internal_drawBox(void *, void *);
 
 //--------------------------------------------------------
@@ -169,8 +169,15 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 //--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment)
 {
-    // draw
-    internal_drawFunc(color, string, length, alignment, 0, 0x80000000, x, y, scaleX, scaleY, 0, 0);
+    /*
+        Aligntment: 0: Right
+                    1: Left
+                    2: Center
+                    3: ????
+                    4: None
+    */
+    // float x, float y, float scaleX, float scaleY, float shadowX, float shadowY, u32 color, const char* string, u64 length, u64 alignment, int bold, u32 shadowColor
+    internal_drawFunc(x, y, scaleX, scaleY, 0, 0, color, string, length, alignment, 1, 0x80000000);
     return x + gfxGetFontWidth(string, length, scaleX);
 }
 
