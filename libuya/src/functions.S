@@ -344,7 +344,7 @@ VARIABLE_FUNCTION(internal_playerWarp, vaPlayerSetPosRotFunc)
 VARIABLE_FUNCTION(internal_playerGiveWeapon, vaGiveWeaponFunc)
 VARIABLE_FUNCTION(internal_playerEquipWeapon, vaEquipWeaponFunc)
 VARIABLE_FUNCTION(playerStripWeapons, vaWeaponStripMeFunc)
-VARIABLE_FUNCTION(internal_GiveMeRandomWeapons, vaGiveMeRandomWeapons)
+VARIABLE_FUNCTION(internal_GiveMeRandomWeapons, vaGiveMeRandomWeaponsFunc)
 
 #--------------------------------------------------------
 #-------------------------- MOBY ------------------------

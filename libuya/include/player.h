@@ -531,7 +531,7 @@ typedef struct Player
 	int WeaponHeldId;												// 0x18D0
 	char unk_18d4[0x110];
 	char State;														// 0x19E4
-	char unk_19e6[0x23];
+	char unk_19e5[0x23];
 	union {
         struct {
             char RaisedGunArm;										// 0x1A08
@@ -552,10 +552,10 @@ typedef struct Player
             char CurSeg;											// 0x1A17
             char HandGadgetType;									// 0x1A18
             char ExternalUpdate;									// 0x1A19
-            char unk_1a19[0x14];
+            char unk_1a1a[0x14];
 		};
     };
-	char unk_1a2f[0x3];
+	char unk_1a2e[0x4];
 	WeaponQuickSelect QuickSelect;									// 0x1A32 to 0x1A34
 	char unk_1a35[0x1e];
 	WeaponAmmo WeaponAmmo;											// 0x1A53 to 0x1A5E
@@ -566,7 +566,6 @@ typedef struct Player
 	char unk_1a84[0x324];
 	int TopOfPlayerStruct2;											// 0x1DA8
 	char unk_1dac[0x6ca];
-	// Unsure how to read health.
 	char Health;													// 0x2476
 	char unk_2477[0x5d];
 	char DamageTaken;												// 0x24D4

@@ -534,6 +534,7 @@ void playerGiveRandomWeapons(Player * player, int amount)
     internal_GiveMeRandomWeapons(player, (!amount) ? 3 : amount);
 }
 
+// Other Obfuscate Address (Health, State)
 VariableAddress_t vaPlayerObfuscateAddr = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -561,24 +562,80 @@ VariableAddress_t vaPlayerObfuscateAddr = {
     .MarcadiaPalace = 0x003c78a1,
 #endif
 };
+// Weapon Obfuscate Address
+VariableAddress_t vaPlayerObfuscateWeaponAddr = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x003aa041,
+	.Hoven = 0x003a9681,
+	.OutpostX12 = 0x003a1581,
+    .KorgonOutpost = 0x003a1341,
+	.Metropolis = 0x003a10c1,
+	.BlackwaterCity = 0x003a1301,
+	.CommandCenter = 0x003b1881,
+    .BlackwaterDocks = 0x003b1c81,
+    .AquatosSewers = 0x003b2401,
+    .MarcadiaPalace = 0x003b1981,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x003aa181,
+	.Hoven = 0x003a97c1,
+	.OutpostX12 = 0x003a16c1,
+    .KorgonOutpost = 0x003a1481,
+	.Metropolis = 0x003a1201,
+	.BlackwaterCity = 0x003a1441,
+	.CommandCenter = 0x003b19c1,
+    .BlackwaterDocks = 0x003b1dc1,
+    .AquatosSewers = 0x003b2541,
+    .MarcadiaPalace = 0x003b1ac1,
+#endif
+};
 u32 playerDeobfuscate(u32 src)
 {
-    static int StackAddr[1];
-    int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
-	u32 Player_Addr = src;
-    u32 Player_Value = *(u8*)src;
+    static int StackAddr[3];
+    u32 Player_Addr = src;
+    u32 Player_Value = *(u8*)Player_Addr;
+    int RandDataAddr;
     int n = 0;
 	int rawr = 0;
-	do {
-		u32 Offset = (u32)((int)Player_Addr - (u32)Player_Value & 7) + n;
-		n = n + 5;
-		*(u8*)((int)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff));
-		++rawr;
-	} while (n < 0x28);
-	// XORAddr (first 4 bytes of StackAddr)
-	StackAddr[0] = (u32)(StackAddr[0]) ^ (u32)Player_Addr;
-	// XORValue (second 4 bytes of StackAddr)
-	StackAddr[1] = (u32)((u32)StackAddr[1] ^ StackAddr[0]);
-	u32 Converted = StackAddr[1];
-	return Converted;
+    u32 Converted;
+    int WeaponObfuscate = 0;
+    // if Player Address is at the weapon area, but before the gadget box address
+    if ((Player_Addr - 0x1A30) >= PLAYER_STRUCT && (Player_Addr - 0x1A80) <= PLAYER_STRUCT) {
+        WeaponObfuscate = 1;
+        RandDataAddr = GetAddress(&vaPlayerObfuscateWeaponAddr);
+    } else {
+        WeaponObfuscate = 0;
+        RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
+    }
+
+    if (!WeaponObfuscate) {
+        do {
+            u32 Offset = (u32)((int)Player_Addr - (u32)Player_Value & 7) + n;
+            n = n + 5;
+            *(u8*)((int)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff));
+            ++rawr;
+        } while (n < 0x28);
+        // XORAddr (first 4 bytes of StackAddr)
+        StackAddr[0] = (u32)(StackAddr[0]) ^ (u32)Player_Addr;
+        // XORValue (second 4 bytes of StackAddr)
+        StackAddr[1] = (u32)((u32)StackAddr[1] ^ StackAddr[0]);
+        Converted = StackAddr[1];
+    } else {
+        do {
+            u32 Offset = (u32)((u32)Player_Addr - (u8)Player_Value & 7) + n;
+            n = n + 3;
+            *(u8*)((u32)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Offset & 7) * 0xd1 + (u8)Player_Value);
+            ++rawr;
+        } while (n < 0x18);
+        StackAddr[0] = (u32)StackAddr[0] ^ (u32)Player_Addr;
+        StackAddr[2] = ((u32)StackAddr[1] ^ (u32)StackAddr[0]) >> 0x10;
+        n = (u32)((u32)StackAddr[1] ^ (u32)StackAddr[0] ^ (u32)StackAddr[2]) * 0x10000 + 1;
+        StackAddr[1] = (u32)StackAddr[2] / n;
+        // u64 hi is used later on in the UYA code, keeping just in case
+        // u64 hi = (u64)((u32)StackAddr[2] % n);
+        StackAddr[2] = (u32)StackAddr[2] & 0xff;
+        Converted = StackAddr[2];
+    }
+    return Converted;
 }
