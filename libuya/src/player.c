@@ -467,7 +467,7 @@ VariableAddress_t vaGiveWeaponFunc = {
 };
 void playerGiveWeapon(Player * player, int weaponId)
 {
-    internal_playerGiveWeapon((u32)player + 0x1a40, weaponId, 2);
+    internal_playerGiveWeapon((u32)player + 0x1a40, weaponId, 1);
 }
 
 VariableAddress_t vaEquipWeaponFunc = {
@@ -499,7 +499,7 @@ VariableAddress_t vaEquipWeaponFunc = {
 };
 void playerEquipWeapon(Player * player, int weaponId)
 {
-    internal_playerEquipWeapon((u32)player + 0x1a40, weaponId, 2);
+    internal_playerEquipWeapon((u32)player + 0x1a40, weaponId);
 }
 
 VariableAddress_t vaGiveMeRandomWeaponsFunc = {
