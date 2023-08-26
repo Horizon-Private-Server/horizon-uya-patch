@@ -577,22 +577,22 @@ void patchDeadShooting(void)
 
 int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, u64 hitFlag, Moby* moby, u64 t0)
 {
-  // hit through terrain
-  // if we've hit a target
-  // we check if we've hit by reading the source guber event
-  // which is passed in 0x5C of the shot's pvars
-  if (moby && moby->PVar) {
-    void * event = *(void**)(moby->PVar + 0x5C);
-    if (event) {
-      u32 hitGuberUid = *(u32*)(event + 0x3C);
-      if (hitGuberUid != 0xFFFFFFFF) {
-        return collLine_Fix(from, to, 1, moby, t0);
-      }
-    }
-  }
+	// hit through terrain
+	// if we've hit a target
+	// we check if we've hit by reading the source guber event
+	// which is passed in 0x5C of the shot's pvars
+	if (moby && moby->PVar) {
+		void * event = *(void**)(moby->PVar + 0x5C);
+		if (event) {
+			u32 hitGuberUid = *(u32*)(event + 0x3C);
+			if (hitGuberUid != 0xFFFFFFFF) {
+				return collLine_Fix(from, to, 1, moby, t0);
+			}
+		}
+	}
 
-  // pass through
-  return collLine_Fix(from, to, hitFlag, moby, t0);
+	// pass through
+	return collLine_Fix(from, to, hitFlag, moby, t0);
 }
 
 /*
@@ -614,131 +614,128 @@ void patchSniperWallSniping(void)
 	VariableAddress_t vaSniperShotCollLineFixHook = {
 #if UYA_PAL
 		.Lobby = 0,
-		.Bakisi = 0,
-		.Hoven = 0,
-		.OutpostX12 = 0,
-		.KorgonOutpost = 0,
-		.Metropolis = 0,
-		.BlackwaterCity = 0,
-		.CommandCenter = 0,
-		.BlackwaterDocks = 0,
-		.AquatosSewers = 0,
-		.MarcadiaPalace = 0,
+		.Bakisi = 0x00408bc0,
+		.Hoven = 0x00408528,
+		.OutpostX12 = 0x00400420,
+		.KorgonOutpost = 0x003ff800,
+		.Metropolis = 0x003fe3c0,
+		.BlackwaterCity = 0x003fb1a8,
+		.CommandCenter = 0x004095b0,
+		.BlackwaterDocks = 0x0040b510,
+		.AquatosSewers = 0x0040b118,
+		.MarcadiaPalace = 0x0040a190,
 #else
 		.Lobby = 0,
 		.Bakisi = 0x00408540,
-		.Hoven = 0,
-		.OutpostX12 = 0,
-		.KorgonOutpost = 0,
-		.Metropolis = 0,
-		.BlackwaterCity = 0,
-		.CommandCenter = 0,
-		.BlackwaterDocks = 0,
-		.AquatosSewers = 0,
-		.MarcadiaPalace = 0,
+		.Hoven = 0x00407e28,
+		.OutpostX12 = 0x003ffd20,
+		.KorgonOutpost = 0x003ff160,
+		.Metropolis = 0x003fdd40,
+		.BlackwaterCity = 0x003faac8,
+		.CommandCenter = 0x00408f18,
+		.BlackwaterDocks = 0x0040ae78,
+		.AquatosSewers = 0x0040aa80,
+		.MarcadiaPalace = 0x00409af8,
 #endif
 	};
 
 	VariableAddress_t vaSniperShotCreatedHook = {
 #if UYA_PAL
 		.Lobby = 0,
-		.Bakisi = 0,
-		.Hoven = 0,
-		.OutpostX12 = 0,
-		.KorgonOutpost = 0,
-		.Metropolis = 0,
-		.BlackwaterCity = 0,
-		.CommandCenter = 0,
-		.BlackwaterDocks = 0,
-		.AquatosSewers = 0,
-		.MarcadiaPalace = 0,
+		.Bakisi = 0x00408508,
+		.Hoven = 0x00407e70,
+		.OutpostX12 = 0x003ffd68,
+		.KorgonOutpost = 0x003ff148,
+		.Metropolis = 0x003fdd08,
+		.BlackwaterCity = 0x003faaf0,
+		.CommandCenter = 0x00408ef8,
+		.BlackwaterDocks = 0x0040ae58,
+		.AquatosSewers = 0x0040aa60,
+		.MarcadiaPalace = 0x00409ad8,
 #else
 		.Lobby = 0,
-		.Bakisi = 0x00407E90,
-		.Hoven = 0,
-		.OutpostX12 = 0,
-		.KorgonOutpost = 0,
-		.Metropolis = 0,
-		.BlackwaterCity = 0,
-		.CommandCenter = 0,
-		.BlackwaterDocks = 0,
-		.AquatosSewers = 0,
-		.MarcadiaPalace = 0,
+		.Bakisi = 0x00407e90,
+		.Hoven = 0x00407778,
+		.OutpostX12 = 0x003ff670,
+		.KorgonOutpost = 0x003feab0,
+		.Metropolis = 0x003fd690,
+		.BlackwaterCity = 0x003fa418,
+		.CommandCenter = 0x00408868,
+		.BlackwaterDocks = 0x0040a7c8,
+		.AquatosSewers = 0x0040a3d0,
+		.MarcadiaPalace = 0x00409448,
 #endif
 	};
 
-  // hook when collision checking is done on the sniper shot
-  u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
-  if (hookAddr) {
-    POKE_U32(hookAddr + 0x04, 0x8FA6FFC8);
-    HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
-  }
+	// hook when collision checking is done on the sniper shot
+	u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
+	if (hookAddr) {
+		POKE_U32(hookAddr + 0x04, 0x8FA6FFC8);
+		HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
+	}
 
   // change sniper shot initialization code to write the guber event to the shot's pvars
   // for use later by patchSniperWallSniping_Hook
-  hookAddr = GetAddress(&vaSniperShotCreatedHook);
-  if (hookAddr) {
-    POKE_U32(hookAddr, 0xAE35005C);
-  }
+	hookAddr = GetAddress(&vaSniperShotCreatedHook);
+	if (hookAddr) {
+		POKE_U32(hookAddr, 0xAE35005C);
+	}
 }
 
 void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 {
-  // Function called at vaGetSniperShotDirectionHook
-  VariableAddress_t vaGetSniperShotDirection = {
+	// Function called at vaGetSniperShotDirectionHook
+	VariableAddress_t vaGetSniperShotDirection = {
 #if UYA_PAL
 		.Lobby = 0,
-		.Bakisi = 0,
-		.Hoven = 0,
-		.OutpostX12 = 0,
-		.KorgonOutpost = 0,
-		.Metropolis = 0,
-		.BlackwaterCity = 0,
-		.CommandCenter = 0,
-		.BlackwaterDocks = 0,
-		.AquatosSewers = 0,
-		.MarcadiaPalace = 0,
+		.Bakisi = 0x0045d9d0,
+		.Hoven = 0x0045f580,
+		.OutpostX12 = 0x00456380,
+		.KorgonOutpost = 0x00453f10,
+		.Metropolis = 0x00453250,
+		.BlackwaterCity = 0x00450a80,
+		.CommandCenter = 0x00451378,
+		.BlackwaterDocks = 0x00453bf8,
+		.AquatosSewers = 0x00452ef8,
+		.MarcadiaPalace = 0x00452878,
 #else
 		.Lobby = 0,
 		.Bakisi = 0x0045c920,
-		.Hoven = 0,
-		.OutpostX12 = 0,
-		.KorgonOutpost = 0,
-		.Metropolis = 0,
-		.BlackwaterCity = 0,
-		.CommandCenter = 0,
-		.BlackwaterDocks = 0,
-		.AquatosSewers = 0,
-		.MarcadiaPalace = 0,
+		.Hoven = 0x0045e410,
+		.OutpostX12 = 0x00455250,
+		.KorgonOutpost = 0x00452e60,
+		.Metropolis = 0x004521a0,
+		.BlackwaterCity = 0x0044f950,
+		.CommandCenter = 0x00450408,
+		.BlackwaterDocks = 0x00452c48,
+		.AquatosSewers = 0x00451f88,
+		.MarcadiaPalace = 0x004518c8,
 #endif
 	};
 
-  if (event) {
-    int hitGuberId = *(int*)(event + 0x3C);
-    int sourceId = *(u8*)(event + 0x36) & 0xF;
-    if (sourceId != gameGetMyClientId()) {
-      DPRINTF("sniper hit %08X\n", hitGuberId);
+	if (event) {
+		int hitGuberId = *(int*)(event + 0x3C);
+		int sourceId = *(u8*)(event + 0x36) & 0xF;
+		if (sourceId != gameGetMyClientId()) {
+			DPRINTF("sniper hit %08X\n", hitGuberId);
 
-      if (hitGuberId != -1) {
-        // hit something
-        Moby* hitMoby = mobyGetByGuberUid(hitGuberId);
-        if (hitMoby) {
-          DPRINTF("sniper hit %08X\n", (u32)hitMoby);
-          vector_subtract(out, hitMoby->Position, (float*)event);
-          out[2] += 0.5;
-          return;
-        }
-      }
-    }
-
-
-  }
-
-  // call base
-  u32 getShotDirectionFunction = GetAddress(&vaGetSniperShotDirection);
-  if (getShotDirectionFunction) {
-    ((void (*)(float, VECTOR, VECTOR))getShotDirectionFunction)(f12 * 0.01666666666, out, in);
-  }
+			if (hitGuberId != -1) {
+				// hit something
+				Moby* hitMoby = mobyGetByGuberUid(hitGuberId);
+				if (hitMoby) {
+					DPRINTF("sniper hit %08X\n", (u32)hitMoby);
+					vector_subtract(out, hitMoby->Position, (float*)event);
+					out[2] += 0.5;
+					return;
+				}
+			}
+		}
+	}
+	// call base
+	u32 getShotDirectionFunction = GetAddress(&vaGetSniperShotDirection);
+	if (getShotDirectionFunction) {
+		((void (*)(float, VECTOR, VECTOR))getShotDirectionFunction)(f12 * 0.01666666666, out, in);
+	}
 }
 
 /*
@@ -760,28 +757,28 @@ void patchSniperNiking(void)
 	VariableAddress_t vaGetSniperShotDirectionHook = {
 #if UYA_PAL
 		.Lobby = 0,
-		.Bakisi = 0,
-		.Hoven = 0,
-		.OutpostX12 = 0,
-		.KorgonOutpost = 0,
-		.Metropolis = 0,
-		.BlackwaterCity = 0,
-		.CommandCenter = 0,
-		.BlackwaterDocks = 0,
-		.AquatosSewers = 0,
-		.MarcadiaPalace = 0,
+		.Bakisi = 0x00407394,
+		.Hoven = 0x00406cfc,
+		.OutpostX12 = 0x003febf4,
+		.KorgonOutpost = 0x003fdfd4,
+		.Metropolis = 0x003fcb94,
+		.BlackwaterCity = 0x003f997c,
+		.CommandCenter = 0x00407d84,
+		.BlackwaterDocks = 0x00409ce4,
+		.AquatosSewers = 0x004098ec,
+		.MarcadiaPalace = 0x00408964,
 #else
 		.Lobby = 0,
 		.Bakisi = 0x00406d2c,
-		.Hoven = 0,
-		.OutpostX12 = 0,
-		.KorgonOutpost = 0,
-		.Metropolis = 0,
-		.BlackwaterCity = 0,
-		.CommandCenter = 0,
-		.BlackwaterDocks = 0,
-		.AquatosSewers = 0,
-		.MarcadiaPalace = 0,
+		.Hoven = 0x00406614,
+		.OutpostX12 = 0x003fe50c,
+		.KorgonOutpost = 0x003fd94c,
+		.Metropolis = 0x003fc52c,
+		.BlackwaterCity = 0x003f92b4,
+		.CommandCenter = 0x00407704,
+		.BlackwaterDocks = 0x00409664,
+		.AquatosSewers = 0x0040926c,
+		.MarcadiaPalace = 0x004082e4,
 #endif
 	};
 
