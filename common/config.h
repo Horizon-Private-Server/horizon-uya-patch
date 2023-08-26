@@ -6,6 +6,7 @@ typedef struct PatchConfig
 {
   char enableAutoMaps;
   char disableCameraShake;
+  char levelOfDetail;
 } PatchConfig_t;
 
 // Game Rules Tab

@@ -119,6 +119,17 @@ int mapsGetInstallationResult(void);
 int mapsPromptEnableCustomMaps(void);
 int mapsDownloadingModules(void);
 
+MenuElem_ListData_t dataLevelOfDetail = {
+    &config.levelOfDetail,
+    NULL,
+#if DEBUG
+    4,
+#else
+    3,
+#endif
+    { "Potato", "Low", "Normal", "High" }
+};
+
 // map override list item
 MenuElem_ListData_t dataCustomMaps = {
     &gameConfig.customMapId,
@@ -206,7 +217,8 @@ MenuElem_t menuElementsGeneral[] = {
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
   { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
-  { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
+  // { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
+  { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake },
 };
 
