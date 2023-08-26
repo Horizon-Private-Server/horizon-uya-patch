@@ -555,4 +555,6 @@ MobyFunctions * mobyGetFunctions(Moby * moby);
  */
 int mobyGetDamager(Moby * moby);
 
+Moby* mobyGetByGuberUid(u32 uid);
+
 #endif // _LIBUYA_MOBY_H_

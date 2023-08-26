@@ -1,5 +1,6 @@
 #include "moby.h"
 #include "interop.h"
+#include "guber.h"
 
 //--------------------------------------------------------
 #define BEGIN_MOBY_PTR                          ((Moby**)GetAddress(&vaBEGIN_MOBY_PTR))
@@ -246,4 +247,24 @@ int mobyClassIsLoaded(int oClass)
     }
 
     return 0;
+}
+
+/*
+ *
+ */
+Moby* mobyGetByGuberUid(u32 uid)
+{
+  Moby* mEnd = mobyListGetEnd();
+  Moby* m = mobyListGetStart();
+
+  while (m < mEnd)
+  {
+    Guber* guber = guberGetObjectByMoby(m);
+    if (guber && guber->Id.UID == uid)
+      return m;
+
+    ++m;
+  }
+
+  return NULL;
 }

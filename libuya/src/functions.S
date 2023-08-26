@@ -384,3 +384,8 @@ VARIABLE_FUNCTION(guberEventCreate, vaGuberEventCreate)
 #------------------------- TIME -------------------------
 #--------------------------------------------------------
 FUNCTION(timerGetSystemTime, 0x0012dcb0)
+
+#--------------------------------------------------------
+#---------------------- COLLISION -----------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(collLine_Fix, vaCollLineFix)

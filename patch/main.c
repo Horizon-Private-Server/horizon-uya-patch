@@ -23,6 +23,7 @@
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
 #include <libuya/time.h>
+#include <libuya/collision.h>
 #include <libuya/net.h>
 #include <libuya/interop.h>
 #include <libuya/utils.h>
@@ -572,6 +573,224 @@ void patchDeadShooting(void)
 	};
 	if (*(u32*)GetAddress(&vaShootingHook) != 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2))
 		*(u32*)GetAddress(&vaShootingHook) = 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2);
+}
+
+int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, u64 hitFlag, Moby* moby, u64 t0)
+{
+  // hit through terrain
+  // if we've hit a target
+  // we check if we've hit by reading the source guber event
+  // which is passed in 0x5C of the shot's pvars
+  if (moby && moby->PVar) {
+    void * event = *(void**)(moby->PVar + 0x5C);
+    if (event) {
+      u32 hitGuberUid = *(u32*)(event + 0x3C);
+      if (hitGuberUid != 0xFFFFFFFF) {
+        return collLine_Fix(from, to, 1, moby, t0);
+      }
+    }
+  }
+
+  // pass through
+  return collLine_Fix(from, to, hitFlag, moby, t0);
+}
+
+/*
+ * NAME :		patchSniperWallSniping
+ * 
+ * DESCRIPTION :
+ * 			Send Weapon Shots more reliably.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchSniperWallSniping(void)
+{
+	VariableAddress_t vaSniperShotCollLineFixHook = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00408540,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#endif
+	};
+
+	VariableAddress_t vaSniperShotCreatedHook = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00407E90,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#endif
+	};
+
+  // hook when collision checking is done on the sniper shot
+  u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
+  if (hookAddr) {
+    POKE_U32(hookAddr + 0x04, 0x8FA6FFC8);
+    HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
+  }
+
+  // change sniper shot initialization code to write the guber event to the shot's pvars
+  // for use later by patchSniperWallSniping_Hook
+  hookAddr = GetAddress(&vaSniperShotCreatedHook);
+  if (hookAddr) {
+    POKE_U32(hookAddr, 0xAE35005C);
+  }
+}
+
+void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
+{
+  // Function called at vaGetSniperShotDirectionHook
+  VariableAddress_t vaGetSniperShotDirection = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x0045c920,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#endif
+	};
+
+  if (event) {
+    int hitGuberId = *(int*)(event + 0x3C);
+    int sourceId = *(u8*)(event + 0x36) & 0xF;
+    if (sourceId != gameGetMyClientId()) {
+      DPRINTF("sniper hit %08X\n", hitGuberId);
+
+      if (hitGuberId != -1) {
+        // hit something
+        Moby* hitMoby = mobyGetByGuberUid(hitGuberId);
+        if (hitMoby) {
+          DPRINTF("sniper hit %08X\n", (u32)hitMoby);
+          vector_subtract(out, hitMoby->Position, (float*)event);
+          out[2] += 0.5;
+          return;
+        }
+      }
+    }
+
+
+  }
+
+  // call base
+  u32 getShotDirectionFunction = GetAddress(&vaGetSniperShotDirection);
+  if (getShotDirectionFunction) {
+    ((void (*)(float, VECTOR, VECTOR))getShotDirectionFunction)(f12 * 0.01666666666, out, in);
+  }
+}
+
+/*
+ * NAME :		patchSniperNiking
+ * 
+ * DESCRIPTION :
+ * 			Send Weapon Shots more reliably.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchSniperNiking(void)
+{
+	VariableAddress_t vaGetSniperShotDirectionHook = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00406d2c,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#endif
+	};
+
+  u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
+  if (hookAddr) {
+    POKE_U32(hookAddr - 0x0C, 0x46000306);
+    POKE_U32(hookAddr + 0x04, 0x02803021);
+    HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
+  }
 }
 
 /*
@@ -1142,6 +1361,10 @@ int main(void)
 
 		// Patch sending weapon shots via UDB to TCP.
 		patchWeaponShotLag();
+
+    // 
+    patchSniperNiking();
+    patchSniperWallSniping();
 
 		// Patches gadget events as they come in.
 		// patchGadgetEvents();
