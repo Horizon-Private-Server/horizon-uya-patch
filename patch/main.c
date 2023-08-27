@@ -676,7 +676,6 @@ void patchSniperWallSniping(void)
 	// hook when collision checking is done on the sniper shot
 	u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
 	if (hookAddr) {
-		POKE_U32(hookAddr + 0x04, 0x8FA6FFC8);
 		HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
 	}
 
