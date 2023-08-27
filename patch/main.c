@@ -588,13 +588,16 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
 	// we check if we've hit by reading the source guber event
 	// which is passed in 0x5C of the shot's pvars
 	if (shotMoby && shotMoby->PVar) {
-		void * event = *(void**)(shotMoby->PVar + 0x5C);
-		if (event) {
-			u32 hitGuberUid = *(u32*)(event + 0x3C);
-			if (hitGuberUid != 0xFFFFFFFF) {
-				return collLine_Fix(from, to, 1, moby, t0);
-			}
-		}
+    int shotOwner = *(u32*)((u32)shotMoby + 0x90) >> 28;
+    if (shotOwner != gameGetMyClientId()) {
+      void * event = *(void**)(shotMoby->PVar + 0x5C);
+      if (event) {
+        u32 hitGuberUid = *(u32*)(event + 0x3C);
+        if (hitGuberUid != 0xFFFFFFFF) {
+          return collLine_Fix(from, to, 1, moby, t0);
+        }
+      }
+    }
 	}
 
 	// pass through
@@ -725,7 +728,7 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 		((void (*)(float, VECTOR, VECTOR))getShotDirectionFunction)(f12 * 0.01666666666, out, in);
 	}
 
-#if PAL
+#if UYA_PAL
   Moby** collHitMoby = (Moby**)0x0025b898;
 #else
   Moby** collHitMoby = (Moby**)0x0025ba18;
