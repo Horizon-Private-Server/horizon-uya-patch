@@ -1114,11 +1114,6 @@ VariableAddress_t vaLevelOfDetail_Ties = {
 
 void patchLevelOfDetail(void)
 {
-	if (!isInGame()) {
-		lastLodLevel = -1;
-		return;
-	}
-
 	if (*(u32*)GetAddress(&vaLevelOfDetail_Hook) == 0x02C3B020) {
 		HOOK_J(GetAddress(&vaLevelOfDetail_Hook), &_correctTieLod);
 		// patch jump instruction in correctTieLod to jump back to needed address.
@@ -1515,9 +1510,6 @@ int main(void)
 	// 
 	runCameraSpeedPatch();
 
-	// Patch Level of Detail
-	patchLevelOfDetail();
-
 	// 
 	onConfigUpdate();
 
@@ -1544,6 +1536,9 @@ int main(void)
 		// Patch Flux Wall Sniping
 		patchSniperWallSniping();
 
+		// Patch Level of Detail
+		patchLevelOfDetail();
+
 		// Patches gadget events as they come in.
 		// patchGadgetEvents();
 
@@ -1564,6 +1559,9 @@ int main(void)
 	{
 		// If in Lobby, run these game rules.
 		grLobbyStart();
+
+		// Reset Level of Detail to -1
+		lastLodLevel = -1;
 
 #ifdef UYA_PAL
 		if (*(u32*)0x00576120 == 0) {
