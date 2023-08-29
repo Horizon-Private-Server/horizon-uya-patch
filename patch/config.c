@@ -1106,10 +1106,22 @@ void drawTab(TabElem_t* tab)
   {
     navMenu(tab, 1, 0);
   }
+  // nav page down
+  if (padGetButtonUp(0, PAD_R2) > 0)
+  {
+    for (i = 0; i < 10; ++i)
+      navMenu(tab, 1, 0);
+  }
   // nav up
   else if (padGetButtonUp(0, PAD_UP) > 0)
   {
     navMenu(tab, -1, 0);
+  }
+  // nav page up
+  else if (padGetButtonUp(0, PAD_L2) > 0)
+  {
+    for (i = 0; i < 10; ++i)
+      navMenu(tab, -1, 0);
   }
   // nav select
   else if (padGetButtonUp(0, PAD_CROSS) > 0)
