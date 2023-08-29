@@ -581,24 +581,27 @@ void patchDeadShooting(void)
 		*(u32*)GetAddress(&vaShootingHook) = 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2);
 }
 
-int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, u64 hitFlag, Moby* moby, u64 t0)
+int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* moby, u64 t0)
 {
 	// hit through terrain
 	// if we've hit a target
 	// we check if we've hit by reading the source guber event
 	// which is passed in 0x5C of the shot's pvars
-	if (moby && moby->PVar) {
-		void * event = *(void**)(moby->PVar + 0x5C);
-		if (event) {
-			u32 hitGuberUid = *(u32*)(event + 0x3C);
-			if (hitGuberUid != 0xFFFFFFFF) {
-				return collLine_Fix(from, to, 1, moby, t0);
-			}
-		}
+	if (shotMoby && shotMoby->PVar) {
+    int shotOwner = *(u32*)((u32)shotMoby + 0x90) >> 28;
+    if (shotOwner != gameGetMyClientId()) {
+      void * event = *(void**)(shotMoby->PVar + 0x5C);
+      if (event) {
+        u32 hitGuberUid = *(u32*)(event + 0x3C);
+        if (hitGuberUid != 0xFFFFFFFF) {
+          return collLine_Fix(from, to, 1, moby, t0);
+        }
+      }
+    }
 	}
 
 	// pass through
-	return collLine_Fix(from, to, hitFlag, moby, t0);
+	return collLine_Fix(from, to, 0, moby, t0);
 }
 
 /*
@@ -676,7 +679,7 @@ void patchSniperWallSniping(void)
 	// hook when collision checking is done on the sniper shot
 	u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
 	if (hookAddr) {
-		POKE_U32(hookAddr + 0x04, 0x8FA6FFC8);
+    POKE_U32(hookAddr + 0x04, 0x0260302D);
 		HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
 	}
 
@@ -719,6 +722,18 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 #endif
 	};
 
+	// call base
+	u32 getShotDirectionFunction = GetAddress(&vaGetSniperShotDirection);
+	if (getShotDirectionFunction) {
+		((void (*)(float, VECTOR, VECTOR))getShotDirectionFunction)(f12 * 0.01666666666, out, in);
+	}
+
+#if UYA_PAL
+  Moby** collHitMoby = (Moby**)0x0025b898;
+#else
+  Moby** collHitMoby = (Moby**)0x0025ba18;
+#endif
+
 	if (event) {
 		int hitGuberId = *(int*)(event + 0x3C);
 		int sourceId = *(u8*)(event + 0x36) & 0xF;
@@ -736,11 +751,6 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 				}
 			}
 		}
-	}
-	// call base
-	u32 getShotDirectionFunction = GetAddress(&vaGetSniperShotDirection);
-	if (getShotDirectionFunction) {
-		((void (*)(float, VECTOR, VECTOR))getShotDirectionFunction)(f12 * 0.01666666666, out, in);
 	}
 }
 
