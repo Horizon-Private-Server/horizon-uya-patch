@@ -303,7 +303,8 @@ VariableAddress_t vaSetPlayerStateFunc = {
 };
 void playerSetPlayerState(Player * player, u8 state)
 {
-    internal_SetPlayerState(player, state, 2, 0);
+    
+    internal_SetPlayerState(player, state, 1, 0, 1);
 }
 
 //--------------------------------------------------------------------------------
