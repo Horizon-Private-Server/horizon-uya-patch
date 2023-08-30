@@ -475,17 +475,50 @@ typedef struct Player
 	int StateTimer;													// 0x2F0
 	int StateTypeTimer;												// 0x2F4
 	int SubStateTimer;												// 0x2F8
-	char unk_2fc[0x20];
-	short RespawnTimer;												// 0x31C
-	char unk_31e[0x2];
-    short CantMoveTimer;                                            // 0x320
-    char unk_322[0x06];
-    float WeaponCooldownTimer;                                      // 0x328
-    char unk_32c[0x30];
+	int animStateTimer;												// 0x2FC
+	int stickOnTimer;												// 0x300
+	int stickOffTimer;												// 0x304
+	short int unk_308;
+	short int unk_30a;
+	int firingTimer;												// 0x30C
+	char unk_310; // Freezes if I change it.
+	char unk_311; // Freezes if I change it.
+	char unk_312; // Freezes if I change it.
+	char unk_313; // Freezes if I change it.
+	char unk_314[0x8];
+	char RespawnTimer;												// 0x31C
+	char NotUsed;													// 0x31D
+	short int unkTimer_31e;											// 0x31E
+    short int CantMoveTimer;										// 0x320
+	short int unkTimer_322; // Not Used
+	short int unkTimer_324;
+	short int unkTimer_326;
+    float gadgetRefireTimer;	                                    // 0x328
+	short int unkTimer_32c;
+	short int unkTimer_32e;
+	short int UnkTimer_330;
+	short int unkTimer_332; // Not Used
+	short int unk_WrenchTimer;										// 0x334
+	short int unkTimer_336;											// 0x336
+	short int NoLedgeTimer;											// 0x338
+	short int unkTimer_33a;	// Not Used								// 0x33A
+	short int unktimer_33c; // Not Used								// 0x33C
+	short int MagneticTimer;										// 0x33E
+	short int unkTimer_340;
+	short int unkTimer_342;
+	short int noDeathTimerTimer;									// 0x344
+	short int unkTimer_346; // Not Used
+	short int unkTimer_348;
+	short int unktimer_34a;
+	short int unktimer_34c; // Not Used
+	short int unktimer_34e; // Not Used
+	int timeAliveTimer;												// 0x350
+	int unk_354;
+	int unk_358;
 	int IsChargebooting;											// 0x35C
-	char unk_360[0x10];
-	// Magnetgic: 0 = No, 2 = Yes.
-	short int magnetic;												// 0x370
+	int unkTimer_360;
+	char unk_364[0xc];
+	short int magnetic; // 0 = No, 2 = Yes.							// 0x370
 	char unk_372[0xae];
 	Moby * StandingOnMoby;											// 0x420
 	Moby * SkinMoby2;												// 0x424
@@ -531,9 +564,10 @@ typedef struct Player
 	int WeaponHeldId;												// 0x18D0
 	char unk_18d4[0x110];
 	char State;														// 0x19E4
-	char unk_19e5[0x23];
+	char unk_19e5[0x22];
 	union {
         struct {
+			char GadgetActive;										// 0x1A07
             char RaisedGunArm;										// 0x1A08
             char InShallowWater;									// 0x1A09
             char Invisible;											// 0x1A0A
@@ -868,6 +902,6 @@ void playerGiveRandomWeapons(Player * player, int amount);
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-u32 playerDeobfuscate(u32 src);
+u32 playerDeobfuscate(u32 src, int addr, int method);
 
 #endif // _LIBUYA_PLAYER_H_
