@@ -48,6 +48,35 @@
 #define SPAWNPOINTS_SIEGE                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x20c))
 #define SPAWNPOINTS_CTF                     (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x210))
 #define SPAWNPOINTS_DM                      (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x214))
+
+VariableAddress_t vaGSFrame = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0,
+	.Hoven = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
+	.Metropolis = 0,
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00248048,
+	.Hoven = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
+	.Metropolis = 0,
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
+#endif
+};
+
 VariableAddress_t vaDeathBarrier = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -104,8 +133,8 @@ VariableAddress_t vaGAME_DATA = {
 #endif
 };
 
-#ifdef UYA_PAL
 VariableAddress_t vaGameEndFunc = {
+#ifdef UYA_PAL
     .Lobby = 0,
     .Bakisi = 0x005445f8,
     .Hoven = 0x005467c0,
@@ -117,9 +146,7 @@ VariableAddress_t vaGameEndFunc = {
     .BlackwaterDocks = 0x00538440,
     .AquatosSewers = 0x00537740,
     .MarcadiaPalace = 0x005370c0,
-};
 #else
-VariableAddress_t vaGameEndFunc = {
     .Lobby = 0,
     .Bakisi = 0x00541ce8,
     .Hoven = 0x00543df0,
@@ -131,8 +158,8 @@ VariableAddress_t vaGameEndFunc = {
     .BlackwaterDocks = 0x00535c48,
     .AquatosSewers = 0x00534f88,
     .MarcadiaPalace = 0x005348c8,
-};
 #endif
+};
 
 __LIBUYA_GETTER__ int isInGame(void)
 {
