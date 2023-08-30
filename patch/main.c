@@ -475,7 +475,7 @@ void patchDeadJumping(void)
 		Player * player = players[i];
 		if (playerIsLocal(player) && playerIsDead(player))
 		{
-			player->CantMoveTimer = 10;
+			player->timers.noInput = 10;
 		}
 	}
 }
@@ -798,12 +798,12 @@ void patchSniperNiking(void)
 #endif
 	};
 
-  u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
-  if (hookAddr) {
-    POKE_U32(hookAddr - 0x0C, 0x46000306);
-    POKE_U32(hookAddr + 0x04, 0x02803021);
-    HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
-  }
+	u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
+	if (hookAddr) {
+		POKE_U32(hookAddr - 0x0C, 0x46000306);
+		POKE_U32(hookAddr + 0x04, 0x02803021);
+		HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
+	}
 }
 
 /*
@@ -1206,12 +1206,12 @@ void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
 {
 	// backup currently equipped weapons
 	if (player->IsLocal) {
-		weaponOrderBackup[player->LocalPlayerIndex][0] = playerDeobfuscate(&player->QuickSelect.Slot[0]);
-		weaponOrderBackup[player->LocalPlayerIndex][1] = playerDeobfuscate(&player->QuickSelect.Slot[1]);
-		weaponOrderBackup[player->LocalPlayerIndex][2] = playerDeobfuscate(&player->QuickSelect.Slot[2]);
-		DPRINTF("\nBackup 0: %d - %d", playerDeobfuscate(&player->QuickSelect.Slot[0]), weaponOrderBackup[player->LocalPlayerIndex][0]);
-		DPRINTF("\nBackup 1: %d - %d", playerDeobfuscate(&player->QuickSelect.Slot[1]), weaponOrderBackup[player->LocalPlayerIndex][1]);
-		DPRINTF("\nBackup 2: %d - %d", playerDeobfuscate(&player->QuickSelect.Slot[2]), weaponOrderBackup[player->LocalPlayerIndex][2]);
+		weaponOrderBackup[player->LocalPlayerIndex][0] = playerDeobfuscate(&player->QuickSelect.Slot[0], 1, 1);
+		weaponOrderBackup[player->LocalPlayerIndex][1] = playerDeobfuscate(&player->QuickSelect.Slot[1], 1, 1);
+		weaponOrderBackup[player->LocalPlayerIndex][2] = playerDeobfuscate(&player->QuickSelect.Slot[2], 1, 1);
+		DPRINTF("\nBackup 0: %d - %d", playerDeobfuscate(&player->QuickSelect.Slot[0], 1, 1), weaponOrderBackup[player->LocalPlayerIndex][0]);
+		DPRINTF("\nBackup 1: %d - %d", playerDeobfuscate(&player->QuickSelect.Slot[1], 1, 1), weaponOrderBackup[player->LocalPlayerIndex][1]);
+		DPRINTF("\nBackup 2: %d - %d", playerDeobfuscate(&player->QuickSelect.Slot[2], 1, 1), weaponOrderBackup[player->LocalPlayerIndex][2]);
 	}
 
 	// call hooked WeaponStripMe function after backup
@@ -1252,8 +1252,8 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 		for (i = 0; i < 3; i++) {
 			u8 backedUpSlotValue = weaponOrderBackup[player->LocalPlayerIndex][i];
 			for(j = 0; j < 3; j++) {
-				if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j])) {
-					DPRINTF("\nMatched %d: %d - %d", j, playerDeobfuscate(&player->QuickSelect.Slot[j]), backedUpSlotValue);
+				if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
+					DPRINTF("\nMatched %d: %d - %d", j, playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1), backedUpSlotValue);
 					matchCount++;
 				}
 			}
@@ -1262,7 +1262,7 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 		if (matchCount == 3) {
 			// set equipped weapon in order
 			for (i = 0; i < 3; ++i) {
-				DPRINTF("\nGive Weapon %d: %d - %d", i, playerDeobfuscate(&player->QuickSelect.Slot[i]), weaponOrderBackup[player->LocalPlayerIndex][i]);
+				DPRINTF("\nGive Weapon %d: %d - %d", i, playerDeobfuscate(&player->QuickSelect.Slot[i]), weaponOrderBackup[player->LocalPlayerIndex][i], 1, 1);
 				playerGiveWeapon(player, weaponOrderBackup[player->LocalPlayerIndex][i]);
 			}
 

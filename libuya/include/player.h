@@ -291,7 +291,7 @@ struct tNW_Player {
 	/* acc */ int homeNodeIndex;
 };
 
-typedef struct HeroTimers {
+typedef struct DL_HeroTimers {
 	/*   0 */ int state;
 	/*   4 */ int stateType;
 	/*   8 */ int subState;
@@ -365,6 +365,55 @@ typedef struct HeroTimers {
 	/*  ae */ short int explodeTimer;
 	/*  b0 */ short int noDeathTimer;
 	/*  b2 */ short int invincibilityTimer;
+} DL_HeroTimers;
+
+typedef struct HeroTimers {
+	int state;														// 0x2F0
+	int stateType;													// 0x2F4
+	int subState;													// 0x2F8
+	int animState;													// 0x2FC
+	int stickOn;													// 0x300
+	int stickOff;													// 0x304
+	short int unk_308;
+	short int unk_30a;
+	int firingTimer;												// 0x30C
+	char unk_310; // Freezes if I change it.
+	char unk_311; // Freezes if I change it.
+	char unk_312; // Freezes if I change it.
+	char unk_313; // Freezes if I change it.
+	char unk_314[0x8];
+	char resurrectWait;												// 0x31C
+	char NotUsed;													// 0x31D
+	short int unkTimer_31e;											// 0x31E
+    short int noInput;												// 0x320
+	short int unkTimer_322; // Not Used
+	short int unkTimer_324;
+	short int unkTimer_326;
+    float gadgetRefire;			                                    // 0x328
+	short int unkTimer_32c;
+	short int unkTimer_32e;
+	short int UnkTimer_330;
+	short int unkTimer_332; // Not Used
+	short int unk_Wrench;											// 0x334
+	short int unkTimer_336;											// 0x336
+	short int noLedge;												// 0x338
+	short int unkTimer_33a;	// Not Used								// 0x33A
+	short int unktimer_33c; // Not Used								// 0x33C
+	short int magnetic;												// 0x33E
+	short int unkTimer_340;
+	short int unkTimer_342;
+	short int noDeathTimer;											// 0x344
+	short int unkTimer_346; // Not Used
+	short int unkTimer_348;
+	short int unktimer_34a;
+	short int unktimer_34c; // Not Used
+	short int unktimer_34e; // Not Used
+	int timeAlive;													// 0x350
+	int unk_354;
+	int unk_358;
+	int IsChargebooting;											// 0x35C
+	int unkTimer_360;
+	char unk_364[0xc];
 } HeroTimers;
 
 typedef struct HeroGround {
@@ -472,52 +521,7 @@ typedef struct Player
     char unk_130[0x1b0];											// 0x130
 	int OnGround;													// 0x2E0
 	char unk_2e4[0xc];
-	int StateTimer;													// 0x2F0
-	int StateTypeTimer;												// 0x2F4
-	int SubStateTimer;												// 0x2F8
-	int animStateTimer;												// 0x2FC
-	int stickOnTimer;												// 0x300
-	int stickOffTimer;												// 0x304
-	short int unk_308;
-	short int unk_30a;
-	int firingTimer;												// 0x30C
-	char unk_310; // Freezes if I change it.
-	char unk_311; // Freezes if I change it.
-	char unk_312; // Freezes if I change it.
-	char unk_313; // Freezes if I change it.
-	char unk_314[0x8];
-	char RespawnTimer;												// 0x31C
-	char NotUsed;													// 0x31D
-	short int unkTimer_31e;											// 0x31E
-    short int CantMoveTimer;										// 0x320
-	short int unkTimer_322; // Not Used
-	short int unkTimer_324;
-	short int unkTimer_326;
-    float gadgetRefireTimer;	                                    // 0x328
-	short int unkTimer_32c;
-	short int unkTimer_32e;
-	short int UnkTimer_330;
-	short int unkTimer_332; // Not Used
-	short int unk_WrenchTimer;										// 0x334
-	short int unkTimer_336;											// 0x336
-	short int NoLedgeTimer;											// 0x338
-	short int unkTimer_33a;	// Not Used								// 0x33A
-	short int unktimer_33c; // Not Used								// 0x33C
-	short int MagneticTimer;										// 0x33E
-	short int unkTimer_340;
-	short int unkTimer_342;
-	short int noDeathTimerTimer;									// 0x344
-	short int unkTimer_346; // Not Used
-	short int unkTimer_348;
-	short int unktimer_34a;
-	short int unktimer_34c; // Not Used
-	short int unktimer_34e; // Not Used
-	int timeAliveTimer;												// 0x350
-	int unk_354;
-	int unk_358;
-	int IsChargebooting;											// 0x35C
-	int unkTimer_360;
-	char unk_364[0xc];
+	HeroTimers timers;												// 0x2F0
 	short int magnetic; // 0 = No, 2 = Yes.							// 0x370
 	char unk_372[0xae];
 	Moby * StandingOnMoby;											// 0x420
@@ -894,14 +898,19 @@ void playerGiveRandomWeapons(Player * player, int amount);
 /*
  * NAME :		playerDeobfuscate
  * DESCRIPTION :
- * 			Gives Target player random weapons
+ * 			Deobfuscates given player struct item.
  * NOTES :
  * ARGS : 
- *      src      :           Source pointer from player struct of the data needed to deorbuscate.
- * 							 Ex: &player->Health, &player->State
+ *      src     :           Source pointer from player struct of the data needed to deorbuscate.
+ * 							Ex: &player->Health, &player->State
+ * 		addr	:			0: vaPlayerObfuscateAddr
+ * 							1: vaPlayerObfuscateWeaponAddr
+ * 		mode	:			0: Used for: Health, Player State, other.
+ * 							1: Used for: Weapon IDs, other.
+ * 							2: Used for: Respawn Timer, other.
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-u32 playerDeobfuscate(u32 src, int addr, int method);
+u32 playerDeobfuscate(u32 src, int addr, int mode);
 
 #endif // _LIBUYA_PLAYER_H_

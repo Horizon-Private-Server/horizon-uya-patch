@@ -449,8 +449,8 @@ void chargebootForever(void)
 		if (!player)
 			continue;
 
-		if (player->IsChargebooting == 1 && playerPadGetButton(player, PAD_R2) > 0 && player->StateTimer > 55)
-			player->StateTimer = 55;
+		if (player->timers.IsChargebooting == 1 && playerPadGetButton(player, PAD_R2) > 0 && player->timers.state > 55)
+			player->timers.state = 55;
 	}
 }
 

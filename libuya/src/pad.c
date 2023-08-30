@@ -204,7 +204,7 @@ void padDisableInput(void)
                 return;
 
             if (player->IsLocal)
-                player->CantMoveTimer = 0;
+                player->timers.noInput = 0;
         }
     }
 }
