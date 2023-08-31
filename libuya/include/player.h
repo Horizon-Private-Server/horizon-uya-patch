@@ -376,7 +376,7 @@ typedef struct HeroTimers {
 	int stickOff;													// 0x304
 	short int unk_308;
 	short int unk_30a;
-	int firingTimer;												// 0x30C
+	int firing;														// 0x30C
 	char unk_310; // Freezes if I change it.
 	char unk_311; // Freezes if I change it.
 	char unk_312; // Freezes if I change it.
@@ -477,18 +477,26 @@ typedef struct HeroPlayerConstants {
 	/*  64 */ int pad[3];
 } HeroPlayerConstants;
 
-typedef struct HeroItem {
-	/*  00 */ Moby * Moby1;
-	/*  04 */ Moby * Moby2;
-	/*  08 */ int IsActive; // Only changes if shooting
-	/*  0c */ char unk0[0xc];
-	/*  18 */ int ChangedCount;
-	/*  1c */ char unk_4b8[0x4];
-	/*  20 */ int TimeSinceChange;
-	/*  24 */ int State;
-	/*  28 */ int Index;
-	/*  2c */ char unk1[0x4];
-} HeroItem;
+typedef struct Gadget {
+	/*   0 */ VECTOR jointPos;
+	/*  10 */ VECTOR jointRot;
+	/*  20 */ Moby* pMoby;
+	/*  24 */ Moby* pMoby2;
+	/*  28 */ int padButtonDown;
+	/*  2c */ int alignPad;
+	/*  30 */ int padButton;
+	/*  34 */ int gsSpawnFrame;
+	/*  38 */ char noAmmoTime;
+	/*  39 */ char unEquipTimer;
+	/*  3a */ char detached;
+	/*  3b */ char unequipTime;
+	/*  3c */ char unEquipStatus;
+	/*  3d */ char unEquipDelay;
+	/*  40 */ int equippedTime;
+	/*  44 */ int state;
+	/*  48 */ int id;
+	/*  4c */ float lightAng;
+} Gadget;
 
 
 /*
@@ -506,17 +514,21 @@ typedef struct HeroItem {
 typedef struct Player
 {
     struct Guber Guber;                                             // 0x00
-    char unk_18[0x88];
-    VECTOR PlayerPosition;                                          // 0xA0
+	MATRIX Water;													// 0x20
+	MATRIX Terrain;													// 0x60
+	VECTOR PlayerPosition;                                          // 0xA0
 	union {															// 0xB0
 		VECTOR PlayerRotation;
 		struct {
-			float PlayerRoll;
-			float PlayerPitch;
-			float PlayerYaw;
+			float PlayerRoll;										// 0xB0
+			float PlayerPitch;										// 0xB4
+			float PlayerYaw;										// 0xB8
+			float unk_cc;
 		};
 	};
-    char unk_c0[0x60];
+	char unk_c0[0x20];
+	VECTOR unk_e0;
+	char unk_f0[0x30];
     VECTOR Velocity;                                         		// 0x120
     char unk_130[0x1b0];											// 0x130
 	int OnGround;													// 0x2E0
@@ -526,10 +538,9 @@ typedef struct Player
 	char unk_372[0xae];
 	Moby * StandingOnMoby;											// 0x420
 	Moby * SkinMoby2;												// 0x424
-	char unk_428[0x28];
-	HeroItem Weapon;												// 0x450
-	char unk_480[0x20];
-	HeroItem Boots;													// 0x4A0
+	char unk_428[0x4];
+	Gadget Weapon;													// 0x430
+	Gadget Boots;													// 0x480
 	char unk_4d0[0x20];
 	char unk_4f0[0xc90];
     VECTOR CameraPos;                                               // 0x1180

@@ -46,7 +46,7 @@ typedef struct Guber
     struct Guber * Next;
     struct Guber * Prev;
     void * Vtable;
-
+    char unk_18[0x8];
 } Guber;
 
 typedef struct GuberMoby

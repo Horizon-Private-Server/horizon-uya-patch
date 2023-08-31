@@ -19,8 +19,6 @@ __LIBUYA_INLINE__ int snprintf(char * buffer, long n, const char * format, ...);
 __LIBUYA_INLINE__ int printf(const char * format, ...);
 
 __LIBUYA_INLINE__ int sce_snprintf(char * buffer, long n, const char * format, ...);
-__LIBUYA_INLINE__ int sce_printf(const char * format, ...);
-
 
 //--------------------------------------------------------
 #ifdef DEBUG
