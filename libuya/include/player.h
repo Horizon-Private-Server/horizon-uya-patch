@@ -579,7 +579,15 @@ typedef struct Player
 	int WeaponHeldId;												// 0x18D0
 	char unk_18d4[0x110];
 	char State;														// 0x19E4
-	char unk_19e5[0x22];
+	char SubState;													// 0x19E5
+	char StateType;													// 0x19E6
+	char PreviousState;												// 0x19E7
+	char PreviousType;												// 0x19E8
+	char PrePreviousState;											// 0x19E9
+	char PrePreviousType;											// 0x19EA
+	char StateHistory[8];											// 0x19EB
+	char StateTypeHistory[8];										// 0x19F3
+	char unk_19fb[0xc];
 	union {
         struct {
 			char GadgetActive;										// 0x1A07
@@ -614,26 +622,47 @@ typedef struct Player
 	int GadgetBox;													// 0x1A80
 	char unk_1a84[0x324];
 	int TopOfPlayerStruct2;											// 0x1DA8
-	char unk_1dac[0x6ca];
+	char unk_1dac[0x688];
+	Moby * SkinMoby3;												// 0x2434
+	char unk_2438[0x10];
+	int firingAnim;													// 0x2448
+	int firingGadget;												// 0x244C
+	int desiredCam;													// 0x2450
+	char unk_2454[0x14];
+	float stickStrength;											// 0x2468
+	float stickRawAngle;											// 0x246C
+	char unk_2470[0x6];
 	char Health;													// 0x2476
-	char unk_2477[0x5d];
+	char unk_2477[0xd];
+	float SkidDeceleration;											// 0x2484
+	int mtxFxActive;												// 0x248C
+	float analogStickStrength;										// 0x2490
+	char unk_2485[0x42];
+	short int unkGadgetTimer_24a4;									// 0x24A4
+	short int GadgetPADDelayTimer;									// 0x24A6
+	short int unkGadgetTimer_24a8;									// 0x24A8
+	char unk_24aa[0x22];
+	u32 LastDamagedMeOwnerUID;										// 0x24CC
+	int LastDamagedMeGadgetId;										// 0x24D0
 	char DamageTaken;												// 0x24D4
 	char unk_24d5[0x28];
-	char IsSquating;												// 0x24FD
-	char unk_24fe[0x2];
+	char LookAndCrouch;												// 0x24FD
+	char LookAndThrowWrench;										// 0x24FE
+	char unk_24ff;
 	char Invisible2;												// 0x2500
-	char DontSpawnWeaponPack;										// 0x2501
+	// lastDeathWasSuicide: Doesn't Spawn Pack if true
+	char LastDeathWasSuicide;										// 0x2501
 	char unk_2502[0x12];
-	int TimerShowHealth;											// 0x2514
-	char TimerFadeToBlack;                                          // 0x2518
-	// When Start is pressed, this counts down from 0xE, then shows menu when it equals 0
-    char TimerStartMenu;                                            // 0x2519
-	char unk_251a[0x2];
-	Moby * HeldMoby;												// 0x251C
+	int HudHealthTimer;												// 0x2514
+	char PauseOn;                                 		 	        // 0x2518
+    char PauseTimer;   		                                        // 0x2519
+	char unk_251a;
+	char PlayerType;												// 0x251B
+	Moby * FlagMoby;												// 0x251C
 	HeroPlayerConstants * PlayerConstants;							// 0x2520
 	Moby * PlayerMoby;												// 0x2524
     Vehicle * Vehicle;                                              // 0x2528
-	char unk_252c[0x4];
+	Vehicle * VehiclePending;										// 0x252C
 	GameCamera * Camera;											// 0x2530
 	PadButtonStatus * Paddata;                                      // 0x2534
 	float PlayerPositionX;											// 0x2538
@@ -641,10 +670,9 @@ typedef struct Player
 	float PlayerPositionY;											// 0x2540
 	int MpIndex;													// 0x2444
 	int Team;														// 0x2548
-	int InVehicle;													// 0x254C
-	// timer gets reset if entering or exiting a vehicle, will always count up.
-	int InOutVehicleTimer;											// 0x2550
-	char unk_2554[0x4];
+	int vehicleState;												// 0x254C
+	int vehicleStateTimer;											// 0x2550
+	int pointsLastKill;												// 0x2554
 	struct tNW_Player * pNetPlayer;									// 0x2558
 
 	char unk_2559[0x26];
