@@ -193,15 +193,29 @@ enum PlayerState {
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-typedef struct CameraAngle
+typedef struct CameraAngleZ
 {
-    float Value;
-    float Velocity;
-    float MaxVelocity;
-    float UNK0;
-    float Acceleration;
-    float UNK1[3];
-} CameraAngle;
+    float rotation;
+    float speed_current;
+    float speed_max_quick;
+    float speed_max_aim;
+    float accel_quick;
+    float accel_aim;
+	float target_slowness_factor_quick;
+	float target_slowness_factor_aim;
+} CameraAngleZ;
+
+typedef struct CameraAngleY
+{
+    float rotation;
+    float speed_current;
+    float speed_max;
+    float accel;
+    float target_slowness_factor;
+    float strafe_turn_factor;
+	float strafe_tilt_factor;
+	float max_target_angle;
+} CameraAngleY;
 
 struct tNW_PlayerWarpMessage {
 	/*   0 */ char netPlayerIndex;
@@ -498,6 +512,87 @@ typedef struct Gadget {
 	/*  4c */ float lightAng;
 } Gadget;
 
+typedef struct FpsCam {
+	MATRIX CameraMatrix;											// 0x11A0
+    CameraAngleZ CameraYaw;                                         // 0x11E0
+    CameraAngleY CameraPitch;                                       // 0x1200
+    int CameraState;												// 0x1220
+	short int quick_turn_input_time;								// 0x1224
+	short int snap_hold_time;										// 0x1226
+	float snap_input;												// 0x1228
+    Moby * Target;                                      	        // 0x122C
+	VECTOR target_last_pos;											// 0x1230
+	VECTOR target_vel;												// 0x1240
+	float target_blend_fac;											// 0x1250
+    float CameraPitchMin; // aka: float max_y_rot                   // 0x1254
+    float CameraPitchMax; // aka: float min_y_rot                   // 0x1258
+    Moby * pExcludeMoby;                                            // 0x125C
+    VECTOR CameraPositionOffset;                                  	// 0x1260
+    VECTOR CameraRotationOffset;									// 0x1270
+	short int CameraFlags;											// 0x1280
+	short int allegiance;											// 0x1282
+	void *special_target_func;										// 0x1284
+	MATRIX *pWorldMtx;												// 0x1288
+	MATRIX *pWorldInvMtx;											// 0x128C
+	VECTOR facing_dir;												// 0x1290
+	VECTOR internal_facing_dir;										// 0x12A0
+	VECTOR WeaponShotPosition;										// 0x12B0
+	float WeaponLockonRange;										// 0x12C0
+    float ext_extension;											// 0x12C4
+	float ext_extension_speed;										// 0x12C8
+	int LocalPlayerIndex; // aka: int cam_slot       	            // 0x12CC
+	void *pHero;													// 0x12D0
+    float camRadius;												// 0x12D4
+    int camSettingsIndex;					                        // 0x12D8
+	int karma_pad;													// 0x12DC
+	VECTOR prevCamPos;												// 0x12E0
+	int karma_pad2[4];												// 0x12F0
+	float camYSpeed;												// 0x1300
+	float camZSpeed;												// 0x1304
+	float gunInterp;												// 0x1308
+	float gunInterpSpeed;											// 0x130C
+} FpsCam;
+
+typedef struct HeroCamera { // 0x30
+	VECTOR CameraPos;												// 0x1180
+	VECTOR CameraDir;												// 0x1190
+	struct FpsCam Vars; 													// 0x11A0 - 0x130C
+	int active;														// 0x1310
+	float gunWithdrawSpeed;											// 0x1314
+	float gunWithdrawDist;											// 0x1318
+	float gunWithdrawIdeal;											// 0x131C
+	float bobRot;													// 0x1320
+	float bobRotSpeed;												// 0x1324
+	float bobAmp;													// 0x1328
+	float camHeroOfs;												// 0x132C
+	float camHeroOfsSpeed;											// 0x1330
+	int ignoreGroundHeight;											// 0x1334
+	float reticulePulseAng;											// 0x1338
+	int reticuleFadeInTimer;										// 0x133C
+} HeroCamera;
+
+typedef struct HeroWalkToPos {
+	VECTOR idealPos;												// 0x13B0
+	VECTOR idealRot;												// 0x13C0
+	int abortOnArrival;												// 0x13D0
+	int walkToTeleport;												// 0x13D4
+	int teleportWaitTime;											// 0x13D8
+	Moby *pTeleTarget;												// 0x13DC
+} HeroWalkToPos;
+
+typedef struct MotionBlur { // 0x150
+	/* 0x000 */ VECTOR posRing[8];
+	/* 0x080 */ VECTOR rotRing[8];
+	/* 0x100 */ int blurAlphas[4];
+	/* 0x110 */ int blurSteps[4];
+	/* 0x120 */ Moby *blurMobys[4];
+	/* 0x130 */ float gapReduction[4];
+	/* 0x140 */ short int ringIndex;
+	/* 0x142 */ short int ringValidSize;
+	/* 0x144 */ Moby *pTrackedMoby;
+	/* 0x148 */ int blurCnt;
+	/* 0x14c */ int active;
+} MotionBlur;
 
 /*
  * NAME :		Player
@@ -543,39 +638,11 @@ typedef struct Player
 	Gadget Boots;													// 0x480
 	char unk_4d0[0x20];
 	char unk_4f0[0xc90];
-    VECTOR CameraPos;                                               // 0x1180
-	VECTOR CameraDir;												// 0x1190
-	MATRIX CameraMatrix;											// 0x11A0
-    CameraAngle CameraYaw;                                          // 0x11E0
-    CameraAngle CameraPitch;                                        // 0x1200
-    char unk_1220[0xc];
-    Moby * LookAtMoby;                                              // 0x122C
-    char unk_1230[0x24];
-    float CameraPitchMin;                                           // 0x1254
-    float CameraPitchMax;                                           // 0x1258
-    Moby * SkinMoby;                                                // 0x125C
-    VECTOR CameraOffset;                                           	// 0x1260
-    char unk_1270[0x10];
-	short CameraType2;												// 0x1280
-	char unk_1282[0x2];
-	// jr ra'ing function messes with camera on metalic surfaces
-	int func_1284;													// 0x1284
-	void * CameraPtr1;												// 0x1288
-	void * CameraPtr2;												// 0x128C
-	char unk_1290[0x20];
-	VECTOR WeaponShotPosition;										// 0x12B0
-	float WeaponLockonDistance;										// 0x12C0
-    char unk_12c4[0x8];
-	int LocalPlayerIndex;                                           // 0x12CC
-	int TopOfPlayerStruct;											// 0x12D0
-    char unk_12d4[0x4];
-    int PlayerId;                                                   // 0x12D8
-	char unk_12dc[0x34];
-    // This int is checked when chargebooting, and shooting
-	int unk_1310;													// 0x1310
-	char unk_1314[0x5b0];
-	Moby * WrenchThrown;											// 0x18C4
-	char unk_18c8[0x8];
+    HeroCamera fps;													// 0x1180 - 0x133C
+	char unk_1340[0x70];
+	HeroWalkToPos walkToPos;										// 0x13B0 - 0x13DC
+	char unk_13e0[0x3a0];
+	MotionBlur wrenchMotionBlur;									// 0x1780 - 0x18D0
 	int WeaponHeldId;												// 0x18D0
 	char unk_18d4[0x110];
 	char State;														// 0x19E4
@@ -635,9 +702,9 @@ typedef struct Player
 	char Health;													// 0x2476
 	char unk_2477[0xd];
 	float SkidDeceleration;											// 0x2484
-	int mtxFxActive;												// 0x248C
-	float analogStickStrength;										// 0x2490
-	char unk_2485[0x42];
+	int mtxFxActive;												// 0x2488
+	float analogStickStrength;										// 0x248C
+	char unk_2490[0x14];
 	short int unkGadgetTimer_24a4;									// 0x24A4
 	short int GadgetPADDelayTimer;									// 0x24A6
 	short int unkGadgetTimer_24a8;									// 0x24A8
@@ -668,8 +735,8 @@ typedef struct Player
 	float PlayerPositionX;											// 0x2538
 	float PlayerPositionZ;											// 0x253C
 	float PlayerPositionY;											// 0x2540
-	int MpIndex;													// 0x2444
-	int Team;														// 0x2548
+	int mpIndex;													// 0x2444
+	int mpTeam;														// 0x2548
 	int vehicleState;												// 0x254C
 	int vehicleStateTimer;											// 0x2550
 	int pointsLastKill;												// 0x2554
