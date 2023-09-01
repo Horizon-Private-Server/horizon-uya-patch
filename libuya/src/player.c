@@ -169,10 +169,10 @@ void playerSetTeam(Player * player, int teamId)
     if (!player)
         return;
 
-    player->Team = teamId;
+    player->mpTeam = teamId;
     // player->PlayerMoby->GlowRGBA = TEAM_COLORS[teamId];
-    player->SkinMoby->ModeBits2 = player->SkinMoby->ModeBits2 & 0x8f | 0x80 | (teamId << 4);
-    // player->SkinMoby->Triggers = 0;
+    player->PlayerMoby->ModeBits2 = player->PlayerMoby->ModeBits2 & 0x8f | 0x80 | (teamId << 4);
+    // player->PlayerMoby->Triggers = 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -223,7 +223,7 @@ void playerPadUpdate(void)
             if (playerPad)
             {
                 memcpy(padHistory, &playerPad->btns, sizeof(struct PadHistory));
-                padHistory->id = player->PlayerId;
+                padHistory->id = player->fps.Vars.camSettingsIndex;
             }
             // Reset pad if no player
             else if (padHistory->id >= 0)
@@ -260,7 +260,7 @@ int playerPadGetButtonDown(Player * player, u16 buttonMask)
         return 0;
 
     return playerPadGetButton(player, buttonMask) &&
-            (PlayerPadHistory[player->PlayerId].btns & buttonMask) != 0;
+            (PlayerPadHistory[player->fps.Vars.camSettingsIndex].btns & buttonMask) != 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ int playerPadGetButtonUp(Player * player, u16 buttonMask)
         return 0;
 
     return !playerPadGetButton(player, buttonMask) &&
-        (PlayerPadHistory[player->PlayerId].btns & buttonMask) != 0;
+        (PlayerPadHistory[player->fps.Vars.camSettingsIndex].btns & buttonMask) != 0;
 }
 
 //--------------------------------------------------------------------------------
