@@ -424,7 +424,7 @@ typedef struct HeroTimers {
 	short int unktimer_34e; // Not Used
 	int timeAlive;													// 0x350
 	int unk_354;
-	int unk_358;s
+	int unk_358;
 	int IsChargebooting;											// 0x35C
 	int unkTimer_360;
 	char unk_364[0xc];
