@@ -394,7 +394,7 @@ typedef struct HeroTimers {
 	char unk_310; // Freezes if I change it.
 	char unk_311; // Freezes if I change it.
 	char unk_312; // Freezes if I change it.
-	char unk_313; // Freezes if I change it.
+	char postHitInvinc; // Freezes if I change it.					// 0x313
 	char unk_314[0x8];
 	char resurrectWait;												// 0x31C
 	char NotUsed;													// 0x31D
@@ -520,7 +520,7 @@ typedef struct FpsCam {
 	short int quick_turn_input_time;								// 0x1224
 	short int snap_hold_time;										// 0x1226
 	float snap_input;												// 0x1228
-    Moby * Target;                                      	        // 0x122C
+    Moby *Target;                                      	        // 0x122C
 	VECTOR target_last_pos;											// 0x1230
 	VECTOR target_vel;												// 0x1240
 	float target_blend_fac;											// 0x1250
@@ -529,7 +529,7 @@ typedef struct FpsCam {
     Moby * pExcludeMoby;                                            // 0x125C
     VECTOR CameraPositionOffset;                                  	// 0x1260
     VECTOR CameraRotationOffset;									// 0x1270
-	short int CameraFlags;											// 0x1280
+	short int flags;												// 0x1280
 	short int allegiance;											// 0x1282
 	void *special_target_func;										// 0x1284
 	MATRIX *pWorldMtx;												// 0x1288
@@ -631,8 +631,8 @@ typedef struct Player
 	HeroTimers timers;												// 0x2F0
 	short int magnetic; // 0 = No, 2 = Yes.							// 0x370
 	char unk_372[0xae];
-	Moby * StandingOnMoby;											// 0x420
-	Moby * SkinMoby2;												// 0x424
+	Moby *StandingOnMoby;											// 0x420
+	Moby *SkinMoby2;												// 0x424
 	char unk_428[0x4];
 	Gadget Weapon;													// 0x430
 	Gadget Boots;													// 0x480
@@ -725,13 +725,13 @@ typedef struct Player
     char PauseTimer;   		                                        // 0x2519
 	char unk_251a;
 	char PlayerType;												// 0x251B
-	Moby * FlagMoby;												// 0x251C
-	HeroPlayerConstants * PlayerConstants;							// 0x2520
-	Moby * PlayerMoby;												// 0x2524
-    Vehicle * Vehicle;                                              // 0x2528
-	Vehicle * VehiclePending;										// 0x252C
-	GameCamera * Camera;											// 0x2530
-	PadButtonStatus * Paddata;                                      // 0x2534
+	Moby *FlagMoby;													// 0x251C
+	HeroPlayerConstants *PlayerConstants;							// 0x2520
+	Moby *PlayerMoby;												// 0x2524
+    Vehicle *Vehicle;                                               // 0x2528
+	Vehicle *VehiclePending;										// 0x252C
+	GameCamera *Camera;												// 0x2530
+	PadButtonStatus *Paddata;                                       // 0x2534
 	float PlayerPositionX;											// 0x2538
 	float PlayerPositionZ;											// 0x253C
 	float PlayerPositionY;											// 0x2540

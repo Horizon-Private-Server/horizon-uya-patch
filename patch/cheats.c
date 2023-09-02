@@ -813,3 +813,38 @@ void keepBaseHealthPadActive(void)
 	if (*(u32*)saveInstr == 0xae040040)
 		*(u32*)saveInstr = 0;	
 }
+
+void noPostHitInvinc(void)
+{
+	VariableAddress_t vaPostHitInvinc = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x005274b4,
+		.Hoven = 0x005295cc,
+		.OutpostX12 = 0x0051eea4,
+		.KorgonOutpost = 0x0051c63c,
+		.Metropolis = 0x0051b98c,
+		.BlackwaterCity = 0x00519224,
+		.CommandCenter = 0x00518fe4,
+		.BlackwaterDocks = 0x0051b864,
+		.AquatosSewers = 0x0051ab64,
+		.MarcadiaPalace = 0x0051a4e4,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00524c34,
+		.Hoven = 0x00526c8c,
+		.OutpostX12 = 0x0051c5a4,
+		.KorgonOutpost = 0x00519dbc,
+		.Metropolis = 0x0051910c,
+		.BlackwaterCity = 0x00516924,
+		.CommandCenter = 0x005168a4,
+		.BlackwaterDocks = 0x005190e4,
+		.AquatosSewers = 0x00518424,
+		.MarcadiaPalace = 0x00517d64,
+#endif
+	};
+	// PAL: 0x27, NTSC: 0x2f
+	int time = GetAddress(&vaPostHitInvinc);
+	*(u32*)(time) = 0x24020001;
+	*(u32*)(time + 0x308) = 0x24020001;
+}

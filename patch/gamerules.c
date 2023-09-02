@@ -152,6 +152,9 @@ void grGameStart(void)
 	if (gameConfig.grBaseHealthPadActive && gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth)
 		keepBaseHealthPadActive();
 
+	if (gameConfig.grNoCooldown)
+		noPostHitInvinc();
+
 	FirstPass = 0;
 }
 

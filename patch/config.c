@@ -236,6 +236,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
   { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableV2s },
+  { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown },
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },

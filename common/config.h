@@ -22,6 +22,7 @@ typedef struct PatchGameConfig
   char grDisablePenaltyTimers;
   char grDisableWeaponPacks;
   char grDisableV2s;
+  char grNoCooldown;
   char grDisableHealthBoxes;
   char grAutoRespawn;
   char grSetGattlingTurretHealth;
