@@ -1206,12 +1206,10 @@ void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
 {
 	// backup currently equipped weapons
 	if (player->IsLocal) {
-		weaponOrderBackup[player->LocalPlayerIndex][0] = playerDeobfuscate(&player->QuickSelect.Slot[0], 1, 1);
-		weaponOrderBackup[player->LocalPlayerIndex][1] = playerDeobfuscate(&player->QuickSelect.Slot[1], 1, 1);
-		weaponOrderBackup[player->LocalPlayerIndex][2] = playerDeobfuscate(&player->QuickSelect.Slot[2], 1, 1);
-		DPRINTF("\nBackup 0: %d - %d", playerDeobfuscate(&player->QuickSelect.Slot[0], 1, 1), weaponOrderBackup[player->LocalPlayerIndex][0]);
-		DPRINTF("\nBackup 1: %d - %d", playerDeobfuscate(&player->QuickSelect.Slot[1], 1, 1), weaponOrderBackup[player->LocalPlayerIndex][1]);
-		DPRINTF("\nBackup 2: %d - %d", playerDeobfuscate(&player->QuickSelect.Slot[2], 1, 1), weaponOrderBackup[player->LocalPlayerIndex][2]);
+		int LocalPlayerIndex = player->fps.Vars.cam_slot;
+		weaponOrderBackup[LocalPlayerIndex][0] = playerDeobfuscate(&player->QuickSelect.Slot[0], 1, 1);
+		weaponOrderBackup[LocalPlayerIndex][1] = playerDeobfuscate(&player->QuickSelect.Slot[1], 1, 1);
+		weaponOrderBackup[LocalPlayerIndex][2] = playerDeobfuscate(&player->QuickSelect.Slot[2], 1, 1);
 	}
 
 	// call hooked WeaponStripMe function after backup
@@ -1248,12 +1246,12 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 
 	// then try and overwrite given weapon order if weapons match equipped weapons before death
 	if (player->IsLocal) {
+		int LocalPlayerIndex = player->fps.Vars.cam_slot;
 		// restore backup if they match (regardless of order) newly assigned weapons
 		for (i = 0; i < 3; i++) {
-			u8 backedUpSlotValue = weaponOrderBackup[player->LocalPlayerIndex][i];
+			u8 backedUpSlotValue = weaponOrderBackup[LocalPlayerIndex][i];
 			for(j = 0; j < 3; j++) {
 				if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
-					DPRINTF("\nMatched %d: %d - %d", j, playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1), backedUpSlotValue);
 					matchCount++;
 				}
 			}
@@ -1262,14 +1260,13 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 		if (matchCount == 3) {
 			// set equipped weapon in order
 			for (i = 0; i < 3; ++i) {
-				DPRINTF("\nGive Weapon %d: %d - %d", i, playerDeobfuscate(&player->QuickSelect.Slot[i]), weaponOrderBackup[player->LocalPlayerIndex][i], 1, 1);
-				playerGiveWeapon(player, weaponOrderBackup[player->LocalPlayerIndex][i]);
+				playerGiveWeapon(player, weaponOrderBackup[LocalPlayerIndex][i]);
 			}
 
 			// equip each weapon from last slot to first slot to keep correct order.
-			playerEquipWeapon(player, weaponOrderBackup[player->LocalPlayerIndex][2]);
-			playerEquipWeapon(player, weaponOrderBackup[player->LocalPlayerIndex][1]);
-			playerEquipWeapon(player, weaponOrderBackup[player->LocalPlayerIndex][0]);
+			playerEquipWeapon(player, weaponOrderBackup[LocalPlayerIndex][2]);
+			playerEquipWeapon(player, weaponOrderBackup[LocalPlayerIndex][1]);
+			playerEquipWeapon(player, weaponOrderBackup[LocalPlayerIndex][0]);
 		}
 	}
 }

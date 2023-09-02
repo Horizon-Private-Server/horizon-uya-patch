@@ -424,7 +424,7 @@ typedef struct HeroTimers {
 	short int unktimer_34e; // Not Used
 	int timeAlive;													// 0x350
 	int unk_354;
-	int unk_358;
+	int unk_358;s
 	int IsChargebooting;											// 0x35C
 	int unkTimer_360;
 	char unk_364[0xc];
@@ -516,7 +516,7 @@ typedef struct FpsCam {
 	MATRIX CameraMatrix;											// 0x11A0
     CameraAngleZ CameraYaw;                                         // 0x11E0
     CameraAngleY CameraPitch;                                       // 0x1200
-    int CameraState;												// 0x1220
+    int state;														// 0x1220
 	short int quick_turn_input_time;								// 0x1224
 	short int snap_hold_time;										// 0x1226
 	float snap_input;												// 0x1228
@@ -536,14 +536,14 @@ typedef struct FpsCam {
 	MATRIX *pWorldInvMtx;											// 0x128C
 	VECTOR facing_dir;												// 0x1290
 	VECTOR internal_facing_dir;										// 0x12A0
-	VECTOR WeaponShotPosition;										// 0x12B0
-	float WeaponLockonRange;										// 0x12C0
+	VECTOR aim_pos;													// 0x12B0
+	float range;													// 0x12C0
     float ext_extension;											// 0x12C4
 	float ext_extension_speed;										// 0x12C8
-	int LocalPlayerIndex; // aka: int cam_slot       	            // 0x12CC
+	int cam_slot; // aka: LocalPlayerIndex    		   	            // 0x12CC
 	void *pHero;													// 0x12D0
     float camRadius;												// 0x12D4
-    int camSettingsIndex;					                        // 0x12D8
+    int camSettingsIndex; // aka: PlayerId		                    // 0x12D8
 	int karma_pad;													// 0x12DC
 	VECTOR prevCamPos;												// 0x12E0
 	int karma_pad2[4];												// 0x12F0
@@ -567,8 +567,8 @@ typedef struct HeroCamera { // 0x30
 	float camHeroOfs;												// 0x132C
 	float camHeroOfsSpeed;											// 0x1330
 	int ignoreGroundHeight;											// 0x1334
-	float reticulePulseAng;											// 0x1338
-	int reticuleFadeInTimer;										// 0x133C
+	float reticlePulseAng;											// 0x1338
+	int reticleFadeInTimer;											// 0x133C
 } HeroCamera;
 
 typedef struct HeroWalkToPos {

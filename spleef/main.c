@@ -191,7 +191,7 @@ int gameGetTeamScore(int team, int score)
 	Player** players = playerGetAll();
 
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		if (players[i] && players[i]->Team == team) {
+		if (players[i] && players[i]->mpTeam == team) {
 			totalScore += SpleefState.PlayerPoints[i];
 		}
 	}
@@ -311,7 +311,8 @@ void resetRoundState(void)
 		SpleefState.RoundPlayerState[i] = 0;
 
 		// move to spawn
-		float theta = (p->PlayerId / (float)gameSettings->PlayerCount) * (float)2.0 * MATH_PI;
+		int PlayerId = p->fps.Vars.camSettingsIndex;
+		float theta = (PlayerId / (float)gameSettings->PlayerCount) * (float)2.0 * MATH_PI;
 		while (theta > MATH_TAU)
 			theta -= MATH_PI;
 
@@ -499,16 +500,17 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 		{
 			if (SpleefState.RoundEndTicks)
 			{
+				int PlayerId = localPlayer->fps.Vars.camSettingsIndex;
 				// draw round message
-				if (SpleefState.RoundResult[1] == localPlayer->PlayerId)
+				if (SpleefState.RoundResult[1] == PlayerId)
 				{
 					drawRoundMessage(SPLEEF_ROUND_WIN, 1.5);
 				}
-				else if (SpleefState.RoundResult[2] == localPlayer->PlayerId)
+				else if (SpleefState.RoundResult[2] == PlayerId)
 				{
 					drawRoundMessage(SPLEEF_ROUND_SECOND, 1.5);
 				}
-				else if (SpleefState.RoundResult[3] == localPlayer->PlayerId)
+				else if (SpleefState.RoundResult[3] == PlayerId)
 				{
 					drawRoundMessage(SPLEEF_ROUND_THIRD, 1.5);
 				}
