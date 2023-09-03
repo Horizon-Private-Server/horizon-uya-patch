@@ -1139,45 +1139,55 @@ void patchLevelOfDetail(void)
 		case 0: // Potato
 		{
 			_lodScale = 0.2;
-			if (lodChanged)
-				lodUpdate(120, 50);
-
+			int TerrainTiesDistance = 320;
+			int ShrubDistance = 500;
+			if (lodChanged) {
+				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
+				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
+				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+			}
 			break;
 		}
 		case 1: // Low
 				{
 			_lodScale = 0.4;
-			if (lodChanged)
-				lodUpdate(480, 250);
-
+			int TerrainTiesDistance = 480;
+			int ShrubDistance = 250;
+			if (lodChanged) {
+				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
+				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
+				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+			}
 			break;
 		}
 		case 2: // Normal
 		{
 			_lodScale = 1.0;
-			if (lodChanged)
-				lodUpdate(960, 500);
+			int TerrainTiesDistance = 960;
+			int ShrubDistance = 500;
+			if (lodChanged) {
+				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
+				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
+				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+			}
 
 			break;
 		}
 		case 3: // High
 		{
 			_lodScale = 5.0;
-			if (lodChanged)
-				lodUpdate(4800, 2500);
-
+			int TerrainTiesDistance = 4800;
+			int ShrubDistance = 2500;
+			if (lodChanged) {
+				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
+				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
+				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+			}
 			break;
 		}
 	}
-
 	// backup lod
 	lastLodLevel = config.levelOfDetail;
-}
-void lodUpdate(int TerrainTiesDistance, int ShrubDistance)
-{
-	*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-	*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-	*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
 }
 
 /*
