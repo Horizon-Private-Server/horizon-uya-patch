@@ -34,6 +34,8 @@
 #include "include/config.h"
 #include "include/cheats.h"
 
+#define GLOBAL_GAME_MODULES_START							((GameModule*)0x000CF000)
+#define EXCEPTION_DISPLAY_ADDR								(0x000C8000)
 #if UYA_PAL
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006c2d80)
 #else
@@ -53,26 +55,8 @@ void grGameStart(void);
 void grLobbyStart(void);
 void grLoadStart(void);
 
-/*
- * Array of game modules.
- */
-#define GLOBAL_GAME_MODULES_START			((GameModule*)0x000CF000)
-
-#define EXCEPTION_DISPLAY_ADDR			(0x000C8000)
-
-PatchConfig_t config __attribute__((section(".config"))) = {
-	.enableAutoMaps = 0,
-	.disableCameraShake = 0,
-	.levelOfDetail = 2,
-};
-
-PatchGameConfig_t gameConfig;
-PatchGameConfig_t gameConfigHostBackup;
-
-// vaPlayerRespawnFunc needed for patchResurrectWeaponOrdering
-extern VariableAddress_t vaPlayerRespawnFunc;
-
-// 
+int dlBytesReceived = 0;
+int dlTotalBytes = 0;
 int hasInitialized = 0;
 int lastMenuInvokedTime = 0;
 int lastGameState = 0;
@@ -90,17 +74,22 @@ const char * regionStr = "PAL:  ";
 #else
 const char * regionStr = "NTSC: ";
 #endif
+int lastLodLevel = 2;
 
 extern float _lodScale;
 extern void* _correctTieLod;
 extern int _correctTieLod_Jump;
-int lastLodLevel = 2;
-
+extern VariableAddress_t vaPlayerRespawnFunc;
 extern MenuElem_ListData_t dataCustomMaps;
 
-// downloader
-int dlBytesReceived = 0;
-int dlTotalBytes = 0;
+PatchConfig_t config __attribute__((section(".config"))) = {
+	.enableAutoMaps = 0,
+	.disableCameraShake = 0,
+	.levelOfDetail = 2,
+};
+
+PatchGameConfig_t gameConfig;
+PatchGameConfig_t gameConfigHostBackup;
 
 //------------------------------------------------------------------------------
 int onServerDownloadDataRequest(void * connection, void * data)
@@ -1146,45 +1135,49 @@ void patchLevelOfDetail(void)
 
 	int lod = config.levelOfDetail;
 	int lodChanged = lod != lastLodLevel;
-	int TerrainTiesDistance;
-	int ShrubDistance;
 	switch (lod) {
 		case 0: // Potato
 		{
 			_lodScale = 0.2;
-			TerrainTiesDistance = 120;
-			ShrubDistance = 50;
+			if (lodChanged)
+				lodUpdate(120, 50);
+
 			break;
 		}
 		case 1: // Low
 				{
 			_lodScale = 0.4;
-			TerrainTiesDistance = 480;
-			ShrubDistance = 250;
+			if (lodChanged)
+				lodUpdate(480, 250);
+
 			break;
 		}
 		case 2: // Normal
 		{
 			_lodScale = 1.0;
-			TerrainTiesDistance = 960;
-			ShrubDistance = 500;
+			if (lodChanged)
+				lodUpdate(960, 500);
+
 			break;
 		}
 		case 3: // High
 		{
 			_lodScale = 5.0;
-			TerrainTiesDistance = 4800;
-			ShrubDistance = 2500;
+			if (lodChanged)
+				lodUpdate(4800, 2500);
+
 			break;
 		}
 	}
-	if (lodChanged) {
-		*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-		*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-		*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
-	}
+
 	// backup lod
 	lastLodLevel = config.levelOfDetail;
+}
+void lodUpdate(int TerrainTiesDistance, int ShrubDistance)
+{
+	*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
+	*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
+	*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
 }
 
 /*
