@@ -48,6 +48,7 @@ VariableAddress_t vaDrawBoxFunc = {
 
 
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
+#define IS_WIDESCREEN                       (*(char*)0x001a58bc)
 #else
 
 // drawTextFunc -> widthFunc Offset: -0x2a0
@@ -95,6 +96,7 @@ VariableAddress_t vaDrawBoxFunc = {
 
 
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
+#define IS_WIDESCREEN                       (*(char*)0x001a5a3c)
 #endif
 
 int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);

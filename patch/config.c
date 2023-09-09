@@ -19,9 +19,11 @@
 #if UYA_PAL
 
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
+#define IS_WIDESCREEN               (*(char*)0x001a58bc)
 #else
 
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
+#define IS_WIDESCREEN               (*(char*)0x001a5a3c)
 #endif
 
 int isConfigMenuActive = 0;
@@ -217,6 +219,7 @@ MenuElem_t menuElementsGeneral[] = {
 #endif
   { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if UYA_NTSC
+  { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
