@@ -464,6 +464,12 @@ void patchDeadJumping(void)
 		Player * player = players[i];
 		if (playerIsLocal(player) && playerIsDead(player))
 		{
+			// get current player state
+			int PlayerState = playerDeobfuscate(&player->State, 0, 0);
+			// if player is on bolt crank, set player state to idle.
+			if (PlayerState == PLAYER_STATE_BOLT_CRANK)
+				playerSetPlayerState(player, PLAYER_STATE_IDLE);
+
 			player->timers.noInput = 10;
 		}
 	}
