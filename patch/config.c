@@ -181,8 +181,18 @@ const char* CustomModeShortNames[] = {
 MenuElem_ListData_t dataWeaponPacks = {
     &gameConfig.grDisableWeaponPacks,
     NULL,
+#if TEST
     3,
-    { "Default", "Off", "On Death" }
+#else
+    2,
+#endif
+    {
+      "Default",
+      "Off",
+#ifdef TEST
+      "On Death"
+#endif
+    }
 };
 
 MenuElem_ListData_t dataVampire = {
@@ -217,7 +227,9 @@ MenuElem_t menuElementsGeneral[] = {
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
   { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
-  // { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
+#ifdef TEST
+  { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
+#endif
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake },
 };
@@ -237,14 +249,20 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
   { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableV2s },
   { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown },
+#ifdef TEST
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
+#endif
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
+#ifdef TEST
   { "Allow Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grAllowDrones },
+#endif
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_BaseDefenses, (void*)LABELTYPE_HEADER },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
+#ifdef TEST
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive },
+#endif
   { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grNoBaseDefense_Bots },
   { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grNoBaseDefense_SmallTurrets },
 
