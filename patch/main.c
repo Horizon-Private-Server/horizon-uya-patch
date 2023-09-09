@@ -665,9 +665,6 @@ void patchSniperWallSniping(void)
 #endif
 	};
 
-	if (!gameConfig.grFluxShotsAlwaysHit)
-		return;
-
 	// hook when collision checking is done on the sniper shot
 	u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
 	if (hookAddr) {
@@ -789,9 +786,6 @@ void patchSniperNiking(void)
 		.MarcadiaPalace = 0x004082e4,
 #endif
 	};
-
-	if(!gameConfig.grFluxNikingDisabled)
-		return;
 
 	u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
 	if (hookAddr) {
@@ -1670,10 +1664,12 @@ int main(void)
 		patchWeaponShotLag();
 
 		// Patch Flux Niking
-		patchSniperNiking();
+		if (gameConfig.grFluxNikingDisabled)
+			patchSniperNiking();
 
 		// Patch Flux Wall Sniping
-		patchSniperWallSniping();
+		if (gameConfig.grFluxShotsAlwaysHit)
+			patchSniperWallSniping();
 
 		// Patch Level of Detail
 		patchLevelOfDetail();

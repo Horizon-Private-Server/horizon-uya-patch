@@ -186,25 +186,14 @@ MenuElem_ListData_t dataWeaponPacks = {
 #else
     2,
 #endif
-    {
-      "Default",
-      "Off",
-#ifdef TEST
-      "On Death"
-#endif
-    }
+    { "Default", "Off", "On Death" }
 };
 
 MenuElem_ListData_t dataVampire = {
     &gameConfig.grVampire,
     NULL,
     4,
-    {
-      "Off",
-      "Quarter Heal",
-      "Half Heal",
-      "Full Heal",
-    }
+    { "Off", "Quarter Heal", "Half Heal", "Full Heal", }
 };
 
 MenuElem_ListData_t dataSetGattlingTurretHealth = {
@@ -227,7 +216,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
   { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
-#ifdef TEST
+#if UYA_NTSC
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
@@ -252,18 +241,18 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit },
   { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled },
 
-#ifdef TEST
+#if TEST
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
 #endif
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
-#ifdef TEST
+#if TEST
   { "Allow Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grAllowDrones },
 #endif
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_BaseDefenses, (void*)LABELTYPE_HEADER },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
-#ifdef TEST
+#if TEST
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive },
 #endif
   { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grNoBaseDefense_Bots },
@@ -1446,7 +1435,6 @@ void configMenuDisable(void)
 
   // re-enable pad
   padEnableInput();
-  DPRINTF("patch menu closed\n");
 }
 
 //------------------------------------------------------------------------------
@@ -1463,5 +1451,4 @@ void configMenuEnable(void)
   
   // prevent pad from affecting menus
   padDisableInput();
-  DPRINTF("patch menu opened\n");
 }
