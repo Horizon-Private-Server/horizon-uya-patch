@@ -31,6 +31,8 @@ typedef struct PatchGameConfig
   char grNoBaseDefense_SmallTurrets;
   char grBaseHealthPadActive;
   char grVampire;
+  char grFluxShotsAlwaysHit;
+  char grFluxNikingDisabled;
 
   // Party
   char prSurvivor;
