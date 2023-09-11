@@ -195,26 +195,26 @@ enum PlayerState {
  */
 typedef struct CameraAngleZ
 {
-    float rotation;
-    float speed_current;
-    float speed_max_quick;
-    float speed_max_aim;
-    float accel_quick;
-    float accel_aim;
-	float target_slowness_factor_quick;
-	float target_slowness_factor_aim;
+    float rotation;												// 0x11E0
+    float speed_current;										// 0x11E4
+    float speed_max_quick;										// 0x11E8
+    float speed_max_aim;										// 0x11EC
+    float accel_quick;											// 0x11F0
+    float accel_aim;											// 0x11F4
+	float target_slowness_factor_quick;							// 0x11F8
+	float target_slowness_factor_aim;							// 0x11FC
 } CameraAngleZ;
 
 typedef struct CameraAngleY
 {
-    float rotation;
-    float speed_current;
-    float speed_max;
-    float accel;
-    float target_slowness_factor;
-    float strafe_turn_factor;
-	float strafe_tilt_factor;
-	float max_target_angle;
+    float rotation;												// 0x1200
+    float speed_current;										// 0x1204
+    float speed_max;											// 0x1208
+    float accel;												// 0x120C
+    float target_slowness_factor;								// 0x1210
+    float strafe_turn_factor;									// 0x1214
+	float strafe_tilt_factor;									// 0x1218
+	float max_target_angle;										// 0x121C
 } CameraAngleY;
 
 struct tNW_PlayerWarpMessage {
@@ -520,7 +520,7 @@ typedef struct FpsCam {
 	short int quick_turn_input_time;								// 0x1224
 	short int snap_hold_time;										// 0x1226
 	float snap_input;												// 0x1228
-    Moby *Target;                                      	        // 0x122C
+    Moby *Target;                                      	      	    // 0x122C
 	VECTOR target_last_pos;											// 0x1230
 	VECTOR target_vel;												// 0x1240
 	float target_blend_fac;											// 0x1250
@@ -556,7 +556,7 @@ typedef struct FpsCam {
 typedef struct HeroCamera { // 0x30
 	VECTOR CameraPos;												// 0x1180
 	VECTOR CameraDir;												// 0x1190
-	struct FpsCam Vars; 													// 0x11A0 - 0x130C
+	struct FpsCam Vars; 											// 0x11A0 - 0x130C
 	int active;														// 0x1310
 	float gunWithdrawSpeed;											// 0x1314
 	float gunWithdrawDist;											// 0x1318

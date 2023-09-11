@@ -16,7 +16,8 @@
 #define POKE_U32(dest, value)								(*(u32*)(dest) = value)
 #define POKE_U16(dest, value)								(*(u16*)(dest) = value)
 #define POKE_U8(dest, value)								(*(u8*)(dest) = value)
-
+#define JAL2ADDR(jal)                                       ((jal & 0x03FFFFFF) << 2)
+#define ADDR2JAL(address)                                   (0x0C000000 | ((u32)(address) >> 2))
 
 /*
  * NAME :		isInEEMemory
