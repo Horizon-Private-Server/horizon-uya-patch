@@ -123,6 +123,7 @@ void gfxScreenSpaceBox(float x, float y, float w, float h, u32 color);
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y);
 
 int gfxGetFontWidth(const char * string, int length, float scale);
+void gfxPixelSpaceBox(float x, float y, float w, float h, u32 color);
 
 int gfxGetIsProgressiveScan(void);
 void gfxSetIsProgressiveScan(int on);

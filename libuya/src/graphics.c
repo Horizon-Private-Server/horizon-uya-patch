@@ -275,6 +275,16 @@ void gfxScreenSpaceBox(float x, float y, float w, float h, u32 color)
     internal_drawBox(buffer, arg2);
 }
 
+void gfxPixelSpaceBox(float x, float y, float w, float h, u32 color)
+{
+    x /= SCREEN_WIDTH;
+    y /= SCREEN_HEIGHT;
+    w /= SCREEN_WIDTH;
+    h /= SCREEN_HEIGHT;
+    
+    gfxScreenSpaceBox(x, y, w, h, color);
+}
+
 int gfxGetIsProgressiveScan(void)
 {
     return IS_PROGRESSIVE_SCAN;

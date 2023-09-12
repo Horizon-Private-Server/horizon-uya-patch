@@ -68,6 +68,11 @@ char showNoMapPopup = 0;
 char weaponOrderBackup[2][3] = { {0,0,0}, {0,0,0} };
 u32 currentUI = 0;
 u32 previousUI = 0;
+float lastFps = 0;
+int renderTimeMs = 0;
+float averageRenderTimeMs = 0;
+int updateTimeMs = 0;
+float averageUpdateTimeMs = 0;
 const char * patchStr = "PATCH CONFIG";
 #if UYA_PAL
 const char * regionStr = "PAL:  ";
@@ -86,6 +91,8 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableAutoMaps = 0,
 	.disableCameraShake = 0,
 	.levelOfDetail = 2,
+	.enableFpsCounter = 0,
+	.playerFov = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1304,6 +1311,236 @@ void patchResurrectWeaponOrdering(void)
 }
 
 /*
+ * NAME :		runFpsCounter_Logic
+ * 
+ * DESCRIPTION :
+ * 			Logic for the FPS counter and drawing the text to screen.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void runFpsCounter_Logic(void)
+{
+	char buf[64];
+	static int lastGameTime = 0;
+	static int tickCounter = 0;
+
+	// initialize time
+	if (tickCounter == 0 && lastGameTime == 0)
+		lastGameTime = gameGetTime();
+	
+	// update fps every FPS frames
+	++tickCounter;
+	if (tickCounter >= GAME_FPS)
+	{
+		int currentTime = gameGetTime();
+		lastFps = tickCounter / ((currentTime - lastGameTime) / (float)TIME_SECOND);
+		lastGameTime = currentTime;
+		tickCounter = 0;
+	}
+
+	// render if enabled
+	if (config.enableFpsCounter)
+	{
+		if (averageRenderTimeMs > 0) {
+			snprintf(buf, 64, "EE: %.1fms GS: %.1fms FPS: %.2f", averageUpdateTimeMs, averageRenderTimeMs, lastFps);
+		} else {
+			snprintf(buf, 64, "FPS: %.2f", lastFps);
+		}
+
+		gfxScreenSpaceText(SCREEN_WIDTH - 5, 5, 0.75, 0.75, 0x80FFFFFF, buf, -1, 2);
+	}
+}
+
+/*
+ * NAME :		runFpsCounter_drawHook
+ * 
+ * DESCRIPTION :
+ * 			Logic for the GS counter.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+VariableAddress_t vaFpsCounter_DrawFunc = {
+#if UYA_PAL
+	.Lobby = 0x00589410,
+	.Bakisi = 0x00456328,
+	.Hoven = 0x00457ea8,
+	.OutpostX12 = 0x0044eca8,
+	.KorgonOutpost = 0x0044c868,
+	.Metropolis = 0x0044bba8,
+	.BlackwaterCity = 0x004493a8,
+	.CommandCenter = 0x0044a028,
+	.BlackwaterDocks = 0x0044c8a8,
+	.AquatosSewers = 0x0044bba8,
+	.MarcadiaPalace = 0x0044b528,
+#else
+	.Lobby = 0x005882a0,
+	.Bakisi = 0x004552b8,
+	.Hoven = 0x00456d78,
+	.OutpostX12 = 0x0044dbb8,
+	.KorgonOutpost = 0x0044b7f8,
+	.Metropolis = 0x0044ab38,
+	.BlackwaterCity = 0x00434ce8,
+	.CommandCenter = 0x004490f8,
+	.BlackwaterDocks = 0x0044b938,
+	.AquatosSewers = 0x0044ac78,
+	.MarcadiaPalace = 0x0044a5b8,
+#endif
+};
+void runFpsCounter_drawHook(void)
+{
+	static int renderTimeCounterMs = 0;
+	static int frames = 0;
+	static long ticksIntervalStarted = 0;
+
+	long t0 = timerGetSystemTime();
+	((void (*)(void))GetAddress(&vaFpsCounter_DrawFunc))();
+	long t1 = timerGetSystemTime();
+
+	renderTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
+
+	renderTimeCounterMs += renderTimeMs;
+	++frames;
+
+	// update every 500 ms
+	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500))
+	{
+		averageRenderTimeMs = renderTimeCounterMs / (float)frames;
+		renderTimeCounterMs = 0;
+		frames = 0;
+		ticksIntervalStarted = t1;
+	}
+}
+
+/*
+ * NAME :		runFpsCounter_updateHook
+ * 
+ * DESCRIPTION :
+ * 			Logic for the EE counter.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+VariableAddress_t vaFpsCounter_UpdateFunc = {
+#if UYA_PAL
+	.Lobby = 0x005fbf18,
+	.Bakisi = 0x004ce660,
+	.Hoven = 0x004d0778,
+	.OutpostX12 = 0x004c6050,
+	.KorgonOutpost = 0x004c37e8,
+	.Metropolis = 0x004c2b38,
+	.BlackwaterCity = 0x004c03d0,
+	.CommandCenter = 0x004c03c8,
+	.BlackwaterDocks = 0x004c2c48,
+	.AquatosSewers = 0x004c1f48,
+	.MarcadiaPalace = 0x004c18c8,
+#else
+	.Lobby = 0x005f9780,
+	.Bakisi = 0x004cbf20,
+	.Hoven = 0x004cdf78,
+	.OutpostX12 = 0x004c3890,
+	.KorgonOutpost = 0x004c10a8,
+	.Metropolis = 0x004c03f8,
+	.BlackwaterCity = 0x004bdc10,
+	.CommandCenter = 0x004bddc8,
+	.BlackwaterDocks = 0x004c0608,
+	.AquatosSewers = 0x004bf948,
+	.MarcadiaPalace = 0x004bf288,
+#endif
+};
+void runFpsCounter_updateHook(void)
+{
+	static int updateTimeCounterMs = 0;
+	static int frames = 0;
+	static long ticksIntervalStarted = 0;
+
+	long t0 = timerGetSystemTime();
+	((void (*)(void))GetAddress(&vaFpsCounter_UpdateFunc))();
+	long t1 = timerGetSystemTime();
+
+	updateTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
+
+	updateTimeCounterMs += updateTimeMs;
+	frames++;
+
+	// update every 500 ms
+	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500))
+	{
+		averageUpdateTimeMs = updateTimeCounterMs / (float)frames;
+		updateTimeCounterMs = 0;
+		frames = 0;
+		ticksIntervalStarted = t1;
+	}
+}
+
+/*
+ * NAME :		runFpsCounter
+ * 
+ * DESCRIPTION :
+ * 			Hooks functions for showing the EE, GS and FPS.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+VariableAddress_t vaFpsCounter_Hooks = {
+#if UYA_PAL
+	.Lobby = 0x00575fc8,
+	.Bakisi = 0x004428c8,
+	.Hoven = 0x00444448,
+	.OutpostX12 = 0x0043b248,
+	.KorgonOutpost = 0x00438e08,
+	.Metropolis = 0x00438148,
+	.BlackwaterCity = 0x00435948,
+	.CommandCenter = 0x004365c8,
+	.BlackwaterDocks = 0x00438e48,
+	.AquatosSewers = 0x00438148,
+	.MarcadiaPalace = 0x00437ac8,
+#else
+	.Lobby = 0x00575288,
+	.Bakisi = 0x00441c88,
+	.Hoven = 0x00443748,
+	.OutpostX12 = 0x0043a588,
+	.KorgonOutpost = 0x004381c8,
+	.Metropolis = 0x00437508,
+	.BlackwaterCity = 0x00434c88,
+	.CommandCenter = 0x00435ac8,
+	.BlackwaterDocks = 0x00438308,
+	.AquatosSewers = 0x00437648,
+	.MarcadiaPalace = 0x00436f88,
+#endif
+};
+void runFpsCounter(void)
+{
+	int hook = GetAddress(&vaFpsCounter_Hooks);
+	int update = GetAddress(&vaFpsCounter_UpdateFunc);
+	int draw = GetAddress(&vaFpsCounter_DrawFunc);
+	HOOK_JAL(hook, &runFpsCounter_updateHook);
+	HOOK_JAL(((u32)hook + 0x60), &runFpsCounter_drawHook);
+	runFpsCounter_Logic();
+}
+
+/*
  * NAME :		runGameStartMessager
  * 
  * DESCRIPTION :
@@ -1682,6 +1919,9 @@ int main(void)
 
 		// Patch Weapon Ordering when Respawning
 		patchResurrectWeaponOrdering();
+
+		// Runs FPS Counter
+		runFpsCounter();
 
 		// Patches gadget events as they come in.
 		// patchGadgetEvents();

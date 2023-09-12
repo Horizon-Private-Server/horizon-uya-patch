@@ -53,6 +53,10 @@ const u32 colorButtonBg = 0x80303030;
 const u32 colorButtonFg = 0x80505050;
 const u32 colorText = 0x8069cbf2;
 const u32 colorOpenBg = 0x20000000;
+const u32 colorRangeBar = 0x8018608f;
+const u32 colorRangeBarSelected = 0x80123251;
+// The color of rangeBar if selected
+u32 RangeBar_IsSelected;
 
 const float frameX = 0.1;
 const float frameY = 0.15;
@@ -74,6 +78,7 @@ void buttonActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, vo
 void toggleActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg);
 void toggleInvertedActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg);
 void listActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg);
+void rangeActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg);
 void gmOverrideListActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg);
 void labelActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg);
 
@@ -130,6 +135,13 @@ MenuElem_ListData_t dataLevelOfDetail = {
     3,
 #endif
     { "Potato", "Low", "Normal", "High" }
+};
+
+MenuElem_RangeData_t dataFieldOfView = {
+    .value = &config.playerFov,
+    .stateHandler = NULL,
+    .minValue = 0,
+    .maxValue = 5,
 };
 
 // map override list item
@@ -222,6 +234,10 @@ MenuElem_t menuElementsGeneral[] = {
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
+#if TEST
+  { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
+#endif
+  { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake },
 };
@@ -669,6 +685,37 @@ void drawToggleInvertedMenuElement(TabElem_t* tab, MenuElem_t* element, RECT* re
 }
 
 //------------------------------------------------------------------------------
+void drawRangeMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_RangeData_t * rangeData, RECT* rect)
+{
+  char buf[32];
+
+  // get element state
+  int state = getMenuElementState(tab, element);
+
+  float x,y,w,v,h;
+  float lerp = (state & ELEMENT_EDITABLE) ? 0.0 : 0.5;
+  u32 color = colorLerp(colorText, 0, lerp);
+
+  // draw name
+  x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
+  y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
+  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0);
+
+  // draw box
+  u32 barColor = colorLerp(RangeBar_IsSelected, 0, lerp);
+  v = (float)(*rangeData->value - rangeData->minValue) / (float)(rangeData->maxValue - rangeData->minValue);
+  w = (rect->TopRight[0] - rect->TopLeft[0]) * 0.5 * SCREEN_WIDTH;
+  x = (rect->TopRight[0] * SCREEN_WIDTH) - w - 5;
+  h = (rect->BottomRight[1] - rect->TopRight[1]) * SCREEN_HEIGHT;
+  gfxPixelSpaceBox(x, y - 4, w * v, h - 2, barColor);
+
+  // draw name
+  sprintf(buf, "%d", *rangeData->value);
+  x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
+  gfxScreenSpaceText(x, y, 1, 1, color, buf, -1, 2);
+}
+
+//------------------------------------------------------------------------------
 void drawListMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_ListData_t * listData, RECT* rect)
 {
   // get element state
@@ -772,6 +819,67 @@ void buttonActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, vo
     case ACTIONTYPE_DRAW:
     {
       drawButtonMenuElement(tab, element, (RECT*)actionArg);
+      break;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+void rangeActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg)
+{
+  MenuElem_RangeData_t* rangeData = (MenuElem_RangeData_t*)element->userdata;
+
+  // get element state
+  int state = getMenuElementState(tab, element);
+
+  // do nothing if hidden
+  if ((state & ELEMENT_VISIBLE) == 0)
+    return;
+
+  switch (actionType)
+  {
+    case ACTIONTYPE_INCREMENT:
+    case ACTIONTYPE_SELECT:
+    {
+      if ((state & ELEMENT_EDITABLE) == 0)
+        break;
+      char newValue = *rangeData->value + 1;
+      if (newValue > rangeData->maxValue)
+        newValue = rangeData->minValue;
+
+      *rangeData->value = newValue;
+      break;
+    }
+    case ACTIONTYPE_SELECT_SECONDARY:
+    {
+      *rangeData->value = (rangeData->minValue + rangeData->maxValue) / 2;
+      break;
+    }
+    case ACTIONTYPE_DECREMENT:
+    {
+      if ((state & ELEMENT_EDITABLE) == 0)
+        break;
+      char newValue = *rangeData->value - 1;
+      if (newValue < rangeData->minValue)
+        newValue = rangeData->maxValue;
+
+      *rangeData->value = newValue;
+      break;
+    }
+    case ACTIONTYPE_GETHEIGHT:
+    {
+      *(float*)actionArg = LINE_HEIGHT;
+      break;
+    }
+    case ACTIONTYPE_DRAW:
+    {
+      drawRangeMenuElement(tab, element, rangeData, (RECT*)actionArg);
+      break;
+    }
+    case ACTIONTYPE_VALIDATE:
+    {
+      if (rangeData->stateHandler != NULL)
+        rangeData->stateHandler(rangeData, rangeData->value);
       break;
     }
   }
@@ -1074,8 +1182,11 @@ void drawTab(TabElem_t* tab)
     if (i == tab->selectedMenuItem) {
       state = getMenuElementState(tab, currentElement);
       if (state & ELEMENT_SELECTABLE) {
+        RangeBar_IsSelected = colorRangeBarSelected;
         gfxScreenSpaceQuad(&drawRect, colorSelected, colorSelected, colorSelected, colorSelected);
       }
+    } else {
+      RangeBar_IsSelected = colorRangeBar;
     }
 
     // draw

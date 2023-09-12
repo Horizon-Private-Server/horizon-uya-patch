@@ -7,6 +7,8 @@ typedef struct PatchConfig
   char enableAutoMaps;
   char disableCameraShake;
   char levelOfDetail;
+  char enableFpsCounter;
+  char playerFov;
 } PatchConfig_t;
 
 // Game Rules Tab

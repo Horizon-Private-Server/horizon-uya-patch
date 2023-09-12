@@ -24,9 +24,9 @@
  * Games FPS
 */
 #if UYA_PAL
-#define GAME_FPS                            (50)
+#define GAME_FPS                            (50.0)
 #else
-#define GAME_FPS                            (60)
+#define GAME_FPS                            (60.0)
 #endif
 
 //--------------------------------------------------------
