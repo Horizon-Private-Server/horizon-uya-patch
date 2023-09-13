@@ -13,7 +13,7 @@
 #include "moby.h"
 #include "math3d.h"
 
-struct CameraFov {
+struct CameraFov { // 0x30
 	/*   0 */ float speed;
 	/*   4 */ float ideal;
 	/*   8 */ float actual;
@@ -147,6 +147,7 @@ struct CameraWidget {
 	/*   8 */ float closest;
 	/*   c */ float interp;
 	/*  10 */ void* preFunc;
+	/*  14 */ int pad[3];
 };
 
 struct CameraShake {
@@ -224,11 +225,19 @@ typedef struct GameCamera {
 	/* 390 */ VECTOR uMtx[3];
 	/* 3c0 */ MATRIX bsMtx;
 	/* 400 */ struct CameraWidget widget;
-	/* 420 */ struct CameraExternal external;
-	/* 430 */ struct CameraFov fov;
-	/* 460 */ int CamUnderWater;
-	/* 464 */ int camTimer;
-	/* 468 */ int disableBlendTimer;
+	/* 420 */ // struct CameraExternal external;
+	/*
+		UYA's Camera Struct is different from DLs.
+		Unsure if I have it correct
+		Commented CameraExternal
+		Added `int pad[3]` to  CameraWidget
+	*/
+	/* 420 */ struct CameraFov fov;
+	/* 450 */ int CamUnderWater;
+	/* 454 */ int camTimer;
+	/* 458 */ int disableBlendTimer;
 } GameCamera;
+
+GameCamera* cameraGetGameCamera(int cameraIndex);
 
 #endif // _LIBUYA_CAMERA_H_
