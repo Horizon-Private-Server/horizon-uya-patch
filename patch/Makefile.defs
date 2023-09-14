@@ -1,5 +1,5 @@
 BIN_PATH = ../bin/
-EE_OBJS = functions.o main.o config.o maploader.o rpc.o cheats.o gamerules.o
+EE_OBJS = functions.o interop.o main.o config.o maploader.o rpc.o cheats.o gamerules.o
 EE_LIBS := $(EE_LIBS) -lkernel
 
 EE_INCS := -I../common -I../libuya/include
