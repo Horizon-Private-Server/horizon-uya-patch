@@ -16,36 +16,45 @@
 // https://github.com/chaoticgd/wrench
 typedef struct GameplayHeaderDef
 {
-  /* 00 */ u32 PropertiesOffset;                        // offset to death height, fog density/color, etc
-  /* 04 */ u32 CamerasOffset;                           // 
-  /* 09 */ u32 SoundInstancesOffset;                    // 
-  /* 0C */ u32 USEnglishTranslationsOffset;             // 
-  /* 10 */ u32 UKEnglishTranslationsOffset;             // 
-  /* 14 */ u32 FrenchTranslationsOffset;                // 
-  /* 18 */ u32 GermanTranslationsOffset;                // 
-  /* 1C */ u32 SpanishTranslationsOffset;               // 
-  /* 20 */ u32 ItalianTranslationsOffset;               // 
-  /* 24 */ u32 JapaneseTranslationsOffset;              // 
-  /* 28 */ u32 KoreanTranslationsOffset;                // 
-  /* 2C */ u32 MobyClassesOffset;                       // 
-  /* 30 */ u32 MobyInstancesOffset;                     // GameplayMobyHeaderDef_t
-  /* 34 */ u32 MobyGroupsOffset;                        // 
-  /* 38 */ u32 GlobalPVarOffset;                        // 
-  /* 3C */ u32 PVarPointerScratchpadTableOffset;        // 
-  /* 40 */ u32 PVarTableOffset;                         // GameplayPVarDef_t
-  /* 44 */ u32 PVarDataOffset;                          // 
-  /* 48 */ u32 PVarPointerRewireTableOffset;            // 
-  /* 4C */ u32 CuboidsOffset;                           // GameplayCuboidHeaderDef_t
-  /* 50 */ u32 SpheresOffset;                           // 
-  /* 54 */ u32 CylindersOffset;                         // 
-  /* 58 */ u32 UNK58Offset;                             // 
-  /* 5C */ u32 PathsOffset;                             // 
-  /* 60 */ u32 GrindPathsOffset;                        // 
-  /* 64 */ u32 UNK64Offset;                             // 
-  /* 68 */ u32 PAD68;                                   // 
-  /* 6C */ u32 UNK6COffset;                             // 
-  /* 70 */ u32 UNK70Offset;                             // 
-  /* 74 */ u32 AreasOffset;                             // 
+/* 0x00 */ u32 PropertiesOffset;                  // offset to death height, fog density/color, etc
+/* 0x04 */ u32 LightsOffset;
+/* 0x08 */ u32 CamerasOffset;
+/* 0x0C */ u32 SoundInstancesOffset;
+/* 0x10 */ u32 USEnglishTranslationsOffset;
+/* 0x14 */ u32 UKEnglishTranslationsOffset;
+/* 0x18 */ u32 FrenchTranslationsOffset;
+/* 0x1C */ u32 GermanTranslationsOffset;
+/* 0x20 */ u32 SpanishTranslationsOffset;
+/* 0x24 */ u32 ItalianTranslationsOffset;
+/* 0x28 */ u32 JapaneseTranslationsOffset;
+/* 0x2C */ u32 KoreanTranslationsOffset;
+/* 0x30 */ u32 TieClassesOffset;
+/* 0x34 */ u32 TieInstancesOffset;
+/* 0x38 */ u32 TieGroupsOffset;
+/* 0x3C */ u32 ShrubClassesOffset;
+/* 0x40 */ u32 ShrubInstancesOffset;
+/* 0x44 */ u32 ShrubGroupsOffset;
+/* 0x48 */ u32 MobyClassesOffset;
+/* 0x4C */ u32 MobyInstancesOffset;               // GameplayMobyHeaderDef_t
+/* 0x50 */ u32 MobyGroupsOffset;
+/* 0x54 */ u32 GlobalPVarOffset;
+/* 0x58 */ u32 PVarPointerScratchpadTableOffset;
+/* 0x5C */ u32 PVarTableOffset;                   // GameplayPVarDef_t
+/* 0x60 */ u32 PVarDataOffset;
+/* 0x64 */ u32 PVarPointerRewireTableOffset;
+/* 0x68 */ u32 CuboidsOffset;                     // GameplayCuboidHeaderDef_t
+/* 0x6C */ u32 SpheresOffset;
+/* 0x70 */ u32 CylindersOffset;
+/* 0x74 */ u32 PillsOffset;
+/* 0x78 */ u32 PathsOffset;
+/* 0x7C */ u32 GrindPathsOffset;
+/* 0x80 */ u32 PointLightsOffset;
+/* 0x84 */ u32 EnvTransitionsOffset;
+/* 0x88 */ u32 CameraCollisionGridsOffset;
+/* 0x8C */ u32 EnvSamplePointsOffset;
+/* 0x90 */ u32 OcclusionOffset;
+/* 0x94 */ u32 TieAmbientRGBAsOffset;
+/* 0x98 */ u32 AreasOffset;
 } GameplayHeaderDef_t;
 
 /*
