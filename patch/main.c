@@ -1198,7 +1198,11 @@ void setupPatchConfigInGame()
  */
 u64 hookedProcessLevel()
 {
+#if UYA_PAL
+	u64 r = ((u64 (*)(void))0x00192f68)();
+#else
 	u64 r = ((u64 (*)(void))0x00193058)();
+#endif
 
 	// call gamerules level load
 	grLoadStart();
@@ -1223,7 +1227,12 @@ u64 hookedProcessLevel()
 void patchProcessLevel(void)
 {
 	// jal hookedProcessLevel
-	*(u32*)0x00193430 = 0x0C000000 | (u32)&hookedProcessLevel / 4;
+#if UYA_PAL
+	int hook = 0x00193340;
+#else
+	int hook = 0x00193430;
+#endif
+	*(u32*)hook = 0x0C000000 | (u32)&hookedProcessLevel / 4;
 }
 
 /*
