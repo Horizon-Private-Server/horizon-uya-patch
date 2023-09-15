@@ -69,7 +69,7 @@ typedef struct GameplayPVarDef
 /*
  *
  */
-typedef struct GameplayMobyDef
+typedef struct DL_GameplayMobyDef
 {
 	u32 Size;
 	char Mission;
@@ -103,6 +103,22 @@ typedef struct GameplayMobyDef
 	int Blue;
 	int Light;
 	int UNK_6C;
+} DL_GameplayMobyDef_t;
+
+typedef struct GameplayMobyDef // 0x88
+{
+/* 0x00 */ u32 Size;
+           char unk_04[0x24];
+/* 0x28 */ int OClass;
+/* 0x2C */ float Scale;
+           int unk_30[4];
+/* 0x40 */ float PosX;
+/* 0x44 */ float PosY;
+/* 0x48 */ float PosZ;
+/* 0x4C */ float RotX;
+/* 0x50 */ float RotY;
+/* 0x54 */ float RotZ;
+           char unk_58[0x30];
 } GameplayMobyDef_t;
 
 /*
