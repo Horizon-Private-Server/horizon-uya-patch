@@ -52,6 +52,38 @@ int VampireHealRate[] = {
 	PLAYER_MAX_HEALTH * 1.00
 };
 
+void onGameplayLoadRemoveWeaponPickups(GameplayHeaderDef_t * gameplay)
+{
+	int i;
+	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
+
+	// iterate each moby, moving all pickups to below the map
+	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
+		GameplayMobyDef_t* mobyDef = &mobyInstancesHeader->MobyInstances[i];
+		if (mobyDef->OClass == MOBY_ID_HEALTH_BOX_MP) {
+			mobyDef->Scale = 3;
+		}
+	}
+}
+
+u32 onGameplayLoad(int a0, void* a1)
+{
+	// run base
+	u32 ret = ((u32 (*)(int, void*))0x00474ff8)(a0, a1);
+
+	GameplayHeaderDef_t * gameplay;
+
+	// pointer to gameplay data is stored in $s1
+	asm volatile (
+		"move %0, $s6"
+		: : "r" (gameplay)
+	);
+
+	// onGameplayLoadRemoveWeaponPickups(gameplay);
+
+	return ret;
+}
+
 /*
  * NAME :		grInitialize
  * 
@@ -209,11 +241,10 @@ void grLoadStart(void)
 	if (!gs || gs->GameStartTime >= 0)
 		return;
 
-  //gameGetOptions()->GameFlags.MultiplayerGameFlags.Timelimit = 1;
-
+	printf("\ngrLoadStart!");
 	// Hook load gameplay file
 	// int hook = GetAddress(&vaGamplayHook);
 	// int hookValue = GetAddress(&vaGamplayHookValue);
-	// if (*(u32*)hook == hookValue)
-	// 	*(u32*)hook = 0x0C000000 | (u32)&onGameplayLoad / 4;
+	// if (*(u32*)0x0046d73c == 0x0c11d3fe)
+	// 	*(u32*)0x0046d73c = 0x0C000000 | (u32)&onGameplayLoad / 4;
 }
