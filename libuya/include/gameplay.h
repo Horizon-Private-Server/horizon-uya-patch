@@ -84,11 +84,11 @@ typedef struct DL_GameplayMobyDef
 	short UNK_24;
 	short UNK_26;
 	float PosX;
-	float PosY;
 	float PosZ;
+	float PosY;
 	float RotX;
-	float RotY;
 	float RotZ;
+	float RotY;
 	int Group;
 	int IsRooted;
 	float RootedDistance;
@@ -113,11 +113,11 @@ typedef struct GameplayMobyDef // 0x88
 /* 0x2C */ float Scale;
            int unk_30[4];
 /* 0x40 */ float PosX;
-/* 0x44 */ float PosY;
-/* 0x48 */ float PosZ;
+/* 0x44 */ float PosZ;
+/* 0x48 */ float PosY;
 /* 0x4C */ float RotX;
-/* 0x50 */ float RotY;
-/* 0x54 */ float RotZ;
+/* 0x50 */ float RotZ;
+/* 0x54 */ float RotY;
            char unk_58[0x30];
 } GameplayMobyDef_t;
 

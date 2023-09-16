@@ -25,6 +25,7 @@
 #include <libuya/utils.h>
 #include <libuya/net.h>
 #include <libuya/gameplay.h>
+#include <libuya/interop.h>
 #include "module.h"
 #include "messageid.h"
 #include "include/config.h"
@@ -38,6 +39,9 @@ extern PatchGameConfig_t gameConfig;
 
 // lobby clients patch config
 extern PatchConfig_t lobbyPlayerConfigs[GAME_MAX_PLAYERS];
+
+int Gameplay_Hook = 0;
+int Gameplay_Func = 0;
 
 int GameRulesInitialized = 0;
 int FirstPass = 1;
@@ -60,28 +64,26 @@ void onGameplayLoadRemoveWeaponPickups(GameplayHeaderDef_t * gameplay)
 	// iterate each moby, moving all pickups to below the map
 	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
 		GameplayMobyDef_t* mobyDef = &mobyInstancesHeader->MobyInstances[i];
-		if (mobyDef->OClass == MOBY_ID_HEALTH_BOX_MP) {
-			mobyDef->Scale = 3;
+		if (mobyDef->OClass == MOBY_ID_JUMP_PAD) {
+			mobyDef->PosY += 1;
 		}
 	}
 }
 
-u32 onGameplayLoad(int a0, void* a1)
+u32 onGameplayLoad(void* a0, long a1)
 {
-	// run base
-	u32 ret = ((u32 (*)(int, void*))0x00474ff8)(a0, a1);
-
 	GameplayHeaderDef_t * gameplay;
 
-	// pointer to gameplay data is stored in $s1
+	// pointer to gameplay data is stored in $s6
 	asm volatile (
 		"move %0, $s6"
 		: : "r" (gameplay)
 	);
 
-	// onGameplayLoadRemoveWeaponPickups(gameplay);
+	onGameplayLoadRemoveWeaponPickups(gameplay);
 
-	return ret;
+	// run base
+	((void (*)(void*, long))Gameplay_Func)(a0, a1);
 }
 
 /*
@@ -218,6 +220,70 @@ void grLobbyStart(void)
 	FirstPass = 1;
 }
 
+/*
+ * NAME :		getGameplayInfo
+ * 
+ * DESCRIPTION :
+ * 			Gets the needed "Gameplay_Hook" and "Gameplay_Value"
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void getGameplayInfo(int map)
+{
+    switch (map) {
+        case MAP_ID_BAKISI:
+			Gameplay_Hook = 0x0046d4cc;
+			Gameplay_Func = 0x00474ca8;
+			break;
+        case MAP_ID_HOVEN:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;
+        case MAP_ID_OUTPOST_X12:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;
+        case MAP_ID_KORGON:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;
+        case MAP_ID_METROPOLIS:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;
+        case MAP_ID_BLACKWATER_CITY:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;
+        case MAP_ID_COMMAND_CENTER:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;
+        case MAP_ID_BLACKWATER_DOCKS:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;
+        case MAP_ID_AQUATOS_SEWERS:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;
+        case MAP_ID_MARCADIA:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;
+        default:
+			Gameplay_Hook = 0;
+			Gameplay_Func = 0;
+			break;;
+    }
+}
+
 
 /*
  * NAME :		grLoadStart
@@ -241,10 +307,9 @@ void grLoadStart(void)
 	if (!gs || gs->GameStartTime >= 0)
 		return;
 
-	printf("\ngrLoadStart!");
-	// Hook load gameplay file
-	// int hook = GetAddress(&vaGamplayHook);
-	// int hookValue = GetAddress(&vaGamplayHookValue);
-	// if (*(u32*)0x0046d73c == 0x0c11d3fe)
-	// 	*(u32*)0x0046d73c = 0x0C000000 | (u32)&onGameplayLoad / 4;
+	// Returns needed hook and needed function.
+	getGameplayInfo(gameGetCurrentMapId());
+	
+	if (Gameplay_Hook != 0)
+		*(u32*)Gameplay_Hook = 0x0C000000 | (u32)&onGameplayLoad / 4;
 }
