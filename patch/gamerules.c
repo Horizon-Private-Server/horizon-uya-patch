@@ -65,7 +65,7 @@ void onGameplayLoadRemoveWeaponPickups(GameplayHeaderDef_t * gameplay)
 	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
 		GameplayMobyDef_t* mobyDef = &mobyInstancesHeader->MobyInstances[i];
 		if (mobyDef->OClass == MOBY_ID_JUMP_PAD) {
-			mobyDef->PosY += 1;
+			mobyDef->PosY += 3;
 		}
 	}
 }
@@ -221,10 +221,10 @@ void grLobbyStart(void)
 }
 
 /*
- * NAME :		getGameplayInfo
+ * NAME :		getGameplayHook
  * 
  * DESCRIPTION :
- * 			Gets the needed "Gameplay_Hook" and "Gameplay_Value"
+ * 			Gets the needed "Gameplay_Hook".
  * 
  * NOTES :
  * 
@@ -234,56 +234,35 @@ void grLobbyStart(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void getGameplayInfo(int map)
+int getGameplayHook(int map)
 {
     switch (map) {
-        case MAP_ID_BAKISI:
-			Gameplay_Hook = 0x0046d4cc;
-			Gameplay_Func = 0x00474ca8;
-			break;
-        case MAP_ID_HOVEN:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;
-        case MAP_ID_OUTPOST_X12:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;
-        case MAP_ID_KORGON:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;
-        case MAP_ID_METROPOLIS:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;
-        case MAP_ID_BLACKWATER_CITY:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;
-        case MAP_ID_COMMAND_CENTER:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;
-        case MAP_ID_BLACKWATER_DOCKS:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;
-        case MAP_ID_AQUATOS_SEWERS:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;
-        case MAP_ID_MARCADIA:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;
-        default:
-			Gameplay_Hook = 0;
-			Gameplay_Func = 0;
-			break;;
+#if UYA_PAL
+        case MAP_ID_BAKISI: return 0x0046db20;
+        case MAP_ID_HOVEN: return 0x0046f6d0;
+        case MAP_ID_OUTPOST_X12: return 0x004664d0;
+        case MAP_ID_KORGON: return 0x00464060;
+        case MAP_ID_METROPOLIS: return 0x004633a0;
+        case MAP_ID_BLACKWATER_CITY: return 0x00460bd0;
+        case MAP_ID_COMMAND_CENTER: return 0x004614c8;
+        case MAP_ID_BLACKWATER_DOCKS: return 0x00463d48;
+        case MAP_ID_AQUATOS_SEWERS: return 0x00463048;
+        case MAP_ID_MARCADIA: return 0x004629c8;
+#else
+        case MAP_ID_BAKISI: return 0x0046bfb8; // 0x0046d4cc;
+        case MAP_ID_HOVEN: return 0x0046daa8;
+        case MAP_ID_OUTPOST_X12: return 0x004648e8;
+        case MAP_ID_KORGON: return 0x004624f8;
+        case MAP_ID_METROPOLIS: return 0x00461838;
+        case MAP_ID_BLACKWATER_CITY: return 0x0045efe8;
+        case MAP_ID_COMMAND_CENTER: return 0x0045faa0;
+        case MAP_ID_BLACKWATER_DOCKS:return 0x004622e0;
+        case MAP_ID_AQUATOS_SEWERS: return 0x00461620;
+        case MAP_ID_MARCADIA: return 0x00460f60;
+#endif
+		default: return 0;
     }
 }
-
 
 /*
  * NAME :		grLoadStart
@@ -308,7 +287,9 @@ void grLoadStart(void)
 		return;
 
 	// Returns needed hook and needed function.
-	getGameplayInfo(gameGetCurrentMapId());
+	Gameplay_Hook = getGameplayHook(gameGetCurrentMapId());
+	// Convert the JAL to the function address and save for later.
+	Gameplay_Func = JAL2ADDR(*(u32*)Gameplay_Hook);
 	
 	if (Gameplay_Hook != 0)
 		*(u32*)Gameplay_Hook = 0x0C000000 | (u32)&onGameplayLoad / 4;
