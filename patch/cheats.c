@@ -26,6 +26,7 @@
 #include <libuya/interop.h>
 #include <libuya/net.h>
 #include <libuya/moby.h>
+#include <libuya/gameplay.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -740,32 +741,53 @@ void setRespawnTimer(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void disableDrones(void)
+ void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay)
 {
-	// Moby * a = mobyListGetStart();
-	// // Remove drone cluster update function. (this is for main configuration)
-	// while ((a = mobyFindNextByOClass(a, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG))) {
-	// 	a->PUpdate = 0;
-	// 	mobyDestroy(a);
-	// 	++a;
-	// }
-	// Moby * b = mobyListGetStart();
-	// // Remove drone update function. (This is for the player activator)
-	// while ((b = mobyFindNextByOClass(b, MOBY_ID_DRONE_BOT_CLUSTER_UPDATER))) {
-	// 	b->PUpdate = 0;
-	// 	mobyDestroy(b);
-	// 	++b;
-	// }
-	Moby * c = mobyListGetStart();
-	while ((c = mobyFindNextByOClass(c, MOBY_ID_DRONE_BOT))) {
-		c->PVar = 0;
-		c->PUpdate = 0;
-		c->Scale = 0;
-		memset(c->BSphere, 0, sizeof(c->BSphere));
-		//memset(c->Position, 0, sizeof(c->Position));
-		++c;
+	int i;
+	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
+
+	// iterate each moby, moving all pickups to below the map
+	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
+		GameplayMobyDef_t* droneConfig = &mobyInstancesHeader->MobyInstances[i];
+		if (droneConfig->OClass == MOBY_ID_DRONE_BOT_CLUSTER_CONFIG) {
+			droneConfig->PosY = -100;
+		}
+		// GameplayMobyDef_t* dronePlayerConfig = &mobyInstancesHeader->MobyInstances[i];
+		// if (dronePlayerConfig->OClass == MOBY_ID_DRONE_BOT_CLUSTER_UPDATER) {
+		// 	dronePlayerConfig->PosY = -200;
+		// }
+		// GameplayMobyDef_t* drones = &mobyInstancesHeader->MobyInstances[i];
+		// if (drones->OClass == MOBY_ID_DRONE_BOT) {
+		// 	drones->PosY = -100;
+		// }
 	}
 }
+// void disableDrones(void)
+// {
+// 	// Moby * a = mobyListGetStart();
+// 	// // Remove drone cluster update function. (this is for main configuration)
+// 	// while ((a = mobyFindNextByOClass(a, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG))) {
+// 	// 	a->PUpdate = 0;
+// 	// 	mobyDestroy(a);
+// 	// 	++a;
+// 	// }
+// 	// Moby * b = mobyListGetStart();
+// 	// // Remove drone update function. (This is for the player activator)
+// 	// while ((b = mobyFindNextByOClass(b, MOBY_ID_DRONE_BOT_CLUSTER_UPDATER))) {
+// 	// 	b->PUpdate = 0;
+// 	// 	mobyDestroy(b);
+// 	// 	++b;
+// 	// }
+// 	Moby * c = mobyListGetStart();
+// 	while ((c = mobyFindNextByOClass(c, MOBY_ID_DRONE_BOT))) {
+// 		c->PVar = 0;
+// 		c->PUpdate = 0;
+// 		c->Scale = 0;
+// 		memset(c->BSphere, 0, sizeof(c->BSphere));
+// 		//memset(c->Position, 0, sizeof(c->Position));
+// 		++c;
+// 	}
+// }
 
 /*
  * NAME :		keepBaseHealthPadActive
@@ -780,38 +802,27 @@ void disableDrones(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void keepBaseHealthPadActive(void)
+int keepBaseHealthPadActive(void)
 {
-	VariableAddress_t vaDisableAmmoHealthPad = {
-#if UYA_PAL
-		.Lobby = 0,
-		.Bakisi = 0x003f62e8,
-		.Hoven = 0x003f5170,
-		.OutpostX12 = 0x003ed068,
-		.KorgonOutpost = 0x003ecf28,
-		.Metropolis = 0x003eb008,
-		.BlackwaterCity = 0x003e7df0,
-		.CommandCenter = 0x003f6cd8,
-		.BlackwaterDocks = 0x003f8c38,
-		.AquatosSewers = 0x003f8840,
-		.MarcadiaPalace = 0x003f6dd8,
-#else
-		.Lobby = 0,
-		.Bakisi = 0x003f5dF8,
-		.Hoven = 0x003f4c00,
-		.OutpostX12 = 0x003ecaf8,
-		.KorgonOutpost = 0x003eca18,
-		.Metropolis = 0x003eab18,
-		.BlackwaterCity = 0x003e78a0,
-		.CommandCenter = 0x003f67d0,
-		.BlackwaterDocks = 0x003f8730,
-		.AquatosSewers = 0x003f8338,
-		.MarcadiaPalace = 0x003f68d0,
-#endif
-	};
-	int saveInstr = GetAddress(&vaDisableAmmoHealthPad);
-	if (*(u32*)saveInstr == 0xae040040)
-		*(u32*)saveInstr = 0;	
+	int init = 0;
+	Moby * a = mobyListGetStart();
+	while ((a = mobyFindNextByOClass(a, MOBY_ID_HEALTH_PAD))) {
+		if (a->PUpdate) {
+			*(u32*)((u32)a->PUpdate + 0x68) = 0x24020001;
+			*(u32*)((u32)a->PUpdate + 0x8C) = 0x24150001;
+		}
+		++a;
+	}
+	Moby * b = mobyListGetStart();
+	while ((b = mobyFindNextByOClass(b, MOBY_ID_AMMO_PAD))) {
+		if (b->PUpdate) {
+			*(u32*)((u32)b->PUpdate + 0x74) = 0x24020001;
+			*(u32*)((u32)b->PUpdate + 0x90) = 0x24020001;
+		}
+		++b;
+	}
+	init = 1;
+	return init;
 }
 
 void noPostHitInvinc(void)

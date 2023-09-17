@@ -263,15 +263,11 @@ MenuElem_t menuElementsGameSettings[] = {
 #endif
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
-#if TEST
   { "Allow Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grAllowDrones },
-#endif
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_BaseDefenses, (void*)LABELTYPE_HEADER },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
-#if TEST
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive },
-#endif
   { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grNoBaseDefense_Bots },
   { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grNoBaseDefense_SmallTurrets },
 

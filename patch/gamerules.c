@@ -47,6 +47,7 @@ int GameRulesInitialized = 0;
 int FirstPass = 1;
 int HasDisabledHealthboxes = 0;
 int HasSetGattlingTurretHealth = 0;
+int HasKeepBaseHealthPadActive = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 short PlayerDeaths[GAME_MAX_PLAYERS];
 
@@ -55,20 +56,6 @@ int VampireHealRate[] = {
 	PLAYER_MAX_HEALTH * 0.50,
 	PLAYER_MAX_HEALTH * 1.00
 };
-
-void onGameplayLoadRemoveWeaponPickups(GameplayHeaderDef_t * gameplay)
-{
-	int i;
-	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
-
-	// iterate each moby, moving all pickups to below the map
-	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
-		GameplayMobyDef_t* mobyDef = &mobyInstancesHeader->MobyInstances[i];
-		if (mobyDef->OClass == MOBY_ID_JUMP_PAD) {
-			mobyDef->PosY += 3;
-		}
-	}
-}
 
 u32 onGameplayLoad(void* a0, long a1)
 {
@@ -79,8 +66,8 @@ u32 onGameplayLoad(void* a0, long a1)
 		"move %0, $s6"
 		: : "r" (gameplay)
 	);
-
-	onGameplayLoadRemoveWeaponPickups(gameplay);
+	if (gameConfig.grAllowDrones)
+		onGameplayLoad_disableDrones(gameplay);
 
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
@@ -114,6 +101,7 @@ void grInitialize(void)
 
 	HasDisabledHealthboxes = 0;
 	HasSetGattlingTurretHealth = 0;
+	HasKeepBaseHealthPadActive = 0;
 	GameRulesInitialized = 1;
 }
 
@@ -154,7 +142,7 @@ void grGameStart(void)
 		HasDisabledHealthboxes = disableHealthboxes();
 
 	if (gameConfig.grAutoRespawn && gameSettings->GameType == GAMERULE_DM)
-		 AutoRespawn();
+		AutoRespawn();
 
 	if (gameConfig.grSetGattlingTurretHealth && !HasSetGattlingTurretHealth)
 		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.grSetGattlingTurretHealth);
@@ -174,17 +162,14 @@ void grGameStart(void)
 	if (gameConfig.grRespawnTimer || gameConfig.grDisablePenaltyTimers)
 		setRespawnTimer();
 
-	if (gameConfig.grAllowDrones)
-		disableDrones();
-
 	if (gameConfig.grNoBaseDefense_Bots)
 		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = 0;
 
 	if (gameConfig.grNoBaseDefense_SmallTurrets)
 		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = 0;
 
-	if (gameConfig.grBaseHealthPadActive && gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth)
-		keepBaseHealthPadActive();
+	if (gameConfig.grBaseHealthPadActive && !HasKeepBaseHealthPadActive && gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth)
+		HasKeepBaseHealthPadActive = keepBaseHealthPadActive();
 
 	if (gameConfig.grNoCooldown)
 		noPostHitInvinc();

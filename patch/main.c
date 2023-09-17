@@ -81,11 +81,14 @@ const char * regionStr = "PAL:  ";
 const char * regionStr = "NTSC: ";
 #endif
 int lastLodLevel = 2;
+int fovChange_Hook = 0;
+int fovChange_Func = 0;
 
 extern float _lodScale;
 extern void* _correctTieLod;
 extern int _correctTieLod_Jump;
 extern VariableAddress_t vaPlayerRespawnFunc;
+extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern MenuElem_ListData_t dataCustomMaps;
 
 PatchConfig_t config __attribute__((section(".config"))) = {
@@ -1029,6 +1032,28 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 }
 
 /*
+ * NAME :		fovChange
+ * 
+ * DESCRIPTION :
+ * 			Rewrites the FOV (via SetPosRot) when player dies.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void fovChange(u32 a0)
+{
+	// run base
+	((void (*)(u32))fovChange_Func)(a0);
+
+	writeFov(0, 0, 3, 0, 0, 0.05, 0.2, 0);
+}
+
+/*
  * NAME :		patchFov
  * 
  * DESCRIPTION :
@@ -1048,12 +1073,22 @@ void patchFov(void)
 	static int lastFov = 0;
 	if (!isInGame()) {
 		ingame = 0;
+		fovChange_Hook = 0;
+		fovChange_Func = 0;
 		return;
 	}
 
 	// replace SetFov function
 	HOOK_J(GetAddress(&vaFieldOfView_Hook), &writeFov);
 	POKE_U32((u32)GetAddress(&vaFieldOfView_Hook) + 0x4, 0x03E0382d);
+
+	// modify SetPosRot Func. (Needed when player dies)
+	int posrot = GetAddress(&vaPlayerSetPosRotFunc);
+	if (!fovChange_Hook){
+		fovChange_Hook = (u32)posrot + 0x4a4;
+		fovChange_Func = JAL2ADDR(*(u32*)fovChange_Hook);
+		HOOK_JAL(fovChange_Hook, &fovChange);
+	}
 
 	// initialize fov at start of game
 	if (!ingame || lastFov != config.playerFov) {
