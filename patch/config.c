@@ -88,6 +88,7 @@ void menuStateAlwaysDisabledHandler(TabElem_t* tab, MenuElem_t* element, int* st
 void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int* state);
@@ -195,11 +196,7 @@ const char* CustomModeShortNames[] = {
 MenuElem_ListData_t dataWeaponPacks = {
     &gameConfig.grDisableWeaponPacks,
     NULL,
-#if TEST
     3,
-#else
-    2,
-#endif
     { "Default", "Off", "On Death" }
 };
 
@@ -265,11 +262,11 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
   { "Allow Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grAllowDrones },
 
-  { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_BaseDefenses, (void*)LABELTYPE_HEADER },
+  { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive },
-  { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grNoBaseDefense_Bots },
-  { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grNoBaseDefense_SmallTurrets },
+  { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots },
+  { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },
@@ -447,6 +444,16 @@ void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state)
 }
 
 void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+
+  if (!gs || gs->GameType == GAMERULE_DM)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
 

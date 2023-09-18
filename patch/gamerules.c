@@ -88,7 +88,7 @@ u32 onGameplayLoad(void* a0, long a1)
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-void grInitialize(void)
+void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 {
 	int i;
 
@@ -128,7 +128,7 @@ void grGameStart(void)
 
 	// Initialize
 	if (GameRulesInitialized != 1)
-		grInitialize();
+		grInitialize(gameSettings, gameOptions);
 
 	if (gameConfig.grDisableWeaponPacks == 1)
 		disableWeaponPacks();
