@@ -421,8 +421,7 @@ void AutoRespawn(void)
 
 int setGattlingTurretHealth(int value)
 {
-    // if value equals 1, multiply it by 1.5, else use it's intended value.
-    int MultiplyBy = (value == 1) ? 1.5 : value;
+    int MultiplyBy[] = {.5, 1.5, 2, 3, 4};
     int init = 0;
     Moby * moby = mobyListGetStart();
     // Iterate through mobys and change health
@@ -434,7 +433,7 @@ int setGattlingTurretHealth(int value)
 			// hexidecimal value.  We use the hex value and multiply it
 			// by our wanted value, then store it as it's float health
 			int HexHealth = ((u32)moby->PVar + 0x34);
-            int NewHealth = (u32)(*(u32*)HexHealth * MultiplyBy);
+            int NewHealth = (u32)(*(u32*)HexHealth * MultiplyBy[value - 1]);
 			*(u32*)HexHealth = NewHealth;
 			*(float*)((u32)moby->PVar + 0x30) = NewHealth;
         }
