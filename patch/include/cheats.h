@@ -6,7 +6,7 @@ void disableCameraShake(void);
 // General Game Rules
 void disableWeaponPacks(void);
 void spawnWeaponPackOnDeath(void);
-void disableV2s(void);
+void v2_Setting(int setting);
 int disableHealthBoxes(void);
 void AutoRespawn(void);
 int setGattlingTurretHealth(int value);

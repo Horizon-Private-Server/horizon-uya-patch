@@ -135,8 +135,8 @@ void grGameStart(void)
 	else if (gameConfig.grDisableWeaponPacks == 2)
 		spawnWeaponPackOnDeath();
 	
-	if (gameConfig.grDisableV2s)
-		disableV2s();
+	if (gameConfig.grV2s)
+		v2_Setting(gameConfig.grV2s);
 
     if (gameConfig.grDisableHealthBoxes && !HasDisabledHealthboxes)
 		HasDisabledHealthboxes = disableHealthboxes();
@@ -161,12 +161,6 @@ void grGameStart(void)
 	
 	if (gameConfig.grRespawnTimer || gameConfig.grDisablePenaltyTimers)
 		setRespawnTimer();
-
-	if (gameConfig.grNoBaseDefense_Bots)
-		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = 0;
-
-	if (gameConfig.grNoBaseDefense_SmallTurrets)
-		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = 0;
 
 	if (gameConfig.grBaseHealthPadActive && !HasKeepBaseHealthPadActive && gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth)
 		HasKeepBaseHealthPadActive = keepBaseHealthPadActive();
@@ -195,12 +189,24 @@ void grGameStart(void)
 void grLobbyStart(void)
 {
 	GameSettings * gameSettings = gameGetSettings();
+	GameOptions * gameOptions = gameGetOptions();
+	// if in staging
+	if (gameSettings && gameSettings->GameLoadStartTime < 0) {
+		// Set gameConfig settings relative to their GameOption settings.
+		static int RelativeOptionsSet = 0;
+		if (!RelativeOptionsSet) {
+			gameConfig.grNoBaseDefense_Bots = gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots;
+			gameConfig.grNoBaseDefense_SmallTurrets = gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets;
+			RelativeOptionsSet = 1;
+		}
+		// Let Gameconfig set GameOptions.
+		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = gameConfig.grNoBaseDefense_Bots;
+		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = gameConfig.grNoBaseDefense_SmallTurrets;
+
+		return;	
+	}
 
 	// If we're not in staging then reset
-	if (gameSettings)
-		return;
-
-	// Reset
 	GameRulesInitialized = 0;
 	FirstPass = 1;
 }

@@ -196,8 +196,23 @@ const char* CustomModeShortNames[] = {
 MenuElem_ListData_t dataWeaponPacks = {
     &gameConfig.grDisableWeaponPacks,
     NULL,
+#if TEST
     3,
+#else
+    2,
+#endif
     { "Default", "Off", "On Death" }
+};
+
+MenuElem_ListData_t dataV2_Setting = {
+    &gameConfig.grV2s,
+    NULL,
+#if TEST
+    3,
+#else
+    2,
+#endif
+    { "On", "Off", "Always" }
 };
 
 MenuElem_ListData_t dataVampire = {
@@ -250,7 +265,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer },
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
-  { "V2s", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableV2s },
+  { "V2s", listActionHandler, menuStateHandler_Default, &dataV2_Setting },
   { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown },
   { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit },
   { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled },
@@ -265,8 +280,8 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive },
-  { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots },
-  { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
+  { "Bots (Troopers, Ball Bots, ect.)", toggleActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots },
+  { "Small Turrets", toggleActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },

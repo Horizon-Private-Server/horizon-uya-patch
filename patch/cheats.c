@@ -36,6 +36,7 @@ extern PlayerKills[GAME_MAX_PLAYERS];
 extern PlayerDeaths[GAME_MAX_PLAYERS];
 extern PatchGameConfig_t gameConfig;
 extern VariableAddress_t vaPlayerRespawnFunc;
+extern VariableAddress_t vaGiveWeaponFunc;
 
 /*
  * NAME :		disableWeaponPacks
@@ -53,39 +54,39 @@ extern VariableAddress_t vaPlayerRespawnFunc;
  */
 void disableWeaponPacks(void)
 {
-  VariableAddress_t vaWeaponPackSpawnFunc = {
+	VariableAddress_t vaWeaponPackSpawnFunc = {
 #if UYA_PAL
-    .Lobby = 0,
-	  .Bakisi = 0x004FA350,
-	  .Hoven = 0x004FC468,
-	  .OutpostX12 = 0x004F1D40,
-    .KorgonOutpost = 0x004EF4D8,
-	  .Metropolis = 0x004EE828,
-	  .BlackwaterCity = 0x004EC0C0,
-	  .CommandCenter = 0x004EC088,
-    .BlackwaterDocks = 0x004EE908,
-    .AquatosSewers = 0x004EDC08,
-    .MarcadiaPalace = 0x004ED588,
+		.Lobby = 0,
+		.Bakisi = 0x004FA350,
+		.Hoven = 0x004FC468,
+		.OutpostX12 = 0x004F1D40,
+		.KorgonOutpost = 0x004EF4D8,
+		.Metropolis = 0x004EE828,
+		.BlackwaterCity = 0x004EC0C0,
+		.CommandCenter = 0x004EC088,
+		.BlackwaterDocks = 0x004EE908,
+		.AquatosSewers = 0x004EDC08,
+		.MarcadiaPalace = 0x004ED588,
 #else
-    .Lobby = 0,
-	  .Bakisi = 0x004F7BD0,
-	  .Hoven = 0x004F9C28,
-	  .OutpostX12 = 0x004EF540,
-    .KorgonOutpost = 0x004ECD58,
-	  .Metropolis = 0x004EC0A8,
-	  .BlackwaterCity = 0x004E98C0,
-	  .CommandCenter = 0x004E9A48,
-    .BlackwaterDocks = 0x004EC288,
-    .AquatosSewers = 0x004EB5C8,
-    .MarcadiaPalace = 0x004EAF08,
+		.Lobby = 0,
+		.Bakisi = 0x004F7BD0,
+		.Hoven = 0x004F9C28,
+		.OutpostX12 = 0x004EF540,
+		.KorgonOutpost = 0x004ECD58,
+		.Metropolis = 0x004EC0A8,
+		.BlackwaterCity = 0x004E98C0,
+		.CommandCenter = 0x004E9A48,
+		.BlackwaterDocks = 0x004EC288,
+		.AquatosSewers = 0x004EB5C8,
+		.MarcadiaPalace = 0x004EAF08,
 #endif
-  };
+	};
 
-  u32 weaponPackSpawnFunc = GetAddress(&vaWeaponPackSpawnFunc);
-  if (weaponPackSpawnFunc) {
-    *(u32*)weaponPackSpawnFunc = 0;
-    *(u32*)(weaponPackSpawnFunc - 0x7BF4) = 0;
-  }
+	u32 weaponPackSpawnFunc = GetAddress(&vaWeaponPackSpawnFunc);
+	if (weaponPackSpawnFunc) {
+		*(u32*)weaponPackSpawnFunc = 0;
+		*(u32*)(weaponPackSpawnFunc - 0x7BF4) = 0;
+	}
 }
 
 /*
@@ -102,8 +103,8 @@ void disableWeaponPacks(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-int SpawnedPack[2] = {0,0};
-void SpawnPack(int a0, int a1, int a2, int a3)
+int SpawnedPack = 0;
+void SpawnPack(int a0, int a1, int a2)
 {
     VariableAddress_t vaRespawnTimerFunc = {
 #if UYA_PAL
@@ -162,27 +163,17 @@ void SpawnPack(int a0, int a1, int a2, int a3)
     };
 
     // Run Original Respawn Timer Hook
-	((void (*)(int, int, int, int))GetAddress(&vaRespawnTimerFunc))(a0, a1, a2, a3);
-
-    // Spawn Pack if Health <= zero and if not spawned already.
-    // get all players
-    Player ** players = playerGetAll();
-	int i;
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-	{
-    	if (!players[i])
-    		continue;
-
-		Player * player = players[i];
-        // if player health is zero, and pack hasn't spawned, spawn pack
-		if (playerGetHealth(player) <= 0 && playerIsLocal(player) && SpawnedPack[i] == 0)
-		{
-            // Spawn Pack
-            ((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(player);
-            // It now spawned pack, so set to true.
-            SpawnedPack[i] = 1;
-        }
-	}
+	((void (*)(int, int, int))GetAddress(&vaRespawnTimerFunc))(a0, a1, a2);
+	
+	// if pack already spawned, don't spawn more.
+	if (SpawnedPack == 1)
+		return;
+	// set player to register v1's value.
+	register int player asm("s3");
+	// Spawn Pack
+	((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(player);
+	// It now spawned pack, so set to true.
+	SpawnedPack = 1;
 }
 
 void spawnWeaponPackOnDeath(void)
@@ -233,18 +224,16 @@ void spawnWeaponPackOnDeath(void)
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
 	{
     	if (!players[i])
-    		continue;
+    		return;
 
 		Player * player = players[i];
-		if (playerGetHealth(player) > 0 && playerIsLocal(player))
-		{
-            SpawnedPack[i] = 0;
-		}
+		if (player->IsLocal && playerGetHealth(player) > 0)
+            SpawnedPack = 0;
 	}
 }
 
 /*
- * NAME :		disableV2s
+ * NAME :		v2_Setting
  * 
  * DESCRIPTION :
  * 
@@ -257,9 +246,22 @@ void spawnWeaponPackOnDeath(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void disableV2s(void)
+void v2_logic(void)
 {
-    VariableAddress_t vaWeaponMeterAddress = {
+	Player ** players = playerGetAll();
+	int i, j;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		Player * player = players[i];
+		if (!player)
+			return;
+
+		for(j = 1; j < 10; ++j)
+			playerGiveWeaponUpgrade(player, j);
+	}
+}
+void v2_Setting(int setting)
+{
+    VariableAddress_t vaV2Setting_V2BranchAddr = {
 #ifdef UYA_PAL
         .Lobby = 0,
         .Bakisi = 0x00544508,
@@ -286,9 +288,24 @@ void disableV2s(void)
         .MarcadiaPalace = 0x005347d8,
 #endif
     };
-    u32 addr = GetAddress(&vaWeaponMeterAddress);
-    if (*(u32*)addr == 0x10400003) // beq v0, zero
-		*(u32*)addr = 0x10000003;
+	// Disable V2's
+	if (setting == 1) {
+		u32 addr = GetAddress(&vaV2Setting_V2BranchAddr);
+		if (*(u32*)addr == 0x10400003) // beq v0, zero
+			*(u32*)addr = 0x10000003;
+	}
+	// Always V2's
+	else {
+		static int GaveV2s = 0;
+		if (!GaveV2s) {
+			int GiveWeapon_JRRA = (u32)GetAddress(&vaGiveWeaponFunc) + 0x538;
+			if (*(u32*)GiveWeapon_JRRA == 0x03e00008)
+				HOOK_J(GiveWeapon_JRRA, &v2_logic);
+
+			v2_logic();
+			GaveV2s = 1;
+		}
+	}
 }
 
 /*
@@ -404,7 +421,8 @@ void AutoRespawn(void)
 
 int setGattlingTurretHealth(int value)
 {
-    int MultiplyBy[] = {.5, 1.5, 2, 3, 4};
+    // if value equals 1, multiply it by 1.5, else use it's intended value.
+    int MultiplyBy = (value == 1) ? 1.5 : value;
     int init = 0;
     Moby * moby = mobyListGetStart();
     // Iterate through mobys and change health
@@ -416,7 +434,7 @@ int setGattlingTurretHealth(int value)
 			// hexidecimal value.  We use the hex value and multiply it
 			// by our wanted value, then store it as it's float health
 			int HexHealth = ((u32)moby->PVar + 0x34);
-            int NewHealth = (u32)(*(u32*)HexHealth * MultiplyBy[value - 1]);
+            int NewHealth = (u32)(*(u32*)HexHealth * MultiplyBy);
 			*(u32*)HexHealth = NewHealth;
 			*(float*)((u32)moby->PVar + 0x30) = NewHealth;
         }
@@ -751,42 +769,8 @@ void setRespawnTimer(void)
 		if (droneConfig->OClass == MOBY_ID_DRONE_BOT_CLUSTER_CONFIG) {
 			droneConfig->PosY = -100;
 		}
-		// GameplayMobyDef_t* dronePlayerConfig = &mobyInstancesHeader->MobyInstances[i];
-		// if (dronePlayerConfig->OClass == MOBY_ID_DRONE_BOT_CLUSTER_UPDATER) {
-		// 	dronePlayerConfig->PosY = -200;
-		// }
-		// GameplayMobyDef_t* drones = &mobyInstancesHeader->MobyInstances[i];
-		// if (drones->OClass == MOBY_ID_DRONE_BOT) {
-		// 	drones->PosY = -100;
-		// }
 	}
 }
-// void disableDrones(void)
-// {
-// 	// Moby * a = mobyListGetStart();
-// 	// // Remove drone cluster update function. (this is for main configuration)
-// 	// while ((a = mobyFindNextByOClass(a, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG))) {
-// 	// 	a->PUpdate = 0;
-// 	// 	mobyDestroy(a);
-// 	// 	++a;
-// 	// }
-// 	// Moby * b = mobyListGetStart();
-// 	// // Remove drone update function. (This is for the player activator)
-// 	// while ((b = mobyFindNextByOClass(b, MOBY_ID_DRONE_BOT_CLUSTER_UPDATER))) {
-// 	// 	b->PUpdate = 0;
-// 	// 	mobyDestroy(b);
-// 	// 	++b;
-// 	// }
-// 	Moby * c = mobyListGetStart();
-// 	while ((c = mobyFindNextByOClass(c, MOBY_ID_DRONE_BOT))) {
-// 		c->PVar = 0;
-// 		c->PUpdate = 0;
-// 		c->Scale = 0;
-// 		memset(c->BSphere, 0, sizeof(c->BSphere));
-// 		//memset(c->Position, 0, sizeof(c->Position));
-// 		++c;
-// 	}
-// }
 
 /*
  * NAME :		keepBaseHealthPadActive
