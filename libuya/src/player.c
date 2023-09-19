@@ -439,6 +439,38 @@ PlayerVTable * playerGetVTable(Player * player)
     return (PlayerVTable*)player->Guber.Vtable;
 }
 
+VariableAddress_t vaGiveWeaponUpgradeFunc = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x005472a0,
+	.Hoven = 0x00549468,
+	.OutpostX12 = 0x0053ed40,
+    .KorgonOutpost = 0x0053c428,
+	.Metropolis = 0x0053b828,
+	.BlackwaterCity = 0x00539010,
+	.CommandCenter = 0x00538868,
+    .BlackwaterDocks = 0x0053b0e8,
+    .AquatosSewers = 0x0053a3e8,
+    .MarcadiaPalace = 0x00539d68,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00544998,
+	.Hoven = 0x00546aa0,
+	.OutpostX12 = 0x0053c3b8,
+    .KorgonOutpost = 0x00539b20,
+	.Metropolis = 0x00538f20,
+	.BlackwaterCity = 0x00536688,
+	.CommandCenter = 0x005360b8,
+    .BlackwaterDocks = 0x005388f8,
+    .AquatosSewers = 0x00537c38,
+    .MarcadiaPalace = 0x00537578,
+#endif
+};
+void playerGiveWeaponUpgrade(Player * player, int weaponId)
+{
+    internal_playerGiveWeaponUpgrade((u32)player + 0x1a40, weaponId);
+}
+
 VariableAddress_t vaGiveWeaponFunc = {
 #if UYA_PAL
 	.Lobby = 0,

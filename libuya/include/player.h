@@ -951,6 +951,19 @@ __LIBUYA_SETTER__ void playerSetPosRot(Player * player, u32 * position, u32 * ro
 int playerIsDead(Player * player);
 
 /*
+ * NAME :		playerGiveWeaponUpgade
+ * DESCRIPTION :
+ * 			Upgrades the target players weapon.
+ * NOTES :  Only Upgrades if the player has the given weapon.
+ * ARGS : 
+ *      player      :           Target player.
+ * 		weaponId	:			Weapon
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void playerGiveWeaponUpgrade(Player * player, int weaponId);
+
+/*
  * NAME :		playerGiveWeapon
  * DESCRIPTION :
  * 			Give the target player the given weapon ID.
