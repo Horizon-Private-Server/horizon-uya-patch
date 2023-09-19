@@ -210,8 +210,8 @@ MenuElem_ListData_t dataVampire = {
 MenuElem_ListData_t dataSetGattlingTurretHealth = {
     &gameConfig.grSetGattlingTurretHealth,
     NULL,
-    5,
-    { "Default", "1.5x", "2x", "3x", "4x", }
+    6,
+    { "Default", ".5x", "1.5x", "2x", "3x", "4x", }
 };
 
 MenuElem_ListData_t dataRespawnTimer = {

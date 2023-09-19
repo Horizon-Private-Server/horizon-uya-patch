@@ -1217,55 +1217,6 @@ void setupPatchConfigInGame()
 }
 
 /*
- * NAME :		hookedProcessLevel
- * 
- * DESCRIPTION :
- * 		 	Function hook that the game will invoke when it is about to start processing a newly loaded level.
- * 			The argument passed is the address of the function to call to start processing the level.
- * 
- * NOTES :
- * 
- * ARGS : 
- * 
- * RETURN :
- * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
-void hookedProcessLevel()
-{
-	// call gamerules level load
-	grLoadStart();
-	
-	// run base (FlushCache)
-	((void (*)(void))0x001264e0)();
-}
-
-/*
- * NAME :		patchProcessLevel
- * 
- * DESCRIPTION :
- * 			Installs hook at where the game starts the process a newly loaded level.
- * 
- * NOTES :
- * 
- * ARGS : 
- * 
- * RETURN :
- * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
-void patchProcessLevel(void)
-{
-	// jal hookedProcessLevel
-#if UYA_PAL
-	int hook = 0x0019334c;
-#else
-	int hook = 0x0019343c;
-#endif
-	*(u32*)hook = 0x0C000000 | (u32)&hookedProcessLevel / 4;
-}
-
-/*
  * NAME :		drawFunction
  * 
  * DESCRIPTION :
@@ -1471,9 +1422,6 @@ int main(void)
 
 	// Patches FOV to let it be user selectable.
 	patchFov();
-
-	// Patch process level call
-	patchProcessLevel();
 
 	// 
 	onConfigUpdate();

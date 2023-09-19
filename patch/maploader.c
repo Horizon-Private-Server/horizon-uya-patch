@@ -113,6 +113,8 @@ char * fGlobalVersion = "uya/version";
 
 #endif
 
+void grLoadStart();
+
 void hook(void);
 void loadModules(void);
 
@@ -580,6 +582,8 @@ u64 hookedLevelExit(void)
 	// We try and hook here to just to make sure that after tha game loads
 	// We can still load our custom minimap
   hook();
+
+  grLoadStart();
 
   return r;
 }
