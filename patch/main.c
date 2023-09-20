@@ -997,7 +997,8 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 
 	// apply our fov modifier
 	// only if not scoping with sniper
-	if (ra != GetAddress(&vaFieldOfView_FluxRA))
+	int FluxRA = GetAddress(&vaFieldOfView_FluxRA);
+	if (ra != FluxRA && ra != ((u32)FluxRA + 0xe0))
 		fov += (config.playerFov / 10.0) * 1;
 
 	if (a2 > 2) {
