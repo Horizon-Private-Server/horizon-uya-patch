@@ -419,6 +419,19 @@ void AutoRespawn(void)
 
 }
 
+/*
+ * NAME :		setGatlinTurretHealth
+ * 
+ * DESCRIPTION :
+ *              
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 int setGattlingTurretHealth(int value)
 {
     int MultiplyBy[] = {.5, 1.5, 2, 3, 4};
@@ -436,6 +449,35 @@ int setGattlingTurretHealth(int value)
             int NewHealth = (u32)(*(u32*)HexHealth * MultiplyBy[value - 1]);
 			*(u32*)HexHealth = NewHealth;
 			*(float*)((u32)moby->PVar + 0x30) = NewHealth;
+        }
+        ++moby; // next moby
+    }
+    init = 1;
+    return init;
+}
+
+/*
+ * NAME :		deleteSiegeNodeTurret
+ * 
+ * DESCRIPTION :
+ *              
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int deleteSiegeNodeTurrets(void)
+{
+    int init = 0;
+    Moby * moby = mobyListGetStart();
+    // Iterate through mobys and change health
+    while ((moby = mobyFindNextByOClass(moby, MOBY_ID_SIEGE_NODE))) {
+        if (moby->PUpdate) {
+			int SpawnTurret = ((u32)moby->PUpdate + 0x810);
+			*(u32*)SpawnTurret = 0;
         }
         ++moby; // next moby
     }

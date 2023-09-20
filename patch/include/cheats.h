@@ -10,6 +10,7 @@ void v2_Setting(int setting);
 int disableHealthBoxes(void);
 void AutoRespawn(void);
 int setGattlingTurretHealth(int value);
+int deleteSiegeNodeTurrets(void);
 void vampireLogic(float healRate);
 void setRespawnTimer(void);
 void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay);

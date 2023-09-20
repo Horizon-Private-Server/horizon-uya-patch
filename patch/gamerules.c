@@ -47,6 +47,7 @@ int GameRulesInitialized = 0;
 int FirstPass = 1;
 int HasDisabledHealthboxes = 0;
 int HasSetGattlingTurretHealth = 0;
+int HasNoBaseDefense_SmallTurrets = 0;
 int HasKeepBaseHealthPadActive = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 short PlayerDeaths[GAME_MAX_PLAYERS];
@@ -101,6 +102,7 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 
 	HasDisabledHealthboxes = 0;
 	HasSetGattlingTurretHealth = 0;
+	HasNoBaseDefense_SmallTurrets = 0;
 	HasKeepBaseHealthPadActive = 0;
 	GameRulesInitialized = 1;
 }
@@ -146,6 +148,9 @@ void grGameStart(void)
 
 	if (gameConfig.grSetGattlingTurretHealth && !HasSetGattlingTurretHealth)
 		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.grSetGattlingTurretHealth);
+
+	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasNoBaseDefense_SmallTurrets)
+		HasNoBaseDefense_SmallTurrets = deleteSiegeNodeTurrets();
 
 	if (gameConfig.prChargebootForever)
 		chargebootForever();
