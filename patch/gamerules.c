@@ -40,6 +40,9 @@ extern PatchGameConfig_t gameConfig;
 // lobby clients patch config
 extern PatchConfig_t lobbyPlayerConfigs[GAME_MAX_PLAYERS];
 
+// gameplay hook addresses
+extern VariableAddress_t vaGameplayHook;
+
 int Gameplay_Hook = 0;
 int Gameplay_Func = 0;
 
@@ -47,7 +50,7 @@ int GameRulesInitialized = 0;
 int FirstPass = 1;
 int HasDisabledHealthboxes = 0;
 int HasSetGattlingTurretHealth = 0;
-int HasNoBaseDefense_SmallTurrets = 0;
+int HasDeleteSiegeNodeTurrets = 0;
 int HasKeepBaseHealthPadActive = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 short PlayerDeaths[GAME_MAX_PLAYERS];
@@ -69,6 +72,12 @@ u32 onGameplayLoad(void* a0, long a1)
 	);
 	if (gameConfig.grAllowDrones)
 		onGameplayLoad_disableDrones(gameplay);
+
+	if (gameConfig.grDisableWeaponCrates)
+		onGameplayLoad_removeWeaponCrates(gameplay);
+
+	if (gameConfig.grDisableAmmoPickups)
+		onGameplayLoad_removeAmmoPickups(gameplay);
 
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
@@ -102,7 +111,7 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 
 	HasDisabledHealthboxes = 0;
 	HasSetGattlingTurretHealth = 0;
-	HasNoBaseDefense_SmallTurrets = 0;
+	HasDeleteSiegeNodeTurrets = 0;
 	HasKeepBaseHealthPadActive = 0;
 	GameRulesInitialized = 1;
 }
@@ -138,7 +147,7 @@ void grGameStart(void)
 		spawnWeaponPackOnDeath();
 	
 	if (gameConfig.grV2s)
-		v2_Setting(gameConfig.grV2s);
+		v2_Setting(gameConfig.grV2s, FirstPass);
 
     if (gameConfig.grDisableHealthBoxes && !HasDisabledHealthboxes)
 		HasDisabledHealthboxes = disableHealthboxes();
@@ -149,8 +158,8 @@ void grGameStart(void)
 	if (gameConfig.grSetGattlingTurretHealth && !HasSetGattlingTurretHealth)
 		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.grSetGattlingTurretHealth);
 
-	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasNoBaseDefense_SmallTurrets)
-		HasNoBaseDefense_SmallTurrets = deleteSiegeNodeTurrets();
+	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasDeleteSiegeNodeTurrets)
+		HasDeleteSiegeNodeTurrets = deleteSiegeNodeTurrets();
 
 	if (gameConfig.prChargebootForever)
 		chargebootForever();
@@ -197,67 +206,17 @@ void grLobbyStart(void)
 	GameOptions * gameOptions = gameGetOptions();
 	// if in staging
 	if (gameSettings && gameSettings->GameLoadStartTime < 0) {
-		// Set gameConfig settings relative to their GameOption settings.
-		static int RelativeOptionsSet = 0;
-		if (!RelativeOptionsSet) {
-			gameConfig.grNoBaseDefense_Bots = gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots;
-			gameConfig.grNoBaseDefense_SmallTurrets = gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets;
-			RelativeOptionsSet = 1;
-		}
 		// Let Gameconfig set GameOptions.
-		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = gameConfig.grNoBaseDefense_Bots;
-		gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = gameConfig.grNoBaseDefense_SmallTurrets;
-
-		return;	
+		if (gameConfig.grNoBaseDefense_Bots)
+			gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = 0;
+		
+		if (gameConfig.grNoBaseDefense_SmallTurrets)
+			gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = 0;
+	} else {
+		// If we're not in staging then reset
+		GameRulesInitialized = 0;
+		FirstPass = 1;
 	}
-
-	// If we're not in staging then reset
-	GameRulesInitialized = 0;
-	FirstPass = 1;
-}
-
-/*
- * NAME :		getGameplayHook
- * 
- * DESCRIPTION :
- * 			Gets the needed "Gameplay_Hook".
- * 
- * NOTES :
- * 
- * ARGS : 
- * 
- * RETURN :
- * 
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-int getGameplayHook(int map)
-{
-    switch (map) {
-#if UYA_PAL
-        case MAP_ID_BAKISI: return 0x0046db20;
-        case MAP_ID_HOVEN: return 0x0046f6d0;
-        case MAP_ID_OUTPOST_X12: return 0x004664d0;
-        case MAP_ID_KORGON: return 0x00464060;
-        case MAP_ID_METROPOLIS: return 0x004633a0;
-        case MAP_ID_BLACKWATER_CITY: return 0x00460bd0;
-        case MAP_ID_COMMAND_CENTER: return 0x004614c8;
-        case MAP_ID_BLACKWATER_DOCKS: return 0x00463d48;
-        case MAP_ID_AQUATOS_SEWERS: return 0x00463048;
-        case MAP_ID_MARCADIA: return 0x004629c8;
-#else
-        case MAP_ID_BAKISI: return 0x0046bfb8; // 0x0046d4cc;
-        case MAP_ID_HOVEN: return 0x0046daa8;
-        case MAP_ID_OUTPOST_X12: return 0x004648e8;
-        case MAP_ID_KORGON: return 0x004624f8;
-        case MAP_ID_METROPOLIS: return 0x00461838;
-        case MAP_ID_BLACKWATER_CITY: return 0x0045efe8;
-        case MAP_ID_COMMAND_CENTER: return 0x0045faa0;
-        case MAP_ID_BLACKWATER_DOCKS:return 0x004622e0;
-        case MAP_ID_AQUATOS_SEWERS: return 0x00461620;
-        case MAP_ID_MARCADIA: return 0x00460f60;
-#endif
-		default: return 0;
-    }
 }
 
 /*
@@ -283,7 +242,7 @@ void grLoadStart(void)
 		return;
 
 	// Returns needed hook and needed function.
-	Gameplay_Hook = getGameplayHook(gameGetCurrentMapId());
+	Gameplay_Hook = GetAddressImmediate(&vaGameplayHook);
 	// Convert the JAL to the function address and save for later.
 	Gameplay_Func = JAL2ADDR(*(u32*)Gameplay_Hook);
 	

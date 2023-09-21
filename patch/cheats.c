@@ -259,7 +259,7 @@ void v2_logic(void)
 			playerGiveWeaponUpgrade(player, j);
 	}
 }
-void v2_Setting(int setting)
+void v2_Setting(int setting, int FirstPass)
 {
     VariableAddress_t vaV2Setting_V2BranchAddr = {
 #ifdef UYA_PAL
@@ -296,14 +296,12 @@ void v2_Setting(int setting)
 	}
 	// Always V2's
 	else {
-		static int GaveV2s = 0;
-		if (!GaveV2s) {
-			int GiveWeapon_JRRA = (u32)GetAddress(&vaGiveWeaponFunc) + 0x538;
-			if (*(u32*)GiveWeapon_JRRA == 0x03e00008)
-				HOOK_J(GiveWeapon_JRRA, &v2_logic);
-
+		// hook v2 logic ad end of give weapon function.
+		int GiveWeapon_JRRA = (u32)GetAddress(&vaGiveWeaponFunc) + 0x538;
+		if (*(u32*)GiveWeapon_JRRA == 0x03e00008)
+			HOOK_J(GiveWeapon_JRRA, &v2_logic);
+		if (FirstPass) {
 			v2_logic();
-			GaveV2s = 1;
 		}
 	}
 }
@@ -475,10 +473,9 @@ int deleteSiegeNodeTurrets(void)
     Moby * moby = mobyListGetStart();
     // Iterate through mobys and change health
     while ((moby = mobyFindNextByOClass(moby, MOBY_ID_SIEGE_NODE))) {
-        if (moby->PUpdate) {
-			int SpawnTurret = ((u32)moby->PUpdate + 0x810);
-			*(u32*)SpawnTurret = 0;
-        }
+        if (moby->PUpdate)
+			*(u32*)((u32)moby->PUpdate + 0x810) = 0;
+
         ++moby; // next moby
     }
     init = 1;
@@ -882,4 +879,49 @@ void noPostHitInvinc(void)
 	int time = GetAddress(&vaPostHitInvinc);
 	*(u32*)(time) = 0x24020001;
 	*(u32*)(time + 0x308) = 0x24020001;
+}
+
+void onGameplayLoad_removeWeaponCrates(GameplayHeaderDef_t * gameplay)
+{
+	int i;
+	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
+	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
+		GameplayMobyDef_t* Crates = &mobyInstancesHeader->MobyInstances[i];
+		switch (Crates->OClass) {
+			case MOBY_ID_CRATE_GRAVITY_BOMB:
+			case MOBY_ID_CRATE_ROCKET_TUBE:
+			case MOBY_ID_CRATE_FLUX:
+			case MOBY_ID_CRATE_BLITZ:
+			case MOBY_ID_CRATE_LAVA_GUN:
+			case MOBY_ID_CRATE_HOLOSHIELD:
+			case MOBY_ID_CRATE_MORPH_O_RAY:
+			case MOBY_ID_CRATE_MINE:
+			case MOBY_ID_CRATE_RANDOM_PICKUP:
+			case MOBY_ID_CRATE_CHARGEBOOTS:
+			case MOBY_ID_AMMO_PACK_HOLOSIELD:
+				Crates->PosY = -100;
+		}
+	}
+}
+
+void onGameplayLoad_removeAmmoPickups(GameplayHeaderDef_t * gameplay)
+{
+	int i;
+	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
+	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
+		GameplayMobyDef_t* Pickups = &mobyInstancesHeader->MobyInstances[i];
+		switch (Pickups->OClass) {
+			case MOBY_ID_AMMO_PACK_GRAVITY_BOMB:
+			case MOBY_ID_AMMO_PACK_BLITZ:
+			case MOBY_ID_AMMO_PACK_FLUX:
+			case MOBY_ID_AMMO_PACK_ROCKET_TUBE:
+			case MOBY_ID_AMMO_PACK_MINE:
+			case MOBY_ID_AMMO_PACK_LAVA_GUN:
+			case MOBY_ID_AMMO_PACK_HOLOSIELD:
+			case MOBY_ID_AMMO_PACK_N60:
+			case MOBY_ID_CRATE_RANDOM_PICKUP:
+			case MOBY_ID_CRATE_CHARGEBOOTS: 
+				Pickups->PosY = -100;
+		}
+	}
 }

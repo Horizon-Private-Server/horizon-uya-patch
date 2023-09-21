@@ -26,6 +26,8 @@ typedef struct PatchGameConfig
   char grV2s;
   char grNoCooldown;
   char grDisableHealthBoxes;
+  char grDisableWeaponCrates;
+  char grDisableAmmoPickups;
   char grAutoRespawn;
   char grSetGattlingTurretHealth;
   char grAllowDrones;

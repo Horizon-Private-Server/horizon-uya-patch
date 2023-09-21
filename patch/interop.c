@@ -692,3 +692,34 @@ VariableAddress_t vaPauseMenuAddr = {
     .MarcadiaPalace = 0x003c81bc,
 #endif
 };
+
+//================================================
+//=============  GameplayHook
+//================================================
+VariableAddress_t vaGameplayHook = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0046db20,
+    .Hoven = 0x0046f6d0,
+    .OutpostX12 = 0x004664d0,
+    .KorgonOutpost = 0x00464060,
+    .Metropolis = 0x004633a0,
+    .BlackwaterCity = 0x00460bd0,
+    .CommandCenter = 0x004614c8,
+    .BlackwaterDocks = 0x00463d48,
+    .AquatosSewers = 0x00463048,
+    .MarcadiaPalace = 0x004629c8,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0046bfb8,
+    .Hoven = 0x0046daa8,
+    .OutpostX12 = 0x004648e8,
+    .KorgonOutpost = 0x004624f8,
+    .Metropolis = 0x00461838,
+    .BlackwaterCity = 0x0045efe8,
+    .CommandCenter = 0x0045faa0,
+    .BlackwaterDocks = 0x004622e0,
+    .AquatosSewers = 0x00461620,
+    .MarcadiaPalace = 0x00460f60,
+#endif
+};
