@@ -735,7 +735,7 @@ typedef struct Player
 	float PlayerPositionX;											// 0x2538
 	float PlayerPositionZ;											// 0x253C
 	float PlayerPositionY;											// 0x2540
-	int mpIndex;													// 0x2444
+	int mpIndex;													// 0x2544
 	int mpTeam;														// 0x2548
 	int vehicleState;												// 0x254C
 	int vehicleStateTimer;											// 0x2550

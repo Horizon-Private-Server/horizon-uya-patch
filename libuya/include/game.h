@@ -366,4 +366,15 @@ __LIBUYA_SETTER__ void gameSetDeathHeight(float height);
  */
 __LIBUYA_GETTER__ GameData* gameGetData(void);
 
+/*
+ * NAME :		gameGetGSFrame
+ * 
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int gameGetGSFrame(void)
+
 #endif // _LIBUYA_GAME_H_

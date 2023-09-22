@@ -45,6 +45,8 @@
 // Player id of the winner. Set to -1 for team win.
 #define GAME_WINNER_PLAYER_ID               (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x14))
 
+#define GAME_GS_FRAME                       (*(int*)GetAddress(&vaGSFrame));
+
 #define SPAWNPOINTS_SIEGE                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x20c))
 #define SPAWNPOINTS_CTF                     (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x210))
 #define SPAWNPOINTS_DM                      (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x214))
@@ -52,28 +54,28 @@
 VariableAddress_t vaGSFrame = {
 #if UYA_PAL
 	.Lobby = 0,
-	.Bakisi = 0,
-	.Hoven = 0,
-	.OutpostX12 = 0,
-    .KorgonOutpost = 0,
-	.Metropolis = 0,
-	.BlackwaterCity = 0,
-	.CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
+	.Bakisi = 0x00247ec8,
+	.Hoven = 0x002480c8,
+	.OutpostX12 = 0x00247fc8,
+    .KorgonOutpost = 0x00247e48,
+	.Metropolis = 0x00247ec8,
+	.BlackwaterCity = 0x00247e48,
+	.CommandCenter = 0x00247a48,
+    .BlackwaterDocks = 0x00247b48,
+    .AquatosSewers = 0x00247b48,
+    .MarcadiaPalace = 0x00247b48,
 #else
 	.Lobby = 0,
 	.Bakisi = 0x00248048,
-	.Hoven = 0,
-	.OutpostX12 = 0,
-    .KorgonOutpost = 0,
-	.Metropolis = 0,
-	.BlackwaterCity = 0,
-	.CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
+	.Hoven = 0x00248248,
+	.OutpostX12 = 0x00248148,
+    .KorgonOutpost = 0x00247fc8,
+	.Metropolis = 0x00248048,
+	.BlackwaterCity = 0x00247fc8,
+	.CommandCenter = 0x00247bc8,
+    .BlackwaterDocks = 0x00247cc8,
+    .AquatosSewers = 0x00247cc8,
+    .MarcadiaPalace = 0x00247cc8,
 #endif
 };
 
@@ -251,4 +253,9 @@ void gameSetWinner(int teamOrPlayerId, int isTeam)
 GameData* gameGetData(void)
 {
     return GAME_DATA;
+}
+
+int gameGetGSFrame(void)
+{
+    return GAME_GS_FRAME;
 }
