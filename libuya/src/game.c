@@ -45,7 +45,7 @@
 // Player id of the winner. Set to -1 for team win.
 #define GAME_WINNER_PLAYER_ID               (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x14))
 
-#define GAME_GS_FRAME                       (*(int*)GetAddress(&vaGSFrame));
+#define GAME_GS_FRAME                       (*(int*)GetAddress(&vaGSFrame))
 
 #define SPAWNPOINTS_SIEGE                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x20c))
 #define SPAWNPOINTS_CTF                     (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x210))

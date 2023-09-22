@@ -375,6 +375,6 @@ __LIBUYA_GETTER__ GameData* gameGetData(void);
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-int gameGetGSFrame(void)
+int gameGetGSFrame(void);
 
 #endif // _LIBUYA_GAME_H_
