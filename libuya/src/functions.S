@@ -261,6 +261,8 @@ FUNCTION(powf, 0x00136788) # not ported
 FUNCTION(fabsf, 0x0011a550)
 FUNCTION(fptodp, 0x001321c8)
 FUNCTION(__divdi3, 0x00130760)
+#FUNCTION(dptoli, 0x00131d70)
+#FUNCTION(litodp, 0x00131cb8)
 FUNCTION(floorf, 0x00136ba8)
 
 #--------------------------------------------------------

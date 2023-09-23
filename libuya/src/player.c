@@ -274,6 +274,104 @@ int playerPadGetButtonUp(Player * player, u16 buttonMask)
 }
 
 //--------------------------------------------------------------------------------
+// Other Obfuscate Address (Health, State)
+VariableAddress_t vaPlayerObfuscateAddr = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x003bfe21,
+	.Hoven = 0x003bf461,
+	.OutpostX12 = 0x003b7361,
+    .KorgonOutpost = 0x003b7121,
+	.Metropolis = 0x003b6ea1,
+	.BlackwaterCity = 0x003b70e1,
+	.CommandCenter = 0x003c7661,
+    .BlackwaterDocks = 0x003c7a61,
+    .AquatosSewers = 0x003c81e1,
+    .MarcadiaPalace = 0x003c7761,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x003bff61,
+	.Hoven = 0x003bf5a1,
+	.OutpostX12 = 0x003b74a1,
+    .KorgonOutpost = 0x003b7261,
+	.Metropolis = 0x003b6fe1,
+	.BlackwaterCity = 0x003b7221,
+	.CommandCenter = 0x003c77a1,
+    .BlackwaterDocks = 0x003c7ba1,
+    .AquatosSewers = 0x003c8321,
+    .MarcadiaPalace = 0x003c78a1,
+#endif
+};
+// Weapon Obfuscate Address
+VariableAddress_t vaPlayerObfuscateWeaponAddr = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x003aa041,
+	.Hoven = 0x003a9681,
+	.OutpostX12 = 0x003a1581,
+    .KorgonOutpost = 0x003a1341,
+	.Metropolis = 0x003a10c1,
+	.BlackwaterCity = 0x003a1301,
+	.CommandCenter = 0x003b1881,
+    .BlackwaterDocks = 0x003b1c81,
+    .AquatosSewers = 0x003b2401,
+    .MarcadiaPalace = 0x003b1981,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x003aa181,
+	.Hoven = 0x003a97c1,
+	.OutpostX12 = 0x003a16c1,
+    .KorgonOutpost = 0x003a1481,
+	.Metropolis = 0x003a1201,
+	.BlackwaterCity = 0x003a1441,
+	.CommandCenter = 0x003b19c1,
+    .BlackwaterDocks = 0x003b1dc1,
+    .AquatosSewers = 0x003b2541,
+    .MarcadiaPalace = 0x003b1ac1,
+#endif
+};
+u32 playerDeobfuscate(u32 src, int addr, int mode)
+{
+    static int StackAddr[2];
+    u32 Player_Addr = src;
+    u32 Player_Value = *(u8*)Player_Addr;
+    int RandDataAddr = !addr ? GetAddress(&vaPlayerObfuscateAddr) : GetAddress(&vaPlayerObfuscateWeaponAddr);
+    int n = 0;
+	int rawr = 0;
+    int Converted;
+    // Mode 0: For Health and Player State (Possibly more)
+    if (mode == 0) {
+        do {
+            u32 Offset = (u32)((int)Player_Addr - (u32)Player_Value & 7) + n;
+            n = n + 5;
+            *(u8*)((int)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff));
+            ++rawr;
+        } while (n < 0x28);
+        // XORAddr (first 4 bytes of StackAddr)
+        StackAddr[0] = (u32)(StackAddr[0]) ^ (u32)Player_Addr;
+        // XORValue (second 4 bytes of StackAddr)
+        StackAddr[1] = (u32)((u32)StackAddr[1] ^ StackAddr[0]);
+        Converted = StackAddr[1];
+    // Mode 1: Meant for Weapons (and other items)
+    } else if (mode == 1) {
+        do {
+            u32 Offset = (u32)((u32)Player_Addr - (u8)Player_Value & 7) + n;
+            n = n + 3;
+            *(u8*)((u32)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Offset & 7) * 0xd1 + (u8)Player_Value);
+            ++rawr;
+        } while (n < 0x18);
+        StackAddr[0] = (u32)StackAddr[0] ^ (u32)Player_Addr;
+        StackAddr[2] = ((u32)StackAddr[1] ^ (u32)StackAddr[0]) >> 0x10;
+        n = (u32)((u32)StackAddr[1] ^ (u32)StackAddr[0] ^ (u32)StackAddr[2]) * 0x10000 + 1;
+        StackAddr[1] = (u32)StackAddr[2] / n;
+        // u64 hi is used later on in the UYA code, keeping just in case
+        // u64 hi = (u64)((u32)StackAddr[2] % n);
+        StackAddr[2] = (u32)StackAddr[2] & 0xff;
+        Converted = StackAddr[2];
+    }
+    return Converted;
+}
+
 VariableAddress_t vaSetPlayerStateFunc = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -343,27 +441,61 @@ void playerDecHealth(Player * player, int health)
 //--------------------------------------------------------------------------------
 void playerIncHealth(Player * player, int health)
 {
-    if (((int)playerGetHealth(player) + health) >= PLAYER_MAX_HEALTH)
-    {
-        playerSetHealth(player, PLAYER_MAX_HEALTH);
-        return;
-    }
-    else
-    {
-        // Grab address where math is done
-        int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
-        // Change to addition
-        *(u8*)math = 0;
-        // Run normal function
-        internal_HurtPlayer(player, health);
-        // Revert back to subtraction
-        *(u8*)math = 1;
-    }
+    asm(".set noreorder;");
+    // static int PlayerIncHealthStack[1];
+    // float fHealth = playerDeobfuscate(&player->Health, 0, 0);
+    // u32 Player_Addr = &player->Health;
+    // u32 Player_Value = *(u8*)Player_Addr;
+    // int gsFrame = gameGetGSFrame();
+	// int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
+    // u32 xord = *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4);
+    // // PlayerHealthStack[0] = (u32)Player_Addr ^ xord;
+    // PlayerIncHealthStack[1] = (float)((u32)(fHealth - (float)(int)health) ^ xord);
+    // PlayerIncHealthStack[0] = (u32)Player_Addr ^ xord;
+    // // PlayerIncHealthStack[1] = (float)((u32)(*(u32*)(&fHealth) + (float)(int)health) ^ xord);
+    // n = 0;
+	// m = 0;
+    // do {
+    //     u32 Offset = (u32)(((int)Player_Addr - (u32)Player_Value & 7) + n);
+    //     n = n + 5;
+    //     *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff)) = *(u8*)((int)PlayerIncHealthStack + m);
+    //     ++m;
+    // } while (n < 0x28);
+
+    // ===== OLD, BUT KEEPING
+    // Grab address where math is done
+    int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
+    // Change to addition
+    *(u8*)math = 0;
+    // Run normal function
+    internal_HurtPlayer(player, health);
+    // Revert back to subtraction
+    *(u8*)math = 1;
 }
 
 void playerSetHealth(Player * player, int health)
 {
-    // Grab address where math is done
+    // asm(".set noreorder;");
+    // static int PlayerSetHealthStack[1];
+    // float f = health;
+    // u32 Player_Addr = &player->Health;
+    // u32 Player_Value = *(u8*)Player_Addr;
+    // int gsFrame = gameGetGSFrame();
+	// int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
+    // u32 xord = *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4);
+	// PlayerSetHealthStack[0] = (u32)Player_Addr ^ xord;
+    // PlayerSetHealthStack[1] = xord ^ *(u32*)(&f);
+    // int n = 0;
+	// int m = 0;
+    // do {
+    //     u32 Offset = (u32)(((int)Player_Addr - (u32)Player_Value & 7) + n);
+    //     n = n + 5;
+    //     *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff)) = *(u8*)((int)PlayerSetHealthStack + m);
+    //     ++m;
+    // } while (n < 0x28);
+
+    // =======OLD, BUT KEEPING
+    // // Grab address where math is done
     int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
     // Instead of subtracting, move f01 to f00.
     *(u32*)math = 0x46000806; // mov.s $f0, $f1
@@ -375,12 +507,26 @@ void playerSetHealth(Player * player, int health)
 
 float playerGetHealth(Player * player)
 {
-    return player->pNetPlayer->pNetPlayerData->hitPoints;
+    // asm(".set noreorder;");
+    static int PlayerGetHealthStack[1];
+    u32 Health_Addr = &player->Health;
+    u32 Health_Value = *(u8*)Health_Addr;
+    int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
+    int n = 0;
+    int m = 0;
+    do {
+        u32 Offset = (u32)((int)Health_Addr - (u32)Health_Value & 7) + n;
+        n = n + 5;
+        *(u8*)((int)PlayerGetHealthStack + m) = *(u8*)((u32)RandDataAddr + (Health_Value + (Offset & 7) * 0xff));
+        ++m;
+    } while (n < 0x28);
+    return (float)((u32)PlayerGetHealthStack[1] ^ (u32)PlayerGetHealthStack[0] ^ (u32)Health_Addr);
 }
 //--------------------------------------------------------------------------------
 int playerIsDead(Player * player)
 {
-	return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
+	// return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
+    return playerGetHealth(player) <= 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -565,102 +711,4 @@ VariableAddress_t vaGiveMeRandomWeaponsFunc = {
 void playerGiveRandomWeapons(Player * player, int amount)
 {
     internal_GiveMeRandomWeapons(player, (!amount) ? 3 : amount);
-}
-
-// Other Obfuscate Address (Health, State)
-VariableAddress_t vaPlayerObfuscateAddr = {
-#if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x003bfe21,
-	.Hoven = 0x003bf461,
-	.OutpostX12 = 0x003b7361,
-    .KorgonOutpost = 0x003b7121,
-	.Metropolis = 0x003b6ea1,
-	.BlackwaterCity = 0x003b70e1,
-	.CommandCenter = 0x003c7661,
-    .BlackwaterDocks = 0x003c7a61,
-    .AquatosSewers = 0x003c81e1,
-    .MarcadiaPalace = 0x003c7761,
-#else
-	.Lobby = 0,
-	.Bakisi = 0x003bff61,
-	.Hoven = 0x003bf5a1,
-	.OutpostX12 = 0x003b74a1,
-    .KorgonOutpost = 0x003b7261,
-	.Metropolis = 0x003b6fe1,
-	.BlackwaterCity = 0x003b7221,
-	.CommandCenter = 0x003c77a1,
-    .BlackwaterDocks = 0x003c7ba1,
-    .AquatosSewers = 0x003c8321,
-    .MarcadiaPalace = 0x003c78a1,
-#endif
-};
-// Weapon Obfuscate Address
-VariableAddress_t vaPlayerObfuscateWeaponAddr = {
-#if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x003aa041,
-	.Hoven = 0x003a9681,
-	.OutpostX12 = 0x003a1581,
-    .KorgonOutpost = 0x003a1341,
-	.Metropolis = 0x003a10c1,
-	.BlackwaterCity = 0x003a1301,
-	.CommandCenter = 0x003b1881,
-    .BlackwaterDocks = 0x003b1c81,
-    .AquatosSewers = 0x003b2401,
-    .MarcadiaPalace = 0x003b1981,
-#else
-	.Lobby = 0,
-	.Bakisi = 0x003aa181,
-	.Hoven = 0x003a97c1,
-	.OutpostX12 = 0x003a16c1,
-    .KorgonOutpost = 0x003a1481,
-	.Metropolis = 0x003a1201,
-	.BlackwaterCity = 0x003a1441,
-	.CommandCenter = 0x003b19c1,
-    .BlackwaterDocks = 0x003b1dc1,
-    .AquatosSewers = 0x003b2541,
-    .MarcadiaPalace = 0x003b1ac1,
-#endif
-};
-u32 playerDeobfuscate(u32 src, int addr, int mode)
-{
-    static int StackAddr[3];
-    u32 Player_Addr = src;
-    u32 Player_Value = *(u8*)Player_Addr;
-    int RandDataAddr = !addr ? GetAddress(&vaPlayerObfuscateAddr) : GetAddress(&vaPlayerObfuscateWeaponAddr);
-    int n = 0;
-	int rawr = 0;
-    u32 Converted;
-    // Mode 0: For Health and Player State (Possibly more)
-    if (mode == 0) {
-        do {
-            u32 Offset = (u32)((int)Player_Addr - (u32)Player_Value & 7) + n;
-            n = n + 5;
-            *(u8*)((int)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff));
-            ++rawr;
-        } while (n < 0x28);
-        // XORAddr (first 4 bytes of StackAddr)
-        StackAddr[0] = (u32)(StackAddr[0]) ^ (u32)Player_Addr;
-        // XORValue (second 4 bytes of StackAddr)
-        StackAddr[1] = (u32)((u32)StackAddr[1] ^ StackAddr[0]);
-        Converted = StackAddr[1];
-    // Mode 1: Meant for Weapons (and other items)
-    } else if (mode == 1) {
-        do {
-            u32 Offset = (u32)((u32)Player_Addr - (u8)Player_Value & 7) + n;
-            n = n + 3;
-            *(u8*)((u32)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Offset & 7) * 0xd1 + (u8)Player_Value);
-            ++rawr;
-        } while (n < 0x18);
-        StackAddr[0] = (u32)StackAddr[0] ^ (u32)Player_Addr;
-        StackAddr[2] = ((u32)StackAddr[1] ^ (u32)StackAddr[0]) >> 0x10;
-        n = (u32)((u32)StackAddr[1] ^ (u32)StackAddr[0] ^ (u32)StackAddr[2]) * 0x10000 + 1;
-        StackAddr[1] = (u32)StackAddr[2] / n;
-        // u64 hi is used later on in the UYA code, keeping just in case
-        // u64 hi = (u64)((u32)StackAddr[2] % n);
-        StackAddr[2] = (u32)StackAddr[2] & 0xff;
-        Converted = StackAddr[2];
-    }
-    return Converted;
 }
