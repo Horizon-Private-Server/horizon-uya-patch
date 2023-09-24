@@ -898,7 +898,7 @@ void playerSetHealth(Player * player, int health);
  * 				Returns players health in float value
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-float playerGetHealth(Player * player);
+int playerGetHealth(Player * player);
 
 /*
  * NAME :		playerRespawn

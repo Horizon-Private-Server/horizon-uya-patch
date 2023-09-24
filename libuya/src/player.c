@@ -479,33 +479,33 @@ void playerSetHealth(Player * player, int health)
         return;
 
     // asm(".set noreorder;");
-    // int PlayerSetHealthStack[1];
-    // float f = health;
-    // u32 Player_Addr = &player->Health;
-    // u32 Player_Value = *(u8*)Player_Addr;
-    // int gsFrame = gameGetGSFrame();
-	// int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
-    // u32 xord = *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4);
-	// PlayerSetHealthStack[0] = (u32)Player_Addr ^ xord;
-    // PlayerSetHealthStack[1] = xord ^ *(u32*)(&f);
-    // int n = 0;
-	// int m = 0;
-    // do {
-    //     u32 Offset = (u32)(((int)Player_Addr - (u32)Player_Value & 7) + n);
-    //     n = n + 5;
-    //     *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff)) = *(u8*)((int)PlayerSetHealthStack + m);
-    //     ++m;
-    // } while (n < 0x28);
+    int PlayerSetHealthStack[1];
+    float f = health;
+    u32 Player_Addr = &player->Health;
+    u32 Player_Value = *(u8*)Player_Addr;
+    int gsFrame = gameGetGSFrame();
+	int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
+    u32 xord = *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4);
+	PlayerSetHealthStack[0] = (u32)Player_Addr ^ xord;
+    PlayerSetHealthStack[1] = xord ^ *(u32*)(&f);
+    int n = 0;
+	int m = 0;
+    do {
+        u32 Offset = (u32)(((int)Player_Addr - (u32)Player_Value & 7) + n);
+        n = n + 5;
+        *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff)) = *(u8*)((int)PlayerSetHealthStack + m);
+        ++m;
+    } while (n < 0x28);
 
     // =======OLD, BUT KEEPING
     // Grab address where math is done
-    int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
-    // Instead of subtracting, move f01 to f00.
-    *(u32*)math = 0x46000806; // mov.s $f0, $f1
-    // Run normal function
-    internal_HurtPlayer(player, (health > PLAYER_MAX_HEALTH) ? PLAYER_MAX_HEALTH : health);
-    // Revert back to subtraction
-    *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
+    // int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
+    // // Instead of subtracting, move f01 to f00.
+    // *(u32*)math = 0x46000806; // mov.s $f0, $f1
+    // // Run normal function
+    // internal_HurtPlayer(player, (health > PLAYER_MAX_HEALTH) ? PLAYER_MAX_HEALTH : health);
+    // // Revert back to subtraction
+    // *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
 
     // set tNW_Player Health
     // if (player->pNetPlayer && player->pNetPlayer->pNetPlayerData){
@@ -514,7 +514,7 @@ void playerSetHealth(Player * player, int health)
     // }
 }
 
-float playerGetHealth(Player * player)
+int playerGetHealth(Player * player)
 {
     // asm(".set noreorder;");
     int PlayerGetHealthStack[1];
@@ -529,7 +529,8 @@ float playerGetHealth(Player * player)
         *(u8*)((u32)PlayerGetHealthStack + m) = *(u8*)((u32)RandDataAddr + (Health_Value + (Offset & 7) * 0xff));
         ++m;
     } while (n < 0x28);
-    return (float)((u32)PlayerGetHealthStack[1] ^ (u32)PlayerGetHealthStack[0] ^ (u32)Health_Addr);
+    u32 fHealth = ((u32)PlayerGetHealthStack[1] ^ (u32)PlayerGetHealthStack[0] ^ (u32)Health_Addr);
+    return *(float*)&fHealth;
 }
 //--------------------------------------------------------------------------------
 int playerIsDead(Player * player)
