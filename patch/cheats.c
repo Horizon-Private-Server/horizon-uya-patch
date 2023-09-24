@@ -511,43 +511,6 @@ void chargebootForever(void)
 }
 
 /*
- * NAME :		vampireLogic
- * 
- * DESCRIPTION :
- *              Handles Vampire Logic.  Heals player if they kill another.
-
- * NOTES :
- * 
- * ARGS : 
- * 
- * RETURN :
- * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
-void vampireLogic(int healRate)
-{
-	int i;
-	Player ** playerObjects = playerGetAll();
-	Player * player;
-	GameData * gameData = gameGetData();
-
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-	{
-		// Check if player has killed someone
-		if (gameData->PlayerStats[i].Kills > PlayerKills[i])
-		{
-			// Try to heal if player exists
-			player = playerObjects[i];
-			if (player)
-                playerSetHealth(player, clamp(((int)player->pNetPlayer->pNetPlayerData->hitPoints + healRate), 0, PLAYER_MAX_HEALTH));
-
-			// Update our cached kills count
-			PlayerKills[i] = gameData->PlayerStats[i].Kills;
-		}
-	}
-}
-
-/*
  * NAME :		disableCameraShake
  * 
  * DESCRIPTION :
@@ -784,28 +747,30 @@ void setRespawnTimer(void)
 }
 
 /*
- * NAME :		disableDrones
+ * NAME :		onGameplayLoad_disableMoby
  * 
  * DESCRIPTION :
- *              Destroys the drones.
+ *              Disables the specified moby
  * NOTES :
  * 
  * ARGS : 
- * 
+ * 				gameplay: don't mess with pls.  It's mine!
+ *				mobyId: Specified moby ID to disable.
  * RETURN :
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
- void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay)
+void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId)
 {
 	int i;
 	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
-
-	// iterate each moby, moving all pickups to below the map
 	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
-		GameplayMobyDef_t* droneConfig = &mobyInstancesHeader->MobyInstances[i];
-		if (droneConfig->OClass == MOBY_ID_DRONE_BOT_CLUSTER_CONFIG) {
-			droneConfig->PosY = -100;
+		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
+		if (moby->OClass == mobyId){
+			moby->PosY = -100;
+			if (mobyId == MOBY_ID_DRONE_BOT_CLUSTER_CONFIG){
+				moby->PosY = 100;
+			}
 		}
 	}
 }
@@ -881,7 +846,7 @@ void noPostHitInvinc(void)
 	*(u32*)(time + 0x308) = 0x24020001;
 }
 
-void onGameplayLoad_removeWeaponCrates(GameplayHeaderDef_t * gameplay)
+void onGameplayLoad_disableWeaponCrates(GameplayHeaderDef_t * gameplay)
 {
 	int i;
 	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
@@ -904,7 +869,7 @@ void onGameplayLoad_removeWeaponCrates(GameplayHeaderDef_t * gameplay)
 	}
 }
 
-void onGameplayLoad_removeAmmoPickups(GameplayHeaderDef_t * gameplay)
+void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay)
 {
 	int i;
 	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);

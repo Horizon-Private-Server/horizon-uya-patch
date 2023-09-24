@@ -26,6 +26,7 @@
 #include <libuya/net.h>
 #include <libuya/gameplay.h>
 #include <libuya/interop.h>
+#include <libuya/moby.h>
 #include "module.h"
 #include "messageid.h"
 #include "include/config.h"
@@ -50,16 +51,100 @@ int GameRulesInitialized = 0;
 int FirstPass = 1;
 int HasDisabledHealthboxes = 0;
 int HasSetGattlingTurretHealth = 0;
-int HasDeleteSiegeNodeTurrets = 0;
+int HasDisableSiegeNodeTurrets = 0;
 int HasKeepBaseHealthPadActive = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 short PlayerDeaths[GAME_MAX_PLAYERS];
 
-int VampireHealRate[] = {
-	PLAYER_MAX_HEALTH * 0.25,
-	PLAYER_MAX_HEALTH * 0.50,
-	PLAYER_MAX_HEALTH * 1.00
-};
+/*
+ * NAME :		vampireLogic
+ * 
+ * DESCRIPTION :
+ *              Handles Vampire Logic.  Heals player if they kill another.
+
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void vampireHeal(Player * player, int weaponid)
+{
+ 	VariableAddress_t vaUpdateWeaponKill = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x004f8cc8,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0x004ec000,
+#endif
+	};
+
+	// run base
+	((void (*)(int, int))GetAddress(&vaUpdateWeaponKill))(player, weaponid);
+
+	int VampireHealRate[] = {0.25, 0.50, 0.75, 1.00};
+	// give player health
+	int Heal = (int)PLAYER_MAX_HEALTH * VampireHealRate[gameConfig.grVampire - 1];
+	int CurrentHealth = (int)player->pNetPlayer->pNetPlayerData->hitPoints;
+	printf("\nCurrentHealth: %d", CurrentHealth);
+	printf("\nHeal Rate: %d", Heal);
+	printf("\nTotal Heal: %d", (CurrentHealth + Heal));
+	playerSetHealth(player, clamp(CurrentHealth + Heal, 0, PLAYER_MAX_HEALTH));
+}
+
+void vampireLogic(void)
+{
+	VariableAddress_t vaUpdateScoreboard = {
+#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0,
+#else
+		.Lobby = 0,
+		.Bakisi = 0x00541b78,
+		.Hoven = 0,
+		.OutpostX12 = 0,
+		.KorgonOutpost = 0,
+		.Metropolis = 0,
+		.BlackwaterCity = 0,
+		.CommandCenter = 0,
+		.BlackwaterDocks = 0,
+		.AquatosSewers = 0,
+		.MarcadiaPalace = 0x00534758,
+#endif
+	};
+	if (GetAddress(&vaUpdateScoreboard))
+		HOOK_JAL((u32)GetAddress(&vaUpdateScoreboard) + 0x88, &vampireHeal);
+}
 
 u32 onGameplayLoad(void* a0, long a1)
 {
@@ -70,14 +155,17 @@ u32 onGameplayLoad(void* a0, long a1)
 		"move %0, $s6"
 		: : "r" (gameplay)
 	);
-	if (gameConfig.grAllowDrones)
-		onGameplayLoad_disableDrones(gameplay);
+	if (gameConfig.grDisableDrones)
+		onGameplayLoad_disableMoby(gameplay, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG);
 
 	if (gameConfig.grDisableWeaponCrates)
-		onGameplayLoad_removeWeaponCrates(gameplay);
+		onGameplayLoad_disableWeaponCrates(gameplay);
 
 	if (gameConfig.grDisableAmmoPickups)
-		onGameplayLoad_removeAmmoPickups(gameplay);
+		onGameplayLoad_disableAmmoPickups(gameplay);
+	
+	if (gameConfig.grDisablePlayerTurrets)
+		onGameplayLoad_disableMoby(gameplay, MOBY_ID_PLAYER_TURRET);
 
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
@@ -111,7 +199,7 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 
 	HasDisabledHealthboxes = 0;
 	HasSetGattlingTurretHealth = 0;
-	HasDeleteSiegeNodeTurrets = 0;
+	HasDisableSiegeNodeTurrets = 0;
 	HasKeepBaseHealthPadActive = 0;
 	GameRulesInitialized = 1;
 }
@@ -158,14 +246,14 @@ void grGameStart(void)
 	if (gameConfig.grSetGattlingTurretHealth && !HasSetGattlingTurretHealth)
 		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.grSetGattlingTurretHealth);
 
-	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasDeleteSiegeNodeTurrets)
-		HasDeleteSiegeNodeTurrets = deleteSiegeNodeTurrets();
+	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasDisableSiegeNodeTurrets)
+		HasDisableSiegeNodeTurrets = deleteSiegeNodeTurrets();
 
 	if (gameConfig.prChargebootForever)
 		chargebootForever();
 	
 	if (gameConfig.grVampire)
-		vampireLogic(VampireHealRate[gameConfig.grVampire - 1]);
+		vampireLogic();
 
 	if (config.disableCameraShake)
 		disableCameraShake();

@@ -218,8 +218,8 @@ MenuElem_ListData_t dataV2_Setting = {
 MenuElem_ListData_t dataVampire = {
     &gameConfig.grVampire,
     NULL,
-    4,
-    { "Off", "Quarter Heal", "Half Heal", "Full Heal", }
+    5,
+    { "Off", "25%", "50%", "75%", "100%" }
 };
 
 MenuElem_ListData_t dataSetGattlingTurretHealth = {
@@ -269,15 +269,15 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown },
   { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit },
   { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled },
-
+  { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
 #if TEST
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
-#endif
+ #endif
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates },
   { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups },
-  { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
-  { "Allow Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grAllowDrones },
+  { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones },
+  { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets },
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },

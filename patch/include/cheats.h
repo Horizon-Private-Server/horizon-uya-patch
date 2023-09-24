@@ -11,13 +11,12 @@ int disableHealthBoxes(void);
 void AutoRespawn(void);
 int setGattlingTurretHealth(int value);
 int deleteSiegeNodeTurrets(void);
-void vampireLogic(float healRate);
 void setRespawnTimer(void);
-void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay);
+void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId);
 int keepBaseHealthPadActive(void);
 void noPostHitInvinc(void);
-void onGameplayLoad_removeWeaponCrates(GameplayHeaderDef_t * gameplay);
-void onGameplayLoad_removeAmmoPickups(GameplayHeaderDef_t * gameplay);
+void onGameplayLoad_disableWeaponCrates(GameplayHeaderDef_t * gameplay);
+void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay);
 
 // Party Game Rules
 void survivor(void);
