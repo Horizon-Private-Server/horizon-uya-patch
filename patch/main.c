@@ -1049,7 +1049,7 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 void fovChange(u32 a0)
 {
 	// run base
-	((void (*)(u32))fovChange_Func)(a0);
+	((void (*)(u32))GetAddress(&vaSetPOSRot_fovChange_Func))(a0);
 
 	writeFov(0, 0, 3, 0, 0, 0.05, 0.2, 0);
 }
@@ -1084,12 +1084,7 @@ void patchFov(void)
 	POKE_U32((u32)GetAddress(&vaFieldOfView_Hook) + 0x4, 0x03E0382d);
 
 	// modify SetPosRot Func. (Needed when player dies)
-	int posrot = GetAddress(&vaPlayerSetPosRotFunc);
-	if (!fovChange_Hook){
-		fovChange_Hook = (u32)posrot + 0x4a4;
-		fovChange_Func = JAL2ADDR(*(u32*)fovChange_Hook);
-		HOOK_JAL(fovChange_Hook, &fovChange);
-	}
+	HOOK_JAL(GetAddress(&vaSetPOSRot_fovChange_Hook), &fovChange);
 
 	// initialize fov at start of game
 	if (!ingame || lastFov != config.playerFov) {

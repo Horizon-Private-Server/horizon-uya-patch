@@ -21,4 +21,6 @@ VariableAddress_t vaFpsCounter_UpdateFunc;
 VariableAddress_t vaFpsCounter_Hooks;
 VariableAddress_t vaFieldOfView_FluxRA;
 VariableAddress_t vaFieldOfView_Hook;
+VariableAddress_t vaSetPOSRot_fovChange_Hook;
+VariableAddress_t vaSetPOSRot_fovChange_Func;
 VariableAddress_t vaPauseMenuAddr;
