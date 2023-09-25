@@ -441,18 +441,24 @@ void playerDecHealth(Player * player, int health)
 //--------------------------------------------------------------------------------
 void playerIncHealth(Player * player, int health)
 {
-    asm(".set noreorder;");
-    // int PlayerIncHealthStack[1];
-    // float fHealth = playerDeobfuscate(&player->Health, 0, 0);
-    // u32 Player_Addr = &player->Health;
-    // u32 Player_Value = *(u8*)Player_Addr;
+    /*
+        NOTES:
+        playerIncHealth doesn't work correctly.  Use playerSetHealth for now.
+        Maybe will update in the future.
+        Old Version only works on Emulator!
+        New version doesnt' work at all.
+    */
+
+
+    // asm(".set noreorder;");
     // int gsFrame = gameGetGSFrame();
 	// int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
-    // u32 xord = *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4);
-    // // PlayerHealthStack[0] = (u32)Player_Addr ^ xord;
-    // // PlayerIncHealthStack[1] = (float)((u32)(fHealth - (float)(int)health) ^ xord);
-    // PlayerIncHealthStack[0] = (u32)Player_Addr ^ xord;
-    // PlayerIncHealthStack[1] = (float)((u32)(*(u32*)(&fHealth) + (float)(int)health) ^ xord);
+    // int fHealth = playerGetHealth(player);
+    // int PlayerIncHealthStack[1];
+    // u32 Player_Addr = &player->Health;
+    // u32 Player_Value = *(u8*)Player_Addr;
+    // PlayerIncHealthStack[0] = (u32)Player_Addr ^ *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4);
+    // PlayerIncHealthStack[1] = (float)((u32)(*(float*)&fHealth + (float)(int)health) ^ *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4));
     // int n = 0;
 	// int m = 0;
     // do {
