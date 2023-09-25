@@ -270,9 +270,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit },
   { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
-#if TEST
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
- #endif
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates },
   { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups },
@@ -283,7 +281,9 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive },
   { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots },
+#if TEST
   { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
+#endif
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },

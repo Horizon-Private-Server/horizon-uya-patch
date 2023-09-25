@@ -481,6 +481,18 @@ int deleteSiegeNodeTurrets(void)
     init = 1;
     return init;
 }
+int deleteNodeTurrets(void)
+{
+    int init = 0;
+	Moby * nodeTurret = mobyListGetStart();
+    // Iterate through mobys and change health
+    while ((nodeTurret = mobyFindNextByOClass(nodeTurret, MOBY_ID_NODE_TURRET))) {
+		nodeTurret->PUpdate = 0;
+        ++nodeTurret; // next moby
+    }
+    init = 1;
+    return init;
+}
 
 /*
  * NAME :		ChargebootForever
