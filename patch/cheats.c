@@ -432,7 +432,7 @@ void AutoRespawn(void)
  */
 int setGattlingTurretHealth(int value)
 {
-    int MultiplyBy[] = {.5, 1.5, 2, 3, 4};
+    static int MultiplyBy[] = {.5, 1.5, 2, 3, 4};
     int init = 0;
     Moby * moby = mobyListGetStart();
     // Iterate through mobys and change health
@@ -568,7 +568,7 @@ void disableCameraShake(void)
  *              Only for DM.  Disables respawn timer and pressing x function.
 
  * NOTES :      Only used as a cheat, doesn't get activated via patch menu.
- * 
+ * 				Important Note:  Can also do: player->timers.noDeathTimer = 10;
  * ARGS : 
  * 
  * RETURN :
