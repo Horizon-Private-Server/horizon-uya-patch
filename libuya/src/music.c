@@ -107,30 +107,9 @@ void musicSetSector(int sector)
     *(u32*)MUSIC_SECTOR = sector;
 }
 
-int musicGetCurrentTrack(void)
+ music_Playing * musicGetTrackInfo(void)
 {
-    static int CurrentTrack;
-    static int NextTrack;
-    if (CURRENT_TRACK->unpause == UNPAUSE_LOADING && CurrentTrack == 0 && NextTrack == 0 && CURRENT_TRACK->track != -1)
-    {
-        // Set CurrentTrack to Track.  This will make it so we know which was is currently playing.
-        // The game automatically sets the track variable to the next track to play after the music starts.
-        CurrentTrack = CURRENT_TRACK->track;
-    }
-    else if ((CURRENT_TRACK->unpause == UNPAUSE_KEEP_PLAYING_AFTER || CURRENT_TRACK->unpause == UNPAUSE_STOP_PLAYING_AFTER) && NextTrack == 0)
-    {
-        // Set NextTrack to Track value.
-        NextTrack = CURRENT_TRACK->track;
-    }
-    // If NextTrack does not equal the Track, that means that the song has switched.
-    // We need to move the NextTrack value into the CurrentTrack value, because it is now
-    // playing that track.  Then we set the NextTrack to the Track value.
-    else if (NextTrack != CURRENT_TRACK->track)
-    {
-        CurrentTrack = NextTrack;
-        NextTrack = CURRENT_TRACK->track;
-    }
-    return CurrentTrack;
+    return CURRENT_TRACK;
 }
 
 int musicGetNextTrack(void)

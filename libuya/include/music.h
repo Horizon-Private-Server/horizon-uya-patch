@@ -124,7 +124,7 @@ void musicSetSector(int sector);
 /*
  * NAME :		musicGetNextTrack
  * 
- * DESCRIPTION : Returns the ncurrent track that is playing.
+ * DESCRIPTION : Returns the curent track info.
  * 
  * NOTES :
  * 
@@ -134,7 +134,7 @@ void musicSetSector(int sector);
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-int musicGetCurrentTrack(void);
+music_Playing * musicGetTrackInfo(void);
 
 /*
  * NAME :		musicGetNextTrack
