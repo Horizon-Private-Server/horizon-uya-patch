@@ -207,11 +207,7 @@ MenuElem_ListData_t dataWeaponPacks = {
 MenuElem_ListData_t dataV2_Setting = {
     &gameConfig.grV2s,
     NULL,
-#if TEST
     3,
-#else
-    2,
-#endif
     { "On", "Off", "Always" }
 };
 
