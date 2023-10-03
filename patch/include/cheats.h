@@ -25,3 +25,6 @@ void chargebootForever(void);
 
 // Other
 void disableRespawning(void);
+
+// variable addresses
+VariableAddress_t vaUpdateWeaponKill;

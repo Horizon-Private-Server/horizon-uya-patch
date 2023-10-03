@@ -31,12 +31,41 @@
 #include "messageid.h"
 #include "config.h"
 #include "include/config.h"
+#include "include/cheats.h"
 
 extern PlayerKills[GAME_MAX_PLAYERS];
 extern PlayerDeaths[GAME_MAX_PLAYERS];
 extern PatchGameConfig_t gameConfig;
 extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaGiveWeaponFunc;
+
+VariableAddress_t vaUpdateWeaponKill = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x004fb448,
+	.Hoven = 0x004fd560,
+	.OutpostX12 = 0x004f2e38,
+	.KorgonOutpost = 0x004f05d0,
+	.Metropolis = 0x004ef920,
+	.BlackwaterCity = 0x004ed1b8,
+	.CommandCenter = 0x004ed180,
+	.BlackwaterDocks = 0x004efa00,
+	.AquatosSewers = 0x004eed00,
+	.MarcadiaPalace = 0x004ee680,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004f8cc8,
+	.Hoven = 0x004fad20,
+	.OutpostX12 = 0x004f0638,
+	.KorgonOutpost = 0x004ede50,
+	.Metropolis = 0x004ed1a0,
+	.BlackwaterCity = 0x004ea9b8,
+	.CommandCenter = 0x004eab40,
+	.BlackwaterDocks = 0x004ed380,
+	.AquatosSewers = 0x004ec6c0,
+	.MarcadiaPalace = 0x004ec000,
+#endif
+};
 
 /*
  * NAME :		disableWeaponPacks
@@ -261,38 +290,12 @@ void v2_logic(void)
 }
 void v2_Setting(int setting, int FirstPass)
 {
-    VariableAddress_t vaV2Setting_V2BranchAddr = {
-#ifdef UYA_PAL
-        .Lobby = 0,
-        .Bakisi = 0x00544508,
-        .Hoven = 0x005466d0,
-        .OutpostX12 = 0x0053bfa8,
-        .KorgonOutpost = 0x00539690,
-        .Metropolis = 0x00538a90,
-        .BlackwaterCity = 0x00536278,
-        .CommandCenter = 0x00535ad0,
-        .BlackwaterDocks = 0x00538350,
-        .AquatosSewers = 0x00537650,
-        .MarcadiaPalace = 0x00536fd0,
-#else
-        .Lobby = 0,
-        .Bakisi = 0x00541bf8,
-        .Hoven = 0x00543d00,
-        .OutpostX12 = 0x00539618,
-        .KorgonOutpost = 0x00536d80,
-        .Metropolis = 0x00536180,
-        .BlackwaterCity = 0x005338e8,
-        .CommandCenter = 0x00533318,
-        .BlackwaterDocks = 0x00535b58,
-        .AquatosSewers = 0x00534e98,
-        .MarcadiaPalace = 0x005347d8,
-#endif
-    };
 	// Disable V2's
 	if (setting == 1) {
-		u32 addr = GetAddress(&vaV2Setting_V2BranchAddr);
-		if (*(u32*)addr == 0x10400003) // beq v0, zero
-			*(u32*)addr = 0x10000003;
+		// Prevent Weapon Meter value from going up.
+		u32 addr = ((u32)GetAddress(&vaUpdateWeaponKill) + 0x27c);
+		if (*(u32*)addr == 0x24420001) // addiu v0, v0, 0x1;
+			*(u32*)addr = 0;
 	}
 	// Always V2's
 	else {

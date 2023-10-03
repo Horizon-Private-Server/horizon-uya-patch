@@ -77,33 +77,6 @@ int VampireHealRate[] = {3, 7, 11, 15};
  */
 void vampireHeal(Player * player, int weaponid)
 {
- 	VariableAddress_t vaUpdateWeaponKill = {
-#if UYA_PAL
-		.Lobby = 0,
-		.Bakisi = 0x004fb448,
-		.Hoven = 0x004fd560,
-		.OutpostX12 = 0x004f2e38,
-		.KorgonOutpost = 0x004f05d0,
-		.Metropolis = 0x004ef920,
-		.BlackwaterCity = 0x004ed1b8,
-		.CommandCenter = 0x004ed180,
-		.BlackwaterDocks = 0x004efa00,
-		.AquatosSewers = 0x004eed00,
-		.MarcadiaPalace = 0x004ee680,
-#else
-		.Lobby = 0,
-		.Bakisi = 0x004f8cc8,
-		.Hoven = 0x004fad20,
-		.OutpostX12 = 0x004f0638,
-		.KorgonOutpost = 0x004ede50,
-		.Metropolis = 0x004ed1a0,
-		.BlackwaterCity = 0x004ea9b8,
-		.CommandCenter = 0x004eab40,
-		.BlackwaterDocks = 0x004ed380,
-		.AquatosSewers = 0x004ec6c0,
-		.MarcadiaPalace = 0x004ec000,
-#endif
-	};
 	// give player health
 	int CurrentHealth = playerGetHealth(player);
 	int HEALME = (CurrentHealth + healRate);
