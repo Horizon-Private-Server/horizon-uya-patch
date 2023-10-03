@@ -45,7 +45,7 @@
 #define PAD_L2              0x0100
 
 struct PAD { // 0x5c0
-	/* 0x000 */ long long unsigned int pad_buf[16];
+	/* 0x000 */ u128 pad_buf[16];
 	/* 0x100 */ float analog[16];
 	/* 0x140 */ float hudAnalog[16];
 	/* 0x180 */ unsigned char profile[4];
