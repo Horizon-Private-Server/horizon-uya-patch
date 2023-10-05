@@ -79,6 +79,35 @@ VariableAddress_t vaPlayerStructArray = {
 #endif
 };
 
+// playerGetFromslot();
+VariableAddress_t vaGetMissionDef = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x004ede30,
+	.Hoven = 0x004eff48,
+	.OutpostX12 = 0x004e5820,
+    .KorgonOutpost = 0x004e5824,
+	.Metropolis = 0x004e2308,
+	.BlackwaterCity = 0x004dfba0,
+	.CommandCenter = 0x004dfb68,
+    .BlackwaterDocks = 0x004e23e8,
+    .AquatosSewers = 0x004e16e8,
+    .MarcadiaPalace = 0x004e1068,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004eb710,
+	.Hoven = 0x004ed768,
+	.OutpostX12 = 0x004e3080,
+    .KorgonOutpost = 0x004e0898,
+	.Metropolis = 0x004dfbe8,
+	.BlackwaterCity = 0x004dd400,
+	.CommandCenter = 0x004dd588,
+    .BlackwaterDocks = 0x004dfdc8,
+    .AquatosSewers = 0x004df108,
+    .MarcadiaPalace = 0x004dea48,
+#endif
+};
+
 VariableAddress_t vaPlayerRespawnFunc = {
 #if UYA_PAL
 	.Lobby = 0,
