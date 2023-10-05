@@ -193,7 +193,7 @@ PadButtonStatus * playerGetPad(Player * player)
     }
     else
     {
-        struct tNW_Player * netPlayer = player->pNetPlayer;
+        struct tNW_Player* netPlayer = player->pNetPlayer;
         if (!netPlayer)
             return 0;
 
@@ -232,6 +232,7 @@ void playerPadUpdate(void)
             }
         }
     }
+
     // Reset player pad history when not in game
     else if (PlayerPadHistory[0].id >= 0)
     {
@@ -542,7 +543,17 @@ int playerGetHealth(Player * player)
 int playerIsDead(Player * player)
 {
 	// return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
-    return (int)playerGetHealth(player) <= 0;
+    // int Health = (int)playerGetHealth(player) <= 0;
+    int State = playerDeobfuscate(&player->State, 0, 0);
+    int CurrentState = State == PLAYER_STATE_DEATH
+        || State == PLAYER_STATE_DROWN
+        || State == PLAYER_STATE_DEATH_FALL
+        || State == PLAYER_STATE_DEATHSAND_SINK
+        || State == PLAYER_STATE_LAVA_DEATH
+        || State == PLAYER_STATE_DEATH_NO_FALL
+        || State == PLAYER_STATE_WAIT_FOR_RESURRECT
+        ;
+    return CurrentState;
 }
 
 //--------------------------------------------------------------------------------
