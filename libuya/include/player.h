@@ -704,15 +704,20 @@ typedef struct Player
 	short int unkGadgetTimer_24a4;									// 0x24A4
 	short int GadgetPADDelayTimer;									// 0x24A6
 	short int unkGadgetTimer_24a8;									// 0x24A8
-	char unk_24aa[0x22];
+	char unk_24ac[0x1e];
+	char unk_24c8;
+	char unk_24c9;
+	char unk_24ca;
+	char unk_24cb;
 	u32 LastDamagedMeOwnerUID;										// 0x24CC
 	int LastDamagedMeGadgetId;										// 0x24D0
 	char DamageTaken;												// 0x24D4
-	char unk_24d5[0x28];
+	char unk_24d5[0x27];
+	char isGetHitMsgPending;										// 0x24FC
 	char LookAndCrouch;												// 0x24FD
 	char LookAndThrowWrench;										// 0x24FE
-	char unk_24ff;
-	char Invisible2;												// 0x2500
+	char earlyThrowAbort;											// 0x24FF
+	char lookAndGetHit;												// 0x2500
 	// lastDeathWasSuicide: Doesn't Spawn Pack if true
 	char LastDeathWasSuicide;										// 0x2501
 	char unk_2502[0x12];

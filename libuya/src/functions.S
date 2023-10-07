@@ -330,7 +330,7 @@ VARIABLE_FUNCTION(internal_colorLerp, vaColorLerpFunc)
 #else
 	FUNCTION(internal_uiDialog, 0x006847C8)
 #endif
-FUNCTION(uiShowPopup, 0x00540170) # Not Ported (For in game)
+VARIABLE_FUNCTION(internal_uiShowPopup, vaUIShowPopup)
 FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported (For in game)
 VARIABLE_FUNCTION(uiMsgString, vaUiMsgStringFunc)
 
