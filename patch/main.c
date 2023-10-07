@@ -56,6 +56,8 @@ void grGameStart(void);
 void grLobbyStart(void);
 void grLoadStart(void);
 
+void runSpectate(void);
+
 int dlBytesReceived = 0;
 int dlTotalBytes = 0;
 int hasInitialized = 0;
@@ -97,6 +99,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.levelOfDetail = 2,
 	.enableFpsCounter = 0,
 	.playerFov = 0,
+	.enableSpectate = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1455,6 +1458,10 @@ int main(void)
 
 		// Runs FPS Counter
 		runFpsCounter();
+
+		// Run Spectate
+		if (config.enableSpectate)
+			runSpectate();
 
 		// Patches gadget events as they come in.
 		// patchGadgetEvents();

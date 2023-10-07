@@ -242,6 +242,9 @@ MenuElem_t menuElementsGeneral[] = {
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
+#if TEST
+  { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate },
+#endif
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },

@@ -9,6 +9,7 @@ typedef struct PatchConfig
   char levelOfDetail;
   char enableFpsCounter;
   char playerFov;
+  char enableSpectate;
 } PatchConfig_t;
 
 // Game Rules Tab
