@@ -467,6 +467,20 @@ typedef struct HeroTimers {
 	char unk_364[0xc];
 } HeroTimers;
 
+typedef struct HeroMobys { // 0x10
+	/* 0x0 */ Moby *ground;
+	/* 0x4 */ Moby *hero;
+	/* 0x8 */ int pad[1];
+} HeroMobys;
+
+typedef struct HeroFireDir { // 0x50
+	/* 0x00 */ VECTOR m0;
+	/* 0x10 */ VECTOR m1;
+	/* 0x20 */ VECTOR m2;
+	/* 0x30 */ VECTOR v;
+	/* 0x40 */ VECTOR rot;
+} HeroFireDir;
+
 typedef struct HeroGround {
 	/*   0 */ VECTOR normal;
 	/*  10 */ VECTOR waterNormal;
@@ -496,7 +510,7 @@ typedef struct HeroGround {
 	/*  b0 */ int oscillating;
 	/*  b4 */ float oscPos1;
 	/*  b8 */ float oscPos2;
-	/*  bc */ int pad[1];
+	/*  bc */ int pad;
 } HeroGround;
 
 typedef struct HeroPlayerConstants {
@@ -548,6 +562,26 @@ typedef struct Gadget {
 	/*  48 */ int id;
 	/*  4c */ float lightAng;
 } Gadget;
+
+typedef struct HeroAnim { // 0x20
+	/* 0x00 */ float speed;
+	/* 0x04 */ int iscale;
+	/* 0x08 */ int flags;
+	/* 0x0c */ int interping;
+	/* 0x10 */ int env_index;
+	/* 0x14 */ int env_time;
+	/* 0x18 */ float mayaFrm;
+	/* 0x1c */ float mayaFrmDelt;
+} HeroAnim;
+
+typedef struct HeroShadow { // 0x28
+	/* 0x00 */ float slope;
+	/* 0x04 */ float plane;
+	/* 0x08 */ float range;
+	/* 0x0c */ int sample_id;
+	/* 0x10 */ int pad[1];
+	/* 0x18 */ float sample_pos[4];
+} HeroShadow;
 
 typedef struct FpsCam {
 	MATRIX CameraMatrix;											// 0x11A0
@@ -658,23 +692,29 @@ typedef struct Player
 			float unk_cc;
 		};
 	};
-	char unk_c0[0x20];
-	VECTOR unk_e0;
-	char unk_f0[0x30];
+	VECTOR rotSpeed;												// 0xC0
+	VECTOR sphereCenter;											// 0xD0
+	VECTOR missileTarget;											// 0xE0
+	VECTOR mtxFxScale;												// 0xF0
+	VECTOR lastPosition;											// 0x100
+	VECTOR stickInput;												// 0x110
     VECTOR Velocity;                                         		// 0x120
-    char unk_130[0x1b0];											// 0x130
-	int OnGround;													// 0x2E0
-	char unk_2e4[0xc];
+    char unk_130[0x100];											// 0x130
+	HeroGround ground;												// 0x230 - 0x2EC
 	HeroTimers timers;												// 0x2F0
 	short int magnetic; // 0 = No, 2 = Yes.							// 0x370
-	char unk_372[0xae];
-	Moby *StandingOnMoby;											// 0x420
-	Moby *SkinMoby2;												// 0x424
-	char unk_428[0x4];
+	char unk_372[0xe];
+	HeroFireDir fireDir;											// 0x380
+	char unk_3d0[0x50];
+	HeroMobys mobys;												// 0x420
 	Gadget Weapon;													// 0x430
 	Gadget Boots;													// 0x480
 	char unk_4d0[0x20];
-	char unk_4f0[0xc90];
+	char unk_4f0[0x120];
+	HeroAnim anim;													// 0x610
+	char unk_630[0x970];
+	HeroShadow shadow;												// 0xFA0
+	char unk_fc8[0x1b8];
     HeroCamera fps;													// 0x1180 - 0x133C
 	char unk_1340[0x70];
 	HeroWalkToPos walkToPos;										// 0x13B0 - 0x13DC
@@ -803,19 +843,19 @@ typedef void (*PlayerUpdateState_func)(Player * player, int stateId, int a2, int
 
 typedef struct PlayerVTable
 {
-    void * FUNC_00;
-    void * FUNC_04;
-    void * FUNC_08;
+    void * FUNC_00; // no pointer
+    void * FUNC_04; // no pointer
+    void * FUNC_08; // just a return;
     PlayerUpdate_func Update;
-    void * FUNC_10;
-    void * FUNC_14;
-    void * FUNC_18;
-    void * FUNC_1C;
-    void * FUNC_20;
-    void * FUNC_24;
-    void * FUNC_28;
-    void * FUNC_2C;
-    void * FUNC_30;
+    void * FUNC_10; // returns (player->unk_2524) ???
+    void * FUNC_14; // 
+    void * FUNC_18; // just a return;
+    void * FUNC_1C; // SetTeam(player, team)
+    void * FUNC_20; // Spawns Local?
+    void * FUNC_24; // 
+    void * FUNC_28; // Updates Left Stick Movement
+    void * FUNC_2C; // Updates Player Position
+    void * FUNC_30; // Runs when player dies or teleports
     PlayerUpdateState_func UpdateState;
     void * FUNC_38;
 	void * FUNC_3C;
