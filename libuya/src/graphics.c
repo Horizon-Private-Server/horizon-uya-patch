@@ -3,8 +3,19 @@
 #include "interop.h"
 
 #if UYA_PAL
+#define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
+#define IS_WIDESCREEN                       (*(char*)0x001a58bc)
+#else
+#define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
+#define IS_WIDESCREEN                       (*(char*)0x001a5a3c)
+#endif
 
+int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
+void internal_drawBox(void *, void *);
+
+// drawTextFunc -> widthFunc Offset: -0x2a0
 VariableAddress_t vaFontPrintFunc = {
+#if UYA_PAL
 	.Lobby = 0x00592238,
 	.Bakisi = 0x0045f4a8,
 	.Hoven = 0x00461058,
@@ -16,43 +27,7 @@ VariableAddress_t vaFontPrintFunc = {
     .BlackwaterDocks = 0x004556d0,
     .AquatosSewers = 0x004549d0,
     .MarcadiaPalace = 0x00454350,
-};
-
-VariableAddress_t vaGetTextWidthFunc = {
-	.Lobby = 0x00591f98,
-	.Bakisi = 0x0045F208,
-	.Hoven = 0x00460DB8,
-	.OutpostX12 = 0x00457BB8,
-    .KorgonOutpost = 0x00455748,
-	.Metropolis = 0x00454A88,
-	.BlackwaterCity = 0x004522B8,
-	.CommandCenter = 0x00452BB0,
-    .BlackwaterDocks = 0x00455430,
-    .AquatosSewers = 0x00454730,
-    .MarcadiaPalace = 0x004540B0,
-};
-
-VariableAddress_t vaDrawBoxFunc = {
-	.Lobby = 0x00617790,
-	.Bakisi = 0x004e96b8,
-	.Hoven = 0x004eb828,
-	.OutpostX12 = 0x004e10a8,
-    .KorgonOutpost = 0x004de840,
-	.Metropolis = 0x004ddb90,
-	.BlackwaterCity = 0x004db428,
-	.CommandCenter = 0x004db3f0,
-    .BlackwaterDocks = 0x004ddc70,
-    .AquatosSewers = 0x004dcf70,
-    .MarcadiaPalace = 0x004dc8f0,
-};
-
-
-#define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
-#define IS_WIDESCREEN                       (*(char*)0x001a58bc)
 #else
-
-// drawTextFunc -> widthFunc Offset: -0x2a0
-VariableAddress_t vaFontPrintFunc = {
 	.Lobby = 0x00590F90,
 	.Bakisi = 0x0045e300,
 	.Hoven = 0x0045FDF0,
@@ -64,9 +39,23 @@ VariableAddress_t vaFontPrintFunc = {
     .BlackwaterDocks = 0x00454628,
     .AquatosSewers = 0x00453968,
     .MarcadiaPalace = 0x004532a8,
+#endif
 };
 
 VariableAddress_t vaGetTextWidthFunc = {
+#if UYA_PAL
+	.Lobby = 0x00591f98,
+	.Bakisi = 0x0045F208,
+	.Hoven = 0x00460DB8,
+	.OutpostX12 = 0x00457BB8,
+    .KorgonOutpost = 0x00455748,
+	.Metropolis = 0x00454A88,
+	.BlackwaterCity = 0x004522B8,
+	.CommandCenter = 0x00452BB0,
+    .BlackwaterDocks = 0x00455430,
+    .AquatosSewers = 0x00454730,
+    .MarcadiaPalace = 0x004540B0,
+#else
 	.Lobby = 0x00590cf0,
 	.Bakisi = 0x0045E060,
 	.Hoven = 0x0045FB50,
@@ -78,9 +67,23 @@ VariableAddress_t vaGetTextWidthFunc = {
     .BlackwaterDocks = 0x00454388,
     .AquatosSewers = 0x004536C8,
     .MarcadiaPalace = 0x00453008,
+#endif
 };
 
 VariableAddress_t vaDrawBoxFunc = {
+#if UYA_PAL
+	.Lobby = 0x00617790,
+	.Bakisi = 0x004e96b8,
+	.Hoven = 0x004eb828,
+	.OutpostX12 = 0x004e10a8,
+    .KorgonOutpost = 0x004de840,
+	.Metropolis = 0x004ddb90,
+	.BlackwaterCity = 0x004db428,
+	.CommandCenter = 0x004db3f0,
+    .BlackwaterDocks = 0x004ddc70,
+    .AquatosSewers = 0x004dcf70,
+    .MarcadiaPalace = 0x004dc8f0,
+#else
 	.Lobby = 0x00615078,
 	.Bakisi = 0x004e6ff8,
 	.Hoven = 0x004e9050,
@@ -92,15 +95,148 @@ VariableAddress_t vaDrawBoxFunc = {
     .BlackwaterDocks = 0x004db6b0,
     .AquatosSewers = 0x004da9f0,
     .MarcadiaPalace = 0x004da330,
+#endif
 };
 
-
-#define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
-#define IS_WIDESCREEN                       (*(char*)0x001a5a3c)
+VariableAddress_t vaSetupGifPaging = {
+#if UYA_PAL
+	.Lobby = 0x00589538,
+	.Bakisi = 0x00456450,
+	.Hoven = 0x00457fd0,
+	.OutpostX12 = 0x0044edd0,
+    .KorgonOutpost = 0x0044c990,
+	.Metropolis = 0x0044bcd0,
+	.BlackwaterCity = 0x004494d0,
+	.CommandCenter = 0x0044a150,
+    .BlackwaterDocks = 0x0044c9d0,
+    .AquatosSewers = 0x0044bcd0,
+    .MarcadiaPalace = 0x0044b650,
+#else
+	.Lobby = 0x005883c8,
+	.Bakisi = 0x004553e0,
+	.Hoven = 0x00456ea0,
+	.OutpostX12 = 0x0044dce0,
+    .KorgonOutpost = 0x0044b920,
+	.Metropolis = 0x0044ac60,
+	.BlackwaterCity = 0x004483e0,
+	.CommandCenter = 0x00449220,
+    .BlackwaterDocks = 0x0044bc60,
+    .AquatosSewers = 0x0044ada0,
+    .MarcadiaPalace = 0x0044a6e0,
 #endif
+};
 
-int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
-void internal_drawBox(void *, void *);
+VariableAddress_t vaDoGifPaging = {
+#if UYA_PAL
+	.Lobby = 0x00589668,
+	.Bakisi = 0x00456580,
+	.Hoven = 0x00458100,
+	.OutpostX12 = 0x0044ef00,
+    .KorgonOutpost = 0x0044cac0,
+	.Metropolis = 0x0044be00,
+	.BlackwaterCity = 0x00449600,
+	.CommandCenter = 0x0044a280,
+    .BlackwaterDocks = 0x0044cb00,
+    .AquatosSewers = 0x0044be00,
+    .MarcadiaPalace = 0x0044b780,
+#else
+	.Lobby = 0x005884f8,
+	.Bakisi = 0x00455510,
+	.Hoven = 0x00456fd0,
+	.OutpostX12 = 0x0044de10,
+    .KorgonOutpost = 0x0044ba50,
+	.Metropolis = 0x0044ad90,
+	.BlackwaterCity = 0x00448510,
+	.CommandCenter = 0x00449350,
+    .BlackwaterDocks = 0x0044bb90,
+    .AquatosSewers = 0x0044aed0,
+    .MarcadiaPalace = 0x0044a810,
+#endif
+};
+
+VariableAddress_t vaGetFrameTex = {
+#if UYA_PAL
+	.Lobby = 0x0059c910,
+	.Bakisi = 0x00469300,
+	.Hoven = 0x0046aeb0,
+	.OutpostX12 = 0x00461cb0,
+    .KorgonOutpost = 0x0045f840,
+	.Metropolis = 0x0045eb84,
+	.BlackwaterCity = 0x0045c3b0,
+	.CommandCenter = 0x0045cca8,
+    .BlackwaterDocks = 0x0045f528,
+    .AquatosSewers = 0x0045e828,
+    .MarcadiaPalace = 0x0045e1a8,
+#else
+	.Lobby = 0x0059b580,
+	.Bakisi = 0x00468070,
+	.Hoven = 0x00469b60,
+	.OutpostX12 = 0x004609a0,
+    .KorgonOutpost = 0x0045e5b0,
+	.Metropolis = 0x0045d8f0,
+	.BlackwaterCity = 0x0045b0a0,
+	.CommandCenter = 0x0045bb58,
+    .BlackwaterDocks = 0x0045e398,
+    .AquatosSewers = 0x0045d6d8,
+    .MarcadiaPalace = 0x0045d018,
+#endif
+};
+
+VariableAddress_t vaGetEffectTex = {
+#if UYA_PAL
+	.Lobby = 0x00589890,
+	.Bakisi = 0x004567a8,
+	.Hoven = 0x00458328,
+	.OutpostX12 = 0x0044f128,
+    .KorgonOutpost = 0x0044cce8,
+	.Metropolis = 0x0044c028,
+	.BlackwaterCity = 0x00449828,
+	.CommandCenter = 0x0044a4a8,
+    .BlackwaterDocks = 0x0044cd28,
+    .AquatosSewers = 0x0044c028,
+    .MarcadiaPalace = 0x0044b9a8,
+#else
+	.Lobby = 0x00588720,
+	.Bakisi = 0x00455738,
+	.Hoven = 0x004571f8,
+	.OutpostX12 = 0x0044e038,
+    .KorgonOutpost = 0x0044e038,
+	.Metropolis = 0x0044afb8,
+	.BlackwaterCity = 0x00448738,
+	.CommandCenter = 0x00449578,
+    .BlackwaterDocks = 0x0044bdb8,
+    .AquatosSewers = 0x0044b0f8,
+    .MarcadiaPalace = 0x0044aa38,
+#endif
+};
+
+VariableAddress_t vaDrawSprite = {
+#if UYA_PAL
+	.Lobby = 0x0058b9f8,
+	.Bakisi = 0x00458910,
+	.Hoven = 0x0045a490,
+	.OutpostX12 = 0x00451290,
+    .KorgonOutpost = 0x0044ee50,
+	.Metropolis = 0x0044e190,
+	.BlackwaterCity = 0x0044b990,
+	.CommandCenter = 0x0044c610,
+    .BlackwaterDocks = 0x0044ee90,
+    .AquatosSewers = 0x0044e190,
+    .MarcadiaPalace = 0x0044db10,
+#else
+	.Lobby = 0x0058a828,
+	.Bakisi = 0x00457840,
+	.Hoven = 0x00459300,
+	.OutpostX12 = 0x00450140,
+    .KorgonOutpost = 0x0044dd80,
+	.Metropolis = 0x0044d0c0,
+	.BlackwaterCity = 0x0044b680,
+	.CommandCenter = 0x0044b680,
+    .BlackwaterDocks = 0x0044dec0,
+    .AquatosSewers = 0x0044d200,
+    .MarcadiaPalace = 0x0044cb40,
+#endif
+};
 
 //--------------------------------------------------------
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)

@@ -24,6 +24,9 @@
 #endif
 
 //--------------------------------------------------------
+// typedef void (*gfxDrawFuncDef)(Moby*);
+
+//--------------------------------------------------------
 typedef float POINT[2] __attribute__((__aligned__(8)));
 
 //--------------------------------------------------------
@@ -35,6 +38,40 @@ typedef struct RECT
     POINT BottomRight;
 } RECT;
 
+//--------------------------------------------------------
+typedef struct CubicLineEndPoint {
+	/*   0 */ int iCoreRGBA;
+	/*   4 */ int iGlowRGBA;
+	/*   8 */ char bFadeEnd;
+	/*   9 */ char style;
+	/*   a */ unsigned char numEndPoints;
+	/*   b */ char bDisabled;
+	/*   c */ int iNumSkipPoints;
+	/*  10 */ VECTOR vPos;
+	/*  20 */ VECTOR vTangent;
+	/*  30 */ VECTOR vTangentOccQuat;
+} CubicLineEndPoint;
+
+//--------------------------------------------------------
+struct UV
+{
+  float U;
+  float V;
+};
+
+//--------------------------------------------------------
+struct QuadDef
+{
+  VECTOR VertexPositions[4];
+  u32 VertexColors[4];
+  struct UV VertexUVs[4];
+	u64 Clamp;
+	u64 Tex0;
+	u64 Tex1;
+	u64 Alpha;
+};
+
+//--------------------------------------------------------
 typedef enum {
 	TOP_LEFT = 0,
 	TOP_CENTER = 1,
@@ -156,5 +193,11 @@ void gfxSetIsProgressiveScan(int on);
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void gfxOcclusion(int OnOff);
+
+void gfxDoGifPaging(void);
+void gfxSetupGifPaging(int);
+u64 gfxGetFrameTex(int id);
+u64 gfxGetEffectTex(int id, int);
+void gfxDrawSprite(float x, float y, float w, float h, int t0, int t1, int texW, int texH, u64 color, u64 texture);
 
 #endif // _LIBUYA_GRAPHICS_H_

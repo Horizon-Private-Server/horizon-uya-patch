@@ -279,6 +279,16 @@ FUNCTION(matrix_rotate_z, 0x0013d660)
 VARIABLE_FUNCTION(internal_drawFunc, vaFontPrintFunc)
 VARIABLE_FUNCTION(gfxGetFontWidth, vaGetTextWidthFunc)
 VARIABLE_FUNCTION(internal_drawBox, vaDrawBoxFunc)
+VARIABLE_FUNCTION(gfxSetupGifPaging, vaSetupGifPaging)
+VARIABLE_FUNCTION(gfxDoGifPaging, vaDoGifPaging)
+VARIABLE_FUNCTION(gfxGetFrameTex, vaGetFrameTex)
+VARIABLE_FUNCTION(gfxGetEffectTex, vaGetEffectTex)
+VARIABLE_FUNCTION(gfxDrawSprite, vaDrawSprite)
+
+#VARIABLE_FUNCTION(gfxDrawQuad, 0x004CA188)
+#VARIABLE_FUNCTION(gfxResetQuad, 0x005b6378)
+#VARIABLE_FUNCTION(gfxSetBlendMode, 0x004c97d8)
+#VARIABLE_FUNCTION(gfxSetTexture, 0x004c9a58)
 
 #--------------------------------------------------------
 #------------------------- GAME -------------------------
