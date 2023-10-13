@@ -677,152 +677,147 @@ typedef struct MotionBlur { // 0x150
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-typedef struct Player
-{
-    struct Guber Guber;                                             // 0x00
-	MATRIX Water;													// 0x20
-	MATRIX Terrain;													// 0x60
-	VECTOR PlayerPosition;                                          // 0xA0
-	union {															// 0xB0
+typedef struct Player {
+	struct Guber Guber;                                     // 0x00
+	MATRIX Water;											// 0x20
+	MATRIX Terrain;											// 0x60
+	VECTOR PlayerPosition;                                  // 0xA0
+	union {													// 0xB0
 		VECTOR PlayerRotation;
 		struct {
-			float PlayerRoll;										// 0xB0
-			float PlayerPitch;										// 0xB4
-			float PlayerYaw;										// 0xB8
+			float PlayerRoll;								// 0xB0
+			float PlayerPitch;								// 0xB4
+			float PlayerYaw;								// 0xB8
 			float unk_cc;
 		};
 	};
-	VECTOR rotSpeed;												// 0xC0
-	VECTOR sphereCenter;											// 0xD0
-	VECTOR missileTarget;											// 0xE0
-	VECTOR mtxFxScale;												// 0xF0
-	VECTOR lastPosition;											// 0x100
-	VECTOR stickInput;												// 0x110
-    VECTOR Velocity;                                         		// 0x120
-    char unk_130[0x100];											// 0x130
-	HeroGround ground;												// 0x230 - 0x2EC
-	HeroTimers timers;												// 0x2F0
-	short int magnetic; // 0 = No, 2 = Yes.							// 0x370
+	VECTOR rotSpeed;										// 0xC0
+	VECTOR sphereCenter;									// 0xD0
+	VECTOR missileTarget;									// 0xE0
+	VECTOR mtxFxScale;										// 0xF0
+	VECTOR lastPosition;									// 0x100
+	VECTOR stickInput;										// 0x110
+	VECTOR Velocity;                                        // 0x120
+	char unk_130[0x100];									// 0x130
+	HeroGround ground;										// 0x230 - 0x2EC
+	HeroTimers timers;										// 0x2F0
+	short int magnetic; // 0 = No, 2 = Yes.					// 0x370
 	char unk_372[0xe];
-	HeroFireDir fireDir;											// 0x380
+	HeroFireDir fireDir;									// 0x380
 	char unk_3d0[0x50];
-	HeroMobys mobys;												// 0x420
-	Gadget Weapon;													// 0x430
-	Gadget Boots;													// 0x480
+	HeroMobys mobys;										// 0x420
+	Gadget Weapon;											// 0x430
+	Gadget Boots;											// 0x480
 	char unk_4d0[0x20];
 	char unk_4f0[0x120];
-	HeroAnim anim;													// 0x610
+	HeroAnim anim;											// 0x610
 	char unk_630[0x970];
-	HeroShadow shadow;												// 0xFA0
+	HeroShadow shadow;										// 0xFA0
 	char unk_fc8[0x1b8];
-    HeroCamera fps;													// 0x1180 - 0x133C
+	HeroCamera fps;											// 0x1180 - 0x133C
 	char unk_1340[0x70];
-	HeroWalkToPos walkToPos;										// 0x13B0 - 0x13DC
+	HeroWalkToPos walkToPos;								// 0x13B0 - 0x13DC
 	char unk_13e0[0x3a0];
-	MotionBlur wrenchMotionBlur;									// 0x1780 - 0x18CC
-	int WeaponHeldId;												// 0x18D0
+	MotionBlur wrenchMotionBlur;							// 0x1780 - 0x18CC
+	int WeaponHeldId;										// 0x18D0
 	char unk_18d4[0x110];
-	char State;														// 0x19E4
-	char SubState;													// 0x19E5
-	char StateType;													// 0x19E6
-	char PreviousState;												// 0x19E7
-	char PreviousType;												// 0x19E8
-	char PrePreviousState;											// 0x19E9
-	char PrePreviousType;											// 0x19EA
-	char StateHistory[8];											// 0x19EB
-	char StateTypeHistory[8];										// 0x19F3
+	char State;												// 0x19E4
+	char SubState;											// 0x19E5
+	char StateType;											// 0x19E6
+	char PreviousState;										// 0x19E7
+	char PreviousType;										// 0x19E8
+	char PrePreviousState;									// 0x19E9
+	char PrePreviousType;									// 0x19EA
+	char StateHistory[8];									// 0x19EB
+	char StateTypeHistory[8];								// 0x19F3
 	char unk_19fb[0xc];
-	union {
-        struct {
-			char GadgetActive;										// 0x1A07
-            char RaisedGunArm;										// 0x1A08
-            char InShallowWater;									// 0x1A09
-            char Invisible;											// 0x1A0A
-            char HideWeapon;										// 0x1A0B
-            char GadgetsOff;										// 0x1A0C
-            char GadgetNotReady;									// 0x1A0D
-            char WrenchOnly;										// 0x1A0E
-            char HideWrench;										// 0x1A0F
-            char SpawnBoltsToMe;									// 0x1A10
-            char AiFollowingMe;										// 0x1A11
-            char ForceWrenchSwitch;									// 0x1A12
-            char ForceSwingSwitch;									// 0x1A13
-            char IsLocal;											// 0x1A14
-            char InBaseHack;										// 0x1A15
-            char ShieldTrigger;										// 0x1A16
-            char CurSeg;											// 0x1A17
-            char HandGadgetType;									// 0x1A18
-            char ExternalUpdate;									// 0x1A19
-            char unk_1a1a[0x14];
-		};
-    };
+	char GadgetActive;										// 0x1A07
+	char RaisedGunArm;										// 0x1A08
+	char InShallowWater;									// 0x1A09
+	char Invisible;											// 0x1A0A
+	char HideWeapon;										// 0x1A0B
+	char GadgetsOff;										// 0x1A0C
+	char GadgetNotReady;									// 0x1A0D
+	char WrenchOnly;										// 0x1A0E
+	char HideWrench;										// 0x1A0F
+	char SpawnBoltsToMe;									// 0x1A10
+	char AiFollowingMe;										// 0x1A11
+	char ForceWrenchSwitch;									// 0x1A12
+	char ForceSwingSwitch;									// 0x1A13
+	char IsLocal;											// 0x1A14
+	char InBaseHack;										// 0x1A15
+	char ShieldTrigger;										// 0x1A16
+	char CurSeg;											// 0x1A17
+	char HandGadgetType;									// 0x1A18
+	char ExternalUpdate;									// 0x1A19
+	char unk_1a1a[0x14];
 	char unk_1a2e[0x4];
-	WeaponQuickSelect QuickSelect;									// 0x1A32 to 0x1A34
+	WeaponQuickSelect QuickSelect;							// 0x1A32 to 0x1A34
 	char unk_1a35[0x1e];
-	WeaponAmmo WeaponAmmo;											// 0x1A53 to 0x1A5E
+	WeaponAmmo WeaponAmmo;									// 0x1A53 to 0x1A5E
 	char unk_1a5f[0x4];
-	WeaponMeter WeaponMeter;										// 0x1A63 to 0x1A6E
+	WeaponMeter WeaponMeter;								// 0x1A63 to 0x1A6E
 	char unk_1a6f[0x11];
-	int GadgetBox;													// 0x1A80
+	int GadgetBox;											// 0x1A80
 	char unk_1a84[0x324];
-	int TopOfPlayerStruct2;											// 0x1DA8
+	int TopOfPlayerStruct2;									// 0x1DA8
 	char unk_1dac[0x688];
-	Moby * SkinMoby3;												// 0x2434
+	Moby * SkinMoby3;										// 0x2434
 	char unk_2438[0x10];
-	int firingAnim;													// 0x2448
-	int firingGadget;												// 0x244C
-	int desiredCam;													// 0x2450
+	int firingAnim;											// 0x2448
+	int firingGadget;										// 0x244C
+	int desiredCam;											// 0x2450
 	char unk_2454[0x14];
-	float stickStrength;											// 0x2468
-	float stickRawAngle;											// 0x246C
+	float stickStrength;									// 0x2468
+	float stickRawAngle;									// 0x246C
 	char unk_2470[0x6];
-	char Health;													// 0x2476
+	char Health;											// 0x2476
 	char unk_2477[0xd];
-	float SkidDeceleration;											// 0x2484
-	int mtxFxActive;												// 0x2488
-	float analogStickStrength;										// 0x248C
+	float SkidDeceleration;									// 0x2484
+	int mtxFxActive;										// 0x2488
+	float analogStickStrength;								// 0x248C
 	char unk_2490[0x14];
-	short int unkGadgetTimer_24a4;									// 0x24A4
-	short int GadgetPADDelayTimer;									// 0x24A6
-	short int unkGadgetTimer_24a8;									// 0x24A8
+	short int unkGadgetTimer_24a4;							// 0x24A4
+	short int GadgetPADDelayTimer;							// 0x24A6
+	short int unkGadgetTimer_24a8;							// 0x24A8
 	char unk_24ac[0x1e];
 	char unk_24c8;
 	char unk_24c9;
 	char unk_24ca;
 	char unk_24cb;
-	u32 LastDamagedMeOwnerUID;										// 0x24CC
-	int LastDamagedMeGadgetId;										// 0x24D0
-	char DamageTaken;												// 0x24D4
+	u32 LastDamagedMeOwnerUID;								// 0x24CC
+	int LastDamagedMeGadgetId;								// 0x24D0
+	char DamageTaken;										// 0x24D4
 	char unk_24d5[0x27];
-	char isGetHitMsgPending;										// 0x24FC
-	char LookAndCrouch;												// 0x24FD
-	char LookAndThrowWrench;										// 0x24FE
-	char earlyThrowAbort;											// 0x24FF
-	char lookAndGetHit;												// 0x2500
+	char isGetHitMsgPending;								// 0x24FC
+	char LookAndCrouch;										// 0x24FD
+	char LookAndThrowWrench;								// 0x24FE
+	char earlyThrowAbort;									// 0x24FF
+	char lookAndGetHit;										// 0x2500
 	// lastDeathWasSuicide: Doesn't Spawn Pack if true
-	char LastDeathWasSuicide;										// 0x2501
+	char LastDeathWasSuicide;								// 0x2501
 	char unk_2502[0x12];
-	int HudHealthTimer;												// 0x2514
-	char PauseOn;                                 		 	        // 0x2518
-    char PauseTimer;   		                                        // 0x2519
+	int HudHealthTimer;										// 0x2514
+	char PauseOn;                                 		 	// 0x2518
+	char PauseTimer;										// 0x2519
 	char unk_251a;
-	char PlayerType;												// 0x251B
-	Moby *FlagMoby;													// 0x251C
-	HeroPlayerConstants *PlayerConstants;							// 0x2520
-	Moby *PlayerMoby;												// 0x2524
-    Vehicle *Vehicle;                                               // 0x2528
-	Vehicle *VehiclePending;										// 0x252C
-	GameCamera *Camera;												// 0x2530
-	PadButtonStatus *Paddata;                                       // 0x2534
-	float PlayerPositionX;											// 0x2538
-	float PlayerPositionZ;											// 0x253C
-	float PlayerPositionY;											// 0x2540
-	int mpIndex;													// 0x2544
-	int mpTeam;														// 0x2548
-	int vehicleState;												// 0x254C
-	int vehicleStateTimer;											// 0x2550
-	int pointsLastKill;												// 0x2554
-	struct tNW_Player * pNetPlayer;									// 0x2558
+	char PlayerType;										// 0x251B
+	Moby *FlagMoby;											// 0x251C
+	HeroPlayerConstants *PlayerConstants;					// 0x2520
+	Moby *PlayerMoby;										// 0x2524
+	Vehicle *Vehicle;                                      	// 0x2528
+	Vehicle *VehiclePending;								// 0x252C
+	GameCamera *Camera;										// 0x2530
+	PadButtonStatus *Paddata;                               // 0x2534
+	float PlayerPositionX;									// 0x2538
+	float PlayerPositionZ;									// 0x253C
+	float PlayerPositionY;									// 0x2540
+	int mpIndex;											// 0x2544
+	int mpTeam;												// 0x2548
+	int vehicleState;										// 0x254C
+	int vehicleStateTimer;									// 0x2550
+	int pointsLastKill;										// 0x2554
+	struct tNW_Player * pNetPlayer;							// 0x2558
 
 	char unk_2559[0x26];
 	// This area changes if wrench is held.
