@@ -697,7 +697,7 @@ typedef struct Player {
 	VECTOR mtxFxScale;										// 0xF0
 	VECTOR lastPosition;									// 0x100
 	VECTOR stickInput;										// 0x110
-	VECTOR Velocity;                                        // 0x120
+	VECTOR velocity;                                        // 0x120
 	char unk_130[0x100];									// 0x130
 	HeroGround ground;										// 0x230 - 0x2EC
 	HeroTimers timers;										// 0x2F0
@@ -706,10 +706,14 @@ typedef struct Player {
 	HeroFireDir fireDir;									// 0x380
 	char unk_3d0[0x50];
 	HeroMobys mobys;										// 0x420
-	Gadget Weapon;											// 0x430
-	Gadget Boots;											// 0x480
-	char unk_4d0[0x20];
-	char unk_4f0[0x120];
+	VECTOR wrenchThrownPos;									// 0x430
+	VECTOR wrenchThrownRot;									// 0x440
+	Gadget Weapon;											// 0x450
+	Gadget Boots;											// 0x4A0
+	Gadget gadget2;											// 0x4F0
+	Gadget gadget3;											// 0x540
+	Gadget gadget4;											// 0x590
+	char unk_5e0[0x30];
 	HeroAnim anim;											// 0x610
 	char unk_630[0x970];
 	HeroShadow shadow;										// 0xFA0
@@ -759,15 +763,24 @@ typedef struct Player {
 	WeaponMeter WeaponMeter;								// 0x1A63 to 0x1A6E
 	char unk_1a6f[0x11];
 	int GadgetBox;											// 0x1A80
-	char unk_1a84[0x324];
+	char unk_1a84[0x320];
+	int pGadgetBox;										// 0x1DA4
 	int TopOfPlayerStruct2;									// 0x1DA8
-	char unk_1dac[0x688];
-	Moby * SkinMoby3;										// 0x2434
+	char unk_1dac[0x5f4];
+	VECTOR camPos;											// 0x23A0
+	VECTOR camRot;											// 0x23B0
+	VECTOR camUMtx[3];										// 0x23C0
+	char unk_23f0[0x44];
+	Moby *SkinMoby3;										// 0x2434
 	char unk_2438[0x10];
 	int firingAnim;											// 0x2448
 	int firingGadget;										// 0x244C
 	int desiredCam;											// 0x2450
-	char unk_2454[0x14];
+	struct Moby *pHeadTargetMoby;									// 0x2454
+	struct Moby *pSheepMoby;										// 0x2458
+	struct Moby *pWhoHitMe;										// 0x245C
+	struct Player *pWhoSheepedMe;									// 0x2460
+	int sheepMeLongTime;									// 0x2464
 	float stickStrength;									// 0x2468
 	float stickRawAngle;									// 0x246C
 	char unk_2470[0x6];
@@ -817,7 +830,7 @@ typedef struct Player {
 	int vehicleState;										// 0x254C
 	int vehicleStateTimer;									// 0x2550
 	int pointsLastKill;										// 0x2554
-	struct tNW_Player * pNetPlayer;							// 0x2558
+	struct tNW_Player *pNetPlayer;							// 0x2558
 
 	char unk_2559[0x26];
 	// This area changes if wrench is held.

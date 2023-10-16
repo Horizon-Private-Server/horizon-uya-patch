@@ -37,10 +37,10 @@ struct tDR_Profile {
 };
 
 struct tDR_PositionHistory {
-	/*   0 */ VECTOR Pos[2];
-	/*  20 */ int Time[2];
+	/*   0 */ VECTOR Pos[1];
+	/*  20 */ int Time[1];
 	/*  28 */ int Oldest;
-	/*  2c */ int pad[1];
+	/*  2c */ int pad;
 };
 
 struct tDR_Vars {
