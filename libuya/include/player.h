@@ -482,6 +482,26 @@ typedef struct HeroHotspots { // 0x10
 	/* 0xc */ int pad;
 } HeroHotspots;
 
+typedef struct HeroLockOn { // 0x50
+	/* 0x00 */ VECTOR strafeIdealVec;
+	/* 0x10 */ Moby *pMoby;
+	/* 0x14 */ short int strafing;
+	/* 0x16 */ char strafingBack;
+	/* 0x17 */ char strafingDir;
+	/* 0x18 */ float strafeRot;
+	/* 0x1c */ float strafeRotSpeed;
+	/* 0x20 */ float backSpeed;
+	/* 0x24 */ int strafeRotTimer;
+	/* 0x28 */ short int strafeLeftDampTimer;
+	/* 0x2a */ short int strafeRightDampTimer;
+	/* 0x2c */ int strafeTurnDiffZero;
+	/* 0x30 */ VECTOR curRetPos;
+	/* 0x40 */ Moby *curRetMoby;
+	/* 0x44 */ float fadeInterp;
+	/* 0x48 */ float retRot;
+	/* 0x4c */ float strafeTurnDiff;
+} HeroLockOn;
+
 typedef struct HeroMobys { // 0x10
 	/* 0x0 */ Moby *ground;
 	/* 0x4 */ Moby *hero;
@@ -748,7 +768,7 @@ typedef struct Player {
 			float PlayerRoll;								// 0xB0
 			float PlayerPitch;								// 0xB4
 			float PlayerYaw;								// 0xB8
-			float unk_cc;
+			float pad;										// 0xBC
 		};
 	};
 	VECTOR rotSpeed;										// 0xC0
@@ -763,7 +783,7 @@ typedef struct Player {
 	HeroTimers timers;										// 0x2F0
 	HeroHotspots hotspots;									// 0x370
 	HeroFireDir fireDir;									// 0x380
-	char unk_3d0[0x50];
+	HeroLockOn lockOn;										// 0x3D0
 	HeroMobys mobys;										// 0x420
 	VECTOR wrenchThrownPos;									// 0x430
 	VECTOR wrenchThrownRot;									// 0x440
@@ -823,7 +843,7 @@ typedef struct Player {
 	char unk_1a6f[0x11];
 	int GadgetBox;											// 0x1A80
 	char unk_1a84[0x320];
-	int pGadgetBox;										// 0x1DA4
+	void * pGadgetBox;										// 0x1DA4
 	int TopOfPlayerStruct2;									// 0x1DA8
 	char unk_1dac[0x5f4];
 	VECTOR camPos;											// 0x23A0
