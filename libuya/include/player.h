@@ -425,8 +425,8 @@ typedef struct HeroTimers {
 	int animState;													// 0x2FC
 	int stickOn;													// 0x300
 	int stickOff;													// 0x304
-	short int unk_308;
-	short int unk_30a;
+	short int noLedge;												// 0x308
+	short int allowQuickSelect;										// 0x30A
 	int firing;														// 0x30C
 	char unk_310; // Freezes if I change it.
 	char unk_311; // Freezes if I change it.
@@ -467,6 +467,21 @@ typedef struct HeroTimers {
 	char unk_364[0xc];
 } HeroTimers;
 
+typedef struct HeroHotspots { // 0x10
+	/* 0x0 */ short int index; // 02: magnetic, 0b: water
+	/* 0x2 */ char ice;
+	/* 0x3 */ char magictele;
+	/* 0x4 */ char deathsand;
+	/* 0x5 */ char lava;
+	/* 0x6 */ char quicksand;
+	/* 0x7 */ char magnetic;
+	/* 0x8 */ char noStand;
+	/* 0x9 */ char water;
+	/* 0xa */ char icewater;
+	/* 0xb */ char groundType;
+	/* 0xc */ int pad;
+} HeroHotspots;
+
 typedef struct HeroMobys { // 0x10
 	/* 0x0 */ Moby *ground;
 	/* 0x4 */ Moby *hero;
@@ -480,6 +495,51 @@ typedef struct HeroFireDir { // 0x50
 	/* 0x30 */ VECTOR v;
 	/* 0x40 */ VECTOR rot;
 } HeroFireDir;
+
+typedef struct HeroMove { // 0xa0
+	/* 0x00 */ VECTOR behavior;
+	/* 0x10 */ VECTOR external;
+	/* 0x20 */ VECTOR actual;
+	/* 0x30 */ VECTOR actualFromBehavior;
+	/* 0x40 */ VECTOR actualFromBehaviorGrav;
+	/* 0x50 */ VECTOR actualFromBehavior2D;
+	/* 0x60 */ VECTOR actualFromExternal;
+	/* 0x70 */ VECTOR taper;
+	/* 0x80 */ float speed;
+	/* 0x84 */ float speed2D;
+	/* 0x88 */ float forwardSpeed;
+	/* 0x8c */ float ascent;
+	/* 0x90 */ float zSpeed;
+	/* 0x94 */ float externalSpeed;
+	/* 0x98 */ int pad[1];
+} HeroMove;
+
+typedef struct HeroColl { // 0x70
+	/* 0x00 */ VECTOR normal;
+	/* 0x10 */ VECTOR ip;
+	/* 0x20 */ float top;
+	/* 0x24 */ float bot;
+	/* 0x28 */ float ideal_top;
+	/* 0x2c */ float ideal_bot;
+	/* 0x30 */ float idealRadius;
+	/* 0x34 */ float radius;
+	/* 0x38 */ float radiusSpeed;
+	/* 0x3c */ Moby *pContactMoby;
+	/* 0x40 */ Moby *pBumpMoby;
+	/* 0x44 */ float bumpPushSpeed;
+	/* 0x48 */ float distToWall;
+	/* 0x4c */ float wallAng;
+	/* 0x50 */ float wallSlope;
+	/* 0x54 */ char wallIsCrate;
+	/* 0x55 */ char wallIsMoby;
+	/* 0x56 */ char contact;
+	/* 0x57 */ char cpad;
+	/* 0x58 */ float ledgeHeight;
+	/* 0x5c */ float ledgeDist;
+	/* 0x60 */ int atLedge;
+	/* 0x64 */ Moby *pWallJumpMoby;
+	/* 0x68 */ int pad[1];
+} HeroColl;
 
 typedef struct HeroGround {
 	/*   0 */ VECTOR normal;
@@ -545,8 +605,8 @@ typedef struct HeroPlayerConstants {
 typedef struct Gadget {
 	/*   0 */ VECTOR jointPos;
 	/*  10 */ VECTOR jointRot;
-	/*  20 */ Moby* pMoby;
-	/*  24 */ Moby* pMoby2;
+	/*  20 */ Moby *pMoby;
+	/*  24 */ Moby *pMoby2;
 	/*  28 */ int padButtonDown;
 	/*  2c */ int alignPad;
 	/*  30 */ int padButton;
@@ -595,9 +655,9 @@ typedef struct FpsCam {
 	VECTOR target_last_pos;											// 0x1230
 	VECTOR target_vel;												// 0x1240
 	float target_blend_fac;											// 0x1250
-    float CameraPitchMin; // aka: float max_y_rot                   // 0x1254
-    float CameraPitchMax; // aka: float min_y_rot                   // 0x1258
-    Moby * pExcludeMoby;                                            // 0x125C
+    float CameraPitchMin; // aka: float mix_y_rot                   // 0x1254
+    float CameraPitchMax; // aka: float man_y_rot                   // 0x1258
+    Moby *pExcludeMoby;												// 0x125C
     VECTOR CameraPositionOffset;                                  	// 0x1260
     VECTOR CameraRotationOffset;									// 0x1270
 	short int flags;												// 0x1280
@@ -697,12 +757,11 @@ typedef struct Player {
 	VECTOR mtxFxScale;										// 0xF0
 	VECTOR lastPosition;									// 0x100
 	VECTOR stickInput;										// 0x110
-	VECTOR velocity;                                        // 0x120
-	char unk_130[0x100];									// 0x130
+	HeroMove move;											// 0x120
+	HeroColl coll;											// 0x1C0
 	HeroGround ground;										// 0x230 - 0x2EC
 	HeroTimers timers;										// 0x2F0
-	short int magnetic; // 0 = No, 2 = Yes.					// 0x370
-	char unk_372[0xe];
+	HeroHotspots hotspots;									// 0x370
 	HeroFireDir fireDir;									// 0x380
 	char unk_3d0[0x50];
 	HeroMobys mobys;										// 0x420
