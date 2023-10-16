@@ -56,6 +56,7 @@ int HasDisableNodeTurrets = 0;
 int HasKeepBaseHealthPadActive = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 short PlayerDeaths[GAME_MAX_PLAYERS];
+char Teams[8];
 
 // Vampire Logistics :D
 int healRate = 0;
@@ -77,18 +78,21 @@ int VampireHealRate[] = {3, 7, 11, 15};
  */
 void vampireHeal(Player * player, int weaponid)
 {
-	// give player health
+	// Get Health
 	int CurrentHealth = playerGetHealth(player);
-	int HEALME = (CurrentHealth + healRate);
-	if (HEALME >= PLAYER_MAX_HEALTH) {
-		playerSetHealth(player, 15);
-	} else if (HEALME < PLAYER_MAX_HEALTH) {
-		playerSetHealth(player, HEALME);
+	// Check to see if player isn't dead
+	if (CurrentHealth > 0 && !playerIsDead(player)) {
+		// Get New Health
+		int HEALME = (CurrentHealth + healRate);
+		// if new health greater than max, set player health to max else set to new health
+		if (HEALME >= PLAYER_MAX_HEALTH) {
+			playerSetHealth(player, 15);
+		} else if (HEALME < PLAYER_MAX_HEALTH) {
+			playerSetHealth(player, HEALME);
+		}
 	}
-
-	// run base
+	// run update weapon kill
 	((void (*)(int, int))GetAddress(&vaUpdateWeaponKill))(player, weaponid);
-
 }
 void vampireLogic()
 {
@@ -171,6 +175,7 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 	{
 		PlayerKills[i] = 0;
 		PlayerDeaths[i] = 0;
+		Teams[i] = 0;
 	}
 
 	HasDisabledHealthboxes = 0;
