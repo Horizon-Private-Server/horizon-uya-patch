@@ -154,6 +154,9 @@ MenuElem_ListData_t dataCustomMaps = {
       "None",
       "Maraxus Prison",
       "Sarathos Swamp",
+#if TEST
+      "Test",
+#endif
     }
 };
 

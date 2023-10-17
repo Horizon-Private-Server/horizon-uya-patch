@@ -47,6 +47,9 @@ typedef struct PatchGameConfig
 
 enum CUSTOM_MAP_ID
 {
+#if TEST
+  CUSTOM_MAP_TEST = -1,
+#endif
   CUSTOM_MAP_NONE = 0,
   CUSTOM_MAP_MARAXUS_PRISON,
   CUSTOM_MAP_SARATHOS_SWAMP,
