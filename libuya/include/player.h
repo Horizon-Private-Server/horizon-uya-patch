@@ -48,12 +48,12 @@
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-enum PlayerCameraType
+typedef enum PlayerCameraType
 {
     CAMERA_TYPE_THIRD_PERSON,
     CAMERA_TYPE_LOCK_STRAFE,
     CAMERA_TYPE_FIRST_PERSON
-};
+} PlayerCameraType;
 
 /*
  * NAME :		PlayerState
@@ -65,7 +65,7 @@ enum PlayerCameraType
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-enum PlayerState {
+typedef enum PlayerState {
 	PLAYER_STATE_IDLE = 0,
 	PLAYER_STATE_LOOK = 1,
 	PLAYER_STATE_WALK = 2,
@@ -177,7 +177,7 @@ enum PlayerState {
 	PLAYER_STATE_WAIT_FOR_JOIN = 154,
 	PLAYER_STATE_DROPPED = 155,
 	PLAYER_STATE_CNT = 156
-};
+} PlayerState;
 
 typedef enum PlayerType {
 	PLAYER_TYPE_IDLE = 0,
@@ -218,7 +218,7 @@ typedef enum PlayerType {
 	PLAYER_TYPE_LADDER = 36,
 	PLAYER_TYPE_SKYDIVE = 37,
 	PLAYER_TYPE_CNT = 38
-};
+} PlayerType;
 
 /*
  * NAME :		CameraAngle
@@ -272,7 +272,7 @@ struct tNW_PlayerData {
 	/*  20 */ VECTOR vIdealVec;
 	/*  30 */ int idealVecTime;
 	/*  34 */ int accountId;
-	/*  38 */ unsigned int UID;
+	/*  38 */ u32 UID;
 	/*  3c */ int playerType;
 	/*  40 */ int playerTeam;
 	/*  44 */ float hitPoints;
@@ -285,24 +285,24 @@ struct tNW_PlayerData {
 	/*  70 */ int cameraRotationSettings[3];
 	/*  7c */ int rank[6];
 	/*  94 */ char cGadgetLevel[32];
-	/*  b4 */ unsigned int updated;
-	/*  b8 */ short unsigned int gadgetsWithAmmo;
-	/*  ba */ short unsigned int fpsMode;
-	/*  bc */ unsigned char flags;
+	/*  b4 */ u32 updated;
+	/*  b8 */ short int gadgetsWithAmmo;
+	/*  ba */ short int fpsMode;
+	/*  bc */ u8 flags;
 };
 
 struct tNW_PlayerPadInputMessage {
 	/*   0 */ int cameraRot[4];
-	/*  10 */ short unsigned int playerPos[3];
-	/*  16 */ unsigned char sequenceNum;
+	/*  10 */ short int playerPos[3];
+	/*  16 */ u8 sequenceNum;
 	union
 	{
-		/*  17 */ unsigned char stateAndRotFlag : 1;
-		/*  17 */ unsigned char playerIndex : 1;
-		/*  17 */ unsigned char flags : 2;
-		/*  17 */ unsigned char framesWithButtonDiffs : 4;
+		/*  17 */ u8 stateAndRotFlag : 1;
+		/*  17 */ u8 playerIndex : 1;
+		/*  17 */ u8 flags : 2;
+		/*  17 */ u8 framesWithButtonDiffs : 4;
 	};
-	/*  18 */ unsigned char pad_data[128];
+	/*  18 */ u8 pad_data[128];
 };
 
 struct tNW_PlayerPadInputMessageListElem {
@@ -337,7 +337,7 @@ struct tNW_Player {
 	/* aaa */ char numConseqSkips;
 	/* aac */ struct tNW_PlayerPadInputMessageListElem* pActivePadMsg;
 	/* ab0 */ struct tNW_PlayerPadInputMessageListElem* pPadMsgListTail;
-	/* ab4 */ unsigned char padFrame[20];
+	/* ab4 */ u8 padFrame[20];
 	/* ac8 */ int homeBaseIndex;
 	/* acc */ int homeNodeIndex;
 };
@@ -447,7 +447,7 @@ typedef struct HeroTimers {
 	short int unkTimer_332; // Not Used
 	short int unk_Wrench;											// 0x334
 	short int unkTimer_336;											// 0x336
-	short int noLedge;												// 0x338
+	short int unkTimer_338;											// 0x338
 	short int unkTimer_33a;	// Not Used								// 0x33A
 	short int unktimer_33c; // Not Used								// 0x33C
 	short int magnetic;												// 0x33E
@@ -665,19 +665,19 @@ typedef struct HeroShadow { // 0x28
 
 typedef struct FpsCam {
 	MATRIX CameraMatrix;											// 0x11A0
-    CameraAngleZ CameraYaw;                                         // 0x11E0
-    CameraAngleY CameraPitch;                                       // 0x1200
+    struct CameraAngleZ CameraYaw;									// 0x11E0
+    struct CameraAngleY CameraPitch;								// 0x1200
     int state;														// 0x1220
 	short int quick_turn_input_time;								// 0x1224
 	short int snap_hold_time;										// 0x1226
 	float snap_input;												// 0x1228
-    Moby *Target;                                      	      	    // 0x122C
+    struct Moby *Target;											// 0x122C
 	VECTOR target_last_pos;											// 0x1230
 	VECTOR target_vel;												// 0x1240
 	float target_blend_fac;											// 0x1250
     float CameraPitchMin; // aka: float mix_y_rot                   // 0x1254
     float CameraPitchMax; // aka: float man_y_rot                   // 0x1258
-    Moby *pExcludeMoby;												// 0x125C
+    struct Moby *pExcludeMoby;										// 0x125C
     VECTOR CameraPositionOffset;                                  	// 0x1260
     VECTOR CameraRotationOffset;									// 0x1270
 	short int flags;												// 0x1280
@@ -707,7 +707,7 @@ typedef struct FpsCam {
 typedef struct HeroCamera { // 0x30
 	VECTOR CameraPos;												// 0x1180
 	VECTOR CameraDir;												// 0x1190
-	struct FpsCam Vars; 											// 0x11A0 - 0x130C
+	FpsCam Vars; 													// 0x11A0 - 0x130C
 	int active;														// 0x1310
 	float gunWithdrawSpeed;											// 0x1314
 	float gunWithdrawDist;											// 0x1318
@@ -758,7 +758,7 @@ typedef struct MotionBlur { // 0x150
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 typedef struct Player {
-	struct Guber Guber;                                     // 0x00
+	struct Guber Guber;										// 0x00
 	MATRIX Water;											// 0x20
 	MATRIX Terrain;											// 0x60
 	VECTOR PlayerPosition;                                  // 0xA0
@@ -841,9 +841,9 @@ typedef struct Player {
 	char unk_1a5f[0x4];
 	WeaponMeter WeaponMeter;								// 0x1A63 to 0x1A6E
 	char unk_1a6f[0x11];
-	int GadgetBox;											// 0x1A80
-	char unk_1a84[0x320];
-	void * pGadgetBox;										// 0x1DA4
+	GadgetEvent gadgetEventSlots[10];						// 0x1A80
+	int unk_1da0;
+	GadgetEvent *pNextGadgetEvent;							// 0x1DA4
 	int TopOfPlayerStruct2;									// 0x1DA8
 	char unk_1dac[0x5f4];
 	VECTOR camPos;											// 0x23A0
@@ -855,10 +855,10 @@ typedef struct Player {
 	int firingAnim;											// 0x2448
 	int firingGadget;										// 0x244C
 	int desiredCam;											// 0x2450
-	struct Moby *pHeadTargetMoby;									// 0x2454
-	struct Moby *pSheepMoby;										// 0x2458
-	struct Moby *pWhoHitMe;										// 0x245C
-	struct Player *pWhoSheepedMe;									// 0x2460
+	struct Moby *pHeadTargetMoby;							// 0x2454
+	struct Moby *pSheepMoby;								// 0x2458
+	struct Moby *pWhoHitMe;									// 0x245C
+	struct Player *pWhoSheepedMe;							// 0x2460
 	int sheepMeLongTime;									// 0x2464
 	float stickStrength;									// 0x2468
 	float stickRawAngle;									// 0x246C
@@ -897,10 +897,10 @@ typedef struct Player {
 	Moby *FlagMoby;											// 0x251C
 	HeroPlayerConstants *PlayerConstants;					// 0x2520
 	Moby *PlayerMoby;										// 0x2524
-	Vehicle *Vehicle;                                      	// 0x2528
+	Vehicle *Vehicle;										// 0x2528
 	Vehicle *VehiclePending;								// 0x252C
 	GameCamera *Camera;										// 0x2530
-	PadButtonStatus *Paddata;                               // 0x2534
+	PadButtonStatus *Paddata;								// 0x2534
 	float PlayerPositionX;									// 0x2538
 	float PlayerPositionZ;									// 0x253C
 	float PlayerPositionY;									// 0x2540
@@ -909,7 +909,7 @@ typedef struct Player {
 	int vehicleState;										// 0x254C
 	int vehicleStateTimer;									// 0x2550
 	int pointsLastKill;										// 0x2554
-	struct tNW_Player *pNetPlayer;							// 0x2558
+	struct tNW_Player *pNetPlayer;									// 0x2558
 
 	char unk_2559[0x26];
 	// This area changes if wrench is held.

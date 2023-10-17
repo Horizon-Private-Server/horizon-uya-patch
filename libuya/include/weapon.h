@@ -16,6 +16,7 @@
 
 #include <tamtypes.h>
 #include "common.h"
+#include "math3d.h"
 
 /*
  * NAME :		WEAPON_IDS
@@ -86,8 +87,7 @@ typedef struct WeaponMeter {
     char Holo;
 } WeaponMeter;
 
-typedef struct tNW_GadgetEventMessage
-{
+struct tNW_GadgetEventMessage { // 0x24
 	/*   0 */ short int GadgetId;
 	/*   2 */ char PlayerIndex;
 	/*   3 */ char GadgetEventType;
@@ -96,7 +96,19 @@ typedef struct tNW_GadgetEventMessage
 	/*   c */ unsigned int TargetUID;
 	/*  10 */ float FiringLoc[3];
 	/*  1c */ float TargetDir[3];
-} tNW_GadgetEventMessage;
+};
+
+typedef struct GadgetEvent { // 0x50
+	/*   0 */ unsigned char gadgetID;
+	/*   1 */ unsigned char cPlayerIndex;
+	/*   2 */ char cGadgetType;
+	/*   3 */ char gadgetEventType;
+	/*   4 */ int iActiveTime;
+	/*   8 */ unsigned int targetUID;
+	/*  10 */ VECTOR targetOffsetQuat;
+	/*  20 */ struct GadgetEvent* pNextGadgetEvent;
+	/*  24 */ struct tNW_GadgetEventMessage gadgetEventMsg;
+} GadgetEvent;
 
 typedef struct GadgetDef { // 0x80
     /* 0x00 */ short int pickupTag;
@@ -104,13 +116,13 @@ typedef struct GadgetDef { // 0x80
     /* 0x04 */ short int mobyClass;
 	/* 0x06 */ short int mobyClass2;
     /* 0x08 */ char isWeapon;
-	/* 0x09 */ signed char type; // Unsure
-	/* 0x0a */ signed char joint; // Unsure
-	/* 0x0b */ signed char handGadgetType;
+	/* 0x09 */ char type; // Unsure
+	/* 0x0a */ char joint; // Unsure
+	/* 0x0b */ char handGadgetType;
     /* 0x0c */ short int fullFireAnim;
 	/* 0x0e */ short int armFireAnimDefault;
 	/* 0x10 */ short int armFireAnimCrouch;
-	/* 0x12 */ short unsigned int icon;
+	/* 0x12 */ short int icon;
 	/* 0x14 */ short int ammotag;
 	/* 0x16 */ short int upgAmmotag;
     /* 0x18 */ short int unk_18; 
