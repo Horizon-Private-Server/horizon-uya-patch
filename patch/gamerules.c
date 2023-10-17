@@ -56,7 +56,7 @@ int HasDisableNodeTurrets = 0;
 int HasKeepBaseHealthPadActive = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 short PlayerDeaths[GAME_MAX_PLAYERS];
-char Teams[8];
+short PlayerTeams[GAME_MAX_PLAYERS];
 
 // Vampire Logistics :D
 int healRate = 0;
@@ -175,7 +175,7 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 	{
 		PlayerKills[i] = 0;
 		PlayerDeaths[i] = 0;
-		Teams[i] = 0;
+		PlayerTeams[i] = 0;
 	}
 
 	HasDisabledHealthboxes = 0;

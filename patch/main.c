@@ -584,7 +584,7 @@ void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short
 {
 	int GEF = GetAddress(&vaGadgetEventFunc);
 	Player * player = (Player*)((u32)message - 0x1a40);
-	tNW_GadgetEventMessage * msg = (tNW_GadgetEventMessage*)message;
+	struct tNW_GadgetEventMessage * msg = (struct tNW_GadgetEventMessage*)message;
 	// GadgetEventType 7 = Niked, or splash damage.
 	if (msg && GadgetEventType == 7)
 	{

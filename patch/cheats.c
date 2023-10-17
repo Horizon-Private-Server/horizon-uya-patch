@@ -35,6 +35,7 @@
 
 extern PlayerKills[GAME_MAX_PLAYERS];
 extern PlayerDeaths[GAME_MAX_PLAYERS];
+extern PlayerTeams[GAME_MAX_PLAYERS];
 extern PatchGameConfig_t gameConfig;
 extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaGiveWeaponFunc;
@@ -650,40 +651,75 @@ void disableRespawning(void)
  */
 void survivor(void)
 {
-    // Don't let players respawn
-    disableRespawning();
+	disableRespawning();
 
     static int DeadPlayers = 0;
+	static int TeamCount = 0;
     int i;
+	Player ** players = playerGetAll();
 	GameData * gameData = gameGetData();
     GameSettings * gameSettings = gameGetSettings();
+	GameOptions * gameOptions = gameGetOptions();
+	int teams = gameOptions->GameFlags.MultiplayerGameFlags.Teams;
     int playerCount = gameSettings->PlayerCount;
-    for (i = 0; i < playerCount; ++i)
-    {
-        // Save current deaths for all players, and how many players have died.
-        if (gameData->PlayerStats[i].Deaths > PlayerDeaths[i])
-        {
-            PlayerDeaths[i] = gameData->PlayerStats[i].Deaths;
-            ++DeadPlayers;
-        }
+	if (teams) {
+		if (!TeamCount) {
+			for (i = 0; i < playerCount; ++i) {
+				if (!players[i])
+					continue;
 
-        // If only one player in game, don't let game end until they die.
-        if (playerCount == 1 && DeadPlayers == 1)
-        {
-			gameData->TimeEnd = 0;
-            gameData->WinningTeam = i;
-        }
-        // if player count is greater than 1, and Dead Players == Player Count - 1
-        else if (playerCount > 1 && DeadPlayers == (playerCount - 1))
-        {
-            // Check to see who has not died
-            if (gameData->PlayerStats[i].Deaths == 0)
-            {
+				++PlayerTeams[players[i]->mpTeam];
+				++TeamCount;
+			}
+		}
+		for (i = 0; i < playerCount; ++i) {
+			if (!players[i])
+				continue;
+					
+		    // Save current deaths for all players, and how many players have died.
+			if (gameData->PlayerStats[i].Deaths > PlayerDeaths[i]) {
+				PlayerDeaths[i] = gameData->PlayerStats[i].Deaths;
+				// Subtract player from their team.
+				--PlayerTeams[players[i]->mpTeam];
+				// if the team of the player who died noe equals zero, subject team coutn.
+				if (PlayerTeams[players[i]->mpTeam] == 0)
+					--TeamCount;
+			}
+			// If only one player in game, don't let game end until they die.
+			if (playerCount == 1 && TeamCount == 0) {
+				gameData->TimeEnd = 0;
+				gameData->WinningTeam = i;
+			}
+			// if only one team remains
+			else if (playerCount > 1 && TeamCount == 1) {
 				gameData->TimeEnd = 0;
                 gameData->WinningTeam = i;
-            }
-        }
-    }
+			}
+		}
+	}
+	else {
+		for (i = 0; i < (playerCount - 1); ++i) {
+			// Save current deaths for all players, and how many players have died.
+			if (gameData->PlayerStats[i].Deaths > PlayerDeaths[i]) {
+				PlayerDeaths[i] = gameData->PlayerStats[i].Deaths;
+				++DeadPlayers;
+			}
+
+			// If only one player in game, don't let game end until they die.
+			if (playerCount == 1 && DeadPlayers == 1) {
+				gameData->TimeEnd = 0;
+				gameData->WinningTeam = i;
+			}
+			// if player count is greater than 1, and Dead Players == Player Count - 1
+			else if (playerCount > 1 && DeadPlayers == (playerCount - 1)) {
+				// Check to see who has not died
+				if (gameData->PlayerStats[i].Deaths == 0) {
+					gameData->TimeEnd = 0;
+					gameData->WinningTeam = i;
+				}
+			}
+		}
+	}
 }
 
 /*
