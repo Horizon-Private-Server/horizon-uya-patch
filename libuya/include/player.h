@@ -855,9 +855,9 @@ typedef struct Player {
 	int firingAnim;											// 0x2448
 	int firingGadget;										// 0x244C
 	int desiredCam;											// 0x2450
-	struct Moby *pHeadTargetMoby;							// 0x2454
-	struct Moby *pSheepMoby;								// 0x2458
-	struct Moby *pWhoHitMe;									// 0x245C
+	Moby *pHeadTargetMoby;									// 0x2454
+	Moby *pSheepMoby;										// 0x2458
+	Moby *pWhoHitMe;										// 0x245C
 	struct Player *pWhoSheepedMe;							// 0x2460
 	int sheepMeLongTime;									// 0x2464
 	float stickStrength;									// 0x2468
@@ -865,10 +865,19 @@ typedef struct Player {
 	char unk_2470[0x6];
 	char Health;											// 0x2476
 	char unk_2477[0xd];
-	float SkidDeceleration;									// 0x2484
+	float skidDeceleration;									// 0x2484
 	int mtxFxActive;										// 0x2488
 	float analogStickStrength;								// 0x248C
-	char unk_2490[0x14];
+	char deathFallChannel;									// 0x2490
+	char wallJumpAngLimiter;								// 0x2491
+	char wallJumpHeightFactor;								// 0x2492
+	char wallJumpChainCnt;									// 0x2493
+	float wallJumpDist;										// 0x2494
+	float moonJumpIdealHeight;								// 0x2498
+	float moonJumpGravity;									// 0x249C
+	short int chargeDoubleTapTimer;							// 0x24A0
+	char unk_24a2;
+	char unk_24a3;
 	short int unkGadgetTimer_24a4;							// 0x24A4
 	short int GadgetPADDelayTimer;							// 0x24A6
 	short int unkGadgetTimer_24a8;							// 0x24A8
