@@ -35,6 +35,7 @@ enum MobyId
 	MOBY_ID_EXPLOSIVE_CRATE = 0x01f9,
 	MOBY_ID_AMMO_CRATE = 0x01ff,
 	MOBY_ID_TITANIUM_BOLT = 0x046e,
+	MOBY_ID_PLAYER_ICE_CUBE = 0x052a,
 	MOBY_ID_DYNAMO_CONTROL_NODE = 0x0952,
 	MOBY_ID_OBANI_JUMP_PAD = 0x09b9,
 	MOBY_ID_WATER = 0x0b37,
@@ -213,18 +214,80 @@ enum MobyId
 	MOBY_ID_OBANI_ENERGY_CLOUD = 0x1f8b,
 };
 
-/*
- * NAME :		Moby
- * 
- * DESCRIPTION :
- * 			Contains the moby struct data.
- * 
- * NOTES :
- *          Mobies are objects that can be spawned in game.
- *          This includes things like vehicles, turrets, mod pads, etc
- * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
+struct MobyReactAnim { // 0x20
+	/* 0x00 */ char animType;
+	/* 0x01 */ char startFrame;
+	/* 0x02 */ char endFrame;
+	/* 0x03 */ char cpad;
+	/* 0x04 */ float drag_mps;
+	/* 0x08 */ float xySpeed_mps;
+	/* 0x0c */ float zSpeed_mps;
+	/* 0x10 */ float upGrav_mps;
+	/* 0x14 */ float downGrav_mps;
+	/* 0x18 */ float peakFrame;
+	/* 0x1c */ float landFrame;
+};
+
+struct MoveAnimData { // 0x20
+	/* 0x00 */ char elv_state;
+	/* 0x01 */ char alert_state;
+	/* 0x02 */ char turning;
+	/* 0x03 */ char motivation_state;
+	/* 0x04 */ char motivation_dir;
+	/* 0x05 */ char action_state;
+	/* 0x06 */ char reaction_state;
+	/* 0x07 */ char animGroup;
+	/* 0x08 */ int flags;
+	/* 0x0c */ float linear_rate;
+	/* 0x10 */ float angular_rate;
+	/* 0x14 */ float trigger_frame;
+	/* 0x18 */ int pad[2];
+};
+
+struct MobyAnimInfo { // 0x8
+	/* 0x0 */ struct MobyReactAnim *reactData;
+	/* 0x4 */ struct MoveAnimData *auxData;
+};
+
+struct MobySeq { // 0x20
+	/* 0x00 */ VECTOR bSphere;
+	/* 0x10 */ char frameCnt;
+	/* 0x11 */ signed char sound;
+	/* 0x12 */ char trigsCnt;
+	/* 0x13 */ char pad;
+	/* 0x14 */ short int *trigs;
+	/* 0x18 */ struct MobyAnimInfo *animInfo;
+	/* 0x1c */ void *frameData;
+};
+
+struct Manipulator { // 0x40
+	/* 0x00 */ char animJoint;
+	/* 0x01 */ char state;
+	/* 0x02 */ char scaleOn;
+	/* 0x03 */ char absolute;
+	/* 0x04 */ int jointId;
+	/* 0x08 */ struct Manipulator *pChain;
+	/* 0x0c */ float interp;
+	/* 0x10 */ s128 q;
+	/* 0x20 */ VECTOR scale;
+	/* 0x30 */ VECTOR trans;
+};
+
+struct MobyAnimLayer { // 0x20
+	/* 0x00 */ struct MobySeq *animSeq;
+	/* 0x04 */ float animSeqT;
+	/* 0x08 */ float animSpeed;
+	/* 0x0c */ short int animIScale;
+	/* 0x0e */ short int poseCacheEntryIndex;
+	/* 0x10 */ struct MobyAnimLayer *nextLayer;
+	/* 0x14 */ char animSeqId;
+	/* 0x15 */ char animFlags;
+	/* 0x16 */ char animJointIndexA;
+	/* 0x17 */ char animJointIndexB;
+	/* 0x18 */ float blendWeight;
+	/* 0x1c */ float blendFade;
+};
+
 typedef struct Moby
 {
 	// Current Swingshot Moby at Metro: 21C5E640

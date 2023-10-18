@@ -220,16 +220,6 @@ typedef enum PlayerType {
 	PLAYER_TYPE_CNT = 38
 } PlayerType;
 
-/*
- * NAME :		CameraAngle
- * 
- * DESCRIPTION :
- * 			Contains camera angle settings and information.
- * 
- * NOTES :
- * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
 typedef struct CameraAngleZ
 {
     float rotation;												// 0x11E0
@@ -253,94 +243,6 @@ typedef struct CameraAngleY
 	float strafe_tilt_factor;									// 0x1218
 	float max_target_angle;										// 0x121C
 } CameraAngleY;
-
-struct tNW_PlayerWarpMessage {
-	/*   0 */ char netPlayerIndex;
-	/*   1 */ char dontKillMeInBaseHack;
-	/*   2 */ char resetPadRing;
-	/*   3 */ char playerSeq;
-	/*   4 */ float playerPos[3];
-	/*  10 */ float playerRot[3];
-	/*  1c */ short int state;
-	/*  1e */ char isResurrecting;
-};
-
-struct tNW_PlayerData {
-	/*   0 */ VECTOR vPosition;
-	/*  10 */ float vRotation[3];
-	/*  1c */ int timeStamp;
-	/*  20 */ VECTOR vIdealVec;
-	/*  30 */ int idealVecTime;
-	/*  34 */ int accountId;
-	/*  38 */ u32 UID;
-	/*  3c */ int playerType;
-	/*  40 */ int playerTeam;
-	/*  44 */ float hitPoints;
-	/*  48 */ int handGadget;
-	/*  4c */ int lastKeepAlive;
-	/*  50 */ int remoteTarget;
-	/*  54 */ int playerIndex;
-	/*  58 */ int cameraElevationSettings[3];
-	/*  64 */ int cameraAzimuthSettings[3];
-	/*  70 */ int cameraRotationSettings[3];
-	/*  7c */ int rank[6];
-	/*  94 */ char cGadgetLevel[32];
-	/*  b4 */ u32 updated;
-	/*  b8 */ short int gadgetsWithAmmo;
-	/*  ba */ short int fpsMode;
-	/*  bc */ u8 flags;
-};
-
-struct tNW_PlayerPadInputMessage {
-	/*   0 */ int cameraRot[4];
-	/*  10 */ short int playerPos[3];
-	/*  16 */ u8 sequenceNum;
-	union
-	{
-		/*  17 */ u8 stateAndRotFlag : 1;
-		/*  17 */ u8 playerIndex : 1;
-		/*  17 */ u8 flags : 2;
-		/*  17 */ u8 framesWithButtonDiffs : 4;
-	};
-	/*  18 */ u8 pad_data[128];
-};
-
-struct tNW_PlayerPadInputMessageListElem {
-	/*   0 */ struct tNW_PlayerPadInputMessage msg;
-	/*  98 */ struct tNW_PlayerPadInputMessageListElem* pNext;
-	/*  9c */ struct tNW_PlayerPadInputMessageListElem* pPrev;
-	/*  a0 */ char inUse;
-};
-
-/*
- *
- */
-struct tNW_Player {
-	/*   0 */ int netClientIndex;
-	/*   4 */ struct tNW_PlayerData* pNetPlayerData;
-	/*   8 */ short int bLocal;
-	/*   a */ short int bSpawned;
-	/*   c */ short int bGiveMeTheDasBoot;
-	/*   e */ short int bCallbackCalled;
-	/*  10 */ int latency;
-	/*  14 */ unsigned int flags;
-	/*  18 */ char accountName[32];
-	/*  38 */ struct tNW_PlayerWarpMessage warpMessage;
-	/*  58 */ struct tNW_PlayerPadInputMessageListElem padMessageElems[16];
-	/* a98 */ char padMessageCurDecodePos;
-	/* a99 */ char activePadFrame;
-	/* a9c */ int lastActiveSeqNum;
-	/* aa0 */ int numBufferedPadMessageElems;
-	/* aa4 */ int receivedActivePadMsgFrame;
-	/* aa8 */ char pullBack;
-	/* aa9 */ signed char jitterThrottleFrames;
-	/* aaa */ char numConseqSkips;
-	/* aac */ struct tNW_PlayerPadInputMessageListElem* pActivePadMsg;
-	/* ab0 */ struct tNW_PlayerPadInputMessageListElem* pPadMsgListTail;
-	/* ab4 */ u8 padFrame[20];
-	/* ac8 */ int homeBaseIndex;
-	/* acc */ int homeNodeIndex;
-};
 
 typedef struct DL_HeroTimers {
 	/*   0 */ int state;
@@ -654,6 +556,37 @@ typedef struct HeroAnim { // 0x20
 	/* 0x1c */ float mayaFrmDelt;
 } HeroAnim;
 
+typedef struct HeroJoints { // 0x100
+	/* 0x00 */ VECTOR gadgetMtxs0[4];
+	/* 0x40 */ VECTOR gadgetMtxs1[4];
+	/* 0x80 */ VECTOR gadgetMtxs2[4];
+	/* 0xc0 */ VECTOR gadgetMtxs3[4];
+} HeroJoints;
+
+typedef struct HeroAnimLayers { // 0x20
+	/* 0x00 */ struct MobyAnimLayer *pArmBlenders[2];
+	/* 0x08 */ struct MobyAnimLayer *pFiringBlenders[2];
+	/* 0x10 */ struct MobyAnimLayer *pHeadBlender;
+	/* 0x14 */ int detachingFiring;
+	/* 0x18 */ int armBlenderSharesIdle;
+	/* 0x1c */ int gadgetAttachedId;
+} HeroAnimLayers;
+
+typedef struct HeroTweaker { // 0xb0
+	/* 0x00 */ struct Manipulator manip;
+	/* 0x40 */ VECTOR rot;
+	/* 0x50 */ VECTOR speed;
+	/* 0x60 */ VECTOR target;
+	/* 0x70 */ VECTOR trans;
+	/* 0x80 */ VECTOR transSpeed;
+	/* 0x90 */ VECTOR transTarget;
+	/* 0xa0 */ short int joint;
+	/* 0xa2 */ short int whichMoby;
+	/* 0xa4 */ float gain;
+	/* 0xa8 */ float damp;
+	/* 0xac */ float scale;
+} HeroTweaker;
+
 typedef struct HeroShadow { // 0x28
 	/* 0x00 */ float slope;
 	/* 0x04 */ float plane;
@@ -731,6 +664,168 @@ typedef struct HeroWalkToPos {
 	Moby *pTeleTarget;												// 0x13DC
 } HeroWalkToPos;
 
+typedef struct HeroSurf { // 0x30
+	/* 0x00 */ float sinkDepth;
+	/* 0x04 */ float sinkRate;
+	/* 0x08 */ int minSwimTimer;
+	/* 0x0c */ float surfHeight;
+	/* 0x10 */ float surfHeightSpeed;
+	/* 0x14 */ Moby *pIceCube;
+	/* 0x18 */ float bobt;
+	/* 0x1c */ float bobz;
+	/* 0x20 */ float swingAng1;
+	/* 0x24 */ float swingAng2;
+	/* 0x28 */ int pad[2];
+} HeroSurf;
+
+typedef struct HeroWalk { // 0x30
+	/* 0x00 */ VECTOR idealTurnVec;
+	/* 0x10 */ float iceMotionDotProduct;
+	/* 0x14 */ float lastGroundSlope;
+	/* 0x18 */ float idealTurnAng;
+	/* 0x1c */ char ideal_motion;
+	/* 0x1d */ char skateThrust;
+	/* 0x1e */ char long_trans;
+	/* 0x1f */ char qturning;
+	/* 0x20 */ int idealAngSet;
+	/* 0x24 */ int pad[3];
+} HeroWalk;
+
+struct HeroNPJumpThrustStage { // 0x10
+	/* 0x0 */ float initThrust;
+	/* 0x4 */ float thrustDelta;
+	/* 0x8 */ int time;
+	/* 0xc */ int pad;
+};
+
+struct HeroJumpNonParab { // 0x30
+	/* 0x00 */ int startThrustTime;
+	/* 0x04 */ int endThrustTime;
+	/* 0x08 */ float thrustStartFrm;
+	/* 0x0c */ float peakFrm;
+	/* 0x10 */ int timeToPeakFrm;
+	/* 0x14 */ struct HeroNPJumpThrustStage *thrustTable;
+	/* 0x18 */ int thrustStageIndex;
+	/* 0x1c */ int thrustStageTimer;
+	/* 0x20 */ float thrust;
+	/* 0x24 */ float chargeJumpThrust;
+	/* 0x28 */ float descendGravity;
+	/* 0x2c */ int pad;
+};
+
+typedef struct HeroJump { // 0x100
+	/* 0x00 */ struct HeroJumpNonParab nonParab;
+	/* 0x30 */ VECTOR takeoffPos;
+	/* 0x40 */ VECTOR snapJumpThrustVec;
+	/* 0x50 */ VECTOR snapJumpForwardVec;
+	/* 0x60 */ float camHeight;
+	/* 0x64 */ float turnSpeed;
+	/* 0x68 */ float wallJumpXySpeed;
+	/* 0x6c */ char land_timer;
+	/* 0x6d */ char useNonParabAscent;
+	/* 0x6e */ char descend;
+	/* 0x6f */ char noGlide;
+	/* 0x70 */ float maxFallSpeed;
+	/* 0x74 */ float maxXySpeed;
+	/* 0x78 */ float ideal_height;
+	/* 0x7c */ short int pushOffTime;
+	/* 0x7e */ short int framesToLand;
+	/* 0x80 */ float up_thrust;
+	/* 0x84 */ float up_thrust_total;
+	/* 0x88 */ float coll_bot;
+	/* 0x8c */ float ledgeJumpSpeed;
+	/* 0x90 */ float snapJumpThrustAng;
+	/* 0x94 */ float snapJumpForwardAng;
+	/* 0x98 */ float peakFrm;
+	/* 0x9c */ float landFrm;
+	/* 0xa0 */ float gameLandFrm;
+	/* 0xa4 */ int snapJumpDir;
+	/* 0xa8 */ float snapJumpRunThrust;
+	/* 0xac */ float snapJumpSpeed;
+	/* 0xb0 */ VECTOR wallJumpDir;
+	/* 0xc0 */ VECTOR wallJumpDirCur;
+	/* 0xd0 */ float accel;
+	/* 0xd4 */ float decel;
+	/* 0xd8 */ float minHeight;
+	/* 0xdc */ float maxHeight;
+	/* 0xe0 */ float fallThresh;
+	/* 0xe4 */ float animMayaScale;
+	/* 0xe8 */ short int maxUpTime;
+	/* 0xea */ short int bailoutSafetyTime;
+	/* 0xec */ short int particleTimer;
+	/* 0xee */ short int particleTimer2;
+	/* 0xf0 */ float gravity;
+	/* 0xf4 */ short int minForwardThrust;
+	/* 0xf6 */ short int minTimeToGlide;
+	/* 0xf8 */ short int onIce;
+	/* 0xfa */ short int minTimeToFall;
+	/* 0xfc */ char gloveAttackOk;
+	/* 0xfd */ char strafingFlip;
+	/* 0xfe */ char flipJumpOk;
+	/* 0xff */ char doubleJumpOk;
+} HeroJump;
+
+typedef struct HeroLedge { // 0x40
+	/* 0x00 */ VECTOR idealWallPos;
+	/* 0x10 */ VECTOR idealGrabPos;
+	/* 0x20 */ float groundHeight;
+	/* 0x24 */ float wallAngZ;
+	/* 0x28 */ int valid;
+	/* 0x2c */ float gravity;
+	/* 0x30 */ float camHeight;
+	/* 0x34 */ int flags;
+	/* 0x38 */ Moby *pMoby;
+	/* 0x3c */ int pad;
+} HeroLedge;
+
+typedef struct HeroCharge { // 0x20
+	/* 0x00 */ VECTOR padWindUp;
+	/* 0x10 */ float groundSpeed;
+	/* 0x14 */ int hitEdge;
+	/* 0x18 */ int pad[2];
+} HeroCharge;
+
+typedef struct HeroWind { // 0x20
+	/* 0x00 */ VECTOR vel;
+	/* 0x10 */ float speed;
+	/* 0x14 */ float angy;
+	/* 0x18 */ float angz;
+	/* 0x1c */ int pad;
+} HeroWind;
+
+typedef struct HeroFall { // 0x20
+	/* 0x00 */ float gravity;
+	/* 0x04 */ float xyDecel;
+	/* 0x08 */ float xRotSpeed;
+	/* 0x0c */ float yRotSpeed;
+	/* 0x10 */ float xRotSpeedIdeal;
+	/* 0x14 */ float yRotSpeedIdeal;
+	/* 0x18 */ float glideTaperSpeed;
+	/* 0x1c */ int pad;
+} HeroFall;
+
+typedef struct HeroSwing { // 0x40
+	/* 0x00 */ Moby *pNextTarget;
+	/* 0x04 */ Moby *pTarget;
+	/* 0x08 */ float targetScore;
+	/* 0x0c */ short int connected;
+	/* 0x0e */ char valid;
+	/* 0x0f */ char qSwitchMe;
+	/* 0x10 */ float idealRadius;
+	/* 0x14 */ float curCableLen;
+	/* 0x18 */ float radialSpeed;
+	/* 0x1c */ float forwardAng;
+	/* 0x20 */ float gravity;
+	/* 0x24 */ float firstSwingSpeed;
+	/* 0x28 */ float alignRotSpeed;
+	/* 0x2c */ short int animScaleQueued;
+	/* 0x2e */ short int firstSwing;
+	/* 0x30 */ float swingElv;
+	/* 0x34 */ float radialGain;
+	/* 0x38 */ float radialDamp;
+	/* 0x3c */ float radialLimit;
+} HeroSwing;
+
 typedef struct MotionBlur { // 0x150
 	/* 0x000 */ VECTOR posRing[8];
 	/* 0x080 */ VECTOR rotRing[8];
@@ -744,6 +839,100 @@ typedef struct MotionBlur { // 0x150
 	/* 0x148 */ int blurCnt;
 	/* 0x14c */ int active;
 } MotionBlur;
+
+struct tNW_PlayerWarpMessage {
+	/*   0 */ char netPlayerIndex;
+	/*   1 */ char dontKillMeInBaseHack;
+	/*   2 */ char resetPadRing;
+	/*   3 */ char playerSeq;
+	/*   4 */ float playerPos[3];
+	/*  10 */ float playerRot[3];
+	/*  1c */ short int state;
+	/*  1e */ char isResurrecting;
+};
+
+struct tNW_PlayerData {
+	/*   0 */ VECTOR vPosition;
+	/*  10 */ float vRotation[3];
+	/*  1c */ int timeStamp;
+	/*  20 */ VECTOR vIdealVec;
+	/*  30 */ int idealVecTime;
+	/*  34 */ int accountId;
+	/*  38 */ u32 UID;
+	/*  3c */ int playerType;
+	/*  40 */ int playerTeam;
+	/*  44 */ float hitPoints;
+	/*  48 */ int handGadget;
+	/*  4c */ int lastKeepAlive;
+	/*  50 */ int remoteTarget;
+	/*  54 */ int playerIndex;
+	/*  58 */ int cameraElevationSettings[3];
+	/*  64 */ int cameraAzimuthSettings[3];
+	/*  70 */ int cameraRotationSettings[3];
+	/*  7c */ int rank[6];
+	/*  94 */ char cGadgetLevel[32];
+	/*  b4 */ u32 updated;
+	/*  b8 */ short int gadgetsWithAmmo;
+	/*  ba */ short int fpsMode;
+	/*  bc */ u8 flags;
+};
+
+struct tNW_PlayerPadInputMessage {
+	/*   0 */ int cameraRot[4];
+	/*  10 */ short int playerPos[3];
+	/*  16 */ u8 sequenceNum;
+	union
+	{
+		/*  17 */ u8 stateAndRotFlag : 1;
+		/*  17 */ u8 playerIndex : 1;
+		/*  17 */ u8 flags : 2;
+		/*  17 */ u8 framesWithButtonDiffs : 4;
+	};
+	/*  18 */ u8 pad_data[128];
+};
+
+struct tNW_PlayerPadInputMessageListElem {
+	/*   0 */ struct tNW_PlayerPadInputMessage msg;
+	/*  98 */ struct tNW_PlayerPadInputMessageListElem* pNext;
+	/*  9c */ struct tNW_PlayerPadInputMessageListElem* pPrev;
+	/*  a0 */ char inUse;
+};
+
+struct tNW_Player {
+	/*   0 */ int netClientIndex;
+	/*   4 */ struct tNW_PlayerData* pNetPlayerData;
+	/*   8 */ short int bLocal;
+	/*   a */ short int bSpawned;
+	/*   c */ short int bGiveMeTheDasBoot;
+	/*   e */ short int bCallbackCalled;
+	/*  10 */ int latency;
+	/*  14 */ unsigned int flags;
+	/*  18 */ char accountName[32];
+	/*  38 */ struct tNW_PlayerWarpMessage warpMessage;
+	/*  58 */ struct tNW_PlayerPadInputMessageListElem padMessageElems[16];
+	/* a98 */ char padMessageCurDecodePos;
+	/* a99 */ char activePadFrame;
+	/* a9c */ int lastActiveSeqNum;
+	/* aa0 */ int numBufferedPadMessageElems;
+	/* aa4 */ int receivedActivePadMsgFrame;
+	/* aa8 */ char pullBack;
+	/* aa9 */ signed char jitterThrottleFrames;
+	/* aaa */ char numConseqSkips;
+	/* aac */ struct tNW_PlayerPadInputMessageListElem* pActivePadMsg;
+	/* ab0 */ struct tNW_PlayerPadInputMessageListElem* pPadMsgListTail;
+	/* ab4 */ u8 padFrame[20];
+	/* ac8 */ int homeBaseIndex;
+	/* acc */ int homeNodeIndex;
+};
+
+typedef struct tNW_PlayerStateMessage { // 0x1c
+	/* 0x00 */ char netPlayerIndex;
+	/* 0x01 */ char newState;
+	/* 0x02 */ char seqNum;
+	/* 0x03 */ char frame;
+	/* 0x04 */ float pos[3];
+	/* 0x10 */ float rot[3];
+} tNW_PlayerStateMessage;
 
 /*
  * NAME :		Player
@@ -794,13 +983,24 @@ typedef struct Player {
 	Gadget gadget4;											// 0x590
 	char unk_5e0[0x30];
 	HeroAnim anim;											// 0x610
-	char unk_630[0x970];
+	char unk_630[0x10];
+	HeroJoints joints;										// 0x640
+	HeroAnimLayers animLayers;								// 0x740
+	HeroTweaker tweaker[12];								// 0x760
 	HeroShadow shadow;										// 0xFA0
 	char unk_fc8[0x1b8];
 	HeroCamera fps;											// 0x1180 - 0x133C
 	char unk_1340[0x70];
 	HeroWalkToPos walkToPos;								// 0x13B0 - 0x13DC
-	char unk_13e0[0x3a0];
+	HeroSurf surf;											// 0x13E0
+	HeroWalk walk;											// 0x1410
+	HeroJump jump;											// 0x1430
+	HeroLedge ledge;										// 0x1540
+	HeroCharge charge;										// 0x1580
+	HeroWind wind;											// 0x15A0
+	HeroFall fall;											// 0x15C0
+	HeroSwing swing;										// 0x15E0
+	char unk_1620[0x160];
 	MotionBlur wrenchMotionBlur;							// 0x1780 - 0x18CC
 	int WeaponHeldId;										// 0x18D0
 	char unk_18d4[0x110];
@@ -901,7 +1101,7 @@ typedef struct Player {
 	int HudHealthTimer;										// 0x2514
 	char PauseOn;                                 		 	// 0x2518
 	char PauseTimer;										// 0x2519
-	char unk_251a;
+	char tauntOverrideTimer;								// 0x251A
 	char PlayerType;										// 0x251B
 	Moby *FlagMoby;											// 0x251C
 	HeroPlayerConstants *PlayerConstants;					// 0x2520
@@ -918,11 +1118,10 @@ typedef struct Player {
 	int vehicleState;										// 0x254C
 	int vehicleStateTimer;									// 0x2550
 	int pointsLastKill;										// 0x2554
-	struct tNW_Player *pNetPlayer;									// 0x2558
-
-	char unk_2559[0x26];
-	// This area changes if wrench is held.
-	char unk_2580[0x78f];
+	struct tNW_Player *pNetPlayer;							// 0x2558
+	tNW_PlayerStateMessage newStateMessage;					// 0x255C
+	// Right Arm Animation
+	char unk_2580[0x790];
 	// All zeros (padding maybe?)
 	char unk_2d10[0xd7];
 	// Changes if wrench is out and jumping:
