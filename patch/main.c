@@ -1102,6 +1102,78 @@ void patchFov(void)
 }
 
 /*
+ * NAME :		patchUnkick_Logic
+ * 
+ * DESCRIPTION :
+ * 				Logic behind fixingi the unkick exploit.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int patchUnkick_Logic(u32 uip)
+{
+#if UYA_PAL
+	// run base command
+	int r = ((int (*)(u32))0x00686e40)(uip);
+#else
+	// run base command
+	int r = ((int (*)(u32))0x00684320)(uip);
+#endif
+	// which option is selected for popup.
+	int selectedOption = 0x01d20234;
+	int i;
+	GameSettings * gs = gameGetSettings();
+	if (gs) {
+		int clientId = gameGetMyClientId();
+		for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
+			// Check ClientID and if they are kicked and not viewing the kicked popup
+			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 5 && *(u32*)selectedOption != 3) {
+				// Select "No" Option
+				*(u32*)selectedOption = 2;
+				// Press X
+#if UYA_PAL
+				*(u8*)0x00225800 = 0xbf;
+#else
+				*(u8*)0x00225983 = 0xbf;
+#endif
+			}
+		}
+	}
+	return r;
+}
+/*
+ * NAME :		patchUnkick
+ * 
+ * DESCRIPTION :
+ * 				Hook for the patchUnkick_Logic.
+ * 				Hooks into the popup loop.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchUnkick(void)
+{
+	// Hook into popup loop
+#if UYA_PAL
+	int hook = 0x006872b0;
+#else
+	int hook = 0x00684790;
+#endif
+	if (hook)
+		HOOK_JAL(hook, &patchUnkick_Logic);
+}
+
+/*
  * NAME :		runGameStartMessager
  * 
  * DESCRIPTION :
@@ -1483,6 +1555,9 @@ int main(void)
 	{
 		// If in Lobby, run these game rules.
 		grLobbyStart();
+
+		// Patch Unkick Bug
+		patchUnkick();
 
 		// Reset Level of Detail to -1
 		lastLodLevel = -1;
