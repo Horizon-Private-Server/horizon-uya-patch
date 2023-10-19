@@ -1271,6 +1271,20 @@ void runCheckGameMapInstalled(void)
 	}
 }
 
+/*
+ * NAME :		setupPatchConfigInGame
+ * 
+ * DESCRIPTION :
+ * 				Changes the "CONTINUE" start option to "PATCH MENU"
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 void setupPatchConfigInGame()
 {
     // Get Menu address via current map.

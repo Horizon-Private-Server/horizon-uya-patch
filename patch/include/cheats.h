@@ -22,6 +22,8 @@ void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay);
 // Party Game Rules
 void survivor(void);
 void chargebootForever(void);
+void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay);
+void playerSize(void);
 
 // Other
 void disableRespawning(void);

@@ -147,6 +147,9 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grDisablePlayerTurrets)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_PLAYER_TURRET);
 
+	if (gameConfig.prPlayerSize)
+		onGameplayLoad_playerSize(gameplay);
+
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
 }
@@ -256,6 +259,9 @@ void grGameStart(void)
 
 	if (gameConfig.grNoCooldown)
 		noPostHitInvinc();
+
+	if (gameConfig.prPlayerSize)
+		playerSize();
 
 	FirstPass = 0;
 }

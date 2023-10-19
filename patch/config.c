@@ -235,6 +235,19 @@ MenuElem_ListData_t dataRespawnTimer = {
     { "Default", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
 };
 
+MenuElem_ListData_t dataPlayerSize = {
+    &gameConfig.prPlayerSize,
+    NULL,
+    5,
+    {
+      "Normal",
+      "Large",
+      "Giant",
+      "Tiny",
+      "Small"
+    }
+};
+
 // General
 MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
@@ -290,6 +303,9 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever },
+#if TEST
+  { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize },
+#endif
 };
 
 // Custom Maps
