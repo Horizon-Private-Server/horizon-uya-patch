@@ -78,7 +78,7 @@ enum UIPointers
     UIP_PRIVATE_MESSAGE = 28,
     UIP_EDIT_PROFILE = 29,
     UIP_RECENT_PLAYERS = 30,
-    UIP_UNK_1 = 31,
+    UIP_CITY = 31,
     UIP_UNK_2 = 32,
     UIP_STAGING = 33,
     UIP_CHANGE_SKIN_TEAM = 34,
