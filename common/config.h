@@ -43,6 +43,7 @@ typedef struct PatchGameConfig
   // Party
   char prSurvivor;
   char prChargebootForever;
+  char prPlayerSize;
 } PatchGameConfig_t;
 
 enum CUSTOM_MAP_ID
