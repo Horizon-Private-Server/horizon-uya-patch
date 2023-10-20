@@ -16,7 +16,6 @@ typedef struct PatchConfig
 typedef struct PatchGameConfig
 {
   // Maps
-  char customMapId;
   // char customWorld;
   char customModeId;
 
@@ -45,6 +44,15 @@ typedef struct PatchGameConfig
   char prChargebootForever;
   char prPlayerSize;
 } PatchGameConfig_t;
+
+typedef struct CustomMapDef
+{
+  char Filename[64];
+  char Name[32];
+  int Version;
+  int BaseMapId;
+  int ForcedCustomModeId;
+} CustomMapDef_t;
 
 enum CUSTOM_MAP_ID
 {

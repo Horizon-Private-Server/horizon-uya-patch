@@ -10,7 +10,7 @@
 #include <libuya/gamesettings.h>
 #include <libuya/game.h>
 #include <libuya/interop.h>
-#include "config.h"
+#include "include/config.h"
 
 #include <sifcmd.h>
 #include <iopheap.h>
@@ -67,7 +67,7 @@ char * fWad = "uya/%s.pal.wad";
 char * fWorld = "uya/%s.pal.world";
 char * fBg = "uya/%s.pal.bg";
 char * fMap = "uya/%s.pal.map";
-char * fVersion = "uya/%s.pal.version";
+char * fVersion = "uya/%s.version";
 char * fGlobalVersion = "uya/version";
 
 #else
@@ -113,6 +113,11 @@ char * fGlobalVersion = "uya/version";
 
 #endif
 
+#if DSCRPRINT
+void pushScrPrintLine(char* str);
+void clearScrPrintLine(void);
+#endif
+
 void grLoadStart();
 
 void hook(void);
@@ -131,6 +136,12 @@ extern PatchConfig_t config;
 
 // game config
 extern PatchGameConfig_t gameConfig;
+
+// custom map defs
+CustomMapDef_t CustomMapDefs[MAX_CUSTOM_MAP_DEFINITIONS];
+int CustomMapDefCount = 0;
+
+extern MenuElem_ListData_t dataCustomMaps;
 
 // game mode overrides
 //extern struct MenuElem_ListData dataCustomModes;
@@ -169,13 +180,12 @@ char membuffer[256];
 
 typedef struct MapOverrideMessage
 {
-	u8 MapId;
-	char MapName[32];
-	char MapFileName[128];
+  CustomMapDef_t CustomMap;
 } MapOverrideMessage;
 
 typedef struct MapOverrideResponseMessage
 {
+  char Filename[64];
 	int Version;
 } MapOverrideResponseMessage;
 
@@ -192,27 +202,24 @@ typedef struct MapServerSentModulesMessage
 	int Module2Size;
 } MapServerSentModulesMessage;
 
-struct MapLoaderState
-{
-    u8 Enabled;
-    u8 MapId;
-	u8 CheckState;
-    char MapName[32];
-    char MapFileName[128];
-    int LoadingFileSize;
-    int LoadingFd;
-} State;
+struct MapLoaderState MapLoaderState;
 
 //------------------------------------------------------------------------------
 int onSetMapOverride(void * connection, void * data)
 {
 	MapOverrideMessage *payload = (MapOverrideMessage*)data;
+  MapOverrideResponseMessage msg;
 
-	if (payload->MapId == 0)
+  // reset
+  SelectedCustomMapId = 0;
+
+	if (payload->CustomMap.BaseMapId == 0)
 	{
 		DPRINTF("recv empty map\n");
-		State.Enabled = 0;
-		State.CheckState = 0;
+		MapLoaderState.Enabled = 0;
+		MapLoaderState.CheckState = 0;
+    MapLoaderState.MapFileName[0] = 0;
+    MapLoaderState.MapName[0] = 0;
 		mapOverrideResponse = 1;
 	}
 	else
@@ -221,30 +228,44 @@ int onSetMapOverride(void * connection, void * data)
 		int version = -1;
 		if (LOAD_MODULES_STATE != 100)
 			version = -1;
-		else if (!readLevelVersion(payload->MapFileName, &version))
+
+    int i = 0;
+    for (i = 0; i < CustomMapDefCount; ++i) {
+      if (strcmp(CustomMapDefs[i].Filename, payload->CustomMap.Filename) == 0) {
+        SelectedCustomMapId = i + 1;
+        version = CustomMapDefs[i].Version;
+        break;
+      }
+    }
+
+		if (!SelectedCustomMapId) {
 			version = -2;
+    }
 
 		// print
-		DPRINTF("MapId:%d MapName:%s MapFileName:%s Version:%d\n", payload->MapId, payload->MapName, payload->MapFileName, version);
+		DPRINTF("MapId:%d MapName:%s MapFileName:%s Version:%d\n", payload->CustomMap.BaseMapId, payload->CustomMap.Name, payload->CustomMap.Filename, version);
 
 		// send response
-		netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_SET_MAP_OVERRIDE_RESPONSE, 4, &version);
+    msg.Version = version;
+    strncpy(msg.Filename, payload->CustomMap.Filename, sizeof(msg.Filename));
+		netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_SET_MAP_OVERRIDE_RESPONSE, sizeof(msg), &msg);
 
+    strncpy(MapLoaderState.MapName, payload->CustomMap.Name, sizeof(MapLoaderState.MapName));
+    strncpy(MapLoaderState.MapFileName, payload->CustomMap.Filename, sizeof(MapLoaderState.MapFileName));
+    
 		// enable
 		if (version >= 0)
 		{
-			State.Enabled = 1;
-			State.CheckState = 0;
+			MapLoaderState.Enabled = 1;
+			MapLoaderState.CheckState = 0;
 			mapOverrideResponse = version;
-			State.MapId = payload->MapId;
-			State.LoadingFd = -1;
-			State.LoadingFileSize = -1;
-			strncpy(State.MapName, payload->MapName, 32);
-			strncpy(State.MapFileName, payload->MapFileName, 128);
+			MapLoaderState.MapId = payload->CustomMap.BaseMapId;
+			MapLoaderState.LoadingFd = -1;
+			MapLoaderState.LoadingFileSize = -1;
 		}
 		else
 		{
-			State.Enabled = 0;
+			MapLoaderState.Enabled = 0;
 			mapOverrideResponse = version;
 		}
 	}
@@ -295,6 +316,9 @@ int onServerSentMapIrxModules(void * connection, void * data)
 			actionState = ACTION_MODULES_INSTALLED;
 		}
 		
+    // refresh custom map list
+    refreshCustomMapList();
+
 		DPRINTF("local maps version %d || remote maps version %d\n", localVersion, remoteVersion);
 
 		// if in game, ask server to resend map override to use
@@ -440,7 +464,7 @@ int readLevelVersion(char * name, int * version)
 int readLevelMapUsb(u8 * buf, int size)
 {
 	// Generate toc filename
-	sprintf(membuffer, fMap, State.MapFileName);
+	sprintf(membuffer, fMap, MapLoaderState.MapFileName);
 
 	// read
 	return readFile(membuffer, (void*)buf, size) > 0;
@@ -450,14 +474,14 @@ int readLevelMapUsb(u8 * buf, int size)
 int readLevelBgUsb(u8 * buf, int size)
 {
 	// Ensure a wad isn't already open
-	if (State.LoadingFd >= 0)
+	if (MapLoaderState.LoadingFd >= 0)
 	{
-		DPRINTF("readLevelBgUsb() called but a file is already open (%d)!", State.LoadingFd);
+		DPRINTF("readLevelBgUsb() called but a file is already open (%d)!", MapLoaderState.LoadingFd);
 		return 0;
 	}
 
 	// Generate toc filename
-	sprintf(membuffer, fBg, State.MapFileName);
+	sprintf(membuffer, fBg, MapLoaderState.MapFileName);
 
 	// read
 	return readFile(membuffer, (void*)buf, size) > 0;
@@ -467,90 +491,203 @@ int readLevelBgUsb(u8 * buf, int size)
 int getSizeUsb(char * filename)
 {
 	// Generate wad filename
-	sprintf(membuffer, filename, State.MapFileName);
+	sprintf(membuffer, filename, MapLoaderState.MapFileName);
 
 	// get file length
-	State.LoadingFileSize = readFileLength(membuffer);
+	MapLoaderState.LoadingFileSize = readFileLength(membuffer);
 
 	// Check the file has a valid size
-	if (State.LoadingFileSize <= 0)
+	if (MapLoaderState.LoadingFileSize <= 0)
 	{
-		DPRINTF("error seeking file (%s): %d\n", membuffer, State.LoadingFileSize);
+		DPRINTF("error seeking file (%s): %d\n", membuffer, MapLoaderState.LoadingFileSize);
 		return 0;
 	}
 
-	return State.LoadingFileSize;
+	return MapLoaderState.LoadingFileSize;
 }
 
 //--------------------------------------------------------------
 int openUsb(char * filename)
 {
 	// Ensure a wad isn't already open
-	if (State.LoadingFd >= 0)
+	if (MapLoaderState.LoadingFd >= 0)
 	{
-		DPRINTF("openUsb() called but a file is already open (%d)!", State.LoadingFd);
+		DPRINTF("openUsb() called but a file is already open (%d)!", MapLoaderState.LoadingFd);
 		return 0;
 	}
 
 	// Generate wad filename
-	sprintf(membuffer, filename, State.MapFileName);
+	sprintf(membuffer, filename, MapLoaderState.MapFileName);
 
 	// open wad file
 	rpcUSBopen(membuffer, FIO_O_RDONLY);
-	rpcUSBSync(0, NULL, &State.LoadingFd);
+	rpcUSBSync(0, NULL, &MapLoaderState.LoadingFd);
 	
 	// Ensure wad successfully opened
-	if (State.LoadingFd < 0)
+	if (MapLoaderState.LoadingFd < 0)
 	{
-		DPRINTF("error opening file (%s): %d\n", membuffer, State.LoadingFd);
+		DPRINTF("error opening file (%s): %d\n", membuffer, MapLoaderState.LoadingFd);
 		return 0;									
 	}
 
 	// Get length of file
-	rpcUSBseek(State.LoadingFd, 0, SEEK_END);
-	rpcUSBSync(0, NULL, &State.LoadingFileSize);
+	rpcUSBseek(MapLoaderState.LoadingFd, 0, SEEK_END);
+	rpcUSBSync(0, NULL, &MapLoaderState.LoadingFileSize);
 
 	// Check the file has a valid size
-	if (State.LoadingFileSize <= 0)
+	if (MapLoaderState.LoadingFileSize <= 0)
 	{
-		DPRINTF("error seeking file (%s): %d\n", membuffer, State.LoadingFileSize);
-		rpcUSBclose(State.LoadingFd);
+		DPRINTF("error seeking file (%s): %d\n", membuffer, MapLoaderState.LoadingFileSize);
+		rpcUSBclose(MapLoaderState.LoadingFd);
 		rpcUSBSync(0, NULL, NULL);
-		State.LoadingFd = -1;
-		State.Enabled = 0;
+		MapLoaderState.LoadingFd = -1;
+		MapLoaderState.Enabled = 0;
 		return 0;
 	}
 
 	// Go back to start of file
 	// The read will be called later
-	rpcUSBseek(State.LoadingFd, 0, SEEK_SET);
+	rpcUSBseek(MapLoaderState.LoadingFd, 0, SEEK_SET);
 	rpcUSBSync(0, NULL, NULL);
 
-	DPRINTF("%s is %d byte long.\n", membuffer, State.LoadingFileSize);
-	return State.LoadingFileSize;
+	DPRINTF("%s is %d byte long.\n", membuffer, MapLoaderState.LoadingFileSize);
+	return MapLoaderState.LoadingFileSize;
 }
 
 //--------------------------------------------------------------
 int readUsb(u8 * buf)
 {
 	// Ensure the wad is open
-	if (State.LoadingFd < 0 || State.LoadingFileSize <= 0)
+	if (MapLoaderState.LoadingFd < 0 || MapLoaderState.LoadingFileSize <= 0)
 	{
-		DPRINTF("error opening file: %d\n", State.LoadingFd);
+		DPRINTF("error opening file: %d\n", MapLoaderState.LoadingFd);
 		return 0;									
 	}
 
 	// Try to read from usb
-	if (rpcUSBread(State.LoadingFd, buf, State.LoadingFileSize) != 0)
+	if (rpcUSBread(MapLoaderState.LoadingFd, buf, MapLoaderState.LoadingFileSize) != 0)
 	{
 		DPRINTF("error reading from file.\n");
-		rpcUSBclose(State.LoadingFd);
+		rpcUSBclose(MapLoaderState.LoadingFd);
 		rpcUSBSync(0, NULL, NULL);
-		State.LoadingFd = -1;
+		MapLoaderState.LoadingFd = -1;
 		return 0;
 	}
 				
 	return 1;
+}
+
+//------------------------------------------------------------------------------
+void refreshCustomMapList(void)
+{
+  int fd, r, i;
+  char* dirpath = "uya";
+  const char* versionExt = ".version";
+  char fullpath[256];
+  char buf[64];
+  char filenameWithoutExtension[64];
+  int versionExtLen = strlen(versionExt);
+  iox_dirent_t dirent;
+  
+  // reset
+  dataCustomMaps.count = 1;
+  CustomMapDefCount = 0;
+  memset(CustomMapDefs, 0, sizeof(CustomMapDefs));
+
+  // need usb modules
+  if (!HAS_LOADED_MODULES) return;
+
+#if DSCRPRINT
+  clearScrPrintLine();
+#endif
+
+	// Open
+	rpcUSBdopen(dirpath);
+	rpcUSBSync(0, NULL, &fd);
+
+	// Ensure the dir was opened successfully
+	if (fd < 0)
+	{
+		DPRINTF("error opening dir (%s): %d\n", dirpath, fd);
+		return;
+	}
+	
+  DPRINTF("opening dir (%s): returned %d\n", dirpath, fd);
+
+  // read
+  do 
+  {
+    // read next entry
+    // stop if we've reached the end
+    if (rpcUSBdread(fd, &dirent) != 0) break;
+    rpcUSBSync(0, NULL, &r);
+    if (r <= 0) break;
+
+    // we want to parse the .version files
+    // check if filename ends with ".version"
+    int len = strlen(dirent.name);
+    if (strncmp(&dirent.name[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
+
+    #if DSCRPRINT
+    snprintf(buf, sizeof(buf), "y %s", dirent.name);
+    pushScrPrintLine(buf);
+    #endif
+
+    DPRINTF("found version %s\n", dirent.name);
+
+    // parse version file
+    CustomMapVersionFileDef_t versionFileDef;
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", dirpath, dirent.name);
+    int read = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
+
+    // ensure version file is valid
+    if (read != sizeof(CustomMapVersionFileDef_t))
+    {
+      DPRINTF("%s (%d) does not match expected file size %d. Skipping.\n", dirent.name, read, sizeof(CustomMapVersionFileDef_t));
+      continue;
+    }
+    
+    // compute filename without extension
+    strncpy(filenameWithoutExtension, dirent.name, sizeof(filenameWithoutExtension));
+    len = strlen(filenameWithoutExtension);
+    filenameWithoutExtension[len - versionExtLen] = 0;
+
+    // ensure version file has matching .world OR .wad
+    snprintf(fullpath, sizeof(fullpath), fWad, filenameWithoutExtension);
+    int fWadLen = readFileLength(fullpath);
+    snprintf(fullpath, sizeof(fullpath), fWorld, filenameWithoutExtension);
+    int fWorldLen = readFileLength(fullpath);
+    if (fWadLen <= 0 && fWorldLen <= 0) continue;
+
+    DPRINTF("(%d) \"%s\" f:\"%s\" v:%d bmap:%d mode:%d\n", CustomMapDefCount, versionFileDef.Name, filenameWithoutExtension, versionFileDef.Version, versionFileDef.BaseMapId, versionFileDef.ForcedCustomModeId);
+
+    // bring to custom map defs
+    CustomMapDefs[CustomMapDefCount].Version = versionFileDef.Version;
+    CustomMapDefs[CustomMapDefCount].BaseMapId = versionFileDef.BaseMapId;
+    CustomMapDefs[CustomMapDefCount].ForcedCustomModeId = versionFileDef.ForcedCustomModeId;
+    strncpy(CustomMapDefs[CustomMapDefCount].Filename, filenameWithoutExtension, sizeof(CustomMapDefs[CustomMapDefCount].Filename));
+    strncpy(CustomMapDefs[CustomMapDefCount].Name, versionFileDef.Name, sizeof(CustomMapDefs[CustomMapDefCount].Name));
+    CustomMapDefCount++;
+
+    // reached max maps
+    if (CustomMapDefCount >= MAX_CUSTOM_MAP_DEFINITIONS) break;
+    
+  } while (1);
+
+  // close
+  rpcUSBdclose(fd);
+	rpcUSBSync(0, NULL, NULL);
+  
+  // populate config
+  for (i = 0; i < CustomMapDefCount; ++i)
+  {
+    dataCustomMaps.items[i+1] = (char*)CustomMapDefs[i].Name;
+    dataCustomMaps.count += 1;
+  }
+
+  // clamp
+  if (SelectedCustomMapId >= dataCustomMaps.count)
+    SelectedCustomMapId = dataCustomMaps.count - 1;
 }
 
 //------------------------------------------------------------------------------
@@ -594,7 +731,7 @@ void hookedLoad(void * dest, u32 sectorStart, u32 sectorSize)
 	char * filename = NULL;
 
 	// Check if loading MP map
-	if (State.Enabled && HAS_LOADED_MODULES)
+	if (MapLoaderState.Enabled && HAS_LOADED_MODULES)
 	{
 		switch (LOAD_LEVEL_PART_ID)
 		{
@@ -632,7 +769,7 @@ u32 hookedCheck(int a0)
 	int r, cmd;
 
 	// If the wad is not open then we're loading from cdvd
-	if (State.LoadingFd < 0 || !State.Enabled)
+	if (MapLoaderState.LoadingFd < 0 || !MapLoaderState.Enabled)
 		return cdvdSync(a0);
 
 	// Otherwise check to see if we've finished loading the data from USB
@@ -642,9 +779,9 @@ u32 hookedCheck(int a0)
 		if (cmd == 0x04)
 		{
 			DPRINTF("finished reading %d bytes from USB\n", r);
-			rpcUSBclose(State.LoadingFd);
+			rpcUSBclose(MapLoaderState.LoadingFd);
 			rpcUSBSync(0, NULL, NULL);
-			State.LoadingFd = -1;
+			MapLoaderState.LoadingFd = -1;
 			return cdvdSync(a0);
 		}
 	}
@@ -662,7 +799,7 @@ u32 hookedCheck(int a0)
 //------------------------------------------------------------------------------
 void hookedLoadingScreen(u64 a0, void * a1, u64 a2, u64 a3, u64 t0, u64 t1, u64 t2)
 {
-	if (State.Enabled && HAS_LOADED_MODULES && readLevelBgUsb(a1, a3 * 0x800) > 0)
+	if (MapLoaderState.Enabled && HAS_LOADED_MODULES && readLevelBgUsb(a1, a3 * 0x800) > 0)
 	{
 
 	}
@@ -684,17 +821,17 @@ void hookedGetTable(u32 startSector, u32 sectorCount, u8 * dest)
 	if (levelId < 40)
 	{
 		DPRINTF("level id is not mp map %d.", levelId);
-		State.Enabled = 0;
+		MapLoaderState.Enabled = 0;
 		return;
 	}
 
 	// Check if loading MP map
-	if (State.Enabled && HAS_LOADED_MODULES)
+	if (MapLoaderState.Enabled && HAS_LOADED_MODULES)
 	{
 		// Disable if map doesn't match
-		if (levelId != State.MapId && (levelId - 10) != State.MapId)
+		if (levelId != MapLoaderState.MapId && (levelId - 10) != MapLoaderState.MapId)
 		{
-			State.Enabled = 0;
+			MapLoaderState.Enabled = 0;
 			DPRINTF("loading map id doesn't match custom map's base id. %d\n", levelId);
 			return;
 		}
@@ -709,7 +846,7 @@ void hookedGetTable(u32 startSector, u32 sectorCount, u8 * dest)
 		}
 		else
 		{
-			State.Enabled = 0;
+			MapLoaderState.Enabled = 0;
 			DPRINTF("Error reading level/world wad from usb (%d, %d)\n", fWadSize, fWorldSize);
 		}
 	}
@@ -736,10 +873,10 @@ u64 hookedLoadCdvd(u64 a0, u64 a1, u64 a2, u64 a3, u64 t0, u64 t1, u64 t2)
 //------------------------------------------------------------------------------
 int hookedLoadScreenMapNameString(void)
 {
-	if (State.Enabled) {
+	if (MapLoaderState.Enabled) {
 		int mapIdx = (LOAD_LEVEL_MAP_ID - 40) % 10;
 		if (mapIdx >= 0) {
-			strncpy(LOAD_LEVEL_TRANSITION_MAPNAME + (mapIdx * 0x20), State.MapName, 32);
+			strncpy(LOAD_LEVEL_TRANSITION_MAPNAME + (mapIdx * 0x20), MapLoaderState.MapName, 32);
 		}
 	}
 
@@ -777,7 +914,7 @@ int hookedGetMap(u32 sectorStart, u32 sectorSize, void * dest, void * a3)
 {
 
 	// Check if loading MP map
-	if (State.Enabled && HAS_LOADED_MODULES && sectorSize == 0x21)
+	if (MapLoaderState.Enabled && HAS_LOADED_MODULES && sectorSize == 0x21)
 	{
 		// We hardcode the size because that's the max that deadlocked can hold
 		if (readLevelMapUsb(dest, 0x21 * 0x800))
@@ -935,8 +1072,8 @@ void runMapLoader(void)
 		initialized = 1;
 
 		// set map loader defaults
-		State.Enabled = 0;
-		State.CheckState = 0;
+		MapLoaderState.Enabled = 0;
+		MapLoaderState.CheckState = 0;
 
 		// install on login
 		if (config.enableAutoMaps && LOAD_MODULES_RESULT == 0)
@@ -946,12 +1083,12 @@ void runMapLoader(void)
 	}
 
 	// force map id to current map override if in staging
-	if (State.Enabled == 1 && isInMenus())
+	if (MapLoaderState.Enabled == 1 && isInMenus())
 	{
 		GameSettings * settings = gameGetSettings();
 		if (settings && settings->GameLoadStartTime > 0)
 		{
-			settings->GameLevel = State.MapId;
+			settings->GameLevel = MapLoaderState.MapId;
 		}
 	}
 }

@@ -29,6 +29,7 @@
 int isConfigMenuActive = 0;
 int selectedTabItem = 0;
 u32 padPointer = 0;
+int SelectedCustomMapId = 0;
 
 // Config
 extern PatchConfig_t config;
@@ -108,6 +109,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
 // list select handlers
 void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element);
+void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
 
 #ifdef DEBUG
 void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
@@ -126,6 +128,7 @@ void navTab(int direction);
 int mapsGetInstallationResult(void);
 int mapsPromptEnableCustomMaps(void);
 int mapsDownloadingModules(void);
+void refreshCustomMapList(void);
 
 MenuElem_ListData_t dataLevelOfDetail = {
     &config.levelOfDetail,
@@ -147,16 +150,12 @@ MenuElem_RangeData_t dataFieldOfView = {
 
 // map override list item
 MenuElem_ListData_t dataCustomMaps = {
-    &gameConfig.customMapId,
+    &SelectedCustomMapId,
     menuStateHandler_SelectedMapOverride,
-    CUSTOM_MAP_COUNT,
+    1,
     {
       "None",
-      "Maraxus Prison",
-      "Sarathos Swamp",
-#if TEST
-      "Test",
-#endif
+      [MAX_CUSTOM_MAP_DEFINITIONS+1] NULL,
     }
 };
 
@@ -253,6 +252,7 @@ MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
+  { "Refresh Maps", buttonActionHandler, menuStateAlwaysEnabledHandler, gmRefreshMapsSelectHandler },
   { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if UYA_NTSC
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
@@ -518,6 +518,18 @@ void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state)
 void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   memset(&gameConfig, 0, sizeof(gameConfig));
+  SelectedCustomMapId = 0;
+}
+
+// 
+void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
+{
+  refreshCustomMapList();
+  
+  // popup
+  char buf[32];
+  snprintf(buf, sizeof(buf), "Found %d maps", CustomMapDefCount);
+  uiShowOkDialog("Custom Maps", buf);
 }
 
 // 
@@ -654,7 +666,7 @@ void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int*
   // hide gamemode for maps with exclusive gamemode
   for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
   {
-    if (gameConfig.customMapId == dataCustomMapsWithExclusiveGameMode[i])
+    if (SelectedCustomMapId == dataCustomMapsWithExclusiveGameMode[i])
     {
       *state = ELEMENT_HIDDEN;
       return;
@@ -1441,7 +1453,7 @@ int onSetGameConfig(void * connection, void * data)
 {
   // copy it over
   memcpy(&gameConfig, data, sizeof(PatchGameConfig_t));
-  DPRINTF("set gameconfig map:%d\n", gameConfig.customMapId);
+  DPRINTF("set gameconfig map:%d\n", SelectedCustomMapId);
   return sizeof(PatchGameConfig_t);
 }
 
@@ -1459,8 +1471,10 @@ void onConfigUpdate(void)
     char * modeName = gameGetGameModeName(gameSettings->GameType);
 
     // get map override name
-    if (gameConfig.customMapId > 0)
-      mapName = dataCustomMaps.items[(int)gameConfig.customMapId];
+    if (SelectedCustomMapId > 0)
+      mapName = dataCustomMaps.items[SelectedCustomMapId];
+    else if (MapLoaderState.MapName[0])
+      mapName = MapLoaderState.MapName;
 
     // get mode override name
     if (gameConfig.customModeId > 0)
@@ -1471,12 +1485,15 @@ void onConfigUpdate(void)
     }
 
     // override gamemode name with map if map has exclusive gamemode
-    for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
+    if (SelectedCustomMapId)
     {
-      if (gameConfig.customMapId == dataCustomMapsWithExclusiveGameMode[i])
+      for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
       {
-        modeName = mapName;
-        break;
+        if (CustomMapDefs[SelectedCustomMapId-1].ForcedCustomModeId != 0)
+        {
+          modeName = mapName;
+          break;
+        }
       }
     }
 
@@ -1562,8 +1579,15 @@ void configTrySendGameConfig(void)
 
     // send
     void * lobbyConnection = netGetLobbyServerConnection();
-    if (lobbyConnection)
-      netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(PatchGameConfig_t), &gameConfig);
+    if (lobbyConnection) {
+      ClientSetGameConfig_t msg;
+
+      memset(&msg, 0, sizeof(msg));
+      if (SelectedCustomMapId > 0)
+        memcpy(&msg.CustomMap, &CustomMapDefs[SelectedCustomMapId-1], sizeof(msg.CustomMap));
+      memcpy(&msg.GameConfig, &gameConfig, sizeof(msg.GameConfig));
+      netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(ClientSetGameConfig_t), &msg);
+    }
   }
 }
 

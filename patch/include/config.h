@@ -1,6 +1,8 @@
 #ifndef __PATCH_CONFIG_H__
 #define __PATCH_CONFIG_H__
 
+#define MAX_CUSTOM_MAP_DEFINITIONS              (32)
+
 enum ActionType
 {
   ACTIONTYPE_DRAW,
@@ -71,5 +73,30 @@ typedef struct TabElem
   int selectedMenuItem;
   int menuOffset;
 } TabElem_t;
+
+typedef struct CustomMapVersionFileDef
+{
+  int Version;
+  int BaseMapId;
+  int ForcedCustomModeId;
+  char padding[4];
+  char Name[32];
+} CustomMapVersionFileDef_t;
+
+struct MapLoaderState
+{
+    u8 Enabled;
+    u8 MapId;
+	  u8 CheckState;
+    char MapName[32];
+    char MapFileName[128];
+    int LoadingFileSize;
+    int LoadingFd;
+};
+
+extern struct MapLoaderState MapLoaderState;
+extern CustomMapDef_t CustomMapDefs[MAX_CUSTOM_MAP_DEFINITIONS];
+extern int CustomMapDefCount;
+extern int SelectedCustomMapId;
 
 #endif // __PATCH_CONFIG_H__
