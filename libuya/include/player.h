@@ -602,6 +602,38 @@ typedef struct HeroShadow { // 0x28
 	/* 0x18 */ float sample_pos[4];
 } HeroShadow;
 
+typedef struct HeroAttack { // 0xb0
+	/* 0x00 */ VECTOR near;
+	/* 0x10 */ VECTOR far;
+	/* 0x20 */ VECTOR oldNear;
+	/* 0x30 */ VECTOR oldFar;
+	/* 0x40 */ VECTOR wrenchHandle;
+	/* 0x50 */ VECTOR wrenchTip;
+	/* 0x60 */ VECTOR idealVec;
+	/* 0x70 */ VECTOR bounceVec;
+	/* 0x80 */ Moby *pTarget;
+	/* 0x84 */ Moby *pMoby;
+	/* 0x88 */ int rotSet;
+	/* 0x8c */ float rot;
+	/* 0x90 */ float bounceAng;
+	/* 0x94 */ float speedFactor;
+	/* 0x98 */ Moby *pGunPointMoby;
+	/* 0x9c */ short int id;
+	/* 0x9e */ short int soundPlayed;
+	/* 0xa0 */ float descend;
+	/* 0xa4 */ float aimAngz;
+	/* 0xa8 */ float aimAngy;
+	/* 0xac */ int throwAttackDamageID;
+} HeroAttack;
+
+typedef struct HeroHeadIdle { // 0x20
+	/* 0x00 */ VECTOR rotOffset;
+	/* 0x10 */ int timer;
+	/* 0x14 */ float gain;
+	/* 0x18 */ float damp;
+	/* 0x1c */ int pad;
+} HeroHeadIdle;
+
 typedef struct FpsCam {
 	MATRIX CameraMatrix;											// 0x11A0
     struct CameraAngleZ CameraYaw;									// 0x11E0
@@ -1012,7 +1044,10 @@ typedef struct Player {
 	HeroAnimLayers animLayers;								// 0x740
 	HeroTweaker tweaker[12];								// 0x760
 	HeroShadow shadow;										// 0xFA0
-	char unk_fc8[0x1b8];
+	char unk_fc8[0x18];
+	HeroAttack attack;										// 0xFE0
+	HeroHeadIdle head;										// 0x1090
+	char unk_10b0[0xd0];
 	HeroCamera fps;											// 0x1180 - 0x133C
 	char unk_1340[0x70];
 	HeroWalkToPos walkToPos;								// 0x13B0 - 0x13DC
