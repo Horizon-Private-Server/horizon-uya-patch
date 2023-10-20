@@ -495,6 +495,12 @@ typedef struct HeroGround {
 	/*  bc */ int pad;
 } HeroGround;
 
+typedef struct HeroCommand { // 0xc
+	/* 0x0 */ int state;
+	/* 0x4 */ Moby *pCurTarget;
+	/* 0x8 */ int timer;
+} HeroCommand;
+
 typedef struct HeroPlayerConstants {
 	/*   0 */ int mobyNum;
 	/*   4 */ float maxWalkSpeed;
@@ -934,6 +940,24 @@ typedef struct tNW_PlayerStateMessage { // 0x1c
 	/* 0x10 */ float rot[3];
 } tNW_PlayerStateMessage;
 
+typedef struct pad_frame { // 0x2
+	/* 0x0 */ u8 data[2];
+} pad_frame;
+
+typedef struct PadStream { // 0x1e0
+	/* 0x000 */ short int button_bits[4];
+	/* 0x008 */ short int analog_stick[4];
+	/* 0x010 */ short int right_analog_stick[4];
+	/* 0x018:0 */ u8 frames_with_btn_diffs : 4;
+	/* 0x019 */ u8 btn_bit_diffs[32];
+	/* 0x03c */ int cur_btn_bit_offset;
+	/* 0x040 */ pad_frame prev_frame;
+	/* 0x042 */ unsigned char pad_stream_buf[2][200];
+	/* 0x1d4 */ int totalPadStreamBytes;
+	/* 0x1d8 */ int curFrame;
+	/* 0x1dc */ int padStreamReady;
+} PadStream;
+
 /*
  * NAME :		Player
  * 
@@ -1119,18 +1143,34 @@ typedef struct Player {
 	int vehicleStateTimer;									// 0x2550
 	int pointsLastKill;										// 0x2554
 	struct tNW_Player *pNetPlayer;							// 0x2558
-	tNW_PlayerStateMessage newStateMessage;					// 0x255C
-	// Right Arm Animation
-	char unk_2580[0x790];
-	// All zeros (padding maybe?)
-	char unk_2d10[0xd7];
-	// Changes if wrench is out and jumping:
-	char unk_2de8[0xdb];
-	// this last char goes to end of struct.
-	char unk_2ec4[0x163b];
-
-	// FULL STRUCT SIZE: 0x44FF
-	// Next Player Struct (if Local): 0x4500
+	char unk_255c[0x1c];
+	Moby *lastVehicleMoby;									// 0x2578
+	int unk_257c;
+	char Animation_RightArm[0x3c0];							// 0x2580
+	char Animation_LeftArm[0x3c0];							// 0x2940
+	char Animation_RightArm_Unk1[0x400];					// 0x2D00
+	char Animation_RightArm_Unk2[0x400];					// 0x3100
+	char Animation_LeftArm_Unk1[0x400];						// 0x3500
+	char Animation_LeftArm_Unk2[0x400];						// 0x3900
+	char Animation_Unk[0x540];								// 0x3D00
+	char unk_4240[0xc0];
+	union {
+		struct {
+			int frameSentStick;								// 0x4300
+			float damageDone;								// 0x4304
+			short int numKills;								// 0x4308
+			short slot;										// 0x430A
+			PadStream padStream;							// 0x430C
+			unsigned char startGameButtonOffFrames;			// 0x44EC
+			unsigned char curPadMsgSequenceNum;				// 0x44ED
+			char curPadMsgFrame;							// 0x44EE
+			char framesUntilStateRot;						// 0x44EF
+			short mapTimer;									// 0x44F0
+			short int lastMineId;							// 0x44F2
+			HeroCommand command;							// 0x44F4
+		} LocalHero;
+	};
+	// END! :D  (Size: 0x4500)
 } Player;
 
 typedef void (*PlayerUpdate_func)(Player * player);

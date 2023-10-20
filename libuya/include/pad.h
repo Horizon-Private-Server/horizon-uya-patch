@@ -88,7 +88,7 @@ struct PAD { // 0x5c0
 	/* 0x54f */ u8 repeatCounter;
 	/* 0x550 */ u8 multi_tap_connected;
 	/* 0x551 */ u8 disconnected;
-	/* 0x552 */ unsigned char act_align[6];
+	/* 0x552 */ u8 act_align[6];
 	/* 0x558 */ u8 slot;
 	/* 0x559 */ char initialized;
 	/* 0x55c */ int rterm_id;
@@ -97,7 +97,7 @@ struct PAD { // 0x5c0
 	/* 0x568 */ int lagFrames;
 	/* 0x56c */ void *RawPadInputCallback;
 	/* 0x570 */ void *pCallbackData;
-	/* 0x574 */ unsigned char rdata[32];
+	/* 0x574 */ u8 rdata[32];
 	/* 0x594 */ int ipad[10];
 };
 
