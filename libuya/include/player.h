@@ -693,9 +693,13 @@ typedef struct HeroCamera { // 0x30
 	int reticleFadeInTimer;											// 0x133C
 } HeroCamera;
 
-typedef struct HeroWalkToPos {
-	VECTOR idealPos;												// 0x13B0
-	VECTOR idealRot;												// 0x13C0
+typedef struct HeroWeaponPosRec { // 0x80
+	/* 0x00 */ VECTOR fpGunMtx[4];
+	/* 0x40 */ VECTOR tpGunMtx[4];
+} HeroWeaponPosRec;
+
+typedef struct HeroWalkToPos { // 0x20
+	VECTOR idealPos;												// 0x13C0
 	int abortOnArrival;												// 0x13D0
 	int walkToTeleport;												// 0x13D4
 	int teleportWaitTime;											// 0x13D8
@@ -1049,8 +1053,8 @@ typedef struct Player {
 	HeroHeadIdle head;										// 0x1090
 	char unk_10b0[0xd0];
 	HeroCamera fps;											// 0x1180 - 0x133C
-	char unk_1340[0x70];
-	HeroWalkToPos walkToPos;								// 0x13B0 - 0x13DC
+	HeroWeaponPosRec weaponPosRec;							// 0x1340
+	HeroWalkToPos walkToPos;								// 0x13C0 - 0x13DC
 	HeroSurf surf;											// 0x13E0
 	HeroWalk walk;											// 0x1410
 	HeroJump jump;											// 0x1430
