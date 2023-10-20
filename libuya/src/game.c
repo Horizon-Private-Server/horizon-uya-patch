@@ -33,7 +33,7 @@
 // 0x001D3B58
 #endif
 
-#define GAME_DEATH_BARRIER                  (*(u32*)GetAddress(&vaDeathBarrier))
+#define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))
 
 #define GAME_DATA                           ((GameData*)GetAddress(&vaGAME_DATA))
 #define GAME_TIME_LIMIT                     (*(int*)GetAddress(&vaGAME_DATA))

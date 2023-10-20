@@ -1146,6 +1146,7 @@ int patchUnkick_Logic(u32 uip)
 	}
 	return r;
 }
+
 /*
  * NAME :		patchUnkick
  * 
@@ -1171,6 +1172,44 @@ void patchUnkick(void)
 #endif
 	if (hook)
 		HOOK_JAL(hook, &patchUnkick_Logic);
+}
+
+/*
+ * NAME :		patchDeathBarrierBug
+ * 
+ * DESCRIPTION :
+ * 				Patches death barrier bug/teleport glitch
+ * 				that let players fall off the map into the base.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchDeathBarrierBug(void)
+{
+	int i;
+	// Grab All Players
+	Player** players = playerGetAll();
+	// Cycle through all
+	for (i = 0; i < players[i]; ++i) {
+		Player* player = players[i];
+		// if player is local
+		if (player && playerIsLocal(player)) {
+			float deathbarrier = gameGetDeathHeight();
+			float pY = player->PlayerPosition[2];
+			DPRINTF("deathheight: %d\nplayery: %d\ninbasehack: %d\n", (int)deathbarrier, (int)pY, player->InBaseHack);
+			// if player is above death barrier and inBaseHack equals 1.
+			if (player->InBaseHack && deathbarrier < pY) {
+				player->InBaseHack = 0;
+			} else if (!player->InBaseHack && deathbarrier > pY) {
+				player->InBaseHack = 1;
+			}
+		}
+	}
 }
 
 /*
@@ -1527,6 +1566,9 @@ int main(void)
 
 		// Patch sending weapon shots via UDB to TCP.
 		patchWeaponShotLag();
+
+		// Patch Death Barrier Bug/Teleporter Glitch
+		patchDeathBarrierBug();
 
 		// Patch Flux Niking
 		if (gameConfig.grFluxNikingDisabled)
