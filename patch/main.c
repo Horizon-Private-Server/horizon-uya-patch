@@ -86,6 +86,13 @@ int lastLodLevel = 2;
 int fovChange_Hook = 0;
 int fovChange_Func = 0;
 
+#if DSCRPRINT
+#define MAX_DEBUG_SCR_PRINT_LINES       (16)
+#define MAX_DEBUG_SCR_PRINT_LINE_LEN    (64)
+char dscrprintlines[MAX_DEBUG_SCR_PRINT_LINES][MAX_DEBUG_SCR_PRINT_LINE_LEN];
+int dscrprintlinescount = 0;
+#endif
+
 extern float _lodScale;
 extern void* _correctTieLod;
 extern int _correctTieLod_Jump;
@@ -134,6 +141,30 @@ int onServerDownloadDataRequest(void * connection, void * data)
 
 	return sizeof(ServerDownloadDataRequest_t) - sizeof(request->Data) + request->DataSize;
 }
+
+#if DSCRPRINT
+//------------------------------------------------------------------------------
+void clearScrPrintLine(void)
+{
+  memset(dscrprintlines, 0, sizeof(dscrprintlines));
+  dscrprintlinescount = 0;
+}
+
+//------------------------------------------------------------------------------
+void pushScrPrintLine(char* str)
+{
+  int i = dscrprintlinescount;
+  
+  if (i >= MAX_DEBUG_SCR_PRINT_LINES) {
+
+    memmove(&dscrprintlines[0], &dscrprintlines[1], (MAX_DEBUG_SCR_PRINT_LINES - 1) * MAX_DEBUG_SCR_PRINT_LINE_LEN * sizeof(char));
+    i = MAX_DEBUG_SCR_PRINT_LINES - 1;
+  }
+
+  strncpy(dscrprintlines[i], str, MAX_DEBUG_SCR_PRINT_LINE_LEN);
+  dscrprintlinescount = i + 1;
+}
+#endif
 
 //------------------------------------------------------------------------------
 int runCheckUI(void)
@@ -1407,6 +1438,8 @@ void processGameModules()
  */
 void onOnlineMenu(void)
 {
+  int i;
+
 	// call normal draw routine
 	drawFunction();
 	
@@ -1416,6 +1449,7 @@ void onOnlineMenu(void)
 		printf("onOnlinemenu - pad enable input\n");
 		padEnableInput();
 		onConfigInitialize();
+    refreshCustomMapList();
 		hasInitialized = 1;
 	}
 	if (hasInitialized == 1 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
@@ -1451,12 +1485,21 @@ void onOnlineMenu(void)
 		else
 		{
 			char buf[32];
-			sprintf(buf, "Please install %s to play.", dataCustomMaps.items[(int)gameConfig.customMapId]);
+			sprintf(buf, "Please install %s to play.", MapLoaderState.MapName);
 			uiShowOkDialog("Custom Maps", buf);
 		}
 		
 		showNoMapPopup = 0;
 	}
+
+  //
+  #if DSCRPRINT
+  float y = 10;
+  for (i = 0; i < MAX_DEBUG_SCR_PRINT_LINES; ++i) {
+    gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0);
+    y += 20;
+  }
+  #endif
 }
 
 /*
