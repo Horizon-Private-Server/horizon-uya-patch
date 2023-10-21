@@ -27,7 +27,7 @@
 #include <libuya/player.h>
 #include <libuya/gamesettings.h>
 
-const int patches[][2] = {
+const int patches[][3] = {
 	
 };
 
@@ -144,13 +144,21 @@ int main (void)
 
 	int inGame = isInGame();
 	int i;
-	const int patchesSize =  sizeof(patches) / (2 * sizeof(int));
+	const int patchesSize =  sizeof(patches) / (3 * sizeof(int));
 	const int clearsSize =  sizeof(clears) / (2 * sizeof(int));
+
+	// state
+	// 0 = menus
+	// 1 = in game
+	// 2 = loading scene
+	int state = isInGame() ? 1 : (isInMenus() ? 0 : 2);
 
 	// unhook patch
 	for (i = 0; i < patchesSize; ++i)
 	{
-		*(u32*)patches[i][0] = (u32)patches[i][1];
+    int context = patches[i][0];
+    if (context < 0 || context == state)
+      *(u32*)patches[i][1] = (u32)patches[i][2];
 	}
 
 	// clear memory
@@ -167,7 +175,7 @@ int main (void)
 	netInstallCustomMsgHook(1);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
 
-	if (!inGame)
+	if (state == 0)
 	{
 		// Hook menu loop
 		#ifdef UYA_PAL

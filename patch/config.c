@@ -87,6 +87,7 @@ void labelActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, voi
 void menuStateAlwaysHiddenHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateAlwaysDisabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateEnabledInMenusHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state);
@@ -252,7 +253,7 @@ MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
-  { "Refresh Maps", buttonActionHandler, menuStateAlwaysEnabledHandler, gmRefreshMapsSelectHandler },
+  { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler },
   { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if UYA_NTSC
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
@@ -527,9 +528,12 @@ void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
   refreshCustomMapList();
   
   // popup
-  char buf[32];
-  snprintf(buf, sizeof(buf), "Found %d maps", CustomMapDefCount);
-  uiShowOkDialog("Custom Maps", buf);
+  if (isInMenus())
+  {
+    char buf[32];
+    snprintf(buf, sizeof(buf), "Found %d maps", CustomMapDefCount);
+    uiShowOkDialog("Custom Maps", buf);
+  }
 }
 
 // 
@@ -656,6 +660,13 @@ void menuStateAlwaysDisabledHandler(TabElem_t* tab, MenuElem_t* element, int* st
 void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE;
+}
+
+// 
+void menuStateEnabledInMenusHandler(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  if (isInMenus()) *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE;
+  else *state = ELEMENT_HIDDEN;
 }
 
 // 
@@ -1297,7 +1308,7 @@ void drawTab(TabElem_t* tab)
       navMenu(tab, -1, 0);
   }
   // nav select
-  else if (padGetButtonUp(0, PAD_CROSS) > 0)
+  else if (padGetButtonDown(0, PAD_CROSS) > 0)
   {
     if (state & ELEMENT_EDITABLE)
       currentElement->handler(tab, currentElement, ACTIONTYPE_SELECT, NULL);

@@ -1232,7 +1232,7 @@ void patchDeathBarrierBug(void)
 		if (player && playerIsLocal(player)) {
 			float deathbarrier = gameGetDeathHeight();
 			float pY = player->PlayerPosition[2];
-			DPRINTF("deathheight: %d\nplayery: %d\ninbasehack: %d\n", (int)deathbarrier, (int)pY, player->InBaseHack);
+			//DPRINTF("deathheight: %d\nplayery: %d\ninbasehack: %d\n", (int)deathbarrier, (int)pY, player->InBaseHack);
 			// if player is above death barrier and inBaseHack equals 1.
 			if (player->InBaseHack && deathbarrier < pY) {
 				player->InBaseHack = 0;
