@@ -249,6 +249,7 @@ FUNCTION(strcat, 0x001202f4)
 FUNCTION(strncat, 0x001209c0)
 FUNCTION(strcmp, 0x001205b0)
 FUNCTION(strncmp, 0x00120b70)
+FUNCTION(strlen, 0x00120884)
 
 #--------------------------------------------------------
 #------------------------- MATH -------------------------
