@@ -160,20 +160,9 @@ MenuElem_ListData_t dataCustomMaps = {
     }
 };
 
-// world override list item
-// MenuElem_ListData_t dataCustomWorlds = {
-//     &gameConfig.customWorld,
-//     menuStateHandler_SelectedWorldOverride,
-//     CUSTOM_WORLD_COUNT,
-//     {
-//       "Off",
-//       "On",
-//     }
-// };
-
 // maps with their own exclusive gamemode
 char dataCustomMapsWithExclusiveGameMode[] = {
-  // CUSTOM_MAP_SPLEEF,
+  CUSTOM_MAP_SPLEEF,
 };
 const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithExclusiveGameMode)/sizeof(char);
 
@@ -274,7 +263,6 @@ MenuElem_t menuElementsGameSettings[] = {
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
-  // { "World Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomWorlds },
   // { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },

@@ -60,21 +60,12 @@ enum CUSTOM_MAP_ID
   CUSTOM_MAP_NONE = 0,
   CUSTOM_MAP_MARAXUS_PRISON,
   CUSTOM_MAP_SARATHOS_SWAMP,
-#if TEST
-  CUSTOM_MAP_TEST,
-#endif
+  CUSTOM_MAP_SPLEEF,
+
   // always at the end to indicate how many items there are
   CUSTOM_MAP_COUNT
 };
 
-// enum CUSTOM_WORLD_ID
-// {
-//   CUSTOM_WORLD_NONE = 0,
-//   CUSTOM_WORLD_YES,
-
-//   // always at the end to indicate how many items there are
-//   CUSTOM_WORLD_COUNT
-// };
 
 enum CUSTOM_MODE_ID
 {
