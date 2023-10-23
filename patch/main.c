@@ -1244,6 +1244,43 @@ void patchDeathBarrierBug(void)
 }
 
 /*
+ * NAME :		patchCreateGameMenu
+ * 
+ * DESCRIPTION :
+ * 				Patches various options on the create game screen
+ * 				such as higher frag limit and time limit.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchCreateGameMenu(void)
+{
+	u32 menu = uiGetActivePointer(UIP_CREATE_GAME);
+	if (!menu)
+		return;
+
+	int max_time_limit = 120;
+	int max_frag_limit = 50;
+
+	// Modify Normal Options
+	int time_limit = (*(u32*)(menu + 0x12c) + 0x70);
+	if (*(int*)time_limit != max_time_limit)
+		*(int*)time_limit = max_time_limit;
+
+	// Modify Advanced Options
+	menu = uiGetActiveSubPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
+	int frag_limit = (*(u32*)(menu + 0x12c) + 0x70);
+	if (menu && *(int*)frag_limit != max_frag_limit)
+		*(int*)frag_limit = max_frag_limit;
+
+}
+
+/*
  * NAME :		runGameStartMessager
  * 
  * DESCRIPTION :
@@ -1488,7 +1525,7 @@ void onOnlineMenu(void)
 		printf("onOnlinemenu - pad enable input\n");
 		padEnableInput();
 		onConfigInitialize();
-    refreshCustomMapList();
+		refreshCustomMapList();
 		hasInitialized = 1;
 	}
 	if (hasInitialized == 1 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
