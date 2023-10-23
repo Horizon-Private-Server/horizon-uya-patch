@@ -173,7 +173,7 @@ MenuElem_ListData_t dataCustomModes = {
     CUSTOM_MODE_COUNT,
     {
       "None",
-      "Example",
+      // "Example",
     }
 };
 
@@ -182,7 +182,7 @@ MenuElem_ListData_t dataCustomModes = {
 // if the entry is NULL then the full name will be used
 const char* CustomModeShortNames[] = {
   [CUSTOM_MODE_NONE] NULL,
-  [CUSTOM_MODE_EXAMPLE] "EX",
+  // [CUSTOM_MODE_EXAMPLE] "EX",
 };
 
 MenuElem_ListData_t dataWeaponPacks = {
