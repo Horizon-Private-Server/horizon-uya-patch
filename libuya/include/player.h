@@ -1066,7 +1066,11 @@ typedef struct Player {
 	char unk_1620[0x160];
 	MotionBlur wrenchMotionBlur;							// 0x1780 - 0x18CC
 	int WeaponHeldId;										// 0x18D0
-	char unk_18d4[0x110];
+	char unk_18d4[0xec];
+	void * pUnk_19c0;										// 0x19C0										// 0x18D0
+	char unk_19c4[0x1c];
+	short unk_19e0;
+	short unk_19e2;
 	char State;												// 0x19E4
 	char SubState;											// 0x19E5
 	char StateType;											// 0x19E6
@@ -1144,9 +1148,9 @@ typedef struct Player {
 	short int unkGadgetTimer_24a4;							// 0x24A4
 	short int GadgetPADDelayTimer;							// 0x24A6
 	short int unkGadgetTimer_24a8;							// 0x24A8
-	char unk_24ac[0x1e];
+	char unk_24aa[0x1e];
 	char unk_24c8;
-	char unk_24c9;
+	char unk_24c9; // hides reticle/hud
 	char unk_24ca;
 	char unk_24cb;
 	u32 LastDamagedMeOwnerUID;								// 0x24CC
