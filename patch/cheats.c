@@ -768,13 +768,15 @@ void setRespawnTimer(void)
     int RespawnAddr = GetAddress(&vaRespawnTimerFunc);
 	if (gameConfig.grRespawnTimer)
 	{
-#if UYA_PAL
-        static int FPS = 50;
-#else
-        static int FPS = 60;
-#endif
-        int Seconds = gameConfig.grRespawnTimer - 1;
-        int RespawnTime = Seconds * FPS;
+	    int Seconds;
+		switch (gameConfig.grRespawnTimer) {
+			case 10:
+			case 11:
+				Seconds = gameConfig.grRespawnTimer - 10; break;
+			default:
+				Seconds = gameConfig.grRespawnTimer + 1; break;
+		}
+        int RespawnTime = Seconds * GAME_FPS;
         
 		// Set Default Respawn Timer
         if (*(u16*)(RespawnAddr + 0x10) != RespawnTime)
@@ -782,7 +784,7 @@ void setRespawnTimer(void)
 
 		// Set Penalty Timer #1 based off of current respawn timer.
 		if (!gameConfig.grDisablePenaltyTimers)
-			*(u16*)(RespawnAddr + 0x78) = (Seconds + 1.5) * FPS;
+			*(u16*)(RespawnAddr + 0x78) = (Seconds + 1.5) * GAME_FPS;
 	}
 	if (gameConfig.grDisablePenaltyTimers)
 	{
