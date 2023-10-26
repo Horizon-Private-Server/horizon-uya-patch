@@ -777,3 +777,34 @@ VariableAddress_t vaGameplayHook = {
     .MarcadiaPalace = 0x00460f60,
 #endif
 };
+
+//================================================
+//=============  patchAlwaysShowHealthBar
+//================================================
+VariableAddress_t vaHealthBarTimerLoad = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x0054800c,
+	.Hoven = 0x0054a1d4,
+	.OutpostX12 = 0x0053faac,
+    .KorgonOutpost = 0x0053c594,
+	.Metropolis = 0x0053c594,
+	.BlackwaterCity = 0x00539d7c,
+	.CommandCenter = 0x005395d4,
+    .BlackwaterDocks = 0x0053be54,
+    .AquatosSewers = 0x0053b154,
+    .MarcadiaPalace = 0x0053aad4,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00545704,
+	.Hoven = 0x0054780c,
+	.OutpostX12 = 0x0053d124,
+    .KorgonOutpost = 0x0053a88c,
+	.Metropolis = 0x00539c8c,
+	.BlackwaterCity = 0x005373f4,
+	.CommandCenter = 0x00536e24,
+    .BlackwaterDocks = 0x00539664,
+    .AquatosSewers = 0x005389a4,
+    .MarcadiaPalace = 0x005382e4,
+#endif
+};

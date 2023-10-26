@@ -107,6 +107,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableFpsCounter = 0,
 	.playerFov = 0,
 	.enableSpectate = 0,
+	.alwaysShowHealth = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1281,6 +1282,32 @@ void patchCreateGameMenu(void)
 }
 
 /*
+ * NAME :		patchAlwaysShowHealth
+ * 
+ * DESCRIPTION :
+ * 				Always shows the players health bar.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchAlwaysShowHealth(void)
+{
+	u32 healthbar_timer = *(u32*)(GetAddress(&vaHealthBarTimerLoad));
+	u32 old_value = 0x8e042514; // lw a0,0x2514(s0)
+	u32 new_value = 0x24040160; // addiu a0, zero, 0x160
+	if (config.alwaysShowHealth && healthbar_timer == old_value) {
+		healthbar_timer = new_value;
+	} else if (!config.alwaysShowHealth && healthbar_timer == new_value) {
+		healthbar_timer = old_value;
+	}
+}
+
+/*
  * NAME :		runGameStartMessager
  * 
  * DESCRIPTION :
@@ -1673,6 +1700,9 @@ int main(void)
 
 		// Patches gadget events as they come in.
 		// patchGadgetEvents();
+
+		// Patch players health bar to always show.
+		patchAlwaysShowHealth();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)

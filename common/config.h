@@ -10,13 +10,13 @@ typedef struct PatchConfig
   char enableFpsCounter;
   char playerFov;
   char enableSpectate;
+  char alwaysShowHealth;
 } PatchConfig_t;
 
 // Game Rules Tab
 typedef struct PatchGameConfig
 {
   // Maps
-  // char customWorld;
   char customModeId;
 
   // Game Rules
