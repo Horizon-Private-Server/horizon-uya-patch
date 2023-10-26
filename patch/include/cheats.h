@@ -18,6 +18,8 @@ int keepBaseHealthPadActive(void);
 void noPostHitInvinc(void);
 void onGameplayLoad_disableWeaponCrates(GameplayHeaderDef_t * gameplay);
 void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay);
+void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, int strLen);
+void healthbars(void);
 
 // Party Game Rules
 void survivor(void);

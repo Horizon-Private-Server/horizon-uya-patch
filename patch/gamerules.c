@@ -263,6 +263,9 @@ void grGameStart(void)
 	if (gameConfig.prPlayerSize)
 		playerSize();
 
+	if (gameConfig.grHealthBars)
+		healthbars();
+
 	FirstPass = 0;
 }
 
