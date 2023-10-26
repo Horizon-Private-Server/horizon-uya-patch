@@ -279,6 +279,7 @@ FUNCTION(matrix_rotate_z, 0x0013d660)
 #----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(internal_drawFunc, vaFontPrintFunc)
+VARIABLE_FUNCTION(gfxScreenSpaceTextCenter, vaFontPrintCenterFunc);
 VARIABLE_FUNCTION(gfxGetFontWidth, vaGetTextWidthFunc)
 VARIABLE_FUNCTION(internal_drawBox, vaDrawBoxFunc)
 VARIABLE_FUNCTION(gfxSetupGifPaging, vaSetupGifPaging)

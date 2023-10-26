@@ -72,7 +72,7 @@ struct QuadDef
 };
 
 //--------------------------------------------------------
-typedef enum {
+typedef enum FontAlignment {
 	TOP_LEFT = 0,
 	TOP_CENTER = 1,
 	TOP_RIGHT = 2,
@@ -115,6 +115,7 @@ void drawFunction(void);
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment);
+int gfxScreenSpaceTextCenter(float x, float y, u32 color, const char * string, int length);
 
 /*
  * NAME :		gfxScreenSpaceBox
