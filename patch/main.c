@@ -1297,13 +1297,14 @@ void patchCreateGameMenu(void)
  */
 void patchAlwaysShowHealth(void)
 {
-	u32 healthbar_timer = *(u32*)(GetAddress(&vaHealthBarTimerLoad));
-	u32 old_value = 0x8e042514; // lw a0,0x2514(s0)
-	u32 new_value = 0x24040160; // addiu a0, zero, 0x160
-	if (config.alwaysShowHealth && healthbar_timer == old_value) {
-		healthbar_timer = new_value;
-	} else if (!config.alwaysShowHealth && healthbar_timer == new_value) {
-		healthbar_timer = old_value;
+	Player *player = (Player *)PLAYER_STRUCT;
+	u32 healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);
+	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
+	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
+		*(u32*)healthbar_timer = 0;
+		player->HudHealthTimer = 5 * GAME_FPS;
+	} else if (!config.alwaysShowHealth && *(u32*)healthbar_timer == 0) {
+		*(u32*)healthbar_timer = old_value;
 	}
 }
 
@@ -1724,6 +1725,9 @@ int main(void)
 
 		// Patch Unkick Bug
 		patchUnkick();
+
+		// Patch various items on Create Game Menu
+		patchCreateGameMenu();
 
 		// Reset Level of Detail to -1
 		lastLodLevel = -1;

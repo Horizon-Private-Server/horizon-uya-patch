@@ -25,4 +25,4 @@ VariableAddress_t vaSetPOSRot_fovChange_Hook;
 VariableAddress_t vaSetPOSRot_fovChange_Func;
 VariableAddress_t vaPauseMenuAddr;
 VariableAddress_t vaGameplayHook;
-VariableAddress_t vaHealthBarTimerLoad;
+VariableAddress_t vaHealthBarTimerSaveZero;

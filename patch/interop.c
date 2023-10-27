@@ -781,30 +781,30 @@ VariableAddress_t vaGameplayHook = {
 //================================================
 //=============  patchAlwaysShowHealthBar
 //================================================
-VariableAddress_t vaHealthBarTimerLoad = {
+VariableAddress_t vaHealthBarTimerSaveZero = {
 #if UYA_PAL
 	.Lobby = 0,
-	.Bakisi = 0x0054800c,
-	.Hoven = 0x0054a1d4,
-	.OutpostX12 = 0x0053faac,
-    .KorgonOutpost = 0x0053c594,
-	.Metropolis = 0x0053c594,
-	.BlackwaterCity = 0x00539d7c,
-	.CommandCenter = 0x005395d4,
-    .BlackwaterDocks = 0x0053be54,
-    .AquatosSewers = 0x0053b154,
-    .MarcadiaPalace = 0x0053aad4,
+	.Bakisi = 0x00548020,
+	.Hoven = 0x0054a1e8,
+	.OutpostX12 = 0x0053fac0,
+    .KorgonOutpost = 0x0053c5a8,
+	.Metropolis = 0x0053c5a8,
+	.BlackwaterCity = 0x00539d90,
+	.CommandCenter = 0x005395e8,
+    .BlackwaterDocks = 0x0053be68,
+    .AquatosSewers = 0x0053b168,
+    .MarcadiaPalace = 0x0053aae8,
 #else
 	.Lobby = 0,
-	.Bakisi = 0x00545704,
-	.Hoven = 0x0054780c,
-	.OutpostX12 = 0x0053d124,
-    .KorgonOutpost = 0x0053a88c,
-	.Metropolis = 0x00539c8c,
-	.BlackwaterCity = 0x005373f4,
-	.CommandCenter = 0x00536e24,
-    .BlackwaterDocks = 0x00539664,
-    .AquatosSewers = 0x005389a4,
-    .MarcadiaPalace = 0x005382e4,
+	.Bakisi = 0x00545718,
+	.Hoven = 0x00547820,
+	.OutpostX12 = 0x0053d138,
+    .KorgonOutpost = 0x0053a8a0,
+	.Metropolis = 0x00539ca0,
+	.BlackwaterCity = 0x00537408,
+	.CommandCenter = 0x00536e38,
+    .BlackwaterDocks = 0x00539678,
+    .AquatosSewers = 0x005389b8,
+    .MarcadiaPalace = 0x005382f8,
 #endif
 };
