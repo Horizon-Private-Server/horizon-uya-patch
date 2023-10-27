@@ -1259,26 +1259,24 @@ void patchDeathBarrierBug(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
+void patchCreateGameMenu_Option(int option, int new_value)
+{
+	if (*(int*)option != new_value)
+		*(int*)option = new_value;
+}
 void patchCreateGameMenu(void)
 {
 	u32 menu = uiGetActivePointer(UIP_CREATE_GAME);
-	if (!menu)
-		return;
-
-	int max_time_limit = 120;
-	int max_frag_limit = 50;
-
+	if (!menu) return;
 	// Modify Normal Options
 	int time_limit = (*(u32*)(menu + 0x12c) + 0x70);
-	if (*(int*)time_limit != max_time_limit)
-		*(int*)time_limit = max_time_limit;
-
-	// Modify Advanced Options
+	patchCreateGameMenu_Option(time_limit, 120); // Time Limit = 120 Minutes
+	
 	menu = uiGetActiveSubPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
+	if (!menu) return;
+	// Modify Advanced Options
 	int frag_limit = (*(u32*)(menu + 0x12c) + 0x70);
-	if (menu && *(int*)frag_limit != max_frag_limit)
-		*(int*)frag_limit = max_frag_limit;
-
+	patchCreateGameMenu_Option(frag_limit, 50); // Frag Limit = 50
 }
 
 /*
