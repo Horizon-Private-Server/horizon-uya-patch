@@ -4,10 +4,10 @@
 
 #if UYA_PAL
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
-#define IS_WIDESCREEN                       (*(char*)0x001a58bc)
+#define IS_WIDESCREEN                       (*(char*)0x001a58bd)
 #else
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
-#define IS_WIDESCREEN                       (*(char*)0x001a5a3c)
+#define IS_WIDESCREEN                       (*(char*)0x001a5a3d)
 #endif
 
 int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
