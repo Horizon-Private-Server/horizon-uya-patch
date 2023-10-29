@@ -820,10 +820,11 @@ void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId)
 	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
 		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
 		if (moby->OClass == mobyId){
-			moby->PosY = -100;
-			if (mobyId == MOBY_ID_DRONE_BOT_CLUSTER_CONFIG){
+			if (mobyId == MOBY_ID_DRONE_BOT_CLUSTER_CONFIG) {
 				moby->PosY = 100;
+				return;
 			}
+			moby->PosY = -100;
 		}
 	}
 }
@@ -1169,44 +1170,44 @@ void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, int strLen)
-{
-	asm(".set noreorder;");
-	// run base function
-	gfxScreenSpaceTextCenter(nameX, nameY, nameColor, nameStr, strLen);
+// void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, int strLen)
+// {
+// 	asm(".set noreorder;");
+// 	// run base function
+// 	gfxScreenSpaceTextCenter(nameX, nameY, nameColor, nameStr, strLen);
 
-	// get the register and copy name into buff.
-	register u32 nameReg asm("s0");
-	char buff[15];
-	strncpy(buff, nameReg, 15);
+// 	// get the register and copy name into buff.
+// 	register u32 nameReg asm("s0");
+// 	char buff[15];
+// 	strncpy(buff, nameReg, 15);
 
-	int i;
-	Player ** players = playerGetAll();
-	GameSettings * gs = gameGetSettings();
-	int playercount = ((int)gs->PlayerCount - 1);
-	for(i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		if (!players[i])
-			return;
+// 	int i;
+// 	Player ** players = playerGetAll();
+// 	GameSettings * gs = gameGetSettings();
+// 	int playercount = ((int)gs->PlayerCount - 1);
+// 	for(i = 0; i < GAME_MAX_PLAYERS; ++i) {
+// 		if (!players[i])
+// 			return;
 
-		// compare strings: if 0, strings match exactly.
-		int comp = strncmp(buff, gs->PlayerNames[i], 0x15);
-		if (!comp) {
-			Player * player = players[i];
-			int CurrentHealth = playerGetHealth(player);
-			if (CurrentHealth > 0 && !playerIsDead(player)) {
-				// printf("\ni: %d, buff: %s, health: %d", i, buff, CurrentHealth);
-				float x = (float)nameX;// / SCREEN_WIDTH;
-				float y = (float)nameY;// / SCREEN_HEIGHT;
-				float health = (float)((int)CurrentHealth / (int)PLAYER_MAX_HEALTH);
-				float w = (0.05 * 1) + 0.02, h = 0.02, p = 0.002;
-				float right = w * health;
-				x -= w / 2;
-				gfxScreenSpaceBox(x,y,w-p,h-p, 0x80000000);
-				gfxScreenSpaceBox(x,y,right,h, nameColor);
-			}
-		}
-	}
-}
+// 		// compare strings: if 0, strings match exactly.
+// 		int comp = strncmp(buff, gs->PlayerNames[i], 0x15);
+// 		if (!comp) {
+// 			Player * player = players[i];
+// 			int CurrentHealth = playerGetHealth(player);
+// 			if (CurrentHealth > 0 && !playerIsDead(player)) {
+// 				// printf("\ni: %d, buff: %s, health: %d", i, buff, CurrentHealth);
+// 				float x = (float)nameX;// / SCREEN_WIDTH;
+// 				float y = (float)nameY;// / SCREEN_HEIGHT;
+// 				float health = (float)((int)CurrentHealth / (int)PLAYER_MAX_HEALTH);
+// 				float w = (0.05 * 1) + 0.02, h = 0.02, p = 0.002;
+// 				float right = w * health;
+// 				x -= w / 2;
+// 				gfxScreenSpaceBox(x,y,w-p,h-p, 0x80000000);
+// 				gfxScreenSpaceBox(x,y,right,h, nameColor);
+// 			}
+// 		}
+// 	}
+// }
 /*
  * NAME :		healthbars
  * 
@@ -1220,36 +1221,36 @@ void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, i
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void healthbars(void)
-{
-	VariableAddress_t vaHealthbars_Hook = {
-#if UYA_PAL
-		.Lobby = 0,
-		.Bakisi = 0x00507c70,
-		.Hoven = 0x00509d88,
-		.OutpostX12 = 0x004ff660,
-		.KorgonOutpost = 0x004fcdf8,
-		.Metropolis = 0x004fc148,
-		.BlackwaterCity = 0x004f99e0,
-		.CommandCenter = 0x004f99a8,
-		.BlackwaterDocks = 0x004fc228,
-		.AquatosSewers = 0x004fb528,
-		.MarcadiaPalace = 0x004faea8,
-#else
-		.Lobby = 0,
-		.Bakisi = 0x00505480,
-		.Hoven = 0x005074d8,
-		.OutpostX12 = 0x004fcdf0,
-		.KorgonOutpost = 0x004fa608,
-		.Metropolis = 0x004f9958,
-		.BlackwaterCity = 0x004f7170,
-		.CommandCenter = 0x004f72f8,
-		.BlackwaterDocks = 0x004f9b38,
-		.AquatosSewers = 0x004f8e78,
-		.MarcadiaPalace = 0x004f87b8,
-#endif
-	};
-	u32 hook = GetAddress(&vaHealthbars_Hook);
-	if (hook)
-		HOOK_JAL(hook, &healthbars_Logic);
-}
+// void healthbars(void)
+// {
+// 	VariableAddress_t vaHealthbars_Hook = {
+// #if UYA_PAL
+// 		.Lobby = 0,
+// 		.Bakisi = 0x00507c70,
+// 		.Hoven = 0x00509d88,
+// 		.OutpostX12 = 0x004ff660,
+// 		.KorgonOutpost = 0x004fcdf8,
+// 		.Metropolis = 0x004fc148,
+// 		.BlackwaterCity = 0x004f99e0,
+// 		.CommandCenter = 0x004f99a8,
+// 		.BlackwaterDocks = 0x004fc228,
+// 		.AquatosSewers = 0x004fb528,
+// 		.MarcadiaPalace = 0x004faea8,
+// #else
+// 		.Lobby = 0,
+// 		.Bakisi = 0x00505480,
+// 		.Hoven = 0x005074d8,
+// 		.OutpostX12 = 0x004fcdf0,
+// 		.KorgonOutpost = 0x004fa608,
+// 		.Metropolis = 0x004f9958,
+// 		.BlackwaterCity = 0x004f7170,
+// 		.CommandCenter = 0x004f72f8,
+// 		.BlackwaterDocks = 0x004f9b38,
+// 		.AquatosSewers = 0x004f8e78,
+// 		.MarcadiaPalace = 0x004f87b8,
+// #endif
+// 	};
+// 	u32 hook = GetAddress(&vaHealthbars_Hook);
+// 	if (hook)
+// 		HOOK_JAL(hook, &healthbars_Logic);
+// }

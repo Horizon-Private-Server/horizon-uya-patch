@@ -1271,7 +1271,13 @@ void patchCreateGameMenu(void)
 	// Modify Normal Options
 	int time_limit = (*(u32*)(menu + 0x12c) + 0x70);
 	patchCreateGameMenu_Option(time_limit, 120); // Time Limit = 120 Minutes
-	
+	// Assembly time limit max (if frag limit = none, it reads from this)
+#if UYA_PAL
+	*(u32*)0x0069aa28 = 0x24020078;
+#else
+	*(u32*)0x00698218 = 0x24020078;
+#endif
+
 	menu = uiGetActiveSubPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
 	if (!menu) return;
 	// Modify Advanced Options
@@ -1300,7 +1306,7 @@ void patchAlwaysShowHealth(void)
 	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
 	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
 		*(u32*)healthbar_timer = 0;
-		player->HudHealthTimer = 5 * GAME_FPS;
+		player->HudHealthTimer = 3 * GAME_FPS;
 	} else if (!config.alwaysShowHealth && *(u32*)healthbar_timer == 0) {
 		*(u32*)healthbar_timer = old_value;
 	}
@@ -1418,7 +1424,7 @@ void runCheckGameMapInstalled(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void setupPatchConfigInGame()
+void setupPatchConfigInGame(void)
 {
     // Get Menu address via current map.
     u32 Addr = GetAddress(&vaPauseMenuAddr);
@@ -1700,8 +1706,8 @@ int main(void)
 		// Patches gadget events as they come in.
 		// patchGadgetEvents();
 
-		// Patch players health bar to always show.
-		patchAlwaysShowHealth();
+		if (config.alwaysShowHealth)
+			patchAlwaysShowHealth();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
@@ -1718,14 +1724,14 @@ int main(void)
 	}
 	else if (isInMenus())
 	{
+		// Patch various options on Create Game Screen
+		// patchCreateGameMenu();
+
 		// If in Lobby, run these game rules.
 		grLobbyStart();
 
 		// Patch Unkick Bug
 		patchUnkick();
-
-		// Patch various items on Create Game Menu
-		patchCreateGameMenu();
 
 		// Reset Level of Detail to -1
 		lastLodLevel = -1;
