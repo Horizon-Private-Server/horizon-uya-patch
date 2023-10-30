@@ -48,11 +48,11 @@ typedef struct PatchGameConfig
 
 typedef struct CustomMapDef
 {
-  char Filename[64];
-  char Name[32];
   int Version;
   int BaseMapId;
   int ForcedCustomModeId;
+  char Name[32];
+  char Filename[64];
 } CustomMapDef_t;
 
 enum CUSTOM_MAP_ID

@@ -838,17 +838,26 @@ void hookedGetTable(u32 startSector, u32 sectorCount, u8 * dest)
 
 		int fWadSize = getSizeUsb(fWad);
 		int fWorldSize = getSizeUsb(fWorld);
-		if (fWadSize > 0 && fWorldSize)
-		{
+
+    if (fWadSize > 0)
+    {
 			((int*)dest)[5] = (fWadSize / 0x800) + ((fWadSize % 0x800) == 0 ? 0 : 1);
+			DPRINTF("MAPLOADER: Get Table || fWadSize: %d\n", fWadSize, fWorldSize);
+    }
+
+    if (fWorldSize > 0)
+    {
 			((int*)dest)[9] = (fWorldSize / 0x800) + ((fWorldSize % 0x800) == 0 ? 0 : 1);
-			DPRINTF("MAPLOADER: Get Table || fWadSize: %d, fWorldSize: %d\n", fWadSize, fWorldSize);
-		}
-		else
-		{
+			DPRINTF("MAPLOADER: Get Table || fWorldSize: %d\n", fWadSize, fWorldSize);
+    }
+
+    // if we can't find a wad or world file
+    // then disable loading the custom map
+    if (fWadSize <= 0 && fWorldSize <= 0)
+    {
 			MapLoaderState.Enabled = 0;
 			DPRINTF("Error reading level/world wad from usb (%d, %d)\n", fWadSize, fWorldSize);
-		}
+    }
 	}
 }
 
