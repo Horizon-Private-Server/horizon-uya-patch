@@ -202,7 +202,7 @@ int gameGetTeamScore(int team, int score)
 //--------------------------------------------------------------------------
 void boxUpdate(Moby * moby)
 {
-	// MobyColDamage * colDamage = mobyGetDamage(moby, 0xfffffff, 0);
+	MobyColDamage * colDamage = mobyGetDamage(moby, 0xfffffff, 0);
 	if (moby->State == 2)
 		mobyDestroy(moby);
 
@@ -256,83 +256,42 @@ void updateGameState(PatchStateContainer_t * gameState)
 	{
 		gameState->GameStateUpdate.RoundNumber = SpleefState.RoundNumber + 1;
 	}
-
-	// stats
-	if (gameState->UpdateCustomGameStats)
-	{
-    	gameState->CustomGameStatsSize = sizeof(struct SpleefGameData);
-		struct SpleefGameData* sGameData = (struct SpleefGameData*)gameState->CustomGameStats.Payload;
-		sGameData->Rounds = SpleefState.RoundNumber+1;
-		DPRINTF("spleef ran for %d rounds\n", sGameData->Rounds);
-		sGameData->Version = 0x00000001;
-		
-		for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-		{
-			DPRINTF("%d: %d points %d boxes\n", i, SpleefState.PlayerPoints[i], SpleefState.PlayerBoxesDestroyed[i]);
-			sGameData->Points[i] = SpleefState.PlayerPoints[i];
-			sGameData->BoxesDestroyed[i] = SpleefState.PlayerBoxesDestroyed[i];
-		}
-	}
 }
 
 //--------------------------------------------------------------------------
 void resetRoundState(void)
 {
-	GameSettings * gameSettings = gameGetSettings();
-	Player ** players = playerGetAll();
+    GameSettings * gameSettings = gameGetSettings();
+	Player * p = (Player*)PLAYER_STRUCT;
 	int gameTime = gameGetTime();
 	int i,j,k, count=0;
 	VECTOR pos, rot = {0,0,0,0}, center;
-	Moby* hbMoby = 0;
+	Moby * hbMoby = 0;
 
-	// 
-	SpleefState.RoundInitialized = 0;
+    SpleefState.RoundInitialized = 0;
 	SpleefState.RoundStartTicks = gameTime;
 	SpleefState.RoundEndTicks = 0;
 	SpleefState.RoundResult[0] = 0;
 	SpleefState.RoundResult[1] = -1;
 	SpleefState.RoundResult[2] = -1;
 	SpleefState.RoundResult[3] = -1;
-	memset(SpleefState.RoundPlayerState, -1, GAME_MAX_PLAYERS);
 
-	// Center
+    // Center
 	center[0] = StartPos[0] + (SPLEEF_BOARD_BOX_SIZE * (SPLEEF_BOARD_DIMENSION / (float)2.0));
 	center[1] = StartPos[1] + (SPLEEF_BOARD_BOX_SIZE * (SPLEEF_BOARD_DIMENSION / (float)2.0));
 	center[2] = StartPos[2];
 
-	// spawn players
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-	{
-		Player * p = players[i];
-		if (!p)
-			continue;
+	pos[0] = center[0];
+	pos[1] = center[1];
+	pos[2] = center[2] + (float)30;
 
-		// set state
-		SpleefState.RoundPlayerState[i] = 0;
+	// playerRespawn(PLAYER_STRUCT);
+	playerSetPosRot(p, &pos, &p->PlayerRotation);
 
-		// move to spawn
-		int PlayerId = p->fps.Vars.camSettingsIndex;
-		float theta = (PlayerId / (float)gameSettings->PlayerCount) * (float)2.0 * MATH_PI;
-		while (theta > MATH_TAU)
-			theta -= MATH_PI;
-
-		pos[0] = center[0] + (cosf(theta) * SPLEEF_BOARD_SPAWN_RADIUS);
-		pos[1] = center[1] + (sinf(theta) * SPLEEF_BOARD_SPAWN_RADIUS);
-		pos[2] = center[2] + (float)30;
-
-		// 
-		rot[2] = theta - MATH_PI;
-
-		// 
-		playerRespawn(p);
-		playerSetPosRot(p, pos, rot);
-	}
-
-	// reset boxes
-	vector_copy(pos, StartPos);
+    vector_copy(pos, StartPos);
 	memset(rot, 0, sizeof(rot));
 
-	// Spawn boxes
+    // Spawn boxes
 	for (k = 0; k < SPLEEF_BOARD_LEVELS; ++k)
 	{
 		for (i = 0; i < SPLEEF_BOARD_DIMENSION; ++i)
@@ -341,7 +300,7 @@ void resetRoundState(void)
 			{
 				// delete old one
 				int boxId = (k * SPLEEF_BOARD_DIMENSION * SPLEEF_BOARD_DIMENSION) + (i * SPLEEF_BOARD_DIMENSION) + j;
-				if (!SpleefBox[boxId] || SpleefBox[boxId]->OClass != SPLEEF_SPAWN_MOBY || mobyIsDestroyed(SpleefBox[boxId]))
+				if (!SpleefBox[boxId] || SpleefBox[boxId]->OClass != SPLEEF_SPAWN_MOBY/* || mobyIsDestroyed(SpleefBox[boxId])*/)
 				{
 					// spawn
 					SpleefBox[boxId] = hbMoby = mobySpawn(SPLEEF_SPAWN_MOBY, 0);
@@ -355,16 +314,10 @@ void resetRoundState(void)
 						hbMoby->DrawDist = 0x0080;
 						hbMoby->Opacity = 0x80;
 						hbMoby->State = 1;
-
-						hbMoby->Scale = (float)0.0425 * SPLEEF_BOARD_BOX_SIZE;
+						hbMoby->Scale = (float)0.0418 * SPLEEF_BOARD_BOX_SIZE;
 						// hbMoby->Lights = 0x202;
 						// hbMoby->GuberMoby = 0;
 						hbMoby->PUpdate = &boxUpdate;
-
-						// For this model the vector here is copied to 0x80 in the moby
-						// This fixes the occlusion bug
-						// vector_copy(hbMoby->LSphere, StartUNK_80);
-
 						++count;
 					}
 				}
@@ -414,10 +367,6 @@ void initialize(PatchGameConfig_t* gameConfig, PatchStateContainer_t* gameState)
 
 	// Set death barrier
 	gameSetDeathHeight(StartPos[2] - (SPLEEF_BOARD_LEVEL_OFFSET * SPLEEF_BOARD_LEVELS) - 10);
-
-	// Set survivor
-	// gameOptions->GameFlags.MultiplayerGameFlags.Survivor = 1;
-	// gameOptions->GameFlags.MultiplayerGameFlags.RespawnTime = -1;
 
 	// Hook set outcome net event
 	// netInstallCustomMsgHandler(CUSTOM_MSG_SET_OUTCOME, &onSetRoundOutcomeRemote);
@@ -645,7 +594,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	return;
 }
 
-void setLobbyGameOptions(void)
+void setLobbyGameOptions(PatchGameConfig_t * gameConfig)
 {
 		// Set needed options
 	// static char options[] = { 
@@ -656,26 +605,23 @@ void setLobbyGameOptions(void)
 	// 	-1, -1, 0, 1,	// 0x14 - 0x18
 	// };
 
-	// // set game options
-	// GameOptions * gameOptions = gameGetOptions();
-	// GameSettings* gameSettings = gameGetSettings();
-	// if (!gameOptions || !gameSettings || gameSettings->GameLoadStartTime <= 0)
-	// 	return;
+	// set game options
+	GameOptions * gameOptions = gameGetOptions();
+	GameSettings* gameSettings = gameGetSettings();
+	if (!gameOptions || !gameSettings || gameSettings->GameLoadStartTime <= 0)
+		return;
 		
 	// // apply options
 	// memcpy((void*)&gameOptions->GameFlags.Raw[6], (void*)options, sizeof(options)/sizeof(char));
-
-	// gameOptions->GameFlags.MultiplayerGameFlags.Juggernaut = 0;
-	// gameOptions->GameFlags.MultiplayerGameFlags.Vehicles = 0;
-	// gameOptions->GameFlags.MultiplayerGameFlags.Puma = 0;
-	// gameOptions->GameFlags.MultiplayerGameFlags.Hoverbike = 0;
-	// gameOptions->GameFlags.MultiplayerGameFlags.Landstalker = 0;
-	// gameOptions->GameFlags.MultiplayerGameFlags.Hovership = 0;
-	// gameOptions->GameFlags.MultiplayerGameFlags.SpawnWithChargeboots = 0;
-	// gameOptions->GameFlags.MultiplayerGameFlags.SpecialPickups = 0;
-	// gameOptions->GameFlags.MultiplayerGameFlags.UnlimitedAmmo = 1;
-	// gameOptions->GameFlags.MultiplayerGameFlags.Survivor = 1;
-	// gameOptions->GameFlags.MultiplayerGameFlags.RespawnTime = -1;
+	gameConfig->prSurvivor = 1;
+	gameOptions->GameFlags.MultiplayerGameFlags.UnlimitedAmmo = 1;
+	gameOptions->GameFlags.MultiplayerGameFlags.Teams = 0;
+	gameOptions->GameFlags.MultiplayerGameFlags.Chargeboots = 0;
+	gameOptions->GameFlags.MultiplayerGameFlags.PlayerNames = 1;
+	gameOptions->GameFlags.MultiplayerGameFlags.Turboslider = 0;
+	gameOptions->GameFlags.MultiplayerGameFlags.Hovership = 0;
+	gameOptions->GameFlags.MultiplayerGameFlags.Vehicle_02 = 0;
+	gameOptions->GameFlags.MultiplayerGameFlags.Vehicle_03 = 0;
 }
 
 //--------------------------------------------------------------------------
@@ -686,37 +632,21 @@ void loadStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	// when setup...
 	// called right before level finishes loading
 	// opportunity to change the gameplay before it's loaded
-	setLobbyGameOptions();
+	setLobbyGameOptions(gameConfig);
 }
 
 //--------------------------------------------------------------------------
 void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t * gameState)
 {
-	int activeId = uiGetActive();
 	// static int initializedScoreboard = 0;
 
 	// 
-	updateGameState(gameState);
+	// updateGameState(gameState);
 
-	// scoreboard
-	switch (activeId)
-	{
-		// case 0x15C:
-		// {
-		// 	if (initializedScoreboard)
-		// 		break;
-
-		// 	setEndGameScoreboard();
-		// 	initializedScoreboard = 1;
-
-		// 	// patch rank computation to keep rank unchanged for base mode
-		// 	POKE_U32(0x0077ACE4, 0x4600BB06);
-		// 	break;
-		// }
-		case UI_ID_GAME_LOBBY:
-		{
-			//setLobbyGameOptions();
-			break;
-		}
+	GameSettings * gameSettings = gameGetSettings();
+	GameOptions * gameOptions = gameGetOptions();
+	// if in staging
+	if (gameSettings && gameSettings->GameLoadStartTime < 0) {
+		setLobbyGameOptions(gameConfig);
 	}
 }
