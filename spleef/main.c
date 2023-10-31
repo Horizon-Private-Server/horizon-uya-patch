@@ -137,36 +137,6 @@ void setRoundOutcome(int first, int second, int third)
 }
 
 //--------------------------------------------------------------------------
-// void onDestroyBox(int id, int playerId)
-// {
-// 	Moby* box = SpleefBox[id];
-// 	if (box && box->OClass == MOBY_ID_NODE_BOLT_GUARD && !mobyIsDestroyed(box))
-// 	{
-// 		mobyDestroy(box);
-// 	}
-
-// 	SpleefBox[id] = NULL;
-
-// 	// 
-// 	if (playerId >= 0)
-// 		SpleefState.PlayerBoxesDestroyed[playerId]++;
-
-// 	DPRINTF("box destroyed %d by %d\n", id, playerId);
-// }
-
-//--------------------------------------------------------------------------
-// int onDestroyBoxRemote(void * connection, void * data)
-// {
-// 	SpleefDestroyBoxMessage_t * message = (SpleefDestroyBoxMessage_t*)data;
-
-// 	// if the round hasn't ended
-// 	if (!SpleefState.RoundEndTicks)
-// 		onDestroyBox(message->BoxId, message->PlayerId);
-
-// 	return sizeof(SpleefDestroyBoxMessage_t);
-// }
-
-//--------------------------------------------------------------------------
 void destroyBox(int id, int playerId)
 {
 	SpleefDestroyBoxMessage_t message;
@@ -184,29 +154,13 @@ void destroyBox(int id, int playerId)
 }
 
 //--------------------------------------------------------------------------
-int gameGetTeamScore(int team, int score)
-{
-	int i = 0;
-	int totalScore = 0;
-	Player** players = playerGetAll();
-
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		if (players[i] && players[i]->mpTeam == team) {
-			totalScore += SpleefState.PlayerPoints[i];
-		}
-	}
-	
-	return totalScore;
-}
-
-//--------------------------------------------------------------------------
 void boxUpdate(Moby * moby)
 {
 	MobyColDamage * colDamage = mobyGetDamage(moby, 0xfffffff, 0);
 	if (moby->State == 2)
 		mobyDestroy(moby);
 
-	((void (*)(Moby*))0x004184E0)(moby);
+	((void (*)(Moby*))0x0041e3c8)(moby);
 }
 
 //--------------------------------------------------------------------------
@@ -243,18 +197,6 @@ void drawRoundMessage(const char * message, float scale)
 			gfxScreenSpaceText(x-(w/2), y, scale, scale, 0x80FFFFFF, rankStrings[i-1], -1, 3);
 			gfxScreenSpaceText(x+(w/2), y, scale, scale, 0x80FFFFFF, gameSettings->PlayerNames[pId], -1, 5);
 		}
-	}
-}
-
-//--------------------------------------------------------------------------
-void updateGameState(PatchStateContainer_t * gameState)
-{
-	int i,j;
-
-	// game state update
-	if (gameState->UpdateGameState)
-	{
-		gameState->GameStateUpdate.RoundNumber = SpleefState.RoundNumber + 1;
 	}
 }
 
@@ -340,7 +282,7 @@ void resetRoundState(void)
 	// this has to be here otherwise the rounds won't reset correctly
 	// think that this eats cycles and that helps sync things maybe?
 	// not super sure
-	printf("count: %d,, new: %08x\n", count, (u32)hbMoby);
+	printf("count: %d, new: %08x\n", count, (u32)hbMoby);
 
 	// 
 #if DEBUG
@@ -358,8 +300,6 @@ int whoKilledMeHook(void)
 
 void initialize(PatchGameConfig_t* gameConfig, PatchStateContainer_t* gameState)
 {
-	static int startDelay = 60 * 0.2;
-	static int waitingForClientsReady = 0;
 	GameSettings * gameSettings = gameGetSettings();
 	GameOptions * gameOptions = gameGetOptions();
 	Player ** players = playerGetAll();
@@ -371,23 +311,6 @@ void initialize(PatchGameConfig_t* gameConfig, PatchStateContainer_t* gameState)
 	// Hook set outcome net event
 	// netInstallCustomMsgHandler(CUSTOM_MSG_SET_OUTCOME, &onSetRoundOutcomeRemote);
 	// netInstallCustomMsgHandler(CUSTOM_MSG_DESTROY_BOX, &onDestroyBoxRemote);
-	
-	// Disable normal game ending
-	// *(u32*)0x006219B8 = 0;	// survivor (8)
-	// *(u32*)0x00621A10 = 0;  // survivor (8)
-
-	if (startDelay) {
-		--startDelay;
-		return;
-	}
-  
-	// wait for all clients to be ready
-	// or for 15 seconds
-	if (!gameState->AllClientsReady && waitingForClientsReady < (5 * 60)) {
-		gfxScreenSpaceText(0.5, 0.5, 1, 1, 0x80FFFFFF, "Waiting For Players...", -1, 4);
-		++waitingForClientsReady;
-		return;
-	}
 
 	// clear spleefbox array
 	memset(SpleefBox, 0, sizeof(SpleefBox));
@@ -436,7 +359,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	// int killsToWin = gameGetOptions()->GameFlags.MultiplayerGameFlags.KillsToWin;
 	int killsToWin = 3;
 	// 
-	updateGameState(gameState);
+	// updateGameState(gameState);
 
 #if DEBUG
 	if (padGetButton(0, PAD_L3 | PAD_R3) > 0)
@@ -569,7 +492,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	else
 	{
 		// set winner
-		gameSetWinner(SpleefState.WinningTeam, 0);
+		// gameSetWinner(SpleefState.WinningTeam, 0);
 
 		// end game
 		if (SpleefState.GameOver == 1)
