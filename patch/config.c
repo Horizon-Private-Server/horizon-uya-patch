@@ -173,7 +173,7 @@ MenuElem_ListData_t dataCustomModes = {
     CUSTOM_MODE_COUNT,
     {
       "None",
-      // "Example",
+      "Infected",
     }
 };
 
@@ -182,7 +182,7 @@ MenuElem_ListData_t dataCustomModes = {
 // if the entry is NULL then the full name will be used
 const char* CustomModeShortNames[] = {
   [CUSTOM_MODE_NONE] NULL,
-  // [CUSTOM_MODE_EXAMPLE] "EX",
+  [CUSTOM_MODE_INFECTED] "Infected",
 };
 
 MenuElem_ListData_t dataWeaponPacks = {
@@ -264,8 +264,9 @@ MenuElem_t menuElementsGameSettings[] = {
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
-  // { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
-
+#if TEST
+  { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
+#endif
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer },
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
@@ -386,25 +387,25 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
   if (!value)
     return 0;
 
-  // GameSettings* gs = gameGetSettings();
-  // char v = *value;
+  GameSettings* gs = gameGetSettings();
+  char v = *value;
 
-  // if (gs)
-  // {
-  //   switch (v)
-  //   {
-  //     case CUSTOM_MODE_EXAMPLE:
-  //     {
-  //       // only allow deathmatch
-  //       if (gs->GameType == GAMERULE_DM)
-  //         return 1;
+  if (gs)
+  {
+    switch (v)
+    {
+      case CUSTOM_MODE_INFECTED:
+      {
+        // only allow deathmatch
+        if (gs->GameType == GAMERULE_DM)
+          return 1;
         
-  //       // otherwise reject custom mode
-  //       *value = CUSTOM_MODE_NONE;
-  //       return 0;
-  //     }
-  //   }
-  // }
+        // otherwise reject custom mode
+        *value = CUSTOM_MODE_NONE;
+        return 0;
+      }
+    }
+  }
 
   return 1;
 }

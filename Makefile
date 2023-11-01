@@ -6,6 +6,7 @@ all:
 	$(MAKE) -C unpatch
 	# $(MAKE) -C example-cgm
 	$(MAKE) -C spleef
+	$(MAKE) -C infected
 	
 clean:
 	$(MAKE) -C libuya clean
@@ -13,6 +14,7 @@ clean:
 	$(MAKE) -C unpatch clean
 	$(MAKE) -C example-cgm clean
 	$(MAKE) -C spleef clean
+	$(MAKE) -C infected clean
 
 install:
 	$(MAKE) -C libuya install
