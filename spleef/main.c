@@ -19,6 +19,7 @@
 #include <libuya/graphics.h>
 #include <libuya/net.h>
 #include <libuya/uya.h>
+#include <libuya/utils.h>
 #include "module.h"
 #include "config.h"
 #include "messageid.h"
@@ -36,10 +37,16 @@
 int boxUpdateFunc = 0;
 int RespawnUpdater = 0x004a545c;
 int RespawnFunc = 0x004ed558;
+
+int WhoHitMe_Hook = 0x004ec810;
+int WhoHitMe_Func = 0x004ebac8;
 #else
 int boxUpdateFunc = 0x0041e3c8;
 int RespawnUpdater = 0x004a300c;
 int RespawnFunc = 0x004eaed8;
+
+int WhoHitMe_Hook = 0x004ea190;
+int WhoHitMe_Func = 0x004e9448;
 #endif
 
 const char * SPLEEF_ROUND_WIN = "First!";
@@ -86,6 +93,12 @@ VECTOR StartPos = {
 	0
 };
 
+// forwards
+void onSetRoundOutcome(char outcome[4]);
+int onSetRoundOutcomeRemote(void * connection, void * data);
+void setRoundOutcome(int first, int second, int third);
+
+//--------------------------------------------------------------------------
 void disableRespawning(void)
 {
 	// Disable Timer and respawn text.
@@ -120,20 +133,18 @@ void getWinningPlayer(int * winningPlayerId, int * winningPlayerScore)
 }
 
 //--------------------------------------------------------------------------
+int onSetRoundOutcomeRemote(void * connection, void * data)
+{
+	SpleefOutcomeMessage_t * message = (SpleefOutcomeMessage_t*)data;
+	onSetRoundOutcome(message->Outcome);
+
+	return sizeof(SpleefOutcomeMessage_t);
+}
 void onSetRoundOutcome(char outcome[4])
 {
 	memcpy(SpleefState.RoundResult, outcome, 4);
 	DPRINTF("outcome set to %d,%d,%d,%d\n", outcome[0], outcome[1], outcome[2], outcome[3]);
 }
-
-//--------------------------------------------------------------------------
-// int onSetRoundOutcomeRemote(void * connection, void * data)
-// {
-// 	SpleefOutcomeMessage_t * message = (SpleefOutcomeMessage_t*)data;
-// 	onSetRoundOutcome(message->Outcome);
-
-// 	return sizeof(SpleefOutcomeMessage_t);
-// }
 
 //--------------------------------------------------------------------------
 void setRoundOutcome(int first, int second, int third)
@@ -153,13 +164,39 @@ void setRoundOutcome(int first, int second, int third)
 	message.Outcome[1] = first;
 	message.Outcome[2] = second;
 	message.Outcome[3] = third;
-	// netBroadcastCustomAppMessage(NET_DELIVERY_CRITICAL, netGetDmeServerConnection(), CUSTOM_MSG_SET_OUTCOME, sizeof(SpleefOutcomeMessage_t), &message);
+	netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_SET_OUTCOME, sizeof(SpleefOutcomeMessage_t), &message);
 
 	// set locally
 	onSetRoundOutcome(message.Outcome);
 }
 
 //--------------------------------------------------------------------------
+void onDestroyBox(int id, int playerId)
+{
+	Moby* box = SpleefBox[id];
+	if (box && box->OClass == SPLEEF_SPAWN_MOBY && !mobyIsDestroyed(box))
+	{
+		mobyDestroy(box);
+	}
+
+	SpleefBox[id] = NULL;
+
+	// 
+	if (playerId >= 0)
+		SpleefState.PlayerBoxesDestroyed[playerId]++;
+
+	DPRINTF("box destroyed %d by %d\n", id, playerId);
+}
+int onDestroyBoxRemote(void * connection, void * data)
+{
+	SpleefDestroyBoxMessage_t * message = (SpleefDestroyBoxMessage_t*)data;
+
+	// if the round hasn't ended
+	if (!SpleefState.RoundEndTicks)
+		onDestroyBox(message->BoxId, message->PlayerId);
+
+	return sizeof(SpleefDestroyBoxMessage_t);
+}
 void destroyBox(int id, int playerId)
 {
 	SpleefDestroyBoxMessage_t message;
@@ -167,7 +204,7 @@ void destroyBox(int id, int playerId)
 	// send out
 	message.BoxId = id;
 	message.PlayerId = playerId;
-	// netBroadcastCustomAppMessage(NET_DELIVERY_CRITICAL, netGetDmeServerConnection(), CUSTOM_MSG_DESTROY_BOX, sizeof(SpleefDestroyBoxMessage_t), &message);
+	netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_DESTROY_BOX, sizeof(SpleefDestroyBoxMessage_t), &message);
 
 	// 
 	if (playerId >= 0)
@@ -257,15 +294,12 @@ void resetRoundState(void)
 	memset(rot, 0, sizeof(rot));
 
     // Spawn boxes
-	for (k = 0; k < SPLEEF_BOARD_LEVELS; ++k)
-	{
-		for (i = 0; i < SPLEEF_BOARD_DIMENSION; ++i)
-		{
-			for (j = 0; j < SPLEEF_BOARD_DIMENSION; ++j)
-			{
+	for (k = 0; k < SPLEEF_BOARD_LEVELS; ++k) {
+		for (i = 0; i < SPLEEF_BOARD_DIMENSION; ++i) {
+			for (j = 0; j < SPLEEF_BOARD_DIMENSION; ++j) {
 				// delete old one
 				int boxId = (k * SPLEEF_BOARD_DIMENSION * SPLEEF_BOARD_DIMENSION) + (i * SPLEEF_BOARD_DIMENSION) + j;
-				if (!SpleefBox[boxId] || SpleefBox[boxId]->OClass != SPLEEF_SPAWN_MOBY/* || mobyIsDestroyed(SpleefBox[boxId])*/)
+				if (!SpleefBox[boxId] || SpleefBox[boxId]->OClass != SPLEEF_SPAWN_MOBY || mobyIsDestroyed(SpleefBox[boxId]))
 				{
 					// spawn
 					SpleefBox[boxId] = hbMoby = mobySpawn(SPLEEF_SPAWN_MOBY, 0);
@@ -331,16 +365,18 @@ void initialize(PatchGameConfig_t* gameConfig, PatchStateContainer_t* gameState)
 	// Set death barrier
 	gameSetDeathHeight(StartPos[2] - (SPLEEF_BOARD_LEVEL_OFFSET * SPLEEF_BOARD_LEVELS) - 10);
 
+	// Disable Respawning
+	disableRespawning();
+
 	// Hook set outcome net event
-	// netInstallCustomMsgHandler(CUSTOM_MSG_SET_OUTCOME, &onSetRoundOutcomeRemote);
-	// netInstallCustomMsgHandler(CUSTOM_MSG_DESTROY_BOX, &onDestroyBoxRemote);
+	netInstallCustomMsgHandler(CUSTOM_MSG_SET_OUTCOME, &onSetRoundOutcomeRemote);
+	netInstallCustomMsgHandler(CUSTOM_MSG_DESTROY_BOX, &onDestroyBoxRemote);
 
 	// clear spleefbox array
 	memset(SpleefBox, 0, sizeof(SpleefBox));
 	memset(&SpleefState, 0, sizeof(SpleefState));
 
 	// Initialize scoreboard
-	// initializeScoreboard();
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
 	{
 		Player * p = players[i];
@@ -348,8 +384,7 @@ void initialize(PatchGameConfig_t* gameConfig, PatchStateContainer_t* gameState)
 	}
 
 	// patch who killed me to prevent damaging others
-	// *(u32*)0x005E07C8 = 0x0C000000 | ((u32)&whoKilledMeHook >> 2);
-	// *(u32*)0x005E11B0 = *(u32*)0x005E07C8;
+	// HOOK_JAL(*(u32*)WhoHitMe_Hook, &whoKilledMeHook);
 
 	// initialize state
 	SpleefState.GameOver = 0;
@@ -358,6 +393,7 @@ void initialize(PatchGameConfig_t* gameConfig, PatchStateContainer_t* gameState)
 	memset(SpleefState.PlayerBoxesDestroyed, 0, sizeof(SpleefState.PlayerBoxesDestroyed));
 	resetRoundState();
 
+	DPRINTF("/nInitialized!");
 	Initialized = 1;
 }
 
@@ -398,21 +434,13 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 				int PlayerId = localPlayer->fps.Vars.camSettingsIndex;
 				// draw round message
 				if (SpleefState.RoundResult[1] == PlayerId)
-				{
 					drawRoundMessage(SPLEEF_ROUND_WIN, 1.5);
-				}
 				else if (SpleefState.RoundResult[2] == PlayerId)
-				{
 					drawRoundMessage(SPLEEF_ROUND_SECOND, 1.5);
-				}
 				else if (SpleefState.RoundResult[3] == PlayerId)
-				{
 					drawRoundMessage(SPLEEF_ROUND_THIRD, 1.5);
-				}
 				else
-				{
 					drawRoundMessage(SPLEEF_ROUND_LOSS, 1.5);
-				}
 
 				// handle when round properly ends
 				if (gameGetTime() > SpleefState.RoundEndTicks)
@@ -443,49 +471,37 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 				int winningScore = 0;
 				getWinningPlayer(&SpleefState.WinningTeam, &winningScore);
 				if (killsToWin > 0 && winningScore >= killsToWin)
-				{
 					SpleefState.GameOver = 1;
-				}
 			}
 		}
 		else
 		{
 			// iterate each player
 			for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-			{
 				SpleefState.PlayerKills[i] = gameData->PlayerStats[i].Kills;
-			}
 
 			// host specific logic
-			if (SpleefState.IsHost && (gameGetTime() - SpleefState.RoundStartTicks) > (5 * TIME_SECOND))
-			{
+			if (SpleefState.IsHost && (gameGetTime() - SpleefState.RoundStartTicks) > (5 * TIME_SECOND)) {
 				int playersAlive = 0, playerCount = 0, lastPlayerAlive = -1;
-				for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-				{
+				for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 					if (SpleefState.RoundPlayerState[i] >= 0)
 						++playerCount;
 					if (SpleefState.RoundPlayerState[i] == 0)
 						++playersAlive;
 				}
 
-				for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-				{
+				for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 					Player * p = players[i];
-
-					if (p)
-					{
+					if (p) {
 						// check if player is dead
-						if (playerIsDead(p) || SpleefState.RoundPlayerState[i] == 1)
-						{
+						if (playerIsDead(p) || SpleefState.RoundPlayerState[i] == 1) {
 							// player newly died
-							if (SpleefState.RoundPlayerState[i] == 0)
-							{
+							if (SpleefState.RoundPlayerState[i] == 0) {
 								DPRINTF("player %d died\n", i);
 								SpleefState.RoundPlayerState[i] = 1;
 
 								// set player to first/second/third if appropriate
-								if (playersAlive < 4)
-								{
+								if (playersAlive < 4) {
 									SpleefState.RoundResult[playersAlive] = i;
 									DPRINTF("setting %d place to player %d\n", playersAlive, i);
 								}
@@ -515,11 +531,10 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	else
 	{
 		// set winner
-		// gameSetWinner(SpleefState.WinningTeam, 0);
+		gameData->WinningTeam = SpleefState.WinningTeam;
 
 		// end game
-		if (SpleefState.GameOver == 1)
-		{
+		if (SpleefState.GameOver == 1) {
 			gameEnd(0);
 			SpleefState.GameOver = 2;
 		}
