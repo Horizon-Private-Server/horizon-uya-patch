@@ -27,13 +27,49 @@
 #include <libuya/player.h>
 #include <libuya/gamesettings.h>
 
+/*
+	-1 = Both
+	0 = Not In Game
+	1 = In Game
+*/
 const int patches[][3] = {
-	
+#if UYA_PAL
+	// patch
+	{ 0, 0x005760E4, 0x0c19f270 }, // menu loop hook 1
+	{ 0, 0x0057611C, 0x0c19f270 }, // menu loop hook 2
+	{ -1, 0x002405e8, 0x00000000 }, // DME_CALLBACK_TABLE
+	{ 0, 0x006872b0, 0x0c1a1b90}, // patchUnkick Hook
+
+	// maploader
+	{ 0, 0x005a41c8, 0x0c170a90 }, // LOAD_LEVEL_READ_WAD_HOOK
+	{ 0, 0x00194f8c, 0x0c0653b6 }, // LOAD_LEVEL_READ_LEVEL_TOC_HOOK
+	{ 0, 0x005a4070, 0x0c06528e }, // LOAD_LEVEL_CD_SYNC_HOOK
+	{ 0, 0x006787a8, 0x03e00008 }, // LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK
+	{ 0, 0x00193340, 0x0c064bda }, // LEVEL_EXIT_FUNCTION_HOOK
+#else
+	// patch
+	{ 0, 0x005753A4, 0x0c19e7c2 }, // menu loop hook 1
+	{ 0, 0x005753DC, 0x0c19e7c2 }, // menu loop hook 2
+	{ -1, 0x00240768, 0x00000000 }, // DME_CALLBACK_TABLE
+	{ 0, 0x00684790, 0x0c1a10c8 }, // patchUnkick Hook
+
+	// maploader
+	{ 0, 0x005a2560, 0x0c17027e }, // LOAD_LEVEL_READ_WAD_HOOK
+	{ 0, 0x0019507c, 0x0c0653f2 }, // LOAD_LEVEL_READ_LEVEL_TOC_HOOK
+	{ 0, 0x005a2408, 0x0c0652ca }, // LOAD_LEVEL_CD_SYNC_HOOK
+	{ 0, 0x00675dc0, 0x03e00008 }, // LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK
+	{ 0, 0x00193430, 0x0c064c16 }, // LEVEL_EXIT_FUNCTION_HOOK
+#endif
+	// patch (PAL and NTSC are same)
+	{ -1, 0x00153248, 0x03E00008 }, // GET_MEDIUS_APP_HANDLER_HOOK
 };
 
 const int clears[][2] = {
-	{ 0x000E0000, 0x0000C000 }, // patch
+	{ 0x000D0000, 0x00020000 }, // patch
+	{ 0x000F0000, 0x0000F000 }, // game mode
 	{ 0x000CF000, 0x00000800 }, // module definitions
+	{ 0x000CFFD0, 0x00000020 }, // patch hash
+	{ 0x000CFFC0, 0x00000010 }, // patch pointers
 };
 int hasClearedMemory = 0;
 
@@ -179,6 +215,7 @@ int main (void)
 	{
 		// Hook menu loop
 		#ifdef UYA_PAL
+		*(u32*)0x005760E4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 		*(u32*)0x0057611C = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);
 		#else
 		*(u32*)0x005753A4 = 0x0C000000 | ((u32)(&onOnlineMenu) / 4);

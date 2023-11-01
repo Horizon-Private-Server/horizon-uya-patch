@@ -32,6 +32,16 @@
 #define SPLEEF_BOARD_SPAWN_RADIUS           (SPLEEF_BOARD_BOX_SIZE * ((SPLEEF_BOARD_DIMENSION + SPLEEF_BOARD_DIMENSION) / 5))
 #define SPLEEF_BOARD_BOX_MAX                (SPLEEF_BOARD_DIMENSION * SPLEEF_BOARD_DIMENSION * SPLEEF_BOARD_LEVELS)
 
+#if UYA_PAL
+int boxUpdateFunc = 0;
+int RespawnUpdater = 0x004a545c;
+int RespawnFunc = 0x004ed558;
+#else
+int boxUpdateFunc = 0x0041e3c8;
+int RespawnUpdater = 0x004a300c;
+int RespawnFunc = 0x004eaed8;
+#endif
+
 const char * SPLEEF_ROUND_WIN = "First!";
 const char * SPLEEF_ROUND_SECOND = "Second!";
 const char * SPLEEF_ROUND_THIRD = "Third!";
@@ -75,6 +85,19 @@ VECTOR StartPos = {
 	800,
 	0
 };
+
+void disableRespawning(void)
+{
+	// Disable Timer and respawn text.
+    if (*(u32*)RespawnUpdater != 0)
+        *(u32*)RespawnUpdater = 0;
+
+	// Disable Respawn Function
+    if (*(u32*)RespawnFunc != 0) {
+		*(u32*)RespawnFunc = 0x03e00008;
+        *(u32*)(RespawnFunc + 0x4) = 0;
+	}
+}
 
 //--------------------------------------------------------------------------
 void getWinningPlayer(int * winningPlayerId, int * winningPlayerScore)
@@ -160,7 +183,7 @@ void boxUpdate(Moby * moby)
 	if (moby->State == 2)
 		mobyDestroy(moby);
 
-	((void (*)(Moby*))0x0041e3c8)(moby);
+	((void (*)(Moby*))boxUpdateFunc)(moby);
 }
 
 //--------------------------------------------------------------------------
@@ -227,7 +250,7 @@ void resetRoundState(void)
 	pos[1] = center[1];
 	pos[2] = center[2] + (float)30;
 
-	// playerRespawn(PLAYER_STRUCT);
+	playerRespawn(p);
 	playerSetPosRot(p, &pos, &p->PlayerRotation);
 
     vector_copy(pos, StartPos);
@@ -497,7 +520,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 		// end game
 		if (SpleefState.GameOver == 1)
 		{
-			gameEnd(4);
+			gameEnd(0);
 			SpleefState.GameOver = 2;
 		}
 	}
@@ -519,7 +542,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 
 void setLobbyGameOptions(PatchGameConfig_t * gameConfig)
 {
-		// Set needed options
+	// Set needed options
 	// static char options[] = { 
 	// 	0, 0, 			// 0x06 - 0x08
 	// 	0, 0, 0, 0, 	// 0x08 - 0x0C
@@ -534,9 +557,8 @@ void setLobbyGameOptions(PatchGameConfig_t * gameConfig)
 	if (!gameOptions || !gameSettings || gameSettings->GameLoadStartTime <= 0)
 		return;
 		
-	// // apply options
+	// apply options
 	// memcpy((void*)&gameOptions->GameFlags.Raw[6], (void*)options, sizeof(options)/sizeof(char));
-	gameConfig->prSurvivor = 1;
 	gameOptions->GameFlags.MultiplayerGameFlags.UnlimitedAmmo = 1;
 	gameOptions->GameFlags.MultiplayerGameFlags.Teams = 0;
 	gameOptions->GameFlags.MultiplayerGameFlags.Chargeboots = 0;
