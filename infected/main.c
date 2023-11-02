@@ -109,34 +109,6 @@ VariableAddress_t vaOnPlayerKill_Func = {
 #endif
 };
 
-VariableAddress_t vaShieldTriggerVars = {
-#if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x002478b0,
-	.Hoven = 0x00247a78,
-	.OutpostX12 = 0x00247a78,
-	.KorgonOutpost = 0x002477f0,
-	.Metropolis = 0x002478b8,
-	.BlackwaterCity = 0x002476f0,
-	.CommandCenter = 0x00247588,
-	.BlackwaterDocks = 0x00247648,
-	.AquatosSewers = 0x00247658,
-	.MarcadiaPalace = 0x00247688,
-#else
-	.Lobby = 0,
-	.Bakisi = 0x00247a30,
-	.Hoven = 0x00247bf8,
-	.OutpostX12 = 0x00247af8,
-	.KorgonOutpost = 0x00247970,
-	.Metropolis = 0x00247a38,
-	.BlackwaterCity = 0x00247870,
-	.CommandCenter = 0x00247708,
-	.BlackwaterDocks = 0x002477c8,
-	.AquatosSewers = 0x002477d8,
-	.MarcadiaPalace = 0x00247808,
-#endif
-};
-
 void disableWeaponPacks(void)
 {
 	VariableAddress_t vaWeaponPackSpawnFunc = {
@@ -296,7 +268,7 @@ void processPlayer(Player * player)
 		if (teamId != INFECTED_TEAM)
 			playerSetTeam(player, INFECTED_TEAM);
 
-		if (!mobyCheckShield(player) && !playerIsDead(player))
+		if (!playerCheckShield(player) && !playerIsDead(player))
 			player->ShieldTrigger = 1;
 
 		*(float*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
@@ -435,6 +407,14 @@ void initialize(void)
 {
 	// No packs
 	disableWeaponPacks();
+	
+	// Modify shield vars
+	ShieldVars * shield = mobyGetShieldVars();
+	shield->mainColor = 0x0000ff00;
+	shield->lightningColor = 0x2000ff00;
+	shield->texture = 0x45;
+	shield->outerCircleGlowRadius = 2.0;
+	shield->animScale = 0;
 
 	// 
 	memset(FirstInfected, 0, sizeof(FirstInfected));
