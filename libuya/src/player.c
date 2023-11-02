@@ -768,3 +768,17 @@ void playerGiveRandomWeapons(Player * player, int amount)
 {
     internal_GiveMeRandomWeapons(player, (!amount) ? 3 : amount);
 }
+
+int playerHasShield(Player * player)
+{
+    Moby *shield = mobyListGetStart();
+    while ((shield = mobyFindNextByOClass(shield, MOBY_ID_OMNI_SHIELD))) {
+		if (shield->PVar) {
+			int PlayerShield = *(u32*)((u32)shield->PVar + 0x40);
+			if (PlayerShield == player)
+				return 1;
+		}
+		++shield;
+	}
+	return 0;
+}

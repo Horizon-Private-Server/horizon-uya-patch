@@ -18,12 +18,12 @@
 #include "math3d.h"
 #include "common.h"
 #include "gid.h"
+
 // #include "camera.h"
 
 struct GuberMoby;
 struct GuberEvent;
 struct Gid;
-
 //--------------------------------------------------------
 enum MobyId
 {
@@ -553,6 +553,35 @@ typedef struct MobyFunctions
 	MobyGetDamager_func GetDamager;
 } MobyFunctions;
 
+typedef struct ShieldVars {
+	u32 mainColor;
+	u32 unk_color_04;
+	u32 unk_color_08;
+	u32 unk_color_0C;
+	u32 lightningColor;
+	u32 unk_color_14;
+	int texture;
+	float mainScale;
+	float outerCircleScale;
+	float outerCircleGlowRadius;
+	u32 textureColor;
+	int pad_2c;
+	float animScale;
+	u32 animBallColor;
+	u32 unk_color_38;
+	u32 animBallTrailColor;
+	float animBallScale;
+	float animBallTrailScale;
+	int unk_texture_48;
+	int unk_texture_4c;
+	float unk_scale_50;
+	float unk_sclae_54;
+	float lightningScale;
+	u32 lightningColor2;
+	int flashTime;
+	int pad[3];
+} ShieldVars;
+
 /*
  * Spawns a moby with the given id and properties size.
  */
@@ -622,5 +651,17 @@ MobyFunctions * mobyGetFunctions(Moby * moby);
 int mobyGetDamager(Moby * moby);
 
 Moby* mobyGetByGuberUid(u32 uid);
+
+
+/*
+ * NAME :		mobyGetShieldVars
+ * DESCRIPTION :
+ * 				Returns Shield Vars so you can edit them.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+u32 mobyGetShieldVars(void);
 
 #endif // _LIBUYA_MOBY_H_

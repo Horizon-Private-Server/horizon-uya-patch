@@ -1491,5 +1491,15 @@ void playerGiveRandomWeapons(Player * player, int amount);
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 u32 playerDeobfuscate(u32 src, int addr, int mode);
+/*
+ * NAME :		playerHasShield
+ * DESCRIPTION :
+ * 				Checks to see if player has shield
+ * NOTES :
+ * ARGS : 		player: player
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int playerHasShield(Player * player);
 
 #endif // _LIBUYA_PLAYER_H_

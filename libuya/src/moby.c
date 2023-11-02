@@ -268,3 +268,35 @@ Moby* mobyGetByGuberUid(u32 uid)
 
   return NULL;
 }
+
+VariableAddress_t vaShieldTriggerVars = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x002478b0,
+	.Hoven = 0x00247a78,
+	.OutpostX12 = 0x00247a78,
+	.KorgonOutpost = 0x002477f0,
+	.Metropolis = 0x002478b8,
+	.BlackwaterCity = 0x002476f0,
+	.CommandCenter = 0x00247588,
+	.BlackwaterDocks = 0x00247648,
+	.AquatosSewers = 0x00247658,
+	.MarcadiaPalace = 0x00247688,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00247a30,
+	.Hoven = 0x00247bf8,
+	.OutpostX12 = 0x00247af8,
+	.KorgonOutpost = 0x00247970,
+	.Metropolis = 0x00247a38,
+	.BlackwaterCity = 0x00247870,
+	.CommandCenter = 0x00247708,
+	.BlackwaterDocks = 0x002477c8,
+	.AquatosSewers = 0x002477d8,
+	.MarcadiaPalace = 0x00247808,
+#endif
+};
+u32 mobyGetShieldVars(void)
+{
+	return (ShieldVars*)GetAddress(&vaShieldTriggerVars);
+}
