@@ -58,25 +58,25 @@ VariableAddress_t vaOnPlayerKill_Hook = {
 	.Bakisi = 0x004fa1ec,
 	.Hoven = 0x004fc304,
 	.OutpostX12 = 0x004f1bdc,
-    .KorgonOutpost = 0x004ef374,
+	.KorgonOutpost = 0x004ef374,
 	.Metropolis = 0x004ee6c4,
 	.BlackwaterCity = 0x004ebf5c,
 	.CommandCenter = 0x004ebf24,
-    .BlackwaterDocks = 0x004ee7a4,
-    .AquatosSewers = 0x004edaa4,
-    .MarcadiaPalace = 0x004ed424,
+	.BlackwaterDocks = 0x004ee7a4,
+	.AquatosSewers = 0x004edaa4,
+	.MarcadiaPalace = 0x004ed424,
 #else
 	.Lobby = 0,
 	.Bakisi = 0x004f7a6c,
 	.Hoven = 0x004f9ac4,
 	.OutpostX12 = 0x004ef3dc,
-    .KorgonOutpost = 0x004ecbf4,
+	.KorgonOutpost = 0x004ecbf4,
 	.Metropolis = 0x004ebf44,
 	.BlackwaterCity = 0x004e975c,
 	.CommandCenter = 0x004e98e4,
-    .BlackwaterDocks = 0x004ec124,
-    .AquatosSewers = 0x004eb464,
-    .MarcadiaPalace = 0x004eada4,
+	.BlackwaterDocks = 0x004ec124,
+	.AquatosSewers = 0x004eb464,
+	.MarcadiaPalace = 0x004eada4,
 #endif
 };
 
@@ -86,28 +86,55 @@ VariableAddress_t vaOnPlayerKill_Func = {
 	.Bakisi = 0x00544488,
 	.Hoven = 0x00546650,
 	.OutpostX12 = 0x0053bf28,
-    .KorgonOutpost = 0x00539610,
+	.KorgonOutpost = 0x00539610,
 	.Metropolis = 0x00538a10,
 	.BlackwaterCity = 0x005361f8,
 	.CommandCenter = 0x00535a50,
-    .BlackwaterDocks = 0x005382d0,
-    .AquatosSewers = 0x005375d0,
-    .MarcadiaPalace = 0x00536f50,
+	.BlackwaterDocks = 0x005382d0,
+	.AquatosSewers = 0x005375d0,
+	.MarcadiaPalace = 0x00536f50,
 #else
 	.Lobby = 0,
 	.Bakisi = 0x00541b78,
 	.Hoven = 0x00543c80,
 	.OutpostX12 = 0x00539598,
-    .KorgonOutpost = 0x00536d00,
+	.KorgonOutpost = 0x00536d00,
 	.Metropolis = 0x00536100,
 	.BlackwaterCity = 0x00533868,
 	.CommandCenter = 0x00533298,
-    .BlackwaterDocks = 0x00535ad8,
-    .AquatosSewers = 0x00534e18,
-    .MarcadiaPalace = 0x00534758,
+	.BlackwaterDocks = 0x00535ad8,
+	.AquatosSewers = 0x00534e18,
+	.MarcadiaPalace = 0x00534758,
 #endif
 };
 
+VariableAddress_t vaShieldTriggerVars = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x002478b0,
+	.Hoven = 0x00247a78,
+	.OutpostX12 = 0x00247a78,
+	.KorgonOutpost = 0x002477f0,
+	.Metropolis = 0x002478b8,
+	.BlackwaterCity = 0x002476f0,
+	.CommandCenter = 0x00247588,
+	.BlackwaterDocks = 0x00247648,
+	.AquatosSewers = 0x00247658,
+	.MarcadiaPalace = 0x00247688,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00247a30,
+	.Hoven = 0x00247bf8,
+	.OutpostX12 = 0x00247af8,
+	.KorgonOutpost = 0x00247970,
+	.Metropolis = 0x00247a38,
+	.BlackwaterCity = 0x00247870,
+	.CommandCenter = 0x00247708,
+	.BlackwaterDocks = 0x002477c8,
+	.AquatosSewers = 0x002477d8,
+	.MarcadiaPalace = 0x00247808,
+#endif
+};
 
 void disableWeaponPacks(void)
 {
@@ -249,10 +276,7 @@ void processPlayer(Player * player)
 
 	int teamId = player->mpTeam;
 	GameData * gameData = gameGetData();
-
-	// 
-	if (isInfected(player->mpIndex))
-	{
+	if (isInfected(player->mpIndex)) {
 		// If not on the right team then set it
 		if (teamId != INFECTED_TEAM)
 			playerSetTeam(player, INFECTED_TEAM);
@@ -260,8 +284,7 @@ void processPlayer(Player * player)
 		*(float*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
 		
 		// Force wrench
-		if (player->WeaponHeldId != WEAPON_ID_WRENCH &&
-			player->WeaponHeldId != WEAPON_ID_SWINGSHOT)
+		if (player->WeaponHeldId != WEAPON_ID_WRENCH && player->WeaponHeldId != WEAPON_ID_SWINGSHOT)
 			playerEquipWeapon(player, WEAPON_ID_WRENCH);
 	}
 	// If the player is already on the infected team
@@ -361,14 +384,12 @@ void updateGameState(PatchStateContainer_t * gameState)
 	int i,j;
 
 	// stats
-	if (gameState->UpdateCustomGameStats)
-	{
-    gameState->CustomGameStatsSize = sizeof(struct InfectedGameData);
+	if (gameState->UpdateCustomGameStats) {
+    	gameState->CustomGameStatsSize = sizeof(struct InfectedGameData);
 		struct InfectedGameData* sGameData = (struct InfectedGameData*)gameState->CustomGameStats.Payload;
 		sGameData->Version = 0x00000001;
 
-		for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-		{
+		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 			sGameData->Infections[i] = Infections[i];
 			sGameData->IsInfected[i] = isInfected(i);
 			sGameData->IsFirstInfected[i] = FirstInfected[i];
