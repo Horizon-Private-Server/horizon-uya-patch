@@ -29,6 +29,8 @@
 
 #define INFECTED_TEAM			(TEAM_GREEN)
 #define PLAYER_SPEED			((float)4.0)
+#define ARRAY_SIZE(x)			(sizeof(x)/sizeof(x[0]))
+#define CHEATCMP(str)			strncmp(str, CS, sizeof(str)-1)
 
 #if UYA_PAL
 #define PLAYER_SPEED_ADDR		(0x00246010)
@@ -52,6 +54,8 @@ char FirstInfected[GAME_MAX_PLAYERS];
 int Infections[GAME_MAX_PLAYERS];
 char InfectedPopupBuffer[64];
 const char * InfectedPopupFormat = "%s has been infected!";
+int ShieldTex = 0;
+char CS[12];
 
 VariableAddress_t vaOnPlayerKill_Hook = {
 #if UYA_PAL
@@ -108,6 +112,9 @@ VariableAddress_t vaOnPlayerKill_Func = {
 	.MarcadiaPalace = 0x00534758,
 #endif
 };
+
+
+
 
 void disableWeaponPacks(void)
 {
@@ -267,15 +274,17 @@ void processPlayer(Player * player)
 		// If not on the right team then set it
 		if (teamId != INFECTED_TEAM)
 			playerSetTeam(player, INFECTED_TEAM);
-
+		// Check if player has shield, if not, enable.
 		if (!playerHasShield(player) && !playerIsDead(player))
 			player->ShieldTrigger = 1;
-
+		// Set Player speed
 		*(float*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
 		
 		// Force wrench
 		if (player->WeaponHeldId != WEAPON_ID_WRENCH && player->WeaponHeldId != WEAPON_ID_SWINGSHOT)
-			playerEquipWeapon(player, WEAPON_ID_WRENCH);
+			player->ForceWrenchSwitch = 1;
+
+		DoCheats(player);
 	}
 	// If the player is already on the infected team
 	// or if they've died
@@ -608,4 +617,79 @@ void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameCon
 void loadStart(void)
 {
   setLobbyGameOptions();
+}
+
+void SwapShield(void)
+{
+	if (ShieldTex == 0)
+		ShieldTex = 0x5c;
+	else if (ShieldTex > 0x62)
+		ShieldTex = 0;
+	else
+		++ShieldTex;
+
+	Clear();
+}
+void Clear(void)
+{
+	int i = 0;
+	for (i = 0; i < ARRAY_SIZE(CS); i++)
+	{
+		CS[i] = ' ';
+	}
+}
+// Logic to run selected codes if combo is correct.
+void AddToCS(char c, Player * currentPlayer)
+{
+	int a = 0;
+	for (a = ARRAY_SIZE(CS) - 2; a >= 0; a--)
+	{
+		CS[a + 1] = CS[a];
+	}
+	CS[0] = c;
+
+	// "UUDDLRLROX"	-	UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT CROSS CIRCLE
+	if (!CHEATCMP("XCRLRLDDUU"))
+	{
+		SwapShield();
+	}
+}
+void DoCheats(Player * currentPlayer)
+{
+	if (padGetButtonDown(0, PAD_TRIANGLE))
+		AddToCS('T', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_CIRCLE))
+		AddToCS('C', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_CROSS))
+		AddToCS('X', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_SQUARE))
+		AddToCS('S', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_UP))
+		AddToCS('U', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_DOWN) > 0)
+		AddToCS('D', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_LEFT) > 0)
+		AddToCS('L', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_RIGHT) > 0)
+		AddToCS('R', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_L1) > 0)
+		AddToCS('1', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_L2) > 0)
+		AddToCS('2', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_R1) > 0)
+		AddToCS('3', currentPlayer);
+
+	if (padGetButtonDown(0, PAD_R2) > 0)
+		AddToCS('4', currentPlayer);
+
 }
