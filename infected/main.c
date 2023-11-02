@@ -268,7 +268,7 @@ void processPlayer(Player * player)
 		if (teamId != INFECTED_TEAM)
 			playerSetTeam(player, INFECTED_TEAM);
 
-		if (!playerCheckShield(player) && !playerIsDead(player))
+		if (!playerHasShield(player) && !playerIsDead(player))
 			player->ShieldTrigger = 1;
 
 		*(float*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
