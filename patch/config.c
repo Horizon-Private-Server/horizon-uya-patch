@@ -188,11 +188,7 @@ const char* CustomModeShortNames[] = {
 MenuElem_ListData_t dataWeaponPacks = {
     &gameConfig.grDisableWeaponPacks,
     NULL,
-#if TEST
-    3,
-#else
     2,
-#endif
     { "Default", "Off", "On Death" }
 };
 
@@ -253,9 +249,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
-#if TEST
-  { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate },
-#endif
+  // { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate },
 };
 
 // Game Settings
@@ -264,9 +258,7 @@ MenuElem_t menuElementsGameSettings[] = {
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
-#if TEST
   { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
-#endif
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer },
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
@@ -277,9 +269,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
-#if TEST
-  { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars },
-#endif
+  // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars },
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates },
   { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups },
@@ -290,16 +280,12 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive },
   { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots },
-#if TEST
-  { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
-#endif
+  // { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever },
-#if TEST
-  { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize },
-#endif
+  // { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize },
 };
 
 // Custom Maps
