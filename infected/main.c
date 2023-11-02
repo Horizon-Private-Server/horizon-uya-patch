@@ -24,6 +24,7 @@
 #include <libuya/string.h>
 #include <libuya/utils.h>
 #include <libuya/interop.h>
+#include <libuya/moby.h>
 
 
 #define INFECTED_TEAM			(TEAM_GREEN)
@@ -204,6 +205,20 @@ int disableHealthboxes(void)
     return count;
 }
 
+int mobyCheckShield(Player * player)
+{
+    Moby *shield = mobyListGetStart();
+    while ((shield = mobyFindNextByOClass(shield, MOBY_ID_OMNI_SHIELD))) {
+		if (shield->PVar) {
+			int PlayerShield = *(u32*)((u32)shield->PVar + 0x40);
+			if (PlayerShield == player)
+				return 1;
+		}
+		++shield;
+	}
+	return 0;
+}
+
 /*
  * NAME :		isInfected
  * 
@@ -280,6 +295,9 @@ void processPlayer(Player * player)
 		// If not on the right team then set it
 		if (teamId != INFECTED_TEAM)
 			playerSetTeam(player, INFECTED_TEAM);
+
+		if (!mobyCheckShield(player) && !playerIsDead(player))
+			player->ShieldTrigger = 1;
 
 		*(float*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
 		
