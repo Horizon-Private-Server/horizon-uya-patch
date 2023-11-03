@@ -28,7 +28,7 @@
 
 
 #define INFECTED_TEAM			(TEAM_GREEN)
-#define PLAYER_SPEED			((float)4.0)
+#define PLAYER_SPEED			(0x60E80000)
 #define ARRAY_SIZE(x)			(sizeof(x)/sizeof(x[0]))
 #define CHEATCMP(str)			strncmp(str, CS, sizeof(str)-1)
 
@@ -278,7 +278,7 @@ void processPlayer(Player * player)
 		if (!playerHasShield(player) && !playerIsDead(player))
 			player->ShieldTrigger = 1;
 		// Set Player speed
-		*(float*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
+		*(u32*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
 		
 		// Force wrench
 		if (player->WeaponHeldId != WEAPON_ID_WRENCH && player->WeaponHeldId != WEAPON_ID_SWINGSHOT)
