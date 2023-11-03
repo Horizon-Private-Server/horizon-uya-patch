@@ -233,19 +233,19 @@ inline int isInfected(int playerId)
  * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-void infect(int playerId)
+void infect(Player * player)
 {
-	InfectedMask |= (1 << playerId);
+	InfectedMask |= (1 << player->mpIndex);
 
 	GameSettings * gameSettings = gameGetSettings();
 	if (!gameSettings)
 		return;
 
 	InfectedPopupBuffer[0] = 0;
-	sprintf(InfectedPopupBuffer, InfectedPopupFormat, gameSettings->PlayerNames[playerId]);
+	sprintf(InfectedPopupBuffer, InfectedPopupFormat, gameSettings->PlayerNames[player->mpIndex]);
 	InfectedPopupBuffer[63] = 0;
 
-	uiShowPopup(0, InfectedPopupBuffer, -1);
+	uiShowPopup(player, InfectedPopupBuffer, 3);
 }
 
 /*
@@ -270,28 +270,28 @@ void processPlayer(Player * player)
 
 	int teamId = player->mpTeam;
 	GameData * gameData = gameGetData();
+	DoCheats(player);
 	if (isInfected(player->mpIndex)) {
 		// If not on the right team then set it
 		if (teamId != INFECTED_TEAM)
 			playerSetTeam(player, INFECTED_TEAM);
+
 		// Check if player has shield, if not, enable.
-		if (!playerHasShield(player) && !playerIsDead(player))
+		if (!playerHasShield(player) && !playerIsDead(player) && !player->pSheepMoby)
 			player->ShieldTrigger = 1;
-		// Set Player speed
-		*(u32*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
-		
+
 		// Force wrench
 		if (player->WeaponHeldId != WEAPON_ID_WRENCH && player->WeaponHeldId != WEAPON_ID_SWINGSHOT)
 			player->ForceWrenchSwitch = 1;
-
-		DoCheats(player);
 	}
 	// If the player is already on the infected team
 	// or if they've died
 	// then infect them
 	else if (teamId == INFECTED_TEAM || gameData->PlayerStats[player->mpIndex].Deaths > 0)
 	{
-		infect(player->mpIndex);
+		infect(player);
+		// Set Player speed
+		*(u32*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
 	}
 	// Process survivor logic
 	else
@@ -414,6 +414,8 @@ void updateGameState(PatchStateContainer_t * gameState)
  */
 void initialize(void)
 {
+	setLobbyGameOptions();
+
 	// No packs
 	disableWeaponPacks();
 	
@@ -471,7 +473,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 		initialize();
 
 	// 
-	updateGameState(gameState);
+	// updateGameState(gameState);
 
 	if (!gameHasEnded())
 	{
@@ -521,7 +523,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 				Player * survivor = getRandomSurvivor(gameSettings->GameStartTime);
 				if (survivor)
 				{
-					infect(survivor->mpIndex);
+					infect(survivor);
 					FirstInfected[survivor->mpIndex] = 1;
 				}
 			}
@@ -583,19 +585,16 @@ void setLobbyGameOptions(void)
  */
 void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t * gameState)
 {
-	u32 menu = 0;
 	static int initializedScoreboard = 0;
-
 	// 
-	updateGameState(gameState);
+	// updateGameState(gameState);
 
 	// Lobby
-	if(menu = uiGetActivePointer(UIP_CREATE_GAME), menu != 0) {
+	GameSettings * gameSettings = gameGetSettings();
+	GameOptions * gameOptions = gameGetOptions();
+	// if in staging
+	if (gameSettings && gameSettings->GameLoadStartTime < 0) {
 		setLobbyGameOptions();
-	}
-	// Scoreboard
-	else if (menu = uiGetActivePointer(UIP_END_GAME_DETAILS), menu != 0) {
-
 	}
 }
 
