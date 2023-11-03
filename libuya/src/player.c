@@ -10,26 +10,26 @@ void internal_HurtPlayer(Player * player, float health);
 
 VariableAddress_t vaEmpty = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0,
-	.Hoven = 0,
-	.OutpostX12 = 0,
+    .Lobby = 0,
+    .Bakisi = 0,
+    .Hoven = 0,
+    .OutpostX12 = 0,
     .KorgonOutpost = 0,
-	.Metropolis = 0,
-	.BlackwaterCity = 0,
-	.CommandCenter = 0,
+    .Metropolis = 0,
+    .BlackwaterCity = 0,
+    .CommandCenter = 0,
     .BlackwaterDocks = 0,
     .AquatosSewers = 0,
     .MarcadiaPalace = 0,
 #else
-	.Lobby = 0,
-	.Bakisi = 0,
-	.Hoven = 0,
-	.OutpostX12 = 0,
+    .Lobby = 0,
+    .Bakisi = 0,
+    .Hoven = 0,
+    .OutpostX12 = 0,
     .KorgonOutpost = 0,
-	.Metropolis = 0,
-	.BlackwaterCity = 0,
-	.CommandCenter = 0,
+    .Metropolis = 0,
+    .BlackwaterCity = 0,
+    .CommandCenter = 0,
     .BlackwaterDocks = 0,
     .AquatosSewers = 0,
     .MarcadiaPalace = 0,
@@ -53,26 +53,26 @@ VariableAddress_t vaEmpty = {
 
 VariableAddress_t vaPlayerStructArray = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x00249330,
-	.Hoven = 0x00249530,
-	.OutpostX12 = 0x00249420,
+    .Lobby = 0,
+    .Bakisi = 0x00249330,
+    .Hoven = 0x00249530,
+    .OutpostX12 = 0x00249420,
     .KorgonOutpost = 0x002492a0,
-	.Metropolis = 0x00249320,
-	.BlackwaterCity = 0x002492a0,
-	.CommandCenter = 0x00248ea0,
+    .Metropolis = 0x00249320,
+    .BlackwaterCity = 0x002492a0,
+    .CommandCenter = 0x00248ea0,
     .BlackwaterDocks = 0x00248fa0,
     .AquatosSewers = 0x00248fa0,
     .MarcadiaPalace = 0x00248fa0,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x002494B0,
-	.Hoven = 0x002496B0,
-	.OutpostX12 = 0x002495a0,
+    .Lobby = 0,
+    .Bakisi = 0x002494B0,
+    .Hoven = 0x002496B0,
+    .OutpostX12 = 0x002495a0,
     .KorgonOutpost = 0x00249420,
-	.Metropolis = 0x002494A0,
-	.BlackwaterCity = 0x00249420,
-	.CommandCenter = 0x00249020,
+    .Metropolis = 0x002494A0,
+    .BlackwaterCity = 0x00249420,
+    .CommandCenter = 0x00249020,
     .BlackwaterDocks = 0x00249120,
     .AquatosSewers = 0x00249120,
     .MarcadiaPalace = 0x00249120,
@@ -82,26 +82,26 @@ VariableAddress_t vaPlayerStructArray = {
 // playerGetFromslot();
 VariableAddress_t vaGetMissionDef = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x004ede30,
-	.Hoven = 0x004eff48,
-	.OutpostX12 = 0x004e5820,
+    .Lobby = 0,
+    .Bakisi = 0x004ede30,
+    .Hoven = 0x004eff48,
+    .OutpostX12 = 0x004e5820,
     .KorgonOutpost = 0x004e5824,
-	.Metropolis = 0x004e2308,
-	.BlackwaterCity = 0x004dfba0,
-	.CommandCenter = 0x004dfb68,
+    .Metropolis = 0x004e2308,
+    .BlackwaterCity = 0x004dfba0,
+    .CommandCenter = 0x004dfb68,
     .BlackwaterDocks = 0x004e23e8,
     .AquatosSewers = 0x004e16e8,
     .MarcadiaPalace = 0x004e1068,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x004eb710,
-	.Hoven = 0x004ed768,
-	.OutpostX12 = 0x004e3080,
+    .Lobby = 0,
+    .Bakisi = 0x004eb710,
+    .Hoven = 0x004ed768,
+    .OutpostX12 = 0x004e3080,
     .KorgonOutpost = 0x004e0898,
-	.Metropolis = 0x004dfbe8,
-	.BlackwaterCity = 0x004dd400,
-	.CommandCenter = 0x004dd588,
+    .Metropolis = 0x004dfbe8,
+    .BlackwaterCity = 0x004dd400,
+    .CommandCenter = 0x004dd588,
     .BlackwaterDocks = 0x004dfdc8,
     .AquatosSewers = 0x004df108,
     .MarcadiaPalace = 0x004dea48,
@@ -110,26 +110,26 @@ VariableAddress_t vaGetMissionDef = {
 
 VariableAddress_t vaPlayerRespawnFunc = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x004fa320,
-	.Hoven = 0x004fc438,
-	.OutpostX12 = 0x004f1d10,
+    .Lobby = 0,
+    .Bakisi = 0x004fa320,
+    .Hoven = 0x004fc438,
+    .OutpostX12 = 0x004f1d10,
     .KorgonOutpost = 0x004ef4a8,
-	.Metropolis = 0x004ee7f8,
-	.BlackwaterCity = 0x004ec090,
-	.CommandCenter = 0x004ec058,
+    .Metropolis = 0x004ee7f8,
+    .BlackwaterCity = 0x004ec090,
+    .CommandCenter = 0x004ec058,
     .BlackwaterDocks = 0x004ee8d8,
     .AquatosSewers = 0x004edbd8,
     .MarcadiaPalace = 0x004ed558,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x004f7ba0,
-	.Hoven = 0x004f9bf8,
-	.OutpostX12 = 0x004ef510,
+    .Lobby = 0,
+    .Bakisi = 0x004f7ba0,
+    .Hoven = 0x004f9bf8,
+    .OutpostX12 = 0x004ef510,
     .KorgonOutpost = 0x004ecd28,
-	.Metropolis = 0x004ec078,
-	.BlackwaterCity = 0x004e9890,
-	.CommandCenter = 0x004e9a18,
+    .Metropolis = 0x004ec078,
+    .BlackwaterCity = 0x004e9890,
+    .CommandCenter = 0x004e9a18,
     .BlackwaterDocks = 0x004ec258,
     .AquatosSewers = 0x004eb598,
     .MarcadiaPalace = 0x004eaed8,
@@ -138,29 +138,57 @@ VariableAddress_t vaPlayerRespawnFunc = {
 
 VariableAddress_t vaWeaponStripMeFunc = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x004fa658,
-	.Hoven = 0x004fc770,
-	.OutpostX12 = 0x004f2048,
+    .Lobby = 0,
+    .Bakisi = 0x004fa658,
+    .Hoven = 0x004fc770,
+    .OutpostX12 = 0x004f2048,
     .KorgonOutpost = 0x004ef7e0,
-	.Metropolis = 0x004eeb30,
-	.BlackwaterCity = 0x004ec3c8,
-	.CommandCenter = 0x004ec390,
+    .Metropolis = 0x004eeb30,
+    .BlackwaterCity = 0x004ec3c8,
+    .CommandCenter = 0x004ec390,
     .BlackwaterDocks = 0x004eec10,
     .AquatosSewers = 0x004edf10,
     .MarcadiaPalace = 0x004ed890,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x004f7ed8,
-	.Hoven = 0x004f9f30,
-	.OutpostX12 = 0x004ef848,
+    .Lobby = 0,
+    .Bakisi = 0x004f7ed8,
+    .Hoven = 0x004f9f30,
+    .OutpostX12 = 0x004ef848,
     .KorgonOutpost = 0x004ed060,
-	.Metropolis = 0x004ec3b0,
-	.BlackwaterCity = 0x004e9bc8,
-	.CommandCenter = 0x004e9d50,
+    .Metropolis = 0x004ec3b0,
+    .BlackwaterCity = 0x004e9bc8,
+    .CommandCenter = 0x004e9d50,
     .BlackwaterDocks = 0x004ec590,
     .AquatosSewers = 0x004eb8d0,
     .MarcadiaPalace = 0x004eb210,
+#endif
+};
+
+VariableAddress_t vaGiveShieldFunc = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0042ab78,
+    .Hoven = 0x0042c5d0,
+    .OutpostX12 = 0x00423500,
+    .KorgonOutpost = 0x004210a8,
+    .Metropolis = 0x00420400,
+    .BlackwaterCity = 0x0041c268,
+    .CommandCenter = 0x00421f08,
+    .BlackwaterDocks = 0x00424758,
+    .AquatosSewers = 0x00423a70,
+    .MarcadiaPalace = 0x004233d8,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0042a1e8,
+    .Hoven = 0x0042bb78,
+    .OutpostX12 = 0x00422ac0,
+    .KorgonOutpost = 0x00420710,
+    .Metropolis = 0x0041fa70,
+    .BlackwaterCity = 0x0041b890,
+    .CommandCenter = 0x00421600,
+    .BlackwaterDocks = 0x00423e38,
+    .AquatosSewers = 0x00423168,
+    .MarcadiaPalace = 0x00422ab8,
 #endif
 };
 
@@ -307,26 +335,26 @@ int playerPadGetButtonUp(Player * player, u16 buttonMask)
 // Other Obfuscate Address (Health, State)
 VariableAddress_t vaPlayerObfuscateAddr = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x003bfe21,
-	.Hoven = 0x003bf461,
-	.OutpostX12 = 0x003b7361,
+    .Lobby = 0,
+    .Bakisi = 0x003bfe21,
+    .Hoven = 0x003bf461,
+    .OutpostX12 = 0x003b7361,
     .KorgonOutpost = 0x003b7121,
-	.Metropolis = 0x003b6ea1,
-	.BlackwaterCity = 0x003b70e1,
-	.CommandCenter = 0x003c7661,
+    .Metropolis = 0x003b6ea1,
+    .BlackwaterCity = 0x003b70e1,
+    .CommandCenter = 0x003c7661,
     .BlackwaterDocks = 0x003c7a61,
     .AquatosSewers = 0x003c81e1,
     .MarcadiaPalace = 0x003c7761,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x003bff61,
-	.Hoven = 0x003bf5a1,
-	.OutpostX12 = 0x003b74a1,
+    .Lobby = 0,
+    .Bakisi = 0x003bff61,
+    .Hoven = 0x003bf5a1,
+    .OutpostX12 = 0x003b74a1,
     .KorgonOutpost = 0x003b7261,
-	.Metropolis = 0x003b6fe1,
-	.BlackwaterCity = 0x003b7221,
-	.CommandCenter = 0x003c77a1,
+    .Metropolis = 0x003b6fe1,
+    .BlackwaterCity = 0x003b7221,
+    .CommandCenter = 0x003c77a1,
     .BlackwaterDocks = 0x003c7ba1,
     .AquatosSewers = 0x003c8321,
     .MarcadiaPalace = 0x003c78a1,
@@ -335,26 +363,26 @@ VariableAddress_t vaPlayerObfuscateAddr = {
 // Weapon Obfuscate Address
 VariableAddress_t vaPlayerObfuscateWeaponAddr = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x003aa041,
-	.Hoven = 0x003a9681,
-	.OutpostX12 = 0x003a1581,
+    .Lobby = 0,
+    .Bakisi = 0x003aa041,
+    .Hoven = 0x003a9681,
+    .OutpostX12 = 0x003a1581,
     .KorgonOutpost = 0x003a1341,
-	.Metropolis = 0x003a10c1,
-	.BlackwaterCity = 0x003a1301,
-	.CommandCenter = 0x003b1881,
+    .Metropolis = 0x003a10c1,
+    .BlackwaterCity = 0x003a1301,
+    .CommandCenter = 0x003b1881,
     .BlackwaterDocks = 0x003b1c81,
     .AquatosSewers = 0x003b2401,
     .MarcadiaPalace = 0x003b1981,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x003aa181,
-	.Hoven = 0x003a97c1,
-	.OutpostX12 = 0x003a16c1,
+    .Lobby = 0,
+    .Bakisi = 0x003aa181,
+    .Hoven = 0x003a97c1,
+    .OutpostX12 = 0x003a16c1,
     .KorgonOutpost = 0x003a1481,
-	.Metropolis = 0x003a1201,
-	.BlackwaterCity = 0x003a1441,
-	.CommandCenter = 0x003b19c1,
+    .Metropolis = 0x003a1201,
+    .BlackwaterCity = 0x003a1441,
+    .CommandCenter = 0x003b19c1,
     .BlackwaterDocks = 0x003b1dc1,
     .AquatosSewers = 0x003b2541,
     .MarcadiaPalace = 0x003b1ac1,
@@ -367,7 +395,7 @@ u32 playerDeobfuscate(u32 src, int addr, int mode)
     u32 Player_Value = *(u8*)Player_Addr;
     int RandDataAddr = !addr ? GetAddress(&vaPlayerObfuscateAddr) : GetAddress(&vaPlayerObfuscateWeaponAddr);
     int n = 0;
-	int rawr = 0;
+    int rawr = 0;
     int Converted;
     // Mode 0: For Health and Player State (Possibly more)
     if (mode == 0) {
@@ -404,26 +432,26 @@ u32 playerDeobfuscate(u32 src, int addr, int mode)
 
 VariableAddress_t vaSetPlayerStateFunc = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x00520b40,
-	.Hoven = 0x00522c58,
-	.OutpostX12 = 0x00518530,
+    .Lobby = 0,
+    .Bakisi = 0x00520b40,
+    .Hoven = 0x00522c58,
+    .OutpostX12 = 0x00518530,
     .KorgonOutpost = 0x00515cc8,
-	.Metropolis = 0x00515018,
-	.BlackwaterCity = 0x005128b0,
-	.CommandCenter = 0x00512670,
+    .Metropolis = 0x00515018,
+    .BlackwaterCity = 0x005128b0,
+    .CommandCenter = 0x00512670,
     .BlackwaterDocks = 0x00514ef0,
     .AquatosSewers = 0x005141f0,
     .MarcadiaPalace = 0x00513b70,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x0051e2f0,
-	.Hoven = 0x00520348,
-	.OutpostX12 = 0x00515c60,
+    .Lobby = 0,
+    .Bakisi = 0x0051e2f0,
+    .Hoven = 0x00520348,
+    .OutpostX12 = 0x00515c60,
     .KorgonOutpost = 0x00513478,
-	.Metropolis = 0x005127c8,
-	.BlackwaterCity = 0x0050ffe0,
-	.CommandCenter = 0x0050ff60,
+    .Metropolis = 0x005127c8,
+    .BlackwaterCity = 0x0050ffe0,
+    .CommandCenter = 0x0050ff60,
     .BlackwaterDocks = 0x005127a0,
     .AquatosSewers = 0x00511ae0,
     .MarcadiaPalace = 0x00511420,
@@ -438,26 +466,26 @@ void playerSetPlayerState(Player * player, u8 state)
 //--------------------------------------------------------------------------------
 VariableAddress_t vaHurtPlayerFunc = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x0050d4d8,
-	.Hoven = 0x0050f5f0,
-	.OutpostX12 = 0x00504ec8,
+    .Lobby = 0,
+    .Bakisi = 0x0050d4d8,
+    .Hoven = 0x0050f5f0,
+    .OutpostX12 = 0x00504ec8,
     .KorgonOutpost = 0x00502660,
-	.Metropolis = 0x005019b0,
-	.BlackwaterCity = 0x004ff248,
-	.CommandCenter = 0x004ff210,
+    .Metropolis = 0x005019b0,
+    .BlackwaterCity = 0x004ff248,
+    .CommandCenter = 0x004ff210,
     .BlackwaterDocks = 0x00501a90,
     .AquatosSewers = 0x00500d90,
     .MarcadiaPalace = 0x00500710,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x0050ace8,
-	.Hoven = 0x0050cd40,
-	.OutpostX12 = 0x00502658,
+    .Lobby = 0,
+    .Bakisi = 0x0050ace8,
+    .Hoven = 0x0050cd40,
+    .OutpostX12 = 0x00502658,
     .KorgonOutpost = 0x004ffe70,
-	.Metropolis = 0x004ff1c0,
-	.BlackwaterCity = 0x004fc9d8,
-	.CommandCenter = 0x004fcb60,
+    .Metropolis = 0x004ff1c0,
+    .BlackwaterCity = 0x004fc9d8,
+    .CommandCenter = 0x004fcb60,
     .BlackwaterDocks = 0x004ff3a0,
     .AquatosSewers = 0x004fe6e0,
     .MarcadiaPalace = 0x004fe020,
@@ -482,7 +510,7 @@ void playerIncHealth(Player * player, int health)
 
     // asm(".set noreorder;");
     // int gsFrame = gameGetGSFrame();
-	// int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
+    // int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
     // int fHealth = playerGetHealth(player);
     // int PlayerIncHealthStack[1];
     // u32 Player_Addr = &player->Health;
@@ -490,7 +518,7 @@ void playerIncHealth(Player * player, int health)
     // PlayerIncHealthStack[0] = (u32)Player_Addr ^ *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4);
     // PlayerIncHealthStack[1] = (float)((u32)(*(float*)&fHealth + (float)(int)health) ^ *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4));
     // int n = 0;
-	// int m = 0;
+    // int m = 0;
     // do {
     //     u32 Offset = (u32)(((int)Player_Addr - (u32)Player_Value & 7) + n);
     //     n = n + 5;
@@ -520,12 +548,12 @@ void playerSetHealth(Player * player, int health)
     u32 Player_Addr = &player->Health;
     u32 Player_Value = *(u8*)Player_Addr;
     int gsFrame = gameGetGSFrame();
-	int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
+    int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
     u32 xord = *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4);
-	PlayerSetHealthStack[0] = (u32)Player_Addr ^ xord;
+    PlayerSetHealthStack[0] = (u32)Player_Addr ^ xord;
     PlayerSetHealthStack[1] = xord ^ *(u32*)(&f);
     int n = 0;
-	int m = 0;
+    int m = 0;
     do {
         u32 Offset = (u32)(((int)Player_Addr - (u32)Player_Value & 7) + n);
         n = n + 5;
@@ -571,7 +599,7 @@ int playerGetHealth(Player * player)
 //--------------------------------------------------------------------------------
 int playerIsDead(Player * player)
 {
-	// return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
+    // return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
     // int Health = (int)playerGetHealth(player) <= 0;
     int State = playerDeobfuscate(&player->State, 0, 0);
     int CurrentState = State == PLAYER_STATE_DEATH
@@ -589,26 +617,26 @@ int playerIsDead(Player * player)
 //--------------------------------------------------------------------------------
 VariableAddress_t vaPlayerSetPosRotFunc = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x00509dc0,
-	.Hoven = 0x0050bed8,
-	.OutpostX12 = 0x005017b0,
+    .Lobby = 0,
+    .Bakisi = 0x00509dc0,
+    .Hoven = 0x0050bed8,
+    .OutpostX12 = 0x005017b0,
     .KorgonOutpost = 0x004fef48,
-	.Metropolis = 0x004fe298,
-	.BlackwaterCity = 0x004fbb30,
-	.CommandCenter = 0x004fbaf8,
+    .Metropolis = 0x004fe298,
+    .BlackwaterCity = 0x004fbb30,
+    .CommandCenter = 0x004fbaf8,
     .BlackwaterDocks = 0x004fe378,
     .AquatosSewers = 0x004fd678,
     .MarcadiaPalace = 0x004fcff8,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x005075d0,
-	.Hoven = 0x00509628,
-	.OutpostX12 = 0x004fef40,
+    .Lobby = 0,
+    .Bakisi = 0x005075d0,
+    .Hoven = 0x00509628,
+    .OutpostX12 = 0x004fef40,
     .KorgonOutpost = 0x004fc758,
-	.Metropolis = 0x004fbaa8,
-	.BlackwaterCity = 0x004f92c0,
-	.CommandCenter = 0x004f9448,
+    .Metropolis = 0x004fbaa8,
+    .BlackwaterCity = 0x004f92c0,
+    .CommandCenter = 0x004f9448,
     .BlackwaterDocks = 0x004f92c0,
     .AquatosSewers = 0x004fafc8,
     .MarcadiaPalace = 0x004fa908,
@@ -644,26 +672,26 @@ PlayerVTable * playerGetVTable(Player * player)
 
 VariableAddress_t vaGiveWeaponUpgradeFunc = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x005472a0,
-	.Hoven = 0x00549468,
-	.OutpostX12 = 0x0053ed40,
+    .Lobby = 0,
+    .Bakisi = 0x005472a0,
+    .Hoven = 0x00549468,
+    .OutpostX12 = 0x0053ed40,
     .KorgonOutpost = 0x0053c428,
-	.Metropolis = 0x0053b828,
-	.BlackwaterCity = 0x00539010,
-	.CommandCenter = 0x00538868,
+    .Metropolis = 0x0053b828,
+    .BlackwaterCity = 0x00539010,
+    .CommandCenter = 0x00538868,
     .BlackwaterDocks = 0x0053b0e8,
     .AquatosSewers = 0x0053a3e8,
     .MarcadiaPalace = 0x00539d68,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x00544998,
-	.Hoven = 0x00546aa0,
-	.OutpostX12 = 0x0053c3b8,
+    .Lobby = 0,
+    .Bakisi = 0x00544998,
+    .Hoven = 0x00546aa0,
+    .OutpostX12 = 0x0053c3b8,
     .KorgonOutpost = 0x00539b20,
-	.Metropolis = 0x00538f20,
-	.BlackwaterCity = 0x00536688,
-	.CommandCenter = 0x005360b8,
+    .Metropolis = 0x00538f20,
+    .BlackwaterCity = 0x00536688,
+    .CommandCenter = 0x005360b8,
     .BlackwaterDocks = 0x005388f8,
     .AquatosSewers = 0x00537c38,
     .MarcadiaPalace = 0x00537578,
@@ -676,26 +704,26 @@ void playerGiveWeaponUpgrade(Player * player, int weaponId)
 
 VariableAddress_t vaGiveWeaponFunc = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x00546c78,
-	.Hoven = 0x00548e40,
-	.OutpostX12 = 0x0053e718,
+    .Lobby = 0,
+    .Bakisi = 0x00546c78,
+    .Hoven = 0x00548e40,
+    .OutpostX12 = 0x0053e718,
     .KorgonOutpost = 0x0053be00,
-	.Metropolis = 0x0053b200,
-	.BlackwaterCity = 0x005389e8,
-	.CommandCenter = 0x00538240,
+    .Metropolis = 0x0053b200,
+    .BlackwaterCity = 0x005389e8,
+    .CommandCenter = 0x00538240,
     .BlackwaterDocks = 0x0053aac0,
     .AquatosSewers = 0x00539dc0,
     .MarcadiaPalace = 0x00539740,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x00544370,
-	.Hoven = 0x00546478,
-	.OutpostX12 = 0x0053bd90,
+    .Lobby = 0,
+    .Bakisi = 0x00544370,
+    .Hoven = 0x00546478,
+    .OutpostX12 = 0x0053bd90,
     .KorgonOutpost = 0x005394f8,
-	.Metropolis = 0x005388f8,
-	.BlackwaterCity = 0x00536060,
-	.CommandCenter = 0x00535a90,
+    .Metropolis = 0x005388f8,
+    .BlackwaterCity = 0x00536060,
+    .CommandCenter = 0x00535a90,
     .BlackwaterDocks = 0x005382d0,
     .AquatosSewers = 0x00537610,
     .MarcadiaPalace = 0x00536f50,
@@ -708,26 +736,26 @@ void playerGiveWeapon(Player * player, int weaponId)
 
 VariableAddress_t vaEquipWeaponFunc = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x005471b8,
-	.Hoven = 0x00549380,
-	.OutpostX12 = 0x0053ec58,
+    .Lobby = 0,
+    .Bakisi = 0x005471b8,
+    .Hoven = 0x00549380,
+    .OutpostX12 = 0x0053ec58,
     .KorgonOutpost = 0x0053c340,
-	.Metropolis = 0x0053b740,
-	.BlackwaterCity = 0x00538f28,
-	.CommandCenter = 0x00538780,
+    .Metropolis = 0x0053b740,
+    .BlackwaterCity = 0x00538f28,
+    .CommandCenter = 0x00538780,
     .BlackwaterDocks = 0x0053b000,
     .AquatosSewers = 0x0053a300,
     .MarcadiaPalace = 0x00539c80,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x005448b0,
-	.Hoven = 0x005469b8,
-	.OutpostX12 = 0x0053c2d0,
+    .Lobby = 0,
+    .Bakisi = 0x005448b0,
+    .Hoven = 0x005469b8,
+    .OutpostX12 = 0x0053c2d0,
     .KorgonOutpost = 0x00539a38,
-	.Metropolis = 0x00538e38,
-	.BlackwaterCity = 0x005365a0,
-	.CommandCenter = 0x00535fd0,
+    .Metropolis = 0x00538e38,
+    .BlackwaterCity = 0x005365a0,
+    .CommandCenter = 0x00535fd0,
     .BlackwaterDocks = 0x00538810,
     .AquatosSewers = 0x00537b50,
     .MarcadiaPalace = 0x00537490,
@@ -740,26 +768,26 @@ void playerEquipWeapon(Player * player, int weaponId)
 
 VariableAddress_t vaGiveMeRandomWeaponsFunc = {
 #if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x00519bd0,
-	.Hoven = 0x0051bce8,
-	.OutpostX12 = 0x005115c0,
+    .Lobby = 0,
+    .Bakisi = 0x00519bd0,
+    .Hoven = 0x0051bce8,
+    .OutpostX12 = 0x005115c0,
     .KorgonOutpost = 0x0050ed58,
-	.Metropolis = 0x0050e0a8,
-	.BlackwaterCity = 0x0050b940,
-	.CommandCenter = 0x0050b700,
+    .Metropolis = 0x0050e0a8,
+    .BlackwaterCity = 0x0050b940,
+    .CommandCenter = 0x0050b700,
     .BlackwaterDocks = 0x0050df80,
     .AquatosSewers = 0x0050d280,
     .MarcadiaPalace = 0x0050cc00,
 #else
-	.Lobby = 0,
-	.Bakisi = 0x005173c8,
-	.Hoven = 0x00519420,
-	.OutpostX12 = 0x0050ed38,
+    .Lobby = 0,
+    .Bakisi = 0x005173c8,
+    .Hoven = 0x00519420,
+    .OutpostX12 = 0x0050ed38,
     .KorgonOutpost = 0x0050c550,
-	.Metropolis = 0x0050b8a0,
-	.BlackwaterCity = 0x005090b8,
-	.CommandCenter = 0x00509038,
+    .Metropolis = 0x0050b8a0,
+    .BlackwaterCity = 0x005090b8,
+    .CommandCenter = 0x00509038,
     .BlackwaterDocks = 0x0050b878,
     .AquatosSewers = 0x0050abb8,
     .MarcadiaPalace = 0x0050a4f8,
@@ -774,12 +802,12 @@ int playerHasShield(Player * player)
 {
     Moby *shield = mobyListGetStart();
     while ((shield = mobyFindNextByOClass(shield, MOBY_ID_OMNI_SHIELD))) {
-		if (shield->PVar) {
-			int PlayerShield = *(u32*)((u32)shield->PVar + 0x40);
-			if (PlayerShield == player)
-				return 1;
-		}
-		++shield;
-	}
-	return 0;
+        if (shield->PVar) {
+            int PlayerShield = *(u32*)((u32)shield->PVar + 0x40);
+            if (PlayerShield == player)
+                return 1;
+        }
+        ++shield;
+    }
+    return 0;
 }

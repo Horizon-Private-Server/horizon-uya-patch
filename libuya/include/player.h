@@ -1501,5 +1501,25 @@ u32 playerDeobfuscate(u32 src, int addr, int mode);
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int playerHasShield(Player * player);
+/*
+ * NAME :		playerGiveShield
+ * DESCRIPTION :
+ * 				Gives the player a shield
+ * NOTES :
+ * ARGS : 		player: player
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void playerGiveShield(Player * player);
+/*
+ * NAME :		playerGetFromSlot
+ * DESCRIPTION :
+ * 				Gets the needed players struct pointer
+ * NOTES :
+ * ARGS : 		index: index
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+u32 playerGetFromSlot(int index);
 
 #endif // _LIBUYA_PLAYER_H_
