@@ -581,6 +581,7 @@ int playerIsDead(Player * player)
         || State == PLAYER_STATE_LAVA_DEATH
         || State == PLAYER_STATE_DEATH_NO_FALL
         || State == PLAYER_STATE_WAIT_FOR_RESURRECT
+        || State == PLAYER_STATE_ICEWATER_FREEZE
         ;
     return CurrentState;
 }
