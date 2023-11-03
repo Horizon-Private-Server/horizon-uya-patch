@@ -184,20 +184,6 @@ int disableHealthboxes(void)
     return count;
 }
 
-int mobyCheckShield(Player * player)
-{
-    Moby *shield = mobyListGetStart();
-    while ((shield = mobyFindNextByOClass(shield, MOBY_ID_OMNI_SHIELD))) {
-		if (shield->PVar) {
-			int PlayerShield = *(u32*)((u32)shield->PVar + 0x40);
-			if (PlayerShield == player)
-				return 1;
-		}
-		++shield;
-	}
-	return 0;
-}
-
 /*
  * NAME :		isInfected
  * 
@@ -277,8 +263,13 @@ void processPlayer(Player * player)
 			playerSetTeam(player, INFECTED_TEAM);
 
 		// Check if player has shield, if not, enable.
-		if (!playerHasShield(player) && !playerIsDead(player) && !player->pSheepMoby)
-			player->ShieldTrigger = 1;
+		if (!playerHasShield(player) && !playerIsDead(player) && !player->pSheepMoby) {
+			// if Local, run shield trigger, if not, run playerGiveShield function
+			if (player->IsLocal)
+				player->ShieldTrigger = 1;
+			else
+				playerGiveShield(player);
+		}
 
 		// Force wrench
 		if (player->WeaponHeldId != WEAPON_ID_WRENCH && player->WeaponHeldId != WEAPON_ID_SWINGSHOT)
@@ -296,7 +287,7 @@ void processPlayer(Player * player)
 	// Process survivor logic
 	else
 	{
-
+		*(float*)PLAYER_SPEED_ADDR = 7.25;
 	}
 }
 
@@ -494,42 +485,32 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 			// Count
 			++playerCount;
 			if (isInfected(players[i]->mpIndex))
-			{
 				++infectedCount;
-			}
 			else
-			{
 				WinningTeam = players[i]->mpTeam;
-			}
 		}
 	}
 
 	// 
 	gameData->WinningTeam = WinningTeam;
 
-	if (!gameHasEnded())
-	{
+	if (!gameHasEnded()) {
 		// If no survivors then end game
-		if (playerCount == infectedCount)
-		{
+		if (playerCount == infectedCount) {
 			// End game
 			gameEnd(2);
 		}
-		else if (infectedCount == 0)
-		{
+		else if (infectedCount == 0) {
 			// Infect first player after 10 seconds
-			if ((gameGetTime() - gameSettings->GameStartTime) > (10 * TIME_SECOND))
-			{
+			if ((gameGetTime() - gameSettings->GameStartTime) > (10 * TIME_SECOND)) {
 				Player * survivor = getRandomSurvivor(gameSettings->GameStartTime);
-				if (survivor)
-				{
+				if (survivor) {
 					infect(survivor);
 					FirstInfected[survivor->mpIndex] = 1;
 				}
 			}
 		}
 	}
-
 	return;
 }
 
@@ -585,16 +566,16 @@ void setLobbyGameOptions(void)
  */
 void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t * gameState)
 {
+	u32 menu;
 	static int initializedScoreboard = 0;
 	// 
 	// updateGameState(gameState);
 
 	// Lobby
-	GameSettings * gameSettings = gameGetSettings();
-	GameOptions * gameOptions = gameGetOptions();
-	// if in staging
-	if (gameSettings && gameSettings->GameLoadStartTime < 0) {
+	if (menu = uiGetActivePointer(UIP_STAGING), menu > 0) {
 		setLobbyGameOptions();
+	} else if (menu = uiGetActivePointer(UIP_END_GAME_DETAILS), menu > 0) {
+		// scoreboard stuff
 	}
 }
 
@@ -647,7 +628,7 @@ void AddToCS(char c, Player * currentPlayer)
 	}
 	CS[0] = c;
 
-	// "UUDDLRLROX"	-	UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT CROSS CIRCLE
+	// "UUDDLRLRCX"	-	UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT CIRCLE CROSS
 	if (!CHEATCMP("XCRLRLDDUU"))
 	{
 		SwapShield();
