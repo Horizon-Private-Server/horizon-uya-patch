@@ -28,7 +28,7 @@
 
 
 #define INFECTED_TEAM			(TEAM_GREEN)
-#define PLAYER_SPEED			(0x60E80000)
+#define PLAYER_SPEED			(0x60e8)
 #define ARRAY_SIZE(x)			(sizeof(x)/sizeof(x[0]))
 #define CHEATCMP(str)			strncmp(str, CS, sizeof(str)-1)
 
@@ -52,7 +52,6 @@ int WinningTeam = 0;
 int Initialized = 0;
 char FirstInfected[GAME_MAX_PLAYERS];
 int Infections[GAME_MAX_PLAYERS];
-char InfectedPopupBuffer[64];
 const char * InfectedPopupFormat = "%s has been infected!";
 int ShieldTex = 0;
 char CS[12];
@@ -113,8 +112,33 @@ VariableAddress_t vaOnPlayerKill_Func = {
 #endif
 };
 
-
-
+VariableAddress_t vaMovementSpeedModifier = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00505094,
+    .Hoven = 0x005071ac,
+    .OutpostX12 = 0x004fca84,
+    .KorgonOutpost = 0x004fa21c,
+    .Metropolis = 0x004f956c,
+    .BlackwaterCity = 0x004f6e04,
+    .CommandCenter = 0x004f6dcc,
+    .BlackwaterDocks = 0x004f964c,
+    .AquatosSewers = 0x004f894c,
+    .MarcadiaPalace = 0x004f82cc,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x005028a4,
+    .Hoven = 0x005048fc,
+    .OutpostX12 = 0x004fa214,
+    .KorgonOutpost = 0x004f7a2c,
+    .Metropolis = 0x004f6d7c,
+    .BlackwaterCity = 0x004f4594,
+    .CommandCenter = 0x004f471c,
+    .BlackwaterDocks = 0x004f6f5c,
+    .AquatosSewers = 0x004f629c,
+    .MarcadiaPalace = 0x004f5bdc,
+#endif
+};
 
 void disableWeaponPacks(void)
 {
@@ -227,11 +251,10 @@ void infect(Player * player)
 	if (!gameSettings)
 		return;
 
-	InfectedPopupBuffer[0] = 0;
-	sprintf(InfectedPopupBuffer, InfectedPopupFormat, gameSettings->PlayerNames[player->mpIndex]);
-	InfectedPopupBuffer[63] = 0;
+	char buf[64];
 
-	uiShowPopup(player, InfectedPopupBuffer, 3);
+	sprintf(buf, InfectedPopupFormat, gameSettings->PlayerNames[player->mpIndex]);
+	uiShowPopup(player, buf, 3);
 }
 
 /*
@@ -254,14 +277,13 @@ void processPlayer(Player * player)
 	if (!player)
 		return;
 
-	int teamId = player->mpTeam;
 	GameData * gameData = gameGetData();
 	DoCheats(player);
-	if (isInfected(player->mpIndex)) {
-		// If not on the right team then set it
-		if (teamId != INFECTED_TEAM)
-			playerSetTeam(player, INFECTED_TEAM);
-
+	if (!isInfected(player->mpIndex) && player->mpTeam != INFECTED_TEAM) { 
+		// do nothing!
+	} else if (isInfected(player->mpIndex) && player->mpTeam != INFECTED_TEAM) {
+		playerSetTeam(player, INFECTED_TEAM);
+	} else if (isInfected(player->mpIndex) && player->mpTeam == INFECTED_TEAM) {
 		// Check if player has shield, if not, enable.
 		if (!playerHasShield(player) && !playerIsDead(player) && !player->pSheepMoby) {
 			// if Local, run shield trigger, if not, run playerGiveShield function
@@ -274,20 +296,20 @@ void processPlayer(Player * player)
 		// Force wrench
 		if (player->WeaponHeldId != WEAPON_ID_WRENCH && player->WeaponHeldId != WEAPON_ID_SWINGSHOT)
 			player->ForceWrenchSwitch = 1;
+
+		// Set Speed (via movement function)
+		int speed = GetAddress(&vaMovementSpeedModifier);
+		if (*(u32*)speed == 0x3c010024) {
+			*(u32*)speed = 0x3c0160e8; // lui at, 0x60e8
+			*(u32*)(speed + 0x4) = 0x44810000; // mtc1 at, f0;
+		}
 	}
 	// If the player is already on the infected team
 	// or if they've died
 	// then infect them
-	else if (teamId == INFECTED_TEAM || gameData->PlayerStats[player->mpIndex].Deaths > 0)
+	else if (player->mpTeam == INFECTED_TEAM || gameData->PlayerStats[player->mpIndex].Deaths > 0)
 	{
 		infect(player);
-		// Set Player speed
-		*(u32*)PLAYER_SPEED_ADDR = PLAYER_SPEED;
-	}
-	// Process survivor logic
-	else
-	{
-		*(float*)PLAYER_SPEED_ADDR = 7.25;
 	}
 }
 
