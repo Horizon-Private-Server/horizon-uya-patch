@@ -85,6 +85,8 @@ const char * regionStr = "NTSC: ";
 int lastLodLevel = 2;
 int fovChange_Hook = 0;
 int fovChange_Func = 0;
+int lastSettings = 0;
+int lastNodes = 0;
 
 #if DSCRPRINT
 #define MAX_DEBUG_SCR_PRINT_LINES       (16)
@@ -99,6 +101,7 @@ extern int _correctTieLod_Jump;
 extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern MenuElem_ListData_t dataCustomMaps;
+extern SelectedCustomMapId;
 
 PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableAutoMaps = 0,
@@ -1264,23 +1267,49 @@ void patchCreateGameMenu_Option(int option, int new_value)
 	if (*(int*)option != new_value)
 		*(int*)option = new_value;
 }
+void patchCreateGameMenu_LastSettings(void)
+{
+	u32 menu = uiGetPointer(UIP_CREATE_GAME);
+	// Normal Options
+	// Enable Password if Disabled
+	int use_password = (*(u32*)(menu + 0x130) + 0x4);
+	int password = (*(u32*)(menu + 0x134) + 0x4);
+	// If "USE PASWORD" is "Yes" and also disabled to edit
+	if (*(u32*)use_password == 2) {
+		patchCreateGameMenu_Option(use_password, 3); // enable "use password"
+		patchCreateGameMenu_Option(password, 3); // enable password option
+	}
+
+	// Advanced Options
+	menu = uiGetPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
+	int nodes = (*(u32*)(menu + 0x114) + 0x64);
+	patchCreateGameMenu_Option(nodes, lastNodes);
+
+	lastSettings = 0;
+}
 void patchCreateGameMenu(void)
 {
 	u32 menu = uiGetActivePointer(UIP_CREATE_GAME);
 	if (!menu) return;
-	// Modify Normal Options
-	int time_limit = (*(u32*)(menu + 0x12c) + 0x70);
-	patchCreateGameMenu_Option(time_limit, 120); // Time Limit = 120 Minutes
-	// Assembly time limit max (if frag limit = none, it reads from this)
-#if UYA_PAL
-	*(u32*)0x0069aa28 = 0x24020078;
-#else
-	*(u32*)0x00698218 = 0x24020078;
-#endif
 
+	// Patch LastSettings options
+	// printf("\nlastsettings: %d", lastSettings);
+	// if (lastSettings)
+	// 	patchCreateGameMenu_LastSettings();
+
+	// Modify Normal Options
+// 	int time_limit = (*(u32*)(menu + 0x12c) + 0x70);
+// 	patchCreateGameMenu_Option(time_limit, 120); // Time Limit = 120 Minutes
+// 	// Assembly time limit max (if frag limit = none, it reads from this)
+// #if UYA_PAL
+// 	*(u32*)0x0069aa28 = 0x24020078;
+// #else
+// 	*(u32*)0x00698218 = 0x24020078;
+// #endif
+
+	// if in Advanced Options
 	menu = uiGetActiveSubPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
 	if (!menu) return;
-	// Modify Advanced Options
 	int frag_limit = (*(u32*)(menu + 0x12c) + 0x70);
 	patchCreateGameMenu_Option(frag_limit, 50); // Frag Limit = 50
 }
@@ -1725,7 +1754,7 @@ int main(void)
 	else if (isInMenus())
 	{
 		// Patch various options on Create Game Screen
-		// patchCreateGameMenu();
+		patchCreateGameMenu();
 
 		// If in Lobby, run these game rules.
 		grLobbyStart();
@@ -1769,11 +1798,27 @@ int main(void)
 			{
 				// copy over last game config as host
 				memcpy(&gameConfig, &gameConfigHostBackup, sizeof(PatchGameConfig_t));
+				// Reset SelectedCustomMapId to none
+				SelectedCustomMapId = 0;
 
 				// send
 				configTrySendGameConfig();
 			}
-			
+
+			// if (gameAmIHost()) {
+			// 	// set lastNodes option
+			// 	#if UYA_PAL
+			// 		int getNodesOption = *(u8*)0x0024164f;
+			// 	#else
+			// 		int getNodesOption = *(u8*)0x002417cf;
+			// 	#endif
+			// 	 // printf("\nlastsettings: %d", lastSettings);
+			// 	lastNodes = (int)getNodesOption;
+
+			// 	// options set, so set lastSettings to 1.
+			// 	lastSettings = 1;
+			// }
+
 			isInStaging = 1;
 		}
 		else
