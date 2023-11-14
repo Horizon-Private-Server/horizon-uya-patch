@@ -1150,7 +1150,7 @@ typedef struct Player {
 	short int unkGadgetTimer_24a8;							// 0x24A8
 	char unk_24aa[0x1e];
 	char unk_24c8;
-	char unk_24c9; // hides reticle/hud
+	char unk_24c9; // hides reticle/hud, does something with CTF Flag
 	char unk_24ca;
 	char unk_24cb;
 	u32 LastDamagedMeOwnerUID;								// 0x24CC

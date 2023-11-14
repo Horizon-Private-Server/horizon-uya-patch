@@ -10,6 +10,11 @@
 #define IS_WIDESCREEN                       (*(char*)0x001a5a3d)
 #endif
 
+#define SCREEN_VISIBOMB_EFFECT              ((ScreenVBEffect_t*)0x00242624)
+#define SCREEN_INSERT_EFFECT                ((ScreenInsertEffect_t*)0x002426A0)
+#define SHELL_CIRCLE_COS                    (0x00242920) // part of struct FXUtilsInterface
+#define SHELL_CIRCLE_SIN                    (0x00242950) // part of struct FXUtilsInterface
+
 int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
 void internal_drawBox(void *, void *);
 

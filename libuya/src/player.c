@@ -333,6 +333,7 @@ int playerPadGetButtonUp(Player * player, u16 buttonMask)
 
 //--------------------------------------------------------------------------------
 // Other Obfuscate Address (Health, State)
+// Another Area (Pointer): 0x002429A0 and 0x002429A4
 VariableAddress_t vaPlayerObfuscateAddr = {
 #if UYA_PAL
     .Lobby = 0,

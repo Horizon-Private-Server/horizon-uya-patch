@@ -304,7 +304,9 @@ typedef struct Moby
 	/*  30 */ char UpdateDist;
     /*  31 */ char Drawn;
     /*  32 */ short DrawDist;
-	/*  34 */ char unk_34[0x8];
+	/*  34 */ u16 ModeBits;
+	/*  36 */ u16 ModeBits2;
+	/*  38 */ u32 Lights;
 	/*  3c */ u32 PrimaryColor;
 	/*     */ char unk_40[0x24];
 	/*  64 */ void * PUpdate;
@@ -314,9 +316,7 @@ typedef struct Moby
     /*  6f */ char ShadowIndex;
     /*  70 */ float ShadowPlane;
     /*  74 */ float ShadowRange;
-	/*  78 */ u32 Lights;
-	/*  7c */ u16 ModeBits;
-    /*  7e */ u16 ModeBits2;
+	/*     */ char unk_78[0x8];
 	/*  80 */ VECTOR LSphere;
 	/*  90 */ struct GuberMoby * GuberMoby;
 	/*     */ char unk_94[0x10];

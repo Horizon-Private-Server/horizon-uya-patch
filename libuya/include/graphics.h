@@ -84,6 +84,25 @@ typedef enum FontAlignment {
 	BOTTOM_RIGHT = 8
 } FontAlignment;
 
+typedef struct ScreenVBEffect { // 0x34
+	/* 0x00 */ int enabled;
+	/* 0x04 */ u32 BKG_color;
+	/* 0x08 */ u64 BKG_alpha;
+	/* 0x10 */ int unk_10;
+	/* 0x14 */ int A_lines;
+	/* 0x18 */ u32 A_color;
+	/* 0x1c */ u64 A_alpha;
+	/* 0x24 */ int B_lines;
+	/* 0x28 */ u32 B_color;
+	/* 0x2c */ u64 B_alpha;
+} ScreenVBEffect_t;
+
+typedef struct ScreenInsertEffect { // 0x10
+	/* 0x0 */ int enabled;
+	/* 0x4 */ u32 color;
+	/* 0x8 */ u64 alpha;
+} ScreenInsertEffect_t;
+
 /*
  * NAME :		drawFunction
  * 
