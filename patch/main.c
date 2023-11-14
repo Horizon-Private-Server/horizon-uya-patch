@@ -1288,22 +1288,17 @@ void patchUnkick(void)
 void patchDeathBarrierBug(void)
 {
 	int i;
-	// Grab All Players
-	Player** players = playerGetAll();
-	// Cycle through all
-	for (i = 0; i < players[i]; ++i) {
-		Player* player = players[i];
-		// if player is local
-		if (player && playerIsLocal(player)) {
-			float deathbarrier = gameGetDeathHeight();
-			float pY = player->PlayerPosition[2];
-			//DPRINTF("deathheight: %d\nplayery: %d\ninbasehack: %d\n", (int)deathbarrier, (int)pY, player->InBaseHack);
-			// if player is above death barrier and inBaseHack equals 1.
-			if (player->InBaseHack && deathbarrier < pY) {
-				player->InBaseHack = 0;
-			} else if (!player->InBaseHack && deathbarrier > pY) {
-				player->InBaseHack = 1;
-			}
+	Player *player = playerGetFromSlot(0);
+	// if player is local
+	if (player && playerIsLocal(player)) {
+		float deathbarrier = gameGetDeathHeight();
+		float pY = player->PlayerPosition[2];
+		//DPRINTF("deathheight: %d\nplayery: %d\ninbasehack: %d\n", (int)deathbarrier, (int)pY, player->InBaseHack);
+		// if player is above death barrier and inBaseHack equals 1.
+		if (player->InBaseHack && deathbarrier < pY) {
+			player->InBaseHack = 0;
+		} else if (!player->InBaseHack && deathbarrier > pY) {
+			player->InBaseHack = 1;
 		}
 	}
 }
