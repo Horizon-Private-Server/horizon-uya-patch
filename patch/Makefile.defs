@@ -4,7 +4,7 @@ EE_LIBS := $(EE_LIBS) -lkernel
 
 EE_INCS := -I../common -I../libuya/include
 EE_LDFLAGS = -fno-builtin -nostdlib -nostartfiles -L. -L../libuya/lib -L$(PS2SDK)/ee/lib
-#EE_DEFS = -DDEBUG
+EE_DEFS = -DDEBUG
 #EE_DEFS += -DDSCRPRINT
 #EE_DEFS += -DTEST
 

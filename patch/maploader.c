@@ -21,6 +21,9 @@
 #define NEWLIB_PORT_AWARE
 #include <io_common.h>
 
+#define MASS_PATH_PREFIX      "mass:"
+#define HOST_PATH_PREFIX      "host:"
+
 #define MAP_FRAG_PAYLOAD_MAX_SIZE               (1024)
 #define LOAD_MODULES_STATE                      (*(u8*)0x000CFFF0)
 #define LOAD_MODULES_RESULT                     (*(u8*)0x000CFFF1)
@@ -63,12 +66,11 @@ VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
 };
 
 // paths for level specific files
-char * fWad = "uya/%s.pal.wad";
-char * fWorld = "uya/%s.pal.world";
-char * fBg = "uya/%s.pal.bg";
-char * fMap = "uya/%s.pal.map";
-char * fVersion = "uya/%s.version";
-char * fGlobalVersion = "uya/version";
+char * fWad = "%suya/%s.pal.wad";
+char * fWorld = "%suya/%s.pal.world";
+char * fBg = "%suya/%s.pal.bg";
+char * fMap = "%suya/%s.pal.map";
+char * fVersion = "%suya/%s.version";
 
 #else
 
@@ -104,12 +106,11 @@ VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
 };
 
 // paths for level specific files
-char * fWad = "uya/%s.wad";
-char * fWorld = "uya/%s.world";
-char * fBg = "uya/%s.bg";
-char * fMap = "uya/%s.map";
-char * fVersion = "uya/%s.version";
-char * fGlobalVersion = "uya/version";
+char * fWad = "%suya/%s.wad";
+char * fWorld = "%suya/%s.world";
+char * fBg = "%suya/%s.bg";
+char * fMap = "%suya/%s.map";
+char * fVersion = "%suya/%s.version";
 
 #endif
 
@@ -124,7 +125,6 @@ void hook(void);
 void loadModules(void);
 
 int readLevelVersion(char * name, int * version);
-int readGlobalVersion(int * version);
 
 void * usbFsModuleStart = (void*)0x000D0000;
 int usbFsModuleSize = 0;
@@ -176,6 +176,7 @@ int rpcInit = 0;
 
 // 
 char membuffer[256];
+int useHost = 0;
 
 
 typedef struct MapOverrideMessage
@@ -203,6 +204,13 @@ typedef struct MapServerSentModulesMessage
 } MapServerSentModulesMessage;
 
 struct MapLoaderState MapLoaderState;
+
+//------------------------------------------------------------------------------
+char * getMapPathPrefix(void)
+{
+  if (useHost) return HOST_PATH_PREFIX;
+  return MASS_PATH_PREFIX;
+}
 
 //------------------------------------------------------------------------------
 int onSetMapOverride(void * connection, void * data)
@@ -303,24 +311,11 @@ int onServerSentMapIrxModules(void * connection, void * data)
 	}
 	else
 	{
-		int remoteVersion = msg->Version;
-		int localVersion = 0;
-		if (!readGlobalVersion(&localVersion) || localVersion != remoteVersion)
-		{
-			// Indicate new version
-			actionState = ACTION_NEW_MAPS_UPDATE;
-		}
-		else
-		{
-			// Indicate maps installed
-			actionState = ACTION_MODULES_INSTALLED;
-		}
-		
-    // refresh custom map list
+    actionState = ACTION_MODULES_INSTALLED;
+
+    // refresh map list
     refreshCustomMapList();
-
-		DPRINTF("local maps version %d || remote maps version %d\n", localVersion, remoteVersion);
-
+		
 		// if in game, ask server to resend map override to use
 		if (gameGetSettings())
 			netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
@@ -426,28 +421,13 @@ int readFile(char * path, void * buffer, int length)
 	return r;
 }
 
-//------------------------------------------------------------------------------
-int readGlobalVersion(int * version)
-{
-	int r;
-
-	r = readFile(fGlobalVersion, (void*)version, 4);
-	if (r != 4)
-	{
-		DPRINTF("error reading file (%s)\n", fGlobalVersion);
-		return 0;
-	}
-
-	return 1;
-}
-
 //--------------------------------------------------------------
 int readLevelVersion(char * name, int * version)
 {
 	int r;
 
 	// Generate version filename
-	sprintf(membuffer, fVersion, name);
+	sprintf(membuffer, fVersion, getMapPathPrefix(), name);
 
 	// read
 	r = readFile(membuffer, (void*)version, 4);
@@ -464,7 +444,7 @@ int readLevelVersion(char * name, int * version)
 int readLevelMapUsb(u8 * buf, int size)
 {
 	// Generate toc filename
-	sprintf(membuffer, fMap, MapLoaderState.MapFileName);
+	sprintf(membuffer, fMap, getMapPathPrefix(), MapLoaderState.MapFileName);
 
 	// read
 	return readFile(membuffer, (void*)buf, size) > 0;
@@ -481,7 +461,7 @@ int readLevelBgUsb(u8 * buf, int size)
 	}
 
 	// Generate toc filename
-	sprintf(membuffer, fBg, MapLoaderState.MapFileName);
+	sprintf(membuffer, fBg, getMapPathPrefix(), MapLoaderState.MapFileName);
 
 	// read
 	return readFile(membuffer, (void*)buf, size) > 0;
@@ -491,7 +471,7 @@ int readLevelBgUsb(u8 * buf, int size)
 int getSizeUsb(char * filename)
 {
 	// Generate wad filename
-	sprintf(membuffer, filename, MapLoaderState.MapFileName);
+	sprintf(membuffer, filename, getMapPathPrefix(), MapLoaderState.MapFileName);
 
 	// get file length
 	MapLoaderState.LoadingFileSize = readFileLength(membuffer);
@@ -517,7 +497,7 @@ int openUsb(char * filename)
 	}
 
 	// Generate wad filename
-	sprintf(membuffer, filename, MapLoaderState.MapFileName);
+	sprintf(membuffer, filename, getMapPathPrefix(), MapLoaderState.MapFileName);
 
 	// open wad file
 	rpcUSBopen(membuffer, FIO_O_RDONLY);
@@ -578,16 +558,43 @@ int readUsb(u8 * buf)
 }
 
 //------------------------------------------------------------------------------
+void checkForHostFs(void)
+{
+  char dirpath[64];
+  int fd;
+  
+  useHost = 1;
+  snprintf(dirpath, sizeof(dirpath), "%suya", getMapPathPrefix());
+  
+  // try to open directory on host:
+	rpcUSBdopen(dirpath);
+	rpcUSBSync(0, NULL, &fd);
+
+	// Ensure the dir was opened successfully
+	if (fd < 0)
+	{
+    useHost = 0;
+		return;
+	}
+	
+  // close
+  rpcUSBdclose(fd);
+	rpcUSBSync(0, NULL, NULL);
+}
+
+//------------------------------------------------------------------------------
 void refreshCustomMapList(void)
 {
   int fd, r, i;
-  char* dirpath = "uya";
   const char* versionExt = ".version";
+  char dirpath[64];
   char fullpath[256];
+  char filename[256];
   char buf[64];
   char filenameWithoutExtension[64];
   int versionExtLen = strlen(versionExt);
   iox_dirent_t dirent;
+  io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
   
   // reset
   dataCustomMaps.count = 1;
@@ -600,6 +607,13 @@ void refreshCustomMapList(void)
 #if DSCRPRINT
   clearScrPrintLine();
 #endif
+
+  // check if host fs exists
+  checkForHostFs();
+
+  //
+  snprintf(dirpath, sizeof(dirpath), "%suya", getMapPathPrefix());
+  DPRINTF("dir path %s\n", dirpath);
 
 	// Open
 	rpcUSBdopen(dirpath);
@@ -623,39 +637,45 @@ void refreshCustomMapList(void)
     rpcUSBSync(0, NULL, &r);
     if (r <= 0) break;
 
+    // extract filename
+    // for some reason there's a mixup between if we're using ioman or iomanX
+    // PS2s use iomanX but the emu HLE hostfs thinks we're using ioman
+    if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
+    else strncpy(filename, dirent.name, sizeof(filename));
+
     // we want to parse the .version files
     // check if filename ends with ".version"
-    int len = strlen(dirent.name);
-    if (strncmp(&dirent.name[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
+    int len = strlen(filename);
+    if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
 
     #if DSCRPRINT
-    snprintf(buf, sizeof(buf), "y %s", dirent.name);
+    snprintf(buf, sizeof(buf), "y %s", filename);
     pushScrPrintLine(buf);
     #endif
 
-    DPRINTF("found version %s\n", dirent.name);
+    DPRINTF("found version %s\n", filename);
 
     // parse version file
     CustomMapVersionFileDef_t versionFileDef;
-    snprintf(fullpath, sizeof(fullpath), "%s/%s", dirpath, dirent.name);
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", dirpath, filename);
     int read = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
 
     // ensure version file is valid
     if (read != sizeof(CustomMapVersionFileDef_t))
     {
-      DPRINTF("%s (%d) does not match expected file size %d. Skipping.\n", dirent.name, read, sizeof(CustomMapVersionFileDef_t));
+      DPRINTF("%s (%d) does not match expected file size %d. Skipping.\n", filename, read, sizeof(CustomMapVersionFileDef_t));
       continue;
     }
     
     // compute filename without extension
-    strncpy(filenameWithoutExtension, dirent.name, sizeof(filenameWithoutExtension));
+    strncpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
     len = strlen(filenameWithoutExtension);
     filenameWithoutExtension[len - versionExtLen] = 0;
 
     // ensure version file has matching .world OR .wad
-    snprintf(fullpath, sizeof(fullpath), fWad, filenameWithoutExtension);
+    snprintf(fullpath, sizeof(fullpath), fWad, getMapPathPrefix(), filenameWithoutExtension);
     int fWadLen = readFileLength(fullpath);
-    snprintf(fullpath, sizeof(fullpath), fWorld, filenameWithoutExtension);
+    snprintf(fullpath, sizeof(fullpath), fWorld, getMapPathPrefix(), filenameWithoutExtension);
     int fWorldLen = readFileLength(fullpath);
     if (fWadLen <= 0 && fWorldLen <= 0) continue;
 
@@ -990,8 +1010,6 @@ void onMapLoaderOnlineMenu(void)
 		// enable input
 		padEnableInput();
 
-		uiShowOkDialog("Custom Maps", "Custom maps have been enabled.");
-
 		actionState = ACTION_NONE;
 		LOAD_MODULES_RESULT = 1;
 	}
@@ -1000,7 +1018,7 @@ void onMapLoaderOnlineMenu(void)
 		// enable input
 		padEnableInput();
 		
-		uiShowOkDialog("Custom Maps", "New updates are available. Please download them at https://rac-horizon.com/maps");
+		uiShowOkDialog("Custom Maps", "New updates are available. Please download them at https://rac-horizon.com");
 		actionState = ACTION_MODULES_INSTALLED;
 		LOAD_MODULES_RESULT = 2;
 	}
@@ -1085,7 +1103,7 @@ void runMapLoader(void)
 		MapLoaderState.CheckState = 0;
 
 		// install on login
-		if (config.enableAutoMaps && LOAD_MODULES_RESULT == 0)
+		if (LOAD_MODULES_RESULT == 0)
 		{
 			initialized = 2;
 		}

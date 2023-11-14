@@ -119,7 +119,6 @@ void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
 // tab state handlers
 void tabDefaultStateHandler(TabElem_t* tab, int * state);
 void tabGameSettingsStateHandler(TabElem_t* tab, int * state);
-void tabCustomMapStateHandler(TabElem_t* tab, int * state);
 
 // navigation functions
 void navMenu(TabElem_t* tab, int direction, int loop);
@@ -127,7 +126,6 @@ void navTab(int direction);
 
 // extern
 int mapsGetInstallationResult(void);
-int mapsPromptEnableCustomMaps(void);
 int mapsDownloadingModules(void);
 void refreshCustomMapList(void);
 
@@ -239,7 +237,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler },
-  { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
+  // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if UYA_NTSC
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
@@ -303,11 +301,29 @@ MenuElem_t menuElementsCustomMap[] = {
 TabElem_t tabElements[] = {
   { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
   { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
-  { "Custom Maps", tabCustomMapStateHandler, menuElementsCustomMap, sizeof(menuElementsCustomMap)/sizeof(MenuElem_t) }
 };
 
 const int tabsCount = sizeof(tabElements)/sizeof(TabElem_t);
 
+
+//------------------------------------------------------------------------------
+//---------------------------- GENERAL SETTINGS TAB ----------------------------
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+
+// 
+void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element)
+{
+  // close menu
+  configMenuDisable();
+
+  // send request
+  void * lobbyConnection = netGetLobbyServerConnection();
+  if (lobbyConnection)
+    netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_PATCH, 0, (void*)element);
+}
+
+#endif
 
 //------------------------------------------------------------------------------
 //------------------------------ GAME SETTINGS TAB -----------------------------
@@ -522,88 +538,6 @@ void tabGameSettingsStateHandler(TabElem_t* tab, int * state)
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
   }
 }
-
-//------------------------------------------------------------------------------
-//------------------------------- CUSTOM MAPS TAB ------------------------------
-//------------------------------------------------------------------------------
-void tabCustomMapStateHandler(TabElem_t* tab, int * state)
-{
-  if (isInGame())
-  {
-    *state = ELEMENT_VISIBLE;
-  }
-  else
-  {
-    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
-  }
-}
-
-// 
-void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state)
-{
-  *state = (!isInGame() && mapsGetInstallationResult() == 0) ? (ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE) : ELEMENT_HIDDEN;
-}
-
-// 
-void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state)
-{
-  *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
-  
-  int installResult = mapsGetInstallationResult();
-  switch (installResult)
-  {
-    case 1:
-    {
-      strncpy(element->name, "Custom map modules installed", 40);
-      break;
-    }
-    case 2:
-    {
-      strncpy(element->name, "There are custom map updates available", 40);
-      break;
-    }
-    case 255:
-    {
-      strncpy(element->name, "Error installing custom map modules", 40);
-      break;
-    }
-    default:
-    {
-      *state = ELEMENT_HIDDEN;
-      break;
-    }
-  }
-}
-
-// 
-void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
-{
-  // 
-  if (!isInMenus())
-    return;
-
-  // close menu
-  configMenuDisable();
-
-  // 
-  mapsPromptEnableCustomMaps();
-}
-
-#ifdef DEBUG
-
-// 
-void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element)
-{
-  // close menu
-  configMenuDisable();
-
-  // send request
-  void * lobbyConnection = netGetLobbyServerConnection();
-  if (lobbyConnection)
-    netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_PATCH, 0, (void*)element);
-}
-
-#endif
 
 //------------------------------------------------------------------------------
 void tabDefaultStateHandler(TabElem_t* tab, int * state)
