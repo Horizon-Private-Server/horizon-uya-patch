@@ -171,6 +171,67 @@ void pushScrPrintLine(char* str)
 #endif
 
 //------------------------------------------------------------------------------
+int getMACAddress(u8 output[6])
+{
+  int i;
+  static int hasMACAddress = 0;
+  static u8 macAddress[6];
+  u8 buf[16];
+
+#if UYA_PAL
+  void* cd = (void*)0x001D3CC0;
+  void* net_buf = (void*)0x001D3D00;
+#else
+  void* cd = (void*)0x001D3E40;
+  void* net_buf = (void*)0x001D3E80;
+#endif
+
+  // use cached result
+  // since the MAC address isn't going to change in the lifetime of the patch
+  if (hasMACAddress)
+  {
+    memcpy(output, macAddress, 6);
+    return 1;
+  }
+
+  // sceInetInterfaceControl get physical address
+  int r = netInterfaceControl(cd, net_buf, 1, 13, buf, sizeof(buf));
+  if (r)
+  {
+    memset(output, 0, 6);
+    return 0;
+  }
+
+  //
+  memcpy(macAddress, buf, 6);
+  memcpy(output, buf, 6);
+  DPRINTF("mac %02X:%02X:%02X:%02X:%02X:%02X\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
+  return hasMACAddress = 1;
+}
+
+//------------------------------------------------------------------------------
+void sendMACAddress(void)
+{
+  static int sent = 0;
+  static int stall = 0;
+  u8 mac[6];
+
+  void * connection = netGetLobbyServerConnection();
+  if (!connection) { sent = 0; return; }
+
+  if (sent) return;
+  if (!getMACAddress(mac)) return;
+
+  // stall
+  if (stall) { stall--; return; }
+
+  // send
+  if (netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_MACHINE_ID, sizeof(mac), mac)) { stall = 60; return; }
+  sent = 1;
+  DPRINTF("sent mac\n");
+}
+
+//------------------------------------------------------------------------------
 int runCheckUI(void)
 {
 	if (isInMenus())
@@ -1690,6 +1751,9 @@ int main(void)
 
 	// 
 	onConfigUpdate();
+
+  // 
+  sendMACAddress();
 
 	if(isInGame())
 	{

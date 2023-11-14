@@ -93,6 +93,11 @@ enum CustomMessageId
     CUSTOM_MSG_ID_CLIENT_REQUEST_PATCH = 13,
 
     /*
+     * Sent from the client to the server with the client's machine id (MAC address).
+     */
+    CUSTOM_MSG_ID_CLIENT_SET_MACHINE_ID = 14,
+
+    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,

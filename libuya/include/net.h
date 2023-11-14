@@ -36,4 +36,6 @@ int netBroadcastCustomAppMessage(void * connection, u8 customMsgId, int msgSize,
 void* netGetLobbyServerConnection(void);
 void* netGetDmeServerConnection(void);
 
+int netInterfaceControl(void* cd, void* net_buf, int interface_id, int code, void* ptr, int len);
+
 #endif // _LIBUYA_NET_H_
