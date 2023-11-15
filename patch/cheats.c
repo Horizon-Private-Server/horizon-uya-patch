@@ -1254,3 +1254,49 @@ void healthbars(void)
 	if (hook)
 		HOOK_JAL(hook, &healthbars_Logic);
 }
+
+VariableAddress_t vaRadarBlips_FloatVal = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x004aec24,
+    .Hoven = 0x004b0d3c,
+    .OutpostX12 = 0x004a6614,
+    .KorgonOutpost = 0x004a3dac,
+    .Metropolis = 0x004a30fc,
+    .BlackwaterCity = 0x004a0994,
+    .CommandCenter = 0x004a098c,
+    .BlackwaterDocks = 0x004a320c,
+    .AquatosSewers = 0x004a250c,
+    .MarcadiaPalace = 0x004a1e8c,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x004ac6d4,
+    .Hoven = 0x004ae72c,
+    .OutpostX12 = 0x004a4044,
+    .KorgonOutpost = 0x004a185c,
+    .Metropolis = 0x004a0bac,
+    .BlackwaterCity = 0x0049e3c4,
+    .CommandCenter = 0x0049e57c,
+    .BlackwaterDocks = 0x004a0dbc,
+    .AquatosSewers = 0x004a00fc,
+    .MarcadiaPalace = 0x0049fa3c,
+#endif
+};
+void radarBlips(void)
+{
+	u32 float_dist = GetAddress(&vaRadarBlips_FloatVal);
+	if (*(u32*)float_dist == 0x3c014499) {
+		switch (gameConfig.grRadarBlipsDistance) {
+			case 1: { // Always
+				*(u32*)float_dist = 0x3c017fff;
+				*(u32*)(float_dist + 0x4) = 0x3421ffff;
+				break;
+			}
+			case 2: { // Off
+				*(u32*)float_dist = 0x3c010000;
+				*(u32*)(float_dist + 0x4) = 0x34210000;
+				break;	
+			}
+		}
+	}
+}

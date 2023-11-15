@@ -225,11 +225,16 @@ MenuElem_ListData_t dataPlayerSize = {
     NULL,
     5,
     {
-      "Normal",
-      "Large",
-      "Giant",
-      "Tiny",
-      "Small"
+      "Normal", "Large", "Giant", "Tiny", "Small"
+    }
+};
+
+MenuElem_ListData_t dataRadarBlipsDistance = {
+    &gameConfig.grRadarBlipsDistance,
+    NULL,
+    3,
+    {
+      "Short", "Always", "Off"
     }
 };
 
@@ -260,6 +265,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
   { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
+  { "Radar Blips", listActionHandler, menuStateHandler_Default, &dataRadarBlipsDistance },
   { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer },
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },

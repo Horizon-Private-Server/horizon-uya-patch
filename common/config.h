@@ -20,6 +20,7 @@ typedef struct PatchGameConfig
   char customModeId;
 
   // Game Rules
+  char grRadarBlipsDistance;
   char grRespawnTimer;
   char grDisablePenaltyTimers;
   char grDisableWeaponPacks;

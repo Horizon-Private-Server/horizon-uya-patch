@@ -19,6 +19,7 @@ void noPostHitInvinc(void);
 void onGameplayLoad_disableWeaponCrates(GameplayHeaderDef_t * gameplay);
 void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay);
 void healthbars(void);
+void radarBlips(void);
 
 // Party Game Rules
 void survivor(void);

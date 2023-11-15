@@ -266,6 +266,9 @@ void grGameStart(void)
 	if (gameConfig.grHealthBars)
 		healthbars();
 
+	if (gameConfig.grRadarBlipsDistance)
+		radarBlips();
+
 	FirstPass = 0;
 }
 
