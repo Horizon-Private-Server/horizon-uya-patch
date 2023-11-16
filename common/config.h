@@ -11,6 +11,9 @@ typedef struct PatchConfig
   char playerFov;
   char enableSpectate;
   char alwaysShowHealth;
+  char mapScoreToggle_MapBtn;
+  char mapScoreToggle_ScoreBtn;
+
 } PatchConfig_t;
 
 // Game Rules Tab

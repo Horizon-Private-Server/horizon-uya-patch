@@ -236,6 +236,24 @@ MenuElem_ListData_t dataRadarBlipsDistance = {
     }
 };
 
+MenuElem_ListData_t dataMapScore_MapAccess = {
+    &config.mapScoreToggle_MapBtn,
+    NULL,
+    4,
+    {
+      "Default", "Select", "L3", "R3"
+    }
+};
+
+MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
+    &config.mapScoreToggle_ScoreBtn,
+    NULL,
+    4,
+    {
+      "Default", "Select", "L3", "R3"
+    }
+};
+
 // General
 MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
@@ -253,6 +271,8 @@ MenuElem_t menuElementsGeneral[] = {
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   // { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate },
+  { "Toggle Map Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_MapAccess },
+  { "Toggle Scoreboard Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_ScoreboardAccess },
 };
 
 // Game Settings

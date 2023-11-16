@@ -111,6 +111,8 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.playerFov = 0,
 	.enableSpectate = 0,
 	.alwaysShowHealth = 0,
+	.mapScoreToggle_MapBtn = 0,
+	.mapScoreToggle_ScoreBtn = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1398,6 +1400,59 @@ void patchAlwaysShowHealth(void)
 }
 
 /*
+ * NAME :		patchMapAndScoreboardToggle
+ * 
+ * DESCRIPTION :
+ * 				Lets the player choose how they want to open the
+ * 				Scoreboard or Map (via Select, L3 or R3)
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchMapAndScoreboardToggle(void)
+{
+	static int ShowScoreboard = 1;
+	static int ShowMap = 1;
+	int ScoreboardToggle = 0;
+	int MapToggle = 0;
+
+	switch (config.mapScoreToggle_ScoreBtn) {
+		case 0: ScoreboardToggle = -1; break;
+		case 1: ScoreboardToggle = PAD_SELECT; break;
+		case 2: ScoreboardToggle = PAD_L3; break;
+		case 3: ScoreboardToggle = PAD_R3; break;
+	}
+	switch (config.mapScoreToggle_MapBtn) {
+		case 0: MapToggle = -1; break;
+		case 1: MapToggle = PAD_SELECT; break;
+		case 2: MapToggle = PAD_L3; break;
+		case 3: MapToggle = PAD_R3; break;
+	}
+	// Disable Select Button for Toggling original Map/Scoreboard
+	if (config.mapScoreToggle_MapBtn != 0 && config.mapScoreToggle_ScoreBtn != 0)
+		POKE_U32(GetAddress(&vaMapScore_SelectBtn), 0);
+
+	if (ScoreboardToggle != -1 && padGetButtonDown(0, ScoreboardToggle) > 0) {
+		((void (*)(int, int))GetAddress(&vaMapScore_ScoreboardToggle))(0, ShowScoreboard);
+		ShowScoreboard = !ShowScoreboard;
+	}
+	if (MapToggle != -1 && padGetButtonDown(0, MapToggle) > 0) {
+		((void (*)(int, int))GetAddress(&vaMapScore_MapToggle))(0, ShowMap);
+		ShowMap = !ShowMap;
+	}
+
+	// Scoreboard (Seige/CTF)
+	((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun))(0, 10);
+	// Map (Seige/CTF)
+	((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun))(0, 10);
+}
+
+/*
  * NAME :		runGameStartMessager
  * 
  * DESCRIPTION :
@@ -1796,6 +1851,9 @@ int main(void)
 
 		if (config.alwaysShowHealth)
 			patchAlwaysShowHealth();
+
+		// Patches the Map and Scoreboard for player toggalability!
+		patchMapAndScoreboardToggle();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
