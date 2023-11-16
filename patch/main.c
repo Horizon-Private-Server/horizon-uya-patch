@@ -28,6 +28,7 @@
 #include <libuya/interop.h>
 #include <libuya/utils.h>
 #include <libuya/player.h>
+#include <libuya/map.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -1420,6 +1421,7 @@ void patchMapAndScoreboardToggle(void)
 	static int ShowMap = 1;
 	int ScoreboardToggle = 0;
 	int MapToggle = 0;
+	GameSettings * gameSettings = gameGetSettings();
 
 	switch (config.mapScoreToggle_ScoreBtn) {
 		case 0: ScoreboardToggle = -1; break;
@@ -1433,6 +1435,12 @@ void patchMapAndScoreboardToggle(void)
 		case 2: MapToggle = PAD_L3; break;
 		case 3: MapToggle = PAD_R3; break;
 	}
+
+	// Scoreboard (Seige/CTF)
+	((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun))(0, 10);
+	// Map (Seige/CTF)
+	((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun))(0, 10);
+
 	// Disable Select Button for Toggling original Map/Scoreboard
 	if (config.mapScoreToggle_MapBtn != 0 && config.mapScoreToggle_ScoreBtn != 0)
 		POKE_U32(GetAddress(&vaMapScore_SelectBtn), 0);
@@ -1441,15 +1449,12 @@ void patchMapAndScoreboardToggle(void)
 		((void (*)(int, int))GetAddress(&vaMapScore_ScoreboardToggle))(0, ShowScoreboard);
 		ShowScoreboard = !ShowScoreboard;
 	}
-	if (MapToggle != -1 && padGetButtonDown(0, MapToggle) > 0) {
-		((void (*)(int, int))GetAddress(&vaMapScore_MapToggle))(0, ShowMap);
-		ShowMap = !ShowMap;
+	if (gameSettings->GameLevel <= MAP_ID_BLACKWATER_DOCKS || SelectedCustomMapId > 0) {
+		if (MapToggle != -1 && padGetButtonDown(0, MapToggle) > 0) {
+			((void (*)(int, int))GetAddress(&vaMapScore_MapToggle))(0, ShowMap);
+			ShowMap = !ShowMap;
+		}
 	}
-
-	// Scoreboard (Seige/CTF)
-	((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun))(0, 10);
-	// Map (Seige/CTF)
-	((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun))(0, 10);
 }
 
 /*
