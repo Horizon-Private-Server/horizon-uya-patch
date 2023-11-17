@@ -812,7 +812,7 @@ VariableAddress_t vaHealthBarTimerSaveZero = {
 //================================================
 //=============  patchMapAndScoreboardToggle
 //================================================
-VariableAddress_t vaMapScore_SelectBtn = {
+VariableAddress_t vaMapScore_SelectBtn_Addr = {
 #if UYA_PAL
     .Lobby = 0,
     .Bakisi = 0x005480fc,
@@ -839,7 +839,34 @@ VariableAddress_t vaMapScore_SelectBtn = {
     .MarcadiaPalace = 0x005383d4,
 #endif
 };
-VariableAddress_t vaMapScore_SeigeCTFScoreboard_AlwaysRun = {
+VariableAddress_t vaMapScore_SelectBtn_Val = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0c152ac6,
+    .Hoven = 0x0c153338,
+    .OutpostX12 = 0x0c15096e,
+    .KorgonOutpost = 0x0c14ff28,
+    .Metropolis = 0x0c14fc28,
+    .BlackwaterCity = 0x0c14f222,
+    .CommandCenter = 0x0c14f038,
+    .BlackwaterDocks = 0x0c14fa58,
+    .AquatosSewers = 0x0c14f718,
+    .MarcadiaPalace = 0x0c14f578,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0c15205c,
+    .Hoven = 0x0c15289e,
+    .OutpostX12 = 0x0c14fee4,
+    .KorgonOutpost = 0x0c14f4be,
+    .Metropolis = 0x0c14f1be,
+    .BlackwaterCity = 0x0c14e798,
+    .CommandCenter = 0x0c14e624,
+    .BlackwaterDocks = 0x0c14f034,
+    .AquatosSewers = 0x0c14ed04,
+    .MarcadiaPalace = 0x0c14eb54,
+#endif
+};
+VariableAddress_t vaMapScore_SeigeCTFMap_AlwaysRun = {
 #if UYA_PAL
     .Lobby = 0,
     .Bakisi = 0x004ae978,
@@ -866,7 +893,7 @@ VariableAddress_t vaMapScore_SeigeCTFScoreboard_AlwaysRun = {
     .MarcadiaPalace = 0x0049f790,
 #endif
 };
-VariableAddress_t vaMapScore_SeigeCTFMap_AlwaysRun = {
+VariableAddress_t vaMapScore_SeigeCTFScoreboard_AlwaysRun = {
 #if UYA_PAL
     .Lobby = 0,
     .Bakisi = 0x004b16a8,

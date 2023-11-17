@@ -1422,7 +1422,9 @@ void patchMapAndScoreboardToggle(void)
 	int ScoreboardToggle = 0;
 	int MapToggle = 0;
 	GameSettings * gameSettings = gameGetSettings();
-
+	if (!gameSettings)
+		return;
+	
 	switch (config.mapScoreToggle_ScoreBtn) {
 		case 0: ScoreboardToggle = -1; break;
 		case 1: ScoreboardToggle = PAD_SELECT; break;
@@ -1436,23 +1438,37 @@ void patchMapAndScoreboardToggle(void)
 		case 3: MapToggle = PAD_R3; break;
 	}
 
-	// Scoreboard (Seige/CTF)
-	((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun))(0, 10);
-	// Map (Seige/CTF)
-	((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun))(0, 10);
-
 	// Disable Select Button for Toggling original Map/Scoreboard
-	if (config.mapScoreToggle_MapBtn != 0 && config.mapScoreToggle_ScoreBtn != 0)
-		POKE_U32(GetAddress(&vaMapScore_SelectBtn), 0);
+	if (MapToggle != -1 && ScoreboardToggle != -1)
+		POKE_U32(GetAddress(&vaMapScore_SelectBtn_Addr), 0);
+	else
+		POKE_U32(GetAddress(&vaMapScore_SelectBtn_Addr), GetAddress(&vaMapScore_SelectBtn_Val));
 
-	if (ScoreboardToggle != -1 && padGetButtonDown(0, ScoreboardToggle) > 0) {
-		((void (*)(int, int))GetAddress(&vaMapScore_ScoreboardToggle))(0, ShowScoreboard);
-		ShowScoreboard = !ShowScoreboard;
+	// If Scoreboard Button Toggle isn't set to "Default"
+	if (ScoreboardToggle != -1) {
+		// Run Scoreboard Main Logic
+		((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun))(0, 10);
+	
+		// if Scoreboard's chosen button is pressed
+		if (padGetButtonDown(0, ScoreboardToggle) > 0) {
+			((void (*)(int, int))GetAddress(&vaMapScore_ScoreboardToggle))(0, ShowScoreboard);
+			ShowScoreboard = !ShowScoreboard;
+		}
 	}
+	// Check to see if Level ID is less than or equal to blackwater docks, or if not on custom map.
+	// This is due to Aquatos and Marcadia not having a mini-map.
 	if (gameSettings->GameLevel <= MAP_ID_BLACKWATER_DOCKS || SelectedCustomMapId > 0) {
-		if (MapToggle != -1 && padGetButtonDown(0, MapToggle) > 0) {
-			((void (*)(int, int))GetAddress(&vaMapScore_MapToggle))(0, ShowMap);
-			ShowMap = !ShowMap;
+		// If Maps Button Toggle isn't set to "Default"
+		if (MapToggle != -1) {
+			// Run Map Main Logic only if gametype is deathmatch.
+			if (gameSettings->GameType == GAMERULE_DM)
+				((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun))(0, 10);
+
+			// if Maps chosen button is pressed
+			if (padGetButtonDown(0, MapToggle) > 0) {
+				((void (*)(int, int))GetAddress(&vaMapScore_MapToggle))(0, ShowMap);
+				ShowMap = !ShowMap;
+			}
 		}
 	}
 }
