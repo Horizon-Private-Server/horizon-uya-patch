@@ -1131,7 +1131,9 @@ typedef struct Player {
 	float stickRawAngle;									// 0x246C
 	char unk_2470[0x6];
 	char Health;											// 0x2476
-	char unk_2477[0xd];
+	char unk_2477[0x9];
+	short unk_2480;	 // Used if Flag is held
+	short unk_2482;											// 0x2482
 	float skidDeceleration;									// 0x2484
 	int mtxFxActive;										// 0x2488
 	float analogStickStrength;								// 0x248C

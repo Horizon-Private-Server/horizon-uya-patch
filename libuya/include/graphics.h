@@ -95,13 +95,64 @@ typedef struct ScreenVBEffect { // 0x34
 	/* 0x24 */ int B_lines;
 	/* 0x28 */ u32 B_color;
 	/* 0x2c */ u64 B_alpha;
-} ScreenVBEffect_t;
+} ScreenVBEffect;
 
 typedef struct ScreenInsertEffect { // 0x10
 	/* 0x0 */ int enabled;
 	/* 0x4 */ u32 color;
 	/* 0x8 */ u64 alpha;
-} ScreenInsertEffect_t;
+} ScreenInsertEffect;
+
+typedef struct ViewContext { // 0x270
+	/* 0x000 */ int headerBase[6][4];
+	/* 0x060 */ u64 headerTex;
+	/* 0x070 */ u64 headerTexNoFog;
+	/* 0x080 */ u64 headerGr;
+	/* 0x090 */ u64 headerGrNoFog;
+	/* 0x0a0 */ float D;
+	/* 0x0a4 */ float F;
+	/* 0x0a8 */ float xclipratio;
+	/* 0x0ac */ float yclipratio;
+	/* 0x0b0 */ float xratio;
+	/* 0x0b4 */ float yratio;
+	/* 0x0b8 */ float xradpad;
+	/* 0x0bc */ float yradpad;
+	/* 0x0c0 */ MATRIX fMtx;
+	/* 0x100 */ MATRIX nfMtx;
+	/* 0x140 */ MATRIX hMtx;
+	/* 0x180 */ VECTOR hmgScale;
+	/* 0x190 */ VECTOR ihmgScale;
+	/* 0x1a0 */ VECTOR hvdf;
+	/* 0x1b0 */ VECTOR unSquish;
+	/* 0x1c0 */ VECTOR guard;
+	/* 0x1d0 */ VECTOR iguard;
+	/* 0x1e0 */ VECTOR sphereCheckA;
+	/* 0x1f0 */ VECTOR sphereCheckB;
+	/* 0x200 */ VECTOR sphereCheckC;
+	/* 0x210 */ float xpix;
+	/* 0x214 */ float ypix;
+	/* 0x218 */ float xclip;
+	/* 0x21c */ float yclip;
+	/* 0x220 */ float fog0;
+	/* 0x224 */ float fog1;
+	/* 0x228 */ float fogNearDist;
+	/* 0x22c */ float fogFarDist;
+	/* 0x230 */ float fogMult;
+	/* 0x234 */ float fogAdd;
+	/* 0x238 */ float fogNearIntensity;
+	/* 0x23c */ float fogFarIntensity;
+	/* 0x240 */ int scis_l;
+	/* 0x244 */ int scis_r;
+	/* 0x248 */ int scis_t;
+	/* 0x24c */ int scis_b;
+	/* 0x250 */ int fogR;
+	/* 0x254 */ int fogG;
+	/* 0x258 */ int fogB;
+	/* 0x25c */ int backR;
+	/* 0x260 */ int backG;
+	/* 0x264 */ int backB;
+	/* 0x268 */ int splitScreenMode;
+} ViewContext;
 
 /*
  * NAME :		drawFunction
@@ -219,5 +270,10 @@ void gfxSetupGifPaging(int);
 u64 gfxGetFrameTex(int id);
 u64 gfxGetEffectTex(int id, int);
 void gfxDrawSprite(float x, float y, float w, float h, int t0, int t1, int texW, int texH, u64 color, u64 texture);
+
+//
+ScreenVBEffect* gfxScreenVBEffect(void);
+ScreenInsertEffect* gfxScreenInsertEffect(void);
+ViewContext* gfxViewContext(void);
 
 #endif // _LIBUYA_GRAPHICS_H_

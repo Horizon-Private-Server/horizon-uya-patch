@@ -297,7 +297,7 @@ VariableAddress_t vaShieldTriggerVars = {
 	.MarcadiaPalace = 0x00247808,
 #endif
 };
-u32 mobyGetShieldVars(void)
+ShieldVars* mobyGetShieldVars(void)
 {
-	return (ShieldVars*)GetAddress(&vaShieldTriggerVars);
+	return GetAddress(&vaShieldTriggerVars);
 }

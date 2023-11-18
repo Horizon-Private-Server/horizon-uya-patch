@@ -10,10 +10,12 @@
 #define IS_WIDESCREEN                       (*(char*)0x001a5a3d)
 #endif
 
-#define SCREEN_VISIBOMB_EFFECT              ((ScreenVBEffect_t*)0x00242624)
-#define SCREEN_INSERT_EFFECT                ((ScreenInsertEffect_t*)0x002426A0)
+#define SCREEN_VISIBOMB_EFFECT              ((ScreenVBEffect*)0x00242624)
+#define SCREEN_INSERT_EFFECT                ((ScreenInsertEffect*)0x002426A0)
 #define SHELL_CIRCLE_COS                    (0x00242920) // part of struct FXUtilsInterface
 #define SHELL_CIRCLE_SIN                    (0x00242950) // part of struct FXUtilsInterface
+
+#define VIEW_CONTEXT                        ((ViewContext*)GetAddress(&vaViewContext))
 
 int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
 void internal_drawBox(void *, void *);
@@ -271,6 +273,34 @@ VariableAddress_t vaDrawSprite = {
 #endif
 };
 
+VariableAddress_t vaViewContext = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00259900,
+    .Hoven = 0x00259a40,
+    .OutpostX12 = 0x00259940,
+    .KorgonOutpost = 0x002597c0,
+    .Metropolis = 0x00259800,
+    .BlackwaterCity = 0x002597c0,
+    .CommandCenter = 0x00259380,
+    .BlackwaterDocks = 0x002594c0,
+    .AquatosSewers = 0x00259500,
+    .MarcadiaPalace = 0x00259480,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x00259A80,
+    .Hoven = 0x00259bc0,
+    .OutpostX12 = 0x00259ac0,
+    .KorgonOutpost = 0x00259940,
+    .Metropolis = 0x00259980,
+    .BlackwaterCity = 0x00259940,
+    .CommandCenter = 0x00259500,
+    .BlackwaterDocks = 0x00259640,
+    .AquatosSewers = 0x00259680,
+    .MarcadiaPalace = 0x00259600,
+#endif
+};
+
 //--------------------------------------------------------
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 {
@@ -495,4 +525,17 @@ void gfxOcclusion(int OnOff)
     };
     // int OnOff = (OnOff == 1) ? 2 : OnOff;
     *(u32*)GetAddress(&vaOcclusionAddr) = OnOff;
+}
+
+ScreenVBEffect* gfxScreenVBEffect(void)
+{
+    return SCREEN_VISIBOMB_EFFECT;
+}
+ScreenInsertEffect* gfxScreenInsertEffect(void)
+{
+    return SCREEN_INSERT_EFFECT;
+}
+ViewContext* gfxViewContext(void)
+{
+    return VIEW_CONTEXT;
 }
