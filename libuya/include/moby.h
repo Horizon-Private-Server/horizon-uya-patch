@@ -681,5 +681,6 @@ int flagIsOnSafeGround(Moby* flagMoby);
 int flagIsAtBase(Moby* flagMoby);
 void flagReturnToBase(Moby* flagMoby, int a0, char returnedByPlayerIdx);
 void flagPickup(Moby* flagMoby, int playerIdx);
+void flagUpdate(Moby*, int a1);
 
 #endif // _LIBUYA_MOBY_H_
