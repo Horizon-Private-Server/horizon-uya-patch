@@ -119,6 +119,16 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 PatchGameConfig_t gameConfig;
 PatchGameConfig_t gameConfigHostBackup;
 
+struct FlagPVars
+{
+	VECTOR BasePosition;
+	short CarrierIdx;
+	short LastCarrierIdx;
+	short Team;
+	char UNK_16[6];
+	int TimeFlagDropped;
+};
+
 //------------------------------------------------------------------------------
 int onServerDownloadDataRequest(void * connection, void * data)
 {

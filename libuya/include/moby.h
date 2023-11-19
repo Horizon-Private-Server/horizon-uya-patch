@@ -664,4 +664,22 @@ Moby* mobyGetByGuberUid(u32 uid);
  */
 ShieldVars* mobyGetShieldVars(void);
 
+/*
+ * NAME :		flagIsOnSafeGround
+ * DESCRIPTION :
+ * 				Returns zero if not on safe ground. -1: default return.
+ * NOTES :
+ * ARGS : 		Moby* flagMoby
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int flagIsOnSafeGround(Moby* flagMoby);
+
+int flagIsReturning(Moby* flagMoby);
+int flagIsBeingPickedUp(Moby* flagMoby);
+int flagIsOnSafeGround(Moby* flagMoby);
+int flagIsAtBase(Moby* flagMoby);
+void flagReturnToBase(Moby* flagMoby, int a0, char returnedByPlayerIdx);
+void flagPickup(Moby* flagMoby, int playerIdx);
+
 #endif // _LIBUYA_MOBY_H_

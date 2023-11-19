@@ -301,3 +301,184 @@ ShieldVars* mobyGetShieldVars(void)
 {
 	return GetAddress(&vaShieldTriggerVars);
 }
+
+VariableAddress_t vaFlagUpdate_Func = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00430608,
+    .Hoven = 0x00432060,
+    .OutpostX12 = 0x00428f90,
+    .KorgonOutpost = 0x00426b38,
+    .Metropolis = 0x00425e90,
+    .BlackwaterCity = 0x00421cf8,
+    .CommandCenter = 0x00426488,
+    .BlackwaterDocks = 0x00428cd8,
+    .AquatosSewers = 0x00427ff0,
+    .MarcadiaPalace = 0x00427958,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0042fb80,
+    .Hoven = 0x00431510,
+    .OutpostX12 = 0x00428458,
+    .KorgonOutpost = 0x004260a8,
+    .Metropolis = 0x00425408,
+    .BlackwaterCity = 0x00421228,
+    .CommandCenter = 0x00425ad8,
+    .BlackwaterDocks = 0x00428310,
+    .AquatosSewers = 0x00427640,
+    .MarcadiaPalace = 0x00426f90,
+#endif
+};
+VariableAddress_t vaFlagIsAtBase_Func = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x004305b0,
+    .Hoven = 0x00432008,
+    .OutpostX12 = 0x00428f38,
+    .KorgonOutpost = 0x00426ae0,
+    .Metropolis = 0x00425e38,
+    .BlackwaterCity = 0x00421ca0,
+    .CommandCenter = 0x00426430,
+    .BlackwaterDocks = 0x00428c80,
+    .AquatosSewers = 0x00427f98,
+    .MarcadiaPalace = 0x00427900,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0042fb28,
+    .Hoven = 0x004314b8,
+    .OutpostX12 = 0x00428400,
+    .KorgonOutpost = 0x00426050,
+    .Metropolis = 0x004253b0,
+    .BlackwaterCity = 0x004211d0,
+    .CommandCenter = 0x00425a80,
+    .BlackwaterDocks = 0x004282b8,
+    .AquatosSewers = 0x004275e8,
+    .MarcadiaPalace = 0x00426f38,
+#endif
+};
+VariableAddress_t vaFlagReturnToBase_Func = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00430100,
+    .Hoven = 0x00431b58,
+    .OutpostX12 = 0x00428a88,
+    .KorgonOutpost = 0x00426630,
+    .Metropolis = 0x00425988,
+    .BlackwaterCity = 0x004217f0,
+    .CommandCenter = 0x00425f80,
+    .BlackwaterDocks = 0x004287d0,
+    .AquatosSewers = 0x00427ae8,
+    .MarcadiaPalace = 0x00427450,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0042f678,
+    .Hoven = 0x00431008,
+    .OutpostX12 = 0x00427f50,
+    .KorgonOutpost = 0x00425ba0,
+    .Metropolis = 0x00424f00,
+    .BlackwaterCity = 0x00420d20,
+    .CommandCenter = 0x004255d0,
+    .BlackwaterDocks = 0x00427e08,
+    .AquatosSewers = 0x00427138,
+    .MarcadiaPalace = 0x00426a88,
+#endif
+};
+VariableAddress_t vaFlagIsReturning_Func = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x004300d8,
+    .Hoven = 0x00431b30,
+    .OutpostX12 = 0x00428a60,
+    .KorgonOutpost = 0x00426608,
+    .Metropolis = 0x00425960,
+    .BlackwaterCity = 0x004217c8,
+    .CommandCenter = 0x00425f58,
+    .BlackwaterDocks = 0x004287a8,
+    .AquatosSewers = 0x00427ac0,
+    .MarcadiaPalace = 0x00427428,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0042f650,
+    .Hoven = 0x00430fe0,
+    .OutpostX12 = 0x00427f28,
+    .KorgonOutpost = 0x00425b78,
+    .Metropolis = 0x00424ed8,
+    .BlackwaterCity = 0x00420cf8,
+    .CommandCenter = 0x004255a8,
+    .BlackwaterDocks = 0x00427de0,
+    .AquatosSewers = 0x00427110,
+    .MarcadiaPalace = 0x00426a60,
+#endif
+};
+VariableAddress_t vaFlagPickup_Func = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00430100,
+    .Hoven = 0x00431b58,
+    .OutpostX12 = 0x00428a88,
+    .KorgonOutpost = 0x00426630,
+    .Metropolis = 0x00425988,
+    .BlackwaterCity = 0x004217f0,
+    .CommandCenter = 0x00425f80,
+    .BlackwaterDocks = 0x004287d0,
+    .AquatosSewers = 0x00427ae8,
+    .MarcadiaPalace = 0x00427450,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0042f608,
+    .Hoven = 0x00431008,
+    .OutpostX12 = 0x00427f50,
+    .KorgonOutpost = 0x00425ba0,
+    .Metropolis = 0x00424f00,
+    .BlackwaterCity = 0x00420d20,
+    .CommandCenter = 0x004255d0,
+    .BlackwaterDocks = 0x00427e08,
+    .AquatosSewers = 0x00427138,
+    .MarcadiaPalace = 0x00426a88,
+#endif
+};
+VariableAddress_t vaFlagIsBeingPickedUp_Func = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00430068,
+    .Hoven = 0x00431ac0,
+    .OutpostX12 = 0x004289f0,
+    .KorgonOutpost = 0x00426598,
+    .Metropolis = 0x004258f0,
+    .BlackwaterCity = 0x00421758,
+    .CommandCenter = 0x00425ee8,
+    .BlackwaterDocks = 0x00428738,
+    .AquatosSewers = 0x00427a50,
+    .MarcadiaPalace = 0x004273b8,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0042f5e0,
+    .Hoven = 0x00430f70,
+    .OutpostX12 = 0x00427eb8,
+    .KorgonOutpost = 0x00425b08,
+    .Metropolis = 0x00424e68,
+    .BlackwaterCity = 0x00420c88,
+    .CommandCenter = 0x00425538,
+    .BlackwaterDocks = 0x00427d70,
+    .AquatosSewers = 0x004270a0,
+    .MarcadiaPalace = 0x004269f0,
+#endif
+};
+
+int flagIsOnSafeGround(Moby* flagMoby)
+{
+	int hotspots = CollHotspot();
+	switch (hotspots) {
+		case 0:
+		case 1:
+		case 3:
+		case 5:
+		case 6:
+		case 8:
+		case 11:
+		case 12:
+		case 13:
+			return 0;
+	}
+	return hotspots;
+}

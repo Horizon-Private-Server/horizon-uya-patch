@@ -418,3 +418,13 @@ FUNCTION(timerGetSystemTime, 0x0012dcb0)
 #--------------------------------------------------------
 VARIABLE_FUNCTION(collLine_Fix, vaCollLineFix)
 VARIABLE_FUNCTION(CollHotspot, vaCollHotspot)
+
+#--------------------------------------------------------
+#------------------------ FLAG --------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(flagIsBeingPickedUp, vaFlagIsBeingPickedUp_Func)
+VARIABLE_FUNCTION(flagPickup, vaFlagPickup_Func)
+VARIABLE_FUNCTION(flagIsReturning, vaFlagIsReturning_Func)
+VARIABLE_FUNCTION(flagReturnToBase, vaFlagReturnToBase_Func)
+VARIABLE_FUNCTION(flagIsAtBase, vaFlagIsAtBase_Func)
+VARIABLE_FUNCTION(flagUpdate, vaFlagUpdate_Func)
