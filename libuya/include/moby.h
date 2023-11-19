@@ -662,6 +662,6 @@ Moby* mobyGetByGuberUid(u32 uid);
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-u32 mobyGetShieldVars(void);
+ShieldVars* mobyGetShieldVars(void);
 
 #endif // _LIBUYA_MOBY_H_

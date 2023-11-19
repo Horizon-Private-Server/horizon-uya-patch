@@ -29,4 +29,6 @@
  */
 int collLine_Fix(VECTOR from, VECTOR to, u64 hitFlag, Moby * moby, u64 t0);
 
+int CollHotspot(void);
+
 #endif // _LIBUYA_COLLISION_H_
