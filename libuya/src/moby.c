@@ -480,5 +480,5 @@ int flagIsOnSafeGround(Moby* flagMoby)
 		case 13:
 			return 0;
 	}
-	return hotspots;
+	return 1;
 }
