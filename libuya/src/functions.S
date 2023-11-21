@@ -408,6 +408,7 @@ VARIABLE_FUNCTION(musicTransitionTrack, vaTransitionTrackFunc)
 VARIABLE_FUNCTION(guberGetObjectByUID, vaGuberGetObjectByUID)
 VARIABLE_FUNCTION(guberGetObjectByMoby, vaGuberGetObjectByMoby)
 VARIABLE_FUNCTION(guberEventCreate, vaGuberEventCreate)
+VARIABLE_FUNCTION(guberGetUID, vaGuberGetUID)
 
 #--------------------------------------------------------
 #------------------------- TIME -------------------------

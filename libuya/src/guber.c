@@ -93,6 +93,34 @@ VariableAddress_t vaGuberGetObjectByMoby = {
 #endif
 };
 
+VariableAddress_t vaGuberGetUID = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x004ef678,
+    .Hoven = 0x004f1790,
+    .OutpostX12 = 0x004e7068,
+    .KorgonOutpost = 0x004e4800,
+    .Metropolis = 0x004e3b50,
+    .BlackwaterCity = 0x004e13e8,
+    .CommandCenter = 0x004e13b0,
+    .BlackwaterDocks = 0x004e3c30,
+    .AquatosSewers = 0x004e2f30,
+    .MarcadiaPalace = 0x004e28b0,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x004ecf58,
+    .Hoven = 0x004eefb0,
+    .OutpostX12 = 0x004e48c8,
+    .KorgonOutpost = 0x004e20e0,
+    .Metropolis = 0x004e1430,
+    .BlackwaterCity = 0x004dec48,
+    .CommandCenter = 0x004dedd0,
+    .BlackwaterDocks = 0x004e1610,
+    .AquatosSewers = 0x004e0950,
+    .MarcadiaPalace = 0x004e0290,
+#endif
+};
+
 VariableAddress_t vaMasterList = {
 #if UYA_PAL
     .Lobby = 0,
