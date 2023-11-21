@@ -105,6 +105,7 @@ typedef struct GuberEvent
 } GuberEvent;
 
 __LIBUYA_GETTER__ GuberMoby * guberMobyGetFirst(void);
+Guber * guberGetObjectByUID(u32 uid);
 Guber * guberGetObjectByMoby(Moby* moby);
 GuberEvent * guberEventCreate(Guber * guber, int eventId, int arg3, int arg4);
 

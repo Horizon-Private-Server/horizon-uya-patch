@@ -37,6 +37,34 @@ VariableAddress_t vaGuberEventCreate = {
 #endif
 };
 
+VariableAddress_t vaGuberGetObjectByUID = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x004ef0d0,
+    .Hoven = 0x004f11e8,
+    .OutpostX12 = 0x004e6ac0,
+    .KorgonOutpost = 0x004e4258,
+    .Metropolis = 0x004e35a8,
+    .BlackwaterCity = 0x004e0e40,
+    .CommandCenter = 0x004e0e08,
+    .BlackwaterDocks = 0x004e3688,
+    .AquatosSewers = 0x004e2988,
+    .MarcadiaPalace = 0x004e2308,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x004ec9b0,
+    .Hoven = 0x004eea08,
+    .OutpostX12 = 0x004e4320,
+    .KorgonOutpost = 0x004e1b38,
+    .Metropolis = 0x004e0e88,
+    .BlackwaterCity = 0x004de6a0,
+    .CommandCenter = 0x004de828,
+    .BlackwaterDocks = 0x004e1068,
+    .AquatosSewers = 0x004e03a8,
+    .MarcadiaPalace = 0x004dfce8,
+#endif
+};
+
 VariableAddress_t vaGuberGetObjectByMoby = {
 #if UYA_PAL
 	.Lobby = 0,
