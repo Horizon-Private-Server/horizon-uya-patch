@@ -428,3 +428,10 @@ VARIABLE_FUNCTION(flagIsReturning, vaFlagIsReturning_Func)
 VARIABLE_FUNCTION(flagReturnToBase, vaFlagReturnToBase_Func)
 VARIABLE_FUNCTION(flagIsAtBase, vaFlagIsAtBase_Func)
 VARIABLE_FUNCTION(flagUpdate, vaFlagUpdate_Func)
+
+#--------------------------------------------------------
+#------------------------ MASTER ------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(masterGet, vaGetMaster)
+VARIABLE_FUNCTION(masterCreate, vaCreateMaster)
+VARIABLE_FUNCTION(masterDelete, vaDeleteMaster)

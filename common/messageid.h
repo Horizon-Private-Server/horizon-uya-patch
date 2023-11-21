@@ -98,6 +98,11 @@ enum CustomMessageId
     CUSTOM_MSG_ID_CLIENT_SET_MACHINE_ID = 14,
 
     /*
+     * Sent from a client to the host when they pick up the flag.
+     */
+    CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP = 15,
+
+    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,
@@ -124,5 +129,12 @@ typedef struct ClientSetGameConfig
   PatchGameConfig_t GameConfig;
   CustomMapDef_t CustomMap;
 } ClientSetGameConfig_t;
+
+typedef struct ClientRequestPickUpFlag
+{
+    int GameTime;
+    int PlayerId;
+    u32 FlagUID;
+} ClientRequestPickUpFlag_t;
 
 #endif // _MESSAGEID_H_

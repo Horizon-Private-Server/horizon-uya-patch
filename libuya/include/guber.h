@@ -37,40 +37,48 @@ typedef struct Guber
 {
     union
     {
-        Gid GID;
         u32 UID;
+        Gid GID;
     } Id;
 
-    int MasterHostId;
-    int State;
-    struct Guber * Next;
-    struct Guber * Prev;
-    void * Vtable;
-    char unk_18[0x8];
+/* 0x04 */ int MasterHostId;
+/* 0x08 */ int State;
+/* 0x0c */ struct Guber * Prev;
+/* 0x10 */ struct Guber * Next;
+/* 0x14 */ void * Vtable;
 } Guber;
 
-typedef struct GuberMoby
-{
-    Guber Guber;
-    Moby * Moby;
-    short ModeBits;
-    u8 PADDING_0[2];
-    void * UpdateFunc;
-    int ClientUpdateTime;
-    int TeamNum;
-    int EnableAutoMigrateMaster;
-    int LastMasterMigrateTime;
-    int CurrentMaster;
-    int NextMaster;
-    int MasterTransferTime;
-    int LastMasterMessageTime;
-    int MasterHandler;
-    int AssignedMaster;
-    int LastAssignedTransferMaster;
-    char LastMessageNum;
-    char MessageNum;
-    u8 PADDING_1[2];
+typedef struct GuberMoby { // 0x54
+/* 0x00 */ Guber Guber;
+/* 0x18 */ Moby * Moby;
+/* 0x1c */ short ModeBits;
+/* 0x1e */ short pad_1e;
+/* 0x20 */ void * Update;
+/* 0x24 */ int ClientUpdateTime;
+/* 0x28 */ int TeamNum;
+/* 0x2c */ int EnableAutoMigrateMaster;
+/* 0x30 */ int LastMasterMigrateTime;
+/* 0x34 */ int CurrentMaster;
+/* 0x38 */ int NextMaster;
+/* 0x3c */ int MasterTransferTime;
+/* 0x40 */ int LastMasterMessageTime;
+/* 0x44 */ int MasterHandler;
+/* 0x48 */ int AssignedMaster;
+/* 0x4c */ int LastAssignedTransferMaster;
+/* 0x50 */ char LastMessageNum;
+/* 0x51 */ char MessageNum;
+/* 0x52 */ short pad_52;
 } GuberMoby;
+
+typedef struct Master {
+    u32 UID;
+    struct Master* Prev;
+    struct Master* Next;
+    void* vtable;
+    Moby* Moby;
+    void* Update;
+    int pad;
+} Master;
 
 typedef struct NetEvent
 {
@@ -96,7 +104,12 @@ typedef struct GuberEvent
     void * NextEvent;
 } GuberEvent;
 
+__LIBUYA_GETTER__ GuberMoby * guberMobyGetFirst(void);
 Guber * guberGetObjectByMoby(Moby* moby);
 GuberEvent * guberEventCreate(Guber * guber, int eventId, int arg3, int arg4);
+
+Master * masterGet(u32 uid);
+Master * masterCreate(void * object, int sendCreateMsg);
+Master * masterDelete(void * master);
 
 #endif // _LIBUYA_GUBER_H_

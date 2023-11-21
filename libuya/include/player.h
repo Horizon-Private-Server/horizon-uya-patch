@@ -1008,6 +1008,7 @@ typedef struct PadStream { // 0x1e0
  */
 typedef struct Player {
 	struct Guber Guber;										// 0x00
+	int padding[1];											// 0x18
 	MATRIX Water;											// 0x20
 	MATRIX Terrain;											// 0x60
 	VECTOR PlayerPosition;                                  // 0xA0
