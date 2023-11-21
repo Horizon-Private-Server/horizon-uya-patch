@@ -43,6 +43,7 @@ typedef struct PatchGameConfig
   char grVampire;
   char grFluxShotsAlwaysHit;
   char grFluxNikingDisabled;
+  char grFlagHotspots;
 
   // Party
   char prSurvivor;

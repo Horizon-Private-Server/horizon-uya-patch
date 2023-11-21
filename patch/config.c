@@ -299,6 +299,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups },
   { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones },
   { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets },
+  { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots },
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
@@ -505,7 +506,7 @@ void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int*
   if (!gs || gs->GameType == GAMERULE_DM)
     *state = ELEMENT_HIDDEN;
   else
-    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+    *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state)

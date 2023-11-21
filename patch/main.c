@@ -1740,21 +1740,7 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
 	}
 	return sizeof(ClientRequestPickUpFlag_t);
 }
-/*
- * NAME :		customFlagLogic_hotspot
- * 
- * DESCRIPTION :
- * 			Returns flag if not on ground.
- * 
- * NOTES :
- * 
- * ARGS : 
- * 
- * RETURN :
- * 
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void customFlagLogic_hotspot(Moby* flagMoby, int a1)
+void flagHotspots(Moby* flagMoby)
 {
 	int i;
 	Player** players = playerGetAll();
@@ -1773,6 +1759,27 @@ void customFlagLogic_hotspot(Moby* flagMoby, int a1)
 			return;
 		}
 	}
+}
+/*
+ * NAME :		customFlagLogic_hotspot
+ * 
+ * DESCRIPTION :
+ * 			Returns flag if not on ground.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void customFlagLogic_temporary(Moby* flagMoby, int a1)
+{
+	// Allows the flag to respawn if landing on bad ground.
+	if (gameConfig.grFlagHotspots)
+		flagHotspots(flagMoby);
+
 	// run normal flag update function
 	flagUpdate(flagMoby, a1);
 }
@@ -1815,10 +1822,10 @@ void patchCTFFlag(void)
 				case MOBY_ID_CTF_BLUE_FLAG:
 				{
 					// customFlagLogic(gm->Moby);
-					// gm->Update = &customFlagLogic_hotspot;
+					// gm->Update = &customFlagLogic_temporary;
 					// Replace main update function pointer with our own.
 					Master * master = masterGet(gm->Guber.Id.UID);
-					master->Update = &customFlagLogic_hotspot;
+					master->Update = &customFlagLogic_temporary;
 
 					break;
 				}
@@ -2178,8 +2185,8 @@ int main(void)
 	// 
 	onConfigUpdate();
 
-  // 
-  sendMACAddress();
+	// 
+	sendMACAddress();
 
 	if(isInGame())
 	{
@@ -2202,7 +2209,7 @@ int main(void)
 		patchDeathBarrierBug();
 
 		// Patch CTF Flag Logic with our own.
-		// patchCTFFlag();
+		patchCTFFlag();
 
 		// Patch Flux Niking
 		if (gameConfig.grFluxNikingDisabled)
