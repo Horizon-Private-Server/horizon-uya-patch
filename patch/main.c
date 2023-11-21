@@ -1485,6 +1485,19 @@ void patchMapAndScoreboardToggle(void)
 	}
 }
 
+/*
+ * NAME :		flagHandlePickup
+ * 
+ * DESCRIPTION :
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
 void flagHandlePickup(Moby* flagMoby, int pIdx)
 {
 	Player** players = playerGetAll();
@@ -1583,7 +1596,7 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
  * 
  * RETURN :
  * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void customFlagLogic(Moby* flagMoby)
 {
@@ -1625,10 +1638,10 @@ void customFlagLogic(Moby* flagMoby)
 	}
 
 	// if flag didn't land on safe ground, return flag.
-	// if (!flagIsOnSafeGround(flagMoby)) {
-	// 	flagReturnToBase(flagMoby, 0, 0xFF);
-	// 	return;
-	// }
+	if (!flagIsOnSafeGround(flagMoby)) {
+		flagReturnToBase(flagMoby, 0, 0xFF);
+		return;
+	}
 
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		Player* player = players[i];
@@ -1725,10 +1738,58 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
 		Moby* flagMoby = gm->Moby;
 		flagHandlePickup(flagMoby, msg.PlayerId);
 	}
-
 	return sizeof(ClientRequestPickUpFlag_t);
 }
+/*
+ * NAME :		customFlagLogic_hotspot
+ * 
+ * DESCRIPTION :
+ * 			Returns flag if not on ground.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void customFlagLogic_hotspot(Moby* flagMoby, int a1)
+{
+	int i;
+	Player** players = playerGetAll();
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		Player* player = players[i];
+		if (!player || !player->IsLocal)
+			continue;
+		
+		// if flag is held
+		if (players[i]->FlagMoby)
+			continue;
 
+		// if flag is not on safeground and is not at the base
+		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby)) {
+			flagReturnToBase(flagMoby, 0, 0xff);
+			return;
+		}
+	}
+	// run normal flag update function
+	flagUpdate(flagMoby, a1);
+}
+/*
+ * NAME :		patchCTFFlag
+ * 
+ * DESCRIPTION :
+ * 			Patch CTF Flag update function with our own
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 void patchCTFFlag(void)
 {
 	VECTOR t;
@@ -1738,13 +1799,13 @@ void patchCTFFlag(void)
 	if (!isInGame())
 		return;
 
-	netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
+	// netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
 
-	u32 FlagFunc = GetAddress(&vaFlagUpdate_Func);
-	if (FlagFunc){
-		*(u32*)FlagFunc = 0x03e00008;
-		*(u32*)(FlagFunc + 0x4) = 0x0000102D;
-	}
+	// u32 FlagFunc = GetAddress(&vaFlagUpdate_Func);
+	// if (FlagFunc){
+	// 	*(u32*)FlagFunc = 0x03e00008;
+	// 	*(u32*)(FlagFunc + 0x4) = 0x0000102D;
+	// }
 
 	GuberMoby* gm = guberMobyGetFirst();
 	while (gm) {
@@ -1753,10 +1814,11 @@ void patchCTFFlag(void)
 				case MOBY_ID_CTF_RED_FLAG:
 				case MOBY_ID_CTF_BLUE_FLAG:
 				{
-					customFlagLogic(gm->Moby);
-					// gm->Update = &customFlagLogic;
-					// Master * master = masterGet(gm->Guber.Id.UID);
-					// master->Update = 0;
+					// customFlagLogic(gm->Moby);
+					// gm->Update = &customFlagLogic_hotspot;
+					// Replace main update function pointer with our own.
+					Master * master = masterGet(gm->Guber.Id.UID);
+					master->Update = &customFlagLogic_hotspot;
 
 					break;
 				}
@@ -1764,7 +1826,6 @@ void patchCTFFlag(void)
 		}
 		gm = (GuberMoby*)gm->Guber.Next;
 	}
-	return;
 }
 
 /*
