@@ -135,6 +135,9 @@ u32 onGameplayLoad(void* a0, long a1)
 		"move %0, $s6"
 		: : "r" (gameplay)
 	);
+    if (gameConfig.grDisableHealthBoxes)
+		onGameplayLoad_disableMoby(gameplay, MOBY_ID_HEALTH_BOX_MP);
+
 	if (gameConfig.grDisableDrones)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG);
 
@@ -223,8 +226,8 @@ void grGameStart(void)
 	if (gameConfig.grV2s)
 		v2_Setting(gameConfig.grV2s, FirstPass);
 
-    if (gameConfig.grDisableHealthBoxes && !HasDisabledHealthboxes)
-		HasDisabledHealthboxes = disableHealthboxes();
+    // if (gameConfig.grDisableHealthBoxes && !HasDisabledHealthboxes)
+	// 	HasDisabledHealthboxes = disableHealthboxes();
 
 	if (gameConfig.grAutoRespawn && gameSettings->GameType == GAMERULE_DM)
 		AutoRespawn();

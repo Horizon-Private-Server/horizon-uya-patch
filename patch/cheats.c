@@ -820,10 +820,6 @@ void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId)
 	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
 		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
 		if (moby->OClass == mobyId){
-			if (mobyId == MOBY_ID_DRONE_BOT_CLUSTER_CONFIG) {
-				moby->PosY = 100;
-				return;
-			}
 			moby->PosY = -100;
 		}
 	}
