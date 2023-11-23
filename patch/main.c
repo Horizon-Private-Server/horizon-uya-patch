@@ -1636,20 +1636,22 @@ void customFlagLogic(Moby* flagMoby)
 		flagReturnToBase(flagMoby, 0, 0xFF);
 		return;
 	}
-
+	
 	// if flag didn't land on safe ground, return flag.
-	if (!flagIsOnSafeGround(flagMoby)) {
-		flagReturnToBase(flagMoby, 0, 0xFF);
-		return;
+	if(gameConfig.grFlagHotspots) {
+		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby)) {
+			flagReturnToBase(flagMoby, 0, 0xff);
+			return;
+		}
 	}
+
+	// wait 3 seconds for last carrier to be able to pick up again
+	if (((pvars->TimeFlagDropped + (3 * TIME_SECOND)) > gameTime))
+		return;
 
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		Player* player = players[i];
 		if (!player || !player->IsLocal)
-			continue;
-
-		// wait 3 seconds for last carrier to be able to pick up again
-		if ((pvars->TimeFlagDropped + 3*TIME_SECOND) > gameTime && i == pvars->LastCarrierIdx)
 			continue;
 
 		// only allow actions by living players
@@ -1661,11 +1663,11 @@ void customFlagLogic(Moby* flagMoby)
 			continue;
 
 		// skip player if in vehicle
-		if (player->Vehicle)
+		if (player->Vehicle && playerDeobfuscate(&player->State, 0, 0) == PLAYER_STATE_VEHICLE)
 			continue;
 
 		// skip if player state is in vehicle and critterMode is on
-		if (player->Camera && player->State == PLAYER_STATE_VEHICLE)
+		if (player->Camera && player->Camera->camHeroData.critterMode)
 			continue;
 
 		// skip if player is on teleport pad
@@ -1740,49 +1742,6 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
 	}
 	return sizeof(ClientRequestPickUpFlag_t);
 }
-void flagHotspots(Moby* flagMoby)
-{
-	int i;
-	Player** players = playerGetAll();
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		Player* player = players[i];
-		if (!player || !player->IsLocal)
-			continue;
-		
-		// if flag is held
-		if (players[i]->FlagMoby)
-			continue;
-
-		// if flag is not on safeground and is not at the base
-		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby)) {
-			flagReturnToBase(flagMoby, 0, 0xff);
-			return;
-		}
-	}
-}
-/*
- * NAME :		customFlagLogic_hotspot
- * 
- * DESCRIPTION :
- * 			Returns flag if not on ground.
- * 
- * NOTES :
- * 
- * ARGS : 
- * 
- * RETURN :
- * 
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void customFlagLogic_temporary(Moby* flagMoby, int a1)
-{
-	// Allows the flag to respawn if landing on bad ground.
-	if (gameConfig.grFlagHotspots)
-		flagHotspots(flagMoby);
-
-	// run normal flag update function
-	flagUpdate(flagMoby, a1);
-}
 /*
  * NAME :		patchCTFFlag
  * 
@@ -1806,13 +1765,13 @@ void patchCTFFlag(void)
 	if (!isInGame())
 		return;
 
-	// netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
 
-	// u32 FlagFunc = GetAddress(&vaFlagUpdate_Func);
-	// if (FlagFunc){
-	// 	*(u32*)FlagFunc = 0x03e00008;
-	// 	*(u32*)(FlagFunc + 0x4) = 0x0000102D;
-	// }
+	u32 FlagFunc = GetAddress(&vaFlagUpdate_Func);
+	if (FlagFunc){
+		*(u32*)FlagFunc = 0x03e00008;
+		*(u32*)(FlagFunc + 0x4) = 0x0000102D;
+	}
 
 	GuberMoby* gm = guberMobyGetFirst();
 	while (gm) {
@@ -1821,11 +1780,10 @@ void patchCTFFlag(void)
 				case MOBY_ID_CTF_RED_FLAG:
 				case MOBY_ID_CTF_BLUE_FLAG:
 				{
-					// customFlagLogic(gm->Moby);
-					// gm->Update = &customFlagLogic_temporary;
-					// Replace main update function pointer with our own.
-					Master * master = masterGet(gm->Guber.Id.UID);
-					master->Update = &customFlagLogic_temporary;
+					customFlagLogic(gm->Moby);
+					// Master * master = masterGet(gm->Guber.Id.UID);
+					// if (master)
+					// 	masterDelete(master);
 
 					break;
 				}
