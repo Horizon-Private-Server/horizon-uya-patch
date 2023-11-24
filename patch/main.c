@@ -1909,16 +1909,19 @@ void setupPatchConfigInGame(void)
 {
     // Get Menu address via current map.
     u32 Addr = GetAddress(&vaPauseMenuAddr);
-    // Insert needed ID, returns string.
-    int str = uiMsgString(0x1115); // Washington, D.C. string ID
-    // Replace "Washington, D.C." string with ours.
-    strncpy((char*)str, patchStr, 13);
-    // Set "CONTINUE" string ID to our ID.
-    *(u32*)Addr = 0x1115;
-    // Pointer to "CONTINUE" function
-    u32 ReturnFunction = *(u32*)(Addr + 0x8);
-    // Hook Patch Config into end of "CONTINUE" function.
-    HOOK_J((ReturnFunction + 0x54), &configMenuEnable);
+	u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2)
+	if (*(u32*)(Addr + 0x8) != ConfigEnableFunc) {
+		// Insert needed ID, returns string.
+		int str = uiMsgString(0x1115); // Washington, D.C. string ID
+		// Replace "Washington, D.C." string with ours.
+		strncpy((char*)str, patchStr, 13);
+		// Set "CONTINUE" string ID to our ID.
+		*(u32*)Addr = 0x1115;
+		// Pointer to "CONTINUE" function
+		u32 ReturnFunction = *(u32*)(Addr + 0x8);
+		// Hook Patch Config into end of "CONTINUE" function.
+		HOOK_J((ReturnFunction + 0x54), &configMenuEnable);
+	}
 }
 
 /*
@@ -2147,9 +2150,17 @@ int main(void)
 	sendMACAddress();
 
 	if(isInGame())
-	{
+	{	
 		// Run Game Rules if in game.
 		grGameStart();
+
+		// Patch Flux Niking
+		if (gameConfig.grFluxNikingDisabled)
+			patchSniperNiking();
+
+		// Patch Flux Wall Sniping
+		if (gameConfig.grFluxShotsAlwaysHit)
+			patchSniperWallSniping();
 
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
@@ -2168,14 +2179,6 @@ int main(void)
 
 		// Patch CTF Flag Logic with our own.
 		patchCTFFlag();
-
-		// Patch Flux Niking
-		if (gameConfig.grFluxNikingDisabled)
-			patchSniperNiking();
-
-		// Patch Flux Wall Sniping
-		if (gameConfig.grFluxShotsAlwaysHit)
-			patchSniperWallSniping();
 
 		// Patch Level of Detail
 		patchLevelOfDetail();
