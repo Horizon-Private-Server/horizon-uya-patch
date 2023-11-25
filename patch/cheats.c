@@ -40,61 +40,6 @@ extern PatchGameConfig_t gameConfig;
 extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaGiveWeaponFunc;
 
-VariableAddress_t vaCheckWeaponKill = {
-#ifdef UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x00544488,
-	.Hoven = 0x00546650,
-	.OutpostX12 = 0x0053bf28,
-	.KorgonOutpost = 0x00539610,
-	.Metropolis = 0x00538a910,
-	.BlackwaterCity = 0x005361f8,
-	.CommandCenter = 0x00535a50,
-	.BlackwaterDocks = 0x005382d0,
-	.AquatosSewers = 0x005375d0,
-	.MarcadiaPalace = 0x00536f50,
-#else
-	.Lobby = 0,
-	.Bakisi = 0x00541b78,
-	.Hoven = 0x00543c80,
-	.OutpostX12 = 0x00539598,
-	.KorgonOutpost = 0x00536d00,
-	.Metropolis = 0x00536100,
-	.BlackwaterCity = 0x00533868,
-	.CommandCenter = 0x00533298,
-	.BlackwaterDocks = 0x00535ad8,
-	.AquatosSewers = 0x00534e18,
-	.MarcadiaPalace = 0x00534758,
-#endif
-};
-VariableAddress_t vaUpdateWeaponKill = {
-#if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = 0x004fb448,
-	.Hoven = 0x004fd560,
-	.OutpostX12 = 0x004f2e38,
-	.KorgonOutpost = 0x004f05d0,
-	.Metropolis = 0x004ef920,
-	.BlackwaterCity = 0x004ed1b8,
-	.CommandCenter = 0x004ed180,
-	.BlackwaterDocks = 0x004efa00,
-	.AquatosSewers = 0x004eed00,
-	.MarcadiaPalace = 0x004ee680,
-#else
-	.Lobby = 0,
-	.Bakisi = 0x004f8cc8,
-	.Hoven = 0x004fad20,
-	.OutpostX12 = 0x004f0638,
-	.KorgonOutpost = 0x004ede50,
-	.Metropolis = 0x004ed1a0,
-	.BlackwaterCity = 0x004ea9b8,
-	.CommandCenter = 0x004eab40,
-	.BlackwaterDocks = 0x004ed380,
-	.AquatosSewers = 0x004ec6c0,
-	.MarcadiaPalace = 0x004ec000,
-#endif
-};
-
 /*
  * NAME :		disableWeaponPacks
  * 
@@ -303,6 +248,60 @@ void spawnWeaponPackOnDeath(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
+VariableAddress_t vaCheckWeaponKill = {
+#ifdef UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00544488,
+	.Hoven = 0x00546650,
+	.OutpostX12 = 0x0053bf28,
+	.KorgonOutpost = 0x00539610,
+	.Metropolis = 0x00538a910,
+	.BlackwaterCity = 0x005361f8,
+	.CommandCenter = 0x00535a50,
+	.BlackwaterDocks = 0x005382d0,
+	.AquatosSewers = 0x005375d0,
+	.MarcadiaPalace = 0x00536f50,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00541b78,
+	.Hoven = 0x00543c80,
+	.OutpostX12 = 0x00539598,
+	.KorgonOutpost = 0x00536d00,
+	.Metropolis = 0x00536100,
+	.BlackwaterCity = 0x00533868,
+	.CommandCenter = 0x00533298,
+	.BlackwaterDocks = 0x00535ad8,
+	.AquatosSewers = 0x00534e18,
+	.MarcadiaPalace = 0x00534758,
+#endif
+};
+VariableAddress_t vaUpdateWeaponKill = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x004fb448,
+	.Hoven = 0x004fd560,
+	.OutpostX12 = 0x004f2e38,
+	.KorgonOutpost = 0x004f05d0,
+	.Metropolis = 0x004ef920,
+	.BlackwaterCity = 0x004ed1b8,
+	.CommandCenter = 0x004ed180,
+	.BlackwaterDocks = 0x004efa00,
+	.AquatosSewers = 0x004eed00,
+	.MarcadiaPalace = 0x004ee680,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004f8cc8,
+	.Hoven = 0x004fad20,
+	.OutpostX12 = 0x004f0638,
+	.KorgonOutpost = 0x004ede50,
+	.Metropolis = 0x004ed1a0,
+	.BlackwaterCity = 0x004ea9b8,
+	.CommandCenter = 0x004eab40,
+	.BlackwaterDocks = 0x004ed380,
+	.AquatosSewers = 0x004ec6c0,
+	.MarcadiaPalace = 0x004ec000,
+#endif
+};
 void v2_logic(void)
 {
 	Player ** players = playerGetAll();
@@ -321,74 +320,28 @@ void v2_Setting(int setting, int FirstPass)
 	// Disable V2's
 	if (setting == 1) {
 		// Prevent Weapon Meter value from going up.
-		u32 addr = GetAddress(&vaCheckWeaponKill);
-		if (*(u32*)(addr + 0x138) == 0x24630001) { // addiu v1, v1, 0x1;
-			*(u32*)(addr + 0xb8) = 0; // addiu v0, v0, 0x1;
-			*(u32*)(addr + 0x108) = 0; // addiu v0, v0, 0x1;
-			*(u32*)(addr + 0x138) = 0; // addiu v1, v1, 0x1;
-		}
+		// u32 addr = GetAddress(&vaCheckWeaponKill);
+		// if (*(u32*)(addr + 0x138) == 0x24630001) { // addiu v1, v1, 0x1;
+		// 	*(u32*)(addr + 0xb8) = 0; // addiu v0, v0, 0x1;
+		// 	*(u32*)(addr + 0x108) = 0; // addiu v0, v0, 0x1;
+		// 	*(u32*)(addr + 0x138) = 0; // addiu v1, v1, 0x1;
+		// }
 		addr = GetAddress(&vaUpdateWeaponKill);
 		if (*(u32*)(addr + 0x27c) == 0x24420001) { // addiu v0, v0, 0x1;
 			*(u32*)(addr + 0x27c) = 0; // addiu v0, v0, 0x1;
-			*(u32*)(addr + 0x288) = 0; // sw v0, 0x0(t1);
+			*(u32*)(addr + 0x288) = 0; // sb v0, 0x0(t1);
 			*(u32*)(addr + 0x298) = 0;
 		}
 	}
 	// Always V2's
-	else (setting == 2) {
+	else {
 		// hook v2 logic ad end of give weapon function.
 		int GiveWeapon_JRRA = (u32)GetAddress(&vaGiveWeaponFunc) + 0x538;
 		if (*(u32*)GiveWeapon_JRRA == 0x03e00008)
 			HOOK_J(GiveWeapon_JRRA, &v2_logic);
-		if (FirstPass) {
+		if (FirstPass)
 			v2_logic();
-		}
 	}
-}
-
-/*
- * NAME :		disableHealthboxes
- * 
- * DESCRIPTION :
- *              Removes all health boxes from the map.
- * NOTES :
- * 
- * ARGS : 
- * 
- * RETURN :
- * 
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-int disableHealthboxes(void)
-{
-    int count = 0;
-    Moby* moby = mobyListGetStart();
-
-    // Iterate through mobys and disable healthboxes
-    while ((moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP)))
-    {
-        // move to 0,0,0
-        memset(moby->Position, 0, sizeof(moby->Position));
-
-        // move orb to 0,0,0
-        if (moby->PVar)
-        {
-            void * subPtr = (void*)(*(u32*)(moby->PVar));
-            if (subPtr)
-            {
-                Moby * orb = (Moby*)(*(u32*)(subPtr + 0x48));
-                if (orb)
-                {
-                    memset(orb->Position, 0, sizeof(orb->Position));
-                    ++count;
-                }
-            }
-        }
-
-        ++moby; // increment moby
-    }
-    
-    return count;
 }
 
 /*
@@ -476,20 +429,23 @@ int setGattlingTurretHealth(int value)
     int init = 0;
     Moby * moby = mobyListGetStart();
     // Iterate through mobys and change health
-    while ((moby = mobyFindNextByOClass(moby, MOBY_ID_GATTLING_TURRET)))
-    {
-        if (moby->PVar)
-        {
+    while ((moby = mobyFindNextByOClass(moby, MOBY_ID_GATTLING_TURRET))) {
+        if (moby->PVar) {
 			// Gattling Turret Health is stored as a float and as it's
 			// hexidecimal value.  We use the hex value and multiply it
 			// by our wanted value, then store it as it's float health
 			int HexHealth = ((u32)moby->PVar + 0x34);
-            int NewHealth = (u32)(*(u32*)HexHealth * MultiplyBy[value - 1]);
+			int NewHealth = *(int*)HexHealth * (int)MultiplyBy[value - 1];
+			// if set to .5 health
+			if ((value - 1) == 0)
+				NewHealth = 150;
+
 			*(u32*)HexHealth = NewHealth;
 			*(float*)((u32)moby->PVar + 0x30) = NewHealth;
         }
         ++moby; // next moby
     }
+	// Init makes this work correctly.  just using "return moby;" doesn't
     init = 1;
     return init;
 }
@@ -511,7 +467,6 @@ int deleteSiegeNodeTurrets(void)
 {
     int init = 0;
     Moby * moby = mobyListGetStart();
-    // Iterate through mobys and change health
     while ((moby = mobyFindNextByOClass(moby, MOBY_ID_SIEGE_NODE))) {
         if (moby->PUpdate)
 			*(u32*)((u32)moby->PUpdate + 0x810) = 0;
@@ -521,17 +476,40 @@ int deleteSiegeNodeTurrets(void)
     init = 1;
     return init;
 }
-int deleteNodeTurrets(void)
+void deleteNodeTurretsUpdate(void)
 {
-    int init = 0;
-	Moby * nodeTurret = mobyListGetStart();
-    // Iterate through mobys and change health
-    while ((nodeTurret = mobyFindNextByOClass(nodeTurret, MOBY_ID_NODE_TURRET))) {
-		nodeTurret->PUpdate = 0;
-        ++nodeTurret; // next moby
-    }
-    init = 1;
-    return init;
+	VariableAddress_t vaNodeTurret_UpdateFunc = {
+	#if UYA_PAL
+		.Lobby = 0,
+		.Bakisi = 0x0041ef60,
+		.Hoven = 0x004209b8,
+		.OutpostX12 = 0x004178e8,
+		.KorgonOutpost = 0x00414f58,
+		.Metropolis = 0x004147e8,
+		.BlackwaterCity = 0x00410650,
+		.CommandCenter = 0x0041acc0,
+		.BlackwaterDocks = 0x0041d510,
+		.AquatosSewers = 0x0041c828,
+		.MarcadiaPalace = 0x0041c190,
+	#else
+		.Lobby = 0,
+		.Bakisi = 0x0041e6f8,
+		.Hoven = 0x00420088,
+		.OutpostX12 = 0x00416fd0,
+		.KorgonOutpost = 0x004146e8,
+		.Metropolis = 0x00413f80,
+		.BlackwaterCity = 0x0040fda0,
+		.CommandCenter = 0x0041a488,
+		.BlackwaterDocks = 0x0041ccc0,
+		.AquatosSewers = 0x0041bff0,
+		.MarcadiaPalace = 0x0041b940,
+	#endif
+	};
+	u32 UpdateFunc = GetAddress(&vaNodeTurret_UpdateFunc);
+	if (*(u32*)UpdateFunc == 0x27bdffe0) {
+		*(u32*)UpdateFunc = 0x03e0008;
+		*(u32*)((u32)UpdateFunc + 0x4) = 0;
+	}
 }
 
 /*
@@ -733,14 +711,14 @@ void survivor(void)
 			}
 		}
 	}
+	// FFA Survivor
 	else {
-		for (i = 0; i < (playerCount - 1); ++i) {
+		for (i = 0; i < playerCount; ++i) {
 			// Save current deaths for all players, and how many players have died.
 			if (gameData->PlayerStats[i].Deaths > PlayerDeaths[i]) {
 				PlayerDeaths[i] = gameData->PlayerStats[i].Deaths;
 				++DeadPlayers;
 			}
-
 			// If only one player in game, don't let game end until they die.
 			if (playerCount == 1 && DeadPlayers == 1) {
 				gameData->TimeEnd = 0;
@@ -845,18 +823,19 @@ void setRespawnTimer(void)
  * ARGS : 
  * 				gameplay: don't mess with pls.  It's mine!
  *				mobyId: Specified moby ID to disable.
+ *				ypos: set mobies y position.
  * RETURN :
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId)
+void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int ypos)
 {
 	int i;
 	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
 	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
 		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
 		if (moby->OClass == mobyId){
-			moby->PosY = -100;
+			moby->PosY = ypos;
 		}
 	}
 }

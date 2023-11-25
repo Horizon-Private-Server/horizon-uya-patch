@@ -49,10 +49,8 @@ int Gameplay_Func = 0;
 
 int GameRulesInitialized = 0;
 int FirstPass = 1;
-int HasDisabledHealthboxes = 0;
 int HasSetGattlingTurretHealth = 0;
 int HasDisableSiegeNodeTurrets = 0;
-int HasDisableNodeTurrets = 0;
 int HasKeepBaseHealthPadActive = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
 short PlayerDeaths[GAME_MAX_PLAYERS];
@@ -136,10 +134,10 @@ u32 onGameplayLoad(void* a0, long a1)
 		: : "r" (gameplay)
 	);
     if (gameConfig.grDisableHealthBoxes)
-		onGameplayLoad_disableMoby(gameplay, MOBY_ID_HEALTH_BOX_MP);
+		onGameplayLoad_disableMoby(gameplay, MOBY_ID_HEALTH_BOX_MP, 0);
 
 	if (gameConfig.grDisableDrones)
-		onGameplayLoad_disableMoby(gameplay, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG);
+		onGameplayLoad_disableMoby(gameplay, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG, 100);
 
 	if (gameConfig.grDisableWeaponCrates)
 		onGameplayLoad_disableWeaponCrates(gameplay);
@@ -148,10 +146,13 @@ u32 onGameplayLoad(void* a0, long a1)
 		onGameplayLoad_disableAmmoPickups(gameplay);
 	
 	if (gameConfig.grDisablePlayerTurrets)
-		onGameplayLoad_disableMoby(gameplay, MOBY_ID_PLAYER_TURRET);
+		onGameplayLoad_disableMoby(gameplay, MOBY_ID_PLAYER_TURRET, 0);
 
 	if (gameConfig.prPlayerSize)
 		onGameplayLoad_playerSize(gameplay);
+
+	if (gameConfig.grNoBaseDefense_SmallTurrets)
+		onGameplayLoad_disableMoby(gameplay, MOBY_ID_NODE_TURRET, 100);
 
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
@@ -184,10 +185,8 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 		PlayerTeams[i] = 0;
 	}
 
-	HasDisabledHealthboxes = 0;
 	HasSetGattlingTurretHealth = 0;
 	HasDisableSiegeNodeTurrets = 0;
-	HasDisableNodeTurrets = 0;
 	HasKeepBaseHealthPadActive = 0;
 	healRate = 0;
 	GameRulesInitialized = 1;
@@ -226,18 +225,15 @@ void grGameStart(void)
 	if (gameConfig.grV2s)
 		v2_Setting(gameConfig.grV2s, FirstPass);
 
-    // if (gameConfig.grDisableHealthBoxes && !HasDisabledHealthboxes)
-	// 	HasDisabledHealthboxes = disableHealthboxes();
-
 	if (gameConfig.grAutoRespawn && gameSettings->GameType == GAMERULE_DM)
 		AutoRespawn();
 
 	if (gameConfig.grSetGattlingTurretHealth && !HasSetGattlingTurretHealth)
 		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.grSetGattlingTurretHealth);
 
-	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasDisableSiegeNodeTurrets && !HasDisableNodeTurrets) {
+	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasDisableSiegeNodeTurrets) {
+		deleteNodeTurretsUpdate();
 		HasDisableSiegeNodeTurrets = deleteSiegeNodeTurrets();
-		HasDisableNodeTurrets = deleteNodeTurrets();
 	}
 
 	if (gameConfig.prChargebootForever)
