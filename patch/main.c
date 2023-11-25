@@ -1645,8 +1645,8 @@ void customFlagLogic(Moby* flagMoby)
 		}
 	}
 
-	// wait 3 seconds for last carrier to be able to pick up again
-	if (((pvars->TimeFlagDropped + (3 * TIME_SECOND)) > gameTime))
+	// wait 1.5 seconds for last carrier to be able to pick up again
+	if (((pvars->TimeFlagDropped + 1500) > gameTime))
 		return;
 
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
