@@ -326,7 +326,7 @@ void v2_Setting(int setting, int FirstPass)
 		// 	*(u32*)(addr + 0x108) = 0; // addiu v0, v0, 0x1;
 		// 	*(u32*)(addr + 0x138) = 0; // addiu v1, v1, 0x1;
 		// }
-		addr = GetAddress(&vaUpdateWeaponKill);
+		u32 addr = GetAddress(&vaUpdateWeaponKill);
 		if (*(u32*)(addr + 0x27c) == 0x24420001) { // addiu v0, v0, 0x1;
 			*(u32*)(addr + 0x27c) = 0; // addiu v0, v0, 0x1;
 			*(u32*)(addr + 0x288) = 0; // sb v0, 0x0(t1);
