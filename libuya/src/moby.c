@@ -4,7 +4,7 @@
 
 //--------------------------------------------------------
 #define BEGIN_MOBY_PTR							((Moby**)GetAddress(&vaBEGIN_MOBY_PTR))
-#define END_MOBY_PTR							((Moby**)((u32)GetAddress(&vaBEGIN_MOBY_PTR) + 0x188))
+#define END_MOBY_PTR							((Moby**)((u32)GetAddress(&vaBEGIN_MOBY_PTR) + 0x8))
 #define MOBY_VARS_LIST_TOP_PTR					((Moby**)((u32)GetAddress(&vaBEGIN_MOBY_PTR) + 0x1b0))
 
 // For Orxon x12.
