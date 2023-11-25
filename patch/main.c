@@ -1909,7 +1909,7 @@ void setupPatchConfigInGame(void)
 {
     // Get Menu address via current map.
     u32 Addr = GetAddress(&vaPauseMenuAddr);
-	u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2)
+	u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
 	if (*(u32*)(Addr + 0x8) != ConfigEnableFunc) {
 		// Insert needed ID, returns string.
 		int str = uiMsgString(0x1115); // Washington, D.C. string ID
