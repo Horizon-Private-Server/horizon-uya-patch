@@ -1637,16 +1637,17 @@ void customFlagLogic(Moby* flagMoby)
 		return;
 	}
 	
-	// if flag didn't land on safe ground, return flag.
+	// if flag didn't land on safe ground, and after .5s a player died
+	static int flagHolderDied = 0;
 	if(gameConfig.grFlagHotspots) {
-		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby)) {
+		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby) && (flagHolderDied + 500) < gameTime) {
 			flagReturnToBase(flagMoby, 0, 0xff);
 			return;
 		}
 	}
 
 	// wait 1.5 seconds for last carrier to be able to pick up again
-	if (((pvars->TimeFlagDropped + 1500) > gameTime))
+	if ((pvars->TimeFlagDropped + 1500) > gameTime)
 		return;
 
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
@@ -1655,8 +1656,13 @@ void customFlagLogic(Moby* flagMoby)
 			continue;
 
 		// only allow actions by living players
-		if (playerIsDead(player) || playerGetHealth(player) <= 0)
+		if (playerIsDead(player) || playerGetHealth(player) <= 0){
+			// if flag holder died, update flagHolderDied time.
+			if (pvars->LastCarrierIdx == player->mpIndex)
+				flagHolderDied = gameTime;
+
 			continue;
+		}
 
 		// skip player if they've only been alive for < 3 seconds
 		if (player->timers.timeAlive <= 180)
