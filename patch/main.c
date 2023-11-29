@@ -2094,11 +2094,6 @@ void onOnlineMenu(void)
   #endif
 }
 
-const char * SELECT_OPTIONS_WOO[] = {
-  "Option 1",
-  "Option 2"
-};
-
 /*
  * NAME :		main
  * 
@@ -2222,15 +2217,6 @@ int main(void)
 	}
 	else if (isInMenus())
 	{
-		if (padGetButtonUp(0, PAD_L3) > 0) {
-			// int r = ((int (*)(void *, const char *, const char *, int))0x00684d80)((void*)0x01c5c000, uiMsgString(0x1115), uiMsgString(0x1116), 1);
-			// if (r != 0 || r != 1)
-			// 	return 1;
-			int r = uiShowInputDialog("TITLE","Hello!", 15);
-			if (r) printf("%s\n",r);
-		}
-			// uiShowSelectDialog("Test 1", "Test 2");
-
 		// Patch various options on Create Game Screen
 		patchCreateGameMenu();
 
