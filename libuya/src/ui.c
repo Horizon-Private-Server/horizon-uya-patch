@@ -7,6 +7,7 @@
 #define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
 
 int internal_uiDialog(void *, const char *, const char *, int, int, float);
+int internal_uiSelectDialog(void *, const char *, const char *, int);
 void internal_uiShowPopup(const char *, int, Player * player);
 
 VariableAddress_t vaUiMsgStringFunc = {
@@ -65,34 +66,19 @@ VariableAddress_t vaUIShowPopup = {
 #endif
 };
 
-u32 uiGetPointer(int UI)
+UiMenu_t* uiGetPointer(int id)
 {
-	return *(u32*)(0x01C5C064 + UI*4);
+    return *(UiMenu_t**)((u32)UI_DIALOG_A0 + 0x64 + (id * 4));
 }
 
-u32 uiGetActivePointer(int UI)
+UiMenu_t* uiGetActivePointer()
 {
-	u32 UI_POINTERS = 0x01C5C064;
-	u32 Pointer = *(u32*)(UI_POINTERS + (UI * 0x4));
-	if (*(u32*)0x01C5C110 == Pointer)
-		return Pointer;
-    
-	return 0;
+	return *(UiMenu_t**)((u32)UI_DIALOG_A0 + 0x64 + 0xac);
 }
 
-u32 uiGetActiveSubPointer(int UI)
+UiMenu_t* uiGetActivePointerSlot(int slot)
 {
-	u32 UI_POINTERS = 0x01C5C064;
-	u32 Pointer = *(u32*)(UI_POINTERS + (UI * 0x4));
-	if (*(u32*)0x01C5C114 == Pointer)
-		return Pointer;
-    
-	return 0;
-}
-
-int uiGetActive(void)
-{
-    return UI_ACTIVE_ID;
+	return *(UiMenu_t**)((u32)UI_DIALOG_A0 + 0x64 + (0xac + (slot * 4)));
 }
 
 int uiShowYesNoDialog(const char * title, const char * description)
@@ -103,6 +89,16 @@ int uiShowYesNoDialog(const char * title, const char * description)
 int uiShowOkDialog(const char * title, const char * description)
 {
     return internal_uiDialog(UI_DIALOG_A0, title, description, 4, 0, 0.6);
+}
+
+int uiShowSelectDialog(const char * option1, const char * option2)
+{
+    return internal_uiSelectDialog(UI_DIALOG_A0, option1, option2, 0);
+}
+
+int uiShowInputDialog(const char * title, char * value, int maxLength)
+{
+    return internal_uiInputDialog(UI_DIALOG_A0, title, value, 0, maxLength, 0, 0, 0, 0);
 }
 
 void uiShowPopup(Player * player, const char * message, int seconds)

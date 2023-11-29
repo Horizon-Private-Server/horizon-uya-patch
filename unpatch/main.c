@@ -147,18 +147,17 @@ void onOnlineMenu(void)
 	drawFunction();
 
 	// only show on main menu
-	if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
+	if (uiGetActivePointerSlot(0) == uiGetPointer(UIP_ONLINE_LOBBY))
 	{
-    gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
-    gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
-    gfxScreenSpaceText(SCREEN_WIDTH * 0.35, SCREEN_HEIGHT * 0.4, 1, 1, textColor, "Downloading patch...", 17 + (gameGetTime()/240 % 4), 3);
+		gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
+		gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
+		gfxScreenSpaceText(SCREEN_WIDTH * 0.35, SCREEN_HEIGHT * 0.4, 1, 1, textColor, "Downloading patch...", 17 + (gameGetTime()/240 % 4), 3);
 
-    if (totalBytes > 0)
-    {
-      float w = (float)bytesReceived / (float)totalBytes;
-      gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
-    }
-  }
+		if (totalBytes > 0) {
+			float w = (float)bytesReceived / (float)totalBytes;
+			gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
+		}
+	}
 }
 
 /*
@@ -190,11 +189,10 @@ int main (void)
 	int state = isInGame() ? 1 : (isInMenus() ? 0 : 2);
 
 	// unhook patch
-	for (i = 0; i < patchesSize; ++i)
-	{
-    int context = patches[i][0];
-    if (context < 0 || context == state)
-      *(u32*)patches[i][1] = (u32)patches[i][2];
+	for (i = 0; i < patchesSize; ++i) {
+		int context = patches[i][0];
+		if (context < 0 || context == state)
+			*(u32*)patches[i][1] = (u32)patches[i][2];
 	}
 
 	// clear memory
@@ -223,7 +221,7 @@ int main (void)
 		#endif
 
 		// disable pad on online main menu
-		if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
+		if (uiGetActivePointerSlot(0) == uiGetPointer(UIP_ONLINE_LOBBY))
 			padDisableInput();
 	}
 

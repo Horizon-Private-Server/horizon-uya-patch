@@ -1291,7 +1291,7 @@ void onMenuUpdate(int inGame)
 	else if (!inGame)
   {
     // if in Online Lobby, and SubPointer equals zero (not on find game)
-		if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0 && *(u32*)0x01C5C114 == 0)
+		if (uiGetActivePointerSlot(0) == uiGetPointer(UIP_ONLINE_LOBBY) && uiGetActivePointerSlot(1) == 0)
 		{
 			// render message
 			// gfxScreenSpaceBox(SCREEN_WIDTH * 0.2, SCREEN_HEIGHT * 0.81, 0.4, 0.3, colorOpenBg);
@@ -1436,8 +1436,8 @@ void onConfigUpdate(void)
       }
     }
 
-    u32 * stagingUiElements = (u32*)(uiGetActivePointer(UIP_STAGING) + 0x110);
-    u32 * stagingDetailsUiElements = (u32*)(uiGetActivePointer(UIP_STAGING_SECONDARY_PLAYER_OPTIONS) + 0x110);
+    u32 * stagingUiElements = (u32*)(uiGetPointer(UIP_STAGING) + 0x110);
+    u32 * stagingDetailsUiElements = (u32*)(uiGetPointer(UIP_STAGING_SECONDARY_PLAYER_OPTIONS) + 0x110);
 
     // update ui strings
     if ((u32)stagingUiElements > 0x100000)
