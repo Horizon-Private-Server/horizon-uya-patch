@@ -293,6 +293,8 @@ VARIABLE_FUNCTION(gfxDrawSprite, vaDrawSprite)
 #VARIABLE_FUNCTION(gfxSetBlendMode, 0x004c97d8)
 #VARIABLE_FUNCTION(gfxSetTexture, 0x004c9a58)
 
+VARIABLE_FUNCTION(gfxGetPreLoadedImageBufferSource, vaGetPreLoadedImageBufferSource)
+
 #--------------------------------------------------------
 #------------------------- GAME -------------------------
 #--------------------------------------------------------
