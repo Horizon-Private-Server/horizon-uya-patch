@@ -160,7 +160,8 @@ int uiShowYesNoDialog(const char * title, const char * description);
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int uiShowOkDialog(const char * title, const char * description);
-
+int uiShowInputDialog(const char * title, char * value, int maxLength);
+int uiShowSelectDialog(const char * option1, const char * option2);
 /*
  * NAME :		uiShowPopup
  * 

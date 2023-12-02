@@ -301,6 +301,34 @@ VariableAddress_t vaViewContext = {
 #endif
 };
 
+VariableAddress_t vaGetPreLoadedImageBufferSource = {
+#if UYA_PAL
+    .Lobby = 0x005e7d20,
+    .Bakisi = 0x004ba3c0,
+    .Hoven = 0x004bc4d8,
+    .OutpostX12 = 0x004b1db0,
+    .KorgonOutpost = 0x004af548,
+    .Metropolis = 0x004ae898,
+    .BlackwaterCity = 0x004ac130,
+    .CommandCenter = 0x004ac128,
+    .BlackwaterDocks = 0x004ae9a8,
+    .AquatosSewers = 0x004adca8,
+    .MarcadiaPalace = 0x004ad628,
+#else
+    .Lobby = 0x005e57b0,
+    .Bakisi = 0x004b7ea8,
+    .Hoven = 0x004b9f00,
+    .OutpostX12 = 0x004af818,
+    .KorgonOutpost = 0x004ad030,
+    .Metropolis = 0x004ac380,
+    .BlackwaterCity = 0x004a9b98,
+    .CommandCenter = 0x004a9d50,
+    .BlackwaterDocks = 0x004ac590,
+    .AquatosSewers = 0x004ab8d0,
+    .MarcadiaPalace = 0x004ab210,
+#endif
+};
+
 //--------------------------------------------------------
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 {

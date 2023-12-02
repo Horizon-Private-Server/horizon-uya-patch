@@ -30,6 +30,7 @@ int isConfigMenuActive = 0;
 int selectedTabItem = 0;
 u32 padPointer = 0;
 int SelectedCustomMapId = 0;
+int preset = 0;
 
 // Config
 extern PatchConfig_t config;
@@ -207,8 +208,8 @@ MenuElem_ListData_t dataVampire = {
 MenuElem_ListData_t dataSetGattlingTurretHealth = {
     &gameConfig.grSetGattlingTurretHealth,
     NULL,
-    6,
-    { "Default", ".5x", "1.5x", "2x", "3x", "4x", }
+    10,
+    { "Default", ".5x", "1.5x", "2x", "3x", "4x", "5x", "6x", "7x", "8x" }
 };
 
 MenuElem_ListData_t dataRespawnTimer = {
@@ -254,6 +255,15 @@ MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
     }
 };
 
+MenuElem_ListData_t dataGameConfigPreset = {
+    &preset,
+    NULL,
+    3,
+    {
+      "None", "Competitive", "1v1",
+    }
+};
+
 // General
 MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
@@ -282,6 +292,8 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
   { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
+  { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset },
+
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Radar Blips", listActionHandler, menuStateHandler_Default, &dataRadarBlipsDistance },
   { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer },
@@ -445,6 +457,8 @@ void menuStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* sta
   GameOptions * go = gameGetOptions();
   if (!gs || (!go->GameFlags.MultiplayerGameFlags.BaseDefense_GatlinTurrets))
     *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
@@ -465,6 +479,8 @@ void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state)
 
   if (!gs || gs->GameType != GAMERULE_SIEGE)
     *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
@@ -475,6 +491,8 @@ void menuStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state)
 
   if (!gs || gs->GameType != GAMERULE_CTF)
     *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
@@ -485,6 +503,8 @@ void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state)
 
   if (!gs || gs->GameType != GAMERULE_DM)
     *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
@@ -495,6 +515,8 @@ void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* stat
 
   if (!gs || gs->GameType == GAMERULE_DM)
     *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
@@ -516,18 +538,24 @@ void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state)
 
   if (!gs || (gs->GameType != GAMERULE_DM) || go->GameFlags.MultiplayerGameFlags.Teams)
     *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state)
 {
-    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+    if (preset)
+      *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
+    else
+      *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 // 
 void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
+  preset = 0;
   memset(&gameConfig, 0, sizeof(gameConfig));
   SelectedCustomMapId = 0;
 }
@@ -1544,7 +1572,46 @@ void configMenuDisable(void)
     netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_CONFIG, sizeof(PatchConfig_t), &config);
 
   // 
-  configTrySendGameConfig();
+  // update and send gameconfig
+  if (gameAmIHost())
+  {
+    // force game config to preset
+    switch (preset)
+    {
+      case 1: // Competitive
+      {
+        gameConfig.grV2s = 0;
+        gameConfig.grVampire = 0;
+        gameConfig.grNoCooldown = 1;
+        gameConfig.grDisableWeaponPacks = 1;
+        gameConfig.grDisableHealthBoxes = 0;
+        gameConfig.grDisableWeaponCrates = 1;
+        gameConfig.grDisableAmmoPickups = 1;
+        gameConfig.grFluxShotsAlwaysHit = 1;
+        gameConfig.grFluxNikingDisabled = 1;
+        break;
+      }
+      case 2: // 1v1
+      {
+        gameConfig.grRadarBlipsDistance = 1; // Always
+        gameConfig.grRespawnTimer = 10; // 0 Seconds
+        gameConfig.grDisableHealthBoxes = 1;
+        gameConfig.grDisableWeaponCrates = 1;
+        gameConfig.grDisableAmmoPickups = 1;
+        gameConfig.grDisableDrones = 1;
+        gameConfig.grDisablePlayerTurrets = 1;
+        gameConfig.grV2s = 1; // Off
+        gameConfig.grNoCooldown = 1;
+        gameConfig.grVampire = 4; // 100%
+        gameConfig.grFluxShotsAlwaysHit = 1;
+        gameConfig.grFluxNikingDisabled = 1;
+        break;
+      }
+    }
+
+    // send
+    configTrySendGameConfig();
+  }
 
   // re-enable pad
   padEnableInput();

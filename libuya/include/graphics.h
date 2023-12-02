@@ -154,6 +154,18 @@ typedef struct ViewContext { // 0x270
 	/* 0x268 */ int splitScreenMode;
 } ViewContext;
 
+struct DataSource { // 0x8
+	/* 0x0 */ int m_state;
+	/* 0x4 */ void *__vtable;
+};
+
+typedef struct ConcretePreLoadedImageBuffer {
+	/* 0x00 */ struct DataSource DataSourceImageBuffer;
+	/* 0x08 */ unsigned int tex0;
+	/* 0x0c */ void *m_memory_buffer;
+	/* 0x10 */ void *m_decompressed_buffer;
+} ConcretePreLoadedImageBuffer;
+
 /*
  * NAME :		drawFunction
  * 
@@ -275,5 +287,6 @@ void gfxDrawSprite(float x, float y, float w, float h, int t0, int t1, int texW,
 ScreenVBEffect* gfxScreenVBEffect(void);
 ScreenInsertEffect* gfxScreenInsertEffect(void);
 ViewContext* gfxViewContext(void);
+ConcretePreLoadedImageBuffer* gfxGetPreLoadedImageBufferSource(int which);
 
 #endif // _LIBUYA_GRAPHICS_H_

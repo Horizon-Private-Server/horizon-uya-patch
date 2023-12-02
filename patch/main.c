@@ -353,7 +353,7 @@ void runExceptionHandler(void)
 void runCameraSpeedPatch(void)
 {
 	char buf[12];
-	const short MAX_CAMERA_SPEED = 200;
+	const short MAX_CAMERA_SPEED = 300;
 	if (isInMenus())
 	{
 		// overwrite menu camera controls max cam speed
@@ -399,6 +399,19 @@ void runCameraSpeedPatch(void)
 					"sh $t0, 0(%1)"
 					: : "r" (MAX_CAMERA_SPEED), "r" (drawCameraSpeedInputIGFunc)
 			);
+		}
+		// draw percentage if in start menu
+		u32 img = gfxGetPreLoadedImageBufferSource(0);
+		int p = playerGetFromSlot(0)->PauseOn;
+		if (p && *(int*)(img + 0xc) == 5) {
+			char buf[12];
+			#ifdef UYA_PAL
+				int PLAYER_ROTATION = 0x001a5894;
+			#else
+				int PLAYER_ROTATION = 0x001a5a14;
+			#endif
+			sprintf(buf, "%d%%", *(int*)PLAYER_ROTATION);
+			gfxScreenSpaceText(273, 0.504 * SCREEN_WIDTH, 1, 1, 0x8069cbf2, buf, -1, 2);
 		}
 	}
 }

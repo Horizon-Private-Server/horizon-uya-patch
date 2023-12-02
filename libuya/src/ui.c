@@ -105,6 +105,16 @@ int uiShowOkDialog(const char * title, const char * description)
     return internal_uiDialog(UI_DIALOG_A0, title, description, 4, 0, 0.6);
 }
 
+int uiShowSelectDialog(const char * option1, const char * option2)
+{
+    return internal_uiSelectDialog(UI_DIALOG_A0, option1, option2, 0);
+}
+
+int uiShowInputDialog(const char * title, char * value, int maxLength)
+{
+    return internal_uiInputDialog(UI_DIALOG_A0, title, value, 0, maxLength, 0, 0, 0, 0);
+}
+
 void uiShowPopup(Player * player, const char * message, int seconds)
 {
 	internal_uiShowPopup(message, seconds * 100, (!player ? 0 : player->unk_24c9));

@@ -1523,6 +1523,6 @@ void playerGiveShield(Player * player);
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-u32 playerGetFromSlot(int index);
+Player * playerGetFromSlot(int index);
 
 #endif // _LIBUYA_PLAYER_H_

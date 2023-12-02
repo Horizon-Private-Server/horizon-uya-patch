@@ -293,6 +293,8 @@ VARIABLE_FUNCTION(gfxDrawSprite, vaDrawSprite)
 #VARIABLE_FUNCTION(gfxSetBlendMode, 0x004c97d8)
 #VARIABLE_FUNCTION(gfxSetTexture, 0x004c9a58)
 
+VARIABLE_FUNCTION(gfxGetPreLoadedImageBufferSource, vaGetPreLoadedImageBufferSource)
+
 #--------------------------------------------------------
 #------------------------- GAME -------------------------
 #--------------------------------------------------------
@@ -340,8 +342,26 @@ VARIABLE_FUNCTION(internal_colorLerp, vaColorLerpFunc)
 #--------------------------------------------------------
 #ifdef UYA_PAL
 	FUNCTION(internal_uiDialog, 0x006872E8)
+	FUNCTION(internal_uiInputDialog, 0x00687450)
+	FUNCTION(internal_uiAdvancedOptionsDialog, 0x00687508)
+	FUNCTION(internal_uiInGameDetailsDialog, 0x00687640)
+	FUNCTION(internal_uiPrivateMessageDialog, 0x006876A0)
+	FUNCTION(internal_uiWeaponSelectDialog, 0x00687750)
+	FUNCTION(internal_uiCitySelectDialog, 0x006877B0)
+	FUNCTION(internal_uiUnk_37_Dialog, 0x00687800)
+	FUNCTION(internal_uiSelectDialog, 0x006878A0)
+	FUNCTION(internal_uiChangeSkinTeamDialog, 0x006878F0)
 #else
 	FUNCTION(internal_uiDialog, 0x006847C8)
+	FUNCTION(internal_uiInputDialog, 0x00684930)
+	FUNCTION(internal_uiAdvancedOptionsDialog, 0x006849e8)
+	FUNCTION(internal_uiInGameDetailsDialog, 0x00684b20)
+	FUNCTION(internal_uiPrivateMessageDialog, 0x00684b80)
+	FUNCTION(internal_uiWeaponSelectDialog, 0x00684c30)
+	FUNCTION(internal_uiCitySelectDialog, 0x00684c90)
+	FUNCTION(internal_uiUnk_37_Dialog, 0x00684ce0)
+	FUNCTION(internal_uiSelectDialog, 0x00684d80)
+	FUNCTION(internal_uiChangeSkinTeamDialog, 0x00684dd0)
 #endif
 VARIABLE_FUNCTION(internal_uiShowPopup, vaUIShowPopup)
 FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported (For in game)
