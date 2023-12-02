@@ -594,9 +594,9 @@ void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameCon
 	// updateGameState(gameState);
 
 	// Lobby
-	if (menu = uiGetActivePointer(UIP_STAGING), menu > 0) {
+	if (menu = uiGetPointer(UIP_STAGING), menu == uiGetActivePointerSlot(0)) {
 		setLobbyGameOptions();
-	} else if (menu = uiGetActivePointer(UIP_END_GAME_DETAILS), menu > 0) {
+	} else if (menu = uiGetPointer(UIP_END_GAME_DETAILS), menu == uiGetActivePointerSlot(0)) {
 		// scoreboard stuff
 	}
 }

@@ -1374,7 +1374,8 @@ void patchCreateGameMenu_LastSettings(void)
 void patchCreateGameMenu(void)
 {
 	u32 menu = uiGetPointer(UIP_CREATE_GAME);
-	if (menu != uiGetActivePointerSlot(0)) return;
+	if (menu != uiGetActivePointerSlot(0))
+		return;
 
 	// Patch LastSettings options
 	// printf("\nlastsettings: %d", lastSettings);
@@ -1392,8 +1393,10 @@ void patchCreateGameMenu(void)
 // #endif
 
 	// if in Advanced Options
-	menu = uiGetActivePointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
-	if (menu != uiGetActivePointerSlot(0)) return;
+	menu = uiGetPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
+	if (menu != uiGetActivePointerSlot(1))
+		return;
+
 	int frag_limit = (*(u32*)(menu + 0x12c) + 0x70);
 	patchCreateGameMenu_Option(frag_limit, 50); // Frag Limit = 50
 }
@@ -1827,7 +1830,7 @@ void runGameStartMessager(void)
 		return;
 
 	// in staging
-	if (uiGetActivePointer(UIP_STAGING) == uiGetActivePointerSlot(0))
+	if (uiGetPointer(UIP_STAGING) == uiGetActivePointerSlot(0))
 	{
 		// check if game started
 		if (!sentGameStart && gameSettings->GameLoadStartTime > 0)

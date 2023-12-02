@@ -223,7 +223,6 @@ void uiShowHelpPopup(int localPlayerIndex, const char * message, int seconds);
 char * uiMsgString(int textId);
 
 __LIBUYA_GETTER__ UiMenu_t* uiGetPointer(int id);
-UiMenu_t* uiGetActivePointer();
 UiMenu_t* uiGetActivePointerSlot(int slot);
 
 #endif // _LIBUYA_UI_H_
