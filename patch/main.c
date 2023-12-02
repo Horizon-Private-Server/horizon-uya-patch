@@ -359,7 +359,7 @@ void runCameraSpeedPatch(void)
 		// overwrite menu camera controls max cam speed
 		// also display speed text next to input
 		u32 ui = uiGetPointer(UIP_CONTROLS);
-		if (ui && uiGetPointer(UIP_EDIT_PROFILE) == uiGetActivePointerSlot(0))
+		if (ui && uiGetActivePointer(UIP_EDIT_PROFILE))
 		{
 			u32 cameraRotationUIPtr = *(u32*)(ui + 0x11C);
 			if (cameraRotationUIPtr)
@@ -368,7 +368,7 @@ void runCameraSpeedPatch(void)
 				*(u32*)(cameraRotationUIPtr + 0x7C) = MAX_CAMERA_SPEED;
 
 				// draw %
-				if (uiGetPointer(UIP_CONTROLS) == uiGetActivePointerSlot(1))
+				if (uiGetActiveSubPointer(UIP_CONTROLS))
 				{
 					sprintf(buf, "%d%%", *(u32*)(cameraRotationUIPtr + 0x80));
 					gfxScreenSpaceText(340, 310, 1, 1, 0x8069cbf2, buf, -1, 2);
@@ -1373,9 +1373,8 @@ void patchCreateGameMenu_LastSettings(void)
 }
 void patchCreateGameMenu(void)
 {
-	u32 menu = uiGetPointer(UIP_CREATE_GAME);
-	if (menu != uiGetActivePointerSlot(0))
-		return;
+	u32 menu = uiGetActivePointer(UIP_CREATE_GAME);
+	if (!menu) return;
 
 	// Patch LastSettings options
 	// printf("\nlastsettings: %d", lastSettings);
@@ -1393,10 +1392,8 @@ void patchCreateGameMenu(void)
 // #endif
 
 	// if in Advanced Options
-	menu = uiGetPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
-	if (menu != uiGetActivePointerSlot(1))
-		return;
-
+	menu = uiGetActiveSubPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
+	if (!menu) return;
 	int frag_limit = (*(u32*)(menu + 0x12c) + 0x70);
 	patchCreateGameMenu_Option(frag_limit, 50); // Frag Limit = 50
 }
@@ -1653,16 +1650,17 @@ void customFlagLogic(Moby* flagMoby)
 		return;
 	}
 	
-	// if flag didn't land on safe ground, return flag.
+	// if flag didn't land on safe ground, and after .5s a player died
+	static int flagHolderDied = 0;
 	if(gameConfig.grFlagHotspots) {
-		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby)) {
+		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby) && (flagHolderDied + 500) < gameTime) {
 			flagReturnToBase(flagMoby, 0, 0xff);
 			return;
 		}
 	}
 
 	// wait 1.5 seconds for last carrier to be able to pick up again
-	if (((pvars->TimeFlagDropped + 1500) > gameTime))
+	if ((pvars->TimeFlagDropped + 1500) > gameTime)
 		return;
 
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
@@ -1671,8 +1669,13 @@ void customFlagLogic(Moby* flagMoby)
 			continue;
 
 		// only allow actions by living players
-		if (playerIsDead(player) || playerGetHealth(player) <= 0)
+		if (playerIsDead(player) || playerGetHealth(player) <= 0){
+			// if flag holder died, update flagHolderDied time.
+			if (pvars->LastCarrierIdx == player->mpIndex)
+				flagHolderDied = gameTime;
+
 			continue;
+		}
 
 		// skip player if they've only been alive for < 3 seconds
 		if (player->timers.timeAlive <= 180)
@@ -1830,7 +1833,7 @@ void runGameStartMessager(void)
 		return;
 
 	// in staging
-	if (uiGetPointer(UIP_STAGING) == uiGetActivePointerSlot(0))
+	if (uiGetActivePointer(UIP_STAGING) != 0)
 	{
 		// check if game started
 		if (!sentGameStart && gameSettings->GameLoadStartTime > 0)
@@ -1891,9 +1894,9 @@ void runCheckGameMapInstalled(void)
 			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 6)
 			{
 		#if UYA_PAL
-				((void (*)(u32, u32, u32))0x006c4308)(uiGetPointer(UIP_STAGING), 5, 0);
+				((void (*)(u32, u32, u32))0x006c4308)(uiGetActivePointer(UIP_STAGING), 5, 0);
 		#else
-				((void (*)(u32, u32, u32))0x006c17f0)(uiGetPointer(UIP_STAGING), 5, 0);
+				((void (*)(u32, u32, u32))0x006c17f0)(uiGetActivePointer(UIP_STAGING), 5, 0);
 		#endif
 				gs->PlayerStates[i] = 0; // unready up
 				showNoMapPopup = 1;
@@ -2054,13 +2057,13 @@ void onOnlineMenu(void)
 	lastMenuInvokedTime = gameGetTime();
 	if (!hasInitialized)
 	{
-		// printf("onOnlinemenu - pad enable input\n");
+		printf("onOnlinemenu - pad enable input\n");
 		padEnableInput();
 		onConfigInitialize();
 		refreshCustomMapList();
 		hasInitialized = 1;
 	}
-	if (hasInitialized == 1 && uiGetPointer(UIP_ONLINE_LOBBY) == uiGetActivePointerSlot(0))
+	if (hasInitialized == 1 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
 	{
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
@@ -2166,7 +2169,7 @@ int main(void)
 	sendMACAddress();
 
 	if(isInGame())
-	{
+	{	
 		// Run Game Rules if in game.
 		grGameStart();
 
