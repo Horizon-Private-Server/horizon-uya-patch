@@ -166,6 +166,20 @@ typedef struct ConcretePreLoadedImageBuffer {
 	/* 0x10 */ void *m_decompressed_buffer;
 } ConcretePreLoadedImageBuffer;
 
+typedef struct PartInstance { // 0x40
+	/* 0x00 */ char i_class;
+	/* 0x01 */ char type;
+	/* 0x02 */ char tex;
+	/* 0x03 */ char gs_alpha;
+	/* 0x04 */ int rgba;
+	/* 0x08 */ char rot;
+	/* 0x09 */ char draw_dist;
+	/* 0x0a */ short int timer;
+	/* 0x0c */ float scale;
+	/* 0x10 */ VECTOR pos;
+	/* 0x20 */ int update[8];
+} PartInstance_t;
+
 /*
  * NAME :		drawFunction
  * 
