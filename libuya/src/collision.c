@@ -1,5 +1,39 @@
 #include <tamtypes.h>
 #include "interop.h"
+#include "moby.h"
+#include "collision.h"
+
+// #define COLL_SPHERE_HIT_MOBIES_ARRAY                         ((Moby**)0x00244DC0)
+
+#define COLLOUTPUT                                           ((CollOutput*)GetAddress(&vaCollOutput))
+
+VariableAddress_t vaCollOutput = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0025b980,
+    .Hoven = 0x0025bac0,
+    .OutpostX12 = 0x0025b9c0,
+    .KorgonOutpost = 0x0025b840,
+    .Metropolis = 0x0025b880,
+    .BlackwaterCity = 0x0025b840,
+    .CommandCenter = 0x0025b400,
+    .BlackwaterDocks = 0x0025b540,
+    .AquatosSewers = 0x0025b580,
+    .MarcadiaPalace = 0x0025b500,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0025bb00,
+    .Hoven = 0x0025bc40,
+    .OutpostX12 = 0x0025bb40,
+    .KorgonOutpost = 0x0025b9c0,
+    .Metropolis = 0x0025ba00,
+    .BlackwaterCity = 0x0025b9c0,
+    .CommandCenter = 0x0025b580,
+    .BlackwaterDocks = 0x0025b6c0,
+    .AquatosSewers = 0x0025b700,
+    .MarcadiaPalace = 0x0025b680,
+#endif
+};
 
 VariableAddress_t vaCollLineFix = {
 #if UYA_PAL
@@ -56,3 +90,33 @@ VariableAddress_t vaCollHotspot = {
     .MarcadiaPalace = 0x00445878,
 #endif
 };
+
+// Moby** CollMobysSphere_Fix_GetHitMobies(void)
+// {
+//   return COLL_SPHERE_HIT_MOBIES_ARRAY;
+// }
+
+CollOutput* colGetOutput(void)
+{
+    return COLLOUTPUT;
+}
+
+Moby* CollLine_Fix_GetHitMoby(void)
+{
+  return COLLOUTPUT->pMoby;
+}
+
+float* CollLine_Fix_GetHitPosition(void)
+{
+  return COLLOUTPUT->ip;
+}
+
+float* CollLine_Fix_GetHitNormal(void)
+{
+  return COLLOUTPUT->normal;
+}
+
+int CollLine_Fix_GetHitCollisionId(void)
+{
+  return COLLOUTPUT->poly;
+}
