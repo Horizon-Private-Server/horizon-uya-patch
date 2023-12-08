@@ -695,8 +695,8 @@ void survivor(void)
 				continue;
 					
 		    // Save current deaths for all players, and how many players have died.
-			if (gameData->PlayerStats[i].Deaths > PlayerDeaths[i]) {
-				PlayerDeaths[i] = gameData->PlayerStats[i].Deaths;
+			if (gameData->PlayerStats.DeathMatch[i].Deaths > PlayerDeaths[i]) {
+				PlayerDeaths[i] = gameData->PlayerStats.DeathMatch[i].Deaths;
 				// Subtract player from their team.
 				--PlayerTeams[players[i]->mpTeam];
 				// if the team of the player who died noe equals zero, subject team coutn.
@@ -719,8 +719,8 @@ void survivor(void)
 	else {
 		for (i = 0; i < playerCount; ++i) {
 			// Save current deaths for all players, and how many players have died.
-			if (gameData->PlayerStats[i].Deaths > PlayerDeaths[i]) {
-				PlayerDeaths[i] = gameData->PlayerStats[i].Deaths;
+			if (gameData->PlayerStats.DeathMatch[i].Deaths > PlayerDeaths[i]) {
+				PlayerDeaths[i] = gameData->PlayerStats.DeathMatch[i].Deaths;
 				++DeadPlayers;
 			}
 			// If only one player in game, don't let game end until they die.
@@ -731,7 +731,7 @@ void survivor(void)
 			// if player count is greater than 1, and Dead Players == Player Count - 1
 			else if (playerCount > 1 && DeadPlayers == (playerCount - 1)) {
 				// Check to see who has not died
-				if (gameData->PlayerStats[i].Deaths == 0) {
+				if (gameData->PlayerStats.DeathMatch[i].Deaths == 0) {
 					gameData->TimeEnd = 0;
 					gameData->WinningTeam = i;
 				}

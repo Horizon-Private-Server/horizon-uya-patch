@@ -478,7 +478,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 		{
 			// iterate each player
 			for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-				SpleefState.PlayerKills[i] = gameData->PlayerStats[i].Kills;
+				SpleefState.PlayerKills[i] = gameData->PlayerStats.DeathMatch[i].Kills;
 
 			// host specific logic
 			if (SpleefState.IsHost && (gameGetTime() - SpleefState.RoundStartTicks) > (5 * TIME_SECOND)) {

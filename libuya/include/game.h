@@ -30,10 +30,17 @@
 #endif
 
 //--------------------------------------------------------
-typedef struct PlayerGameStats
-{
+typedef struct DeathMatchKD {
     short Kills;
     short Deaths;
+} DeathMatchKD;
+
+typedef struct PlayerGameStats { // 0x40
+/*0x00*/ DeathMatchKD DeathMatch[GAME_MAX_PLAYERS];
+/*0x20*/ char NodesCaptured[GAME_MAX_PLAYERS];
+/*0x28*/ char NodesSaved[GAME_MAX_PLAYERS];
+/*0x30*/ char FlagsCaptured[GAME_MAX_PLAYERS];
+/*0x38*/ char FlagsSaved[GAME_MAX_PLAYERS];
 } PlayerGameStats;
 
 //=================   =For DL:
@@ -98,12 +105,9 @@ typedef struct DeathMatchGameData
 //--------------------------------------------------------
 typedef struct CTFGameData
 {
-    Moby* BlueFlagMoby[2];
-    Moby* RedFlagMoby[2];
-    Moby* GreenFlagMoby[2];
-    Moby* OrangeFlagMoby[2];
-    int TeamFlagPositions[4];
-    int pad[8];
+    int Unk_00[2];
+    short TeamCaptures;
+    short TeamSaves;
 } CTFGameData;
 
 //--------------------------------------------------------
@@ -140,15 +144,18 @@ typedef struct ScoreboardItem
 } ScoreboardItem;
 
 //--------------------------------------------------------
-typedef struct GameData
-{
-    int TimeEnd;
-    int TimeStart;
-    int GameState;
-    int NumTeams;
-    int WinningTeam;
-    int WinningPlayer;
-    PlayerGameStats PlayerStats[GAME_MAX_PLAYERS];
+typedef struct GameData {
+/* 0x000 */ int TimeEnd;
+/* 0x004 */ int TimeStart;
+/* 0x008 */ int GameState;
+/* 0x00c */ int NumTeams;
+/* 0x010 */ int WinningTeam;
+/* 0x014 */ int WinningPlayer;
+/* 0x018 */ PlayerGameStats PlayerStats;
+/* 0x058 */ char unk_058[0x1b4];
+/* 0x20c */ void* unk_ptr_20c;
+/* 0x210 */ CTFGameData* CTFGameData;
+/* 0x214 */ DeathMatchGameData* DeathMatchGameData;
 } GameData;
 
 //=================   =For DL:

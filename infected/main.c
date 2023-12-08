@@ -307,7 +307,7 @@ void processPlayer(Player * player)
 	// If the player is already on the infected team
 	// or if they've died
 	// then infect them
-	else if (player->mpTeam == INFECTED_TEAM || gameData->PlayerStats[player->mpIndex].Deaths > 0)
+	else if (player->mpTeam == INFECTED_TEAM || gameData->PlayerStats.DeathMatch[player->mpIndex].Deaths > 0)
 	{
 		infect(player);
 	}
