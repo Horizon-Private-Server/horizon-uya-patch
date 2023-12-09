@@ -438,7 +438,7 @@ FUNCTION(timerGetSystemTime, 0x0012dcb0)
 #--------------------------------------------------------
 #---------------------- COLLISION -----------------------
 #--------------------------------------------------------
-VARIABLE_FUNCTION(collLine_Fix, vaCollLineFix)
+VARIABLE_FUNCTION(CollLine_Fix, vaCollLineFix)
 VARIABLE_FUNCTION(CollHotspot, vaCollHotspot)
 
 #--------------------------------------------------------

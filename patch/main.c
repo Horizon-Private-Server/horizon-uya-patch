@@ -562,14 +562,14 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
       if (event) {
         u32 hitGuberUid = *(u32*)(event + 0x3C);
         if (hitGuberUid != 0xFFFFFFFF) {
-          return collLine_Fix(from, to, 1, moby, t0);
+          return CollLine_Fix(from, to, 1, moby, t0);
         }
       }
     }
 	}
 
 	// pass through
-	return collLine_Fix(from, to, 0, moby, t0);
+	return CollLine_Fix(from, to, 0, moby, t0);
 }
 
 /*
