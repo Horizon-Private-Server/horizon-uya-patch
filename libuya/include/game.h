@@ -20,6 +20,7 @@
  * Maximum number of players in a game.
  */
 #define GAME_MAX_PLAYERS                    (8)
+#define GAME_MAX_LOCALS                     (2)
 /*
  * Games FPS
 */

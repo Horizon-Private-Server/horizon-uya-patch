@@ -43,6 +43,7 @@ enum MobyId
 	MOBY_ID_LEVEL_MODEL_ANIMATION = 0x0c66,
 	MOBY_ID_BASE_LIGHT = 0x0cbe,
 	MOBY_ID_LEVEL_MODEL_TEXTURE_ANIMATION = 0x0ce9,
+	MOBY_ID_EXPLOSION = 0x0d4e, // Used for Mini-Rocket Tube Rocket Explosion
 	MOBY_ID_JUMP_PAD_SP = 0x0f05,
 	MOBY_ID_TELEPORT_PAD_RC1 = 0x0f51,
 	MOBY_ID_MP_PLAYER_CONFIG = 0x106a,
@@ -291,7 +292,6 @@ struct MobyAnimLayer { // 0x20
 
 typedef struct Moby
 {
-	// Current Swingshot Moby at Metro: 21C5E640
 	/*   0 */ VECTOR BSphere;
 	/*  10 */ VECTOR Position;
 	/*  20 */ char State;
