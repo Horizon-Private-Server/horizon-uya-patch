@@ -103,6 +103,21 @@ enum CustomMessageId
     CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP = 15,
 
     /*
+     * Sent by the client to the server when the client has collected a horizon bolt.
+     */
+    CUSTOM_MSG_ID_CLIENT_PICKED_UP_HORIZON_BOLT = 16,
+
+    /*
+     * Sent by the client to the server when the client requests the current scavenger hunt settings.
+     */
+    CUSTOM_MSG_ID_CLIENT_REQUEST_SCAVENGER_HUNT_SETTINGS = 17,
+
+    /*
+     * Sent by the server to the client containing the current scavenger hunt settings.
+     */
+    CUSTOM_MSG_ID_SERVER_RESPONSE_SCAVENGER_HUNT_SETTINGS = 18,
+
+    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,
@@ -136,5 +151,11 @@ typedef struct ClientRequestPickUpFlag
     int PlayerId;
     u32 FlagUID;
 } ClientRequestPickUpFlag_t;
+
+typedef struct ScavengerHuntSettingsResponse
+{
+  int Enabled;
+  float SpawnFactor;
+} ScavengerHuntSettingsResponse_t;
 
 #endif // _MESSAGEID_H_

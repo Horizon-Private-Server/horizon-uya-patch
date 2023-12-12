@@ -60,6 +60,10 @@ void grLoadStart(void);
 
 void runSpectate(void);
 
+#if SCAVENGER_HUNT
+void scavHuntRun(void);
+#endif
+
 int dlBytesReceived = 0;
 int dlTotalBytes = 0;
 int hasInitialized = 0;
@@ -116,6 +120,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.alwaysShowHealth = 0,
 	.mapScoreToggle_MapBtn = 0,
 	.mapScoreToggle_ScoreBtn = 0,
+	.disableScavengerHunt = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1545,7 +1550,7 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 		flagPickup(flagMoby, pIdx);
 		player->FlagMoby = flagMoby;
 	}
-	DPRINTF("player %d picked up flag %X at %d\n", player->PlayerId, flagMoby->OClass, gameGetTime());
+	DPRINTF("player %d picked up flag %X at %d\n", player->mpIndex, flagMoby->OClass, gameGetTime());
 }
 
 /*
@@ -1843,6 +1848,12 @@ void runGameStartMessager(void)
 			{
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_GAME_LOBBY_STARTED, 0, gameSettings);
 			}
+
+			// request latest scavenger hunt settings
+			#if SCAVENGER_HUNT
+      		scavHuntQueryForRemoteSettings();
+			#endif
+
 			sentGameStart = 1;
 		}
 	}
@@ -2155,6 +2166,11 @@ int main(void)
 
 	// 
 	runCheckGameMapInstalled();
+
+	#if SCAVENGER_HUNT
+		// Run Scavenger Hunt
+		scavHuntRun();
+	#endif
 
 	// 
 	runCameraSpeedPatch();

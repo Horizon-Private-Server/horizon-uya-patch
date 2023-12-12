@@ -13,7 +13,7 @@ typedef struct PatchConfig
   char alwaysShowHealth;
   char mapScoreToggle_MapBtn;
   char mapScoreToggle_ScoreBtn;
-
+  char disableScavengerHunt;
 } PatchConfig_t;
 
 // Game Rules Tab
