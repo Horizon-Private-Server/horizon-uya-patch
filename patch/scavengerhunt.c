@@ -171,6 +171,9 @@ VariableAddress_t vaDeletePart = {
 extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 extern PatchStateContainer_t patchStateContainer;
+extern VariableAddress_t vaGetFrameTex;
+extern VariableAddress_t vaGetEffectTex;
+
 float scavHuntSpawnFactor = 1;
 float scavHuntSpawnTimerFactor = 1;
 int scavHuntShownPopup = 0;
@@ -207,7 +210,7 @@ int scavHuntOnReceiveRemoteSettings(void* connection, void* data)
 
   scavHuntEnabled = response.Enabled;
   scavHuntSpawnFactor = maxf(response.SpawnFactor, 0.1);
-  scavHuntSpawnTimerFactor = clamp(scavHuntSpawnFactor, 1, 5);
+  scavHuntSpawnTimerFactor = clamp(scavHuntSpawnFactor, 1, 30);
   DPRINTF("received scav hunt %d %f\n", scavHuntEnabled, scavHuntSpawnFactor);
 }
 
@@ -243,7 +246,7 @@ struct PartInstance * scavHuntSpawnParticle(VECTOR position, u32 color, char opa
 
 	// return ((struct PartInstance* (*)(VECTOR, u32, char, u32, u32, int, int, int, float))GetAddress(&vaSpawnPart_059))(position, color, opacity, a3, t0, -1, 0, 0, f12 + (f1 * idx));
 
-	return ((struct PartInstance* (*)(VECTOR, u32, char, u32, u32, int, int, int, float))GetAddress(&vaSpawnPart_059))(position, color, opacity, 53, 1, 2, 0, 0, idx);
+	return ((struct PartInstance* (*)(VECTOR, u32, char, u32, u32, int, int, int, float))GetAddress(&vaSpawnPart_059))(position, color, opacity, 53, 0, 2, 0, 0, 1.25 + (0.5 * idx));
 }
 
 //--------------------------------------------------------------------------
@@ -291,9 +294,18 @@ void scavHuntHBoltPostDraw(Moby* moby)
 
 	if (timeUntilDestruction < 10) {
 		float speed = timeUntilDestruction < 3 ? 20.0 : 3.0;
-		float pulse = (1 + sinf((gameGetTime() / 1000.0) * speed)) * 0.5;
+		float pulse = (1 + sinf(clampAngle((gameGetTime() / 1000.0) * speed))) * 0.5;
 		opacity = 32 + (pulse * 96);
 	}
+
+  opacity = opacity << 24;
+  color = opacity | (color & HBOLT_SPRITE_COLOR);
+  moby->PrimaryColor = color;
+
+  HOOK_JAL(0x0045a220 + 0x20, GetAddress(&vaGetFrameTex));
+  ((void (*)(float scale, float, float theta, VECTOR position, int tex, int color, int drawType))0x0045ae68)(0.55, 0, MATH_PI, moby->Position, 81, opacity, 0);
+  ((void (*)(float scale, float, float theta, VECTOR position, int tex, int color, int drawType))0x0045ae68)(0.5, 0.01, MATH_PI, moby->Position, 81, color, 0);
+  HOOK_JAL(0x0045a220 + 0x20, GetAddress(&vaGetEffectTex));
 
 //   opacity = opacity << 24;
 //   color = opacity | (color & HBOLT_SPRITE_COLOR);
@@ -317,7 +329,8 @@ void scavHuntHBoltUpdate(Moby* moby)
 	if (!pvars)
 		return;
 
-	scavHuntHBoltPostDraw(moby);
+  // Sticky_FX
+  ((void (*)(void*, Moby*))0x00456108)(&scavHuntHBoltPostDraw, moby);
 
 	// handle particles
 	u32 color = colorLerp(0, HBOLT_PARTICLE_COLOR, 1.0 / 4);
@@ -334,7 +347,7 @@ void scavHuntHBoltUpdate(Moby* moby)
 		}
 	}
 
-		// handle pickup
+  // handle pickup
   for (i = 0; i < GAME_MAX_LOCALS; ++i) {
     Player* p = playerGetFromSlot(i);
     if (!p || playerIsDead(p)) continue;
@@ -365,8 +378,8 @@ void scavHuntSpawn(VECTOR position)
   vector_copy(moby->Position, position);
   moby->UpdateDist = -1;
   moby->Drawn = 1;
-  moby->Opacity = 0x80;
-  moby->DrawDist = 0x80;
+  moby->Opacity = 0x00;
+  moby->DrawDist = 0x00;
 
   // update pvars
   struct HBoltPVar* pvars = (struct HBoltPVar*)moby->PVar;
@@ -387,7 +400,7 @@ void scavHuntSpawnRandomNearPosition(VECTOR position)
   while (i < 4)
   {
     // generate random position
-    VECTOR from, to = {0,0,-6,0}, p = {0,0,1,0};
+    VECTOR from = {0,0,0,0}, to = {0,0,-6,0}, p = {0,0,1,0};
     float theta = randRadian();
     float radius = randRange(5, 10);
     vector_fromyaw(from, theta);
@@ -396,8 +409,9 @@ void scavHuntSpawnRandomNearPosition(VECTOR position)
     vector_add(from, from,  position);
     vector_add(to, to, from);
 
-	vector_add(p, p, CollLine_Fix_GetHitPosition());
-	scavHuntSpawn(p);
+	//vector_add(p, p, CollLine_Fix_GetHitPosition());
+	scavHuntSpawn(from);
+  break;
 
     // snap to ground
     // and check if ground is walkable
@@ -446,7 +460,7 @@ int scavCheckClients(void)
     GameSettings* gs = gameGetSettings();
     int i;
     int uniqueClients = 0;
-    char clientIds[GAME_MAX_PLAYERS] = {0,0,0,0,0,0,0,0,0,0};
+    char clientIds[GAME_MAX_PLAYERS] = {0,0,0,0,0,0,0,0};
 
     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
       int clientId = gs->PlayerClients[i];
@@ -469,7 +483,7 @@ void scavHuntRun(void)
 
   // if the hunt is live then show a first time popup on the online lobby
   if (isInMenus() && uiGetActivePointer(UIP_ONLINE_LOBBY) && !scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled) {
-    uiShowOkDialog("Scavenger Hunt", "The Horizon Scavenger Hunt is live! Hunt for Horizon Bolts for a chance to win prizes! Join our discord for more info: discord.gg/horizonps");
+    //uiShowOkDialog("Scavenger Hunt", "The Horizon Scavenger Hunt is live! Hunt for Horizon Bolts for a chance to win prizes! Join our discord for more info: discord.gg/horizonps");
     scavHuntShownPopup = 1;
   }
 
@@ -498,15 +512,15 @@ void scavHuntRun(void)
   Player* localPlayer = playerGetFromSlot(0);
   if (!localPlayer) return;
 
-  // we need at least 3 unique clients
-#if !DEBUG
-  if (scavCheckClients() < 3) return;
-#endif
-
 #if DEBUG
   if (padGetButtonDown(0, PAD_DOWN | PAD_L1) > 0) {
     scavHuntSpawnRandomNearPlayer(0);
   }
+#endif
+
+  // we need at least 3 unique clients
+#if !DEBUG
+  if (scavCheckClients() < 3) return;
 #endif
 
   // hooks

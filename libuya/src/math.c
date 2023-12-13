@@ -124,14 +124,9 @@ float clamp(float v, float min, float max)
 //--------------------------------------------------------
 float clampAngle(float theta)
 {
-    if (theta > MATH_PI)
-        theta -= MATH_TAU;
-    else if (theta < -MATH_PI)
-        theta += MATH_TAU;
-
-    return theta;
+  float f1 = (theta + MATH_PI) / MATH_TAU;
+  return (f1 - (float)(int)f1) * MATH_TAU - MATH_PI;
 }
-
 
 //--------------------------------------------------------
 // https://gist.github.com/volkansalma/2972237
