@@ -273,6 +273,62 @@ VariableAddress_t vaDrawSprite = {
 #endif
 };
 
+VariableAddress_t vaSticky_FX = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00457240,
+    .Hoven = 0x00458dc0,
+    .OutpostX12 = 0x0044fbc0,
+    .KorgonOutpost = 0x0044d780,
+    .Metropolis = 0x0044cac0,
+    .BlackwaterCity = 0x0044a2c0,
+    .CommandCenter = 0x0044af40,
+    .BlackwaterDocks = 0x0044d7c0,
+    .AquatosSewers = 0x0044cac0,
+    .MarcadiaPalace = 0x0044c440,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x00456108,
+    .Hoven = 0x00457c90,
+    .OutpostX12 = 0x0044ead0,
+    .KorgonOutpost = 0x0044c710,
+    .Metropolis = 0x0044ba50,
+    .BlackwaterCity = 0x004491d0,
+    .CommandCenter = 0x0044a010,
+    .BlackwaterDocks = 0x0044c850,
+    .AquatosSewers = 0x0044b4d0,
+    .MarcadiaPalace = 0x0044b4d0,
+#endif
+};
+
+VariableAddress_t vaDrawBillboardQuad = {
+#if UYA_PAL
+
+    .Lobby = 0,
+    .Hoven = 0x0045dab0,
+    .OutpostX12 = 0x004548b0,
+    .KorgonOutpost = 0x00452470,
+    .Metropolis = 0x004517b0,
+    .BlackwaterCity = 0x0044efb0,
+    .CommandCenter = 0x0044fad8,
+    .BlackwaterDocks = 0x00452358,
+    .AquatosSewers = 0x00451658,
+    .MarcadiaPalace = 0x00450fd8,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0045ae68,
+    .Hoven = 0x0045c928,
+    .OutpostX12 = 0x00453768,
+    .KorgonOutpost = 0x00453768,
+    .Metropolis = 0x004506e8,
+    .BlackwaterCity = 0x0044de68,
+    .CommandCenter = 0x0044eb50,
+    .BlackwaterDocks = 0x00451390,
+    .AquatosSewers = 0x004506d0,
+    .MarcadiaPalace = 0x00450010,
+#endif
+};
+
 VariableAddress_t vaViewContext = {
 #if UYA_PAL
     .Lobby = 0,

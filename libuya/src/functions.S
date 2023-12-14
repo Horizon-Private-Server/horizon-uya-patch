@@ -287,6 +287,8 @@ VARIABLE_FUNCTION(gfxDoGifPaging, vaDoGifPaging)
 VARIABLE_FUNCTION(gfxGetFrameTex, vaGetFrameTex)
 VARIABLE_FUNCTION(gfxGetEffectTex, vaGetEffectTex)
 VARIABLE_FUNCTION(gfxDrawSprite, vaDrawSprite)
+VARIABLE_FUNCTION(gfxStickyFX, vaSticky_FX)
+VARIABLE_FUNCTION(gfxDrawBillboardQuad, vaDrawBillboardQuad)
 
 #VARIABLE_FUNCTION(gfxDrawQuad, 0x004CA188)
 #VARIABLE_FUNCTION(gfxResetQuad, 0x005b6378)
