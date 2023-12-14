@@ -168,6 +168,34 @@ VariableAddress_t vaDeletePart = {
 #endif
 };
 
+VariableAddress_t vaReplace_GetEffectTexJAL = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0045b2f0,
+    .Hoven = 0x0045ce70,
+    .OutpostX12 = 0x00453c70,
+    .KorgonOutpost = 0x00451830,
+    .Metropolis = 0x00450b70,
+    .BlackwaterCity = 0x0044e370,
+    .CommandCenter = 0x0044eff0,
+    .BlackwaterDocks = 0x00451870,
+    .AquatosSewers = 0x00450b70,
+    .MarcadiaPalace = 0x004504f0,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0045a220,
+    .Hoven = 0x0045bce0,
+    .OutpostX12 = 0x00452b20,
+    .KorgonOutpost = 0x00450760,
+    .Metropolis = 0x0044faa0,
+    .BlackwaterCity = 0x0044d220,
+    .CommandCenter = 0x0044e060,
+    .BlackwaterDocks = 0x004508a0,
+    .AquatosSewers = 0x0044fbe0,
+    .MarcadiaPalace = 0x0044f520,
+#endif
+};
+
 extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 extern PatchStateContainer_t patchStateContainer;
@@ -302,20 +330,11 @@ void scavHuntHBoltPostDraw(Moby* moby)
   color = opacity | (color & HBOLT_SPRITE_COLOR);
   moby->PrimaryColor = color;
 
-  HOOK_JAL(0x0045a220 + 0x20, GetAddress(&vaGetFrameTex));
-  ((void (*)(float scale, float, float theta, VECTOR position, int tex, int color, int drawType))0x0045ae68)(0.55, 0, MATH_PI, moby->Position, 81, opacity, 0);
-  ((void (*)(float scale, float, float theta, VECTOR position, int tex, int color, int drawType))0x0045ae68)(0.5, 0.01, MATH_PI, moby->Position, 81, color, 0);
-  HOOK_JAL(0x0045a220 + 0x20, GetAddress(&vaGetEffectTex));
-
-//   opacity = opacity << 24;
-//   color = opacity | (color & HBOLT_SPRITE_COLOR);
-//   moby->PrimaryColor = color;
-
-//   HOOK_JAL(0x005b64dc, 0x004e4d70); // (GetEffectTex, GetFrameTex)
-//   // gfxDrawBillboardQuad?: 0x0045bae0
-//   gfxDrawBillboardQuad(vector_read(moby->Position), HBOLT_SCALE * 0.6, opacity, 0, -MATH_PI / 2, 3, 1, 0);
-//   gfxDrawBillboardQuad(vector_read(moby->Position), HBOLT_SCALE * 0.5, color, 0, -MATH_PI / 2, 3, 1, 0);
-//   HOOK_JAL(0x005b64dc, 0x004c4200); // Reset back to regular Data
+  u32 hook = (u32)GetAddress(&vaReplace_GetEffectTexJAL) + 0x20;
+  HOOK_JAL(hook, GetAddress(&vaGetFrameTex));
+  gfxDrawBillboardQuad(0.55, 0, MATH_PI, moby->Position, 81, opacity, 0);
+  gfxDrawBillboardQuad(0.5, 0.01, MATH_PI, moby->Position, 81, color, 0);
+  HOOK_JAL(hook, GetAddress(&vaGetEffectTex));
 }
 
 //--------------------------------------------------------------------------
@@ -329,8 +348,7 @@ void scavHuntHBoltUpdate(Moby* moby)
 	if (!pvars)
 		return;
 
-  // Sticky_FX
-  ((void (*)(void*, Moby*))0x00456108)(&scavHuntHBoltPostDraw, moby);
+  gfxStickyFX(&scavHuntHBoltPostDraw, moby);
 
 	// handle particles
 	u32 color = colorLerp(0, HBOLT_PARTICLE_COLOR, 1.0 / 4);
