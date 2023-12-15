@@ -7,7 +7,7 @@ EE_LDFLAGS = -fno-builtin -nostdlib -nostartfiles -L. -L../libuya/lib -L$(PS2SDK
 #EE_DEFS = -DDEBUG
 #EE_DEFS += -DDSCRPRINT
 #EE_DEFS += -DTEST
-EE_DEFS += -DSCAVENGER_HUNT
+#EE_DEFS += -DSCAVENGER_HUNT
 
 all: $(EE_BIN) clean copy
 
