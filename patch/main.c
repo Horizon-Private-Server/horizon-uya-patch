@@ -60,9 +60,7 @@ void grLoadStart(void);
 
 void runSpectate(void);
 
-#if SCAVENGER_HUNT
 void scavHuntRun(void);
-#endif
 
 int dlBytesReceived = 0;
 int dlTotalBytes = 0;
@@ -109,6 +107,8 @@ extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern VariableAddress_t vaFlagUpdate_Func;
 extern MenuElem_ListData_t dataCustomMaps;
 extern SelectedCustomMapId;
+extern scavHuntEnabled;
+extern scavHuntShownPopup;
 
 PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableAutoMaps = 0,
@@ -1850,9 +1850,7 @@ void runGameStartMessager(void)
 			}
 
 			// request latest scavenger hunt settings
-			#if SCAVENGER_HUNT
       		scavHuntQueryForRemoteSettings();
-			#endif
 
 			sentGameStart = 1;
 		}
@@ -2068,7 +2066,6 @@ void onOnlineMenu(void)
 	lastMenuInvokedTime = gameGetTime();
 	if (!hasInitialized)
 	{
-		printf("onOnlinemenu - pad enable input\n");
 		padEnableInput();
 		onConfigInitialize();
 		refreshCustomMapList();
@@ -2112,6 +2109,11 @@ void onOnlineMenu(void)
 		}
 		
 		showNoMapPopup = 0;
+	}
+
+	if (!scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled){
+		uiShowOkDialog("Scavenger Hunt", "The Horizon Scavenger Hunt is live! Hunt for Horizon Bolts for a chance to win prizes! Join our discord for more info: discord.gg/horizonps");
+    	scavHuntShownPopup = 1;
 	}
 
   //
@@ -2167,10 +2169,8 @@ int main(void)
 	// 
 	runCheckGameMapInstalled();
 
-	#if SCAVENGER_HUNT
-		// Run Scavenger Hunt
-		scavHuntRun();
-	#endif
+	// Run Scavenger Hunt
+	scavHuntRun();
 
 	// 
 	runCameraSpeedPatch();

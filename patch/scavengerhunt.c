@@ -206,7 +206,7 @@ float scavHuntSpawnFactor = 1;
 float scavHuntSpawnTimerFactor = 1;
 int scavHuntShownPopup = 0;
 int scavHuntHasGotSettings = 0;
-int scavHuntEnabled = 0;
+int scavHuntEnabled = 1;
 int scavHuntInitialized = 0;
 int scavHuntBoltSpawnCooldown = 0;
 
@@ -500,10 +500,11 @@ void scavHuntRun(void)
   netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_RESPONSE_SCAVENGER_HUNT_SETTINGS, &scavHuntOnReceiveRemoteSettings);
 
   // if the hunt is live then show a first time popup on the online lobby
-  if (isInMenus() && uiGetActivePointer(UIP_ONLINE_LOBBY) && !scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled) {
-    //uiShowOkDialog("Scavenger Hunt", "The Horizon Scavenger Hunt is live! Hunt for Horizon Bolts for a chance to win prizes! Join our discord for more info: discord.gg/horizonps");
-    scavHuntShownPopup = 1;
-  }
+  // MOVED TO "main.c->onOnlineMenu()"
+  // if (isInMenus() && uiGetActivePointer(UIP_ONLINE_LOBBY) && !scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled) {
+  //   //uiShowOkDialog("Scavenger Hunt", "The Horizon Scavenger Hunt is live! Hunt for Horizon Bolts for a chance to win prizes! Join our discord for more info: discord.gg/horizonps");
+  //   scavHuntShownPopup = 1;
+  // }
 
   // request settings on first download of the patch
   if (!scavHuntHasGotSettings) {
