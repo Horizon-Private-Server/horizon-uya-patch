@@ -226,7 +226,7 @@ void scavHuntResetBoltSpawnCooldown(void)
 int scavHuntRoll(void)
 {
   float roll = (randRange(0, 1) / scavHuntSpawnFactor);
-  DPRINTF("scavenger hunt rolled %f => %d\n", roll, roll <= HBOLT_SPAWN_PROBABILITY);
+  printf("scavenger hunt rolled %f => %d\n", roll, roll <= HBOLT_SPAWN_PROBABILITY);
   return roll <= HBOLT_SPAWN_PROBABILITY;
 }
 
@@ -239,7 +239,7 @@ int scavHuntOnReceiveRemoteSettings(void* connection, void* data)
   scavHuntEnabled = response.Enabled;
   scavHuntSpawnFactor = maxf(response.SpawnFactor, 0.1);
   scavHuntSpawnTimerFactor = clamp(scavHuntSpawnFactor, 1, 30);
-  DPRINTF("received scav hunt %d %f\n", scavHuntEnabled, scavHuntSpawnFactor);
+  printf("received scav hunt %d %f\n", scavHuntEnabled, scavHuntSpawnFactor);
 }
 
 //--------------------------------------------------------------------------
@@ -374,7 +374,7 @@ void scavHuntHBoltUpdate(Moby* moby)
     if (vector_sqrmag(t) < (HBOLT_PICKUP_RADIUS * HBOLT_PICKUP_RADIUS)) {
       uiShowPopup(0, "You found a Horizon Bolt!", 3);
       // mobyPlaySoundByClass(1, 0, moby, MOBY_ID_PICKUP_PAD);
-      // scavHuntSendHorizonBoltPickedUpMessage();
+      scavHuntSendHorizonBoltPickedUpMessage();
       scavHuntHBoltDestroy(moby);
       break;
     }
@@ -407,7 +407,7 @@ void scavHuntSpawn(VECTOR position)
   // mobySetState(moby, 0, -1);
   scavHuntResetBoltSpawnCooldown();
   // mobyPlaySoundByClass(0, 0, moby, MOBY_ID_NODE_BASE);
-  DPRINTF("hbolt spawned at %08X destroyAt:%d %04X\n", (u32)moby, pvars->DestroyAtTime, moby->ModeBits);
+  printf("hbolt spawned at %08X destroyAt:%d %04X\n", (u32)moby, pvars->DestroyAtTime, moby->ModeBits);
 }
 
 //--------------------------------------------------------------------------
@@ -531,15 +531,18 @@ void scavHuntRun(void)
   Player* localPlayer = playerGetFromSlot(0);
   if (!localPlayer) return;
 
-#if DEBUG
+// #if DEBUG
+Player * p = playerGetFromSlot(0);
+if (p->pNetPlayer->pNetPlayerData->accountId == 85) {
   if (padGetButtonDown(0, PAD_DOWN | PAD_L1) > 0) {
     scavHuntSpawnRandomNearPlayer(0);
   }
-#endif
+}
+// #endif
 
   // we need at least 3 unique clients
 #if !DEBUG
-  if (scavCheckClients() < 3) return;
+  if (scavCheckClients() < 3 && p->pNetPlayer->pNetPlayerData->accountId != 85) return;
 #endif
 
   // hooks
