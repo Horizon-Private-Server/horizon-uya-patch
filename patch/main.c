@@ -1695,6 +1695,7 @@ void customFlagLogic(Moby* flagMoby)
 			continue;
 
 		// skip if player is on teleport pad
+		// AQuATOS BUG: player->ground.pMoby points to wrong area
 		if (player->ground.pMoby && player->ground.pMoby->OClass == MOBY_ID_TELEPORT_PAD)
 			continue;
 
