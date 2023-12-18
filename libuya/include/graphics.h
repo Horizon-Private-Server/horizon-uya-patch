@@ -12,6 +12,7 @@
 
 #include <tamtypes.h>
 #include "math3d.h"
+#include "moby.h"
 
 
 //--------------------------------------------------------
@@ -296,6 +297,8 @@ void gfxSetupGifPaging(int);
 u64 gfxGetFrameTex(int id);
 u64 gfxGetEffectTex(int id, int);
 void gfxDrawSprite(float x, float y, float w, float h, int t0, int t1, int texW, int texH, u64 color, u64 texture);
+void gfxStickyFX(void* a0, Moby* moby);
+void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
 
 //
 ScreenVBEffect* gfxScreenVBEffect(void);

@@ -5,6 +5,13 @@
 #include "common.h"
 #include "player.h"
 
+struct Cuboid { // 0x80
+	/* 0x00 */ mtx3 matrix;
+	/* 0x30 */ vec4 pos;
+	/* 0x40 */ mtx3 imatrix;
+	/* 0x70 */ vec4f rot;
+};
+
 typedef struct SpawnPoint
 {
     MATRIX M0;

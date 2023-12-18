@@ -89,6 +89,7 @@ void menuStateAlwaysHiddenHandler(TabElem_t* tab, MenuElem_t* element, int* stat
 void menuStateAlwaysDisabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateEnabledInMenusHandler(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateScavengerHuntEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state);
@@ -129,6 +130,8 @@ void navTab(int direction);
 int mapsGetInstallationResult(void);
 int mapsDownloadingModules(void);
 void refreshCustomMapList(void);
+extern int scavHuntEnabled;
+
 
 MenuElem_ListData_t dataLevelOfDetail = {
     &config.levelOfDetail,
@@ -271,6 +274,7 @@ MenuElem_t menuElementsGeneral[] = {
 #endif
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
+  { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt },
 #if UYA_NTSC
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
@@ -642,7 +646,13 @@ void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int*
 
   *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
-
+void menuStateScavengerHuntEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  if (!scavHuntEnabled)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
 // 
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state)
 {

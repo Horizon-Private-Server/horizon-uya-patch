@@ -60,6 +60,8 @@ void grLoadStart(void);
 
 void runSpectate(void);
 
+void scavHuntRun(void);
+
 int dlBytesReceived = 0;
 int dlTotalBytes = 0;
 int hasInitialized = 0;
@@ -105,6 +107,8 @@ extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern VariableAddress_t vaFlagUpdate_Func;
 extern MenuElem_ListData_t dataCustomMaps;
 extern SelectedCustomMapId;
+extern scavHuntEnabled;
+extern scavHuntShownPopup;
 
 PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableAutoMaps = 0,
@@ -116,6 +120,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.alwaysShowHealth = 0,
 	.mapScoreToggle_MapBtn = 0,
 	.mapScoreToggle_ScoreBtn = 0,
+	.disableScavengerHunt = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1545,7 +1550,7 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 		flagPickup(flagMoby, pIdx);
 		player->FlagMoby = flagMoby;
 	}
-	DPRINTF("player %d picked up flag %X at %d\n", player->PlayerId, flagMoby->OClass, gameGetTime());
+	DPRINTF("player %d picked up flag %X at %d\n", player->mpIndex, flagMoby->OClass, gameGetTime());
 }
 
 /*
@@ -1690,6 +1695,7 @@ void customFlagLogic(Moby* flagMoby)
 			continue;
 
 		// skip if player is on teleport pad
+		// AQuATOS BUG: player->ground.pMoby points to wrong area
 		if (player->ground.pMoby && player->ground.pMoby->OClass == MOBY_ID_TELEPORT_PAD)
 			continue;
 
@@ -1843,6 +1849,10 @@ void runGameStartMessager(void)
 			{
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_GAME_LOBBY_STARTED, 0, gameSettings);
 			}
+
+			// request latest scavenger hunt settings
+      		scavHuntQueryForRemoteSettings();
+
 			sentGameStart = 1;
 		}
 	}
@@ -2057,7 +2067,6 @@ void onOnlineMenu(void)
 	lastMenuInvokedTime = gameGetTime();
 	if (!hasInitialized)
 	{
-		printf("onOnlinemenu - pad enable input\n");
 		padEnableInput();
 		onConfigInitialize();
 		refreshCustomMapList();
@@ -2101,6 +2110,11 @@ void onOnlineMenu(void)
 		}
 		
 		showNoMapPopup = 0;
+	}
+
+	if (!scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled){
+		uiShowOkDialog("Scavenger Hunt", "The Horizon Scavenger Hunt is live! Hunt for Horizon Bolts for a chance to win prizes! Join our discord for more info: discord.gg/horizonps");
+    	scavHuntShownPopup = 1;
 	}
 
   //
@@ -2155,6 +2169,9 @@ int main(void)
 
 	// 
 	runCheckGameMapInstalled();
+
+	// Run Scavenger Hunt
+	scavHuntRun();
 
 	// 
 	runCameraSpeedPatch();
