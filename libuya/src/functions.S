@@ -415,6 +415,7 @@ VARIABLE_FUNCTION(spawnPointGetRandom, vaGetRandomSpawnPointFunc)
 #--------------------------------------------------------
 VARIABLE_FUNCTION(soundHeroPlay, vaSoundHeroPlayFunc)
 VARIABLE_FUNCTION(soundMobyPlay, vaSoundMobyPlayFunc)
+VARIABLE_FUNCTION(soundPlayByOClass, vaSoundPlayByOClassFunc)
 VARIABLE_FUNCTION(soundPlay, vaSoundPlayFunc)
 
 #--------------------------------------------------------

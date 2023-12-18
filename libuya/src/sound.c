@@ -58,6 +58,34 @@ VariableAddress_t vaSoundMobyPlayFunc = {
 #endif
 };
 
+VariableAddress_t vaSoundPlayByOClassFunc = {
+#if UYA_PAL
+    .Lobby = 0x005f3488,
+    .Bakisi = 0x004c5b28,
+    .Hoven = 0x004c7c40,
+    .OutpostX12 = 0x004bd518,
+    .KorgonOutpost = 0x004bacb0,
+    .Metropolis = 0x004ba000,
+    .BlackwaterCity = 0x004b7898,
+    .CommandCenter = 0x004b7890,
+    .BlackwaterDocks = 0x004ba110,
+    .AquatosSewers = 0x004b9410,
+    .MarcadiaPalace = 0x004b8d90,
+#else
+    .Lobby = 0x005f0d88,
+    .Bakisi = 0x004c3480,
+    .Hoven = 0x004c54d8,
+    .OutpostX12 = 0x004badf0,
+    .KorgonOutpost = 0x004b8608,
+    .Metropolis = 0x004b7958,
+    .BlackwaterCity = 0x004b5170,
+    .CommandCenter = 0x004b5328,
+    .BlackwaterDocks = 0x004b7b68,
+    .AquatosSewers = 0x004b6ea8,
+    .MarcadiaPalace = 0x004b67e8,
+#endif
+};
+
 VariableAddress_t vaSoundPlayFunc = {
 #if UYA_PAL
 	.Lobby = 0,

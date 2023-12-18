@@ -97,10 +97,10 @@ typedef struct SoundDef { // 0x20
 	/* 0x1c */ int bank_index;
 } SoundDef;
 
-void soundHeroPlay(Player * player, short sound, int flags);
+void soundHeroPlay(Player* player, short sound, int flags);
 
-void soundMobyPlay(short sound, int flags, Moby * moby);
-
-void soundPlay(SoundDef * sound, int flags, Moby * moby, VECTOR position, int volume);
+void soundMobyPlay(short sound, int flags, Moby* moby);
+void soundPlayByOClass(short sound, int flags, Moby* moby, short oClass);
+void soundPlay(SoundDef* sound, int flags, Moby* moby, VECTOR position, int volume);
 
 #endif // _LIBUYA_SOUND_H_
