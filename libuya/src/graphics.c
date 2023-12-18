@@ -296,7 +296,7 @@ VariableAddress_t vaSticky_FX = {
     .BlackwaterCity = 0x004491d0,
     .CommandCenter = 0x0044a010,
     .BlackwaterDocks = 0x0044c850,
-    .AquatosSewers = 0x0044b4d0,
+    .AquatosSewers = 0x0044bac8,
     .MarcadiaPalace = 0x0044b4d0,
 #endif
 };
