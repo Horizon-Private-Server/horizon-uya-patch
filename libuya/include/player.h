@@ -470,9 +470,9 @@ typedef struct HeroGround {
 	/*  30 */ VECTOR point;
 	/*  40 */ VECTOR lastGoodPos;
 	/*  50 */ VECTOR externalBootGrav;
-	/*  60 */ float feetHeights[1];
-	/*  68 */ float pitchSlopes[1];
-	/*  70 */ float rollSlopes[1];
+	/*  60 */ float feetHeights[2];
+	/*  68 */ float pitchSlopes[2];
+	/*  70 */ float rollSlopes[2];
 	/*  78 */ float height;
 	/*  7c */ float dist;
 	/*  80 */ float slope;
