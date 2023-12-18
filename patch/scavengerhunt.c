@@ -171,28 +171,28 @@ VariableAddress_t vaDeletePart = {
 VariableAddress_t vaReplace_GetEffectTexJAL = {
 #if UYA_PAL
     .Lobby = 0,
-    .Bakisi = 0x0045b2f0,
-    .Hoven = 0x0045ce70,
-    .OutpostX12 = 0x00453c70,
-    .KorgonOutpost = 0x00451830,
-    .Metropolis = 0x00450b70,
-    .BlackwaterCity = 0x0044e370,
-    .CommandCenter = 0x0044eff0,
-    .BlackwaterDocks = 0x00451870,
-    .AquatosSewers = 0x00450b70,
-    .MarcadiaPalace = 0x004504f0,
+    .Bakisi = 0x2045b2f0,
+    .Hoven = 0x2045ce70,
+    .OutpostX12 = 0x20453c70,
+    .KorgonOutpost = 0x20451830,
+    .Metropolis = 0x20450b70,
+    .BlackwaterCity = 0x2044e370,
+    .CommandCenter = 0x2044eff0,
+    .BlackwaterDocks = 0x20451870,
+    .AquatosSewers = 0x20450b70,
+    .MarcadiaPalace = 0x204504f0,
 #else
     .Lobby = 0,
-    .Bakisi = 0x0045a220,
-    .Hoven = 0x0045bce0,
-    .OutpostX12 = 0x00452b20,
-    .KorgonOutpost = 0x00450760,
-    .Metropolis = 0x0044faa0,
-    .BlackwaterCity = 0x0044d220,
-    .CommandCenter = 0x0044e060,
-    .BlackwaterDocks = 0x004508a0,
-    .AquatosSewers = 0x0044fbe0,
-    .MarcadiaPalace = 0x0044f520,
+    .Bakisi = 0x2045a220,
+    .Hoven = 0x2045bce0,
+    .OutpostX12 = 0x20452b20,
+    .KorgonOutpost = 0x20450760,
+    .Metropolis = 0x2044faa0,
+    .BlackwaterCity = 0x2044d220,
+    .CommandCenter = 0x2044e060,
+    .BlackwaterDocks = 0x204508a0,
+    .AquatosSewers = 0x2044fbe0,
+    .MarcadiaPalace = 0x2044f520,
 #endif
 };
 
@@ -267,13 +267,6 @@ void scavHuntSendHorizonBoltPickedUpMessage(void)
 //--------------------------------------------------------------------------
 struct PartInstance * scavHuntSpawnParticle(VECTOR position, u32 color, char opacity, int idx)
 {
-	// u32 a3 = *(u32*)0x002218E8;
-	// u32 t0 = *(u32*)0x002218E4;
-	// float f12 = *(float*)0x002218DC;
-	// float f1 = *(float*)0x002218E0;
-
-	// return ((struct PartInstance* (*)(VECTOR, u32, char, u32, u32, int, int, int, float))GetAddress(&vaSpawnPart_059))(position, color, opacity, a3, t0, -1, 0, 0, f12 + (f1 * idx));
-
 	return ((struct PartInstance* (*)(VECTOR, u32, char, u32, u32, int, int, int, float))GetAddress(&vaSpawnPart_059))(position, color, opacity, 53, 0, 2, 0, 0, 1.25 + (0.5 * idx));
 }
 
@@ -372,8 +365,8 @@ void scavHuntHBoltUpdate(Moby* moby)
 
     vector_subtract(t, p->PlayerPosition, moby->Position);
     if (vector_sqrmag(t) < (HBOLT_PICKUP_RADIUS * HBOLT_PICKUP_RADIUS)) {
-      uiShowPopup(0, "You found a Horizon Bolt!", 3);
-      // mobyPlaySoundByClass(1, 0, moby, MOBY_ID_PICKUP_PAD);
+      uiShowPopup(0, "You found a Horizon Bolt!\x0", 3);
+      soundPlayByOClass(2, 0, moby, MOBY_ID_OMNI_SHIELD);
       scavHuntSendHorizonBoltPickedUpMessage();
       scavHuntHBoltDestroy(moby);
       break;
@@ -406,7 +399,7 @@ void scavHuntSpawn(VECTOR position)
 
   // mobySetState(moby, 0, -1);
   scavHuntResetBoltSpawnCooldown();
-  // mobyPlaySoundByClass(0, 0, moby, MOBY_ID_NODE_BASE);
+  soundPlayByOClass(1, 0, moby, MOBY_ID_OMNI_SHIELD);
   printf("hbolt spawned at %08X destroyAt:%d %04X\n", (u32)moby, pvars->DestroyAtTime, moby->ModeBits);
 }
 
@@ -418,9 +411,9 @@ void scavHuntSpawnRandomNearPosition(VECTOR position)
   while (i < 4)
   {
     // generate random position
-    VECTOR from = {0,0,0,0}, to = {0,0,-6,0}, p = {0,0,1,0};
+    VECTOR from = {0,0,0,0}, to = {0,0,-6,0}, p = {0,0,.5,0};
     float theta = randRadian();
-    float radius = randRange(5, 10);
+    float radius = randRange(5, 8);
     vector_fromyaw(from, theta);
     vector_scale(from, from, radius);
     from[2] = 3;
@@ -434,12 +427,12 @@ void scavHuntSpawnRandomNearPosition(VECTOR position)
     // snap to ground
     // and check if ground is walkable
     // if (CollLine_Fix(from, to, 0, NULL, NULL)) {
-    //   int colId = CollLine_Fix_GetHitCollisionId() & 0x0f;
-    //   if (colId == 0xF || colId == 0x7 || colId == 0x9 || colId == 0xA) {
-    //     vector_add(p, p, CollLine_Fix_GetHitPosition());
-    //     scavHuntSpawn(p);
-    //     break;
-    //   }
+      // int colId = CollHotspot();
+      // if (colId == 2 || colId == 4 || colId == 7 || colId == 9 || colId == 10) {
+      //   vector_add(p, p, CollLine_Fix_GetHitPosition());
+      //   scavHuntSpawn(p);
+      //   break;
+      // }
     // }
 
     ++i;
@@ -458,7 +451,7 @@ void scavHuntSpawnRandomNearPlayer(int pIdx)
 }
 
 //--------------------------------------------------------------------------
-void scavHuntOnKillDeathMessage(void* killDeathMsg)
+void scavHuntOnKillDeathMessage(char* killDeathMsg)
 {
   ((void (*)(void*))GetAddress(&vaOnPlayerKill_Func))(killDeathMsg);
 
@@ -466,8 +459,8 @@ void scavHuntOnKillDeathMessage(void* killDeathMsg)
 
   Player* localPlayer = playerGetFromSlot(0);
   if (!localPlayer) return;
-  char killer = *(char*)(killDeathMsg + 0);
-  char killed = *(char*)(killDeathMsg + 2);
+  char killer = killDeathMsg[0];
+  char killed = killDeathMsg[2];
   if (killed >= 0 && killed < GAME_MAX_PLAYERS && killer == localPlayer->mpIndex) {
     scavHuntSpawnRandomNearPlayer(killed);
   }
