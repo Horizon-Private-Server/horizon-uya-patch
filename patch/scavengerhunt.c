@@ -535,7 +535,7 @@ if (p->pNetPlayer->pNetPlayerData->accountId == 85) {
 
   // we need at least 3 unique clients
 #if !DEBUG
-  if (scavCheckClients() < 3 && p->pNetPlayer->pNetPlayerData->accountId != 85) return;
+  if (scavCheckClients() < 3) return;
 #endif
 
   // hooks
