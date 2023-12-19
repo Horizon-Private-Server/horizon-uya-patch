@@ -40,7 +40,7 @@ typedef struct GameplayHeaderDef
 /* 0x54 */ u32 GlobalPVarOffset;
 /* 0x58 */ u32 PVarPointerScratchpadTableOffset;
 /* 0x5C */ u32 PVarTableOffset;                   // GameplayPVarDef_t
-/* 0x60 */ u32 PVarDataOffset;
+/* 0x60 */ u32 PVarDataOffset;					  // Actual PVar Data
 /* 0x64 */ u32 PVarPointerRewireTableOffset;
 /* 0x68 */ u32 CuboidsOffset;                     // GameplayCuboidHeaderDef_t
 /* 0x6C */ u32 SpheresOffset;
@@ -118,7 +118,9 @@ typedef struct GameplayMobyDef // 0x88
 /* 0x4C */ float RotX;
 /* 0x50 */ float RotZ;
 /* 0x54 */ float RotY;
-           char unk_58[0x30];
+		   char unk_58[0x10];
+/* 0x68 */ int PVarIndex;
+           char unk_6c[0x1c];
 } GameplayMobyDef_t;
 
 /*

@@ -215,8 +215,8 @@ MenuElem_ListData_t dataSetGattlingTurretHealth = {
     { "Default", ".5x", "1.5x", "2x", "3x", "4x", "5x", "6x", "7x", "8x" }
 };
 
-MenuElem_ListData_t dataRespawnTimer = {
-    &gameConfig.grRespawnTimer,
+MenuElem_ListData_t dataRespawnTimer_Player = {
+    &gameConfig.grRespawnTimer_Player,
     NULL,
     12,
     { "1.5", "2", "3", "4", "5", "6", "7", "8", "9", "10", "0", "1", }
@@ -267,6 +267,25 @@ MenuElem_ListData_t dataGameConfigPreset = {
     }
 };
 
+MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
+    &gameConfig.grRespawnTimer_HealthBoxes,
+    NULL,
+    7,
+    { "30", "0", "5", "10", "15", "20", "25" }
+};
+MenuElem_ListData_t dataRespawnTimer_WeaponCrates = {
+    &gameConfig.grRespawnTimer_WeaponCrates,
+    NULL,
+    7,
+    { "30", "0", "5", "10", "15", "20", "25" }
+};
+MenuElem_ListData_t dataRespawnTimer_AmmoPickups = {
+    &gameConfig.grRespawnTimer_AmmoPickups,
+    NULL,
+    7,
+    { "30", "0", "5", "10", "15", "20", "25" }
+};
+
 // General
 MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
@@ -300,7 +319,7 @@ MenuElem_t menuElementsGameSettings[] = {
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Radar Blips", listActionHandler, menuStateHandler_Default, &dataRadarBlipsDistance },
-  { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer },
+  { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_Player },
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
   { "V2s", listActionHandler, menuStateHandler_Default, &dataV2_Setting },
@@ -313,6 +332,10 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates },
   { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups },
+  { "Health Boxes Respawn Timer", toggleInvertedActionHandler, menuStateHandler_Default, &dataRespawnTimer_HealthBoxes },
+  { "Weapon Crates Respawn Timer", toggleInvertedActionHandler, menuStateHandler_Default, &dataRespawnTimer_WeaponCrates },
+  { "Ammo Pickups Respawn Timer", toggleInvertedActionHandler, menuStateHandler_Default, &dataRespawnTimer_AmmoPickups },
+
   { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones },
   { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets },
   { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots },
@@ -1604,7 +1627,7 @@ void configMenuDisable(void)
       case 2: // 1v1
       {
         gameConfig.grRadarBlipsDistance = 1; // Always
-        gameConfig.grRespawnTimer = 10; // 0 Seconds
+        gameConfig.grRespawnTimer_Player = 10; // 0 Seconds
         gameConfig.grDisableHealthBoxes = 1;
         gameConfig.grDisableWeaponCrates = 1;
         gameConfig.grDisableAmmoPickups = 1;

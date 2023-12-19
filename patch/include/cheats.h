@@ -12,7 +12,7 @@ void AutoRespawn(void);
 int setGattlingTurretHealth(int value);
 int deleteSiegeNodeTurrets(void);
 void deleteNodeTurretsUpdate(void);
-void setRespawnTimer(void);
+void setRespawnTimer_Player(void);
 void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int ypos);
 int keepBaseHealthPadActive(void);
 void noPostHitInvinc(void);
@@ -20,6 +20,7 @@ void onGameplayLoad_disableWeaponCrates(GameplayHeaderDef_t * gameplay);
 void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay);
 void healthbars(void);
 void radarBlips(void);
+void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay);
 
 // Party Game Rules
 void survivor(void);

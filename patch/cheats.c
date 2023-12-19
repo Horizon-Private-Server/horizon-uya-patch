@@ -741,7 +741,7 @@ void survivor(void)
 }
 
 /*
- * NAME :		setRespawnTimer
+ * NAME :		setRespawnTimer_Player
  * 
  * DESCRIPTION :
  *              Sets respawn timer to certain value.  Also can disable pentaly timers.
@@ -753,7 +753,7 @@ void survivor(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void setRespawnTimer(void)
+void setRespawnTimer_Player(void)
 {
 	VariableAddress_t vaRespawnTimerFunc = {
 	// Uses the start of the Respawn Timer Function
@@ -784,15 +784,15 @@ void setRespawnTimer(void)
 #endif
 	};
     int RespawnAddr = GetAddress(&vaRespawnTimerFunc);
-	if (gameConfig.grRespawnTimer)
+	if (gameConfig.grRespawnTimer_Player)
 	{
 	    int Seconds;
-		switch (gameConfig.grRespawnTimer) {
+		switch (gameConfig.grRespawnTimer_Player) {
 			case 10:
 			case 11:
-				Seconds = gameConfig.grRespawnTimer - 10; break;
+				Seconds = gameConfig.grRespawnTimer_Player - 10; break;
 			default:
-				Seconds = gameConfig.grRespawnTimer + 1; break;
+				Seconds = gameConfig.grRespawnTimer_Player + 1; break;
 		}
         int RespawnTime = Seconds * GAME_FPS;
         
@@ -1270,6 +1270,19 @@ void healthbars(void)
 		HOOK_JAL(hook, &healthbars_Logic);
 }
 
+/*
+ * NAME :		radarBlips
+ * 
+ * DESCRIPTION :
+ *              Change how far the radarblips can be shown.
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 VariableAddress_t vaRadarBlips_FloatVal = {
 #if UYA_PAL
     .Lobby = 0,
@@ -1311,6 +1324,74 @@ void radarBlips(void)
 				*(u32*)float_dist = 0x3c010000;
 				*(u32*)(float_dist + 0x4) = 0x34210000;
 				break;	
+			}
+		}
+	}
+}
+
+/*
+ * NAME :		onGameplayLoad_miscRespawnTimers
+ * 
+ * DESCRIPTION :
+ *              Updates Various respawn timers for items (Health Boxes, Weapon Crates and Ammo Packs)
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
+{
+	int i;
+	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
+	u32 PVarOffsetPtr = ((u32)gameplay + gameplay->PVarTableOffset);
+	u32 PVarDataPtr = ((u32)gameplay + gameplay->PVarDataOffset);
+	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
+		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
+		if (gameConfig.grRespawnTimer_HealthBoxes > 0) {
+			switch (moby->OClass) {
+				case MOBY_ID_HEALTH_BOX_MP: {
+					GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+					u32 data = PVarDataPtr + PVarOffset->Offset;
+					*(int*)(data + 0x70) = (gameConfig.grRespawnTimer_HealthBoxes - 1) * 5;
+				}
+			}
+		}
+		if (gameConfig.grRespawnTimer_AmmoPickups > 0) {
+			switch (moby->OClass) {
+				case MOBY_ID_AMMO_PACK_GRAVITY_BOMB:
+				case MOBY_ID_AMMO_PACK_BLITZ:
+				case MOBY_ID_AMMO_PACK_FLUX:
+				case MOBY_ID_AMMO_PACK_ROCKET_TUBE:
+				case MOBY_ID_AMMO_PACK_MINE:
+				case MOBY_ID_AMMO_PACK_LAVA_GUN:
+				case MOBY_ID_AMMO_PACK_HOLOSIELD:
+				case MOBY_ID_AMMO_PACK_N60:
+				case MOBY_ID_CHARGEBOOTS_PICKUP: {
+					GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+					u32 data = PVarDataPtr + PVarOffset->Offset;
+					*(int*)(data + 0x70) = (gameConfig.grRespawnTimer_AmmoPickups - 1) * 5;
+				}
+			}
+		}
+		if (gameConfig.grRespawnTimer_WeaponCrates > 0) {
+			switch (moby->OClass) {
+				case MOBY_ID_CRATE_CHARGEBOOTS:
+				case MOBY_ID_CRATE_GRAVITY_BOMB:
+				case MOBY_ID_CRATE_ROCKET_TUBE:
+				case MOBY_ID_CRATE_FLUX:
+				case MOBY_ID_CRATE_BLITZ:
+				case MOBY_ID_CRATE_LAVA_GUN:
+				case MOBY_ID_CRATE_HOLOSHIELD:
+				case MOBY_ID_CRATE_MORPH_O_RAY:
+				case MOBY_ID_CRATE_MINE:
+				case MOBY_ID_CRATE_RANDOM_PICKUP: {
+					GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+					u32 data = PVarDataPtr + PVarOffset->Offset;
+					*(int*)(data + 0x70) = (gameConfig.grRespawnTimer_WeaponCrates - 1) * 5;
+				}
 			}
 		}
 	}

@@ -154,6 +154,9 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grNoBaseDefense_SmallTurrets)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_NODE_TURRET, 100);
 
+	if (gameConfig.grRespawnTimer_HealthBoxes || gameConfig.grRespawnTimer_WeaponCrates || gameConfig.grRespawnTimer_AmmoPickups)
+		onGameplayLoad_miscRespawnTimers(gameplay);
+
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
 }
@@ -250,8 +253,8 @@ void grGameStart(void)
 	if (gameConfig.prSurvivor)
 		survivor();
 	
-	if (gameConfig.grRespawnTimer || gameConfig.grDisablePenaltyTimers)
-		setRespawnTimer();
+	if (gameConfig.grRespawnTimer_Player || gameConfig.grDisablePenaltyTimers)
+		setRespawnTimer_Player();
 
 	if (gameConfig.grBaseHealthPadActive && !HasKeepBaseHealthPadActive && gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth)
 		HasKeepBaseHealthPadActive = keepBaseHealthPadActive();
