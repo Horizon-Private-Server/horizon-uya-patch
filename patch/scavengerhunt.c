@@ -431,7 +431,7 @@ void scavHuntSpawnRandomNearPosition(VECTOR position)
       DPRINTF("\nSpawning Try: %d", i + 1);
       int colId = CollHotspot();
       // colId == -1 || colId == 1 || colId == 2 || colId == 4 || colId == 7 || colId == 9 || colId == 10
-      if (coldId) {
+      if (colId) {
         DPRINTF("\nCollision ID: %d", colId);
         vector_add(p, p, CollLine_Fix_GetHitPosition());
         scavHuntSpawn(p);
