@@ -226,7 +226,7 @@ void scavHuntResetBoltSpawnCooldown(void)
 int scavHuntRoll(void)
 {
   float roll = (randRange(0, 1) / scavHuntSpawnFactor);
-  printf("scavenger hunt rolled %f => %d\n", roll, roll <= HBOLT_SPAWN_PROBABILITY);
+  DPRINTF("scavenger hunt rolled %f => %d\n", roll, roll <= HBOLT_SPAWN_PROBABILITY);
   return roll <= HBOLT_SPAWN_PROBABILITY;
 }
 
@@ -239,7 +239,7 @@ int scavHuntOnReceiveRemoteSettings(void* connection, void* data)
   scavHuntEnabled = response.Enabled;
   scavHuntSpawnFactor = maxf(response.SpawnFactor, 0.1);
   scavHuntSpawnTimerFactor = clamp(scavHuntSpawnFactor, 1, 30);
-  printf("received scav hunt %d %f\n", scavHuntEnabled, scavHuntSpawnFactor);
+  DPRINTF("received scav hunt %d %f\n", scavHuntEnabled, scavHuntSpawnFactor);
 }
 
 //--------------------------------------------------------------------------
@@ -400,7 +400,7 @@ void scavHuntSpawn(VECTOR position)
   // mobySetState(moby, 0, -1);
   scavHuntResetBoltSpawnCooldown();
   soundPlayByOClass(1, 0, moby, MOBY_ID_OMNI_SHIELD);
-  printf("hbolt spawned at %08X destroyAt:%d %04X\n", (u32)moby, pvars->DestroyAtTime, moby->ModeBits);
+  DPRINTF("hbolt spawned at %08X destroyAt:%d %04X\n", (u32)moby, pvars->DestroyAtTime, moby->ModeBits);
 }
 
 //--------------------------------------------------------------------------
@@ -408,10 +408,9 @@ void scavHuntSpawnRandomNearPosition(VECTOR position)
 {
   // try 4 times to generate a random point near given position
   int i = 0;
-  while (i < 4)
-  {
+  while (i < 4) {
     // generate random position
-    VECTOR from = {0,0,0,0}, to = {0,0,-6,0}, p = {0,0,.5,0};
+    VECTOR from = {0,0,0,0}, to = {0,0,-6,0}, p = {0,0,1,0};
     float theta = randRadian();
     float radius = randRange(5, 8);
     vector_fromyaw(from, theta);
@@ -420,21 +419,25 @@ void scavHuntSpawnRandomNearPosition(VECTOR position)
     vector_add(from, from,  position);
     vector_add(to, to, from);
 
-	//vector_add(p, p, CollLine_Fix_GetHitPosition());
-	scavHuntSpawn(from);
-  break;
+  // for Local Play:
+	// vector_add(p, p, CollLine_Fix_GetHitPosition());
+	// scavHuntSpawn(from);
+  // break;
 
+    // for Online:
     // snap to ground
     // and check if ground is walkable
-    // if (CollLine_Fix(from, to, 0, NULL, NULL)) {
-      // int colId = CollHotspot();
-      // if (colId == 2 || colId == 4 || colId == 7 || colId == 9 || colId == 10) {
-      //   vector_add(p, p, CollLine_Fix_GetHitPosition());
-      //   scavHuntSpawn(p);
-      //   break;
-      // }
-    // }
-
+    if (CollLine_Fix(from, to, 0, NULL, NULL)) {
+      DPRINTF("\nSpawning Try: %d", i + 1);
+      int colId = CollHotspot();
+      // colId == -1 || colId == 1 || colId == 2 || colId == 4 || colId == 7 || colId == 9 || colId == 10
+      if (coldId) {
+        DPRINTF("\nCollision ID: %d", colId);
+        vector_add(p, p, CollLine_Fix_GetHitPosition());
+        scavHuntSpawn(p);
+        break;
+      }
+    }
     ++i;
   }
 }
