@@ -1,0 +1,7 @@
+EE_LIBS = -luyantsc
+EE_OBJS = main.o
+EE_ELF = alpine-junction-10684.elf
+EE_BIN = alpine-junction-10684.bin
+EE_DEFS += -DUYA_NTSC
+
+include ${CURDIR}/Makefile.base

@@ -1,0 +1,7 @@
+EE_LIBS = -luyapal
+EE_OBJS = main.o
+EE_ELF = alpine-junction-10683.elf
+EE_BIN = alpine-junction-10683.bin
+EE_DEFS += -DUYA_PAL
+
+include ${CURDIR}/Makefile.base
