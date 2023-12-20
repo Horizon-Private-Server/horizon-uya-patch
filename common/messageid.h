@@ -118,6 +118,16 @@ enum CustomMessageId
     CUSTOM_MSG_ID_SERVER_RESPONSE_SCAVENGER_HUNT_SETTINGS = 18,
 
     /*
+     * Sent by the client to the server when the client requests MONTH and DAY (no year).
+     */
+    CUSTOM_MSG_ID_CLIENT_REQUEST_DATE_SETTINGS = 19,
+
+    /*
+     * Sent by the server to the client containing the current MONTH and DAY (no year).
+     */
+    CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS = 20,
+
+    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,
@@ -157,5 +167,11 @@ typedef struct ScavengerHuntSettingsResponse
   int Enabled;
   float SpawnFactor;
 } ScavengerHuntSettingsResponse_t;
+
+typedef struct DateResponse
+{
+  char Month;
+  char Day;
+} DateResponse_t;
 
 #endif // _MESSAGEID_H_

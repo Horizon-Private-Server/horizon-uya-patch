@@ -2127,6 +2127,16 @@ void onOnlineMenu(void)
   #endif
 }
 
+void serverDateRequest(void* connection, void* data)
+{
+	if (!connection) return;
+	
+	DateResponse_t* response = (DateResponse_t*)data;
+	// memcpy(&response, data, sizeof(response));
+	printf("\nDate: %d/%d", response->Month, response->Day);
+	netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_DATE_SETTINGS, 0, NULL);
+}
+
 /*
  * NAME :		main
  * 
@@ -2155,6 +2165,7 @@ int main(void)
 
 	//
   	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
+  	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_REQUEST_DATE_SETTINGS, &serverDateRequest);
 
 	// Run map loader
 	runMapLoader();

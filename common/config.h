@@ -1,6 +1,10 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+#define PATCH_POINTERS             ((void*)0x000CFFC0)
+#define PATCH_POINTERS_MONTH       (*(u8*)(PATCH_POINTERS + 10))
+#define PATCH_POINTERS_DAY         (*(u8*)(PATCH_POINTERS + 11))
+
 // General Tab
 typedef struct PatchConfig
 {
