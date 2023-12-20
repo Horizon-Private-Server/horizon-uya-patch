@@ -126,6 +126,11 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 PatchGameConfig_t gameConfig;
 PatchGameConfig_t gameConfigHostBackup;
 
+PatchPointers_t patchPointers = {
+  .ServerTimeMonth = 0,
+  .ServerTimeDay = 0
+};
+
 struct FlagPVars
 {
 	VECTOR BasePosition;
@@ -249,6 +254,27 @@ void sendMACAddress(void)
   if (netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_MACHINE_ID, sizeof(mac), mac)) { stall = 60; return; }
   sent = 1;
   DPRINTF("sent mac\n");
+}
+
+//------------------------------------------------------------------------------
+void requestServerTime(void)
+{
+  void* connection = netGetLobbyServerConnection();
+	if (!connection) return;
+	
+	netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_DATE_SETTINGS, 0, NULL);
+}
+
+//------------------------------------------------------------------------------
+void onServerTimeResponse(void* connection, void* data)
+{
+  DateResponse_t response;
+	if (!connection) return;
+	
+  memcpy(&response, data, sizeof(DateResponse_t));
+	DPRINTF("\nDate: %d/%d", response.Month, response.Day);
+  patchPointers.ServerTimeMonth = response.Month;
+  patchPointers.ServerTimeDay = response.Day;
 }
 
 //------------------------------------------------------------------------------
@@ -1850,6 +1876,9 @@ void runGameStartMessager(void)
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_GAME_LOBBY_STARTED, 0, gameSettings);
 			}
 
+      // request server time
+      requestServerTime();
+
 			// request latest scavenger hunt settings
       		scavHuntQueryForRemoteSettings();
 
@@ -2127,16 +2156,6 @@ void onOnlineMenu(void)
   #endif
 }
 
-void serverDateRequest(void* connection, void* data)
-{
-	if (!connection) return;
-	
-	DateResponse_t* response = (DateResponse_t*)data;
-	// memcpy(&response, data, sizeof(response));
-	printf("\nDate: %d/%d", response->Month, response->Day);
-	netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_DATE_SETTINGS, 0, NULL);
-}
-
 /*
  * NAME :		main
  * 
@@ -2156,6 +2175,9 @@ int main(void)
 	// Call this first
 	uyaPreUpdate();
 
+  // update patch pointers
+  PATCH_POINTERS = &patchPointers;
+
 	// auto enable pad input to prevent freezing when popup shows
 	if (isInMenus() && lastMenuInvokedTime > 0 && (gameGetTime() - lastMenuInvokedTime) > TIME_SECOND)
 	{
@@ -2165,7 +2187,7 @@ int main(void)
 
 	//
   	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
-  	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_REQUEST_DATE_SETTINGS, &serverDateRequest);
+  	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
 
 	// Run map loader
 	runMapLoader();

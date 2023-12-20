@@ -4,8 +4,9 @@ EE_ELF = alpine-junction-10683.elf
 EE_BIN = alpine-junction-10683.bin
 EE_DEFS += -DUYA_PAL
 
+EE_LINKFILE = linkfile.pal
 CODE_BIN = pal
-CODE_ADDR = 0054D5F0
-CODE_ENTRY = 00443448
+CODE_ADDR = 00550068
+CODE_ENTRY = 00444148
 
 include ${CURDIR}/Makefile.base

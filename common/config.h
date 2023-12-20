@@ -1,9 +1,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define PATCH_POINTERS             ((void*)0x000CFFC0)
-#define PATCH_POINTERS_MONTH       (*(u8*)(PATCH_POINTERS + 10))
-#define PATCH_POINTERS_DAY         (*(u8*)(PATCH_POINTERS + 11))
+#define PATCH_POINTERS             (*(PatchPointers_t**)0x000CFFC0)
 
 // General Tab
 typedef struct PatchConfig
@@ -57,6 +55,12 @@ typedef struct PatchGameConfig
   char prChargebootForever;
   char prPlayerSize;
 } PatchGameConfig_t;
+
+typedef struct PatchPointers
+{
+  char ServerTimeMonth;
+  char ServerTimeDay;
+} PatchPointers_t;
 
 typedef struct CustomMapDef
 {

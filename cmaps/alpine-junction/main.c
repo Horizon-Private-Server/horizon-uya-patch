@@ -8,11 +8,7 @@
 
 #include <tamtypes.h>
 #include <libuya/math3d.h>
-
-// set to 1 from patch to enable shrubs
-#define SPECIAL_SHRUBS_ENABLED          (*(int*)0x000FFFFC)
-
-// NTSC HOOK 0x0045a74c
+#include "config.h"
 
 //--------------------------------------------------------------------------
 void update (int enabled)
@@ -21,7 +17,7 @@ void update (int enabled)
   static int count = 0;
 
 #if UYA_PAL
-  int *shrubCount = (int*)0;
+  int *shrubCount = (int*)0x00249000;
 #elif UYA_NTSC
   int *shrubCount = (int*)0x00249180;
 #endif
@@ -33,7 +29,9 @@ void update (int enabled)
 //--------------------------------------------------------------------------
 int main (void)
 {
-  int enabled = SPECIAL_SHRUBS_ENABLED;
+  int enabled = 0;
+  if (PATCH_POINTERS && PATCH_POINTERS->ServerTimeMonth == 12) enabled = 1;
+  
   update(enabled);
 
 	return 0;
