@@ -1371,8 +1371,8 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
 				case MOBY_ID_AMMO_PACK_N60:
 				case MOBY_ID_CHARGEBOOTS_PICKUP: {
 					GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
-					u32 data = PVarDataPtr + PVarOffset->Offset;
-					*(int*)(data + 0x70) = (gameConfig.grRespawnTimer_AmmoPickups - 1) * 5;
+					AmmoPickupVars_t* data = (AmmoPickupVars_t*)((u32)PVarDataPtr + (u32)PVarOffset->Offset);
+					data->respawnTime = (gameConfig.grRespawnTimer_AmmoPickups - 1) * 5;
 				}
 			}
 		}

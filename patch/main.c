@@ -268,13 +268,13 @@ void requestServerTime(void)
 //------------------------------------------------------------------------------
 void onServerTimeResponse(void* connection, void* data)
 {
-  DateResponse_t response;
+	DateResponse_t response;
 	if (!connection) return;
-	
-  memcpy(&response, data, sizeof(DateResponse_t));
+
+	memcpy(&response, data, sizeof(DateResponse_t));
 	DPRINTF("\nDate: %d/%d", response.Month, response.Day);
-  patchPointers.ServerTimeMonth = response.Month;
-  patchPointers.ServerTimeDay = response.Day;
+	patchPointers.ServerTimeMonth = response.Month;
+	patchPointers.ServerTimeDay = response.Day;
 }
 
 //------------------------------------------------------------------------------
@@ -1682,9 +1682,10 @@ void customFlagLogic(Moby* flagMoby)
 	}
 	
 	// if flag didn't land on safe ground, and after .5s a player died
-	static int flagHolderDied = 0;
+	// DEPRICATED: flagIgnorePlayer swapped with pvars->TimeFlagDropped
+	// static int flagIgnorePlayer = 0;
 	if(gameConfig.grFlagHotspots) {
-		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby) && (flagHolderDied + 500) < gameTime) {
+		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby) && (pvars->TimeFlagDropped + 300) < gameTime) {
 			flagReturnToBase(flagMoby, 0, 0xff);
 			return;
 		}
@@ -1701,9 +1702,9 @@ void customFlagLogic(Moby* flagMoby)
 
 		// only allow actions by living players
 		if (playerIsDead(player) || playerGetHealth(player) <= 0){
-			// if flag holder died, update flagHolderDied time.
-			if (pvars->LastCarrierIdx == player->mpIndex)
-				flagHolderDied = gameTime;
+			// if flag holder died, update flagIgnorePlayer time.
+			// if (pvars->LastCarrierIdx == player->mpIndex)
+			// 	flagIgnorePlayer = gameTime;
 
 			continue;
 		}

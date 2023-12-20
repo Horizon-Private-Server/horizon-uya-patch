@@ -332,9 +332,9 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
   { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates },
   { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups },
-  // { "Health Boxes Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_HealthBoxes },
-  // { "Weapon Crates Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_WeaponCrates },
-  // { "Ammo Pickups Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_AmmoPickups },
+  { "Health Boxes Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_HealthBoxes },
+  { "Weapon Crates Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_WeaponCrates },
+  { "Ammo Pickups Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_AmmoPickups },
 
   { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones },
   { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets },

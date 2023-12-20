@@ -597,12 +597,26 @@ typedef struct ShieldVars {
 	int unk_texture_48;
 	int unk_texture_4c;
 	float unk_scale_50;
-	float unk_sclae_54;
+	float unk_scale_54;
 	float lightningScale;
 	u32 lightningColor2;
 	int flashTime;
 	int pad[3];
 } ShieldVars;
+
+typedef struct AmmoPickupVars { // 0x30
+/* 0x00 */ struct Moby* pParent;
+/* 0x04 */ int unk_04;
+/* 0x08 */ int unk_08;
+/* 0x0c */ int unk_0c;
+/* 0x10 */ int ammoType;
+/* 0x14 */ int respawnTime;
+/* 0x18 */ int lastPickupTime;
+/* 0x1c */ int unk_1c;
+/* 0x20 */ int unk_ARGB_20;
+/* 0x24 */ int unk_ARGB_24;
+/* 0x28 */ int particleColor[2];
+} AmmoPickupVars_t;
 
 /*
  * Spawns a moby with the given id and properties size.

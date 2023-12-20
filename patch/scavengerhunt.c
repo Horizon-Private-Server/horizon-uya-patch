@@ -206,7 +206,7 @@ float scavHuntSpawnFactor = 1;
 float scavHuntSpawnTimerFactor = 1;
 int scavHuntShownPopup = 0;
 int scavHuntHasGotSettings = 0;
-int scavHuntEnabled = 1;
+int scavHuntEnabled = 0;
 int scavHuntInitialized = 0;
 int scavHuntBoltSpawnCooldown = 0;
 
@@ -527,14 +527,14 @@ void scavHuntRun(void)
   Player* localPlayer = playerGetFromSlot(0);
   if (!localPlayer) return;
 
-// #if DEBUG
+#if DEBUG
 Player * p = playerGetFromSlot(0);
 if (p->pNetPlayer->pNetPlayerData->accountId == 85) {
   if (padGetButtonDown(0, PAD_DOWN | PAD_L1) > 0) {
     scavHuntSpawnRandomNearPlayer(0);
   }
 }
-// #endif
+#endif
 
   // we need at least 3 unique clients
 #if !DEBUG
