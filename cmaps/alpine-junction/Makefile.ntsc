@@ -4,4 +4,8 @@ EE_ELF = alpine-junction-10684.elf
 EE_BIN = alpine-junction-10684.bin
 EE_DEFS += -DUYA_NTSC
 
+CODE_BIN = ntsc
+CODE_ADDR = 0054D5F0
+CODE_ENTRY = 00443448
+
 include ${CURDIR}/Makefile.base

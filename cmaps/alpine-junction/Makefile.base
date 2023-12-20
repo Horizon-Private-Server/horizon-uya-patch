@@ -1,4 +1,4 @@
-EE_INCS := -I../common
+EE_INCS := -I../../common
 EE_LDFLAGS := -fno-builtin -nostdlib -nostartfiles -L.
 
 # set to DEBUG or RELEASE
@@ -14,6 +14,13 @@ EE_DEFS +=
 endif
 
 all: $(EE_BIN) clean
+	mkdir -p $(CURDIR)/bin/$(CODE_BIN)
+	cp $(CURDIR)/static/$(CODE_BIN)/*.* $(CURDIR)/bin/$(CODE_BIN)/
+
+	# payload and definition
+	cp $(CURDIR)/$(EE_BIN) $(CURDIR)/bin/$(CODE_BIN)/code.0007.bin
+	bin2codedef $(CURDIR)/bin/$(CODE_BIN)/code.0007.bin $(CODE_ADDR) $(CURDIR)/bin/$(CODE_BIN)/code.0007.def $(CODE_ENTRY)
+
 
 clean:
 	rm -f *.irx *.o
