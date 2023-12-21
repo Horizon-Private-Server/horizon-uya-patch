@@ -1984,7 +1984,7 @@ void runCampaignMusic(void)
 		// Zero out stack to finish the job.
 		memset((u32*)Stack, 0, 0x1818);
 		}
-		printf("\nTracks: %d", AddedTracks);
+		DPRINTF("\nTracks: %d", AddedTracks);
 		FinishedConvertingTracks = 1;
 	}
 	
