@@ -195,3 +195,7 @@ int musicTrackRangeMin(void);
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int musicTrackRangeMax(void);
+
+void musicPlayTrack(int track, int flags, int volume);
+void musicStopTrack(void);
+int musicTransitionTrack(int track, int transition, int flags, int volume);
