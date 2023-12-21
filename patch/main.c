@@ -73,8 +73,6 @@ int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 1;
 char showNoMapPopup = 0;
 char weaponOrderBackup[2][3] = { {0,0,0}, {0,0,0} };
-u32 currentUI = 0;
-u32 previousUI = 0;
 float lastFps = 0;
 int renderTimeMs = 0;
 float averageRenderTimeMs = 0;
@@ -91,6 +89,12 @@ int fovChange_Hook = 0;
 int fovChange_Func = 0;
 int lastSettings = 0;
 int lastNodes = 0;
+short int QuickSelectTimeCurrent = 0;
+#if UYA_PAL
+short int QuickSelectTimeNeeded = 5; // 50fps / 10 = 6 (so 1 tenth of a frame)
+#else
+short int QuickSelectTimeNeeded = 6; // 60fps / 10 = 6 (so 1 tenth of a frame)
+#endif
 
 #if DSCRPRINT
 #define MAX_DEBUG_SCR_PRINT_LINES       (16)
@@ -278,25 +282,6 @@ void onServerTimeResponse(void* connection, void* data)
 }
 
 //------------------------------------------------------------------------------
-int runCheckUI(void)
-{
-	if (isInMenus())
-	{
-		u32 MostCurrentUI = *(u32*)0x01C5C110;
-		if (currentUI == 0 && previousUI == 0)
-		{
-			currentUI = MostCurrentUI;
-			return 1;
-		}
-		else if (currentUI != MostCurrentUI)
-		{
-			previousUI = currentUI;
-			currentUI = MostCurrentUI;
-			return 1;
-		}
-	}
-	return 0;
-}
 char * checkGameType(void)
 {
 	if (isInMenus() || isInGame())
@@ -1845,6 +1830,30 @@ void patchCTFFlag(void)
 	}
 }
 
+int quickSelectTimer(void)
+{
+	// if (averageRenderTimeMs > 0)
+	// 	mytime = 50;
+	// else
+	// 	mytime = 10;
+
+	if (QuickSelectTimeCurrent < QuickSelectTimeNeeded)
+		++QuickSelectTimeCurrent;
+
+	return QuickSelectTimeCurrent == QuickSelectTimeNeeded;
+}
+
+void patchQuickSelectTimer(void)
+{
+	if (!GetAddress(&vaQuickSelectCheck_Hook))
+		return;
+
+	HOOK_JAL(GetAddress(&vaQuickSelectCheck_Hook), &quickSelectTimer);
+	Player* p = playerGetFromSlot(0);
+	if (playerPadGetButtonUp(p, PAD_TRIANGLE))
+		QuickSelectTimeCurrent = 0;
+}
+
 /*
  * NAME :		runGameStartMessager
  * 
@@ -2231,6 +2240,9 @@ int main(void)
 		// Patch Flux Wall Sniping
 		if (gameConfig.grFluxShotsAlwaysHit)
 			patchSniperWallSniping();
+
+		// Patch Quick Select to use custom timer.
+		patchQuickSelectTimer();
 
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();

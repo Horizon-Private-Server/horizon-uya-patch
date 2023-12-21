@@ -974,3 +974,34 @@ VariableAddress_t vaMapScore_ScoreboardToggle = {
     .MarcadiaPalace = 0x004a24a8,
 #endif
 };
+
+//================================================
+//=============  patchQuickSelectTimer
+//================================================
+VariableAddress_t vaQuickSelectCheck_Hook = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00549170,
+    .Hoven = 0x0054b338,
+    .OutpostX12 = 0x00540c10,
+    .KorgonOutpost = 0x0053e2f8,
+    .Metropolis = 0x0053d6f8,
+    .BlackwaterCity = 0x0053aee0,
+    .CommandCenter = 0x0053a738,
+    .BlackwaterDocks = 0x0053cfb8,
+    .AquatosSewers = 0x0053c2b8,
+    .MarcadiaPalace = 0x0053bc38,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x00546818,
+    .Hoven = 0x00548920,
+    .OutpostX12 = 0x0053e238,
+    .KorgonOutpost = 0x0053b9a0,
+    .Metropolis = 0x0053ada0,
+    .BlackwaterCity = 0x00538508,
+    .CommandCenter = 0x00537f38,
+    .BlackwaterDocks = 0x0053a778,
+    .AquatosSewers = 0x00539ab8,
+    .MarcadiaPalace = 0x005393f8,
+#endif
+};
