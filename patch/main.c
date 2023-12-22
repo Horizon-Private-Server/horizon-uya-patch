@@ -1934,11 +1934,11 @@ void runCampaignMusic(void)
 	};
 	// if music isn't loaded or enable singleplayermusic isn't on, or in menus, return.
 	u32 CodeSegmentPointer = *(u32*)0x01FFFD00;
-	if (!musicIsLoaded() || CodeSegmentPointer == 0x00574F88 || !config.enableSingleplayerMusic)
+	if (!musicGetSector() || CodeSegmentPointer == 0x00574F88 || !config.enableSingleplayerMusic)
 		return;
 	
 	u32 NewTracksLocation = 0x001F8588; // Overwrites current tracks too.
-	if (!FinishedConvertingTracks || musicIsLoaded() != CustomSector) {
+	if (!FinishedConvertingTracks && musicGetSector() != CustomSector) {
 		// Set custom Sector
 		musicSetSector(CustomSector);
 
@@ -2054,6 +2054,8 @@ void runCampaignMusic(void)
 			// Doing this lets the current playing track to fade out.
 			musicTransitionTrack(0,0,0,0);
 		}
+	} else if (isInMenus() && FinishedConvertingTracks) {
+		FinishedConvertingTracks = 0;
 	}
 }
 

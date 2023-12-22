@@ -92,7 +92,7 @@ typedef struct music_Globals { // 0xe4
 } music_Globals;
 
 /*
- * NAME :		musicIsLoaded
+ * NAME :		musicGetSector
  * 
  * DESCRIPTION : Returns music sector value.
  * 
@@ -104,10 +104,10 @@ typedef struct music_Globals { // 0xe4
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-int musicIsLoaded(void);
+int musicGetSector(void);
 
 /*
- * NAME :		musicIsLoaded
+ * NAME :		musicSetSector
  * 
  * DESCRIPTION :    Sets music sector value.
  * 

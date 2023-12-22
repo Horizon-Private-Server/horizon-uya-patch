@@ -97,7 +97,7 @@ VariableAddress_t vaTransitionTrackFunc = {
 #endif
 };
 
-int musicIsLoaded(void)
+int musicGetSector(void)
 {
     return *(int*)MUSIC_SECTOR;
 }
