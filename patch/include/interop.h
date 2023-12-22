@@ -33,3 +33,4 @@ VariableAddress_t vaMapScore_SeigeCTFScoreboard_AlwaysRun;
 VariableAddress_t vaMapScore_MapToggle;
 VariableAddress_t vaMapScore_ScoreboardToggle;
 VariableAddress_t vaQuickSelectCheck_Hook;
+VariableAddress_t vaQuickSelectCheck_Func;

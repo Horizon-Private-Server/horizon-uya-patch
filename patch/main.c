@@ -127,6 +127,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.mapScoreToggle_ScoreBtn = 0,
 	.disableScavengerHunt = 0,
 	.enableSingleplayerMusic = 0,
+	.quickSelectTimeDelay = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1846,12 +1847,16 @@ void patchCTFFlag(void)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-int quickSelectTimer(void)
+int quickSelectTimer(int a0)
 {
-	if (QuickSelectTimeCurrent < QuickSelectTimeNeeded)
-		++QuickSelectTimeCurrent;
+	if (config.quickSelectTimeDelay > 0) {
+		if (QuickSelectTimeCurrent < config.quickSelectTimeDelay)
+			++QuickSelectTimeCurrent;
 
-	return QuickSelectTimeCurrent == QuickSelectTimeNeeded;
+		return QuickSelectTimeCurrent == config.quickSelectTimeDelay;
+	}
+	// return if quickSelectTimeDelay is off. 
+	return ((int (*)(int))GetAddress(&vaQuickSelectCheck_Func))(a0);
 }
 void patchQuickSelectTimer(void)
 {
@@ -1859,9 +1864,11 @@ void patchQuickSelectTimer(void)
 		return;
 
 	HOOK_JAL(GetAddress(&vaQuickSelectCheck_Hook), &quickSelectTimer);
-	Player* p = playerGetFromSlot(0);
-	if (playerPadGetButtonUp(p, PAD_TRIANGLE))
-		QuickSelectTimeCurrent = 0;
+	if (config.quickSelectTimeDelay) {
+		Player* p = playerGetFromSlot(0);
+		if (playerPadGetButtonUp(p, PAD_TRIANGLE))
+			QuickSelectTimeCurrent = 0;
+	}
 }
 
 /*
@@ -1949,16 +1956,14 @@ void runCampaignMusic(void)
 		{
 			int WAD = wadArray[a][0];
 			// Check if Map Sector is not zero
-			if (WAD != 0)
-			{
+			if (WAD != 0) {
 				internal_wadGetSectors(WAD, 1, Stack);
 				int WAD_Sector = *(u32*)(Stack + 0x4);
 
 				// make sure WAD_Sector isn't zero
-				if (WAD_Sector != 0)
-				{
-					printf("WAD: 0x%X\n", WAD);
-					printf("WAD Sector: 0x%X\n", WAD_Sector);
+				if (WAD_Sector != 0) {
+					DPRINTF("WAD: 0x%X\n", WAD);
+					DPRINTF("WAD Sector: 0x%X\n", WAD_Sector);
 
 					// do music stuffs~
 					// Get SP 2 MP Offset for current WAD_Sector.

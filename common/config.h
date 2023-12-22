@@ -17,6 +17,7 @@ typedef struct PatchConfig
   char mapScoreToggle_ScoreBtn;
   char disableScavengerHunt;
   char enableSingleplayerMusic;
+  char quickSelectTimeDelay;
 } PatchConfig_t;
 
 // Game Rules Tab

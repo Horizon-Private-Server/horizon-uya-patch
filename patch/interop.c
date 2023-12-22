@@ -1005,3 +1005,31 @@ VariableAddress_t vaQuickSelectCheck_Hook = {
     .MarcadiaPalace = 0x005393f8,
 #endif
 };
+
+VariableAddress_t vaQuickSelectCheck_Func = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0054a8a8,
+    .Hoven = 0x0054ca70,
+    .OutpostX12 = 0x00542348,
+    .KorgonOutpost = 0x0053fa30,
+    .Metropolis = 0x0053ee30,
+    .BlackwaterCity = 0x0053c618,
+    .CommandCenter = 0x0053be70,
+    .BlackwaterDocks = 0x0053e6f0,
+    .AquatosSewers = 0x0053d9f0,
+    .MarcadiaPalace = 0x0053d370,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x00547f00,
+    .Hoven = 0x0054a008,
+    .OutpostX12 = 0x0053f920,
+    .KorgonOutpost = 0x0053d088,
+    .Metropolis = 0x0053c488,
+    .BlackwaterCity = 0x00539bf0,
+    .CommandCenter = 0x00539620,
+    .BlackwaterDocks = 0x0053be60,
+    .AquatosSewers = 0x0053b1a0,
+    .MarcadiaPalace = 0x0053aae0,
+#endif
+};

@@ -151,6 +151,13 @@ MenuElem_RangeData_t dataFieldOfView = {
     .maxValue = 5,
 };
 
+MenuElem_RangeData_t dataQuickSelectTimeDelay = {
+    .value = &config.quickSelectTimeDelay,
+    .stateHandler = NULL,
+    .minValue = 0,
+    .maxValue = 30,
+};
+
 // map override list item
 MenuElem_ListData_t dataCustomMaps = {
     &SelectedCustomMapId,
@@ -304,6 +311,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   // { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate },
+  { "Quick Select Delay", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataQuickSelectTimeDelay },
   { "Single Player Music", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSingleplayerMusic },
   { "Toggle Map Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_MapAccess },
   { "Toggle Scoreboard Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_ScoreboardAccess },
