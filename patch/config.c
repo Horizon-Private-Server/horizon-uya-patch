@@ -329,7 +329,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Radar Blips", listActionHandler, menuStateHandler_Default, &dataRadarBlipsDistance },
   { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_Player },
-  { "Respawn Invicibility", toggleActionHandler, menuStateHandler_Default, &gameConfig.grRespawnInvicibility },
+  { "Respawn Invincibility", toggleActionHandler, menuStateHandler_Default, &gameConfig.grRespawnInvincibility },
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
   { "V2s", listActionHandler, menuStateHandler_Default, &dataV2_Setting },

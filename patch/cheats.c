@@ -1399,7 +1399,7 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
 }
 
 /*
- * NAME :		runInvicibilityTimer
+ * NAME :		runInvincibilityTimer
  * 
  * DESCRIPTION :
  *              Adds a small invincibility timer when a player respawns.
@@ -1411,7 +1411,7 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
  * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-int runInvicibilityTimer(Player* player, int a1)
+int runInvincibilityTimer(Player* player, int a1)
 {
 	int hurtPlayer = a1;
 	// if timer is greater than zero, player can't be hurt.
@@ -1425,9 +1425,9 @@ int runInvicibilityTimer(Player* player, int a1)
 
 	// run base function with our a1
 	DPRINTF("\nhurtPlayer: %d", hurtPlayer);
-	return ((int (*)(Player*, int))GetAddress(&vaPlayerInvicibleTimer_Func))(player, hurtPlayer);
+	return ((int (*)(Player*, int))GetAddress(&vaPlayerInvincibleTimer_Func))(player, hurtPlayer);
 }
 void respawnInvincTimer(void)
 {
-	HOOK_JAL(GetAddress(&vaPlayerInvicibleTimer_Hook), &runInvicibilityTimer);
+	HOOK_JAL(GetAddress(&vaPlayerInvincibleTimer_Hook), &runInvincibilityTimer);
 }

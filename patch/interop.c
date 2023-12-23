@@ -1036,7 +1036,7 @@ VariableAddress_t vaQuickSelectCheck_Func = {
 //================================================
 //=============  playerInvicibleTimer
 //================================================
-VariableAddress_t vaPlayerInvicibleTimer_Hook = {
+VariableAddress_t vaPlayerInvincibleTimer_Hook = {
 #if UYA_PAL
     .Lobby = 0,
     .Bakisi = 0x0052916c,
@@ -1063,7 +1063,7 @@ VariableAddress_t vaPlayerInvicibleTimer_Hook = {
     .MarcadiaPalace = 0x00519a1c,
 #endif
 };
-VariableAddress_t vaPlayerInvicibleTimer_Func = {
+VariableAddress_t vaPlayerInvincibleTimer_Func = {
 #if UYA_PAL
     .Lobby = 0,
     .Bakisi = 0x004f8c30,

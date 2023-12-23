@@ -21,6 +21,7 @@ void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay);
 void healthbars(void);
 void radarBlips(void);
 void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay);
+void respawnInvincTimer(void);
 
 // Party Game Rules
 void survivor(void);
