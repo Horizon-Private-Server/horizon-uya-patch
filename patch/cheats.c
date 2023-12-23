@@ -32,6 +32,7 @@
 #include "config.h"
 #include "include/config.h"
 #include "include/cheats.h"
+#include "include/interop.h"
 
 extern PlayerKills[GAME_MAX_PLAYERS];
 extern PlayerDeaths[GAME_MAX_PLAYERS];
@@ -1395,4 +1396,38 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
 			}
 		}
 	}
+}
+
+/*
+ * NAME :		runInvicibilityTimer
+ * 
+ * DESCRIPTION :
+ *              Adds a small invincibility timer when a player respawns.
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int runInvicibilityTimer(Player* player, int a1)
+{
+	int hurtPlayer = a1;
+	// if timer is greater than zero, player can't be hurt.
+	if (player->timers.unkTimer_346 > 0) {
+		timeDecTimer(&player->timers.unkTimer_346);
+		hurtPlayer = 0;
+	}
+	// if previous player state was resurrecting, start timer.
+	if (playerDeobfuscate(&player->PreviousState, 0, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
+		player->timers.unkTimer_346 = 0x78;
+
+	// run base function with our a1
+	DPRINTF("\nhurtPlayer: %d", hurtPlayer);
+	return ((int (*)(Player*, int))GetAddress(&vaPlayerInvicibleTimer_Func))(player, hurtPlayer);
+}
+void respawnInvincTimer(void)
+{
+	HOOK_JAL(GetAddress(&vaPlayerInvicibleTimer_Hook), &runInvicibilityTimer);
 }

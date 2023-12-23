@@ -29,6 +29,7 @@ typedef struct PatchGameConfig
   // Game Rules
   char grRadarBlipsDistance;
   char grRespawnTimer_Player;
+  char grRespawnInvicibility;
   char grDisablePenaltyTimers;
   char grDisableWeaponPacks;
   char grV2s;

@@ -476,10 +476,8 @@ void patchKillStealing(void)
 {
 	int the_hook = GetAddress(&vaWhoHitMeHook);
 	int the_patch = 0x0C000000 | ((u32)&patchKillStealing_Hook >> 2);
-	// static int the_original_jal;
 	if (*(u32*)the_hook != the_patch)
 	{
-		// the_original_jal = ConvertJALtoAddress(*(u32*)the_hook);
 		*(u32*)the_hook = the_patch;
 	}
 }

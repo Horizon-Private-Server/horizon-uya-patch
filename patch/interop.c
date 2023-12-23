@@ -1005,7 +1005,6 @@ VariableAddress_t vaQuickSelectCheck_Hook = {
     .MarcadiaPalace = 0x005393f8,
 #endif
 };
-
 VariableAddress_t vaQuickSelectCheck_Func = {
 #if UYA_PAL
     .Lobby = 0,
@@ -1031,5 +1030,63 @@ VariableAddress_t vaQuickSelectCheck_Func = {
     .BlackwaterDocks = 0x0053be60,
     .AquatosSewers = 0x0053b1a0,
     .MarcadiaPalace = 0x0053aae0,
+#endif
+};
+
+//================================================
+//=============  playerInvicibleTimer
+//================================================
+VariableAddress_t vaPlayerInvicibleTimer_Hook = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0052916c,
+    .Hoven = 0x0052b284,
+    .OutpostX12 = 0x00520b5c,
+    .KorgonOutpost = 0x0051e2f4,
+    .Metropolis = 0x0051d644,
+    .BlackwaterCity = 0x0051aedc,
+    .CommandCenter = 0x0051ac9c,
+    .BlackwaterDocks = 0x0051d51c,
+    .AquatosSewers = 0x0051c81c,
+    .MarcadiaPalace = 0x0051c19c,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x005268ec,
+    .Hoven = 0x00528944,
+    .OutpostX12 = 0x0051e25c,
+    .KorgonOutpost = 0x0051ba74,
+    .Metropolis = 0x0051adc4,
+    .BlackwaterCity = 0x005185dc,
+    .CommandCenter = 0x0051855c,
+    .BlackwaterDocks = 0x0051ad9c,
+    .AquatosSewers = 0x0051a0dc,
+    .MarcadiaPalace = 0x00519a1c,
+#endif
+};
+VariableAddress_t vaPlayerInvicibleTimer_Func = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x004f8c30,
+    .Hoven = 0x004fad48,
+    .OutpostX12 = 0x004f0620,
+    .KorgonOutpost = 0x004eddb8,
+    .Metropolis = 0x004ed108,
+    .BlackwaterCity = 0x004ea9a0,
+    .CommandCenter = 0x004ea968,
+    .BlackwaterDocks = 0x004ed1e8,
+    .AquatosSewers = 0x004ec4e8,
+    .MarcadiaPalace = 0x004ebe68,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x004f64b0,
+    .Hoven = 0x004f8508,
+    .OutpostX12 = 0x004ede20,
+    .KorgonOutpost = 0x004eb638,
+    .Metropolis = 0x004ea988,
+    .BlackwaterCity = 0x004e81a0,
+    .CommandCenter = 0x004e8328,
+    .BlackwaterDocks = 0x004eab68,
+    .AquatosSewers = 0x004e9ea8,
+    .MarcadiaPalace = 0x004e97e8,
 #endif
 };

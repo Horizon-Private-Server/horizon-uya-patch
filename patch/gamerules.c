@@ -271,6 +271,9 @@ void grGameStart(void)
 	if (gameConfig.grRadarBlipsDistance)
 		radarBlips();
 
+	if (gameConfig.grRespawnInvicibility)
+		respawnInvincTimer();
+
 	FirstPass = 0;
 }
 
