@@ -437,6 +437,8 @@ VARIABLE_FUNCTION(guberGetUID, vaGuberGetUID)
 #------------------------- TIME -------------------------
 #--------------------------------------------------------
 FUNCTION(timerGetSystemTime, 0x0012dcb0)
+VARIABLE_FUNCTION(timeDecTimer, vaFastDecTimeInt)
+VARIABLE_FUNCTION(timeDecTimerShort, vaFastDecTimeShort)
 
 #--------------------------------------------------------
 #---------------------- COLLISION -----------------------
