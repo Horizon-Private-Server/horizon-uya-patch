@@ -976,6 +976,19 @@ typedef struct tNW_PlayerStateMessage { // 0x1c
 	/* 0x10 */ float rot[3];
 } tNW_PlayerStateMessage;
 
+typedef struct tNW_KillDeathMessage { // 0x18
+	/* 0x00 */ char killingPlayerIndex;
+	/* 0x01 */ u8 deathState;
+	/* 0x02 */ char deadPlayerIndex;
+	/* 0x03 */ char killingWeapon;
+	/* 0x04 */ char killType;
+	/* 0x08 */ u32 killerUID;
+	/* 0x0c */ u32 deathData;
+	/* 0x10 */ short iTag;
+	/* 0x12 */ short iTagFlg;
+	/* 0x14 */ int netFrameTime;
+} tNW_KillDeathMessage;
+
 typedef struct pad_frame { // 0x2
 	/* 0x0 */ u8 data[2];
 } pad_frame;

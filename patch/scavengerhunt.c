@@ -394,7 +394,7 @@ void scavHuntSpawn(VECTOR position)
 
   // update pvars
   struct HBoltPVar* pvars = (struct HBoltPVar*)moby->PVar;
-  // pvars->DestroyAtTime = gameGetTime() + (TIME_SECOND * 30);
+  pvars->DestroyAtTime = gameGetTime() + (TIME_SECOND * 30);
   memset(pvars->Particles, 0, sizeof(pvars->Particles));
 
   // mobySetState(moby, 0, -1);
