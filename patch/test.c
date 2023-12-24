@@ -33,98 +33,47 @@ static int EFFECT_ME = 21;
 static int SOUND_ME = 0;
 static int SOUND_ME_FLAG = 3;
 
-void DebugInGame()
+void DebugInGame(Player* player)
 {
-    static int Active = 0;
-	Player * player = playerGetFromSlot(0);
-    PadButtonStatus * pad = (PadButtonStatus*)0x00225980;
-
-    /*
-		DEBUG OPTIONS:
-		PAD_UP: Occlusion on/off
-		PAD_DOWN: Gattling Turret Health to 1
-		PAD_LEFT: Change Team (red <-> blue)
-		PAD_RIGHT: Hurt Player
-	*/
-    if ((pad->btns & PAD_LEFT) == 0 && Active == 0)
-	{
-        Active = 1;
+    if (playerPadGetButtonDown(player, PAD_LEFT) > 0) {
 		// Swap Teams
 		int SetTeam = (player->mpTeam < 7) ? player->mpTeam + 1 : 0;
 		playerSetTeam(player, SetTeam);
-		// playerDecHealth(player, 1);
-	}
-    else if ((pad->btns & PAD_RIGHT) == 0 && Active == 0)
-    {
-        Active = 1;
+	} else if (playerPadGetButtonDown(player, PAD_RIGHT) > 0) {
         // Hurt Player
         playerDecHealth(player, 1);
-	}
-	else if ((pad->btns & PAD_UP) == 0 && Active == 0)
-	{
-		Active = 1;
+	} else if (playerPadGetButtonDown(player, PAD_UP) > 0) {
 		// static int Occlusion = (Occlusion == 2) ? 0 : 2;
 		// gfxOcclusion(Occlusion);
 		// spawnPointGetRandom(player, &position, &rotation);
 		Player ** ps = playerGetAll();
 		Player * p = ps[1];
 		playerSetPosRot(player, &p->PlayerPosition, &p->PlayerRotation);
-	}
-	else if((pad->btns & PAD_DOWN) == 0 && Active == 0)
-	{
+	} else if(playerPadGetButtonDown(player, PAD_DOWN) > 0) {
 		// Set Gattling Turret Health to 1.
 		DEBUGsetGattlingTurretHealth();
+	} else if (playerPadGetButtonDown(player, PAD_L3) > 0) {
+		// Nothing Yet!
+	} else if (playerPadGetButtonDown(player, PAD_R3) > 0) {
+		// Nothing Yet!
 	}
-	else if ((pad->btns & PAD_L3) == 0 && Active == 0)
-	{
-		Active = 1;
-	}
-	else if ((pad->btns & PAD_R3) == 0 && Active == 0)
-	{
-		Active = 1;
-	}
-    if (!(pad->btns & PAD_LEFT) == 0 && !(pad->btns & PAD_RIGHT) == 0 && !(pad->btns & PAD_UP) == 0 && !(pad->btns & PAD_DOWN) == 0 && !(pad->btns & PAD_L3) == 0 && !(pad->btns & PAD_R3) == 0)
-    {
-        Active = 0;
-    }
 }
 
 void DebugInMenus(void)
 {
-	static int Active = 0;
-    PadButtonStatus * pad = (PadButtonStatus*)0x00225980;
-    /*
-		DEBUG_InMenus OPTIONS:
-	*/
-    if ((pad->btns & PAD_LEFT) == 0 && Active == 0)
-	{
-        Active = 1;
-		// ((int (*)(int, int, int))0x00685798)(0x21, 0, 0);
+    if (padGetButtonDown(0, PAD_LEFT) > 0) {
+		// Nothing Yet!
+	} else if (padGetButtonDown(0, PAD_RIGHT) > 0) {
+		// Nothing Yet!
+	} else if (padGetButtonDown(0, PAD_UP) > 0) {
+		// Nothing Yet!
+	} else if(padGetButtonDown(0, PAD_DOWN) > 0) {
+		// Nothing Yet!
+	} else if (padGetButtonDown(0, PAD_L3) > 0) {
+		// Nothing Yet!
+	} else if (padGetButtonDown(0, PAD_R3) > 0) {
+		// Nothing Yet!
 	}
-    else if ((pad->btns & PAD_RIGHT) == 0 && Active == 0)
-    {
-        Active = 1;
-    }
-	else if ((pad->btns & PAD_UP) == 0 && Active == 0)
-	{
-		Active = 1;
-	}
-	else if((pad->btns & PAD_DOWN) == 0 && Active == 0)
-	{
-		Active = 1;
-	}
-	else if ((pad->btns & PAD_L3) == 0 && Active == 0)
-	{
-		Active = 1;
-	}
-	else if ((pad->btns & PAD_R3) == 0 && Active == 0)
-	{
-		Active = 1;
-	}
-    if (!(pad->btns & PAD_LEFT) == 0 && !(pad->btns & PAD_RIGHT) == 0 && !(pad->btns & PAD_UP) == 0 && !(pad->btns & PAD_DOWN) == 0 && !(pad->btns & PAD_L3) == 0 && !(pad->btns & PAD_R3) == 0)
-    {
-        Active = 0;
-    }
 }
 
 void InfiniteChargeboot(void)
@@ -419,7 +368,7 @@ void Test()
         runB6HitVisualizer();
 		InfiniteChargeboot();
 		InfiniteHealthMoonjump();
-    	DebugInGame();
+    	DebugInGame(p);
     } else {
 		DebugInMenus();
 	}
