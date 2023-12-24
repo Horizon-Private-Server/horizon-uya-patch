@@ -56,16 +56,16 @@ typedef struct CubicLineEndPoint {
 //--------------------------------------------------------
 struct UV
 {
-  float U;
-  float V;
+	float U;
+	float V;
 };
 
 //--------------------------------------------------------
 struct QuadDef
 {
-  VECTOR VertexPositions[4];
-  u32 VertexColors[4];
-  struct UV VertexUVs[4];
+	VECTOR VertexPositions[4];
+	u32 VertexColors[4];
+	struct UV VertexUVs[4];
 	u64 Clamp;
 	u64 Tex0;
 	u64 Tex1;
@@ -299,6 +299,7 @@ u64 gfxGetEffectTex(int id, int);
 void gfxDrawSprite(float x, float y, float w, float h, int t0, int t1, int texW, int texH, u64 color, u64 texture);
 void gfxStickyFX(void* a0, Moby* moby);
 void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
+void gfxDrawQuad(struct QuadDef * quadDef, MATRIX worldMatrix, u32 a3);
 
 //
 ScreenVBEffect* gfxScreenVBEffect(void);

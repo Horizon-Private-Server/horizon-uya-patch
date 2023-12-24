@@ -329,6 +329,34 @@ VariableAddress_t vaDrawBillboardQuad = {
 #endif
 };
 
+VariableAddress_t vaFastDrawQuadReal = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0045a058,
+    .Hoven = 0x0045bbd8,
+    .OutpostX12 = 0x004529d8,
+    .KorgonOutpost = 0x00450598,
+    .Metropolis = 0x0044f8d8,
+    .BlackwaterCity = 0x0044d0d8,
+    .CommandCenter = 0x0044dd58,
+    .BlackwaterDocks = 0x004505d8,
+    .AquatosSewers = 0x0044f8d8,
+    .MarcadiaPalace = 0x0044f258,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x00458f88,
+    .Hoven = 0x0045aa48,
+    .OutpostX12 = 0x00451888,
+    .KorgonOutpost = 0x0044f4c8,
+    .Metropolis = 0x0044e808,
+    .BlackwaterCity = 0x0044bf88,
+    .CommandCenter = 0x0044cdc8,
+    .BlackwaterDocks = 0x0044f608,
+    .AquatosSewers = 0x0044e948,
+    .MarcadiaPalace = 0x0044e288,
+#endif
+};
+
 VariableAddress_t vaViewContext = {
 #if UYA_PAL
     .Lobby = 0,

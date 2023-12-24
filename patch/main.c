@@ -60,8 +60,10 @@ void grLobbyStart(void);
 void grLoadStart(void);
 
 void runSpectate(void);
-
 void scavHuntRun(void);
+#if TEST
+void runTest(void);
+#endif
 
 int dlBytesReceived = 0;
 int dlTotalBytes = 0;
@@ -2434,6 +2436,10 @@ int main(void)
 	// Adds Single Player Music to Multiplayer
 	if (config.enableSingleplayerMusic)
 		runCampaignMusic();
+
+	#if TEST
+	void runTest(void);
+	#endif
 
 	if(isInGame())
 	{	

@@ -9,6 +9,11 @@ EE_LDFLAGS = -fno-builtin -nostdlib -nostartfiles -L. -L../libuya/lib -L$(PS2SDK
 #EE_DEFS += -DTEST
 #EE_DEFS += -DSCAVENGER_HUNT
 
+# build test if defined
+ifneq (,$(findstring -DTEST,$(EE_DEFS)))
+    EE_OBJS += test.o
+endif
+
 all: $(EE_BIN) clean copy
 
 copy:
