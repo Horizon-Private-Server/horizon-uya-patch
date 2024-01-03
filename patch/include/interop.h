@@ -36,4 +36,3 @@ VariableAddress_t vaQuickSelectCheck_Hook;
 VariableAddress_t vaQuickSelectCheck_Func;
 VariableAddress_t vaPlayerInvincibleTimer_Hook;
 VariableAddress_t vaPlayerInvincibleTimer_Func;
-

@@ -90,14 +90,7 @@ const char * regionStr = "NTSC: ";
 int lastLodLevel = 2;
 int fovChange_Hook = 0;
 int fovChange_Func = 0;
-int lastSettings = 0;
-int lastNodes = 0;
 short int QuickSelectTimeCurrent = 0;
-#if UYA_PAL
-short int QuickSelectTimeNeeded = 5; // 50fps / 10 = 6 (so 1 tenth of a frame)
-#else
-short int QuickSelectTimeNeeded = 6; // 60fps / 10 = 6 (so 1 tenth of a frame)
-#endif
 
 #if DSCRPRINT
 #define MAX_DEBUG_SCR_PRINT_LINES       (16)
@@ -162,20 +155,18 @@ int onServerDownloadDataRequest(void * connection, void * data)
 	printf("DOWNLOAD: %d/%d, writing %d to %08X\n", dlBytesReceived, request->TotalSize, request->DataSize, request->TargetAddress);
   
 	// respond
-	if (connection)
-	{
+	if (connection) {
 		ClientDownloadDataResponse_t response;
 		response.Id = request->Id;
 		response.BytesReceived = dlBytesReceived;
 		netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_DOWNLOAD_DATA_RESPONSE, sizeof(ClientDownloadDataResponse_t), &response);
 	}
 
-  // reset at end
-  if (dlBytesReceived >= request->TotalSize)
-  {
-    dlTotalBytes = 0;
-    dlBytesReceived = 0;
-  }
+	// reset at end
+	if (dlBytesReceived >= request->TotalSize) {
+		dlTotalBytes = 0;
+		dlBytesReceived = 0;
+	}
 
 	return sizeof(ServerDownloadDataRequest_t) - sizeof(request->Data) + request->DataSize;
 }
@@ -207,62 +198,60 @@ void pushScrPrintLine(char* str)
 //------------------------------------------------------------------------------
 int getMACAddress(u8 output[6])
 {
-  int i;
-  static int hasMACAddress = 0;
-  static u8 macAddress[6];
-  u8 buf[16];
+	int i;
+	static int hasMACAddress = 0;
+	static u8 macAddress[6];
+	u8 buf[16];
 
 #if UYA_PAL
-  void* cd = (void*)0x001D3CC0;
-  void* net_buf = (void*)0x001D3D00;
+	void* cd = (void*)0x001D3CC0;
+	void* net_buf = (void*)0x001D3D00;
 #else
-  void* cd = (void*)0x001D3E40;
-  void* net_buf = (void*)0x001D3E80;
+	void* cd = (void*)0x001D3E40;
+	void* net_buf = (void*)0x001D3E80;
 #endif
 
-  // use cached result
-  // since the MAC address isn't going to change in the lifetime of the patch
-  if (hasMACAddress)
-  {
-    memcpy(output, macAddress, 6);
-    return 1;
-  }
+	// use cached result
+	// since the MAC address isn't going to change in the lifetime of the patch
+	if (hasMACAddress) {
+		memcpy(output, macAddress, 6);
+		return 1;
+	}
 
-  // sceInetInterfaceControl get physical address
-  int r = netInterfaceControl(cd, net_buf, 1, 13, buf, sizeof(buf));
-  if (r)
-  {
-    memset(output, 0, 6);
-    return 0;
-  }
+	// sceInetInterfaceControl get physical address
+	int r = netInterfaceControl(cd, net_buf, 1, 13, buf, sizeof(buf));
+	if (r) {
+		memset(output, 0, 6);
+		return 0;
+	}
 
-  //
-  memcpy(macAddress, buf, 6);
-  memcpy(output, buf, 6);
-  DPRINTF("mac %02X:%02X:%02X:%02X:%02X:%02X\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
-  return hasMACAddress = 1;
+	//
+	memcpy(macAddress, buf, 6);
+	memcpy(output, buf, 6);
+	DPRINTF("mac %02X:%02X:%02X:%02X:%02X:%02X\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
+	return hasMACAddress = 1;
 }
 
 //------------------------------------------------------------------------------
 void sendMACAddress(void)
 {
-  static int sent = 0;
-  static int stall = 0;
-  u8 mac[6];
+	static int sent = 0;
+	static int stall = 0;
+	u8 mac[6];
 
-  void * connection = netGetLobbyServerConnection();
-  if (!connection) { sent = 0; return; }
+	void * connection = netGetLobbyServerConnection();
+	if (!connection) { sent = 0; return; }
 
-  if (sent) return;
-  if (!getMACAddress(mac)) return;
+	if (sent) return;
+	if (!getMACAddress(mac)) return;
 
-  // stall
-  if (stall) { stall--; return; }
+	// stall
+	if (stall) { stall--; return; }
 
-  // send
-  if (netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_MACHINE_ID, sizeof(mac), mac)) { stall = 60; return; }
-  sent = 1;
-  DPRINTF("sent mac\n");
+	// send
+	if (netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_MACHINE_ID, sizeof(mac), mac)) { stall = 60; return; }
+	sent = 1;
+	DPRINTF("sent mac\n");
 }
 
 //------------------------------------------------------------------------------
@@ -289,13 +278,10 @@ void onServerTimeResponse(void* connection, void* data)
 //------------------------------------------------------------------------------
 char * checkGameType(void)
 {
-	if (isInMenus() || isInGame())
-	{
+	if (isInMenus() || isInGame()) {
 		GameSettings * gs = gameGetSettings();
-		if (gs)
-		{
-			switch(gs->GameType)
-			{
+		if (gs) {
+			switch(gs->GameType) {
 				case GAMERULE_SIEGE: return "Siege at ";
 				case GAMERULE_CTF:  return "CTF at ";
 				case GAMERULE_DM:  return "DM at ";
@@ -307,33 +293,22 @@ char * checkGameType(void)
 }
 char * checkMap(void)
 {
-	if (isInMenus())
-	{
+	if (isInMenus()) {
 		if (isInStaging)
-		{
 			return "Staging";
-		}
 		else
-		{
 			return "Online Lobby";
-		}
-	}
-	else if (isInGame())
-	{
+	} else if (isInGame()) {
 		return mapGetName(gameGetCurrentMapId());
-	}
-	else
-	{
+	} else {
 		return "Loading Screen";
 	}
 }
 void runExceptionHandler(void)
 {
 	// invoke exception display installer
-	if (*(u32*)EXCEPTION_DISPLAY_ADDR != 0)
-	{
-		if (!hasInstalledExceptionHandler)
-		{
+	if (*(u32*)EXCEPTION_DISPLAY_ADDR != 0) {
+		if (!hasInstalledExceptionHandler) {
 			((void (*)(void))EXCEPTION_DISPLAY_ADDR)();
 			hasInstalledExceptionHandler = 1;
 		}
@@ -344,13 +319,10 @@ void runExceptionHandler(void)
 		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x79a), mapStr, 20);
 		
 		// change display to match progressive scan resolution
-		if (gfxGetIsProgressiveScan())
-		{
+		if (gfxGetIsProgressiveScan()) {
 			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F4) = 0x0083;
 			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F8) = 0x210E;
-		}
-		else
-		{
+		} else {
 			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F4) = 0x0183;
 			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F8) = 0x2278;
 		}
@@ -375,22 +347,18 @@ void runCameraSpeedPatch(void)
 {
 	char buf[12];
 	const short MAX_CAMERA_SPEED = 300;
-	if (isInMenus())
-	{
+	if (isInMenus()) {
 		// overwrite menu camera controls max cam speed
 		// also display speed text next to input
 		u32 ui = uiGetPointer(UIP_CONTROLS);
-		if (ui && uiGetActivePointer(UIP_EDIT_PROFILE))
-		{
+		if (ui && uiGetActivePointer(UIP_EDIT_PROFILE)) {
 			u32 cameraRotationUIPtr = *(u32*)(ui + 0x11C);
-			if (cameraRotationUIPtr)
-			{
+			if (cameraRotationUIPtr) {
 				// max speed
 				*(u32*)(cameraRotationUIPtr + 0x7C) = MAX_CAMERA_SPEED;
 
 				// draw %
-				if (uiGetActiveSubPointer(UIP_CONTROLS))
-				{
+				if (uiGetActiveSubPointer(UIP_CONTROLS)) {
 					sprintf(buf, "%d%%", *(u32*)(cameraRotationUIPtr + 0x80));
 					gfxScreenSpaceText(340, 310, 1, 1, 0x8069cbf2, buf, -1, 2);
 				}
@@ -479,9 +447,7 @@ void patchKillStealing(void)
 	int the_hook = GetAddress(&vaWhoHitMeHook);
 	int the_patch = 0x0C000000 | ((u32)&patchKillStealing_Hook >> 2);
 	if (*(u32*)the_hook != the_patch)
-	{
 		*(u32*)the_hook = the_patch;
-	}
 }
 
 /*
@@ -502,14 +468,12 @@ void patchDeadJumping(void)
 {
 	Player ** players = playerGetAll();
 	int i;
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-	{
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
     	if (!players[i])
     		continue;
 
 		Player * player = players[i];
-		if (playerIsLocal(player) && playerIsDead(player))
-		{
+		if (playerIsLocal(player) && playerIsDead(player)) {
 			// get current player state
 			int PlayerState = playerDeobfuscate(&player->State, 0, 0);
 			// if player is on bolt crank, set player state to idle.
@@ -575,16 +539,16 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
 	// we check if we've hit by reading the source guber event
 	// which is passed in 0x5C of the shot's pvars
 	if (shotMoby && shotMoby->PVar) {
-    int shotOwner = *(u32*)((u32)shotMoby + 0x90) >> 28;
-    if (shotOwner != gameGetMyClientId()) {
-      void * event = *(void**)(shotMoby->PVar + 0x5C);
-      if (event) {
-        u32 hitGuberUid = *(u32*)(event + 0x3C);
-        if (hitGuberUid != 0xFFFFFFFF) {
-          return CollLine_Fix(from, to, 1, moby, t0);
-        }
-      }
-    }
+		int shotOwner = *(u32*)((u32)shotMoby + 0x90) >> 28;
+		if (shotOwner != gameGetMyClientId()) {
+		void * event = *(void**)(shotMoby->PVar + 0x5C);
+			if (event) {
+				u32 hitGuberUid = *(u32*)(event + 0x3C);
+				if (hitGuberUid != 0xFFFFFFFF) {
+					return CollLine_Fix(from, to, 1, moby, t0);
+				}
+			}
+		}
 	}
 
 	// pass through
@@ -1038,8 +1002,7 @@ void runFpsCounter_drawHook(void)
 	++frames;
 
 	// update every 500 ms
-	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500))
-	{
+	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500)) {
 		averageRenderTimeMs = renderTimeCounterMs / (float)frames;
 		renderTimeCounterMs = 0;
 		frames = 0;
@@ -1077,8 +1040,7 @@ void runFpsCounter_updateHook(void)
 	frames++;
 
 	// update every 500 ms
-	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500))
-	{
+	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500)) {
 		averageUpdateTimeMs = updateTimeCounterMs / (float)frames;
 		updateTimeCounterMs = 0;
 		frames = 0;
@@ -1370,26 +1332,26 @@ void patchCreateGameMenu_Option(int option, int new_value)
 	if (*(int*)option != new_value)
 		*(int*)option = new_value;
 }
-void patchCreateGameMenu_LastSettings(void)
-{
-	u32 menu = uiGetPointer(UIP_CREATE_GAME);
-	// Normal Options
-	// Enable Password if Disabled
-	int use_password = (*(u32*)(menu + 0x130) + 0x4);
-	int password = (*(u32*)(menu + 0x134) + 0x4);
-	// If "USE PASWORD" is "Yes" and also disabled to edit
-	if (*(u32*)use_password == 2) {
-		patchCreateGameMenu_Option(use_password, 3); // enable "use password"
-		patchCreateGameMenu_Option(password, 3); // enable password option
-	}
+// void patchCreateGameMenu_LastSettings(void)
+// {
+// 	u32 menu = uiGetPointer(UIP_CREATE_GAME);
+// 	// Normal Options
+// 	// Enable Password if Disabled
+// 	int use_password = (*(u32*)(menu + 0x130) + 0x4);
+// 	int password = (*(u32*)(menu + 0x134) + 0x4);
+// 	// If "USE PASWORD" is "Yes" and also disabled to edit
+// 	if (*(u32*)use_password == 2) {
+// 		patchCreateGameMenu_Option(use_password, 3); // enable "use password"
+// 		patchCreateGameMenu_Option(password, 3); // enable password option
+// 	}
 
-	// Advanced Options
-	menu = uiGetPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
-	int nodes = (*(u32*)(menu + 0x114) + 0x64);
-	patchCreateGameMenu_Option(nodes, lastNodes);
+// 	// Advanced Options
+// 	menu = uiGetPointer(UIP_CREATE_GAME_ADVANCED_OPTIONS);
+// 	int nodes = (*(u32*)(menu + 0x114) + 0x64);
+// 	patchCreateGameMenu_Option(nodes, lastNodes);
 
-	lastSettings = 0;
-}
+// 	lastSettings = 0;
+// }
 void patchCreateGameMenu(void)
 {
 	u32 menu = uiGetActivePointer(UIP_CREATE_GAME);
@@ -1590,6 +1552,7 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
 	Player* player = players[pIdx];
 	if (!player || !flagMoby)
 		return;
+	
 	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->PVar;
 	if (!pvars)
 		return;
@@ -1670,10 +1633,9 @@ void customFlagLogic(Moby* flagMoby)
 	}
 	
 	// if flag didn't land on safe ground, and after .5s a player died
-	// DEPRICATED: flagIgnorePlayer swapped with pvars->TimeFlagDropped
-	// static int flagIgnorePlayer = 0;
+	static int flagIgnorePlayer = 0;
 	if(gameConfig.grFlagHotspots) {
-		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby) && (pvars->TimeFlagDropped + 300) < gameTime) {
+		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby) && (flagIgnorePlayer + 300) < gameTime) {
 			flagReturnToBase(flagMoby, 0, 0xff);
 			return;
 		}
@@ -1691,8 +1653,8 @@ void customFlagLogic(Moby* flagMoby)
 		// only allow actions by living players
 		if (playerIsDead(player) || playerGetHealth(player) <= 0){
 			// if flag holder died, update flagIgnorePlayer time.
-			// if (pvars->LastCarrierIdx == player->mpIndex)
-			// 	flagIgnorePlayer = gameTime;
+			if (pvars->LastCarrierIdx == player->mpIndex)
+				flagIgnorePlayer = gameTime;
 
 			continue;
 		}
@@ -2039,8 +2001,7 @@ void runCampaignMusic(void)
 		// If NextTrack does not equal the Track, that means that the song has switched.
 		// We need to move the NextTrack value into the CurrentTrack value, because it is now
 		// playing that track.  Then we set the NextTrack to the Track value.
-		else if (NextTrack != music->track)
-		{
+		else if (NextTrack != music->track) {
 			CurrentTrack = NextTrack;
 			NextTrack = music->track;
 		}
@@ -2048,8 +2009,7 @@ void runCampaignMusic(void)
 		// and if CurrentTrack does not equal -1
 		// and if the track duration is below 0x3000
 		// and if Status2 is 2, or Current Playing
-		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack != -1 && (music->remain <= 0x3000) && music->queuelen == QUEUELEN_PLAYING)
-		{
+		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack != -1 && (music->remain <= 0x3000) && music->queuelen == QUEUELEN_PLAYING) {
 			// This technically cues track 1 (the shortest track) with no sound to play.
 			// Doing this lets the current playing track to fade out.
 			musicTransitionTrack(0,0,0,0);
@@ -2080,28 +2040,22 @@ void runGameStartMessager(void)
 		return;
 
 	// in staging
-	if (uiGetActivePointer(UIP_STAGING) != 0)
-	{
+	if (uiGetActivePointer(UIP_STAGING) != 0) {
 		// check if game started
-		if (!sentGameStart && gameSettings->GameLoadStartTime > 0)
-		{
+		if (!sentGameStart && gameSettings->GameLoadStartTime > 0) {
 			// check if host
 			if (gameAmIHost())
-			{
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_GAME_LOBBY_STARTED, 0, gameSettings);
-			}
 
-      // request server time
-      requestServerTime();
+			// request server time
+			requestServerTime();
 
 			// request latest scavenger hunt settings
       		scavHuntQueryForRemoteSettings();
 
 			sentGameStart = 1;
 		}
-	}
-	else
-	{
+	} else {
 		sentGameStart = 0;
 	}
 }
@@ -2141,12 +2095,9 @@ void runCheckGameMapInstalled(void)
 	}
 	
 	int clientId = gameGetMyClientId();
-	if (mapOverrideResponse < 0)
-	{
-		for (i = 1; i < GAME_MAX_PLAYERS; ++i)
-		{
-			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 6)
-			{
+	if (mapOverrideResponse < 0) {
+		for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
+			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 6) {
 		#if UYA_PAL
 				((void (*)(u32, u32, u32))0x006c4308)(uiGetActivePointer(UIP_STAGING), 5, 0);
 		#else
@@ -2155,9 +2106,7 @@ void runCheckGameMapInstalled(void)
 				gs->PlayerStates[i] = 0; // unready up
 				showNoMapPopup = 1;
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
-			}
-			else if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 5)
-			{
+			} else if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 5) {
 				showNoMapPopup = 0;
 			}
 		}
@@ -2243,26 +2192,19 @@ void processGameModules()
 	GameSettings * gamesettings = gameGetSettings();
 
 	// Iterate through all the game modules until we hit an empty one
-	while (module->GameEntrypoint || module->LobbyEntrypoint)
-	{
+	while (module->GameEntrypoint || module->LobbyEntrypoint) {
 		// Ensure we have game settings
-		if (gamesettings)
-		{
+		if (gamesettings) {
 			// Check the module is enabled
-			if (module->State > GAMEMODULE_OFF)
-			{
+			if (module->State > GAMEMODULE_OFF) {
 				// If in game, run game entrypoint
-				if (isInGame())
-				{
+				if (isInGame()) {
 					// Invoke module
 					if (module->GameEntrypoint)
 						module->GameEntrypoint(module, &config, &gameConfig);
-				}
-				else if (isInMenus())
-				{
+				} else if (isInMenus()) {
 					// Invoke lobby module if still active
-					if (module->LobbyEntrypoint)
-					{
+					if (module->LobbyEntrypoint) {
 						module->LobbyEntrypoint(module, &config, &gameConfig);
 					}
 				}
@@ -2270,15 +2212,11 @@ void processGameModules()
 		}
 		// If we aren't in a game then try to turn the module off
 		// ONLY if it's temporarily enabled
-		else if (module->State == GAMEMODULE_TEMP_ON)
-		{
+		else if (module->State == GAMEMODULE_TEMP_ON) {
 			module->State = GAMEMODULE_OFF;
-		}
-		else if (module->State == GAMEMODULE_ALWAYS_ON)
-		{
+		} else if (module->State == GAMEMODULE_ALWAYS_ON) {
 			// Invoke lobby module if still active
-			if (isInMenus() && module->LobbyEntrypoint)
-			{
+			if (isInMenus() && module->LobbyEntrypoint) {
 				module->LobbyEntrypoint(module, &config, &gameConfig);
 			}
 		}
@@ -2309,15 +2247,13 @@ void onOnlineMenu(void)
 	drawFunction();
 	
 	lastMenuInvokedTime = gameGetTime();
-	if (!hasInitialized)
-	{
+	if (!hasInitialized) {
 		padEnableInput();
 		onConfigInitialize();
 		refreshCustomMapList();
 		hasInitialized = 1;
 	}
-	if (hasInitialized == 1 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
-	{
+	if (hasInitialized == 1 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0) {
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
 	}
@@ -2329,8 +2265,7 @@ void onOnlineMenu(void)
 	onConfigOnlineMenu();
 
 	// draw download data box
-	if (dlTotalBytes > 0)
-	{
+	if (dlTotalBytes > 0) {
 		gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, 0x8004223f);
 		gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, 0x80123251);
 		gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, 0x8069cbf2, "Downloading...", 11 + (gameGetTime()/240 % 4), 3);
@@ -2340,19 +2275,14 @@ void onOnlineMenu(void)
 	}
 
 	// 
-	if (showNoMapPopup)
-	{
-		if (mapOverrideResponse == -1)
-		{
+	if (showNoMapPopup) {
+		if (mapOverrideResponse == -1) {
 			uiShowOkDialog("Custom Maps", "You have not installed the map modules.");
-		}
-		else
-		{
+		} else {
 			char buf[32];
 			sprintf(buf, "Please install %s to play.", MapLoaderState.MapName);
 			uiShowOkDialog("Custom Maps", buf);
 		}
-		
 		showNoMapPopup = 0;
 	}
 
@@ -2390,8 +2320,8 @@ int main(void)
 	// Call this first
 	uyaPreUpdate();
 
-  // update patch pointers
-  PATCH_POINTERS = &patchPointers;
+	// update patch pointers
+	PATCH_POINTERS = &patchPointers;
 
 	// auto enable pad input to prevent freezing when popup shows
 	if (isInMenus() && lastMenuInvokedTime > 0 && (gameGetTime() - lastMenuInvokedTime) > TIME_SECOND)
@@ -2441,8 +2371,7 @@ int main(void)
 	void runTest(void);
 	#endif
 
-	if(isInGame())
-	{	
+	if(isInGame()) {	
 		// Run Game Rules if in game.
 		grGameStart();
 
@@ -2509,11 +2438,10 @@ int main(void)
 		onConfigGameMenu();
 
 		lastGameState = 1;
-	}
-	else if (isInMenus())
-	{
+	} else if (isInMenus()) {
 		// Patch various options on Create Game Screen
-		patchCreateGameMenu();
+		// Freezes on PAL
+		// patchCreateGameMenu();
 
 		// If in Lobby, run these game rules.
 		grLobbyStart();
@@ -2550,11 +2478,9 @@ int main(void)
 
 		// send patch game config on create game
 		GameSettings * gameSettings = gameGetSettings();
-		if (gameSettings && gameSettings->GameLoadStartTime < 0)
-		{
+		if (gameSettings && gameSettings->GameLoadStartTime < 0) {
 			// if host and just entered staging, send patch game config
-			if (gameAmIHost() && !isInStaging)
-			{
+			if (gameAmIHost() && !isInStaging) {
 				// copy over last game config as host
 				memcpy(&gameConfig, &gameConfigHostBackup, sizeof(PatchGameConfig_t));
 				// Reset SelectedCustomMapId to none
@@ -2563,25 +2489,8 @@ int main(void)
 				// send
 				configTrySendGameConfig();
 			}
-
-			// if (gameAmIHost()) {
-			// 	// set lastNodes option
-			// 	#if UYA_PAL
-			// 		int getNodesOption = *(u8*)0x0024164f;
-			// 	#else
-			// 		int getNodesOption = *(u8*)0x002417cf;
-			// 	#endif
-			// 	 // printf("\nlastsettings: %d", lastSettings);
-			// 	lastNodes = (int)getNodesOption;
-
-			// 	// options set, so set lastSettings to 1.
-			// 	lastSettings = 1;
-			// }
-
 			isInStaging = 1;
-		}
-		else
-		{
+		} else {
 			isInStaging = 0;
 		}
 	}

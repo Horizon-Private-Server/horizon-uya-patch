@@ -182,7 +182,8 @@ MenuElem_ListData_t dataCustomModes = {
     CUSTOM_MODE_COUNT,
     {
       "None",
-      "Infected",
+      "Infected"
+      // "Juggernaught"
     }
 };
 
@@ -192,6 +193,7 @@ MenuElem_ListData_t dataCustomModes = {
 const char* CustomModeShortNames[] = {
   [CUSTOM_MODE_NONE] NULL,
   [CUSTOM_MODE_INFECTED] "Infected",
+  [CUSTOM_MODE_JUGGERNAUGHT] NULL,
 };
 
 MenuElem_ListData_t dataWeaponPacks = {
@@ -473,6 +475,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
     switch (v)
     {
       case CUSTOM_MODE_INFECTED:
+      case CUSTOM_MODE_JUGGERNAUGHT:
       {
         // only allow deathmatch
         if (gs->GameType == GAMERULE_DM)
