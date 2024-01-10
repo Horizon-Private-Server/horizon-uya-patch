@@ -2371,7 +2371,13 @@ int main(void)
 	void runTest(void);
 	#endif
 
-	if(isInGame()) {	
+	if(isInGame()) {
+		// Patch Dead Jumping/Crouching
+		patchDeadJumping();
+
+		// Patch Dead Shooting
+		patchDeadShooting();
+
 		// Run Game Rules if in game.
 		grGameStart();
 
@@ -2385,12 +2391,6 @@ int main(void)
 
 		// Patch Quick Select to use custom timer.
 		patchQuickSelectTimer();
-
-		// Patch Dead Jumping/Crouching
-		patchDeadJumping();
-
-		// Patch Dead Shooting
-		patchDeadShooting();
 
 		// Patch Kill Stealing
 		patchKillStealing();
