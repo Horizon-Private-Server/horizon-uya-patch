@@ -1650,8 +1650,8 @@ void customFlagLogic(Moby* flagMoby)
 		if (!player || !player->IsLocal)
 			continue;
 
-		// only allow actions by living players
-		if (playerIsDead(player) || playerGetHealth(player) <= 0){
+		// only allow actions by living players, and non-chargebooting players
+		if ((playerIsDead(player) || playerGetHealth(player) <= 0) || (player->timers.IsChargebooting == 1 && (playerPadGetButton(player, PAD_R2) > 0) && player->timers.state > 55)){
 			// if flag holder died, update flagIgnorePlayer time.
 			if (pvars->LastCarrierIdx == player->mpIndex)
 				flagIgnorePlayer = gameTime;
