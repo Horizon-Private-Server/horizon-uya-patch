@@ -1416,7 +1416,7 @@ int runInvincibilityTimer(Player* player, int a1)
 	int hurtPlayer = a1;
 	// if timer is greater than zero, player can't be hurt.
 	if (player->timers.unkTimer_346 > 0) {
-		timeDecTimer(&player->timers.unkTimer_346);
+		timeDecTimerShort(&player->timers.unkTimer_346);
 		hurtPlayer = 0;
 	}
 	// if previous player state was resurrecting, start timer.
