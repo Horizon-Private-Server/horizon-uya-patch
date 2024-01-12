@@ -2447,7 +2447,9 @@ int main(void)
 		grLobbyStart();
 
 		// Patch Unkick Bug
+		#if UYA_NTSC
 		patchUnkick();
+		#endif
 
 		// Reset Level of Detail to -1
 		lastLodLevel = -1;
