@@ -47,8 +47,8 @@ struct PlayerSpectateData
     int HasShownEnterMsg;
     int HasShownNavMsg;
     VECTOR LastCameraPos;
-    float LastCameraYaw;
-    float LastCameraPitch;
+    float LastCameraZ;
+    float LastCameraY;
 } SpectateData[2];
 
 int InitSpectate = 0;
@@ -156,8 +156,8 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
     // Fix void fall spectate bug
     currentPlayer->fps.Vars.flags = 2;
 
-    currentPlayer->fps.Vars.CameraPitchMin = playerToSpectate->fps.Vars.CameraPitchMin;
-    currentPlayer->fps.Vars.CameraPitchMax = playerToSpectate->fps.Vars.CameraPitchMax;
+    currentPlayer->fps.Vars.CameraYMin = playerToSpectate->fps.Vars.CameraYMin;
+    currentPlayer->fps.Vars.CameraYMax = playerToSpectate->fps.Vars.CameraYMax;
     currentPlayer->fps.Vars.CameraPositionOffset[0] = -6;
 
     if (playerToSpectate->Vehicle)
@@ -211,15 +211,15 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
         }
 
         // Interpolate camera rotation towards target player
-        currentPlayer->fps.Vars.CameraYaw.rotation = spectateData->LastCameraYaw = lerpfAngle(spectateData->LastCameraYaw, yaw, cameraT);
-        currentPlayer->fps.Vars.CameraPitch.rotation = spectateData->LastCameraPitch = lerpfAngle(spectateData->LastCameraPitch, pitch, cameraT);
+        currentPlayer->fps.Vars.CameraZ.rotation = spectateData->LastCameraZ = lerpfAngle(spectateData->LastCameraZ, yaw, cameraT);
+        currentPlayer->fps.Vars.CameraY.rotation = spectateData->LastCameraY = lerpfAngle(spectateData->LastCameraY, pitch, cameraT);
         
         // Generate target based off distance and elevation
         VECTOR target;
         vector_copy(target, playerToSpectate->Vehicle->pMoby->Position);
-        target[0] -= cosf(spectateData->LastCameraYaw) * distance;
-        target[1] -= sinf(spectateData->LastCameraYaw) * distance;
-        target[2] += (sinf(spectateData->LastCameraPitch) * distance) + elevation;
+        target[0] -= cosf(spectateData->LastCameraZ) * distance;
+        target[1] -= sinf(spectateData->LastCameraZ) * distance;
+        target[2] += (sinf(spectateData->LastCameraY) * distance) + elevation;
 
         // Interpolate camera towards target player
         vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, target, 1 - powf(MATH_E, -CAMERA_POSITION_SHARPNESS * MATH_DT));
@@ -228,8 +228,8 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
         // cameraT = 1 - powf(MATH_E, -CAMERA_ROTATION_SHARPNESS * MATH_DT);
 
         // Interpolate camera rotation towards target player
-        currentPlayer->fps.Vars.CameraYaw.rotation = spectateData->LastCameraYaw = playerToSpectate->fps.Vars.CameraYaw.rotation;
-        currentPlayer->fps.Vars.CameraPitch.rotation = spectateData->LastCameraPitch = playerToSpectate->fps.Vars.CameraPitch.rotation;
+        currentPlayer->fps.Vars.CameraZ.rotation = spectateData->LastCameraZ = playerToSpectate->fps.Vars.CameraZ.rotation;
+        currentPlayer->fps.Vars.CameraY.rotation = spectateData->LastCameraY = playerToSpectate->fps.Vars.CameraY.rotation;
 
         // Interpolate camera towards target player
         vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, playerToSpectate->fps.CameraPos, .5);
