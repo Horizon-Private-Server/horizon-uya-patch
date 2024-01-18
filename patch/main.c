@@ -123,6 +123,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.disableScavengerHunt = 0,
 	.enableSingleplayerMusic = 0,
 	.quickSelectTimeDelay = 0,
+	.aimAssist = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -2020,6 +2021,33 @@ void runCampaignMusic(void)
 }
 
 /*
+ * NAME :		patchAimAssist
+ * 
+ * DESCRIPTION :	Disables Aim Assist for player weapons
+ * 			
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchAimAssist(void)
+{
+	Player* p = playerGetFromSlot(0);
+	if (p->fps.Vars.CameraY.target_slowness_factor == 0)
+		return;
+	
+	p->fps.Vars.CameraZ.target_slowness_factor_quick = 0;
+	p->fps.Vars.CameraZ.target_slowness_factor_aim = 0;
+	p->fps.Vars.CameraY.target_slowness_factor = 0;
+	p->fps.Vars.CameraY.strafe_turn_factor = 0;
+	p->fps.Vars.CameraY.strafe_tilt_factor = 0;
+}
+
+/*
  * NAME :		runGameStartMessager
  * 
  * DESCRIPTION :
@@ -2402,7 +2430,7 @@ int main(void)
 		patchDeathBarrierBug();
 
 		// Patch CTF Flag Logic with our own.
-		patchCTFFlag();
+		// patchCTFFlag();
 
 		// Patch Level of Detail
 		patchLevelOfDetail();
@@ -2425,6 +2453,9 @@ int main(void)
 
 		// Patches the Map and Scoreboard for player toggalability!
 		patchMapAndScoreboardToggle();
+
+		if (config.aimAssist)
+			patchAimAssist();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
