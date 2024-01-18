@@ -636,8 +636,8 @@ typedef struct HeroHeadIdle { // 0x20
 
 typedef struct FpsCam {
 	MATRIX CameraMatrix;											// 0x11A0
-    struct CameraAngleZ CameraYaw;									// 0x11E0
-    struct CameraAngleY CameraPitch;								// 0x1200
+    struct CameraAngleZ CameraZ;									// 0x11E0
+    struct CameraAngleY CameraY;								// 0x1200
     int state;														// 0x1220
 	short int quick_turn_input_time;								// 0x1224
 	short int snap_hold_time;										// 0x1226
@@ -646,8 +646,8 @@ typedef struct FpsCam {
 	VECTOR target_last_pos;											// 0x1230
 	VECTOR target_vel;												// 0x1240
 	float target_blend_fac;											// 0x1250
-    float CameraPitchMin; // aka: float mix_y_rot                   // 0x1254
-    float CameraPitchMax; // aka: float man_y_rot                   // 0x1258
+    float CameraYMin; // aka: float mix_y_rot                   	// 0x1254
+    float CameraYMax; // aka: float man_y_rot                   	// 0x1258
     struct Moby *pExcludeMoby;										// 0x125C
     VECTOR CameraPositionOffset;                                  	// 0x1260
     VECTOR CameraRotationOffset;									// 0x1270
