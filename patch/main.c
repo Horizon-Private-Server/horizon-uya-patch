@@ -124,10 +124,13 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableSingleplayerMusic = 0,
 	.quickSelectTimeDelay = 0,
 	.aimAssist = 0,
+	.cycleOrder = 0,
 };
 
 PatchGameConfig_t gameConfig;
 PatchGameConfig_t gameConfigHostBackup;
+VoteToEndState_t voteToEndState;
+PatchStateContainer_t patchStateContainer;
 
 PatchPointers_t patchPointers = {
   .ServerTimeMonth = 0,
@@ -871,25 +874,50 @@ void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
  */
 void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int weaponCount)
 {
-	int i, j, matchCount = 0;
+	int i, j, matchCount, cycleOrderCount = 0;
 
 	// call hooked GiveMeRandomWeapons function first
 	playerGiveRandomWeapons(player, weaponCount);
 
 	// then try and overwrite given weapon order if weapons match equipped weapons before death
 	if (player->IsLocal) {
-		int LocalPlayerIndex = player->fps.Vars.cam_slot;
+		int LocalPlayerIndex = player->mpIndex;
 		// restore backup if they match (regardless of order) newly assigned weapons
 		for (i = 0; i < 3; i++) {
 			u8 backedUpSlotValue = weaponOrderBackup[LocalPlayerIndex][i];
 			for(j = 0; j < 3; j++) {
-				if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
-					matchCount++;
+				if (config.cycleOrder > 0) {
+					if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
+						switch (backedUpSlotValue) {
+							case WEAPON_ID_BLITZ:
+							case WEAPON_ID_FLUX:
+							case WEAPON_ID_GBOMB:
+								cycleOrderCount++;
+						}
+						matchCount++;
+					}
+				} else {
+					if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
+						matchCount++;
+					}
 				}
 			}
 		}
+		DPRINTF("Cycle Count: %d\n", cycleOrderCount);
+		DPRINTF("Match Count: %d \n", matchCount);
 		// if we found a match, set
 		if (matchCount == 3) {
+			if (cycleOrderCount == 3) {
+				if (config.cycleOrder == 1) {
+					weaponOrderBackup[LocalPlayerIndex][0] = WEAPON_ID_BLITZ;
+					weaponOrderBackup[LocalPlayerIndex][1] = WEAPON_ID_FLUX;
+					weaponOrderBackup[LocalPlayerIndex][2] = WEAPON_ID_GBOMB;
+				} else {
+					weaponOrderBackup[LocalPlayerIndex][0] = WEAPON_ID_BLITZ;
+					weaponOrderBackup[LocalPlayerIndex][1] = WEAPON_ID_GBOMB;			
+					weaponOrderBackup[LocalPlayerIndex][2] = WEAPON_ID_FLUX;
+				}
+			}
 			// set equipped weapon in order
 			for (i = 0; i < 3; ++i) {
 				playerGiveWeapon(player, weaponOrderBackup[LocalPlayerIndex][i]);
@@ -2048,6 +2076,193 @@ void patchAimAssist(void)
 }
 
 /*
+ * NAME :		onClientVoteToEndStateUpdateRemote
+ * 
+ * DESCRIPTION :
+ * 			Receives when the host updates the vote to end state.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+int onClientVoteToEndStateUpdateRemote(void * connection, void * data)
+{
+	memcpy(&voteToEndState, data, sizeof(voteToEndState));
+	return sizeof(voteToEndState);
+}
+
+/*
+ * NAME :		onClientVoteToEndRemote
+ * 
+ * DESCRIPTION :
+ * 			Receives when another client has voted to end.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+int onClientVoteToEndRemote(void * connection, void * data)
+{
+	int playerId;
+	memcpy(&playerId, data, sizeof(playerId));
+	onClientVoteToEnd(playerId);
+	return sizeof(playerId);
+}
+
+/*
+ * NAME :		onClientVoteToEnd
+ * 
+ * DESCRIPTION :
+ * 			Handles when a client votes to end.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void onClientVoteToEnd(int playerId)
+{
+	int i;
+	GameSettings* gs = gameGetSettings();
+	if (!gs) return;
+	if (!gameAmIHost()) return;
+
+	// set
+	voteToEndState.Votes[playerId] = 1;
+
+	// tally votes
+	voteToEndState.Count = 0;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+		if (voteToEndState.Votes[i]) voteToEndState.Count += 1;
+
+	// set timeout
+	if (voteToEndState.TimeoutTime <= 0)
+		voteToEndState.TimeoutTime = gameGetTime() + TIME_SECOND*30;
+
+	// send update
+	netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, sizeof(voteToEndState), &voteToEndState);
+	DPRINTF("End player:%d timeout:%d\n", playerId, voteToEndState.TimeoutTime - gameGetTime());
+}
+
+/*
+ * NAME :		sendClientVoteForEnd
+ * 
+ * DESCRIPTION :
+ * 			Broadcasts to all other clients in lobby that this client has voted to end.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void sendClientVoteForEnd(void)
+{
+	Player* p1 = playerGetFromSlot(0);
+	if (!p1) return;
+
+	int playerId = p1->mpIndex;
+	if (!gameAmIHost()) {
+		netSendCustomAppMessage(netGetDmeServerConnection(), -1, CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, 4, &playerId);
+	} else {
+		onClientVoteToEnd(playerId);
+	}
+}
+
+/*
+ * NAME :		voteToEndNumberOfVotesRequired
+ * 
+ * DESCRIPTION :
+ * 			Returns the number of votes required for the vote to pass.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+int voteToEndNumberOfVotesRequired(void)
+{
+	GameSettings* gs = gameGetSettings();
+	GameData* gameData = gameGetData();
+	int i;
+	int playerCount = 0;
+
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		if (gs->PlayerClients[i] >= 0) playerCount += 1;
+	}
+
+	if (gameData->NumTeams > 2) return playerCount;
+	else return (int)(playerCount * 0.75) + 1;
+}
+
+/*
+ * NAME :		runVoteToEndLogic
+ * 
+ * DESCRIPTION :
+ * 			Handles all logic related to when a team Ends.
+ * 
+ * NOTES :
+ * 
+ * ARGS : 
+ * 
+ * RETURN :
+ * 
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void runVoteToEndLogic(void)
+{
+	if (!isInGame()) { patchStateContainer.VoteToEndPassed = 0; memset(&voteToEndState, 0, sizeof(voteToEndState)); return; }
+	if (gameHasEnded()) return;
+	if (voteToEndState.Count <= 0 || voteToEndState.TimeoutTime <= 0) return;
+
+	int i;
+	int gameTime = gameGetTime();
+	GameData* gameData = gameGetData();
+	GameSettings* gs = gameGetSettings();
+	char buf[64];
+
+	int votesNeeded = voteToEndNumberOfVotesRequired();
+	if (voteToEndState.Count >= votesNeeded && gameAmIHost()) {
+		// reset
+		memset(&voteToEndState, 0, sizeof(voteToEndState));
+		// pass to modules
+		patchStateContainer.VoteToEndPassed = 1;
+		// end game
+		gameEnd(0);
+		return;
+	}
+
+	if (voteToEndState.TimeoutTime > gameTime) {
+		// draw
+		int secondsLeft = (voteToEndState.TimeoutTime - gameTime) / TIME_SECOND;
+		snprintf(buf, sizeof(buf), "Vote to End (%d/%d)    %d...", voteToEndState.Count, votesNeeded, secondsLeft);
+		gfxScreenSpaceText(12, SCREEN_HEIGHT - 18, 1, 1, 0x80000000, buf, -1, 0);
+		gfxScreenSpaceText(10, SCREEN_HEIGHT - 20, 1, 1, 0x80FFFFFF, buf, -1, 0);
+	} else if (gameAmIHost() && voteToEndState.TimeoutTime < gameTime) {
+		// reset
+		memset(&voteToEndState, 0, sizeof(voteToEndState));
+		netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, sizeof(voteToEndState), &voteToEndState);
+	}
+}
+
+
+/*
  * NAME :		runGameStartMessager
  * 
  * DESCRIPTION :
@@ -2279,6 +2494,7 @@ void onOnlineMenu(void)
 		padEnableInput();
 		onConfigInitialize();
 		refreshCustomMapList();
+		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		hasInitialized = 1;
 	}
 	if (hasInitialized == 1 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0) {
@@ -2361,7 +2577,9 @@ int main(void)
 	//
   	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
   	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
-
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, &onClientVoteToEndRemote);
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, &onClientVoteToEndStateUpdateRemote);
+	
 	// Run map loader
 	runMapLoader();
 
@@ -2394,6 +2612,9 @@ int main(void)
 	// Adds Single Player Music to Multiplayer
 	if (config.enableSingleplayerMusic)
 		runCampaignMusic();
+
+	// 
+	runVoteToEndLogic();
 
 	#if TEST
 	void runTest(void);

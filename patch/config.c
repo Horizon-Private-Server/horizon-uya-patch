@@ -103,6 +103,8 @@ void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_VoteToEndStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
+
 
 int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value);
 // int menuStateHandler_SelectedWorldOverride(MenuElem_ListData_t* listData, char* value);
@@ -113,6 +115,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
 void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
+void voteToEndSelectHandler(TabElem_t* tab, MenuElem_t* element);
 
 #ifdef DEBUG
 void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
@@ -130,7 +133,10 @@ void navTab(int direction);
 int mapsGetInstallationResult(void);
 int mapsDownloadingModules(void);
 void refreshCustomMapList(void);
+void sendClientVoteForEnd(void);
+
 extern int scavHuntEnabled;
+extern VoteToEndState_t voteToEndState;
 
 
 MenuElem_ListData_t dataLevelOfDetail = {
@@ -156,6 +162,13 @@ MenuElem_RangeData_t dataQuickSelectTimeDelay = {
     .stateHandler = NULL,
     .minValue = 0,
     .maxValue = 30,
+};
+
+MenuElem_ListData_t dataCycleOrder = {
+    &config.cycleOrder,
+    NULL,
+    3,
+    { "Off", "Blitz ->  Flux -> GBomb", "Blitz -> GBomb -> Flux" }
 };
 
 // map override list item
@@ -300,6 +313,7 @@ MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
+  { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler },
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt },
@@ -310,6 +324,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Always Show Health", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.alwaysShowHealth },
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake },
+  { "Cycle Order", listActionHandler, menuStateAlwaysEnabledHandler, &dataCycleOrder },
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
@@ -613,6 +628,31 @@ void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
     snprintf(buf, sizeof(buf), "Found %d maps", CustomMapDefCount);
     uiShowOkDialog("Custom Maps", buf);
   }
+}
+
+//
+void voteToEndSelectHandler(TabElem_t* tab, MenuElem_t* element)
+{
+  sendClientVoteForEnd();
+  configMenuDisable();
+}
+
+// 
+void menuStateHandler_VoteToEndStateHandler(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings* gs = gameGetSettings();
+  int i = 0;
+  
+  if (isInGame()) {
+    Player* p = playerGetFromSlot(0);
+    if (p) {
+      *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
+      if (!voteToEndState.Votes[p->mpIndex]) *state |= ELEMENT_EDITABLE;
+      return;
+    }
+  }
+  
+  *state = ELEMENT_HIDDEN;
 }
 
 // 

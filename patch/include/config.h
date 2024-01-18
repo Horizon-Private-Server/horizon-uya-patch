@@ -94,6 +94,13 @@ struct MapLoaderState
     int LoadingFd;
 };
 
+typedef struct VoteToEndState
+{
+  int TimeoutTime;
+  int Count;
+  char Votes[GAME_MAX_PLAYERS];
+} VoteToEndState_t;
+
 extern struct MapLoaderState MapLoaderState;
 extern CustomMapDef_t CustomMapDefs[MAX_CUSTOM_MAP_DEFINITIONS];
 extern int CustomMapDefCount;

@@ -19,6 +19,7 @@ typedef struct PatchConfig
   char enableSingleplayerMusic;
   char quickSelectTimeDelay;
   char aimAssist;
+  char cycleOrder;
 } PatchConfig_t;
 
 // Game Rules Tab
