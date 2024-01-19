@@ -886,25 +886,21 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 		for (i = 0; i < 3; i++) {
 			u8 backedUpSlotValue = weaponOrderBackup[LocalPlayerIndex][i];
 			for(j = 0; j < 3; j++) {
-				if (config.cycleOrder > 0) {
-					if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
+				if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
+					matchCount++;
+					if (config.cycleOrder != 0) {
 						switch (backedUpSlotValue) {
 							case WEAPON_ID_BLITZ:
 							case WEAPON_ID_FLUX:
 							case WEAPON_ID_GBOMB:
 								cycleOrderCount++;
+								break;
 						}
-						matchCount++;
-					}
-				} else {
-					if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
-						matchCount++;
 					}
 				}
 			}
 		}
-		DPRINTF("Cycle Count: %d\n", cycleOrderCount);
-		DPRINTF("Match Count: %d \n", matchCount);
+		printf("Cycle Count: %d; Match Count: %d\n", cycleOrderCount, matchCount);
 		// if we found a match, set
 		if (matchCount == 3) {
 			if (cycleOrderCount == 3) {
