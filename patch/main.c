@@ -841,10 +841,9 @@ void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
 {
 	// backup currently equipped weapons
 	if (player->IsLocal) {
-		int LocalPlayerIndex = player->fps.Vars.cam_slot;
-		weaponOrderBackup[LocalPlayerIndex][0] = playerDeobfuscate(&player->QuickSelect.Slot[0], 1, 1);
-		weaponOrderBackup[LocalPlayerIndex][1] = playerDeobfuscate(&player->QuickSelect.Slot[1], 1, 1);
-		weaponOrderBackup[LocalPlayerIndex][2] = playerDeobfuscate(&player->QuickSelect.Slot[2], 1, 1);
+		weaponOrderBackup[player->mpIndex][0] = playerDeobfuscate(&player->QuickSelect.Slot[0], 1, 1);
+		weaponOrderBackup[player->mpIndex][1] = playerDeobfuscate(&player->QuickSelect.Slot[1], 1, 1);
+		weaponOrderBackup[player->mpIndex][2] = playerDeobfuscate(&player->QuickSelect.Slot[2], 1, 1);
 	}
 
 	// call hooked WeaponStripMe function after backup
@@ -874,7 +873,10 @@ void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
  */
 void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int weaponCount)
 {
-	int i, j, matchCount, cycleOrderCount = 0;
+	static int cycleOrder = 1;
+	int i, j;
+	char matchCount = 0;
+	char cycleOrderCount = 0;
 
 	// call hooked GiveMeRandomWeapons function first
 	playerGiveRandomWeapons(player, weaponCount);
@@ -887,37 +889,30 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 			u8 backedUpSlotValue = weaponOrderBackup[LocalPlayerIndex][i];
 			for(j = 0; j < 3; j++) {
 				if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
-					matchCount++;
-					if (config.cycleOrder != 0) {
-						switch (backedUpSlotValue) {
-							case WEAPON_ID_BLITZ:
-							case WEAPON_ID_FLUX:
-							case WEAPON_ID_GBOMB:
-								cycleOrderCount++;
-								break;
-						}
-					}
+					++matchCount;
+				}
+			}
+			if (config.cycleOrder != 0) {
+				switch (backedUpSlotValue) {
+					case WEAPON_ID_BLITZ:
+					case WEAPON_ID_FLUX:
+					case WEAPON_ID_GBOMB:
+						++cycleOrderCount;
 				}
 			}
 		}
-		printf("Cycle Count: %d; Match Count: %d\n", cycleOrderCount, matchCount);
+		DPRINTF("Cycle Count: %d; Match Count: %d\n", cycleOrderCount, matchCount);
+		// if cycleOrderCount matches, set backup weapons.
+		if (cycleOrderCount == 3) {
+			weaponOrderBackup[LocalPlayerIndex][0] = WEAPON_ID_BLITZ;
+			weaponOrderBackup[LocalPlayerIndex][1] = (config.cycleOrder == 1) ? WEAPON_ID_FLUX : WEAPON_ID_GBOMB;
+			weaponOrderBackup[LocalPlayerIndex][2] = (config.cycleOrder == 1) ? WEAPON_ID_GBOMB : WEAPON_ID_FLUX;
+		}
 		// if we found a match, set
-		if (matchCount == 3) {
-			if (cycleOrderCount == 3) {
-				if (config.cycleOrder == 1) {
-					weaponOrderBackup[LocalPlayerIndex][0] = WEAPON_ID_BLITZ;
-					weaponOrderBackup[LocalPlayerIndex][1] = WEAPON_ID_FLUX;
-					weaponOrderBackup[LocalPlayerIndex][2] = WEAPON_ID_GBOMB;
-				} else {
-					weaponOrderBackup[LocalPlayerIndex][0] = WEAPON_ID_BLITZ;
-					weaponOrderBackup[LocalPlayerIndex][1] = WEAPON_ID_GBOMB;			
-					weaponOrderBackup[LocalPlayerIndex][2] = WEAPON_ID_FLUX;
-				}
-			}
+		if (matchCount == 3 || cycleOrderCount == 3) {
 			// set equipped weapon in order
-			for (i = 0; i < 3; ++i) {
+			for (i = 0; i < 3; ++i)
 				playerGiveWeapon(player, weaponOrderBackup[LocalPlayerIndex][i]);
-			}
 
 			// equip each weapon from last slot to first slot to keep correct order.
 			playerEquipWeapon(player, weaponOrderBackup[LocalPlayerIndex][2]);
