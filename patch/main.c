@@ -1916,7 +1916,7 @@ void runCampaignMusic(void)
 	};
 	// if music isn't loaded or enable singleplayermusic isn't on, or in menus, return.
 	u32 CodeSegmentPointer = *(u32*)0x01FFFD00;
-	if (!musicGetSector() || CodeSegmentPointer == 0x00574F88 || !config.enableSingleplayerMusic)
+	if (!musicGetSector() || !config.enableSingleplayerMusic)
 		return;
 	
 	u32 NewTracksLocation = 0x001F8588; // Overwrites current tracks too.
@@ -1978,27 +1978,28 @@ void runCampaignMusic(void)
 	int DefaultMultiplayerTracks = 0x0d; // This number will never change
 	// Due to us overwriting original gracks, no need to do extra math like in DL.
 	TotalTracks = AddedTracks;
-	if (*(u32*)musicTrackRangeMax() != TotalTracks) {
+	if (CodeSegmentPointer != 0x00574F88 && *(u32*)musicTrackRangeMax() != TotalTracks) {
 		int MusicFunctionData = CodeSegmentPointer + 0x1A8;
 		*(u16*)MusicFunctionData = TotalTracks;
 	}
 
-	// If in game
-	if (isInGame())
+	if (isInGame() || isInMenus())
 	{
 		static short CurrentTrack = 0;
 		static short NextTrack = 0;
 		music_Playing* music = musicGetTrackInfo();
 		// double check if min/max info are correct
-		if (config.enableSingleplayerMusic) {
-			if (*(int*)musicTrackRangeMax() != (TotalTracks - *(int*)musicTrackRangeMin()) || *(int*)musicTrackRangeMin() != 4) {
-				*(int*)musicTrackRangeMin() = 4;
-				*(int*)musicTrackRangeMax() = TotalTracks - *(int*)musicTrackRangeMin();
-			}
-		} else {
-			if (*(int*)musicTrackRangeMax() != (DefaultMultiplayerTracks - *(int*)musicTrackRangeMin()) || *(int*)musicTrackRangeMin() != 4) {
-				*(int*)musicTrackRangeMin() = 4;
-				*(int*)musicTrackRangeMax() = DefaultMultiplayerTracks - *(int*)musicTrackRangeMin();
+		if (isInGame()) {
+			if (config.enableSingleplayerMusic) {
+				if (*(int*)musicTrackRangeMax() != (TotalTracks - *(int*)musicTrackRangeMin()) || *(int*)musicTrackRangeMin() != 4) {
+					*(int*)musicTrackRangeMin() = 4;
+					*(int*)musicTrackRangeMax() = TotalTracks - *(int*)musicTrackRangeMin();
+				}
+			} else {
+				if (*(int*)musicTrackRangeMax() != (DefaultMultiplayerTracks - *(int*)musicTrackRangeMin()) || *(int*)musicTrackRangeMin() != 4) {
+					*(int*)musicTrackRangeMin() = 4;
+					*(int*)musicTrackRangeMax() = DefaultMultiplayerTracks - *(int*)musicTrackRangeMin();
+				}
 			}
 		}
 		// Fixes bug where music doesn't always want to start playing at start of game
@@ -2034,8 +2035,6 @@ void runCampaignMusic(void)
 			// Doing this lets the current playing track to fade out.
 			musicTransitionTrack(0,0,0,0);
 		}
-	} else if (isInMenus() && FinishedConvertingTracks) {
-		FinishedConvertingTracks = 0;
 	}
 }
 
