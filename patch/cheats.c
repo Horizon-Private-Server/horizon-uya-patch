@@ -224,8 +224,7 @@ void spawnWeaponPackOnDeath(void)
     // This will be checking constantly, instead of just when the player dies.
     Player ** players = playerGetAll();
 	int i;
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-	{
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
     	if (!players[i])
     		return;
 
@@ -534,8 +533,7 @@ void chargebootForever(void)
 {
 	int i;
 	Player ** players = playerGetAll();
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-	{
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		Player * player = players[i];
 		if (!player)
 			continue;
@@ -589,8 +587,7 @@ void disableCameraShake(void)
 #endif
 	};
 	int CameraShake = GetAddress(&vaCameraShakeFunc);
-	if (*(u32*)CameraShake == 0x24030460)
-	{
+	if (*(u32*)CameraShake == 0x24030460) {
 		*(u32*)CameraShake = 0x03e00008;
 		*(u32*)(CameraShake + 0x4) = 0;
 	}
@@ -646,8 +643,7 @@ void disableRespawning(void)
 
 	// Disable Respawn Function
 	int RespawnFunc = GetAddress(&vaPlayerRespawnFunc);
-    if (*(u32*)RespawnFunc != 0)
-	{
+    if (*(u32*)RespawnFunc != 0) {
 		*(u32*)RespawnFunc = 0x03e00008;
         *(u32*)(RespawnFunc + 0x4) = 0;
 	}
@@ -785,8 +781,7 @@ void setRespawnTimer_Player(void)
 #endif
 	};
     int RespawnAddr = GetAddress(&vaRespawnTimerFunc);
-	if (gameConfig.grRespawnTimer_Player)
-	{
+	if (gameConfig.grRespawnTimer_Player) {
 	    int Seconds;
 		switch (gameConfig.grRespawnTimer_Player) {
 			case 10:
@@ -805,8 +800,12 @@ void setRespawnTimer_Player(void)
 		if (!gameConfig.grDisablePenaltyTimers)
 			*(u16*)(RespawnAddr + 0x78) = (Seconds + 1.5) * GAME_FPS;
 	}
-	if (gameConfig.grDisablePenaltyTimers)
-	{
+	if (gameConfig.grDisablePenaltyTimers) {
+		GameSettings * gs = gameGetSettings();
+		// if map is Command Center, Aquatos, Blackwater Docks, Marcadia or custom map, return.
+		if (gs->GameLevel >= 46)
+			return;
+
 		// Jump to end of function after respawn timer is set.
 		if (*(u32*)(RespawnAddr + 0x28) == 0x14440003)
 			*(u32*)(RespawnAddr + 0x28) = 0x1000001A;
