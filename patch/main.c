@@ -2201,7 +2201,7 @@ int voteToEndNumberOfVotesRequired(void)
 	}
 
 	if (gameData->NumTeams > 2) return playerCount;
-	else return (int)(playerCount * 0.75) + 1;
+	else return (int)(playerCount * 0.66) + 1;
 }
 
 /*
