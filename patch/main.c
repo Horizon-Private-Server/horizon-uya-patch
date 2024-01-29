@@ -34,7 +34,7 @@
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
-#include "include/interop.h"
+#include "interop/patch.h"
 #include "include/config.h"
 #include "include/cheats.h"
 

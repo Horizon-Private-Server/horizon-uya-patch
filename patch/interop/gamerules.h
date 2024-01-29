@@ -1,0 +1,2 @@
+VariableAddress_t vaGameplayHook;
+VariableAddress_t vaUpdateScoreboard;
