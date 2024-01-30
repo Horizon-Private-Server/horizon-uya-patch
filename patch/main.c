@@ -199,6 +199,22 @@ void pushScrPrintLine(char* str)
 }
 #endif
 
+#if BENCHMARK
+static long TestBegan = 0;
+static long TestEnd = 0;
+
+long getMsSinceTestBegan(void)
+{
+	return (timerGetSystemTime() - TestBegan) / SYSTEM_TIME_TICKS_PER_MS;
+}
+void benchmark_timePrint(char *title)
+{
+	printf("%s: %dms\n", title, (int)getMsSinceTestBegan());
+	// reset time begun after each new printf
+	TestBegan = timerGetSystemTime();
+}
+#endif
+
 //------------------------------------------------------------------------------
 int getMACAddress(u8 output[6])
 {
@@ -532,8 +548,11 @@ int patchDeadShooting_Hook(int pad)
  */
 void patchDeadShooting(void)
 {
-	if (*(u32*)GetAddress(&vaPatchDeadShooting_ShootingHook) != 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2))
-		*(u32*)GetAddress(&vaPatchDeadShooting_ShootingHook) = 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2);
+	static int patched = 0;
+	if (patched) return;
+
+	HOOK_JAL(GetAddress(&vaPatchDeadShooting_ShootingHook), &patchDeadShooting_Hook);
+	patched = 1;
 }
 
 int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* moby, u64 t0)
@@ -575,19 +594,21 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
  */
 void patchSniperWallSniping(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	// hook when collision checking is done on the sniper shot
 	u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
-	if (hookAddr) {
-    	POKE_U32(hookAddr + 0x04, 0x0260302D);
-		HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
-	}
+	POKE_U32(hookAddr + 0x04, 0x0260302D);
+	HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
 
   // change sniper shot initialization code to write the guber event to the shot's pvars
   // for use later by patchSniperWallSniping_Hook
 	hookAddr = GetAddress(&vaSniperShotCreatedHook);
-	if (hookAddr) {
-		POKE_U32(hookAddr, 0xAE35005C);
-	}
+	POKE_U32(hookAddr, 0xAE35005C);
+
+	patched = 1;
 }
 
 void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
@@ -640,11 +661,16 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
  */
 void patchSniperNiking(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
 	if (hookAddr) {
 		POKE_U32(hookAddr - 0x0C, 0x46000306);
 		POKE_U32(hookAddr + 0x04, 0x02803021);
 		HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
+		patched = 1;
 	}
 }
 
@@ -664,6 +690,10 @@ void patchSniperNiking(void)
  */
 void patchWeaponShotLag(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	int TCP = 0x24040040;
 
 	// Send all weapon shots reliably (Use TCP instead of UDP)
@@ -675,6 +705,8 @@ void patchWeaponShotLag(void)
 	int FluxAddr = GetAddress(&vaFluxUDPtoTCP);
 	if (*(u32*)FluxAddr == 0x90A407D4)
 		*(u32*)FluxAddr = TCP;
+
+	patched = 1;
 }
 
 /*
@@ -739,7 +771,12 @@ void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short
  */
 void patchGadgetEvents(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	HOOK_JAL(GetAddress(&vaGadgetEventHook), &handleGadgetEvents);
+	patched = 1;
 }
 
 /*
@@ -939,10 +976,16 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
  */
 void patchResurrectWeaponOrdering(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	u32 hook_StripMe = ((u32)GetAddress(&vaPlayerRespawnFunc) + 0x40);
 	u32 hook_RandomWeapons = hook_StripMe + 0x1c;
 	HOOK_JAL(hook_StripMe, &patchResurrectWeaponOrdering_HookWeaponStripMe);
 	HOOK_JAL(hook_RandomWeapons, &patchResurrectWeaponOrdering_HookGiveMeRandomWeapons);
+
+	patched = 1;
 }
 
 /*
@@ -1084,11 +1127,19 @@ void runFpsCounter_updateHook(void)
  */
 void runFpsCounter(void)
 {
-	int hook = GetAddress(&vaFpsCounter_Hooks);
-	int update = GetAddress(&vaFpsCounter_UpdateFunc);
-	int draw = GetAddress(&vaFpsCounter_DrawFunc);
-	HOOK_JAL(hook, &runFpsCounter_updateHook);
-	HOOK_JAL(((u32)hook + 0x60), &runFpsCounter_drawHook);
+	static int hook = 0;
+	static int update = 0;
+	static int draw = 0;
+	if (!draw) {
+		hook = GetAddress(&vaFpsCounter_Hooks);
+		update = GetAddress(&vaFpsCounter_UpdateFunc);
+		draw = GetAddress(&vaFpsCounter_DrawFunc);
+	}
+	if (hook) {
+		HOOK_JAL(hook, &runFpsCounter_updateHook);
+		HOOK_JAL(((u32)hook + 0x60), &runFpsCounter_drawHook);
+	}
+
 	runFpsCounter_Logic();
 }
 
@@ -1415,8 +1466,13 @@ void patchCreateGameMenu(void)
  */
 void patchAlwaysShowHealth(void)
 {
+	static u32 healthbar_timer = 0;
 	Player *player = (Player *)PLAYER_STRUCT;
-	u32 healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);
+	if (!healthbar_timer) {
+		healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);
+		return;
+	}
+
 	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
 	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
 		*(u32*)healthbar_timer = 0;
@@ -1450,7 +1506,10 @@ void patchMapAndScoreboardToggle(void)
 	GameSettings * gameSettings = gameGetSettings();
 	if (!gameSettings)
 		return;
-	
+
+	if (!config.mapScoreToggle_ScoreBtn && !config.mapScoreToggle_MapBtn)
+		return;
+
 	switch (config.mapScoreToggle_ScoreBtn) {
 		case 0: ScoreboardToggle = -1; break;
 		case 1: ScoreboardToggle = PAD_SELECT; break;
@@ -1464,20 +1523,41 @@ void patchMapAndScoreboardToggle(void)
 		case 3: MapToggle = PAD_R3; break;
 	}
 
-	// Disable Select Button for Toggling original Map/Scoreboard
-	if (MapToggle != -1 && ScoreboardToggle != -1)
-		POKE_U32(GetAddress(&vaMapScore_SelectBtn_Addr), 0);
-	else
-		POKE_U32(GetAddress(&vaMapScore_SelectBtn_Addr), GetAddress(&vaMapScore_SelectBtn_Val));
+	// Define all needed static values first.  this way it only needs to search for them once.
+	static u32 SelectBtnAddr = 0;
+	static u32 SelectBtnVal = 0;
+	static u32 ScoreAlwaysRun = 0;
+	static u32 MapAlwaysRun = 0;
+	static u32 ScoreToggleFunction = 0;
+	static u32 MapToggleFunction = 0;
+	static int patched = 0;
+	if (!MapToggleFunction && !patched) {
+		SelectBtnAddr = GetAddress(&vaMapScore_SelectBtn_Addr);
+		SelectBtnVal = GetAddress(&vaMapScore_SelectBtn_Val);
+		ScoreAlwaysRun = GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun);
+		MapAlwaysRun = GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun);
+		ScoreToggleFunction = GetAddress(&vaMapScore_ScoreboardToggle);
+		MapToggleFunction = GetAddress(&vaMapScore_MapToggle);
+		patched = 1;
+	}
 
+	if (!patched)
+		return;
+
+	// Disable Select Button for Toggling original Map/Scoreboard
+	if (MapToggle != -1 && ScoreboardToggle != -1) {
+		POKE_U32(SelectBtnAddr, 0);
+	} else {
+		POKE_U32(SelectBtnAddr,SelectBtnVal);
+	}
 	// If Scoreboard Button Toggle isn't set to "Default"
 	if (ScoreboardToggle != -1) {
 		// Run Scoreboard Main Logic
-		((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun))(0, 10);
+		((void (*)(int, int))ScoreAlwaysRun)(0, 10);
 	
 		// if Scoreboard's chosen button is pressed
 		if (padGetButtonDown(0, ScoreboardToggle) > 0) {
-			((void (*)(int, int))GetAddress(&vaMapScore_ScoreboardToggle))(0, ShowScoreboard);
+			((void (*)(int, int))ScoreToggleFunction)(0, ShowScoreboard);
 			ShowScoreboard = !ShowScoreboard;
 		}
 	}
@@ -1488,11 +1568,11 @@ void patchMapAndScoreboardToggle(void)
 		if (MapToggle != -1) {
 			// Run Map Main Logic only if gametype is deathmatch.
 			if (gameSettings->GameType == GAMERULE_DM)
-				((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun))(0, 10);
+				((void (*)(int, int))MapAlwaysRun)(0, 10);
 
 			// if Maps chosen button is pressed
 			if (padGetButtonDown(0, MapToggle) > 0) {
-				((void (*)(int, int))GetAddress(&vaMapScore_MapToggle))(0, ShowMap);
+				((void (*)(int, int))MapToggleFunction)(0, ShowMap);
 				ShowMap = !ShowMap;
 			}
 		}
@@ -1973,6 +2053,10 @@ void runCampaignMusic(void)
 		}
 		DPRINTF("\nTracks: %d", AddedTracks);
 		FinishedConvertingTracks = 1;
+
+		#if BENCHMARK
+		benchmark_timePrint("runCampaignMusic");
+		#endif
 	}
 	
 	int DefaultMultiplayerTracks = 0x0d; // This number will never change
@@ -2066,6 +2150,10 @@ void patchAimAssist(void)
 	p->fps.Vars.CameraY.target_slowness_factor = 0;
 	p->fps.Vars.CameraY.strafe_turn_factor = 0;
 	p->fps.Vars.CameraY.strafe_tilt_factor = 0;
+
+	#if BENCHMARK
+	benchmark_timePrint("patchAimAssist");
+	#endif
 }
 
 /*
