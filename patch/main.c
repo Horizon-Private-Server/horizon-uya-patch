@@ -401,34 +401,33 @@ void runCameraSpeedPatch(void)
 		
 		// if not on correct pause screen
 		u32 img = gfxGetPreLoadedImageBufferSource(0);
-		if (!img && *(int*)(img + 0xc) != 5)
-			return;
+		if (img && *(int*)(img + 0xc) == 5) {
+			// replace drawing function denominator to scale input down to 0 to our MAX
+			static u32 drawCameraSpeedInputIGFunc = 0;
+			if (!drawCameraSpeedInputIGFunc)
+				drawCameraSpeedInputIGFunc = GetAddress(&vaDrawCameraSpeedInputIGFunc);
+			
+			if (drawCameraSpeedInputIGFunc) {
+				asm __volatile(
+						"mtc1 %0, $f12\n"
+						"cvt.s.w $f12, $f12\n"
+						"mfc1 $t0, $f12\n"
+						"srl $t0, $t0, 16\n"
+						"sh $t0, 0(%1)"
+						: : "r" (MAX_CAMERA_SPEED), "r" (drawCameraSpeedInputIGFunc)
+				);
+			}
 
-		// replace drawing function denominator to scale input down to 0 to our MAX
-		static u32 drawCameraSpeedInputIGFunc = 0;
-		if (!drawCameraSpeedInputIGFunc)
-			drawCameraSpeedInputIGFunc = GetAddress(&vaDrawCameraSpeedInputIGFunc);
-		
-		if (drawCameraSpeedInputIGFunc) {
-			asm __volatile(
-					"mtc1 %0, $f12\n"
-					"cvt.s.w $f12, $f12\n"
-					"mfc1 $t0, $f12\n"
-					"srl $t0, $t0, 16\n"
-					"sh $t0, 0(%1)"
-					: : "r" (MAX_CAMERA_SPEED), "r" (drawCameraSpeedInputIGFunc)
-			);
+			// Draw peercentage
+			char buf[12];
+			#ifdef UYA_PAL
+				int PLAYER_ROTATION = 0x001a5894;
+			#else
+				int PLAYER_ROTATION = 0x001a5a14;
+			#endif
+			sprintf(buf, "%d%%", *(int*)PLAYER_ROTATION);
+			gfxScreenSpaceText(273, 0.504 * SCREEN_WIDTH, 1, 1, 0x8069cbf2, buf, -1, 2);
 		}
-
-		// Draw peercentage
-		char buf[12];
-		#ifdef UYA_PAL
-			int PLAYER_ROTATION = 0x001a5894;
-		#else
-			int PLAYER_ROTATION = 0x001a5a14;
-		#endif
-		sprintf(buf, "%d%%", *(int*)PLAYER_ROTATION);
-		gfxScreenSpaceText(273, 0.504 * SCREEN_WIDTH, 1, 1, 0x8069cbf2, buf, -1, 2);
 	}
 }
 
@@ -2507,7 +2506,7 @@ void setupPatchConfigInGame(void)
     static u32 Addr = 0;
 	static int patched = 0;
 	if (!Addr)
-		GetAddress(&vaPauseMenuAddr);
+		Addr = GetAddress(&vaPauseMenuAddr);
 
 	// u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
 	// Original If: *(u32*)(Addr + 0x8) != ConfigEnableFunc
