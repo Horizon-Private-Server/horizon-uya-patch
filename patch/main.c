@@ -385,20 +385,30 @@ void runCameraSpeedPatch(void)
 			}
 		}
 
-	}
-	else if (isInGame())
-	{
-		// overwrite in game camera speed control max
-
+	} else if (isInGame()) {
 		// replaces limiter function so that input can go past default 100
-		u32 updateCameraSpeedIGFunc = GetAddress(&vaUpdateCameraSpeedIGFunc);
-		if (updateCameraSpeedIGFunc) {
+		static u32 updateCameraSpeedIGFunc = 0;
+		if (!updateCameraSpeedIGFunc) {
+			updateCameraSpeedIGFunc = GetAddress(&vaUpdateCameraSpeedIGFunc);
 			*(u16*)(updateCameraSpeedIGFunc + 0x130) = MAX_CAMERA_SPEED;
 			*(u16*)(updateCameraSpeedIGFunc + 0x154) = MAX_CAMERA_SPEED+1;
 		}
 
+		// if start menu isn't open
+		int p = playerGetFromSlot(0)->PauseOn;
+		if (!p)
+			return;
+		
+		// if not on correct pause screen
+		u32 img = gfxGetPreLoadedImageBufferSource(0);
+		if (!img && *(int*)(img + 0xc) != 5)
+			return;
+
 		// replace drawing function denominator to scale input down to 0 to our MAX
-		u32 drawCameraSpeedInputIGFunc = GetAddress(&vaDrawCameraSpeedInputIGFunc);
+		static u32 drawCameraSpeedInputIGFunc = 0;
+		if (!drawCameraSpeedInputIGFunc)
+			drawCameraSpeedInputIGFunc = GetAddress(&vaDrawCameraSpeedInputIGFunc);
+		
 		if (drawCameraSpeedInputIGFunc) {
 			asm __volatile(
 					"mtc1 %0, $f12\n"
@@ -409,19 +419,16 @@ void runCameraSpeedPatch(void)
 					: : "r" (MAX_CAMERA_SPEED), "r" (drawCameraSpeedInputIGFunc)
 			);
 		}
-		// draw percentage if in start menu
-		u32 img = gfxGetPreLoadedImageBufferSource(0);
-		int p = playerGetFromSlot(0)->PauseOn;
-		if (p && *(int*)(img + 0xc) == 5) {
-			char buf[12];
-			#ifdef UYA_PAL
-				int PLAYER_ROTATION = 0x001a5894;
-			#else
-				int PLAYER_ROTATION = 0x001a5a14;
-			#endif
-			sprintf(buf, "%d%%", *(int*)PLAYER_ROTATION);
-			gfxScreenSpaceText(273, 0.504 * SCREEN_WIDTH, 1, 1, 0x8069cbf2, buf, -1, 2);
-		}
+
+		// Draw peercentage
+		char buf[12];
+		#ifdef UYA_PAL
+			int PLAYER_ROTATION = 0x001a5894;
+		#else
+			int PLAYER_ROTATION = 0x001a5a14;
+		#endif
+		sprintf(buf, "%d%%", *(int*)PLAYER_ROTATION);
+		gfxScreenSpaceText(273, 0.504 * SCREEN_WIDTH, 1, 1, 0x8069cbf2, buf, -1, 2);
 	}
 }
 
@@ -445,8 +452,12 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
 	if (target->pNetPlayer->pNetPlayerData->hitPoints <= 0)
 		return 0;
 
+	static u32 whoHitMe = 0;
+	if (!whoHitMe)
+		whoHitMe = GetAddress(&vaWhoHitMeFunc);
+
 	// pass through
-	return ((int (*)(Player *, Moby *, u64))GetAddress(&vaWhoHitMeFunc))(target, damageSource, a2);
+	return ((int (*)(Player *, Moby *, u64))whoHitMe)(target, damageSource, a2);
 }
 /*
  * NAME :		patchKillStealing
@@ -464,10 +475,18 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
  */
 void patchKillStealing(void)
 {
-	int the_hook = GetAddress(&vaWhoHitMeHook);
-	int the_patch = 0x0C000000 | ((u32)&patchKillStealing_Hook >> 2);
-	if (*(u32*)the_hook != the_patch)
-		*(u32*)the_hook = the_patch;
+	static int patched = 0;
+	if (patched)
+		return;
+
+	static u32 the_hook = 0;
+	if (!the_hook)
+		the_hook = GetAddress(&vaWhoHitMeHook);
+
+	if (the_hook) {
+		HOOK_JAL(the_hook, &patchKillStealing_Hook);
+		patched = 1;
+	}
 }
 
 /*
@@ -603,8 +622,8 @@ void patchSniperWallSniping(void)
 	POKE_U32(hookAddr + 0x04, 0x0260302D);
 	HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
 
-  // change sniper shot initialization code to write the guber event to the shot's pvars
-  // for use later by patchSniperWallSniping_Hook
+	// change sniper shot initialization code to write the guber event to the shot's pvars
+	// for use later by patchSniperWallSniping_Hook
 	hookAddr = GetAddress(&vaSniperShotCreatedHook);
 	POKE_U32(hookAddr, 0xAE35005C);
 
@@ -614,10 +633,12 @@ void patchSniperWallSniping(void)
 void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 {
 	// call base
-	u32 getShotDirectionFunction = GetAddress(&vaGetSniperShotDirectionFunc);
-	if (getShotDirectionFunction) {
+	static u32 getShotDirectionFunction = 0;
+	if (!getShotDirectionFunction)
+		getShotDirectionFunction = GetAddress(&vaGetSniperShotDirectionFunc);
+	
+	if (getShotDirectionFunction)
 		((void (*)(float, VECTOR, VECTOR))getShotDirectionFunction)(f12 * 0.01666666666, out, in);
-	}
 
 #if UYA_PAL
 	Moby** collHitMoby = (Moby**)0x0025b898;
@@ -725,17 +746,16 @@ void patchWeaponShotLag(void)
  */
 void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short GadgetId, int t0, int StackPointer)
 {
-	int GEF = GetAddress(&vaGadgetEventFunc);
+	static u32 GEF = 0;
+	if (!GEF)
+		GEF = GetAddress(&vaGadgetEventFunc);
+
 	Player * player = (Player*)((u32)message - 0x1a40);
 	struct tNW_GadgetEventMessage * msg = (struct tNW_GadgetEventMessage*)message;
 	// GadgetEventType 7 = Niked, or splash damage.
-	if (msg && GadgetEventType == 7)
-	{
-		if(GadgetId == 3)
-		{
-			GadgetEventType = 8;
-		}
-	}
+	if (msg && GadgetEventType == 7 && GadgetId == 3)
+		GadgetEventType = 8;
+
 	// GadgetEventType 8 = Hit Something
 	// else if (msg && msg->GadgetEventType == 8)
 	// {
@@ -795,11 +815,27 @@ void patchGadgetEvents(void)
  */
 void patchLevelOfDetail(void)
 {
-	if (*(u32*)GetAddress(&vaLevelOfDetail_Hook) == 0x02C3B020) {
-		HOOK_J(GetAddress(&vaLevelOfDetail_Hook), &_correctTieLod);
-		// patch jump instruction in correctTieLod to jump back to needed address.
-		u32 val = ((u32)GetAddress(&vaLevelOfDetail_Hook) + 0x8);
-		*(u32*)(&_correctTieLod_Jump) = 0x08000000 | (val / 4);
+	static int patched = 0;
+	static u32 hook = 0;
+	static u32 LOD_Shrubs = 0;
+	static u32 LOD_Ties = 0;
+	static u32 LOD_Terrain = 0;
+	if (!patched) {
+		if (!hook) {
+			hook = GetAddress(&vaLevelOfDetail_Hook);
+			LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
+			LOD_Ties = GetAddress(&vaLevelOfDetail_Ties);
+			LOD_Terrain = GetAddress(&vaLevelOfDetail_Terrain);
+		}
+
+		if (*(u32*)hook == 0x02C3B020) {
+			HOOK_J(hook, &_correctTieLod);
+			// patch jump instruction in correctTieLod to jump back to needed address.
+			u32 val = ((u32)hook + 0x8);
+			*(u32*)(&_correctTieLod_Jump) = 0x08000000 | (val / 4);
+		}
+
+		patched = 1;
 	}
 
 	int lod = config.levelOfDetail;
@@ -811,9 +847,9 @@ void patchLevelOfDetail(void)
 			int TerrainTiesDistance = 320;
 			int ShrubDistance = 500;
 			if (lodChanged) {
-				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+				*(float*)LOD_Shrubs = ShrubDistance;
+				*(u32*)LOD_Ties = TerrainTiesDistance;
+				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
 			}
 			break;
 		}
@@ -823,9 +859,9 @@ void patchLevelOfDetail(void)
 			int TerrainTiesDistance = 480;
 			int ShrubDistance = 250;
 			if (lodChanged) {
-				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+				*(float*)LOD_Shrubs = ShrubDistance;
+				*(u32*)LOD_Ties = TerrainTiesDistance;
+				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
 			}
 			break;
 		}
@@ -835,9 +871,9 @@ void patchLevelOfDetail(void)
 			int TerrainTiesDistance = 960;
 			int ShrubDistance = 500;
 			if (lodChanged) {
-				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+				*(float*)LOD_Shrubs = ShrubDistance;
+				*(u32*)LOD_Ties = TerrainTiesDistance;
+				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
 			}
 
 			break;
@@ -848,9 +884,9 @@ void patchLevelOfDetail(void)
 			int TerrainTiesDistance = 4800;
 			int ShrubDistance = 2500;
 			if (lodChanged) {
-				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+				*(float*)LOD_Shrubs = ShrubDistance;
+				*(u32*)LOD_Ties = TerrainTiesDistance;
+				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
 			}
 			break;
 		}
@@ -1545,9 +1581,9 @@ void patchMapAndScoreboardToggle(void)
 		return;
 
 	// Disable Select Button for Toggling original Map/Scoreboard
-	if (MapToggle != -1 && ScoreboardToggle != -1) {
+	if (MapToggle != -1 && ScoreboardToggle != -1 && *(u32*)SelectBtnAddr != 0) {
 		POKE_U32(SelectBtnAddr, 0);
-	} else {
+	} else if (*(u32*)SelectBtnAddr != SelectBtnVal) {
 		POKE_U32(SelectBtnAddr,SelectBtnVal);
 	}
 	// If Scoreboard Button Toggle isn't set to "Default"
@@ -1860,19 +1896,26 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
  */
 void patchCTFFlag(void)
 {
+	if (!isInGame())
+		return;
+
 	VECTOR t;
 	int i = 0;
 	Player** players = playerGetAll();
 
-	if (!isInGame())
-		return;
 
-	netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
-
-	u32 FlagFunc = GetAddress(&vaFlagUpdate_Func);
-	if (FlagFunc){
-		*(u32*)FlagFunc = 0x03e00008;
-		*(u32*)(FlagFunc + 0x4) = 0x0000102D;
+	static u32 flagFunc = 0;
+	static int patched = 0;
+	if (!patched) {
+		netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
+		if (!flagFunc)
+			flagFunc = GetAddress(&vaFlagUpdate_Func);
+		
+		if (flagFunc) {
+			*(u32*)flagFunc = 0x03e00008;
+			*(u32*)(flagFunc + 0x4) = 0x0000102D;
+		}
+		patched = 1;
 	}
 
 	GuberMoby* gm = guberMobyGetFirst();
@@ -1917,15 +1960,24 @@ int quickSelectTimer(int a0)
 
 		return QuickSelectTimeCurrent == config.quickSelectTimeDelay;
 	}
+	static u32 quickSelectFunc = 0;
+	if (!quickSelectFunc)
+		quickSelectFunc = GetAddress(&vaQuickSelectCheck_Func);
+
 	// return if quickSelectTimeDelay is off. 
-	return ((int (*)(int))GetAddress(&vaQuickSelectCheck_Func))(a0);
+	return ((int (*)(int))quickSelectFunc)(a0);
 }
 void patchQuickSelectTimer(void)
 {
-	if (!GetAddress(&vaQuickSelectCheck_Hook))
-		return;
+	static u32 hook = 0;
+	static int patched = 0;
+	if (!patched) {
+		if (!hook)
+			hook = GetAddress(&vaQuickSelectCheck_Hook);
 
-	HOOK_JAL(GetAddress(&vaQuickSelectCheck_Hook), &quickSelectTimer);
+		HOOK_JAL(hook, &quickSelectTimer);
+		patched = 1;
+	}
 	if (config.quickSelectTimeDelay) {
 		Player* p = playerGetFromSlot(0);
 		if (playerPadGetButtonUp(p, PAD_TRIANGLE))
@@ -2141,19 +2193,17 @@ void runCampaignMusic(void)
  */
 void patchAimAssist(void)
 {
-	Player* p = playerGetFromSlot(0);
-	if (p->fps.Vars.CameraY.target_slowness_factor == 0)
+	static int patched = 0;
+	if (patched)
 		return;
-	
+
+	Player* p = playerGetFromSlot(0);
 	p->fps.Vars.CameraZ.target_slowness_factor_quick = 0;
 	p->fps.Vars.CameraZ.target_slowness_factor_aim = 0;
 	p->fps.Vars.CameraY.target_slowness_factor = 0;
 	p->fps.Vars.CameraY.strafe_turn_factor = 0;
 	p->fps.Vars.CameraY.strafe_tilt_factor = 0;
-
-	#if BENCHMARK
-	benchmark_timePrint("patchAimAssist");
-	#endif
+	patched = 1;
 }
 
 /*
@@ -2454,9 +2504,14 @@ void runCheckGameMapInstalled(void)
 void setupPatchConfigInGame(void)
 {
     // Get Menu address via current map.
-    u32 Addr = GetAddress(&vaPauseMenuAddr);
-	u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
-	if (*(u32*)(Addr + 0x8) != ConfigEnableFunc) {
+    static u32 Addr = 0;
+	static int patched = 0;
+	if (!Addr)
+		GetAddress(&vaPauseMenuAddr);
+
+	// u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
+	// Original If: *(u32*)(Addr + 0x8) != ConfigEnableFunc
+	if (!patched) {
 		// Insert needed ID, returns string.
 		int str = uiMsgString(0x1115); // Washington, D.C. string ID
 		// Replace "Washington, D.C." string with ours.
@@ -2467,6 +2522,7 @@ void setupPatchConfigInGame(void)
 		u32 ReturnFunction = *(u32*)(Addr + 0x8);
 		// Hook Patch Config into end of "CONTINUE" function.
 		HOOK_J((ReturnFunction + 0x54), &configMenuEnable);
+		patched = 1;
 	}
 }
 
