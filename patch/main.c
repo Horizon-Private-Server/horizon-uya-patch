@@ -2502,15 +2502,16 @@ void runCheckGameMapInstalled(void)
  */
 void setupPatchConfigInGame(void)
 {
-    // Get Menu address via current map.
-    static u32 Addr = 0;
 	static int patched = 0;
-	if (!Addr)
-		Addr = GetAddress(&vaPauseMenuAddr);
 
 	// u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
 	// Original If: *(u32*)(Addr + 0x8) != ConfigEnableFunc
 	if (!patched) {
+		// Get Menu address via current map.
+   		static u32 Addr = 0;
+		if (!Addr)
+			Addr = GetAddress(&vaPauseMenuAddr);
+
 		// Insert needed ID, returns string.
 		int str = uiMsgString(0x1115); // Washington, D.C. string ID
 		// Replace "Washington, D.C." string with ours.
