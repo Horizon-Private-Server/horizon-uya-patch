@@ -327,12 +327,16 @@ char * checkMap(void)
 }
 void runExceptionHandler(void)
 {
+	static int patched = 0;
 	// invoke exception display installer
 	if (*(u32*)EXCEPTION_DISPLAY_ADDR != 0) {
 		if (!hasInstalledExceptionHandler) {
 			((void (*)(void))EXCEPTION_DISPLAY_ADDR)();
 			hasInstalledExceptionHandler = 1;
 		}
+
+		if (patched)
+			return;
 		
 		// change "a fatal error as occured." to region and map.
 		char * mapStr = checkMap();
@@ -347,6 +351,7 @@ void runExceptionHandler(void)
 			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F4) = 0x0183;
 			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F8) = 0x2278;
 		}
+		patched = 1;
 	}
 }
 
