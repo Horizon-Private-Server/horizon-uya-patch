@@ -88,11 +88,24 @@ void vampireHeal(Player * player, int weaponid)
 		}
 	}
 	// run update weapon kill
-	((void (*)(int, int))GetAddress(&vaUpdateWeaponKill))(player, weaponid);
+	static u32 updateWeaponKill = 0;
+	if (!updateWeaponKill)
+		updateWeaponKill = GetAddress(&vaUpdateWeaponKill);
+		
+	((void (*)(int, int))updateWeaponKill)(player, weaponid);
 }
 void vampireLogic()
 {
-	HOOK_JAL((u32)GetAddress(&vaUpdateScoreboard) + 0x88, &vampireHeal);
+	static int patched = 0;
+	static u32 updateScoreboard = 0;
+	if (patched)
+		return;
+
+	if (!updateScoreboard)
+		updateScoreboard = GetAddress(&vaUpdateScoreboard);
+
+	HOOK_JAL(updateScoreboard + 0x88, &vampireHeal);
+	patched = 1;
 }
 
 u32 onGameplayLoad(void* a0, long a1)

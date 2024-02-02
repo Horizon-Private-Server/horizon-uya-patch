@@ -2104,10 +2104,6 @@ void runCampaignMusic(void)
 		}
 		DPRINTF("\nTracks: %d", AddedTracks);
 		FinishedConvertingTracks = 1;
-
-		#if BENCHMARK
-		benchmark_timePrint("runCampaignMusic");
-		#endif
 	}
 	
 	int DefaultMultiplayerTracks = 0x0d; // This number will never change
