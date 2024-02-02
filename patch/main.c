@@ -292,7 +292,8 @@ void onServerTimeResponse(void* connection, void* data)
 	memcpy(&response, data, sizeof(DateResponse_t));
 	DPRINTF("\nDate: %d/%d", response.Month, response.Day);
 	patchPointers.ServerTimeMonth = response.Month;
-	patchPointers.ServerTimeDay = response.Day;
+	// not adding 1 to the date broke things on January 31st.
+	patchPointers.ServerTimeDay = response.Day + 1;
 }
 
 //------------------------------------------------------------------------------
@@ -326,15 +327,20 @@ char * checkMap(void)
 }
 void runExceptionHandler(void)
 {
+	static char * oldMap = "";
 	// invoke exception display installer
 	if (*(u32*)EXCEPTION_DISPLAY_ADDR != 0) {
 		if (!hasInstalledExceptionHandler) {
 			((void (*)(void))EXCEPTION_DISPLAY_ADDR)();
 			hasInstalledExceptionHandler = 1;
 		}
+
+		char * newMapStr = checkMap();
+		if (cmpstr(newMapStr, mapStr))
+			return;
 		
+		mapStr = newMapStr;
 		// change "a fatal error as occured." to region and map.
-		char * mapStr = checkMap();
 		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x794), regionStr, 6);
 		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x79a), mapStr, 20);
 		
@@ -2503,10 +2509,12 @@ void setupPatchConfigInGame(void)
 	// u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
 	// Original If: *(u32*)(Addr + 0x8) != ConfigEnableFunc
 	if (!patched) {
+		static u32 Addr = 0;
 		// Get Menu address via current map.
-   		static u32 Addr = 0;
-		if (!Addr)
+		if (!Addr) {
 			Addr = GetAddress(&vaPauseMenuAddr);
+			return;
+		}
 
 		// Insert needed ID, returns string.
 		int str = uiMsgString(0x1115); // Washington, D.C. string ID
