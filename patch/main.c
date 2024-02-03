@@ -327,7 +327,7 @@ char * checkMap(void)
 }
 void runExceptionHandler(void)
 {
-	static char * oldMap = "";
+	static char * mapStr = "";
 	// invoke exception display installer
 	if (*(u32*)EXCEPTION_DISPLAY_ADDR != 0) {
 		if (!hasInstalledExceptionHandler) {
@@ -336,7 +336,7 @@ void runExceptionHandler(void)
 		}
 
 		char * newMapStr = checkMap();
-		if (cmpstr(newMapStr, mapStr))
+		if (strcmp(newMapStr, mapStr))
 			return;
 		
 		mapStr = newMapStr;

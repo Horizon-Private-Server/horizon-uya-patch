@@ -57,10 +57,15 @@ extern VariableAddress_t vaGiveWeaponFunc;
  */
 void disableWeaponPacks(void)
 {
+	const int patched = 0;
+	if (patched)
+		return;
+
 	u32 weaponPackSpawnFunc = GetAddress(&vaWeaponPackSpawnFunc);
 	if (weaponPackSpawnFunc) {
 		*(u32*)weaponPackSpawnFunc = 0;
 		*(u32*)(weaponPackSpawnFunc - 0x7BF4) = 0;
+		patched = 1;
 	}
 }
 
@@ -81,8 +86,14 @@ void disableWeaponPacks(void)
 int SpawnedPack = 0;
 void SpawnPack(int a0, int a1, int a2)
 {
+	static u32 respawnTimerFunc = 0;
+	static u32 SpawnWeaponPackFunc = 0;
+	if (!respawnTimerFunc) {
+		respawnTimerFunc = GetAddress(&vaRespawnTimerFunc);
+		SpawnWeaponPackFunc = GetAddress(&vaSpawnWeaponPackFunc);
+	}
     // Run Original Respawn Timer Hook
-	((void (*)(int, int, int))GetAddress(&vaRespawnTimerFunc))(a0, a1, a2);
+	((void (*)(int, int, int))respawnTimerFunc)(a0, a1, a2);
 	
 	// if pack already spawned, don't spawn more.
 	if (SpawnedPack == 1)
@@ -90,36 +101,42 @@ void SpawnPack(int a0, int a1, int a2)
 	// set player to register v1's value.
 	register int player asm("s3");
 	// Spawn Pack
-	((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(player);
+	((void (*)(u32))SpawnWeaponPackFunc)(player);
 	// It now spawned pack, so set to true.
 	SpawnedPack = 1;
 }
 
 void spawnWeaponPackOnDeath(void)
 {
-    // Disable normal Weapon Pack spawns
-    disableWeaponPacks();
-
-    // Hook CTF/Siege SpawnPack
-    if (*(u32*)GetAddress(&vaRespawnTimerHook) != (0x0C000000 | ((u32)(&SpawnPack) >> 2)))
-        HOOK_JAL(GetAddress(&vaRespawnTimerHook), &SpawnPack);
-    
-    // Hook DM SpawnPack
-    if (*(u32*)((u32)GetAddress(&vaRespawnTimerHook) + 0x2100) != (0x0C000000 | ((u32)(&SpawnPack) >> 2)))
-        HOOK_JAL(((u32)GetAddress(&vaRespawnTimerHook) + 0x2100), &SpawnPack);
-
+	static int patched = 0;
     // if Health is greater than zero and pack has spawned
     // This will be checking constantly, instead of just when the player dies.
     Player ** players = playerGetAll();
 	int i;
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
     	if (!players[i])
-    		return;
+    		continue;
 
 		Player * player = players[i];
 		if (player->IsLocal && playerGetHealth(player) > 0)
             SpawnedPack = 0;
 	}
+
+	// if Patched don't run following.
+	if (patched)
+		return;
+
+    // Disable normal Weapon Pack spawns
+    disableWeaponPacks();
+	// get needed hook address
+	u32 RespawnTimerHook = GetAddress(&vaRespawnTimerHook);
+    // Hook CTF/Siege SpawnPack
+    HOOK_JAL(RespawnTimerHook, &SpawnPack);
+    // Hook DM SpawnPack
+    HOOK_JAL(((u32)RespawnTimerHook + 0x2100), &SpawnPack);
+
+	// finished patching
+	patched = 1;
 }
 
 /*
@@ -144,14 +161,18 @@ void v2_logic(void)
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		Player * player = players[i];
 		if (!player)
-			return;
+			continue;
 
-		for(j = 1; j < 10; ++j)
+		for (j = 1; j < 10; ++j)
 			playerGiveWeaponUpgrade(player, j);
 	}
 }
 void v2_Setting(int setting, int FirstPass)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	// Disable V2's
 	if (setting == 1) {
 		// Prevent Weapon Meter value from going up.
@@ -166,16 +187,19 @@ void v2_Setting(int setting, int FirstPass)
 			*(u32*)(addr + 0x27c) = 0; // addiu v0, v0, 0x1;
 			*(u32*)(addr + 0x288) = 0; // sb v0, 0x0(t1);
 			*(u32*)(addr + 0x298) = 0;
+			patched = 1;
 		}
 	}
 	// Always V2's
 	else {
-		// hook v2 logic ad end of give weapon function.
+		// hook v2 logic at end of give weapon function.
 		int GiveWeapon_JRRA = (u32)GetAddress(&vaGiveWeaponFunc) + 0x538;
 		if (*(u32*)GiveWeapon_JRRA == 0x03e00008)
 			HOOK_J(GiveWeapon_JRRA, &v2_logic);
 		if (FirstPass)
 			v2_logic();
+
+		patched = 1;
 	}
 }
 
@@ -204,6 +228,9 @@ void RespawnPlayer(int a0)
 }
 void AutoRespawn(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
 	//GameOptions * gameOptions = (GameOptions*)0x002417C8;
 	//gameOptions->GameFlags.MultiplayerGameFlags.Nodes
 	// Siege & CTF: Press X to Respawn
@@ -211,10 +238,8 @@ void AutoRespawn(void)
 
 	// DM: Press X To Respawn JAL
 	// Freezes in Siege and CTF due to needing to choose nodes, even if nodes are off.
-	int hook = GetAddress(&vaDM_PressXToRespawn);
-	int jal = (0x0C000000 | ((u32)(&RespawnPlayer) >> 2));
-	if (*(u32*)hook != jal)
-		*(u32*)hook = jal;
+	HOOK_JAL(GetAddress(&vaDM_PressXToRespawn), &RespawnPlayer);
+	patched = 1;
 
 }
 
@@ -290,10 +315,15 @@ int deleteSiegeNodeTurrets(void)
 }
 void deleteNodeTurretsUpdate(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	u32 UpdateFunc = GetAddress(&vaNodeTurret_UpdateFunc);
 	if (*(u32*)UpdateFunc == 0x27bdffe0) {
 		*(u32*)UpdateFunc = 0x03e0008;
 		*(u32*)((u32)UpdateFunc + 0x4) = 0;
+		patched = 1;
 	}
 }
 
@@ -340,11 +370,15 @@ void chargebootForever(void)
  */
 void disableCameraShake(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
 
 	int CameraShake = GetAddress(&vaCameraShakeFunc);
 	if (*(u32*)CameraShake == 0x24030460) {
 		*(u32*)CameraShake = 0x03e00008;
 		*(u32*)(CameraShake + 0x4) = 0;
+		patched = 1;
 	}
 }
 
@@ -364,6 +398,10 @@ void disableCameraShake(void)
  */
 void disableRespawning(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	// Disable Timer and respawn text.
     int RespawnUpdater = GetAddress(&vaDM_RespawnUpdater);
     if (*(u32*)RespawnUpdater != 0)
@@ -375,6 +413,7 @@ void disableRespawning(void)
 		*(u32*)RespawnFunc = 0x03e00008;
         *(u32*)(RespawnFunc + 0x4) = 0;
 	}
+	patched = 1;
 }
 
 /*
@@ -480,6 +519,10 @@ void survivor(void)
  */
 void setRespawnTimer_Player(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
     int RespawnAddr = GetAddress(&vaRespawnTimerFunc_Player);
 	if (gameConfig.grRespawnTimer_Player) {
 	    int Seconds;
@@ -501,11 +544,6 @@ void setRespawnTimer_Player(void)
 			*(u16*)(RespawnAddr + 0x78) = (Seconds + 1.5) * GAME_FPS;
 	}
 	if (gameConfig.grDisablePenaltyTimers) {
-		GameSettings * gs = gameGetSettings();
-		// if map is Command Center, Aquatos, Blackwater Docks, Marcadia or custom map, return.
-		if (gs->GameLevel >= 46)
-			return;
-
 		// Jump to end of function after respawn timer is set.
 		if (*(u32*)(RespawnAddr + 0x28) == 0x14440003)
 			*(u32*)(RespawnAddr + 0x28) = 0x1000001A;
@@ -515,6 +553,7 @@ void setRespawnTimer_Player(void)
 		// Anti-Air Turret Destroyed (RespawnTime + This)
 		// *(u16*)(RespawnAddr + 0x8c) = RespawnTime;
 	}
+	patched = 1;
 }
 
 /*
@@ -595,10 +634,14 @@ int keepBaseHealthPadActive(void)
  */
 void noPostHitInvinc(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
 	// PAL: 0x27, NTSC: 0x2f
 	int time = GetAddress(&vaPostHitInvinc);
 	*(u32*)(time) = 0x24020001;
 	*(u32*)(time + 0x308) = 0x24020001;
+	patched = 1;
 }
 
 /*
@@ -689,7 +732,10 @@ void playerSize(void)
 {
 	int i, j;
 	Player** players = playerGetAll();
-	float size, cameraHeight, tpHeight, moveSpeed = 1;
+	float size;
+	float cameraHeight;
+	float tpHeight;
+	float moveSpeed = 1;
 	
 	switch (gameConfig.prPlayerSize)
 	{
@@ -756,7 +802,10 @@ void playerSize(void)
  */
 void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay)
 {
-	float size, cameraHeight, tpHeight, moveSpeed = 1;
+	float size;
+	float cameraHeight;
+	float tpHeight;
+	float moveSpeed = 1;
 	switch (gameConfig.prPlayerSize)
 	{
 		case 1: size = 1.5; cameraHeight = 0.75; tpHeight = 3; moveSpeed = 1.5; break; // large
@@ -911,9 +960,12 @@ void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, i
  */
 void healthbars(void)
 {
-	u32 hook = GetAddress(&vaHealthbars_Hook);
-	if (hook)
-		HOOK_JAL(hook, &healthbars_Logic);
+	static int patched = 0;
+	if (patched)
+		return;
+
+	HOOK_JAL(GetAddress(&vaHealthbars_Hook), &healthbars_Logic);
+	patched = 1;
 }
 
 /*
@@ -931,6 +983,10 @@ void healthbars(void)
  */
 void radarBlips(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	u32 float_dist = GetAddress(&vaRadarBlips_FloatVal);
 	if (*(u32*)float_dist == 0x3c014499) {
 		switch (gameConfig.grRadarBlipsDistance) {
@@ -945,6 +1001,7 @@ void radarBlips(void)
 				break;	
 			}
 		}
+		patched = 1;
 	}
 }
 
@@ -1031,6 +1088,7 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
  */
 int runInvincibilityTimer(Player* player, int a1)
 {
+	static u32 PlayerInvincibleTimer_Func = 0;
 	int hurtPlayer = a1;
 	// if timer is greater than zero, player can't be hurt.
 	if (player->timers.unkTimer_346 > 0) {
@@ -1042,10 +1100,18 @@ int runInvincibilityTimer(Player* player, int a1)
 		player->timers.unkTimer_346 = 0x78;
 
 	// run base function with our a1
+	if (!PlayerInvincibleTimer_Func)
+		PlayerInvincibleTimer_Func = GetAddress(&vaPlayerInvincibleTimer_Func);
+	
 	DPRINTF("\nhurtPlayer: %d", hurtPlayer);
-	return ((int (*)(Player*, int))GetAddress(&vaPlayerInvincibleTimer_Func))(player, hurtPlayer);
+	return ((int (*)(Player*, int))PlayerInvincibleTimer_Func)(player, hurtPlayer);
 }
 void respawnInvincTimer(void)
 {
+	static int patched = 0;
+	if (patched)
+		return;
+
 	HOOK_JAL(GetAddress(&vaPlayerInvincibleTimer_Hook), &runInvincibilityTimer);
+	patched = 1;
 }
