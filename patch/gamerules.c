@@ -33,13 +33,9 @@
 #include "include/cheats.h"
 #include "interop/gamerules.h"
 
-// config
 extern PatchConfig_t config;
-
-// game config
 extern PatchGameConfig_t gameConfig;
-
-// lobby clients patch config
+extern PatchPatches_t patched;
 extern PatchConfig_t lobbyPlayerConfigs[GAME_MAX_PLAYERS];
 
 int Gameplay_Hook = 0;
@@ -96,16 +92,11 @@ void vampireHeal(Player * player, int weaponid)
 }
 void vampireLogic()
 {
-	static int patched = 0;
-	static u32 updateScoreboard = 0;
-	if (patched)
+	if (patched.gameConfig.grVampire)
 		return;
 
-	if (!updateScoreboard)
-		updateScoreboard = GetAddress(&vaUpdateScoreboard);
-
-	HOOK_JAL(updateScoreboard + 0x88, &vampireHeal);
-	patched = 1;
+	HOOK_JAL((u32)GetAddress(&vaUpdateScoreboard) + 0x88, &vampireHeal);
+	patched.gameConfig.grVampire = 1;
 }
 
 u32 onGameplayLoad(void* a0, long a1)
