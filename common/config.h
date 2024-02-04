@@ -69,6 +69,10 @@ typedef struct PatchPatches {
   char gadgetEvents;
   char resurrectWeaponOrdering;
   char ctfLogic;
+
+  // gameConfig misc.
+  char spawnWeaponPackOnDeath;
+  char disableRespawning;
 } PatchPatches_t;
 
 typedef struct PatchPointers {

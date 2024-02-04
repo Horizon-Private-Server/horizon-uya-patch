@@ -38,6 +38,7 @@ extern PlayerKills[GAME_MAX_PLAYERS];
 extern PlayerDeaths[GAME_MAX_PLAYERS];
 extern PlayerTeams[GAME_MAX_PLAYERS];
 extern PatchGameConfig_t gameConfig;
+extern PatchPatches_t patched;
 extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaGiveWeaponFunc;
 
@@ -57,15 +58,14 @@ extern VariableAddress_t vaGiveWeaponFunc;
  */
 void disableWeaponPacks(void)
 {
-	const int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grDisableWeaponPacks)
 		return;
 
 	u32 weaponPackSpawnFunc = GetAddress(&vaWeaponPackSpawnFunc);
 	if (weaponPackSpawnFunc) {
 		*(u32*)weaponPackSpawnFunc = 0;
 		*(u32*)(weaponPackSpawnFunc - 0x7BF4) = 0;
-		patched = 1;
+		patched.gameConfig.grDisableWeaponPacks = 1;
 	}
 }
 
@@ -108,7 +108,6 @@ void SpawnPack(int a0, int a1, int a2)
 
 void spawnWeaponPackOnDeath(void)
 {
-	static int patched = 0;
     // if Health is greater than zero and pack has spawned
     // This will be checking constantly, instead of just when the player dies.
     Player ** players = playerGetAll();
@@ -123,7 +122,7 @@ void spawnWeaponPackOnDeath(void)
 	}
 
 	// if Patched don't run following.
-	if (patched)
+	if (patched.spawnWeaponPackOnDeath)
 		return;
 
     // Disable normal Weapon Pack spawns
@@ -136,7 +135,7 @@ void spawnWeaponPackOnDeath(void)
     HOOK_JAL(((u32)RespawnTimerHook + 0x2100), &SpawnPack);
 
 	// finished patching
-	patched = 1;
+	patched.spawnWeaponPackOnDeath = 1;
 }
 
 /*
@@ -169,8 +168,7 @@ void v2_logic(void)
 }
 void v2_Setting(int setting, int FirstPass)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grV2s)
 		return;
 
 	// Disable V2's
@@ -187,7 +185,7 @@ void v2_Setting(int setting, int FirstPass)
 			*(u32*)(addr + 0x27c) = 0; // addiu v0, v0, 0x1;
 			*(u32*)(addr + 0x288) = 0; // sb v0, 0x0(t1);
 			*(u32*)(addr + 0x298) = 0;
-			patched = 1;
+			patched.gameConfig.grV2s = 1;
 		}
 	}
 	// Always V2's
@@ -199,7 +197,7 @@ void v2_Setting(int setting, int FirstPass)
 		if (FirstPass)
 			v2_logic();
 
-		patched = 1;
+		patched.gameConfig.grV2s = 1;
 	}
 }
 
@@ -228,8 +226,7 @@ void RespawnPlayer(int a0)
 }
 void AutoRespawn(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grAutoRespawn)
 		return;
 	//GameOptions * gameOptions = (GameOptions*)0x002417C8;
 	//gameOptions->GameFlags.MultiplayerGameFlags.Nodes
@@ -239,7 +236,7 @@ void AutoRespawn(void)
 	// DM: Press X To Respawn JAL
 	// Freezes in Siege and CTF due to needing to choose nodes, even if nodes are off.
 	HOOK_JAL(GetAddress(&vaDM_PressXToRespawn), &RespawnPlayer);
-	patched = 1;
+	patched.gameConfig.grAutoRespawn = 1;
 
 }
 
@@ -315,15 +312,14 @@ int deleteSiegeNodeTurrets(void)
 }
 void deleteNodeTurretsUpdate(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grNoBaseDefense_SmallTurrets)
 		return;
 
 	u32 UpdateFunc = GetAddress(&vaNodeTurret_UpdateFunc);
 	if (*(u32*)UpdateFunc == 0x27bdffe0) {
 		*(u32*)UpdateFunc = 0x03e0008;
 		*(u32*)((u32)UpdateFunc + 0x4) = 0;
-		patched = 1;
+		patched.gameConfig.grNoBaseDefense_SmallTurrets = 1;
 	}
 }
 
@@ -370,15 +366,14 @@ void chargebootForever(void)
  */
 void disableCameraShake(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.config.disableCameraShake)
 		return;
 
 	int CameraShake = GetAddress(&vaCameraShakeFunc);
 	if (*(u32*)CameraShake == 0x24030460) {
 		*(u32*)CameraShake = 0x03e00008;
 		*(u32*)(CameraShake + 0x4) = 0;
-		patched = 1;
+		patched.config.disableCameraShake = 1;
 	}
 }
 
@@ -398,8 +393,7 @@ void disableCameraShake(void)
  */
 void disableRespawning(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.disableRespawning)
 		return;
 
 	// Disable Timer and respawn text.
@@ -413,7 +407,7 @@ void disableRespawning(void)
 		*(u32*)RespawnFunc = 0x03e00008;
         *(u32*)(RespawnFunc + 0x4) = 0;
 	}
-	patched = 1;
+	patched.disableRespawning = 1;
 }
 
 /*
@@ -433,7 +427,9 @@ void disableRespawning(void)
  */
 void survivor(void)
 {
-	disableRespawning();
+	// patched.disableRespawning becomes true in disableRespawning function.
+	if (!patched.disableRespawning)
+		disableRespawning();
 
     static int DeadPlayers = 0;
 	static int TeamCount = 0;
@@ -519,8 +515,7 @@ void survivor(void)
  */
 void setRespawnTimer_Player(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grRespawnTimer_Player)
 		return;
 
     int RespawnAddr = GetAddress(&vaRespawnTimerFunc_Player);
@@ -553,7 +548,7 @@ void setRespawnTimer_Player(void)
 		// Anti-Air Turret Destroyed (RespawnTime + This)
 		// *(u16*)(RespawnAddr + 0x8c) = RespawnTime;
 	}
-	patched = 1;
+	patched.gameConfig.grRespawnTimer_Player = 1;
 }
 
 /*
@@ -634,14 +629,13 @@ int keepBaseHealthPadActive(void)
  */
 void noPostHitInvinc(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grNoCooldown)
 		return;
 	// PAL: 0x27, NTSC: 0x2f
 	int time = GetAddress(&vaPostHitInvinc);
 	*(u32*)(time) = 0x24020001;
 	*(u32*)(time + 0x308) = 0x24020001;
-	patched = 1;
+	patched.gameConfig.grNoCooldown = 1;
 }
 
 /*
@@ -960,12 +954,11 @@ void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, i
  */
 void healthbars(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grHealthBars)
 		return;
 
 	HOOK_JAL(GetAddress(&vaHealthbars_Hook), &healthbars_Logic);
-	patched = 1;
+	patched.gameConfig.grHealthBars = 1;
 }
 
 /*
@@ -983,8 +976,7 @@ void healthbars(void)
  */
 void radarBlips(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grRadarBlipsDistance)
 		return;
 
 	u32 float_dist = GetAddress(&vaRadarBlips_FloatVal);
@@ -1001,7 +993,7 @@ void radarBlips(void)
 				break;	
 			}
 		}
-		patched = 1;
+		patched.gameConfig.grRadarBlipsDistance = 1;
 	}
 }
 
@@ -1108,10 +1100,9 @@ int runInvincibilityTimer(Player* player, int a1)
 }
 void respawnInvincTimer(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grRespawnInvincibility)
 		return;
 
 	HOOK_JAL(GetAddress(&vaPlayerInvincibleTimer_Hook), &runInvincibilityTimer);
-	patched = 1;
+	patched.gameConfig.grRespawnInvincibility = 1;
 }
