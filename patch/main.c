@@ -129,6 +129,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 
 PatchGameConfig_t gameConfig;
 PatchGameConfig_t gameConfigHostBackup;
+PatchPatches_t patched;
 VoteToEndState_t voteToEndState;
 PatchStateContainer_t patchStateContainer;
 
@@ -480,22 +481,15 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
  */
 void patchKillStealing(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.killStealing)
 		return;
 
-	static u32 the_hook = 0;
-	if (!the_hook)
-		the_hook = GetAddress(&vaWhoHitMeHook);
-
-	if (the_hook) {
-		HOOK_JAL(the_hook, &patchKillStealing_Hook);
-		patched = 1;
-	}
+	HOOK_JAL(GetAddress(&vaWhoHitMeHook), &patchKillStealing_Hook);
+	patched.killStealing = 1;
 }
 
 /*
- * NAME :		patchDeathJumping
+ * NAME :		patchDeadJumping
  * 
  * DESCRIPTION :
  * 			Patches Dead Jumping by setting the can't move timer.
@@ -552,8 +546,12 @@ int patchDeadShooting_Hook(int pad)
 	if (p->pNetPlayer->pNetPlayerData->hitPoints <= 0)
 		return 0;
 
+	static u32 patchDeadShooting_ShootingFunc = 0;
+	if (!patchDeadShooting_ShootingFunc)
+		patchDeadShooting_ShootingFunc = GetAddress(&vaPatchDeadShooting_ShootingFunc);
+
 	// If not dead, run normal function.
-	return ((int (*)(int))GetAddress(&vaPatchDeadShooting_ShootingFunc))(pad);
+	return ((int (*)(int))patchDeadShooting_ShootingFunc)(pad);
 }
 
 /*
@@ -572,11 +570,11 @@ int patchDeadShooting_Hook(int pad)
  */
 void patchDeadShooting(void)
 {
-	static int patched = 0;
-	if (patched) return;
+	if (patched.deadShooting)
+		return;
 
 	HOOK_JAL(GetAddress(&vaPatchDeadShooting_ShootingHook), &patchDeadShooting_Hook);
-	patched = 1;
+	patched.deadShooting = 1;
 }
 
 int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* moby, u64 t0)
@@ -618,8 +616,7 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
  */
 void patchSniperWallSniping(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grFluxShotsAlwaysHit)
 		return;
 
 	// hook when collision checking is done on the sniper shot
@@ -632,7 +629,7 @@ void patchSniperWallSniping(void)
 	hookAddr = GetAddress(&vaSniperShotCreatedHook);
 	POKE_U32(hookAddr, 0xAE35005C);
 
-	patched = 1;
+	patched.gameConfig.grFluxShotsAlwaysHit = 1;
 }
 
 void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
@@ -687,8 +684,7 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
  */
 void patchSniperNiking(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gameConfig.grFluxNikingDisabled)
 		return;
 
 	u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
@@ -696,7 +692,7 @@ void patchSniperNiking(void)
 		POKE_U32(hookAddr - 0x0C, 0x46000306);
 		POKE_U32(hookAddr + 0x04, 0x02803021);
 		HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
-		patched = 1;
+		patched.gameConfig.grFluxNikingDisabled = 1;
 	}
 }
 
@@ -716,8 +712,7 @@ void patchSniperNiking(void)
  */
 void patchWeaponShotLag(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.weaponShotLag)
 		return;
 
 	int TCP = 0x24040040;
@@ -732,7 +727,7 @@ void patchWeaponShotLag(void)
 	if (*(u32*)FluxAddr == 0x90A407D4)
 		*(u32*)FluxAddr = TCP;
 
-	patched = 1;
+	patched.weaponShotLag = 1;
 }
 
 /*
@@ -796,12 +791,11 @@ void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short
  */
 void patchGadgetEvents(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.gadgetEvents)
 		return;
 
 	HOOK_JAL(GetAddress(&vaGadgetEventHook), &handleGadgetEvents);
-	patched = 1;
+	patched.gadgetEvents = 1;
 }
 
 /*
@@ -820,12 +814,11 @@ void patchGadgetEvents(void)
  */
 void patchLevelOfDetail(void)
 {
-	static int patched = 0;
 	static u32 hook = 0;
 	static u32 LOD_Shrubs = 0;
 	static u32 LOD_Ties = 0;
 	static u32 LOD_Terrain = 0;
-	if (!patched) {
+	if (!patched.config.levelOfDetail) {
 		if (!hook) {
 			hook = GetAddress(&vaLevelOfDetail_Hook);
 			LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
@@ -840,7 +833,7 @@ void patchLevelOfDetail(void)
 			*(u32*)(&_correctTieLod_Jump) = 0x08000000 | (val / 4);
 		}
 
-		patched = 1;
+		patched.config.levelOfDetail = 1;
 	}
 
 	int lod = config.levelOfDetail;
@@ -1017,8 +1010,7 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
  */
 void patchResurrectWeaponOrdering(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.resurrectWeaponOrdering)
 		return;
 
 	u32 hook_StripMe = ((u32)GetAddress(&vaPlayerRespawnFunc) + 0x40);
@@ -1026,7 +1018,7 @@ void patchResurrectWeaponOrdering(void)
 	HOOK_JAL(hook_StripMe, &patchResurrectWeaponOrdering_HookWeaponStripMe);
 	HOOK_JAL(hook_RandomWeapons, &patchResurrectWeaponOrdering_HookGiveMeRandomWeapons);
 
-	patched = 1;
+	patched.resurrectWeaponOrdering = 1;
 }
 
 /*
@@ -1095,9 +1087,12 @@ void runFpsCounter_drawHook(void)
 	static int renderTimeCounterMs = 0;
 	static int frames = 0;
 	static long ticksIntervalStarted = 0;
+	static u32 drawIt = 0;
+	if (!drawIt)
+		drawIt = GetAddress(&vaFpsCounter_DrawFunc);
 
 	long t0 = timerGetSystemTime();
-	((void (*)(void))GetAddress(&vaFpsCounter_DrawFunc))();
+	((void (*)(void))drawIt)();
 	long t1 = timerGetSystemTime();
 
 	renderTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
@@ -1133,9 +1128,12 @@ void runFpsCounter_updateHook(void)
 	static int updateTimeCounterMs = 0;
 	static int frames = 0;
 	static long ticksIntervalStarted = 0;
+	static u32 updateIt = 0;
+	if (!updateIt)
+		updateIt = GetAddress(&vaFpsCounter_UpdateFunc);
 
 	long t0 = timerGetSystemTime();
-	((void (*)(void))GetAddress(&vaFpsCounter_UpdateFunc))();
+	((void (*)(void))updateIt)();
 	long t1 = timerGetSystemTime();
 
 	updateTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
@@ -1168,17 +1166,11 @@ void runFpsCounter_updateHook(void)
  */
 void runFpsCounter(void)
 {
-	static int hook = 0;
-	static int update = 0;
-	static int draw = 0;
-	if (!draw) {
-		hook = GetAddress(&vaFpsCounter_Hooks);
-		update = GetAddress(&vaFpsCounter_UpdateFunc);
-		draw = GetAddress(&vaFpsCounter_DrawFunc);
-	}
-	if (hook) {
+	if (!patched.config.enableFpsCounter) {
+		u32 hook = GetAddress(&vaFpsCounter_Hooks);
 		HOOK_JAL(hook, &runFpsCounter_updateHook);
 		HOOK_JAL(((u32)hook + 0x60), &runFpsCounter_drawHook);
+		patched.config.enableFpsCounter = 1;
 	}
 
 	runFpsCounter_Logic();
@@ -1217,7 +1209,10 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 
 	// apply our fov modifier
 	// only if not scoping with sniper
-	int FluxRA = GetAddress(&vaFieldOfView_FluxRA);
+	static u32 FluxRA = 0;
+	if (!FluxRA)
+		FluxRA = GetAddress(&vaFieldOfView_FluxRA);
+
 	if (ra != FluxRA && ra != ((u32)FluxRA + 0xe0))
 		fov += (config.playerFov / 10.0) * 1;
 
@@ -1269,7 +1264,11 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 void fovChange(u32 a0)
 {
 	// run base
-	((void (*)(u32))GetAddress(&vaSetPOSRot_fovChange_Func))(a0);
+	static u32 FOVChange = 0;
+	if (!FOVChange)
+		FOVChange = GetAddress(&vaSetPOSRot_fovChange_Func);
+
+	((void (*)(u32))FOVChange)(a0);
 
 	writeFov(0, 0, 3, 0, 0, 0.05, 0.2, 0);
 }
@@ -1300,11 +1299,15 @@ void patchFov(void)
 	}
 
 	// replace SetFov function
-	HOOK_J(GetAddress(&vaFieldOfView_Hook), &writeFov);
-	POKE_U32((u32)GetAddress(&vaFieldOfView_Hook) + 0x4, 0x03E0382d);
+	if (!patched.config.playerFov) {
+		HOOK_J(GetAddress(&vaFieldOfView_Hook), &writeFov);
+		POKE_U32((u32)GetAddress(&vaFieldOfView_Hook) + 0x4, 0x03E0382d);
 
-	// modify SetPosRot Func. (Needed when player dies)
-	HOOK_JAL(GetAddress(&vaSetPOSRot_fovChange_Hook), &fovChange);
+		// modify SetPosRot Func. (Needed when player dies)
+		HOOK_JAL(GetAddress(&vaSetPOSRot_fovChange_Hook), &fovChange);
+
+		patched.config.playerFov = 1;
+	}
 
 	// initialize fov at start of game
 	if (!ingame || lastFov != config.playerFov) {
@@ -1509,10 +1512,8 @@ void patchAlwaysShowHealth(void)
 {
 	static u32 healthbar_timer = 0;
 	Player *player = (Player *)PLAYER_STRUCT;
-	if (!healthbar_timer) {
+	if (!healthbar_timer)
 		healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);
-		return;
-	}
 
 	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
 	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
@@ -1571,18 +1572,18 @@ void patchMapAndScoreboardToggle(void)
 	static u32 MapAlwaysRun = 0;
 	static u32 ScoreToggleFunction = 0;
 	static u32 MapToggleFunction = 0;
-	static int patched = 0;
-	if (!MapToggleFunction && !patched) {
+	// I only use patched.config.mapScoreToggle_ScoreBtn.  No need for Score and Map config.
+	if (!MapToggleFunction && !patched.config.mapScoreToggle_ScoreBtn) {
 		SelectBtnAddr = GetAddress(&vaMapScore_SelectBtn_Addr);
 		SelectBtnVal = GetAddress(&vaMapScore_SelectBtn_Val);
 		ScoreAlwaysRun = GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun);
 		MapAlwaysRun = GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun);
 		ScoreToggleFunction = GetAddress(&vaMapScore_ScoreboardToggle);
 		MapToggleFunction = GetAddress(&vaMapScore_MapToggle);
-		patched = 1;
+		patched.config.mapScoreToggle_ScoreBtn = 1;
 	}
 
-	if (!patched)
+	if (!patched.config.mapScoreToggle_ScoreBtn)
 		return;
 
 	// Disable Select Button for Toggling original Map/Scoreboard
@@ -1910,8 +1911,7 @@ void patchCTFFlag(void)
 
 
 	static u32 flagFunc = 0;
-	static int patched = 0;
-	if (!patched) {
+	if (!patched.ctfLogic) {
 		netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
 		if (!flagFunc)
 			flagFunc = GetAddress(&vaFlagUpdate_Func);
@@ -1920,7 +1920,7 @@ void patchCTFFlag(void)
 			*(u32*)flagFunc = 0x03e00008;
 			*(u32*)(flagFunc + 0x4) = 0x0000102D;
 		}
-		patched = 1;
+		patched.ctfLogic = 1;
 	}
 
 	GuberMoby* gm = guberMobyGetFirst();
@@ -1974,14 +1974,9 @@ int quickSelectTimer(int a0)
 }
 void patchQuickSelectTimer(void)
 {
-	static u32 hook = 0;
-	static int patched = 0;
-	if (!patched) {
-		if (!hook)
-			hook = GetAddress(&vaQuickSelectCheck_Hook);
-
-		HOOK_JAL(hook, &quickSelectTimer);
-		patched = 1;
+	if (!patched.config.quickSelectTimeDelay) {
+		HOOK_JAL(GetAddress(&vaQuickSelectCheck_Hook), &quickSelectTimer);
+		patched.config.quickSelectTimeDelay = 1;
 	}
 	if (config.quickSelectTimeDelay) {
 		Player* p = playerGetFromSlot(0);
@@ -2194,8 +2189,7 @@ void runCampaignMusic(void)
  */
 void patchAimAssist(void)
 {
-	static int patched = 0;
-	if (patched)
+	if (patched.config.aimAssist)
 		return;
 
 	Player* p = playerGetFromSlot(0);
@@ -2204,7 +2198,7 @@ void patchAimAssist(void)
 	p->fps.Vars.CameraY.target_slowness_factor = 0;
 	p->fps.Vars.CameraY.strafe_turn_factor = 0;
 	p->fps.Vars.CameraY.strafe_tilt_factor = 0;
-	patched = 1;
+	patched.config.aimAssist = 1;
 }
 
 /*
@@ -2504,11 +2498,9 @@ void runCheckGameMapInstalled(void)
  */
 void setupPatchConfigInGame(void)
 {
-	static int patched = 0;
-
 	// u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
 	// Original If: *(u32*)(Addr + 0x8) != ConfigEnableFunc
-	if (!patched) {
+	if (!patched.configStartOption) {
 		static u32 Addr = 0;
 		// Get Menu address via current map.
 		if (!Addr) {
@@ -2526,7 +2518,7 @@ void setupPatchConfigInGame(void)
 		u32 ReturnFunction = *(u32*)(Addr + 0x8);
 		// Hook Patch Config into end of "CONTINUE" function.
 		HOOK_J((ReturnFunction + 0x54), &configMenuEnable);
-		patched = 1;
+		patched.configStartOption = 1;
 	}
 }
 
