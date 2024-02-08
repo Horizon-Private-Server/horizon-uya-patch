@@ -1535,8 +1535,15 @@ void patchAlwaysShowHealth(void)
  */
 void patchMapAndScoreboardToggle(void)
 {
-	static int ShowScoreboard = 1;
-	static int ShowMap = 1;
+	// Define all needed static values first.  this way it only needs to search for them once.
+	static u32 SelectBtnAddr = 0;
+	static u32 SelectBtnVal = 0;
+	static u32 ScoreAlwaysRun = 0;
+	static u32 ScoreToggleFunction = 0;
+	static u32 MapAlwaysRun = 0;
+	static u32 MapToggleFunction = 0;
+	static int ShowScoreboard = 0;
+	static int ShowMap = 0;
 	int ScoreboardToggle = 0;
 	int MapToggle = 0;
 	GameSettings * gameSettings = gameGetSettings();
@@ -1559,42 +1566,33 @@ void patchMapAndScoreboardToggle(void)
 		case 3: MapToggle = PAD_R3; break;
 	}
 
-	// Define all needed static values first.  this way it only needs to search for them once.
-	static u32 SelectBtnAddr = 0;
-	static u32 SelectBtnVal = 0;
-	static u32 ScoreAlwaysRun = 0;
-	static u32 MapAlwaysRun = 0;
-	static u32 ScoreToggleFunction = 0;
-	static u32 MapToggleFunction = 0;
-	// I only use patched.config.mapScoreToggle_ScoreBtn.  No need for Score and Map config.
-	if (!MapToggleFunction && !patched.config.mapScoreToggle_ScoreBtn) {
+	if (!SelectBtnAddr || !SelectBtnVal) {
 		SelectBtnAddr = GetAddress(&vaMapScore_SelectBtn_Addr);
 		SelectBtnVal = GetAddress(&vaMapScore_SelectBtn_Val);
-		ScoreAlwaysRun = GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun);
-		MapAlwaysRun = GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun);
-		ScoreToggleFunction = GetAddress(&vaMapScore_ScoreboardToggle);
-		MapToggleFunction = GetAddress(&vaMapScore_MapToggle);
-		patched.config.mapScoreToggle_ScoreBtn = 1;
-	}
-
-	if (!patched.config.mapScoreToggle_ScoreBtn)
 		return;
+	}
 
 	// Disable Select Button for Toggling original Map/Scoreboard
 	if (MapToggle != -1 && ScoreboardToggle != -1 && *(u32*)SelectBtnAddr != 0) {
 		POKE_U32(SelectBtnAddr, 0);
 	} else if (*(u32*)SelectBtnAddr != SelectBtnVal) {
-		POKE_U32(SelectBtnAddr,SelectBtnVal);
+		POKE_U32(SelectBtnAddr, SelectBtnVal);
 	}
 	// If Scoreboard Button Toggle isn't set to "Default"
 	if (ScoreboardToggle != -1) {
-		// Run Scoreboard Main Logic
-		((void (*)(int, int))ScoreAlwaysRun)(0, 10);
+		if (!patched.config.mapScoreToggle_ScoreBtn) {
+			ScoreAlwaysRun = GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun);
+			ScoreToggleFunction = GetAddress(&vaMapScore_ScoreboardToggle);
+			patched.config.mapScoreToggle_ScoreBtn = 1;
+		} else {
+			// Run Scoreboard Main Logic
+			((void (*)(int, int))ScoreAlwaysRun)(0, 10);
+		}
 	
 		// if Scoreboard's chosen button is pressed
 		if (padGetButtonDown(0, ScoreboardToggle) > 0) {
-			((void (*)(int, int))ScoreToggleFunction)(0, ShowScoreboard);
 			ShowScoreboard = !ShowScoreboard;
+			((void (*)(int, int))ScoreToggleFunction)(0, ShowScoreboard);
 		}
 	}
 	// Check to see if Level ID is less than or equal to blackwater docks, or if not on custom map.
@@ -1602,14 +1600,20 @@ void patchMapAndScoreboardToggle(void)
 	if (gameSettings->GameLevel <= MAP_ID_BLACKWATER_DOCKS || SelectedCustomMapId > 0) {
 		// If Maps Button Toggle isn't set to "Default"
 		if (MapToggle != -1) {
-			// Run Map Main Logic only if gametype is deathmatch.
-			if (gameSettings->GameType == GAMERULE_DM)
-				((void (*)(int, int))MapAlwaysRun)(0, 10);
+			if (!patched.config.mapScoreToggle_MapBtn) {
+				MapAlwaysRun = GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun);
+				MapToggleFunction = GetAddress(&vaMapScore_MapToggle);
+				patched.config.mapScoreToggle_MapBtn = 1;
+			} else {
+				// Run Map Main Logic only if gametype is deathmatch.
+				if (gameSettings->GameType == GAMERULE_DM)
+					((void (*)(int, int))MapAlwaysRun)(0, 10);
+			}
 
 			// if Maps chosen button is pressed
 			if (padGetButtonDown(0, MapToggle) > 0) {
-				((void (*)(int, int))MapToggleFunction)(0, ShowMap);
 				ShowMap = !ShowMap;
+				((void (*)(int, int))MapToggleFunction)(0, ShowMap);
 			}
 		}
 	}
@@ -2495,13 +2499,7 @@ void setupPatchConfigInGame(void)
 	// u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
 	// Original If: *(u32*)(Addr + 0x8) != ConfigEnableFunc
 	if (!patched.configStartOption) {
-		static u32 Addr = 0;
-		// Get Menu address via current map.
-		if (!Addr) {
-			Addr = GetAddress(&vaPauseMenuAddr);
-			return;
-		}
-
+		u32 Addr = GetAddress(&vaPauseMenuAddr);
 		// Insert needed ID, returns string.
 		int str = uiMsgString(0x1115); // Washington, D.C. string ID
 		// Replace "Washington, D.C." string with ours.
