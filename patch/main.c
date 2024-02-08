@@ -1542,8 +1542,8 @@ void patchMapAndScoreboardToggle(void)
 	static u32 ScoreToggleFunction = 0;
 	static u32 MapAlwaysRun = 0;
 	static u32 MapToggleFunction = 0;
-	static int ShowScoreboard = 0;
-	static int ShowMap = 0;
+	static int ShowScoreboard = 1;
+	static int ShowMap = 1;
 	int ScoreboardToggle = 0;
 	int MapToggle = 0;
 	GameSettings * gameSettings = gameGetSettings();
@@ -1573,26 +1573,25 @@ void patchMapAndScoreboardToggle(void)
 	}
 
 	// Disable Select Button for Toggling original Map/Scoreboard
-	if (MapToggle != -1 && ScoreboardToggle != -1 && *(u32*)SelectBtnAddr != 0) {
+	if (MapToggle != -1 && ScoreboardToggle != -1)
 		POKE_U32(SelectBtnAddr, 0);
-	} else if (*(u32*)SelectBtnAddr != SelectBtnVal) {
+	else
 		POKE_U32(SelectBtnAddr, SelectBtnVal);
-	}
+
 	// If Scoreboard Button Toggle isn't set to "Default"
 	if (ScoreboardToggle != -1) {
 		if (!patched.config.mapScoreToggle_ScoreBtn) {
 			ScoreAlwaysRun = GetAddress(&vaMapScore_SeigeCTFScoreboard_AlwaysRun);
 			ScoreToggleFunction = GetAddress(&vaMapScore_ScoreboardToggle);
 			patched.config.mapScoreToggle_ScoreBtn = 1;
-		} else {
-			// Run Scoreboard Main Logic
-			((void (*)(int, int))ScoreAlwaysRun)(0, 10);
 		}
+		// Run Scoreboard Main Logic
+		((void (*)(int, int))ScoreAlwaysRun)(0, 10);
 	
 		// if Scoreboard's chosen button is pressed
 		if (padGetButtonDown(0, ScoreboardToggle) > 0) {
-			ShowScoreboard = !ShowScoreboard;
 			((void (*)(int, int))ScoreToggleFunction)(0, ShowScoreboard);
+			ShowScoreboard = !ShowScoreboard;
 		}
 	}
 	// Check to see if Level ID is less than or equal to blackwater docks, or if not on custom map.
@@ -1604,16 +1603,15 @@ void patchMapAndScoreboardToggle(void)
 				MapAlwaysRun = GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun);
 				MapToggleFunction = GetAddress(&vaMapScore_MapToggle);
 				patched.config.mapScoreToggle_MapBtn = 1;
-			} else {
-				// Run Map Main Logic only if gametype is deathmatch.
-				if (gameSettings->GameType == GAMERULE_DM)
-					((void (*)(int, int))MapAlwaysRun)(0, 10);
 			}
+			// Run Map Main Logic only if gametype is deathmatch.
+			if (gameSettings->GameType == GAMERULE_DM)
+				((void (*)(int, int))MapAlwaysRun)(0, 10);
 
 			// if Maps chosen button is pressed
 			if (padGetButtonDown(0, MapToggle) > 0) {
-				ShowMap = !ShowMap;
 				((void (*)(int, int))MapToggleFunction)(0, ShowMap);
+				ShowMap = !ShowMap;
 			}
 		}
 	}
