@@ -328,7 +328,6 @@ char * checkMap(void)
 }
 void runExceptionHandler(void)
 {
-	static char * mapStr = "";
 	// invoke exception display installer
 	if (*(u32*)EXCEPTION_DISPLAY_ADDR != 0) {
 		if (!hasInstalledExceptionHandler) {
@@ -336,12 +335,7 @@ void runExceptionHandler(void)
 			hasInstalledExceptionHandler = 1;
 		}
 
-		char * newMapStr = checkMap();
-		if (strcmp(newMapStr, mapStr))
-			return;
-		
-		mapStr = newMapStr;
-		// change "a fatal error as occured." to region and map.
+		char * mapStr = checkMap();		// change "a fatal error as occured." to region and map.
 		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x794), regionStr, 6);
 		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x79a), mapStr, 20);
 		
