@@ -84,11 +84,7 @@ void vampireHeal(Player * player, int weaponid)
 		}
 	}
 	// run update weapon kill
-	static u32 updateWeaponKill = 0;
-	if (!updateWeaponKill)
-		updateWeaponKill = GetAddress(&vaUpdateWeaponKill);
-		
-	((void (*)(int, int))updateWeaponKill)(player, weaponid);
+	((void (*)(int, int))GetAddress(&vaUpdateWeaponKill))(player, weaponid);
 }
 void vampireLogic()
 {
@@ -162,6 +158,9 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 		PlayerDeaths[i] = 0;
 		PlayerTeams[i] = 0;
 	}
+
+	// Set patched settings to 0
+	memcpy(&patches, 0, sizeof(PatchPatches_t));
 
 	HasSetGattlingTurretHealth = 0;
 	HasDisableSiegeNodeTurrets = 0;
