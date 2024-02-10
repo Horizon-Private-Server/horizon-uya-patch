@@ -62,11 +62,9 @@ void disableWeaponPacks(void)
 		return;
 
 	u32 weaponPackSpawnFunc = GetAddress(&vaWeaponPackSpawnFunc);
-	if (weaponPackSpawnFunc) {
-		*(u32*)weaponPackSpawnFunc = 0;
-		*(u32*)(weaponPackSpawnFunc - 0x7BF4) = 0;
-		patched.gameConfig.grDisableWeaponPacks = 1;
-	}
+	*(u32*)weaponPackSpawnFunc = 0;
+	*(u32*)(weaponPackSpawnFunc - 0x7BF4) = 0;
+	patched.gameConfig.grDisableWeaponPacks = 1;
 }
 
 /*
@@ -86,14 +84,8 @@ void disableWeaponPacks(void)
 int SpawnedPack = 0;
 void SpawnPack(int a0, int a1, int a2)
 {
-	static u32 respawnTimerFunc = 0;
-	static u32 SpawnWeaponPackFunc = 0;
-	if (!respawnTimerFunc) {
-		respawnTimerFunc = GetAddress(&vaRespawnTimerFunc);
-		SpawnWeaponPackFunc = GetAddress(&vaSpawnWeaponPackFunc);
-	}
     // Run Original Respawn Timer Hook
-	((void (*)(int, int, int))respawnTimerFunc)(a0, a1, a2);
+	((void (*)(int, int, int))GetAddress(&vaRespawnTimerFunc))(a0, a1, a2);
 	
 	// if pack already spawned, don't spawn more.
 	if (SpawnedPack == 1)
@@ -101,7 +93,7 @@ void SpawnPack(int a0, int a1, int a2)
 	// set player to register v1's value.
 	register int player asm("s3");
 	// Spawn Pack
-	((void (*)(u32))SpawnWeaponPackFunc)(player);
+	((void (*)(u32))GetAddress(&vaSpawnWeaponPackFunc))(player);
 	// It now spawned pack, so set to true.
 	SpawnedPack = 1;
 }
@@ -237,7 +229,6 @@ void AutoRespawn(void)
 	// Freezes in Siege and CTF due to needing to choose nodes, even if nodes are off.
 	HOOK_JAL(GetAddress(&vaDM_PressXToRespawn), &RespawnPlayer);
 	patched.gameConfig.grAutoRespawn = 1;
-
 }
 
 /*
@@ -1080,7 +1071,6 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
  */
 int runInvincibilityTimer(Player* player, int a1)
 {
-	static u32 PlayerInvincibleTimer_Func = 0;
 	int hurtPlayer = a1;
 	// if timer is greater than zero, player can't be hurt.
 	if (player->timers.unkTimer_346 > 0) {
@@ -1092,11 +1082,8 @@ int runInvincibilityTimer(Player* player, int a1)
 		player->timers.unkTimer_346 = 0x78;
 
 	// run base function with our a1
-	if (!PlayerInvincibleTimer_Func)
-		PlayerInvincibleTimer_Func = GetAddress(&vaPlayerInvincibleTimer_Func);
-	
 	DPRINTF("\nhurtPlayer: %d", hurtPlayer);
-	return ((int (*)(Player*, int))PlayerInvincibleTimer_Func)(player, hurtPlayer);
+	return ((int (*)(Player*, int))GetAddress(&vaPlayerInvincibleTimer_Func))(player, hurtPlayer);
 }
 void respawnInvincTimer(void)
 {
