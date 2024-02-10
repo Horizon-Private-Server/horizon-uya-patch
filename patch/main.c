@@ -2815,7 +2815,6 @@ int main(void)
 		} else {
 			isInStaging = 0;
 		}
-		patches_setToZero = 1;
 	}
 
 	// process modules

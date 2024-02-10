@@ -160,7 +160,7 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 	}
 
 	// Set patched settings to 0
-	memcpy(&patches, 0, sizeof(PatchPatches_t));
+	memcpy(&patched, 0, sizeof(PatchPatches_t));
 
 	HasSetGattlingTurretHealth = 0;
 	HasDisableSiegeNodeTurrets = 0;
