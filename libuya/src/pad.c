@@ -193,18 +193,16 @@ void padDisableInput(void)
     if (PAD_PROCESS_ADDR == PAD_PROCESS_VALUE)
         PAD_PROCESS_ADDR = 0x24020000;
 
-    if (isInGame())
-    {
+    if (isInGame()) {
         int i;
         Player ** Players = playerGetAll();
-        for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-        {
+        for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
             Player * player = Players[i];
             if (!player)
-                return;
+                continue;
 
             if (player->IsLocal)
-                player->timers.noInput = 0;
+                player->timers.noInput = 3;
         }
     }
 }
