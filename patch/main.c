@@ -1905,12 +1905,9 @@ int quickSelectTimer(int a0)
 
 		return QuickSelectTimeCurrent == config.quickSelectTimeDelay;
 	}
-	static u32 quickSelectFunc = 0;
-	if (!quickSelectFunc)
-		quickSelectFunc = GetAddress(&vaQuickSelectCheck_Func);
 
 	// return if quickSelectTimeDelay is off. 
-	return ((int (*)(int))quickSelectFunc)(a0);
+	return ((int (*)(int))GetAddress(&vaQuickSelectCheck_Func))(a0);
 }
 void patchQuickSelectTimer(void)
 {
@@ -2810,6 +2807,9 @@ int main(void)
 				// send
 				configTrySendGameConfig();
 			}
+
+			if (!isInStaging)
+				memset(&patched, 0, sizeof(PatchPatches_t));
 
 			isInStaging = 1;
 		} else {

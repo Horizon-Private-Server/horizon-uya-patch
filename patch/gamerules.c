@@ -159,9 +159,6 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 		PlayerTeams[i] = 0;
 	}
 
-	// Set patched settings to 0
-	memcpy(&patched, 0, sizeof(PatchPatches_t));
-
 	HasSetGattlingTurretHealth = 0;
 	HasDisableSiegeNodeTurrets = 0;
 	HasKeepBaseHealthPadActive = 0;
