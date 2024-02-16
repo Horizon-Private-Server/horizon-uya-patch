@@ -2228,6 +2228,7 @@ void runVoteToEndLogic(void)
 	int gameTime = gameGetTime();
 	GameData* gameData = gameGetData();
 	GameSettings* gs = gameGetSettings();
+	Player* player = playerGetFromSlot(0);
 	char buf[64];
 
 	int votesNeeded = voteToEndNumberOfVotesRequired();
@@ -2237,16 +2238,25 @@ void runVoteToEndLogic(void)
 		// pass to modules
 		patchStateContainer.VoteToEndPassed = 1;
 		// end game
-		gameEnd(0);
+		gameEnd(4);
 		return;
 	}
+
+	int haveVoted = 0;
+	if (player)
+		haveVoted = voteToEndState.Votes[player->mpIndex];
 
 	if (voteToEndState.TimeoutTime > gameTime) {
 		// draw
 		int secondsLeft = (voteToEndState.TimeoutTime - gameTime) / TIME_SECOND;
-		snprintf(buf, sizeof(buf), "Vote to End (%d/%d)    %d...", voteToEndState.Count, votesNeeded, secondsLeft);
+		snprintf(buf, sizeof(buf), "(L3 + R3) Vote to End (%d/%d)    %d...", voteToEndState.Count, votesNeeded, secondsLeft);
 		gfxScreenSpaceText(12, SCREEN_HEIGHT - 18, 1, 1, 0x80000000, buf, -1, 0);
 		gfxScreenSpaceText(10, SCREEN_HEIGHT - 20, 1, 1, 0x80FFFFFF, buf, -1, 0);
+		
+		// vote to end
+		if (!haveVoted && padGetButtonDown(0, PAD_L3 | PAD_R3) > 0)
+    		sendClientVoteForEnd();
+	
 	} else if (gameAmIHost() && voteToEndState.TimeoutTime < gameTime) {
 		// reset
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
