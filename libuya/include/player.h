@@ -1010,7 +1010,7 @@ typedef struct Player { // 0x4500
 	/* 0x0020 */ MATRIX Water;
 	/* 0x0060 */ MATRIX Terrain;
 	/* 0x00a0 */ VECTOR PlayerPosition;
-			union {												
+			union {
 	/* 0x00b0 */ VECTOR PlayerRotation;
 				 struct {
 	/* 0x00b0 */	float PlayerRoll;
@@ -1362,38 +1362,28 @@ int playerGetHealth(Player * player);
 
 /*
  * NAME :		playerRespawn
- * 
  * DESCRIPTION :
  * 			Respawns the given player.
- * 
  * NOTES :
  *          Spawn point is determined internally.
  *          This will freeze on CQ if the player hasn't picked a node to respawn to.
- * 
  * ARGS : 
  *      player      :           Target player.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void playerRespawn(Player * player);
 
 /*
  * NAME :		playerSetPosRot
- * 
  * DESCRIPTION :
  * 			Sets a given player's position and rotation.
- * 
  * NOTES :
- * 
  * ARGS : 
  *      player      :           Target player.
  *      position    :           Position.
  *      rotation    :           Rotation.
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 __LIBUYA_SETTER__ void playerSetPosRot(Player * player, u32 * position, u32 * rotation);
