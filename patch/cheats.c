@@ -154,8 +154,11 @@ void v2_logic(void)
 		if (!player)
 			continue;
 
+		// Loop through each weapon slot
 		u8* slot = (u8*)(u32)player + 0x1a32;
 		for(j = 0; j < 12; ++j) {
+			// Check to see if the weapon slow has a weapon.
+			// If so, deofuscate the weapon id and give the player the upgrade.
 			if (slot[j] > 0)
 				playerGiveWeaponUpgrade(player, playerDeobfuscate(&slot[j], 1, 1));
 		}
@@ -333,12 +336,12 @@ void deleteNodeTurretsUpdate(void)
 void chargebootForever(void)
 {
 	int i;
-	Player ** players = playerGetAll();
+	Player** players = playerGetAll();
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		Player * player = players[i];
+		Player* player = players[i];
 		if (!player)
 			continue;
-
+		// if Is Chargebooting and player is holding R2 and player's state timer is greater than 55
 		if (player->timers.IsChargebooting == 1 && playerPadGetButton(player, PAD_R2) > 0 && player->timers.state > 55)
 			player->timers.state = 55;
 	}
@@ -365,8 +368,9 @@ void disableCameraShake(void)
 
 	int CameraShake = GetAddress(&vaCameraShakeFunc);
 	if (*(u32*)CameraShake == 0x24030460) {
-		*(u32*)CameraShake = 0x03e00008;
-		*(u32*)(CameraShake + 0x4) = 0;
+		// JR RA the start of the Camera shake function
+		*(u32*)CameraShake = 0x03e00008; // jr ra
+		*(u32*)(CameraShake + 0x4) = 0; // nop
 		patched.config.disableCameraShake = 1;
 	}
 }
@@ -566,9 +570,9 @@ void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int 
 	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
 	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
 		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
-		if (moby->OClass == mobyId){
+		// if the OClass equals needed mobyId, set Y Position to wanted value.
+		if (moby->OClass == mobyId)
 			moby->PosY = ypos;
-		}
 	}
 }
 
@@ -589,6 +593,7 @@ int keepBaseHealthPadActive(void)
 {
 	int init = 0;
 	Moby * a = mobyListGetStart();
+	// if moby list finds the health pad
 	while ((a = mobyFindNextByOClass(a, MOBY_ID_HEALTH_PAD))) {
 		if (a->PUpdate) {
 			*(u32*)((u32)a->PUpdate + 0x68) = 0x24020001;
@@ -597,6 +602,7 @@ int keepBaseHealthPadActive(void)
 		++a;
 	}
 	Moby * b = mobyListGetStart();
+	// if moby list finds the ammo pad
 	while ((b = mobyFindNextByOClass(b, MOBY_ID_AMMO_PAD))) {
 		if (b->PUpdate) {
 			*(u32*)((u32)b->PUpdate + 0x74) = 0x24020001;
@@ -627,6 +633,7 @@ void noPostHitInvinc(void)
 		return;
 	// PAL: 0x27, NTSC: 0x2f
 	int time = GetAddress(&vaPostHitInvinc);
+	// set post hit invincibility to 1 frame.
 	*(u32*)(time) = 0x24020001;
 	*(u32*)(time + 0x308) = 0x24020001;
 	patched.gameConfig.grNoCooldown = 1;
