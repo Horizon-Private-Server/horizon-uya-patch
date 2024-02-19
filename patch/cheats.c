@@ -154,8 +154,11 @@ void v2_logic(void)
 		if (!player)
 			continue;
 
-		for (j = 1; j < 10; ++j)
-			playerGiveWeaponUpgrade(player, j);
+		u8* slot = (u8*)(u32)player + 0x1a32;
+		for(j = 0; j < 12; ++j) {
+			if (slot[j] > 0)
+				playerGiveWeaponUpgrade(player, playerDeobfuscate(&slot[j], 1, 1));
+		}
 	}
 }
 void v2_Setting(int setting, int FirstPass)
