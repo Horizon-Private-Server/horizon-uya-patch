@@ -220,8 +220,7 @@ typedef enum PlayerType {
 	PLAYER_TYPE_CNT = 38
 } PlayerType;
 
-typedef struct CameraAngleZ
-{
+typedef struct CameraAngleZ { // 0x20
 	/* 0x11e0 */ float rotation;
 	/* 0x11e4 */ float speed_current;
 	/* 0x11e8 */ float speed_max_quick;
@@ -232,8 +231,7 @@ typedef struct CameraAngleZ
 	/* 0x11fc */ float target_slowness_factor_aim;
 } CameraAngleZ;
 
-typedef struct CameraAngleY
-{
+typedef struct CameraAngleY { // 0x20
 	/* 0x1200 */ float rotation;
 	/* 0x1204 */ float speed_current;
 	/* 0x1208 */ float speed_max;
@@ -320,7 +318,7 @@ typedef struct DL_HeroTimers {
 	/* 0xb2 */ short int invincibilityTimer;
 } DL_HeroTimers;
 
-typedef struct HeroTimers {
+typedef struct HeroTimers { // 0x80
 	/* 0x2f0 */ int state;
 	/* 0x2f4 */ int stateType;
 	/* 0x2f8 */ int subState;
@@ -463,7 +461,7 @@ typedef struct HeroColl { // 0x70
 	/* 0x68 */ int pad[1];
 } HeroColl;
 
-typedef struct HeroGround {
+typedef struct HeroGround { // 0xc0
 	/* 0x00 */ VECTOR normal;
 	/* 0x10 */ VECTOR waterNormal;
 	/* 0x20 */ VECTOR gravity;
@@ -501,7 +499,7 @@ typedef struct HeroCommand { // 0xc
 	/* 0x8 */ int timer;
 } HeroCommand;
 
-typedef struct HeroPlayerConstants {
+typedef struct HeroPlayerConstants { // 0x70
 	/* 0x00 */ int mobyNum;
 	/* 0x04 */ float maxWalkSpeed;
 	/* 0x08 */ float kneeHeight;
@@ -530,7 +528,7 @@ typedef struct HeroPlayerConstants {
 	/* 0x64 */ int pad[3];
 } HeroPlayerConstants;
 
-typedef struct Gadget {
+typedef struct Gadget { // 0x50
 	/* 0x00 */ VECTOR jointPos;
 	/* 0x10 */ VECTOR jointRot;
 	/* 0x20 */ Moby *pMoby;
@@ -882,7 +880,7 @@ typedef struct MotionBlur { // 0x150
 	/* 0x14c */ int active;
 } MotionBlur;
 
-struct tNW_PlayerWarpMessage {
+struct tNW_PlayerWarpMessage { // 0x20
 	/* 0x00 */ char netPlayerIndex;
 	/* 0x01 */ char dontKillMeInBaseHack;
 	/* 0x02 */ char resetPadRing;
@@ -893,7 +891,7 @@ struct tNW_PlayerWarpMessage {
 	/* 0x1e */ char isResurrecting;
 };
 
-struct tNW_PlayerData {
+struct tNW_PlayerData { // 0xc0
 	/* 0x00 */ VECTOR vPosition;
 	/* 0x10 */ float vRotation[3];
 	/* 0x1c */ int timeStamp;
@@ -919,7 +917,7 @@ struct tNW_PlayerData {
 	/* 0xbc */ u8 flags;
 };
 
-struct tNW_PlayerPadInputMessage {
+struct tNW_PlayerPadInputMessage { // 0x98
 	/* 0x00 */ int cameraRot[4];
 	/* 0x10 */ short int playerPos[3];
 	/* 0x16 */ u8 sequenceNum;
@@ -932,14 +930,14 @@ struct tNW_PlayerPadInputMessage {
 	/* 0x18 */ u8 pad_data[128];
 };
 
-struct tNW_PlayerPadInputMessageListElem {
+struct tNW_PlayerPadInputMessageListElem { // 0xa4
 	/* 0x00 */ struct tNW_PlayerPadInputMessage msg;
 	/* 0x98 */ struct tNW_PlayerPadInputMessageListElem* pNext;
 	/* 0x9c */ struct tNW_PlayerPadInputMessageListElem* pPrev;
 	/* 0xa0 */ char inUse;
 };
 
-struct tNW_Player {
+struct tNW_Player { // 0xad0
 	/* 0x000 */ int netClientIndex;
 	/* 0x004 */ struct tNW_PlayerData* pNetPlayerData;
 	/* 0x008 */ short int bLocal;
@@ -1006,19 +1004,7 @@ typedef struct PadStream { // 0x1e0
 	/* 0x1dc */ int padStreamReady;
 } PadStream;
 
-/*
- * NAME :		Player
- * 
- * DESCRIPTION :
- * 			Contains the player data.
- * 
- * NOTES :
- *          This is very large and documentation is incomplete.
- *          Much of the padding is to skip over area's not yet understood.
- * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
-typedef struct Player {
+typedef struct Player { // 0x4500
 	/* 0x0000 */ struct Guber Guber;
 	/* 0x0018 */ int padding[1];
 	/* 0x0020 */ MATRIX Water;
@@ -1228,7 +1214,6 @@ typedef struct Player {
 	/* 0x44F4 */ HeroCommand command;
 		} LocalHero;
 	};
-	// END! :D  (Size: 0x4500)
 } Player;
 
 typedef void (*PlayerUpdate_func)(Player * player);
