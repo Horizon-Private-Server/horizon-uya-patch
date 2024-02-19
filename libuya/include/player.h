@@ -1020,213 +1020,213 @@ typedef struct PadStream { // 0x1e0
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 typedef struct Player {
-	struct Guber Guber;										// 0x00
-	int padding[1];											// 0x18
-	MATRIX Water;											// 0x20
-	MATRIX Terrain;											// 0x60
-	VECTOR PlayerPosition;                                  // 0xA0
-	union {													// 0xB0
-		VECTOR PlayerRotation;
-		struct {
-			float PlayerRoll;								// 0xB0
-			float PlayerPitch;								// 0xB4
-			float PlayerYaw;								// 0xB8
-			float pad;										// 0xBC
-		};
-	};
-	VECTOR rotSpeed;										// 0xC0
-	VECTOR sphereCenter;									// 0xD0
-	VECTOR missileTarget;									// 0xE0
-	VECTOR mtxFxScale;										// 0xF0
-	VECTOR lastPosition;									// 0x100
-	VECTOR stickInput;										// 0x110
-	HeroMove move;											// 0x120
-	HeroColl coll;											// 0x1C0
-	HeroGround ground;										// 0x230 - 0x2EC
-	HeroTimers timers;										// 0x2F0
-	HeroHotspots hotspots;									// 0x370
-	HeroFireDir fireDir;									// 0x380
-	HeroLockOn lockOn;										// 0x3D0
-	HeroMobys mobys;										// 0x420
-	VECTOR wrenchThrownPos;									// 0x430
-	VECTOR wrenchThrownRot;									// 0x440
-	Gadget Weapon;											// 0x450
-	Gadget Boots;											// 0x4A0
-	Gadget gadget2;											// 0x4F0
-	Gadget gadget3;											// 0x540
-	Gadget gadget4;											// 0x590
-	char unk_5e0[0x30];
-	HeroAnim anim;											// 0x610
-	char unk_630[0x10];
-	HeroJoints joints;										// 0x640
-	HeroAnimLayers animLayers;								// 0x740
-	HeroTweaker tweaker[12];								// 0x760
-	HeroShadow shadow;										// 0xFA0
-	char unk_fc8[0x18];
-	HeroAttack attack;										// 0xFE0
-	HeroHeadIdle head;										// 0x1090
-	char unk_10b0[0xd0];
-	HeroCamera fps;											// 0x1180 - 0x133C
-	HeroWeaponPosRec weaponPosRec;							// 0x1340
-	HeroWalkToPos walkToPos;								// 0x13C0 - 0x13DC
-	HeroSurf surf;											// 0x13E0
-	HeroWalk walk;											// 0x1410
-	HeroJump jump;											// 0x1430
-	HeroLedge ledge;										// 0x1540
-	HeroCharge charge;										// 0x1580
-	HeroWind wind;											// 0x15A0
-	HeroFall fall;											// 0x15C0
-	HeroSwing swing;										// 0x15E0
-	char unk_1620[0x160];
-	MotionBlur wrenchMotionBlur;							// 0x1780 - 0x18CC
-	int WeaponHeldId;										// 0x18D0
-	char unk_18d4[0xec];
-	void * pUnk_19c0;										// 0x19C0										// 0x18D0
-	char unk_19c4[0x1c];
-	short unk_19e0;
-	short unk_19e2;
-	char State;												// 0x19E4
-	char SubState;											// 0x19E5
-	char StateType;											// 0x19E6
-	char PreviousState;										// 0x19E7
-	char PreviousType;										// 0x19E8
-	char PrePreviousState;									// 0x19E9
-	char PrePreviousType;									// 0x19EA
-	char StateHistory[8];									// 0x19EB
-	char StateTypeHistory[8];								// 0x19F3
-	char unk_19fb[0xc];
-	char GadgetActive;										// 0x1A07
-	char RaisedGunArm;										// 0x1A08
-	char InShallowWater;									// 0x1A09
-	char Invisible;											// 0x1A0A
-	char HideWeapon;										// 0x1A0B
-	char GadgetsOff;										// 0x1A0C
-	char GadgetNotReady;									// 0x1A0D
-	char WrenchOnly;										// 0x1A0E
-	char HideWrench;										// 0x1A0F
-	char SpawnBoltsToMe;									// 0x1A10
-	char AiFollowingMe;										// 0x1A11
-	char ForceWrenchSwitch;									// 0x1A12
-	char ForceSwingSwitch;									// 0x1A13
-	char IsLocal;											// 0x1A14
-	char InBaseHack;										// 0x1A15
-	char ShieldTrigger;										// 0x1A16
-	char CurSeg;											// 0x1A17
-	char HandGadgetType;									// 0x1A18
-	char ExternalUpdate;									// 0x1A19
-	char unk_1a1a[0x14];
-	char unk_1a2e[0x4];
-	WeaponQuickSelect QuickSelect;							// 0x1A32 to 0x1A34
-	char unk_1a35[0x1e];
-	WeaponAmmo WeaponAmmo;									// 0x1A53 to 0x1A5E
-	char unk_1a5f[0x4];
-	WeaponMeter WeaponMeter;								// 0x1A63 to 0x1A6E
-	char unk_1a6f[0x11];
-	GadgetEvent gadgetEventSlots[10];						// 0x1A80
-	int unk_1da0;
-	GadgetEvent *pNextGadgetEvent;							// 0x1DA4
-	int TopOfPlayerStruct2;									// 0x1DA8
-	char unk_1dac[0x5f4];
-	VECTOR camPos;											// 0x23A0
-	VECTOR camRot;											// 0x23B0
-	VECTOR camUMtx[3];										// 0x23C0
-	char unk_23f0[0x44];
-	Moby *SkinMoby3;										// 0x2434
-	char unk_2438[0x10];
-	int firingAnim;											// 0x2448
-	int firingGadget;										// 0x244C
-	int desiredCam;											// 0x2450
-	Moby *pHeadTargetMoby;									// 0x2454
-	Moby *pSheepMoby;										// 0x2458
-	Moby *pWhoHitMe;										// 0x245C
-	struct Player *pWhoSheepedMe;							// 0x2460
-	int sheepMeLongTime;									// 0x2464
-	float stickStrength;									// 0x2468
-	float stickRawAngle;									// 0x246C
-	char unk_2470[0x6];
-	char Health;											// 0x2476
-	char unk_2477[0x9];
-	short unk_2480;	 // Used if Flag is held
-	short unk_2482;											// 0x2482
-	float skidDeceleration;									// 0x2484
-	int mtxFxActive;										// 0x2488
-	float analogStickStrength;								// 0x248C
-	char deathFallChannel;									// 0x2490
-	char wallJumpAngLimiter;								// 0x2491
-	char wallJumpHeightFactor;								// 0x2492
-	char wallJumpChainCnt;									// 0x2493
-	float wallJumpDist;										// 0x2494
-	float moonJumpIdealHeight;								// 0x2498
-	float moonJumpGravity;									// 0x249C
-	short int chargeDoubleTapTimer;							// 0x24A0
-	char unk_24a2;
-	char unk_24a3;
-	short int unkGadgetTimer_24a4;							// 0x24A4
-	short int GadgetPADDelayTimer;							// 0x24A6
-	short int unkGadgetTimer_24a8;							// 0x24A8
-	char unk_24aa[0x1e];
-	char unk_24c8;
-	char unk_24c9; // hides reticle/hud, does something with CTF Flag
-	char unk_24ca;
-	char unk_24cb;
-	u32 LastDamagedMeOwnerUID;								// 0x24CC
-	int LastDamagedMeGadgetId;								// 0x24D0
-	char DamageTaken;										// 0x24D4
-	char unk_24d5[0x27];
-	char isGetHitMsgPending;								// 0x24FC
-	char LookAndCrouch;										// 0x24FD
-	char LookAndThrowWrench;								// 0x24FE
-	char earlyThrowAbort;									// 0x24FF
-	char lookAndGetHit;										// 0x2500
+	/* 0x0000 */ struct Guber Guber;
+	/* 0x0018 */ int padding[1];
+	/* 0x0020 */ MATRIX Water;
+	/* 0x0060 */ MATRIX Terrain;
+	/* 0x00a0 */ VECTOR PlayerPosition;
+			union {												
+	/* 0x00b0 */ VECTOR PlayerRotation;
+				 struct {
+	/* 0x00b0 */	float PlayerRoll;
+	/* 0x00b4 */	float PlayerPitch;
+	/* 0x00b8 */	float PlayerYaw;
+	/* 0x00bc */	float pad;
+				 };
+			};
+	/* 0x00c0 */ VECTOR rotSpeed;
+	/* 0x00d0 */ VECTOR sphereCenter;
+	/* 0x00e0 */ VECTOR missileTarget;
+	/* 0x00f0 */ VECTOR mtxFxScale;
+	/* 0x0100 */ VECTOR lastPosition;
+	/* 0x0110 */ VECTOR stickInput;
+	/* 0x0120 */ HeroMove move;
+	/* 0x01c0 */ HeroColl coll;
+	/* 0x0230 */ HeroGround ground;
+	/* 0x02f0 */ HeroTimers timers;
+	/* 0x0370 */ HeroHotspots hotspots;
+	/* 0x0380 */ HeroFireDir fireDir;
+	/* 0x03d0 */ HeroLockOn lockOn;
+	/* 0x0420 */ HeroMobys mobys;
+	/* 0x0430 */ VECTOR wrenchThrownPos;
+	/* 0x0440 */ VECTOR wrenchThrownRot;
+	/* 0x0450 */ Gadget Weapon;
+	/* 0x04a0 */ Gadget Boots;
+	/* 0x04f0 */ Gadget gadget2;
+	/* 0x0540 */ Gadget gadget3;
+	/* 0x0590 */ Gadget gadget4;
+	/*        */ char unk_5e0[0x30];
+	/* 0x0610 */ HeroAnim anim;
+	/*        */ char unk_630[0x10];
+	/* 0x0640 */ HeroJoints joints;
+	/* 0x0740 */ HeroAnimLayers animLayers;
+	/* 0x0760 */ HeroTweaker tweaker[12];
+	/* 0x0fa0 */ HeroShadow shadow;
+	/*        */ char unk_fc8[0x18];
+	/* 0x0fe0 */ HeroAttack attack;
+	/* 0x1090 */ HeroHeadIdle head;
+	/*        */ char unk_10b0[0xd0];
+	/* 0x1180 */ HeroCamera fps;
+	/* 0x1340 */ HeroWeaponPosRec weaponPosRec;
+	/* 0x13c0 */ HeroWalkToPos walkToPos;
+	/* 0x13e0 */ HeroSurf surf;
+	/* 0x1410 */ HeroWalk walk;
+	/* 0x1430 */ HeroJump jump;
+	/* 0x1540 */ HeroLedge ledge;
+	/* 0x1580 */ HeroCharge charge;
+	/* 0x15a0 */ HeroWind wind;
+	/* 0x15c0 */ HeroFall fall;
+	/* 0x15e0 */ HeroSwing swing;
+	/*        */ char unk_1620[0x160];
+	/* 0x1780 */ MotionBlur wrenchMotionBlur;
+	/* 0x18D0 */ int WeaponHeldId;
+	/*        */ char unk_18d4[0xec];
+	/*        */ void * pUnk_19c0;
+	/*        */ char unk_19c4[0x1c];
+	/* 0x19e0 */ short unk_19e0;
+	/* 0x19e2 */ short unk_19e2;
+	/* 0x19e4 */ char State;
+	/* 0x19e5 */ char SubState;
+	/* 0x19e6 */ char StateType;
+	/* 0x19e7 */ char PreviousState;
+	/* 0x19e8 */ char PreviousType;
+	/* 0x19e9 */ char PrePreviousState;
+	/* 0x19ea */ char PrePreviousType;
+	/* 0x19eb */ char StateHistory[8];
+	/* 0x19f3 */ char StateTypeHistory[8];
+	/*        */ char unk_19fb[0xc];
+	/* 0x1a07 */ char GadgetActive;
+	/* 0x1a08 */ char RaisedGunArm;
+	/* 0x1a09 */ char InShallowWater;
+	/* 0x1a0a */ char Invisible;
+	/* 0x1a0b */ char HideWeapon;
+	/* 0x1a0c */ char GadgetsOff;
+	/* 0x1a0d */ char GadgetNotReady;
+	/* 0x1a0e */ char WrenchOnly;
+	/* 0x1a0f */ char HideWrench;
+	/* 0x1a10 */ char SpawnBoltsToMe;
+	/* 0x1a11 */ char AiFollowingMe;
+	/* 0x1a12 */ char ForceWrenchSwitch;
+	/* 0x1a13 */ char ForceSwingSwitch;
+	/* 0x1a14 */ char IsLocal;
+	/* 0x1a15 */ char InBaseHack;
+	/* 0x1a16 */ char ShieldTrigger;
+	/* 0x1a17 */ char CurSeg;
+	/* 0x1a18 */ char HandGadgetType;
+	/* 0x1a19 */ char ExternalUpdate;
+	/*        */ char unk_1a1a[0x14];
+	/*        */ char unk_1a2e[0x4];
+	/* 0x1a32 */ WeaponQuickSelect QuickSelect;
+	/*        */ char unk_1a35[0x1e];
+	/* 0x1a53 */ WeaponAmmo WeaponAmmo;
+	/*        */ char unk_1a5f[0x4];
+	/* 0x1a63 */ WeaponMeter WeaponMeter;
+	/*        */ char unk_1a6f[0x11];
+	/* 0x1a80 */ GadgetEvent gadgetEventSlots[10];
+	/*        */ int unk_1da0;
+	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;
+	/* 0x1da8 */ int TopOfPlayerStruct2;
+	/*        */ char unk_1dac[0x5f4];
+	/* 0x23a0 */ VECTOR camPos;
+	/* 0x23b0 */ VECTOR camRot;
+	/* 0x23c0 */ VECTOR camUMtx[3];
+	/*        */ char unk_23f0[0x44];
+	/* 0x2434 */ Moby *SkinMoby3;
+	/*        */ char unk_2438[0x10];
+	/* 0x2448 */ int firingAnim;
+	/* 0x244c */ int firingGadget;
+	/* 0x2450 */ int desiredCam;
+	/* 0x2454 */ Moby *pHeadTargetMoby;
+	/* 0x2458 */ Moby *pSheepMoby;
+	/* 0x245c */ Moby *pWhoHitMe;
+	/* 0x2460 */ struct Player *pWhoSheepedMe;
+	/* 0x2464 */ int sheepMeLongTime;
+	/* 0x2468 */ float stickStrength;
+	/* 0x246c */ float stickRawAngle;
+	/*        */ char unk_2470[0x6];
+	/* 0x2476 */ char Health;
+	/*        */ char unk_2477[0x9];
+	/*        */ short unk_2480;	 // Used if Flag is held
+	/* 0x2482 */ short unk_2482;
+	/* 0x2484 */ float skidDeceleration;
+	/* 0x2488 */ int mtxFxActive;
+	/* 0x248c */ float analogStickStrength;
+	/* 0x2490 */ char deathFallChannel;
+	/* 0x2491 */ char wallJumpAngLimiter;
+	/* 0x2492 */ char wallJumpHeightFactor;
+	/* 0x2493 */ char wallJumpChainCnt;
+	/* 0x2494 */ float wallJumpDist;
+	/* 0x2498 */ float moonJumpIdealHeight;
+	/* 0x249c */ float moonJumpGravity;
+	/* 0x24a0 */ short int chargeDoubleTapTimer;
+	/*        */ char unk_24a2;
+	/*        */ char unk_24a3;
+	/* 0x24a4 */ short int unkGadgetTimer_24a4;
+	/* 0x24a6 */ short int GadgetPADDelayTimer;
+	/* 0x24a8 */ short int unkGadgetTimer_24a8;
+	/*        */ char unk_24aa[0x1e];
+	/*        */ char unk_24c8;
+	/*        */ char unk_24c9; // hides reticle/hud, does something with CTF Flag
+	/*        */ char unk_24ca;
+	/*        */ char unk_24cb;
+	/* 0x24cc */ u32 LastDamagedMeOwnerUID;
+	/* 0x24d0 */ int LastDamagedMeGadgetId;
+	/* 0x24d4 */ char DamageTaken;
+	/*        */ char unk_24d5[0x27];
+	/* 0x24fc */ char isGetHitMsgPending;
+	/* 0x24fd */ char LookAndCrouch;
+	/* 0x24fe */ char LookAndThrowWrench;
+	/* 0x24ff */ char earlyThrowAbort;
+	/* 0x2500 */ char lookAndGetHit;
 	// lastDeathWasSuicide: Doesn't Spawn Pack if true
-	char LastDeathWasSuicide;								// 0x2501
-	char unk_2502[0x12];
-	int HudHealthTimer;										// 0x2514
-	char PauseOn;                                 		 	// 0x2518
-	char PauseTimer;										// 0x2519
-	char tauntOverrideTimer;								// 0x251A
-	char PlayerType;										// 0x251B
-	Moby *FlagMoby;											// 0x251C
-	HeroPlayerConstants *PlayerConstants;					// 0x2520
-	Moby *PlayerMoby;										// 0x2524
-	Vehicle *Vehicle;										// 0x2528
-	Vehicle *VehiclePending;								// 0x252C
-	GameCamera *Camera;										// 0x2530
-	PadButtonStatus *Paddata;								// 0x2534
-	float PlayerPositionX;									// 0x2538
-	float PlayerPositionZ;									// 0x253C
-	float PlayerPositionY;									// 0x2540
-	int mpIndex;											// 0x2544
-	int mpTeam;												// 0x2548
-	int vehicleState;										// 0x254C
-	int vehicleStateTimer;									// 0x2550
-	int pointsLastKill;										// 0x2554
-	struct tNW_Player *pNetPlayer;							// 0x2558
-	char unk_255c[0x1c];
-	Moby *lastVehicleMoby;									// 0x2578
-	int unk_257c;
-	char Animation_RightArm[0x3c0];							// 0x2580
-	char Animation_LeftArm[0x3c0];							// 0x2940
-	char Animation_RightArm_Unk1[0x400];					// 0x2D00
-	char Animation_RightArm_Unk2[0x400];					// 0x3100
-	char Animation_LeftArm_Unk1[0x400];						// 0x3500
-	char Animation_LeftArm_Unk2[0x400];						// 0x3900
-	char Animation_Unk[0x540];								// 0x3D00
-	char unk_4240[0xc0];
+	/* 0x2501 */ char LastDeathWasSuicide;
+	/*        */ char unk_2502[0x12];
+	/* 0x2514 */ int HudHealthTimer;
+	/* 0x2518 */ char PauseOn;
+	/* 0x2519 */ char PauseTimer;
+	/* 0x251a */ char tauntOverrideTimer;
+	/* 0x251b */ char PlayerType;
+	/* 0x251c */ Moby *FlagMoby;
+	/* 0x2520 */ HeroPlayerConstants *PlayerConstants;
+	/* 0x2524 */ Moby *PlayerMoby;
+	/* 0x2528 */ Vehicle *Vehicle;
+	/* 0x252c */ Vehicle *VehiclePending;
+	/* 0x2530 */ GameCamera *Camera;
+	/* 0x2534 */ PadButtonStatus *Paddata;
+	/* 0x2538 */ float PlayerPositionX;
+	/* 0x253c */ float PlayerPositionZ;
+	/* 0x2540 */ float PlayerPositionY;
+	/* 0x2544 */ int mpIndex;
+	/* 0x2548 */ int mpTeam;
+	/* 0x254c */ int vehicleState;
+	/* 0x2550 */ int vehicleStateTimer;
+	/* 0x2554 */ int pointsLastKill;
+	/* 0x2558 */ struct tNW_Player *pNetPlayer;
+	/*        */ char unk_255c[0x1c];
+	/* 0x2578 */ Moby *lastVehicleMoby;
+	/*        */ int unk_257c;
+	/* 0x2580 */ char Animation_RightArm[0x3c0];
+	/* 0x2940 */ char Animation_LeftArm[0x3c0];
+	/* 0x2D00 */ char Animation_RightArm_Unk1[0x400];
+	/* 0x3100 */ char Animation_RightArm_Unk2[0x400];
+	/* 0x3500 */ char Animation_LeftArm_Unk1[0x400];
+	/* 0x3900 */ char Animation_LeftArm_Unk2[0x400];
+	/* 0x3D00 */ char Animation_Unk[0x540];
+	/*        */ char unk_4240[0xc0];
 	union {
 		struct {
-			int frameSentStick;								// 0x4300
-			float damageDone;								// 0x4304
-			short int numKills;								// 0x4308
-			short slot;										// 0x430A
-			PadStream padStream;							// 0x430C
-			unsigned char startGameButtonOffFrames;			// 0x44EC
-			unsigned char curPadMsgSequenceNum;				// 0x44ED
-			char curPadMsgFrame;							// 0x44EE
-			char framesUntilStateRot;						// 0x44EF
-			short mapTimer;									// 0x44F0
-			short int lastMineId;							// 0x44F2
-			HeroCommand command;							// 0x44F4
+	/* 0x4300 */ int frameSentStick;
+	/* 0x4304 */ float damageDone;
+	/* 0x4308 */ short int numKills;
+	/* 0x430a */ short slot;
+	/* 0x430c */ PadStream padStream;
+	/* 0x44ec */ unsigned char startGameButtonOffFrames;
+	/* 0x44ed */ unsigned char curPadMsgSequenceNum;
+	/* 0x44ef */ char curPadMsgFrame;
+	/* 0x44ef */ char framesUntilStateRot;
+	/* 0x44F0 */ short mapTimer;
+	/* 0x44F2 */ short int lastMineId;
+	/* 0x44F4 */ HeroCommand command;
 		} LocalHero;
 	};
 	// END! :D  (Size: 0x4500)
