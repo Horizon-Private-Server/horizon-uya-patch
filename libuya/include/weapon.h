@@ -147,5 +147,7 @@ typedef struct GadgetDef { // 0x80
  */
 __LIBUYA_GETTER__ GadgetDef * weaponGadgetList(void);
 
+// returns true if given weapon ID is available in game.
+int weaponIsEnabled(int weaponId);
 
 #endif // _LIBUYA_WEAPON_H_

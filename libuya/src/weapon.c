@@ -33,6 +33,35 @@ VariableAddress_t vaWeaponsPvar = {
 #endif
 };
 
+// GadgetBox: Is Weapon Enabled?
+VariableAddress_t vaGB_IsWeaponEnabled = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00545bb0,
+    .Hoven = 0x00547d78,
+    .OutpostX12 = 0x0053d650,
+    .KorgonOutpost = 0x0053ad38,
+    .Metropolis = 0x0053a138,
+    .BlackwaterCity = 0x00537920,
+    .CommandCenter = 0x00537178,
+    .BlackwaterDocks = 0x005399f8,
+    .AquatosSewers = 0x00538cf8,
+    .MarcadiaPalace = 0x00538678,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x005432a0,
+    .Hoven = 0x005453a8,
+    .OutpostX12 = 0x0053acc0,
+    .KorgonOutpost = 0x00538428,
+    .Metropolis = 0x00537828,
+    .BlackwaterCity = 0x00534f90,
+    .CommandCenter = 0x005349c0,
+    .BlackwaterDocks = 0x00537200,
+    .AquatosSewers = 0x00536540,
+    .MarcadiaPalace = 0x00535e80,
+#endif
+};
+
 /*
  * Returns pointer to the start of the moby list.
  */
