@@ -478,3 +478,8 @@ VARIABLE_FUNCTION(randRadian, vaMB_randRot)
 #VARIABLE_FUNCTION(randVector, 0x004b7e50)
 #VARIABLE_FUNCTION(randVectorRangeNeg, 0x005083c8)
 #VARIABLE_FUNCTION(randVectorRange, 0x00508448)
+
+#--------------------------------------------------------
+#------------------------ WEAPON ------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(weaponIsEnabled, vaGB_IsWeaponEnabled)
