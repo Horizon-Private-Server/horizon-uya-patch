@@ -350,6 +350,20 @@ void runExceptionHandler(void)
 	}
 }
 
+int botsInGame(void)
+{
+	int i;
+	char * CPU = "CPU-";
+	GameSettings *gs = gameGetSettings();
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		if (strncmp(CPU, gs->PlayerNames[i], 4)) {
+			printf("\nBOTS IN GAME! UH OH, AI COMMIN FOR YA!\n");
+			return true;
+		}
+	}
+	return false;
+}
+
 /*
  * NAME :		runCameraSpeedPatch
  * 
@@ -602,15 +616,18 @@ void patchSniperWallSniping(void)
 	if (patched.gameConfig.grFluxShotsAlwaysHit)
 		return;
 
-	// hook when collision checking is done on the sniper shot
-	u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
-	POKE_U32(hookAddr + 0x04, 0x0260302D);
-	HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
+	// if there are no CPU Bots in the game
+	if (!botsInGame()) {
+		// hook when collision checking is done on the sniper shot
+		u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
+		POKE_U32(hookAddr + 0x04, 0x0260302D);
+		HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
 
-	// change sniper shot initialization code to write the guber event to the shot's pvars
-	// for use later by patchSniperWallSniping_Hook
-	hookAddr = GetAddress(&vaSniperShotCreatedHook);
-	POKE_U32(hookAddr, 0xAE35005C);
+		// change sniper shot initialization code to write the guber event to the shot's pvars
+		// for use later by patchSniperWallSniping_Hook
+		hookAddr = GetAddress(&vaSniperShotCreatedHook);
+		POKE_U32(hookAddr, 0xAE35005C);
+	}
 
 	patched.gameConfig.grFluxShotsAlwaysHit = 1;
 }
@@ -665,10 +682,14 @@ void patchSniperNiking(void)
 	if (patched.gameConfig.grFluxNikingDisabled)
 		return;
 
-	u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
-	POKE_U32(hookAddr - 0x0C, 0x46000306);
-	POKE_U32(hookAddr + 0x04, 0x02803021);
-	HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
+	// Check to see if there are any bots in the game.
+	// If there are, don't patch anything.
+	if (!botsInGame()) {
+		u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
+		POKE_U32(hookAddr - 0x0C, 0x46000306);
+		POKE_U32(hookAddr + 0x04, 0x02803021);
+		HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
+	}
 	patched.gameConfig.grFluxNikingDisabled = 1;
 }
 
@@ -2720,12 +2741,10 @@ int main(void)
 		grGameStart();
 
 		// Patch Flux Niking
-		if (gameConfig.grFluxNikingDisabled)
-			patchSniperNiking();
+		patchSniperNiking();
 
 		// Patch Flux Wall Sniping
-		if (gameConfig.grFluxShotsAlwaysHit)
-			patchSniperWallSniping();
+		patchSniperWallSniping();
 
 		// Patch Quick Select to use custom timer.
 		patchQuickSelectTimer();
