@@ -357,11 +357,11 @@ int botsInGame(void)
 	GameSettings *gs = gameGetSettings();
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		if (strncmp(CPU, gs->PlayerNames[i], 4)) {
-			printf("\nBOTS IN GAME! UH OH, AI COMMIN FOR YA!\n");
-			return true;
+			DPRINTF("\nBOTS IN GAME! UH OH, AI COMIN' FOR YA!\n");
+			return 1;
 		}
 	}
-	return false;
+	return 0;
 }
 
 /*
