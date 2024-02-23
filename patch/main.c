@@ -1492,11 +1492,8 @@ void patchCreateGameMenu(void)
  */
 void patchAlwaysShowHealth(void)
 {
-	static u32 healthbar_timer = 0;
+	u32 healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);;
 	Player *player = (Player *)PLAYER_STRUCT;
-	if (!healthbar_timer)
-		healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);
-
 	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
 	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
 		*(u32*)healthbar_timer = 0;
