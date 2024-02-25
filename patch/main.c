@@ -2073,8 +2073,8 @@ void runCampaignMusic(void)
 	// If in game
 	if (isInGame())
 	{
-		static short CurrentTrack = 0;
-		static short NextTrack = 0;
+		short CurrentTrack = 0;
+		short NextTrack = 0;
 		music_Playing* music = musicGetTrackInfo();
 		// double check if min/max info are correct
 		if (config.enableSingleplayerMusic) {
@@ -2125,6 +2125,9 @@ void runCampaignMusic(void)
 		}
 	} else if (isInMenus() && FinishedConvertingTracks) {
 		FinishedConvertingTracks = 0;
+		SetupMusic = 0;
+		AddedTracks = 0;
+		TotalTracks = 0;
 	}
 }
 
