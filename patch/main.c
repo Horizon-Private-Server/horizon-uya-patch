@@ -589,17 +589,37 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
  */
 void patchSniperWallSniping(void)
 {
-	// if there are no CPU Bots in the game
-	if (!botsInGame()) {
+	if (gameConfig.grFluxShotsAlwaysHit) {
 		// hook when collision checking is done on the sniper shot
 		u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
-		POKE_U32(hookAddr + 0x04, 0x0260302D);
-		HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
+		if (hookAddr) {
+			POKE_U32(hookAddr + 0x04, 0x0260302D);
+			HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
+		}
 
 		// change sniper shot initialization code to write the guber event to the shot's pvars
 		// for use later by patchSniperWallSniping_Hook
 		hookAddr = GetAddress(&vaSniperShotCreatedHook);
-		POKE_U32(hookAddr, 0xAE35005C);
+		if (hookAddr) {
+			POKE_U32(hookAddr, 0xAE35005C);
+		}
+	} else {
+		if (botsInGame())
+			return;
+
+		// hook when collision checking is done on the sniper shot
+		u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
+		if (hookAddr) {
+			POKE_U32(hookAddr + 0x04, 0x0260302D);
+			HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
+		}
+
+		// change sniper shot initialization code to write the guber event to the shot's pvars
+		// for use later by patchSniperWallSniping_Hook
+		hookAddr = GetAddress(&vaSniperShotCreatedHook);
+		if (hookAddr) {
+			POKE_U32(hookAddr, 0xAE35005C);
+		}
 	}
 }
 
@@ -653,13 +673,23 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
  */
 void patchSniperNiking(void)
 {
-	// Check to see if there are any bots in the game.
-	// If there are, don't patch anything.
-	if (!botsInGame()) {
+	if (gameConfig.grFluxNikingDisabled) {
 		u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
-		POKE_U32(hookAddr - 0x0C, 0x46000306);
-		POKE_U32(hookAddr + 0x04, 0x02803021);
-		HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
+		if (hookAddr) {
+			POKE_U32(hookAddr - 0x0C, 0x46000306);
+			POKE_U32(hookAddr + 0x04, 0x02803021);
+			HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
+		}
+	} else {
+		if (botsInGame())
+			return;
+
+		u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
+		if (hookAddr) {
+			POKE_U32(hookAddr - 0x0C, 0x46000306);
+			POKE_U32(hookAddr + 0x04, 0x02803021);
+			HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
+		}
 	}
 }
 
@@ -2619,7 +2649,9 @@ int main(void)
 	runCameraSpeedPatch();
 
 	// Patches FOV to let it be user selectable.
+	#if DEBUG
 	patchFov();
+	#endif
 
 	// 
 	onConfigUpdate();
@@ -2679,8 +2711,10 @@ int main(void)
 		runFpsCounter();
 
 		// Run Spectate
+		#if DEBUG
 		if (config.enableSpectate)
 			runSpectate();
+		#endif
 
 		// Patches gadget events as they come in.
 		// patchGadgetEvents();
