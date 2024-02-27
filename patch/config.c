@@ -184,7 +184,9 @@ MenuElem_ListData_t dataCustomMaps = {
 
 // maps with their own exclusive gamemode
 char dataCustomMapsWithExclusiveGameMode[] = {
+#if DEBUG
   CUSTOM_MAP_SPLEEF,
+#endif
 };
 const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithExclusiveGameMode)/sizeof(char);
 
@@ -195,8 +197,10 @@ MenuElem_ListData_t dataCustomModes = {
     CUSTOM_MODE_COUNT,
     {
       "None",
-      "Infected"
-      // "Juggernaught"
+#if DEBUG
+      "Infected",
+      "Juggernaught"
+#endif
     }
 };
 
@@ -317,7 +321,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt },
-#if UYA_NTSC
+#if DEBUG
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
@@ -325,7 +329,9 @@ MenuElem_t menuElementsGeneral[] = {
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake },
   { "Cycle Order", listActionHandler, menuStateAlwaysEnabledHandler, &dataCycleOrder },
+#if DEBUG
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
+#endif
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   // { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate },
@@ -352,8 +358,8 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
   { "V2s", listActionHandler, menuStateHandler_Default, &dataV2_Setting },
   { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown },
-  // { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit },
-  // { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled },
+  { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit },
+  { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
   // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars },
@@ -366,7 +372,9 @@ MenuElem_t menuElementsGameSettings[] = {
 
   { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones },
   { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets },
+#if DEBUG
   { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots },
+#endif
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
   { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
@@ -1674,8 +1682,10 @@ void configMenuDisable(void)
         gameConfig.grDisableHealthBoxes = 0;
         gameConfig.grDisableWeaponCrates = 1;
         gameConfig.grDisableAmmoPickups = 1;
-        gameConfig.grFluxShotsAlwaysHit = 1;
-        gameConfig.grFluxNikingDisabled = 1;
+        gameConfig.grDisableDrones = 1;
+        gameConfig.grDisablePlayerTurrets = 1;
+        // gameConfig.grFluxShotsAlwaysHit = 1;
+        // gameConfig.grFluxNikingDisabled = 1;
         break;
       }
       case 2: // 1v1
@@ -1690,8 +1700,8 @@ void configMenuDisable(void)
         gameConfig.grV2s = 1; // Off
         gameConfig.grNoCooldown = 1;
         gameConfig.grVampire = 4; // 100%
-        gameConfig.grFluxShotsAlwaysHit = 1;
-        gameConfig.grFluxNikingDisabled = 1;
+        // gameConfig.grFluxShotsAlwaysHit = 1;
+        // gameConfig.grFluxNikingDisabled = 1;
         break;
       }
     }
