@@ -34,7 +34,7 @@
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
-#include "include/interop.h"
+#include "interop/patch.h"
 #include "include/config.h"
 #include "include/cheats.h"
 
@@ -129,6 +129,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 
 PatchGameConfig_t gameConfig;
 PatchGameConfig_t gameConfigHostBackup;
+PatchPatches_t patched;
 VoteToEndState_t voteToEndState;
 PatchStateContainer_t patchStateContainer;
 
@@ -196,6 +197,22 @@ void pushScrPrintLine(char* str)
 
   strncpy(dscrprintlines[i], str, MAX_DEBUG_SCR_PRINT_LINE_LEN);
   dscrprintlinescount = i + 1;
+}
+#endif
+
+#if BENCHMARK
+static long TestBegan = 0;
+static long TestEnd = 0;
+
+long getMsSinceTestBegan(void)
+{
+	return (timerGetSystemTime() - TestBegan) / SYSTEM_TIME_TICKS_PER_MS;
+}
+void benchmark_timePrint(char *title)
+{
+	printf("%s: %dms\n", title, (int)getMsSinceTestBegan());
+	// reset time begun after each new printf
+	TestBegan = timerGetSystemTime();
 }
 #endif
 
@@ -276,7 +293,8 @@ void onServerTimeResponse(void* connection, void* data)
 	memcpy(&response, data, sizeof(DateResponse_t));
 	DPRINTF("\nDate: %d/%d", response.Month, response.Day);
 	patchPointers.ServerTimeMonth = response.Month;
-	patchPointers.ServerTimeDay = response.Day;
+	// not adding 1 to the date broke things on January 31st.
+	patchPointers.ServerTimeDay = response.Day + 1;
 }
 
 //------------------------------------------------------------------------------
@@ -316,9 +334,8 @@ void runExceptionHandler(void)
 			((void (*)(void))EXCEPTION_DISPLAY_ADDR)();
 			hasInstalledExceptionHandler = 1;
 		}
-		
-		// change "a fatal error as occured." to region and map.
-		char * mapStr = checkMap();
+
+		char * mapStr = checkMap();		// change "a fatal error as occured." to region and map.
 		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x794), regionStr, 6);
 		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x79a), mapStr, 20);
 		
@@ -383,34 +400,37 @@ void runCameraSpeedPatch(void)
 			}
 		}
 
-	}
-	else if (isInGame())
-	{
-		// overwrite in game camera speed control max
-
+	} else if (isInGame()) {
 		// replaces limiter function so that input can go past default 100
 		u32 updateCameraSpeedIGFunc = GetAddress(&vaUpdateCameraSpeedIGFunc);
-		if (updateCameraSpeedIGFunc) {
-			*(u16*)(updateCameraSpeedIGFunc + 0x130) = MAX_CAMERA_SPEED;
-			*(u16*)(updateCameraSpeedIGFunc + 0x154) = MAX_CAMERA_SPEED+1;
-		}
+		*(u16*)(updateCameraSpeedIGFunc + 0x130) = MAX_CAMERA_SPEED;
+		*(u16*)(updateCameraSpeedIGFunc + 0x154) = MAX_CAMERA_SPEED+1;
 
-		// replace drawing function denominator to scale input down to 0 to our MAX
-		u32 drawCameraSpeedInputIGFunc = GetAddress(&vaDrawCameraSpeedInputIGFunc);
-		if (drawCameraSpeedInputIGFunc) {
-			asm __volatile(
-					"mtc1 %0, $f12\n"
-					"cvt.s.w $f12, $f12\n"
-					"mfc1 $t0, $f12\n"
-					"srl $t0, $t0, 16\n"
-					"sh $t0, 0(%1)"
-					: : "r" (MAX_CAMERA_SPEED), "r" (drawCameraSpeedInputIGFunc)
-			);
-		}
-		// draw percentage if in start menu
-		u32 img = gfxGetPreLoadedImageBufferSource(0);
+		// if start menu isn't open
 		int p = playerGetFromSlot(0)->PauseOn;
-		if (p && *(int*)(img + 0xc) == 5) {
+		if (!p)
+			return;
+		
+		// if not on correct pause screen
+		u32 img = gfxGetPreLoadedImageBufferSource(0);
+		if (img && *(int*)(img + 0xc) == 5) {
+			// replace drawing function denominator to scale input down to 0 to our MAX
+			static u32 drawCameraSpeedInputIGFunc = 0;
+			if (!drawCameraSpeedInputIGFunc)
+				drawCameraSpeedInputIGFunc = GetAddress(&vaDrawCameraSpeedInputIGFunc);
+			
+			if (drawCameraSpeedInputIGFunc) {
+				asm __volatile(
+						"mtc1 %0, $f12\n"
+						"cvt.s.w $f12, $f12\n"
+						"mfc1 $t0, $f12\n"
+						"srl $t0, $t0, 16\n"
+						"sh $t0, 0(%1)"
+						: : "r" (MAX_CAMERA_SPEED), "r" (drawCameraSpeedInputIGFunc)
+				);
+			}
+
+			// Draw peercentage
 			char buf[12];
 			#ifdef UYA_PAL
 				int PLAYER_ROTATION = 0x001a5894;
@@ -462,14 +482,15 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
  */
 void patchKillStealing(void)
 {
-	int the_hook = GetAddress(&vaWhoHitMeHook);
-	int the_patch = 0x0C000000 | ((u32)&patchKillStealing_Hook >> 2);
-	if (*(u32*)the_hook != the_patch)
-		*(u32*)the_hook = the_patch;
+	if (patched.killStealing)
+		return;
+
+	HOOK_JAL(GetAddress(&vaWhoHitMeHook), &patchKillStealing_Hook);
+	patched.killStealing = 1;
 }
 
 /*
- * NAME :		patchDeathJumping
+ * NAME :		patchDeadJumping
  * 
  * DESCRIPTION :
  * 			Patches Dead Jumping by setting the can't move timer.
@@ -546,8 +567,11 @@ int patchDeadShooting_Hook(int pad)
  */
 void patchDeadShooting(void)
 {
-	if (*(u32*)GetAddress(&vaPatchDeadShooting_ShootingHook) != 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2))
-		*(u32*)GetAddress(&vaPatchDeadShooting_ShootingHook) = 0x0C000000 | ((u32)&patchDeadShooting_Hook >> 2);
+	if (patched.deadShooting)
+		return;
+
+	HOOK_JAL(GetAddress(&vaPatchDeadShooting_ShootingHook), &patchDeadShooting_Hook);
+	patched.deadShooting = 1;
 }
 
 int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* moby, u64 t0)
@@ -626,10 +650,7 @@ void patchSniperWallSniping(void)
 void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 {
 	// call base
-	u32 getShotDirectionFunction = GetAddress(&vaGetSniperShotDirectionFunc);
-	if (getShotDirectionFunction) {
-		((void (*)(float, VECTOR, VECTOR))getShotDirectionFunction)(f12 * 0.01666666666, out, in);
-	}
+	((void (*)(float, VECTOR, VECTOR))GetAddress(&vaGetSniperShotDirectionFunc))(f12 * 0.01666666666, out, in);
 
 #if UYA_PAL
 	Moby** collHitMoby = (Moby**)0x0025b898;
@@ -673,23 +694,11 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
  */
 void patchSniperNiking(void)
 {
-	if (gameConfig.grFluxNikingDisabled) {
-		u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
-		if (hookAddr) {
-			POKE_U32(hookAddr - 0x0C, 0x46000306);
-			POKE_U32(hookAddr + 0x04, 0x02803021);
-			HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
-		}
-	} else {
-		if (botsInGame())
-			return;
-
-		u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
-		if (hookAddr) {
-			POKE_U32(hookAddr - 0x0C, 0x46000306);
-			POKE_U32(hookAddr + 0x04, 0x02803021);
-			HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
-		}
+	u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
+	if (hookAddr) {
+		POKE_U32(hookAddr - 0x0C, 0x46000306);
+		POKE_U32(hookAddr + 0x04, 0x02803021);
+		HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
 	}
 }
 
@@ -709,6 +718,9 @@ void patchSniperNiking(void)
  */
 void patchWeaponShotLag(void)
 {
+	if (patched.weaponShotLag)
+		return;
+
 	int TCP = 0x24040040;
 
 	// Send all weapon shots reliably (Use TCP instead of UDP)
@@ -720,6 +732,8 @@ void patchWeaponShotLag(void)
 	int FluxAddr = GetAddress(&vaFluxUDPtoTCP);
 	if (*(u32*)FluxAddr == 0x90A407D4)
 		*(u32*)FluxAddr = TCP;
+
+	patched.weaponShotLag = 1;
 }
 
 /*
@@ -738,17 +752,12 @@ void patchWeaponShotLag(void)
  */
 void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short GadgetId, int t0, int StackPointer)
 {
-	int GEF = GetAddress(&vaGadgetEventFunc);
 	Player * player = (Player*)((u32)message - 0x1a40);
 	struct tNW_GadgetEventMessage * msg = (struct tNW_GadgetEventMessage*)message;
 	// GadgetEventType 7 = Niked, or splash damage.
-	if (msg && GadgetEventType == 7)
-	{
-		if(GadgetId == 3)
-		{
-			GadgetEventType = 8;
-		}
-	}
+	if (msg && GadgetEventType == 7 && GadgetId == 3)
+		GadgetEventType = 8;
+
 	// GadgetEventType 8 = Hit Something
 	// else if (msg && msg->GadgetEventType == 8)
 	// {
@@ -765,7 +774,7 @@ void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short
 	// 	}
 	// }
 	// run base command
-	((void (*)(int, char, int, short, int, int))GEF)(message, GadgetEventType, ActiveTime, GadgetId, t0, StackPointer);
+	((void (*)(int, char, int, short, int, int))GetAddress(&vaGadgetEventFunc))(message, GadgetEventType, ActiveTime, GadgetId, t0, StackPointer);
 }
 
 /*
@@ -784,7 +793,11 @@ void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short
  */
 void patchGadgetEvents(void)
 {
+	if (patched.gadgetEvents)
+		return;
+
 	HOOK_JAL(GetAddress(&vaGadgetEventHook), &handleGadgetEvents);
+	patched.gadgetEvents = 1;
 }
 
 /*
@@ -803,11 +816,16 @@ void patchGadgetEvents(void)
  */
 void patchLevelOfDetail(void)
 {
-	if (*(u32*)GetAddress(&vaLevelOfDetail_Hook) == 0x02C3B020) {
-		HOOK_J(GetAddress(&vaLevelOfDetail_Hook), &_correctTieLod);
-		// patch jump instruction in correctTieLod to jump back to needed address.
-		u32 val = ((u32)GetAddress(&vaLevelOfDetail_Hook) + 0x8);
-		*(u32*)(&_correctTieLod_Jump) = 0x08000000 | (val / 4);
+	if (!patched.config.levelOfDetail) {
+		u32 hook = GetAddress(&vaLevelOfDetail_Hook);
+		if (*(u32*)hook == 0x02C3B020) {
+			HOOK_J(hook, &_correctTieLod);
+			// patch jump instruction in correctTieLod to jump back to needed address.
+			u32 val = ((u32)hook + 0x8);
+			*(u32*)(&_correctTieLod_Jump) = 0x08000000 | (val / 4);
+		}
+
+		patched.config.levelOfDetail = 1;
 	}
 
 	int lod = config.levelOfDetail;
@@ -819,9 +837,12 @@ void patchLevelOfDetail(void)
 			int TerrainTiesDistance = 320;
 			int ShrubDistance = 500;
 			if (lodChanged) {
-				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+				u32 LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
+				u32 LOD_Ties = GetAddress(&vaLevelOfDetail_Ties);
+				u32 LOD_Terrain = GetAddress(&vaLevelOfDetail_Terrain);
+				*(float*)LOD_Shrubs = ShrubDistance;
+				*(u32*)LOD_Ties = TerrainTiesDistance;
+				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
 			}
 			break;
 		}
@@ -831,9 +852,12 @@ void patchLevelOfDetail(void)
 			int TerrainTiesDistance = 480;
 			int ShrubDistance = 250;
 			if (lodChanged) {
-				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+				u32 LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
+				u32 LOD_Ties = GetAddress(&vaLevelOfDetail_Ties);
+				u32 LOD_Terrain = GetAddress(&vaLevelOfDetail_Terrain);
+				*(float*)LOD_Shrubs = ShrubDistance;
+				*(u32*)LOD_Ties = TerrainTiesDistance;
+				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
 			}
 			break;
 		}
@@ -843,9 +867,12 @@ void patchLevelOfDetail(void)
 			int TerrainTiesDistance = 960;
 			int ShrubDistance = 500;
 			if (lodChanged) {
-				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+				u32 LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
+				u32 LOD_Ties = GetAddress(&vaLevelOfDetail_Ties);
+				u32 LOD_Terrain = GetAddress(&vaLevelOfDetail_Terrain);
+				*(float*)LOD_Shrubs = ShrubDistance;
+				*(u32*)LOD_Ties = TerrainTiesDistance;
+				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
 			}
 
 			break;
@@ -856,9 +883,12 @@ void patchLevelOfDetail(void)
 			int TerrainTiesDistance = 4800;
 			int ShrubDistance = 2500;
 			if (lodChanged) {
-				*(float*)GetAddress(&vaLevelOfDetail_Shrubs) = ShrubDistance;
-				*(u32*)GetAddress(&vaLevelOfDetail_Ties) = TerrainTiesDistance;
-				*(float*)GetAddress(&vaLevelOfDetail_Terrain) = TerrainTiesDistance * 1024;
+				u32 LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
+				u32 LOD_Ties = GetAddress(&vaLevelOfDetail_Ties);
+				u32 LOD_Terrain = GetAddress(&vaLevelOfDetail_Terrain);
+				*(float*)LOD_Shrubs = ShrubDistance;
+				*(u32*)LOD_Ties = TerrainTiesDistance;
+				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
 			}
 			break;
 		}
@@ -984,10 +1014,15 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
  */
 void patchResurrectWeaponOrdering(void)
 {
+	if (patched.resurrectWeaponOrdering)
+		return;
+
 	u32 hook_StripMe = ((u32)GetAddress(&vaPlayerRespawnFunc) + 0x40);
 	u32 hook_RandomWeapons = hook_StripMe + 0x1c;
 	HOOK_JAL(hook_StripMe, &patchResurrectWeaponOrdering_HookWeaponStripMe);
 	HOOK_JAL(hook_RandomWeapons, &patchResurrectWeaponOrdering_HookGiveMeRandomWeapons);
+
+	patched.resurrectWeaponOrdering = 1;
 }
 
 /*
@@ -1129,11 +1164,10 @@ void runFpsCounter_updateHook(void)
  */
 void runFpsCounter(void)
 {
-	int hook = GetAddress(&vaFpsCounter_Hooks);
-	int update = GetAddress(&vaFpsCounter_UpdateFunc);
-	int draw = GetAddress(&vaFpsCounter_DrawFunc);
+	u32 hook = GetAddress(&vaFpsCounter_Hooks);
 	HOOK_JAL(hook, &runFpsCounter_updateHook);
 	HOOK_JAL(((u32)hook + 0x60), &runFpsCounter_drawHook);
+
 	runFpsCounter_Logic();
 }
 
@@ -1170,7 +1204,10 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 
 	// apply our fov modifier
 	// only if not scoping with sniper
-	int FluxRA = GetAddress(&vaFieldOfView_FluxRA);
+	static u32 FluxRA = 0;
+	if (!FluxRA)
+		FluxRA = GetAddress(&vaFieldOfView_FluxRA);
+
 	if (ra != FluxRA && ra != ((u32)FluxRA + 0xe0))
 		fov += (config.playerFov / 10.0) * 1;
 
@@ -1253,11 +1290,15 @@ void patchFov(void)
 	}
 
 	// replace SetFov function
-	HOOK_J(GetAddress(&vaFieldOfView_Hook), &writeFov);
-	POKE_U32((u32)GetAddress(&vaFieldOfView_Hook) + 0x4, 0x03E0382d);
+	if (!patched.config.playerFov) {
+		HOOK_J(GetAddress(&vaFieldOfView_Hook), &writeFov);
+		POKE_U32((u32)GetAddress(&vaFieldOfView_Hook) + 0x4, 0x03E0382d);
 
-	// modify SetPosRot Func. (Needed when player dies)
-	HOOK_JAL(GetAddress(&vaSetPOSRot_fovChange_Hook), &fovChange);
+		// modify SetPosRot Func. (Needed when player dies)
+		HOOK_JAL(GetAddress(&vaSetPOSRot_fovChange_Hook), &fovChange);
+
+		patched.config.playerFov = 1;
+	}
 
 	// initialize fov at start of game
 	if (!ingame || lastFov != config.playerFov) {
@@ -1460,8 +1501,8 @@ void patchCreateGameMenu(void)
  */
 void patchAlwaysShowHealth(void)
 {
+	u32 healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);;
 	Player *player = (Player *)PLAYER_STRUCT;
-	u32 healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);
 	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
 	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
 		*(u32*)healthbar_timer = 0;
@@ -1495,7 +1536,10 @@ void patchMapAndScoreboardToggle(void)
 	GameSettings * gameSettings = gameGetSettings();
 	if (!gameSettings)
 		return;
-	
+
+	if (!config.mapScoreToggle_ScoreBtn && !config.mapScoreToggle_MapBtn)
+		return;
+
 	switch (config.mapScoreToggle_ScoreBtn) {
 		case 0: ScoreboardToggle = -1; break;
 		case 1: ScoreboardToggle = PAD_SELECT; break;
@@ -1825,19 +1869,25 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
  */
 void patchCTFFlag(void)
 {
+	if (!isInGame())
+		return;
+
 	VECTOR t;
 	int i = 0;
 	Player** players = playerGetAll();
 
-	if (!isInGame())
-		return;
 
-	netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
-
-	u32 FlagFunc = GetAddress(&vaFlagUpdate_Func);
-	if (FlagFunc){
-		*(u32*)FlagFunc = 0x03e00008;
-		*(u32*)(FlagFunc + 0x4) = 0x0000102D;
+	static u32 flagFunc = 0;
+	if (!patched.ctfLogic) {
+		netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
+		if (!flagFunc)
+			flagFunc = GetAddress(&vaFlagUpdate_Func);
+		
+		if (flagFunc) {
+			*(u32*)flagFunc = 0x03e00008;
+			*(u32*)(flagFunc + 0x4) = 0x0000102D;
+		}
+		patched.ctfLogic = 1;
 	}
 
 	GuberMoby* gm = guberMobyGetFirst();
@@ -1882,15 +1932,16 @@ int quickSelectTimer(int a0)
 
 		return QuickSelectTimeCurrent == config.quickSelectTimeDelay;
 	}
+
 	// return if quickSelectTimeDelay is off. 
 	return ((int (*)(int))GetAddress(&vaQuickSelectCheck_Func))(a0);
 }
 void patchQuickSelectTimer(void)
 {
-	if (!GetAddress(&vaQuickSelectCheck_Hook))
-		return;
-
-	HOOK_JAL(GetAddress(&vaQuickSelectCheck_Hook), &quickSelectTimer);
+	if (!patched.config.quickSelectTimeDelay) {
+		HOOK_JAL(GetAddress(&vaQuickSelectCheck_Hook), &quickSelectTimer);
+		patched.config.quickSelectTimeDelay = 1;
+	}
 	if (config.quickSelectTimeDelay) {
 		Player* p = playerGetFromSlot(0);
 		if (playerPadGetButtonUp(p, PAD_TRIANGLE))
@@ -2031,8 +2082,8 @@ void runCampaignMusic(void)
 	// If in game
 	if (isInGame())
 	{
-		static short CurrentTrack = 0;
-		static short NextTrack = 0;
+		short CurrentTrack = 0;
+		short NextTrack = 0;
 		music_Playing* music = musicGetTrackInfo();
 		// double check if min/max info are correct
 		if (config.enableSingleplayerMusic) {
@@ -2083,6 +2134,9 @@ void runCampaignMusic(void)
 		}
 	} else if (isInMenus() && FinishedConvertingTracks) {
 		FinishedConvertingTracks = 0;
+		SetupMusic = 0;
+		AddedTracks = 0;
+		TotalTracks = 0;
 	}
 }
 
@@ -2102,15 +2156,16 @@ void runCampaignMusic(void)
  */
 void patchAimAssist(void)
 {
-	Player* p = playerGetFromSlot(0);
-	if (p->fps.Vars.CameraY.target_slowness_factor == 0)
+	if (patched.config.aimAssist)
 		return;
-	
+
+	Player* p = playerGetFromSlot(0);
 	p->fps.Vars.CameraZ.target_slowness_factor_quick = 0;
 	p->fps.Vars.CameraZ.target_slowness_factor_aim = 0;
 	p->fps.Vars.CameraY.target_slowness_factor = 0;
 	p->fps.Vars.CameraY.strafe_turn_factor = 0;
 	p->fps.Vars.CameraY.strafe_tilt_factor = 0;
+	patched.config.aimAssist = 1;
 }
 
 /*
@@ -2420,10 +2475,10 @@ void runCheckGameMapInstalled(void)
  */
 void setupPatchConfigInGame(void)
 {
-    // Get Menu address via current map.
-    u32 Addr = GetAddress(&vaPauseMenuAddr);
-	u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
-	if (*(u32*)(Addr + 0x8) != ConfigEnableFunc) {
+	// u32 ConfigEnableFunc = 0x0C000000 | ((u32)&configMenuEnable >> 2);
+	// Original If: *(u32*)(Addr + 0x8) != ConfigEnableFunc
+	if (!patched.configStartOption) {
+		u32 Addr = GetAddress(&vaPauseMenuAddr);
 		// Insert needed ID, returns string.
 		int str = uiMsgString(0x1115); // Washington, D.C. string ID
 		// Replace "Washington, D.C." string with ours.
@@ -2434,6 +2489,7 @@ void setupPatchConfigInGame(void)
 		u32 ReturnFunction = *(u32*)(Addr + 0x8);
 		// Hook Patch Config into end of "CONTINUE" function.
 		HOOK_J((ReturnFunction + 0x54), &configMenuEnable);
+		patched.configStartOption = 1;
 	}
 }
 
@@ -2609,6 +2665,21 @@ void onOnlineMenu(void)
  */
 int main(void)
 {
+	#if DEBUG
+	Player * p = playerGetFromSlot(0);
+	// 82: Test Server,  85: Prod Server
+	if (p->pNetPlayer->pNetPlayerData->accountId == 82) {
+		static int num = 0;
+		if (padGetButtonDown(0, PAD_L3 | PAD_R3) > 0) {
+			gameEnd(num);
+			num = 0;
+		}
+		if (padGetButtonDown(0, PAD_L1 | PAD_UP) > 0) num = 1;
+		if (padGetButtonDown(0, PAD_L1 | PAD_DOWN) > 0) num = 2;
+		if (padGetButtonDown(0, PAD_L1 | PAD_LEFT) > 0) num = 3;
+		if (padGetButtonDown(0, PAD_L1 | PAD_RIGHT) > 0) num = 4;
+	}
+	#endif
 	// Call this first
 	uyaPreUpdate();
 
@@ -2749,7 +2820,7 @@ int main(void)
 		grLobbyStart();
 
 		// Patch Unkick Bug
-		#if UYA_NTSC
+		#if DEBUG
 		patchUnkick();
 		#endif
 
@@ -2793,6 +2864,10 @@ int main(void)
 				// send
 				configTrySendGameConfig();
 			}
+
+			if (!isInStaging)
+				memset(&patched, 0, sizeof(PatchPatches_t));
+
 			isInStaging = 1;
 		} else {
 			isInStaging = 0;

@@ -4,8 +4,7 @@
 #define PATCH_POINTERS             (*(PatchPointers_t**)0x000CFFC0)
 
 // General Tab
-typedef struct PatchConfig
-{
+typedef struct PatchConfig {
   char enableAutoMaps;
   char disableCameraShake;
   char levelOfDetail;
@@ -23,8 +22,7 @@ typedef struct PatchConfig
 } PatchConfig_t;
 
 // Game Rules Tab
-typedef struct PatchGameConfig
-{
+typedef struct PatchGameConfig {
   // Maps
   char customModeId;
 
@@ -61,14 +59,28 @@ typedef struct PatchGameConfig
   char prPlayerSize;
 } PatchGameConfig_t;
 
-typedef struct PatchPointers
-{
+typedef struct PatchPatches {
+  PatchConfig_t config;
+  PatchGameConfig_t gameConfig;
+  char configStartOption;
+  char killStealing;
+  char deadShooting;
+  char weaponShotLag;
+  char gadgetEvents;
+  char resurrectWeaponOrdering;
+  char ctfLogic;
+
+  // gameConfig misc.
+  char spawnWeaponPackOnDeath;
+  char disableRespawning;
+} PatchPatches_t;
+
+typedef struct PatchPointers {
   char ServerTimeMonth;
   char ServerTimeDay;
 } PatchPointers_t;
 
-typedef struct CustomMapDef
-{
+typedef struct CustomMapDef {
   int Version;
   int BaseMapId;
   int ForcedCustomModeId;
@@ -76,9 +88,7 @@ typedef struct CustomMapDef
   char Filename[64];
 } CustomMapDef_t;
 
-enum CUSTOM_MAP_ID
-{
-
+enum CUSTOM_MAP_ID {
   CUSTOM_MAP_NONE = 0,
 
   // always at the end to indicate how many items there are
@@ -86,8 +96,7 @@ enum CUSTOM_MAP_ID
 };
 
 
-enum CUSTOM_MODE_ID
-{
+enum CUSTOM_MODE_ID {
   CUSTOM_MODE_NONE = 0,
   CUSTOM_MODE_INFECTED,
   CUSTOM_MODE_JUGGERNAUGHT,
