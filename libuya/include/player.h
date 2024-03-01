@@ -1102,11 +1102,13 @@ typedef struct Player { // 0x4500
 	/*        */ char unk_1a1a[0x14];
 	/*        */ char unk_1a2e[0x4];
 	/* 0x1a32 */ WeaponQuickSelect QuickSelect;
-	/*        */ char unk_1a35[0x1e];
-	/* 0x1a53 */ WeaponAmmo WeaponAmmo;
-	/*        */ char unk_1a5f[0x4];
-	/* 0x1a63 */ WeaponMeter WeaponMeter;
-	/*        */ char unk_1a6f[0x11];
+	/*        */ char unk_1a3a[0x6];
+	/* 0x1a40 */ char ChargebootsSlot;
+	/*        */ char unk_1a41[0x11];
+	/* 0x1a52 */ WeaponAmmo WeaponAmmo;
+	/*        */ char unk_1a5e[0x4];
+	/* 0x1a62 */ WeaponMeter WeaponMeter;
+	/*        */ char unk_1a6d[0x12];
 	/* 0x1a80 */ GadgetEvent gadgetEventSlots[10];
 	/*        */ int unk_1da0;
 	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;
