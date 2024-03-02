@@ -730,9 +730,9 @@ VariableAddress_t vaGiveWeaponFunc = {
     .MarcadiaPalace = 0x00536f50,
 #endif
 };
-void playerGiveWeapon(Player * player, int weaponId)
+void playerGiveWeapon(Player * player, int weaponId, int type)
 {
-    internal_playerGiveWeapon((u32)player + 0x1a40, weaponId, 1);
+    internal_playerGiveWeapon((u32)player + 0x1a40, weaponId, type);
 }
 
 VariableAddress_t vaEquipWeaponFunc = {
@@ -796,7 +796,7 @@ VariableAddress_t vaGiveMeRandomWeaponsFunc = {
 };
 void playerGiveRandomWeapons(Player * player, int amount)
 {
-    internal_GiveMeRandomWeapons(player, (!amount) ? 3 : amount);
+    internal_GiveMeRandomWeapons(player, amount);
 }
 
 int playerHasShield(Player * player)

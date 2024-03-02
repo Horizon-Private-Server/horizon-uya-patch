@@ -1423,10 +1423,11 @@ void playerGiveWeaponUpgrade(Player * player, int weaponId);
  * ARGS : 
  *      player      :           Target player.
  * 		weaponId	:			Weapon
+ * 		type		:			0: Gadget, 1: Weapon
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void playerGiveWeapon(Player * player, int weaponId);
+void playerGiveWeapon(Player * player, int weaponId, int type);
 
 /*
  * NAME :		playerEquipWeapon
