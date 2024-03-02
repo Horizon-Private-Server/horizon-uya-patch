@@ -245,6 +245,9 @@ void grGameStart(void)
 	if (gameConfig.grRespawnInvincibility)
 		respawnInvincTimer();
 
+	if (gameConfig.prLoadoutWeaponsOnly)
+		loadoutWeaponsOnly(FirstPass);
+
 	FirstPass = 0;
 }
 

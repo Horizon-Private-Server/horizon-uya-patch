@@ -27,6 +27,7 @@
 #include <libuya/net.h>
 #include <libuya/moby.h>
 #include <libuya/gameplay.h>
+#include <libuya/weapon.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -156,7 +157,7 @@ void v2_logic(void)
 
 		// Loop through each weapon slot
 		u8* slot = (u8*)(u32)player + 0x1a32;
-		for(j = 0; j < 12; ++j) {
+		for(j = 0; j < 8; ++j) {
 			// Check to see if the weapon slow has a weapon.
 			// If so, deofuscate the weapon id and give the player the upgrade.
 			if (slot[j] > 0)
@@ -1102,4 +1103,21 @@ void respawnInvincTimer(void)
 
 	HOOK_JAL(GetAddress(&vaPlayerInvincibleTimer_Hook), &runInvincibilityTimer);
 	patched.gameConfig.grRespawnInvincibility = 1;
+}
+
+void loadoutWeaponsOnly(int first)
+{
+	// only call once at the start of the game.
+	if (!first)
+		return;
+
+	int i;
+	Player *player = playerGetFromSlot(0);
+	// Strip all Weapons
+	patchResurrectWeaponOrdering_HookWeaponStripMe(player);
+	// Give needed weapons
+	patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(player, 3);
+	// Give chargeboots if needed
+	if (gameGetOptions()->GameFlags.MultiplayerGameFlags.Chargeboots == 1)
+		playerGiveWeapon(player, WEAPON_ID_CHARGEBOOTS, 0);
 }

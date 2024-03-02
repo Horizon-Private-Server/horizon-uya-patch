@@ -18,7 +18,9 @@ typedef struct PatchConfig {
   char enableSingleplayerMusic;
   char quickSelectTimeDelay;
   char aimAssist;
-  char cycleOrder;
+  char cycleWeapon1;
+  char cycleWeapon2;
+  char cycleWeapon3;
 } PatchConfig_t;
 
 // Game Rules Tab
@@ -57,6 +59,7 @@ typedef struct PatchGameConfig {
   char prSurvivor;
   char prChargebootForever;
   char prPlayerSize;
+  char prLoadoutWeaponsOnly;
 } PatchGameConfig_t;
 
 typedef struct PatchPatches {

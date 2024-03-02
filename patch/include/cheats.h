@@ -28,6 +28,7 @@ void survivor(void);
 void chargebootForever(void);
 void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay);
 void playerSize(void);
+void loadoutWeaponsOnly(int FirstPass);
 
 // Other
 void disableRespawning(void);

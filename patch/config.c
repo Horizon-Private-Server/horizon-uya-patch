@@ -104,7 +104,7 @@ void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* stat
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_VoteToEndStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
-
+void menuStateHandler_DisabledInGame(TabElem_t* tab, MenuElem_t* element, int* state);
 
 int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value);
 // int menuStateHandler_SelectedWorldOverride(MenuElem_ListData_t* listData, char* value);
@@ -164,11 +164,58 @@ MenuElem_RangeData_t dataQuickSelectTimeDelay = {
     .maxValue = 30,
 };
 
-MenuElem_ListData_t dataCycleOrder = {
-    &config.cycleOrder,
+MenuElem_ListData_t dataCycleWeapon1 = {
+    &config.cycleWeapon1,
     NULL,
-    3,
-    { "Off", "Blitz ->  Flux -> GBomb", "Blitz -> GBomb -> Flux" }
+    10,
+    {
+    "Off",
+    "N60 Storm",
+    "Blitz Cannon",
+    "Flux Rifle",
+    "Mini Rocket Tube",
+    "Gravity Bomb",
+    "Mine Launcher",
+    "Lava Gun",
+    "Morph-O-Ray",
+    "Holo Shield Glove"
+    }
+};
+
+MenuElem_ListData_t dataCycleWeapon2 = {
+    &config.cycleWeapon2,
+    NULL,
+    10,
+    {
+    "Off",
+    "N60 Storm",
+    "Blitz Cannon",
+    "Flux Rifle",
+    "Mini Rocket Tube",
+    "Gravity Bomb",
+    "Mine Launcher",
+    "Lava Gun",
+    "Morph-O-Ray",
+    "Holo Shield Glove"
+    }
+};
+
+MenuElem_ListData_t dataCycleWeapon3 = {
+    &config.cycleWeapon3,
+    NULL,
+    10,
+    {
+    "Off",
+    "N60 Storm",
+    "Blitz Cannon",
+    "Flux Rifle",
+    "Mini Rocket Tube",
+    "Gravity Bomb",
+    "Mine Launcher",
+    "Lava Gun",
+    "Morph-O-Ray",
+    "Holo Shield Glove"
+    }
 };
 
 // map override list item
@@ -328,7 +375,9 @@ MenuElem_t menuElementsGeneral[] = {
   { "Always Show Health", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.alwaysShowHealth },
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake },
-  { "Cycle Order", listActionHandler, menuStateAlwaysEnabledHandler, &dataCycleOrder },
+  { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1 },
+  { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2 },
+  { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3 },
 #if DEBUG
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
 #endif
@@ -383,9 +432,10 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever },
+  { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly },
   // { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize },
+  { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },
 };
 
 // Custom Maps
@@ -712,6 +762,12 @@ void menuStateEnabledInMenusHandler(TabElem_t* tab, MenuElem_t* element, int* st
 {
   if (isInMenus()) *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE;
   else *state = ELEMENT_HIDDEN;
+}
+
+void menuStateHandler_DisabledInGame(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  if (isInMenus()) *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_SELECTABLE;
+  else *state = ELEMENT_VISIBLE | ELEMENT_SELECTABLE;
 }
 
 // 
