@@ -1756,10 +1756,17 @@ void configMenuDisable(void)
         gameConfig.grV2s = 1; // Off
         gameConfig.grNoCooldown = 1;
         gameConfig.grVampire = 4; // 100%
+        gameConfig.grDisableWeaponPacks = 1;
         // gameConfig.grFluxShotsAlwaysHit = 1;
         // gameConfig.grFluxNikingDisabled = 1;
         break;
       }
+    }
+
+    if (gameConfig.prLoadoutWeaponsOnly) {
+      gameConfig.grDisableWeaponPacks = 1;
+      gameConfig.grDisableWeaponCrates = 1;
+      gameConfig.grDisableAmmoPickups = 1;
     }
 
     // send
