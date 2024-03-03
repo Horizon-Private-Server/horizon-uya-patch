@@ -138,6 +138,22 @@ void sendClientVoteForEnd(void);
 extern int scavHuntEnabled;
 extern VoteToEndState_t voteToEndState;
 
+// List of ListElement STrings
+char cycleWeaponNames[][18] = {
+    "Off",
+    "N60 Storm",
+    "Blitz Cannon",
+    "Flux Rifle",
+    "Mini Rocket Tube",
+    "Gravity Bomb",
+    "Mine Glove",
+    "Lava Gun",
+    "Morph-O-Ray",
+    "Holo Shield Glove"
+};
+
+char mapScoreToggleButtons[][8] = {"Default", "Select", "L3", "R3"};
+char respawnTimerMisc[][2] = { "30", "0", "5", "10", "15", "20", "25" };
 
 MenuElem_ListData_t dataLevelOfDetail = {
     &config.levelOfDetail,
@@ -168,54 +184,21 @@ MenuElem_ListData_t dataCycleWeapon1 = {
     &config.cycleWeapon1,
     NULL,
     10,
-    {
-    "Off",
-    "N60 Storm",
-    "Blitz Cannon",
-    "Flux Rifle",
-    "Mini Rocket Tube",
-    "Gravity Bomb",
-    "Mine Launcher",
-    "Lava Gun",
-    "Morph-O-Ray",
-    "Holo Shield Glove"
-    }
+    cycleWeaponNames
 };
 
 MenuElem_ListData_t dataCycleWeapon2 = {
     &config.cycleWeapon2,
     NULL,
     10,
-    {
-    "Off",
-    "N60 Storm",
-    "Blitz Cannon",
-    "Flux Rifle",
-    "Mini Rocket Tube",
-    "Gravity Bomb",
-    "Mine Launcher",
-    "Lava Gun",
-    "Morph-O-Ray",
-    "Holo Shield Glove"
-    }
+    cycleWeaponNames
 };
 
 MenuElem_ListData_t dataCycleWeapon3 = {
     &config.cycleWeapon3,
     NULL,
     10,
-    {
-    "Off",
-    "N60 Storm",
-    "Blitz Cannon",
-    "Flux Rifle",
-    "Mini Rocket Tube",
-    "Gravity Bomb",
-    "Mine Launcher",
-    "Lava Gun",
-    "Morph-O-Ray",
-    "Holo Shield Glove"
-    }
+    cycleWeaponNames
 };
 
 // map override list item
@@ -308,55 +291,47 @@ MenuElem_ListData_t dataRadarBlipsDistance = {
     &gameConfig.grRadarBlipsDistance,
     NULL,
     3,
-    {
-      "Short", "Always", "Off"
-    }
+    { "Short", "Always", "Off" }
 };
 
 MenuElem_ListData_t dataMapScore_MapAccess = {
     &config.mapScoreToggle_MapBtn,
     NULL,
     4,
-    {
-      "Default", "Select", "L3", "R3"
-    }
+    mapScoreToggleButtons
 };
 
 MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
     &config.mapScoreToggle_ScoreBtn,
     NULL,
     4,
-    {
-      "Default", "Select", "L3", "R3"
-    }
+    mapScoreToggleButtons
 };
 
 MenuElem_ListData_t dataGameConfigPreset = {
     &preset,
     NULL,
     3,
-    {
-      "None", "Competitive", "1v1",
-    }
+    { "None", "Competitive", "1v1", }
 };
 
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
     &gameConfig.grRespawnTimer_HealthBoxes,
     NULL,
     7,
-    { "30", "0", "5", "10", "15", "20", "25" }
+    respawnTimerMisc
 };
 MenuElem_ListData_t dataRespawnTimer_WeaponCrates = {
     &gameConfig.grRespawnTimer_WeaponCrates,
     NULL,
     7,
-    { "30", "0", "5", "10", "15", "20", "25" }
+    respawnTimerMisc
 };
 MenuElem_ListData_t dataRespawnTimer_AmmoPickups = {
     &gameConfig.grRespawnTimer_AmmoPickups,
     NULL,
     7,
-    { "30", "0", "5", "10", "15", "20", "25" }
+    respawnTimerMisc
 };
 
 // General
