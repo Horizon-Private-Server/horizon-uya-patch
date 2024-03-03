@@ -1441,6 +1441,9 @@ void onMenuUpdate(int inGame)
 
   if (isConfigMenuActive)
   {
+    // prevent pad from affecting menus
+    padDisableInput();
+
 		// draw
 		if (padGetButtonDown(0, PAD_L3) <= 0)
 		{
@@ -1788,7 +1791,4 @@ void configMenuEnable(void)
   tabElements[selectedTabItem].stateHandler(&tabElements[selectedTabItem], &state);
   if ((state & ELEMENT_SELECTABLE) == 0 || (state & ELEMENT_VISIBLE) == 0)
     selectedTabItem = 0;
-  
-  // prevent pad from affecting menus
-  padDisableInput();
 }
