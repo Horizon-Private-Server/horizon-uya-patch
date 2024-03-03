@@ -282,9 +282,7 @@ MenuElem_ListData_t dataPlayerSize = {
     &gameConfig.prPlayerSize,
     NULL,
     5,
-    {
-      "Normal", "Large", "Giant", "Tiny", "Small"
-    }
+    { "Normal", "Large", "Giant", "Tiny", "Small" }
 };
 
 MenuElem_ListData_t dataRadarBlipsDistance = {
