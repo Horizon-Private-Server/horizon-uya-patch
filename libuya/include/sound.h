@@ -1,9 +1,7 @@
 /***************************************************
  * FILENAME :		sound.h
- * 
  * DESCRIPTION :
  * 		Contains sound specific offsets and structures for Deadlocked.
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

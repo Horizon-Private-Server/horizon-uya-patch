@@ -1,9 +1,6 @@
 /***************************************************
  * FILENAME :		net.h
- * 
  * DESCRIPTION :
- * 		
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

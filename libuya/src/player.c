@@ -37,7 +37,6 @@ VariableAddress_t vaEmpty = {
 };
 
 /*
- * 
  */
 #define PLAYER_STRUCT_ARRAY                         ((Player**)GetAddress(&vaPlayerStructArray))
 

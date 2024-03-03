@@ -1,13 +1,10 @@
 /***************************************************
  * FILENAME :		gamesettings.h
- * 
  * DESCRIPTION :
  * 		Contains lobby specific offsets and structures for Deadlocked.
- * 
  * NOTES :
  * 		Each offset is determined per app id.
  * 		This is to ensure compatibility between versions of Deadlocked/Gladiator.
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -31,13 +28,9 @@ enum GameRuleIds
 
 /*
  * NAME :		GameSettings
- * 
  * DESCRIPTION :
  * 			Contains the lobby's game settings.
- * 
  * NOTES :
- * 
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 typedef struct GameSettings
@@ -101,17 +94,12 @@ typedef struct GameOptions
 
 /*
  * NAME :		gameGetSettings
- * 
  * DESCRIPTION :
  * 			Returns a pointer to the active tNW_GameSettings object.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
  *          Returns NULL if no lobby.
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 GameSettings * gameGetSettings(void);

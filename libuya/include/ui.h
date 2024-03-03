@@ -1,9 +1,6 @@
 /***************************************************
  * FILENAME :		ui.h
- * 
  * DESCRIPTION :
- * 		
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -113,50 +110,35 @@ typedef struct FontWindow { // 0x1c
 
 /*
  * NAME :		uiGetActive
- * 
  * DESCRIPTION :
  * 			Gets the current ui menu id.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_GETTER__ int uiGetActive(void);
 
 /*
  * NAME :		uiShowYesNoDialog
- * 
  * DESCRIPTION :
  * 			Shows a blocking yes no dialog.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
  *          Returns 1 if 'Yes' is selected.
  *          Returns 2 if 'No' is selected.
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int uiShowYesNoDialog(const char * title, const char * description);
 
 /*
  * NAME :		uiShowOkDialog
- * 
  * DESCRIPTION :
  * 			Shows a blocking ok dialog.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int uiShowOkDialog(const char * title, const char * description);
@@ -164,55 +146,40 @@ int uiShowInputDialog(const char * title, char * value, int maxLength);
 int uiShowSelectDialog(const char * option1, const char * option2);
 /*
  * NAME :		uiShowPopup
- * 
  * DESCRIPTION :
  * 			Shows a popup with the given text to the given local player.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          message : Mesasge to show
  *          seconds : how many seconds to show the popup (-1 for default time)
  *          player  : The local player to show the message too.
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void uiShowPopup(Player * player, const char * message, int seconds);
 
 /*
  * NAME :		uiShowHelpPopup
- * 
  * DESCRIPTION :
  * 			Shows a help popup with the given text to the given local player.
- * 
  * NOTES :
- * 
  * ARGS : 
  *      localPlayerIndex    :               Local player to show popup for.
  *      message             :               Message to show.
  *      seconds             :               How many seconds to show the popup for.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void uiShowHelpPopup(int localPlayerIndex, const char * message, int seconds);
 
 /*
  * NAME :		uiMsgString
- * 
  * DESCRIPTION :
  * 			Returns the string associated with the given text id.
- * 
  * NOTES :
- * 
  * ARGS : 
  *      textId              :               Id of the string to return.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 char * uiMsgString(int textId);

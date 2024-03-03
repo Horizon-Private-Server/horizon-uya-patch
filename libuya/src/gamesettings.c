@@ -17,7 +17,6 @@
 #define GLOBAL_GAMEOPTIONS			            ((GameOptions*)((u32)GLOBAL_GAMESETTINGS + 0x188))
 
 /*
- *
  */
 #define GAME_KILLS_TO_WIN                       (*(u8*)0x00241654)
 #define VEHICLES_ALLOWED                        (*(u8*)0x00241657)
@@ -38,7 +37,6 @@
 #define GLOBAL_GAMEOPTIONS			            ((GameOptions*)((u32)GLOBAL_GAMESETTINGS + 0x188))
 
 /*
- *
  */
 #define GAME_KILLS_TO_WIN                       (*(u8*)0x002417D4)
 #define VEHICLES_ALLOWED                        (*(u8*)0x002417D7)

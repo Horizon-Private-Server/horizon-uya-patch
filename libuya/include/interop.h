@@ -1,12 +1,8 @@
 /***************************************************
  * FILENAME :		interop.h
- * 
  * DESCRIPTION :
  * 		Provides tools to define and reference/invoke addresses in memory by map.
- * 
  * NOTES :
- * 
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

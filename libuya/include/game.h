@@ -1,11 +1,8 @@
 /***************************************************
  * FILENAME :		game.h
- * 
  * DESCRIPTION :
  * 		Contains game specific offsets and structures for UYA.
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -191,7 +188,6 @@ typedef struct GameData {
 
 /*
  * NAME :		isInGame
- * 
  * DESCRIPTION :
  * 			Whether the client is currently in game world.
  * NOTES :
@@ -225,7 +221,6 @@ __LIBUYA_GETTER__ int isSceneLoading(void);
 
 /*
  * NAME :		gameHasEnded
- * 
  * DESCRIPTION :
  * 			Whether the game has ended and/or is ending.
  * NOTES :
@@ -329,7 +324,6 @@ char* gameGetGameModeName(int gameModeId);
  * NAME :		gameEnd
  * DESCRIPTION :
  * 			End game.
- * 
  * NOTES :
  * ARGS : 
  *      reason :      Why the game ended.
@@ -351,10 +345,8 @@ __LIBUYA_GETTER__ float gameGetDeathHeight(void);
 
 /*
  * NAME :		gameSetDeathHeight
- * 
  * DESCRIPTION :
  * 			Sets the level's death height.
- * 
  * NOTES :
  * ARGS : 
  * RETURN :
@@ -364,7 +356,6 @@ __LIBUYA_SETTER__ void gameSetDeathHeight(float height);
 
 /*
  * NAME :		gameGetData
- * 
  * DESCRIPTION :
  * 			Gets the game data.
  * NOTES :
@@ -376,7 +367,6 @@ __LIBUYA_GETTER__ GameData* gameGetData(void);
 
 /*
  * NAME :		gameGetGSFrame
- * 
  * DESCRIPTION :
  * NOTES :
  * ARGS : 

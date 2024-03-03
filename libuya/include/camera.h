@@ -1,9 +1,6 @@
 /***************************************************
  * FILENAME :		camera.h
- * 
  * DESCRIPTION :
- * 		
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

@@ -1,10 +1,7 @@
 
 /***************************************************
  * FILENAME :		messageid.h
- * 
  * DESCRIPTION :
- * 		
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -14,13 +11,9 @@
 
 /*
  * NAME :		CustomMessageId
- * 
  * DESCRIPTION :
  * 			Contains the different message ids.
- * 
  * NOTES :
- * 
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 enum CustomMessageId

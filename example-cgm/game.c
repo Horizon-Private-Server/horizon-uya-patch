@@ -1,9 +1,7 @@
 /***************************************************
  * FILENAME :		game.c
- * 
  * DESCRIPTION :
  * 		PAYLOAD.
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

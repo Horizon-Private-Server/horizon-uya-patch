@@ -45,17 +45,12 @@ PadHistory LocalPadHistory[PAD_PORT_MAX * 2] = {
 
 /*
  * NAME :		padUpdate
- * 
  * DESCRIPTION :
  * 			Processes pad state, registering when a button is pressed and released.
- * 
  * NOTES :
  *          This must be called every tick in order for pad functionality to work.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void padUpdate(void)
@@ -70,19 +65,14 @@ void padUpdate(void)
 
 /*
  * NAME :		padGetButton
- * 
  * DESCRIPTION :
  * 			Returns 1 when the user is pressing the given button combination.
  *          Returns negative on failure.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          port:                       Which controller port to read.
  *          buttonMask:                 Buttons to check.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int padGetButton(int port, u16 buttonMask)
@@ -97,19 +87,14 @@ int padGetButton(int port, u16 buttonMask)
 
 /*
  * NAME :		padGetButtonDown
- * 
  * DESCRIPTION :
  * 			Returns 1 during the frame that the user starts pressing the given button combination.
  *          Returns negative on failure.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          port:                       Which controller port to read.
  *          buttonMask:                 Buttons to check.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int padGetButtonDown(int port, u16 buttonMask)
@@ -123,19 +108,14 @@ int padGetButtonDown(int port, u16 buttonMask)
 
 /*
  * NAME :		padGetButtonUp
- * 
  * DESCRIPTION :
  * 			Returns 1 during the frame that the user releases the given button combination.
  *          Returns negative on failure.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          port:                       Which controller port to read.
  *          buttonMask:                 Buttons to check.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int padGetButtonUp(int port, u16 buttonMask)
@@ -149,17 +129,12 @@ int padGetButtonUp(int port, u16 buttonMask)
 
 /*
  * NAME :		padResetInput
- * 
  * DESCRIPTION :
  * 			Resets the given ports inputs.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          port:                       Which controller port to reset.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void padResetInput(int port)
@@ -176,16 +151,11 @@ void padResetInput(int port)
 
 /*
  * NAME :		padDisableInput
- * 
  * DESCRIPTION :
  * 			Disables the pad input.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void padDisableInput(void)
@@ -209,16 +179,11 @@ void padDisableInput(void)
 
 /*
  * NAME :		padEnableInput
- * 
  * DESCRIPTION :
  * 			Enables the pad input.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void padEnableInput(void)

@@ -205,7 +205,6 @@ int mobyIsDestroyed(Moby* moby)
 }
 
 /*
- * 
  */
 // int mobyGetNumSpawnableMobys(void)
 // {
@@ -251,7 +250,6 @@ int mobyClassIsLoaded(int oClass)
 }
 
 /*
- *
  */
 Moby* mobyGetByGuberUid(u32 uid)
 {

@@ -1,12 +1,8 @@
 /***************************************************
  * FILENAME :		map.h
- * 
  * DESCRIPTION :
  * 		Contains map specific offsets and structures for UYA.
- * 
  * NOTES :
- * 
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -16,7 +12,6 @@
 #include <tamtypes.h>
 
 /*
- *
  */
 enum MAP_IDS
 {

@@ -1,13 +1,10 @@
 /***************************************************
  * FILENAME :		main.c
- * 
  * DESCRIPTION :
  * 		Unhooks patch file and spawns menu popup telling user patch is downloading.
- * 
  * NOTES :
  * 		Each offset is determined per game region.
  * 		This is to ensure compatibility between versions of UYA PAL/NTSC.
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -101,16 +98,11 @@ int onServerDownloadDataRequest(void * connection, void * data)
 
 /*
  * NAME :		drawFunction
- * 
  * DESCRIPTION :
  * 			Calls the normal draw function.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void drawFunction(void)
@@ -124,16 +116,11 @@ void drawFunction(void)
 
 /*
  * NAME :		onOnlineMenu
- * 
  * DESCRIPTION :
  * 			Called every ui update.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void onOnlineMenu(void)
@@ -163,16 +150,11 @@ void onOnlineMenu(void)
 
 /*
  * NAME :		main
- * 
  * DESCRIPTION :
  * 			Entrypoint.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int main (void)

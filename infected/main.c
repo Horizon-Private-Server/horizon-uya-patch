@@ -1,13 +1,10 @@
 /***************************************************
  * FILENAME :		main.c
- * 
  * DESCRIPTION :
  * 		Infected entrypoint and logic.
- * 
  * NOTES :
  * 		Each offset is determined per app id.
  * 		This is to ensure compatibility between versions of Deadlocked/Gladiator.
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -210,17 +207,12 @@ int disableHealthboxes(void)
 
 /*
  * NAME :		isInfected
- * 
  * DESCRIPTION :
  * 			Returns true if the given player is infected.
- * 
  * NOTES :
- * 
  * ARGS : 
  * 		playerId:	Player index
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 inline int isInfected(int playerId)
@@ -230,17 +222,12 @@ inline int isInfected(int playerId)
 
 /*
  * NAME :		infect
- * 
  * DESCRIPTION :
  * 			Infects the given player.
- * 
  * NOTES :
- * 
  * ARGS : 
  * 		playerId:	Player index
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void infect(Player * player)
@@ -259,17 +246,12 @@ void infect(Player * player)
 
 /*
  * NAME :		processPlayer
- * 
  * DESCRIPTION :
  * 			Process player.
- * 
  * NOTES :
- * 
  * ARGS : 
  * 		player:		Player to process.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void processPlayer(Player * player)
@@ -315,17 +297,12 @@ void processPlayer(Player * player)
 
 /*
  * NAME :		getRandomSurvivor
- * 
  * DESCRIPTION :
  * 			Returns a random survivor.
- * 
  * NOTES :
- * 
  * ARGS : 
  * 		seed :		Used to determine the random survivor.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 Player * getRandomSurvivor(u32 seed)
@@ -353,15 +330,11 @@ Player * getRandomSurvivor(u32 seed)
 
 /*
  * NAME :		onPlayerKill
- * 
  * DESCRIPTION :
  * 			Triggers whenever a player is killed.
  * 			Handles detection of when a player infects another.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void onPlayerKill(char * fragMsg)
@@ -381,14 +354,10 @@ void onPlayerKill(char * fragMsg)
 
 /*
  * NAME :		updateGameState
- * 
  * DESCRIPTION :
  * 			Updates the gamemode state for the server stats.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void updateGameState(PatchStateContainer_t * gameState)
@@ -412,17 +381,12 @@ void updateGameState(PatchStateContainer_t * gameState)
 
 /*
  * NAME :		initialize
- * 
  * DESCRIPTION :
  * 			Initializes the gamemode.
- * 
  * NOTES :
  * 			This is called only once at the start.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void initialize(void)
@@ -455,17 +419,12 @@ void initialize(void)
 
 /*
  * NAME :		gameStart
- * 
  * DESCRIPTION :
  * 			Infected game logic entrypoint.
- * 
  * NOTES :
  * 			This is called only when in game.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t * gameState)
@@ -573,17 +532,12 @@ void setLobbyGameOptions(void)
 
 /*
  * NAME :		lobbyStart
- * 
  * DESCRIPTION :
  * 			Infected lobby logic entrypoint.
- * 
  * NOTES :
  * 			This is called only when in lobby.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t * gameState)
@@ -603,17 +557,12 @@ void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameCon
 
 /*
  * NAME :		loadStart
- * 
  * DESCRIPTION :
  * 			Load logic entrypoint.
- * 
  * NOTES :
  * 			This is called only when the game has finished reading the level from the disc and before it has started processing the data.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void loadStart(void)

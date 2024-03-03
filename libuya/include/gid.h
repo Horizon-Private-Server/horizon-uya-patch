@@ -1,10 +1,7 @@
 /***************************************************
  * FILENAME :		gid.h
- * 
  * DESCRIPTION :
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -15,12 +12,9 @@
 
 /*
  * NAME :		Gid
- * 
  * DESCRIPTION :
  * 			Contains the gid definition struct data.
- * 
  * NOTES :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 typedef struct

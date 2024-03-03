@@ -1,9 +1,7 @@
 /***************************************************
  * FILENAME :		stdio.h
- * 
  * DESCRIPTION :
  * 		Contains useful functions for debugging.
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

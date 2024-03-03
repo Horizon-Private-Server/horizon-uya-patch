@@ -1,12 +1,8 @@
 /***************************************************
  * FILENAME :		time.h
- * 
  * DESCRIPTION :
  * 		Contains time related constants.
- * 
  * NOTES :
- * 
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -21,16 +17,11 @@
 
 /*
  * NAME :		timerGetSystemTime
- * 
  * DESCRIPTION :
  * 			Returns system time.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 long timerGetSystemTime(void);

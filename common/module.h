@@ -1,13 +1,10 @@
 /***************************************************
  * FILENAME :		module.h
- * 
  * DESCRIPTION :
  * 		Modules are a way to optimize the limited memory available on the PS2.
  *      Modules are dynamically loaded by the server and dynamically invoked by the patcher.
  *      This header file contains the relevant structues for patch modules.
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -24,15 +21,11 @@ struct GameModule;
 
 /*
  * NAME :		ModuleStart
- * 
  * DESCRIPTION :
  * 			Defines the function pointer for all module entrypoints.
  *          Modules will provide a pointer to their entrypoint that will match
  *          this type.
- * 
  * NOTES :
- * 
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 typedef void (*ModuleStart)(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig);
@@ -40,14 +33,10 @@ typedef void (*ModuleStart)(struct GameModule * module, PatchConfig_t * config, 
 
 /*
  * NAME :		GameModuleState
- * 
  * DESCRIPTION :
  * 			Contains the different states for a game module.
  *          The state will define how the patcher handles the module.
- * 
  * NOTES :
- * 
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 typedef enum GameModuleState
@@ -73,14 +62,11 @@ typedef enum GameModuleState
 
 /*
  * NAME :		GameModule
- * 
  * DESCRIPTION :
  * 			A game module is a dynamically loaded and invoked program.
  *          It contains a state and an entrypoint pointer.
- * 
  * NOTES :
  *          Game modules are only executed while the player is in a game.
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 typedef struct GameModule

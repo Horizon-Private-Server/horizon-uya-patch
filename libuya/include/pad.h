@@ -1,11 +1,8 @@
 /***************************************************
  * FILENAME :		pad.h
- * 
  * DESCRIPTION :
  * 		Contains pad specific offsets and structures for UYA.
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -138,106 +135,76 @@ typedef struct PadHistory
 
 /*
  * NAME :		padGetButton
- * 
  * DESCRIPTION :
  * 			Returns 1 when the user is pressing the given button combination.
  *          Returns negative on failure.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          port:                       Which controller port to read.
  *          buttonMask:                 Buttons to check.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_GETTER__ int padGetButton(int port, u16 buttonMask);
 
 /*
  * NAME :		padGetButtonDown
- * 
  * DESCRIPTION :
  * 			Returns 1 during the frame that the user starts pressing the given button combination.
  *          Returns negative on failure.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          port:                       Which controller port to read.
  *          buttonMask:                 Buttons to check.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_GETTER__ int padGetButtonDown(int port, u16 buttonMask);
 
 /*
  * NAME :		padGetButtonUp
- * 
  * DESCRIPTION :
  * 			Returns 1 during the frame that the user releases the given button combination.
  *          Returns negative on failure.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          port:                       Which controller port to read.
  *          buttonMask:                 Buttons to check.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_GETTER__ int padGetButtonUp(int port, u16 buttonMask);
 
 /*
  * NAME :		padResetInput
- * 
  * DESCRIPTION :
  * 			Resets the given ports inputs.
- * 
  * NOTES :
- * 
  * ARGS : 
  *          port:                       Which controller port to reset.
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 __LIBUYA_SETTER__ void padResetInput(int port);
 
 /*
  * NAME :		padDisableInput
- * 
  * DESCRIPTION :
  * 			Disables the pad input.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void padDisableInput(void);
 
 /*
  * NAME :		padEnableInput
- * 
  * DESCRIPTION :
  * 			Enables the pad input.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void padEnableInput(void);

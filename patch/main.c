@@ -1,13 +1,10 @@
 /***************************************************
  * FILENAME :		main.c
- * 
  * DESCRIPTION :
  * 		Manages and applies all UYA patches.
- * 
  * NOTES :
  * 		Each offset is determined per game region.
  * 		This is to ensure compatibility between versions of UYA PAL/NTSC.
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -368,17 +365,11 @@ int botsInGame(void)
 
 /*
  * NAME :		runCameraSpeedPatch
- * 
  * DESCRIPTION :
- * 
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void runCameraSpeedPatch(void)
 {
@@ -447,16 +438,11 @@ void runCameraSpeedPatch(void)
 
 /*
  * NAME :		patchKillStealing_Hook
- * 
  * DESCRIPTION :
  * 			Filters out hits when player is already dead.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
@@ -470,16 +456,11 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
 }
 /*
  * NAME :		patchKillStealing
- * 
  * DESCRIPTION :
  * 			Patches who hit me on weapon hit with patchKillStealing_Hook.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchKillStealing(void)
@@ -493,16 +474,11 @@ void patchKillStealing(void)
 
 /*
  * NAME :		patchDeadJumping
- * 
  * DESCRIPTION :
  * 			Patches Dead Jumping by setting the can't move timer.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchDeadJumping(void)
@@ -528,16 +504,11 @@ void patchDeadJumping(void)
 
 /*
  * NAME :		patchDeadShooting_Hook
- * 
  * DESCRIPTION :
  * 			If player is dead, don't let them shoot.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int patchDeadShooting_Hook(int pad)
@@ -555,16 +526,11 @@ int patchDeadShooting_Hook(int pad)
 
 /*
  * NAME :		patchDeathShooting
- * 
  * DESCRIPTION :
  * 			Patches the shooting hook with patchDeadShooting_Hook
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchDeadShooting(void)
@@ -601,16 +567,11 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
 
 /*
  * NAME :		patchSniperWallSniping
- * 
  * DESCRIPTION :
  * 			Send Weapon Shots more reliably.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchSniperWallSniping(void)
@@ -682,16 +643,11 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 
 /*
  * NAME :		patchSniperNiking
- * 
  * DESCRIPTION :
  * 			Send Weapon Shots more reliably.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchSniperNiking(void)
@@ -706,16 +662,11 @@ void patchSniperNiking(void)
 
 /*
  * NAME :		patchWeaponShotLag
- * 
  * DESCRIPTION :
  * 			Send Weapon Shots more reliably.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchWeaponShotLag(void)
@@ -740,16 +691,11 @@ void patchWeaponShotLag(void)
 
 /*
  * NAME :		handleGadgetEvent
- * 
  * DESCRIPTION :
  * 			Reads gadget events and patches them if needed.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short GadgetId, int t0, int StackPointer)
@@ -781,16 +727,11 @@ void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short
 
 /*
  * NAME :		patchGadgetEvents
- * 
  * DESCRIPTION :
  * 			Hook for the handleGadgetEVentLag function.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchGadgetEvents(void)
@@ -804,16 +745,11 @@ void patchGadgetEvents(void)
 
 /*
  * NAME :		patchLevelOfDetail
- * 
  * DESCRIPTION :
  * 			Sets the level of detail.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchLevelOfDetail(void)
@@ -901,17 +837,12 @@ void patchLevelOfDetail(void)
 
 /*
  * NAME :		patchResurrectWeaponOrdering_HookWeaponStripMe
- * 
  * DESCRIPTION :
  * 			Invoked during the resurrection process, when the game wishes to remove all weapons from the given player.
  * 			Before we continue to remove the player's weapons, we backup the list of equipped weapons.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
@@ -938,12 +869,10 @@ int patchResurrectWeaponOrdering_ConvertToWeaponId(int id)
 }
 /*
  * NAME :		patchResurrectWeaponOrdering_HookGiveMeRandomWeapons
- * 
  * DESCRIPTION :
  * 			Invoked during the resurrection process, when the game wishes to give the given player a random set of weapons.
  * 			After the weapons are randomly assigned to the player, we check to see if the given weapons are the same as the last equipped weapon backup.
  * 			If they contain the same list of weapons (regardless of order), then we force the order of the new set of weapons to match the backup.
- * 
  * 			Consider the scenario:
  * 				Player dies with 								Fusion, B6, Magma Cannon
  * 				Player is assigned 							B6, Fusion, Magma Cannon
@@ -951,11 +880,8 @@ int patchResurrectWeaponOrdering_ConvertToWeaponId(int id)
  * 			If prLoadoutWeaponsOnly
  * 				Player will only spawn with their selected loadout (or default to cycle weapons)
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int weaponCount)
@@ -1021,17 +947,12 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 
 /*
  * NAME :		patchResurrectWeaponOrdering
- * 
  * DESCRIPTION :
  * 			Installs necessary hooks such that when respawning with same weapons,
  * 			they are equipped in the same order.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchResurrectWeaponOrdering(void)
@@ -1049,16 +970,11 @@ void patchResurrectWeaponOrdering(void)
 
 /*
  * NAME :		runFpsCounter_Logic
- * 
  * DESCRIPTION :
  * 			Logic for the FPS counter and drawing the text to screen.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void runFpsCounter_Logic(void)
@@ -1096,16 +1012,11 @@ void runFpsCounter_Logic(void)
 
 /*
  * NAME :		runFpsCounter_drawHook
- * 
  * DESCRIPTION :
  * 			Logic for the GS counter.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void runFpsCounter_drawHook(void)
@@ -1134,16 +1045,11 @@ void runFpsCounter_drawHook(void)
 
 /*
  * NAME :		runFpsCounter_updateHook
- * 
  * DESCRIPTION :
  * 			Logic for the EE counter.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void runFpsCounter_updateHook(void)
@@ -1172,16 +1078,11 @@ void runFpsCounter_updateHook(void)
 
 /*
  * NAME :		runFpsCounter
- * 
  * DESCRIPTION :
  * 			Hooks functions for showing the EE, GS and FPS.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void runFpsCounter(void)
@@ -1195,16 +1096,11 @@ void runFpsCounter(void)
 
 /*
  * NAME :		writeFov
- * 
  * DESCRIPTION :
  * 			Replaces game's SetFov function. Hook installed by patchFov().
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float f14, float f15)
@@ -1266,16 +1162,11 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 
 /*
  * NAME :		fovChange
- * 
  * DESCRIPTION :
  * 			Rewrites the FOV (via SetPosRot) when player dies.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void fovChange(u32 a0)
@@ -1288,16 +1179,11 @@ void fovChange(u32 a0)
 
 /*
  * NAME :		patchFov
- * 
  * DESCRIPTION :
  * 			Installs SetFov override hook.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void patchFov(void)
@@ -1336,16 +1222,11 @@ void patchFov(void)
 
 /*
  * NAME :		patchUnkick_Logic
- * 
  * DESCRIPTION :
  * 				Logic behind fixingi the unkick exploit.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int patchUnkick_Logic(u32 uip)
@@ -1382,17 +1263,12 @@ int patchUnkick_Logic(u32 uip)
 
 /*
  * NAME :		patchUnkick
- * 
  * DESCRIPTION :
  * 				Hook for the patchUnkick_Logic.
  * 				Hooks into the popup loop.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchUnkick(void)
@@ -1409,17 +1285,12 @@ void patchUnkick(void)
 
 /*
  * NAME :		patchDeathBarrierBug
- * 
  * DESCRIPTION :
  * 				Patches death barrier bug/teleport glitch
  * 				that let players fall off the map into the base.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchDeathBarrierBug(void)
@@ -1442,17 +1313,12 @@ void patchDeathBarrierBug(void)
 
 /*
  * NAME :		patchCreateGameMenu
- * 
  * DESCRIPTION :
  * 				Patches various options on the create game screen
  * 				such as higher frag limit and time limit.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchCreateGameMenu_Option(int option, int new_value)
@@ -1509,16 +1375,11 @@ void patchCreateGameMenu(void)
 
 /*
  * NAME :		patchAlwaysShowHealth
- * 
  * DESCRIPTION :
  * 				Always shows the players health bar.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchAlwaysShowHealth(void)
@@ -1536,17 +1397,12 @@ void patchAlwaysShowHealth(void)
 
 /*
  * NAME :		patchMapAndScoreboardToggle
- * 
  * DESCRIPTION :
  * 				Lets the player choose how they want to open the
  * 				Scoreboard or Map (via Select, L3 or R3)
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchMapAndScoreboardToggle(void)
@@ -1612,15 +1468,10 @@ void patchMapAndScoreboardToggle(void)
 
 /*
  * NAME :		flagHandlePickup
- * 
  * DESCRIPTION :
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void flagHandlePickup(Moby* flagMoby, int pIdx)
@@ -1662,18 +1513,13 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 
 /*
  * NAME :		flagRequestPickup
- * 
  * DESCRIPTION :
  * 			Requests to either pickup or return the given flag.
  * 			If host, this request is automatically passed to the handler.
  * 			If not host, this request is sent over the net to the host.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void flagRequestPickup(Moby* flagMoby, int pIdx)
@@ -1712,16 +1558,11 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
 
 /*
  * NAME :		customFlagLogic
- * 
  * DESCRIPTION :
  * 			Reimplements flag pickup logic but runs through our host authoritative logic.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void customFlagLogic(Moby* flagMoby)
@@ -1833,16 +1674,11 @@ void customFlagLogic(Moby* flagMoby)
 
 /*
  * NAME :		onRemoteClientRequestPickUpFlag
- * 
  * DESCRIPTION :
  * 			Handles when a remote client sends the CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP message.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int onRemoteClientRequestPickUpFlag(void * connection, void * data)
@@ -1877,16 +1713,11 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
 }
 /*
  * NAME :		patchCTFFlag
- * 
  * DESCRIPTION :
  * 			Patch CTF Flag update function with our own
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchCTFFlag(void)
@@ -1934,16 +1765,10 @@ void patchCTFFlag(void)
 
 /*
  * NAME :		patchQuickSelectTimer
- * 
  * DESCRIPTION :	Uses a timer for quick select, so I can fine tune the delay of opening it.
- * 			
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int quickSelectTimer(int a0)
@@ -1973,16 +1798,10 @@ void patchQuickSelectTimer(void)
 
 /*
  * NAME :		runCampaignMusic
- * 
  * DESCRIPTION :	Adds Singple Player Tracks to Multiplayer
- * 			
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void runCampaignMusic(void)
@@ -2164,16 +1983,10 @@ void runCampaignMusic(void)
 
 /*
  * NAME :		patchAimAssist
- * 
  * DESCRIPTION :	Disables Aim Assist for player weapons
- * 			
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void patchAimAssist(void)
@@ -2192,16 +2005,11 @@ void patchAimAssist(void)
 
 /*
  * NAME :		onClientVoteToEndStateUpdateRemote
- * 
  * DESCRIPTION :
  * 			Receives when the host updates the vote to end state.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int onClientVoteToEndStateUpdateRemote(void * connection, void * data)
@@ -2212,16 +2020,11 @@ int onClientVoteToEndStateUpdateRemote(void * connection, void * data)
 
 /*
  * NAME :		onClientVoteToEndRemote
- * 
  * DESCRIPTION :
  * 			Receives when another client has voted to end.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int onClientVoteToEndRemote(void * connection, void * data)
@@ -2234,16 +2037,11 @@ int onClientVoteToEndRemote(void * connection, void * data)
 
 /*
  * NAME :		onClientVoteToEnd
- * 
  * DESCRIPTION :
  * 			Handles when a client votes to end.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void onClientVoteToEnd(int playerId)
@@ -2272,16 +2070,11 @@ void onClientVoteToEnd(int playerId)
 
 /*
  * NAME :		sendClientVoteForEnd
- * 
  * DESCRIPTION :
  * 			Broadcasts to all other clients in lobby that this client has voted to end.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void sendClientVoteForEnd(void)
@@ -2299,16 +2092,11 @@ void sendClientVoteForEnd(void)
 
 /*
  * NAME :		voteToEndNumberOfVotesRequired
- * 
  * DESCRIPTION :
  * 			Returns the number of votes required for the vote to pass.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int voteToEndNumberOfVotesRequired(void)
@@ -2328,16 +2116,11 @@ int voteToEndNumberOfVotesRequired(void)
 
 /*
  * NAME :		runVoteToEndLogic
- * 
  * DESCRIPTION :
  * 			Handles all logic related to when a team Ends.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void runVoteToEndLogic(void)
@@ -2389,16 +2172,10 @@ void runVoteToEndLogic(void)
 
 /*
  * NAME :		runGameStartMessager
- * 
  * DESCRIPTION :
- * 
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void runGameStartMessager(void)
@@ -2430,16 +2207,10 @@ void runGameStartMessager(void)
 
 /*
  * NAME :		runCheckGameMapInstalled
- * 
  * DESCRIPTION :
- * 
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void runCheckGameMapInstalled(void)
@@ -2483,16 +2254,11 @@ void runCheckGameMapInstalled(void)
 
 /*
  * NAME :		setupPatchConfigInGame
- * 
  * DESCRIPTION :
  * 				Changes the "CONTINUE" start option to "PATCH MENU"
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void setupPatchConfigInGame(void)
@@ -2517,16 +2283,11 @@ void setupPatchConfigInGame(void)
 
 /*
  * NAME :		drawFunction
- * 
  * DESCRIPTION :
  * 			Calls the normal draw function.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void drawFunction(void)
@@ -2540,16 +2301,10 @@ void drawFunction(void)
 
 /*
  * NAME :		processGameModules
- * 
  * DESCRIPTION :
- * 
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void processGameModules()
@@ -2596,16 +2351,11 @@ void processGameModules()
 
 /*
  * NAME :		onOnlineMenu
- * 
  * DESCRIPTION :
  * 			Called every ui update.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void onOnlineMenu(void)
@@ -2673,16 +2423,11 @@ void onOnlineMenu(void)
 
 /*
  * NAME :		main
- * 
  * DESCRIPTION :
  * 			Applies all patches and modules.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int main(void)

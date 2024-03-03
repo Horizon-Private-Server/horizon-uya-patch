@@ -1,8 +1,6 @@
 /***************************************************
  * FILENAME :		main.c
- * 
  * DESCRIPTION :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

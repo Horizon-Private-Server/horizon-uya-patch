@@ -1,11 +1,8 @@
 /***************************************************
  * FILENAME :		help.h
- * 
  * DESCRIPTION :
  * 		Contains help specific offsets and structures for UYA.
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -15,7 +12,6 @@
 #include "common.h"
 
 /*
- *
  */
 enum HELP_STRING_IDS
 {

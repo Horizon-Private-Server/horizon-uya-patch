@@ -1,11 +1,8 @@
 /***************************************************
  * FILENAME :		guber.h
- * 
  * DESCRIPTION :
  * 		Contains guber specific offsets and structures for UYA.
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -20,14 +17,11 @@
 
 /*
  * NAME :		GuberDef
- * 
  * DESCRIPTION :
  * 			Contains the guber definition struct data.
- * 
  * NOTES :
  *          Mobies are objects that can be spawned in game.
  *          This includes things like vehicles, turrets, mod pads, etc
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

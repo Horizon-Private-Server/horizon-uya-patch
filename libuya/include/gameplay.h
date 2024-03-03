@@ -1,9 +1,6 @@
 /***************************************************
  * FILENAME :		gameplay.h
- * 
  * DESCRIPTION :
- * 		
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -58,7 +55,6 @@ typedef struct GameplayHeaderDef
 } GameplayHeaderDef_t;
 
 /*
- *
  */
 typedef struct GameplayPVarDef
 {
@@ -67,7 +63,6 @@ typedef struct GameplayPVarDef
 } GameplayPVarDef_t;
 
 /*
- *
  */
 typedef struct DL_GameplayMobyDef
 {
@@ -124,7 +119,6 @@ typedef struct GameplayMobyDef // 0x88
 } GameplayMobyDef_t;
 
 /*
- *
  */
 typedef struct GameplayMobyHeaderDef
 {
@@ -135,7 +129,6 @@ typedef struct GameplayMobyHeaderDef
 } GameplayMobyHeaderDef_t;
 
 /*
- *
  */
 typedef struct GameplayCuboidDef
 {
@@ -144,7 +137,6 @@ typedef struct GameplayCuboidDef
 } GameplayCuboidDef_t;
 
 /*
- *
  */
 typedef struct GameplayCuboidHeaderDef
 {

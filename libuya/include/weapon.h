@@ -1,13 +1,10 @@
 /***************************************************
  * FILENAME :		weapon.h
- * 
  * DESCRIPTION :
  * 		Contains weapon specific offsets and structures for UYA.
- * 
  * NOTES :
  * 		Each offset is determined per app id.
  * 		This is to ensure compatibility between versions of Deadlocked/Gladiator.
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -20,13 +17,10 @@
 
 /*
  * NAME :		WEAPON_IDS
- * 
  * DESCRIPTION :
  * 			Defines the value for each weapon id.
- * 
  * NOTES :
  *          
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 enum WEAPON_IDS

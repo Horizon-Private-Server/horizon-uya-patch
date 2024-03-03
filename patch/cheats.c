@@ -1,11 +1,8 @@
 /***************************************************
  * FILENAME :		cheats.c
- * 
  * DESCRIPTION :
  * 		Contains simple cheats/game settings for UYA.
- * 
  * NOTES :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -45,16 +42,10 @@ extern VariableAddress_t vaGiveWeaponFunc;
 
 /*
  * NAME :		disableWeaponPacks
- * 
  * DESCRIPTION :
- * 
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void disableWeaponPacks(void)
@@ -70,16 +61,10 @@ void disableWeaponPacks(void)
 
 /*
  * NAME :		spawnWeaponPackOnDeath
- * 
  * DESCRIPTION :
- * 
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int SpawnedPack = 0;
@@ -133,16 +118,10 @@ void spawnWeaponPackOnDeath(void)
 
 /*
  * NAME :		v2_Setting
- * 
  * DESCRIPTION :
- * 
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 
@@ -202,16 +181,12 @@ void v2_Setting(int setting, int FirstPass)
 
 /*
  * NAME :		AutoRespawn
- * 
  * DESCRIPTION :
  *              DM Only, Freezes in Siege and CTF due to nodes.
  *              Respawns player automatically.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void RespawnPlayer(int a0)
@@ -240,15 +215,11 @@ void AutoRespawn(void)
 
 /*
  * NAME :		setGatlinTurretHealth
- * 
  * DESCRIPTION :
  *              
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int setGattlingTurretHealth(int value)
@@ -284,15 +255,11 @@ int setGattlingTurretHealth(int value)
 
 /*
  * NAME :		deleteSiegeNodeTurret
- * 
  * DESCRIPTION :
  *              
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int deleteSiegeNodeTurrets(void)
@@ -323,15 +290,11 @@ void deleteNodeTurretsUpdate(void)
 
 /*
  * NAME :		ChargebootForever
- * 
  * DESCRIPTION :
  *              Lets Player keep Chargebooting if R2 is held.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void chargebootForever(void)
@@ -350,16 +313,12 @@ void chargebootForever(void)
 
 /*
  * NAME :		disableCameraShake
- * 
  * DESCRIPTION :
  *              Removes Camera Shake
 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void disableCameraShake(void)
@@ -378,16 +337,13 @@ void disableCameraShake(void)
 
 /*
  * NAME :		DisableRespawning
- * 
  * DESCRIPTION :
  *              Only for DM.  Disables respawn timer and pressing x function.
 
  * NOTES :      Only used as a cheat, doesn't get activated via patch menu.
  * 				Important Note:  Can also do: player->timers.noDeathTimer = 10;
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void disableRespawning(void)
@@ -411,17 +367,13 @@ void disableRespawning(void)
 
 /*
  * NAME :		survivor
- * 
  * DESCRIPTION :
  *              Last Person standing wins!  Once a player is dead, they
  *              can't respawn.
 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void survivor(void)
@@ -501,15 +453,11 @@ void survivor(void)
 
 /*
  * NAME :		setRespawnTimer_Player
- * 
  * DESCRIPTION :
  *              Sets respawn timer to certain value.  Also can disable pentaly timers.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void setRespawnTimer_Player(void)
@@ -552,17 +500,14 @@ void setRespawnTimer_Player(void)
 
 /*
  * NAME :		onGameplayLoad_disableMoby
- * 
  * DESCRIPTION :
  *              Disables the specified moby
  * NOTES :
- * 
  * ARGS : 
  * 				gameplay: don't mess with pls.  It's mine!
  *				mobyId: Specified moby ID to disable.
  *				ypos: set mobies y position.
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int ypos)
@@ -579,15 +524,11 @@ void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int 
 
 /*
  * NAME :		keepBaseHealthPadActive
- * 
  * DESCRIPTION :
  *              Keeps Base Ammo/Health Pads Active even if Gatlin Turrets are destroyed.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int keepBaseHealthPadActive(void)
@@ -617,15 +558,11 @@ int keepBaseHealthPadActive(void)
 
 /*
  * NAME :		noPostHitInvinc
- * 
  * DESCRIPTION :
  *              Disables the post hit invicibility timer.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void noPostHitInvinc(void)
@@ -642,15 +579,11 @@ void noPostHitInvinc(void)
 
 /*
  * NAME :		onGameplayLoad_disableWeaponCrates
- * 
  * DESCRIPTION :
  *              Moves weapon crates to the bottom of the map.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void onGameplayLoad_disableWeaponCrates(GameplayHeaderDef_t * gameplay)
@@ -678,15 +611,11 @@ void onGameplayLoad_disableWeaponCrates(GameplayHeaderDef_t * gameplay)
 
 /*
  * NAME :		onGameplayLoad_disableAmmoPickups
- * 
  * DESCRIPTION :
  *              Moves ammo pickups to the bottom of the map.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay)
@@ -713,15 +642,11 @@ void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay)
 
 /*
  * NAME :		playerSize
- * 
  * DESCRIPTION :
  *              Modifies the player's size (and other objects)
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void playerSize(void)
@@ -785,15 +710,11 @@ void playerSize(void)
 
 /*
  * NAME :		onGameplayLoad_playerSize
- * 
  * DESCRIPTION :
  *              Modifies the player's size (and other objects) while game is loading.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay)
@@ -892,15 +813,11 @@ void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay)
 
 /*
  * NAME :		healthbar_Logic
- * 
  * DESCRIPTION :
  *              Shows a healthbar above the players name.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, int strLen)
@@ -943,15 +860,11 @@ void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, i
 }
 /*
  * NAME :		healthbars
- * 
  * DESCRIPTION :
  *              Hooks healthbars_Logic
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void healthbars(void)
@@ -965,15 +878,11 @@ void healthbars(void)
 
 /*
  * NAME :		radarBlips
- * 
  * DESCRIPTION :
  *              Change how far the radarblips can be shown.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void radarBlips(void)
@@ -1001,15 +910,11 @@ void radarBlips(void)
 
 /*
  * NAME :		onGameplayLoad_miscRespawnTimers
- * 
  * DESCRIPTION :
  *              Updates Various respawn timers for items (Health Boxes, Weapon Crates and Ammo Packs)
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
@@ -1069,15 +974,11 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
 
 /*
  * NAME :		runInvincibilityTimer
- * 
  * DESCRIPTION :
  *              Adds a small invincibility timer when a player respawns.
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int runInvincibilityTimer(Player* player, int a1)

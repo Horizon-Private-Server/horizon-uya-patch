@@ -1,11 +1,8 @@
 /***************************************************
  * FILENAME :		sha1.h
- * 
  * DESCRIPTION :
  * 		Contains SHA1 related function definitions found in UYA.
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

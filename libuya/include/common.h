@@ -1,9 +1,6 @@
 /***************************************************
  * FILENAME :		common.h
- * 
  * DESCRIPTION :
- * 		
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

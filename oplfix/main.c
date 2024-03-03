@@ -1,11 +1,7 @@
 /***************************************************
  * FILENAME :		main.c
- * 
  * DESCRIPTION :
- * 		
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -70,16 +66,11 @@ void hook(void * dest, void * functionPtr)
 
 /*
  * NAME :		main
- * 
  * DESCRIPTION :
  * 			Entrypoint.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 int main (void)

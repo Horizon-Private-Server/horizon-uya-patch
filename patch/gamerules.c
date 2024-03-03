@@ -1,11 +1,8 @@
 /***************************************************
  * FILENAME :		gamerules.c
- * 
  * DESCRIPTION :
  * 		Gamerules entrypoint and logic.
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -56,16 +53,12 @@ int VampireHealRate[] = {3, 7, 11, 15};
 
 /*
  * NAME :		vampireLogic
- * 
  * DESCRIPTION :
  *              Handles Vampire Logic.  Heals player if they kill another.
 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void vampireHeal(Player * player, int weaponid)
@@ -134,17 +127,12 @@ u32 onGameplayLoad(void* a0, long a1)
 
 /*
  * NAME :		grInitialize
- * 
  * DESCRIPTION :
  * 			Initializes this module.
- * 
  * NOTES :
  * 			This is called only when in game.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
@@ -168,17 +156,12 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 
 /*
  * NAME :		grGameStart
- * 
  * DESCRIPTION :
  * 			Gamerules game logic entrypoint.
- * 
  * NOTES :
  * 			This is called only when in game.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void grGameStart(void)
@@ -253,17 +236,12 @@ void grGameStart(void)
 
 /*
  * NAME :		grLobbyStart
- * 
  * DESCRIPTION :
  * 			Gamerules lobby logic entrypoint.
- * 
  * NOTES :
  * 			This is called only when in lobby.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void grLobbyStart(void)
@@ -287,17 +265,12 @@ void grLobbyStart(void)
 
 /*
  * NAME :		grLoadStart
- * 
  * DESCRIPTION :
  * 			Gamerules load logic entrypoint.
- * 
  * NOTES :
  * 			This is called only when the game has finished reading the level from the disc and before it has started processing the data.
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void grLoadStart(void)

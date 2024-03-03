@@ -93,105 +93,70 @@ typedef struct music_Globals { // 0xe4
 
 /*
  * NAME :		musicGetSector
- * 
  * DESCRIPTION : Returns music sector value.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int musicGetSector(void);
 
 /*
  * NAME :		musicSetSector
- * 
  * DESCRIPTION :    Sets music sector value.
- * 
  * NOTES :
- * 
  * ARGS :           sector = new sector value.
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void musicSetSector(int sector);
 
 /*
  * NAME :		musicGetNextTrack
- * 
  * DESCRIPTION : Returns the curent track info.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 music_Playing * musicGetTrackInfo(void);
 
 /*
  * NAME :		musicGetNextTrack
- * 
  * DESCRIPTION : Returns the next track that will play.
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int musicGetNextTrack(void);
 
 /*
  * NAME :		musicGetTrackDuration
- * 
  * DESCRIPTION : Returns current track duration
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int musicGetTrackDuration(void);
 
 /*
  * NAME :		musicGetTrackRangeMin
- * 
  * DESCRIPTION : Returns which track to start randomization
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int musicTrackRangeMin(void);
 
 /*
  * NAME :		musicGetTrackRangeMax
- * 
  * DESCRIPTION : Returns the range of how many tracks to randomize through
- * 
  * NOTES :
- * 
  * ARGS : 
- * 
  * RETURN :
- * 
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int musicTrackRangeMax(void);

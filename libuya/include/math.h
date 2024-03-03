@@ -1,11 +1,8 @@
 /***************************************************
  * FILENAME :		math.h
- * 
  * DESCRIPTION :
  * 		Contains many math related function definitions found in UYA.
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 

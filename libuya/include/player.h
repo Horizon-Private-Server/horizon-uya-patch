@@ -1,11 +1,8 @@
 /***************************************************
  * FILENAME :		player.h
- * 
  * DESCRIPTION :
  * 		Contains player specific offsets and structures for UYA.
- * 
  * NOTES :
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -39,13 +36,10 @@
 
 /*
  * NAME :		PlayerCameraType
- * 
  * DESCRIPTION :
  * 			Defines the three player camera types.
  *          These are used in the player struct under 'CameraType'
- * 
  * NOTES :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 typedef enum PlayerCameraType
@@ -57,12 +51,9 @@ typedef enum PlayerCameraType
 
 /*
  * NAME :		PlayerState
- * 
  * DESCRIPTION :
  * 			Defines the player states.
- * 
  * NOTES :
- * 
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 typedef enum PlayerState {
@@ -1283,7 +1274,6 @@ __LIBUYA_GETTER__ int playerPadGetButtonDown(Player * player, u16 buttonMask);
 
 /*
  * NAME :		playerPadGetButtonUp
- * 
  * DESCRIPTION :
  * 			Returns 1 during the frame that the given player releases the given button combination.
  *          Returns negative on failure.
@@ -1300,7 +1290,6 @@ __LIBUYA_GETTER__ int playerPadGetButtonUp(Player * player, u16 buttonMask);
  * NAME :		playerSetPlayerState
  * DESCRIPTION :
  * 			Set Player to a certain state.
- * 
  * NOTES :
  * ARGS : 
  *          player:                     Pointer to player's player object.

@@ -1,13 +1,10 @@
 /***************************************************
  * FILENAME :		moby.h
- * 
  * DESCRIPTION :
  * 		Contains moby specific offsets and structures for Deadlocked.
- * 
  * NOTES :
  * 		Each offset is determined per app id.
  * 		This is to ensure compatibility between versions of Deadlocked/Gladiator.
- * 		
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -635,7 +632,6 @@ __LIBUYA_GETTER__ Moby * mobyListGetStart(void);
 __LIBUYA_GETTER__ Moby * mobyListGetEnd(void);
 
 /*
- *
  */
 __LIBUYA_GETTER__ u16 * mobyGetLoadedMobyClassList(void);
 
@@ -666,12 +662,10 @@ void mobyDestroy(Moby * moby);
 MobyFunctions * mobyGetFunctions(Moby * moby);
 
 /*
- *
  */
 // int mobyGetNumSpawnableMobys(void);
 
 /*
- * 
  */
 // int mobyIsHero(Moby* moby);
 
