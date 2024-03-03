@@ -1006,6 +1006,15 @@ void respawnInvincTimer(void)
 	patched.gameConfig.grRespawnInvincibility = 1;
 }
 
+/*
+ * NAME :		loadoutWeaponsOnly
+ * DESCRIPTION :
+ *              Forces players to use their loudout weapons.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 void loadoutWeaponsOnly(int first)
 {
 	// only call once at the start of the game.
