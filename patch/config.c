@@ -139,7 +139,7 @@ extern int scavHuntEnabled;
 extern VoteToEndState_t voteToEndState;
 
 // List of ListElement STrings
-char cycleWeaponNames[][18] = {
+char* cycleWeaponNames[] = {
     "Off",
     "N60 Storm",
     "Blitz Cannon",
@@ -152,8 +152,8 @@ char cycleWeaponNames[][18] = {
     "Holo Shield Glove"
 };
 
-char mapScoreToggleButtons[][8] = {"Default", "Select", "L3", "R3"};
-char respawnTimerMisc[][2] = { "30", "0", "5", "10", "15", "20", "25" };
+char* mapScoreToggleButtons[] = {"Default", "Select", "L3", "R3"};
+char* respawnTimerMisc[] = { "30", "0", "5", "10", "15", "20", "25" };
 
 MenuElem_ListData_t dataLevelOfDetail = {
     &config.levelOfDetail,
@@ -183,21 +183,21 @@ MenuElem_RangeData_t dataQuickSelectTimeDelay = {
 MenuElem_ListData_t dataCycleWeapon1 = {
     &config.cycleWeapon1,
     NULL,
-    10,
+    sizeof(cycleWeaponNames),
     cycleWeaponNames
 };
 
 MenuElem_ListData_t dataCycleWeapon2 = {
     &config.cycleWeapon2,
     NULL,
-    10,
+    sizeof(cycleWeaponNames),
     cycleWeaponNames
 };
 
 MenuElem_ListData_t dataCycleWeapon3 = {
     &config.cycleWeapon3,
     NULL,
-    10,
+    sizeof(cycleWeaponNames),
     cycleWeaponNames
 };
 
@@ -297,14 +297,14 @@ MenuElem_ListData_t dataRadarBlipsDistance = {
 MenuElem_ListData_t dataMapScore_MapAccess = {
     &config.mapScoreToggle_MapBtn,
     NULL,
-    4,
+    sizeof(mapScoreToggleButtons),
     mapScoreToggleButtons
 };
 
 MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
     &config.mapScoreToggle_ScoreBtn,
     NULL,
-    4,
+    sizeof(mapScoreToggleButtons),
     mapScoreToggleButtons
 };
 
@@ -318,19 +318,19 @@ MenuElem_ListData_t dataGameConfigPreset = {
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
     &gameConfig.grRespawnTimer_HealthBoxes,
     NULL,
-    7,
+    sizeof(respawnTimerMisc),
     respawnTimerMisc
 };
 MenuElem_ListData_t dataRespawnTimer_WeaponCrates = {
     &gameConfig.grRespawnTimer_WeaponCrates,
     NULL,
-    7,
+    sizeof(respawnTimerMisc),
     respawnTimerMisc
 };
 MenuElem_ListData_t dataRespawnTimer_AmmoPickups = {
     &gameConfig.grRespawnTimer_AmmoPickups,
     NULL,
-    7,
+    sizeof(respawnTimerMisc),
     respawnTimerMisc
 };
 
