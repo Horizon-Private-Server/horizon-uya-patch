@@ -138,23 +138,6 @@ void sendClientVoteForEnd(void);
 extern int scavHuntEnabled;
 extern VoteToEndState_t voteToEndState;
 
-// List of ListElement STrings
-char* cycleWeaponNames[] = {
-    "Off",
-    "N60 Storm",
-    "Blitz Cannon",
-    "Flux Rifle",
-    "Mini Rocket Tube",
-    "Gravity Bomb",
-    "Mine Glove",
-    "Lava Gun",
-    "Morph-O-Ray",
-    "Holo Shield Glove"
-};
-
-char* mapScoreToggleButtons[] = {"Default", "Select", "L3", "R3"};
-char* respawnTimerMisc[] = { "30", "0", "5", "10", "15", "20", "25" };
-
 MenuElem_ListData_t dataLevelOfDetail = {
     &config.levelOfDetail,
     NULL,
@@ -183,22 +166,55 @@ MenuElem_RangeData_t dataQuickSelectTimeDelay = {
 MenuElem_ListData_t dataCycleWeapon1 = {
     &config.cycleWeapon1,
     NULL,
-    sizeof(cycleWeaponNames),
-    cycleWeaponNames
+    10,
+    {
+      "Off",
+      "N60 Storm",
+      "Blitz Cannon",
+      "Flux Rifle",
+      "Mini Rocket Tube",
+      "Gravity Bomb",
+      "Mine Glove",
+      "Lava Gun",
+      "Morph-O-Ray",
+      "Holo Shield Glove"
+    }
 };
 
 MenuElem_ListData_t dataCycleWeapon2 = {
     &config.cycleWeapon2,
     NULL,
-    sizeof(cycleWeaponNames),
-    cycleWeaponNames
+    10,
+    {
+      "Off",
+      "N60 Storm",
+      "Blitz Cannon",
+      "Flux Rifle",
+      "Mini Rocket Tube",
+      "Gravity Bomb",
+      "Mine Glove",
+      "Lava Gun",
+      "Morph-O-Ray",
+      "Holo Shield Glove"
+    }
 };
 
 MenuElem_ListData_t dataCycleWeapon3 = {
     &config.cycleWeapon3,
     NULL,
-    sizeof(cycleWeaponNames),
-    cycleWeaponNames
+    10,
+    {
+      "Off",
+      "N60 Storm",
+      "Blitz Cannon",
+      "Flux Rifle",
+      "Mini Rocket Tube",
+      "Gravity Bomb",
+      "Mine Glove",
+      "Lava Gun",
+      "Morph-O-Ray",
+      "Holo Shield Glove"
+    }
 };
 
 // map override list item
@@ -295,15 +311,15 @@ MenuElem_ListData_t dataRadarBlipsDistance = {
 MenuElem_ListData_t dataMapScore_MapAccess = {
     &config.mapScoreToggle_MapBtn,
     NULL,
-    sizeof(mapScoreToggleButtons),
-    mapScoreToggleButtons
+    4,
+    { "Default", "Select", "L3", "R3" }
 };
 
 MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
     &config.mapScoreToggle_ScoreBtn,
     NULL,
-    sizeof(mapScoreToggleButtons),
-    mapScoreToggleButtons
+    4,
+   { "Default", "Select", "L3", "R3" }
 };
 
 MenuElem_ListData_t dataGameConfigPreset = {
@@ -316,20 +332,20 @@ MenuElem_ListData_t dataGameConfigPreset = {
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
     &gameConfig.grRespawnTimer_HealthBoxes,
     NULL,
-    sizeof(respawnTimerMisc),
-    respawnTimerMisc
+    7,
+    { "30", "0", "5", "10", "15", "20", "25" }
 };
 MenuElem_ListData_t dataRespawnTimer_WeaponCrates = {
     &gameConfig.grRespawnTimer_WeaponCrates,
     NULL,
-    sizeof(respawnTimerMisc),
-    respawnTimerMisc
+    7,
+    { "30", "0", "5", "10", "15", "20", "25" }
 };
 MenuElem_ListData_t dataRespawnTimer_AmmoPickups = {
     &gameConfig.grRespawnTimer_AmmoPickups,
     NULL,
-    sizeof(respawnTimerMisc),
-    respawnTimerMisc
+    7,
+    { "30", "0", "5", "10", "15", "20", "25" }
 };
 
 // General
@@ -348,14 +364,14 @@ MenuElem_t menuElementsGeneral[] = {
   { "Always Show Health", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.alwaysShowHealth },
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake },
-  { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1 },
-  { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2 },
-  { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3 },
 #if DEBUG
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
 #endif
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
+  { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1 },
+  { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2 },
+  { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3 },
   // { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate },
   { "Quick Select Delay", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataQuickSelectTimeDelay },
   { "Single Player Music", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSingleplayerMusic },
