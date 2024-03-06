@@ -85,8 +85,6 @@ const char * regionStr = "PAL:  ";
 const char * regionStr = "NTSC: ";
 #endif
 int lastLodLevel = 2;
-int fovChange_Hook = 0;
-int fovChange_Func = 0;
 short int QuickSelectTimeCurrent = 0;
 
 #if DSCRPRINT
@@ -1103,7 +1101,6 @@ void runFpsCounter(void)
 void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float f14, float f15)
 {
 	static float lastFov = 0;
-
 	GameCamera* camera = cameraGetGameCamera(cameraIdx);
 	if (!camera)
 		return;
@@ -1119,10 +1116,7 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 
 	// apply our fov modifier
 	// only if not scoping with sniper
-	static u32 FluxRA = 0;
-	if (!FluxRA)
-		FluxRA = GetAddress(&vaFieldOfView_FluxRA);
-
+	u32 FluxRA = GetAddress(&vaFieldOfView_FluxRA);
 	if (ra != FluxRA && ra != ((u32)FluxRA + 0xe0))
 		fov += (config.playerFov / 10.0) * 1;
 
@@ -1135,8 +1129,7 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 		camera->fov.gain = f13;
 		camera->fov.damp = f14;
 		return;
-	}
-	else if (a2 < 1) {
+	} else if (a2 < 1) {
 		if (a2 != 0) return;
 		camera->fov.ideal = fov;
 		camera->fov.changeType = 0;
@@ -1147,8 +1140,7 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
 	if (a1 == 0) {
 		camera->fov.ideal = fov;
 		camera->fov.changeType = 0;
-	}
-	else {
+	} else {
 		camera->fov.changeType = a2;
 		camera->fov.init = camera->fov.actual;
 		camera->fov.timer = (short)a2;
@@ -1166,11 +1158,8 @@ void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void fovChange(u32 a0)
+void fovChange(void)
 {
-	// run base
-	((void (*)(u32))GetAddress(&vaSetPOSRot_fovChange_Func))(a0);
-
 	writeFov(0, 0, 3, 0, 0, 0.05, 0.2, 0);
 }
 
@@ -1189,8 +1178,6 @@ void patchFov(void)
 	static int lastFov = 0;
 	if (!isInGame()) {
 		ingame = 0;
-		fovChange_Hook = 0;
-		fovChange_Func = 0;
 		return;
 	}
 
@@ -1200,10 +1187,15 @@ void patchFov(void)
 		POKE_U32((u32)GetAddress(&vaFieldOfView_Hook) + 0x4, 0x03E0382d);
 
 		// modify SetPosRot Func. (Needed when player dies)
-		HOOK_JAL(GetAddress(&vaSetPOSRot_fovChange_Hook), &fovChange);
+		HOOK_J((u32)GetAddress(&vaPlayerSetPosRotFunc) + 0x584, &fovChange);
 
 		patched.config.playerFov = 1;
 	}
+
+	// If patching with `vaPlayerSetPosRotFunc` doesn't work, use this.
+	// Player *player = playerGetFromSlot(0);
+	// if (playerDeobfuscate(&player->PreviousState, 0, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
+	// 	writeFov(0, 0, 3, 0, 0, 0.05, 0.2, 0);
 
 	// initialize fov at start of game
 	if (!ingame || lastFov != config.playerFov) {
@@ -2484,9 +2476,7 @@ int main(void)
 	runCameraSpeedPatch();
 
 	// Patches FOV to let it be user selectable.
-	#if DEBUG
 	patchFov();
-	#endif
 
 	// 
 	onConfigUpdate();
