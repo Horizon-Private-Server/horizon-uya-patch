@@ -403,15 +403,12 @@ void runCameraSpeedPatch(void)
 		int p = playerGetFromSlot(0)->PauseOn;
 		if (!p)
 			return;
-		
+
 		// if not on correct pause screen
 		u32 img = gfxGetPreLoadedImageBufferSource(0);
 		if (img && *(int*)(img + 0xc) == 5) {
 			// replace drawing function denominator to scale input down to 0 to our MAX
-			static u32 drawCameraSpeedInputIGFunc = 0;
-			if (!drawCameraSpeedInputIGFunc)
-				drawCameraSpeedInputIGFunc = GetAddress(&vaDrawCameraSpeedInputIGFunc);
-			
+			u32 drawCameraSpeedInputIGFunc = GetAddress(&vaDrawCameraSpeedInputIGFunc);
 			if (drawCameraSpeedInputIGFunc) {
 				asm __volatile(
 						"mtc1 %0, $f12\n"
