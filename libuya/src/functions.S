@@ -254,12 +254,11 @@ FUNCTION(strlen, 0x00120884)
 #--------------------------------------------------------
 #------------------------- MATH -------------------------
 #--------------------------------------------------------
-# Currently not ported.
 VARIABLE_FUNCTION(cosf, vaFastCosf)
 VARIABLE_FUNCTION(sinf, vaFastSinf)
+FUNCTION(powf, 0x00136d28)
 FUNCTION(asinf, 0x001348b8)
 FUNCTION(sqrtf, 0x0011a808)
-FUNCTION(powf, 0x00135278)
 FUNCTION(fabsf, 0x0011a550)
 FUNCTION(fptodp, 0x001321c8)
 FUNCTION(__divdi3, 0x00130760)
