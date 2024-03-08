@@ -256,6 +256,7 @@ FUNCTION(strlen, 0x00120884)
 #--------------------------------------------------------
 VARIABLE_FUNCTION(cosf, vaFastCosf)
 VARIABLE_FUNCTION(sinf, vaFastSinf)
+# NTSC and PAL addresses are the same for the following.
 FUNCTION(powf, 0x00136d28)
 FUNCTION(asinf, 0x001348b8)
 FUNCTION(sqrtf, 0x0011a808)
@@ -313,14 +314,13 @@ FUNCTION(sha1, 0x0015de28)
 #------------------------- SIF --------------------------
 #--------------------------------------------------------
 #
-# NTSC and PAL address' are the same.
+# NTSC and PAL addresses are the same.
 #
 FUNCTION(SifInitRpc, 0x00129490)
 FUNCTION(SifExitRpc, 0x00129630)
 FUNCTION(SifRpcGetOtherData, 0x00129970)
 FUNCTION(SifBindRpc, 0x00129c38)
 FUNCTION(SifCallRpc, 0x00129e18)
-
 FUNCTION(SifCheckStatRpc, 0x0012a018)
 FUNCTION(SifInitIopHeap, 0x0012b8b8)
 FUNCTION(SifAllocIopHeap, 0x0012b940)
@@ -328,7 +328,6 @@ FUNCTION(SifFreeIopHeap, 0x0012baa8)
 FUNCTION(SifIopReset, 0x0012c570)
 FUNCTION(SifIopSync, 0x0012c6f0)
 FUNCTION(_SifLoadModuleBuffer, 0x0012c2c0)
-
 FUNCTION(SifWriteBackDCache, 0x001293e0)
 FUNCTION(SifSetDma, 0x00126620)
 FUNCTION(SifDmaStat, 0x00126600)
