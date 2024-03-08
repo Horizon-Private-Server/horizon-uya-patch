@@ -149,7 +149,7 @@ void disableSpectate(Player * player, struct PlayerSpectateData * data)
 void spectate(Player * currentPlayer, Player * playerToSpectate)
 {
     float cameraT;
-    struct PlayerSpectateData * spectateData = SpectateData + currentPlayer->fps.Vars.cam_slot;
+    struct PlayerSpectateData * spectateData = SpectateData + currentPlayer->mpIndex;
     if(!playerToSpectate)
         return;
 
@@ -160,11 +160,10 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
     currentPlayer->fps.Vars.CameraYMax = playerToSpectate->fps.Vars.CameraYMax;
     currentPlayer->fps.Vars.CameraPositionOffset[0] = -6;
 
-    if (playerToSpectate->Vehicle)
-    {
-        Moby * vehicleMoby = playerToSpectate->Vehicle->pMoby;
+    if (playerToSpectate->Vehicle) {
+        struct Moby * vehicleMoby = playerToSpectate->Vehicle->pMoby;
         int isPassenger = playerToSpectate->Vehicle->pPassenger == playerToSpectate;
-        // cameraT = 1 - powf(MATH_E, -(isPassenger ? CAMERA_ROTATION_SHARPNESS : VEHICLE_CAMERA_ROTATION_SHARPNESS) * MATH_DT);
+        cameraT = 1 - powf(MATH_E, -(isPassenger ? CAMERA_ROTATION_SHARPNESS : VEHICLE_CAMERA_ROTATION_SHARPNESS) * MATH_DT);
 
         // Grab rotation
         float yaw = playerToSpectate->Vehicle->netUpdatedRot[2];
@@ -173,36 +172,29 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
         float elevation = 0;
         
         // Determine distance and elevation by vehicle id
-        switch (vehicleMoby->OClass)
-        {
-            case MOBY_ID_TURBOSLIDER:
-            {
+        switch (vehicleMoby->OClass) {
+            case MOBY_ID_TURBOSLIDER: {
                 distance = VEHICLE_DISTANCE[0 + isPassenger];
                 elevation = VEHICLE_ELEVATION[0 + isPassenger];
-                if (isPassenger)
-                {
+                if (isPassenger) {
                     yaw = playerToSpectate->Vehicle->netUpdatedPassengerRot[2];
                     pitch = playerToSpectate->Vehicle->netUpdatedPassengerRot[1] + (float)0.08;
                 }
                 break;
             }
-            case MOBY_ID_HOVERSHIP:
-            {
+            case MOBY_ID_HOVERSHIP: {
                 distance = VEHICLE_DISTANCE[2 + isPassenger];
                 elevation = VEHICLE_ELEVATION[2 + isPassenger];
-                if (isPassenger)
-                {
+                if (isPassenger) {
                     yaw = playerToSpectate->Vehicle->netUpdatedPassengerRot[2];
                     pitch = playerToSpectate->Vehicle->netUpdatedPassengerRot[1];
                 }
                 break;
             }
-			case MOBY_ID_TANK:
-			{
+			case MOBY_ID_TANK: {
                 distance = VEHICLE_DISTANCE[4 + isPassenger];
                 elevation = VEHICLE_ELEVATION[4 + isPassenger];
-                if (isPassenger)
-                {
+                if (isPassenger) {
                     yaw = playerToSpectate->Vehicle->netUpdatedPassengerRot[2];
                     pitch = playerToSpectate->Vehicle->netUpdatedPassengerRot[1] + (float)0.08;
                 }
@@ -211,8 +203,12 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
         }
 
         // Interpolate camera rotation towards target player
-        currentPlayer->fps.Vars.CameraZ.rotation = spectateData->LastCameraZ = lerpfAngle(spectateData->LastCameraZ, yaw, cameraT);
-        currentPlayer->fps.Vars.CameraY.rotation = spectateData->LastCameraY = lerpfAngle(spectateData->LastCameraY, pitch, cameraT);
+        float lerpZ = lerpfAngle(spectateData->LastCameraZ, yaw, cameraT);
+        currentPlayer->fps.Vars.CameraZ.rotation = lerpZ;
+        spectateData->LastCameraZ = lerpZ;
+        float lerpY = lerpfAngle(spectateData->LastCameraY, pitch, cameraT);
+        currentPlayer->fps.Vars.CameraY.rotation = lerpY;
+        spectateData->LastCameraY = lerpY;
         
         // Generate target based off distance and elevation
         VECTOR target;
@@ -225,11 +221,15 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
         vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, target, 1 - powf(MATH_E, -CAMERA_POSITION_SHARPNESS * MATH_DT));
         vector_copy(currentPlayer->fps.CameraPos, spectateData->LastCameraPos);
     } else {
-        // cameraT = 1 - powf(MATH_E, -CAMERA_ROTATION_SHARPNESS * MATH_DT);
+        cameraT = 1 - powf(MATH_E, -CAMERA_ROTATION_SHARPNESS * MATH_DT);
 
         // Interpolate camera rotation towards target player
-        currentPlayer->fps.Vars.CameraZ.rotation = spectateData->LastCameraZ = playerToSpectate->fps.Vars.CameraZ.rotation;
-        currentPlayer->fps.Vars.CameraY.rotation = spectateData->LastCameraY = playerToSpectate->fps.Vars.CameraY.rotation;
+        float playerToSpectateZ = playerToSpectate->fps.Vars.CameraZ.rotation;
+        currentPlayer->fps.Vars.CameraZ.rotation = playerToSpectateZ;
+        spectateData->LastCameraZ = playerToSpectateZ;
+        float playerToSpectateY = playerToSpectate->fps.Vars.CameraY.rotation;
+        currentPlayer->fps.Vars.CameraY.rotation = playerToSpectateY;
+        spectateData->LastCameraY = playerToSpectateY;
 
         // Interpolate camera towards target player
         vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, playerToSpectate->fps.CameraPos, .5);
@@ -303,9 +303,9 @@ void runSpectate(void)
 		Player * player = players[i];
 
 		// Next, we have to ensure the player is the local player and they are dead
-		if (playerIsLocal(player)) {
+		if (playerIsLocal(player) || playerGetHealth(player) <= 0) {
 			// Grab player-specific spectate data
-			spectateData = SpectateData + player->fps.Vars.cam_slot;
+			spectateData = SpectateData + player->mpIndex;
 			spectateIndex = spectateData->Index;
 
 			// If dead
@@ -341,11 +341,9 @@ void runSpectate(void)
 
 					// Update spectate index
 					spectateData->Index = spectateIndex;
-				}
-				else {
+				} else {
 					// Show nav message
-					if (!spectateData->HasShownNavMsg) 
-					{
+					if (!spectateData->HasShownNavMsg) {
 						spectateData->HasShownNavMsg = 1;
 						uiShowPopup(player, "Use \x14 and \x15 to navigate between players.", 5);
 					}
