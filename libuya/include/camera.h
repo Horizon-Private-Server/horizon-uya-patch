@@ -11,10 +11,10 @@
 #include "math3d.h"
 
 struct CameraFov { // 0x30
-	/*   0 */ float speed;
-	/*   4 */ float ideal;
-	/*   8 */ float actual;
-	/*   c */ float gain;
+	/*   0 */ float gain;
+	/*   4 */ float speed;
+	/*   8 */ float ideal;
+	/*   c */ float actual;
 	/*  10 */ float damp;
 	/*  14 */ float limit;
 	/*  18 */ char changeType;
