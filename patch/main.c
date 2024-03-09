@@ -1090,123 +1090,39 @@ void runFpsCounter(void)
 }
 
 /*
- * NAME :		writeFov
+ * NAME :		patchFov
  * DESCRIPTION :
- * 			Replaces game's SetFov function. Hook installed by patchFov().
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
-void writeFov(int cameraIdx, int a1, int a2, u32 ra, float fov, float f13, float f14, float f15)
-{
-	static float lastFov = 0;
-	GameCamera* camera = cameraGetGameCamera(cameraIdx);
-	if (!camera)
-		return;
-
-	// save last fov
-	// or reuse last if fov passed is 0
-	if (fov > 0)
-		lastFov = fov;
-	else if (lastFov > 0)
-		fov = lastFov;
-	else
-		fov = lastFov = camera->fov.ideal;
-
-	// apply our fov modifier
-	// only if not scoping with sniper
-	u32 FluxRA = GetAddress(&vaFieldOfView_FluxRA);
-	if (ra != FluxRA && ra != ((u32)FluxRA + 0xe0))
-		fov += (config.playerFov / 10.0) * 1;
-
-	if (a2 > 2) {
-		if (a2 != 3) return;
-		camera->fov.limit = f15;
-		camera->fov.changeType = a2;
-		camera->fov.ideal = fov;
-		camera->fov.state = 1;
-		camera->fov.gain = f13;
-		camera->fov.damp = f14;
-		return;
-	} else if (a2 < 1) {
-		if (a2 != 0) return;
-		camera->fov.ideal = fov;
-		camera->fov.changeType = 0;
-		camera->fov.state = 1;
-		return;
-	}
-
-	if (a1 == 0) {
-		camera->fov.ideal = fov;
-		camera->fov.changeType = 0;
-	} else {
-		camera->fov.changeType = a2;
-		camera->fov.init = camera->fov.actual;
-		camera->fov.timer = (short)a2;
-		camera->fov.timerInv = 1.0 / (float)a2;
-	}
-	camera->fov.state = 1;
-}
-
-/*
- * NAME :		fovChange
- * DESCRIPTION :
- * 			Rewrites the FOV (via SetPosRot) when player dies.
  * NOTES :
  * ARGS : 
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void fovChange(void)
-{
-	writeFov(0, 0, 3, 0, 0, 0.05, 0.2, 0);
-}
-
-/*
- * NAME :		patchFov
- * DESCRIPTION :
- * 			Installs SetFov override hook.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
 void patchFov(void)
 {
-	static int ingame = 0;
-	static int lastFov = 0;
-	if (!isInGame()) {
-		ingame = 0;
-		return;
+	float normalFOV = 1.11;
+	float newFOV = normalFOV + (config.playerFov / 10.0) * 1;
+	Player *p = playerGetFromSlot(0);
+	// if not in FPS View, set
+	if (p->fps.active == 1) {
+		p->Camera->fov.ideal = newFOV;
+		// set Patched FOV to false
+		patched.config.playerFov = 0;
+	} else {
+		// if in FPS and not holding Flux, use new FOV, else use normal FOV.
+		if (p->WeaponHeldId != WEAPON_ID_FLUX) {
+			// set to new FOV
+			p->Camera->fov.ideal = newFOV;
+			patched.config.playerFov = 0;
+		// if in FPS and patched.config.playerFov is false
+		// or if the ideal camera is greater than the normal FOV.
+		} else if (!patched.config.playerFov || p->Camera->fov.ideal > normalFOV) {
+			// set to normal FOV.
+			p->Camera->fov.ideal = normalFOV;
+			patched.config.playerFov = 1;
+		}
 	}
-
-	// replace SetFov function
-	if (!patched.config.playerFov) {
-		HOOK_J(GetAddress(&vaFieldOfView_Hook), &writeFov);
-		POKE_U32((u32)GetAddress(&vaFieldOfView_Hook) + 0x4, 0x03E0382d);
-
-		// modify SetPosRot Func. (Needed when player dies)
-		HOOK_J((u32)GetAddress(&vaPlayerSetPosRotFunc) + 0x584, &fovChange);
-
-		patched.config.playerFov = 1;
-	}
-
-	// If patching with `vaPlayerSetPosRotFunc` doesn't work, use this.
-	// Player *player = playerGetFromSlot(0);
-	// if (playerDeobfuscate(&player->PreviousState, 0, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
-	// 	writeFov(0, 0, 3, 0, 0, 0.05, 0.2, 0);
-
-	// initialize fov at start of game
-	if (!ingame || lastFov != config.playerFov) {
-		GameCamera* camera = cameraGetGameCamera(0);
-		if (!camera)
-			return;
-
-		writeFov(0, 0, 3, 0, 0, 0.05, 0.2, 0);
-		lastFov = config.playerFov;
-		ingame = 1;
-	}
+	p->Camera->fov.changeType = 3;
+	p->Camera->fov.state = 1;
 }
 
 /*
@@ -2475,9 +2391,6 @@ int main(void)
 	// 
 	runCameraSpeedPatch();
 
-	// Patches FOV to let it be user selectable.
-	patchFov();
-
 	// 
 	onConfigUpdate();
 
@@ -2510,6 +2423,10 @@ int main(void)
 
 		// Patch Flux Wall Sniping
 		patchSniperWallSniping();
+
+		// Patches FOV to let it be user selectable.
+		if (config.playerFov != 0)
+			patchFov();
 
 		// Patch Quick Select to use custom timer.
 		patchQuickSelectTimer();
