@@ -22,6 +22,19 @@ struct SoundInstance { // 0x90
 	/* 0x10 */ struct Cuboid cuboid;
 };
 
+typedef struct SoundDef { // 0x20
+	/* 0x00 */ float minRange;
+	/* 0x04 */ float maxRange;
+	/* 0x08 */ int minVolume;
+	/* 0x0c */ int maxVolume;
+	/* 0x10 */ int minPitch;
+	/* 0x14 */ int maxPitch;
+	/* 0x18 */ char loop;
+	/* 0x19 */ char flags;
+	/* 0x1a */ short int index;
+	/* 0x1c */ int bank_index;
+} SoundDef;
+
 struct _sound_data { // 0x80
 	/* 0x00 */ int handle;
 	/* 0x04 */ struct SoundDef *def;
@@ -82,23 +95,13 @@ typedef struct _sound_globals { // 0x1d30
 	/* 0x1d24 */ int pad32_2[3];
 } SoundGlobals;
 
-typedef struct SoundDef { // 0x20
-	/* 0x00 */ float minRange;
-	/* 0x04 */ float maxRange;
-	/* 0x08 */ int minVolume;
-	/* 0x0c */ int maxVolume;
-	/* 0x10 */ int minPitch;
-	/* 0x14 */ int maxPitch;
-	/* 0x18 */ char loop;
-	/* 0x19 */ char flags;
-	/* 0x1a */ short int index;
-	/* 0x1c */ int bank_index;
-} SoundDef;
-
 void soundHeroPlay(Player* player, short sound, int flags);
 
 void soundMobyPlay(short sound, int flags, Moby* moby);
 void soundPlayByOClass(short sound, int flags, Moby* moby, short oClass);
 void soundPlay(SoundDef* sound, int flags, Moby* moby, VECTOR position, int volume);
+
+// Return Sound Globals
+SoundGlobals* soundGetSound(void);
 
 #endif // _LIBUYA_SOUND_H_
