@@ -171,7 +171,7 @@ void padDisableInput(void)
             if (!player)
                 continue;
 
-            if (player->IsLocal)
+            if (player->isLocal)
                 player->timers.noInput = 3;
         }
     }

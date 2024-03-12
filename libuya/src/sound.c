@@ -1,41 +1,12 @@
 #include "math3d.h"
 #include "common.h"
 #include "interop.h"
-#include "sound.h"
 
 #if UYA_PAL
 #define SOUND_GLOBALS                       ((SoundGlobals*)0x001fe020)
 #else
 #define SOUND_GLOBALS                       ((SoundGlobals*)0x001fe1a0)
 #endif
-
-VariableAddress_t vaSoundGlobals = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0,
-    .Hoven = 0,
-    .OutpostX12 = 0,
-    .KorgonOutpost = 0,
-    .Metropolis = 0,
-    .BlackwaterCity = 0,
-    .CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
-#else
-    .Lobby = 0,
-    .Bakisi = ,
-    .Hoven = 0x001fe1a0,
-    .OutpostX12 = 0,
-    .KorgonOutpost = 0,
-    .Metropolis = 0,
-    .BlackwaterCity = 0,
-    .CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
-#endif
-};
 
 VariableAddress_t vaSoundHeroPlayFunc = {
 #if UYA_PAL
@@ -149,7 +120,7 @@ VariableAddress_t vaSoundPlayFunc = {
 #endif
 };
 
-SoundGlobals* soundGetSound(void)
-{
-    return SOUND_GLOBALS;
-}
+// SoundGlobals* soundGetSound(void)
+// {
+//     return SOUND_GLOBALS;
+// }

@@ -204,37 +204,15 @@ Player ** playerGetAll(void)
 }
 
 //--------------------------------------------------------------------------------
-// void playerSetLocalEquipslot(int localPlayerId, int slot, int weaponId)
-// {
-//     int * equipslots = WEAPON_EQUIPSLOT;
-//     equipslots[slot + (localPlayerId * 3)] = weaponId;
-// }
-
-//--------------------------------------------------------------------------------
-// void playerSetWeapon(Player * player, int weaponId)
-// {
-//     if (!player)
-//         return;
-
-//     player->ChangeWeaponHeldId = weaponId;
-// }
-
-//--------------------------------------------------------------------------------
 void playerSetTeam(Player * player, int teamId)
 {
     if (!player)
         return;
 
     player->mpTeam = teamId;
-    // player->PlayerMoby->GlowRGBA = TEAM_COLORS[teamId];
-    player->PlayerMoby->ModeBits2 = player->PlayerMoby->ModeBits2 & 0x8f | 0x80 | (teamId << 4);
-    // player->PlayerMoby->Triggers = 0;
-}
-
-//--------------------------------------------------------------------------------
-int playerIsLocal(Player * player)
-{
-    return player->IsLocal;
+    // player->pMoby->GlowRGBA = TEAM_COLORS[teamId];
+    player->pMoby->ModeBits2 = player->pMoby->ModeBits2 & 0x8f | 0x80 | (teamId << 4);
+    // player->pMoby->Triggers = 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -243,12 +221,9 @@ PadButtonStatus * playerGetPad(Player * player)
     if (!player)
         return 0;
 
-    if (playerIsLocal(player))
-    {
-        return player->Paddata;
-    }
-    else
-    {
+    if (player->isLocal) {
+        return player->pPad;
+    } else {
         struct tNW_Player* netPlayer = player->pNetPlayer;
         if (!netPlayer)
             return 0;
@@ -545,7 +520,7 @@ void playerSetHealth(Player * player, int health)
     // asm(".set noreorder;");
     int PlayerSetHealthStack[1];
     float f = health;
-    u32 Player_Addr = &player->Health;
+    u32 Player_Addr = &player->hitPoints;
     u32 Player_Value = *(u8*)Player_Addr;
     int gsFrame = gameGetGSFrame();
     int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
@@ -582,7 +557,7 @@ int playerGetHealth(Player * player)
 {
     // asm(".set noreorder;");
     int PlayerGetHealthStack[1];
-    u32 Health_Addr = &player->Health;
+    u32 Health_Addr = &player->hitPoints;
     u32 Health_Value = *(u8*)Health_Addr;
     int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
     int n = 0;
@@ -601,7 +576,7 @@ int playerIsDead(Player * player)
 {
     // return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
     // int Health = (int)playerGetHealth(player) <= 0;
-    int State = playerDeobfuscate(&player->State, 0, 0);
+    int State = playerDeobfuscate(&player->state, 0, 0);
     int CurrentState = State == PLAYER_STATE_DEATH
         || State == PLAYER_STATE_DROWN
         || State == PLAYER_STATE_DEATH_FALL
