@@ -390,7 +390,6 @@ void runCameraSpeedPatch(void)
 				}
 			}
 		}
-
 	} else if (isInGame()) {
 		// replaces limiter function so that input can go past default 100
 		u32 updateCameraSpeedIGFunc = GetAddress(&vaUpdateCameraSpeedIGFunc);
@@ -1712,10 +1711,10 @@ void patchQuickSelectTimer(void)
 void runCampaignMusic(void)
 {
 	static int CustomSector = 0x1d8a;
-	static char FinishedConvertingTracks = 0;
+	static int FinishedConvertingTracks = 0;
 	static char SetupMusic = 0;
-	static char AddedTracks = 0;
-	static char TotalTracks = 0;
+	int AddedTracks = 0;
+	int TotalTracks = 0;
 	// We go by each wad because we have to have Multiplayer one first.
 	static short wadArray[][2] = {
 		// wad, song per wad
@@ -1881,8 +1880,6 @@ void runCampaignMusic(void)
 	} else if (isInMenus() && FinishedConvertingTracks) {
 		FinishedConvertingTracks = 0;
 		SetupMusic = 0;
-		AddedTracks = 0;
-		TotalTracks = 0;
 	}
 }
 
