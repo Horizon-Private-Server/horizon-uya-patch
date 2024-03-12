@@ -49,7 +49,7 @@ int WinningTeam = 0;
 int Initialized = 0;
 char FirstInfected[GAME_MAX_PLAYERS];
 int Infections[GAME_MAX_PLAYERS];
-const char * InfectedPopupFormat = "%s has been infected!";
+const char * InfectedPopupFormat = "%s has been infected!\0";
 int ShieldTex = 0;
 char CS[12];
 
@@ -479,9 +479,8 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 		// If no survivors then end game
 		if (playerCount == infectedCount) {
 			// End game
-			gameEnd(2);
-		}
-		else if (infectedCount == 0) {
+			gameEnd(4);
+		} else if (infectedCount == 0) {
 			// Infect first player after 10 seconds
 			if ((gameGetTime() - gameSettings->GameStartTime) > (10 * TIME_SECOND)) {
 				Player * survivor = getRandomSurvivor(gameSettings->GameStartTime);
@@ -585,25 +584,20 @@ void Clear(void)
 {
 	int i = 0;
 	for (i = 0; i < ARRAY_SIZE(CS); i++)
-	{
 		CS[i] = ' ';
-	}
 }
 // Logic to run selected codes if combo is correct.
 void AddToCS(char c, Player * currentPlayer)
 {
 	int a = 0;
-	for (a = ARRAY_SIZE(CS) - 2; a >= 0; a--)
-	{
+	for (a = ARRAY_SIZE(CS) - 2; a >= 0; a--) {
 		CS[a + 1] = CS[a];
 	}
 	CS[0] = c;
 
 	// "UUDDLRLRCX"	-	UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT CIRCLE CROSS
 	if (!CHEATCMP("XCRLRLDDUU"))
-	{
 		SwapShield();
-	}
 }
 void DoCheats(Player * currentPlayer)
 {
