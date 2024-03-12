@@ -95,7 +95,7 @@ void spawnWeaponPackOnDeath(void)
     		continue;
 
 		Player * player = players[i];
-		if (player->IsLocal && playerGetHealth(player) > 0)
+		if (player->isLocal && playerGetHealth(player) > 0)
             SpawnedPack = 0;
 	}
 
@@ -697,8 +697,8 @@ void playerSize(void)
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		Player * player = players[i];
 		if (player) {
-			if (player->PlayerMoby)
-				player->PlayerMoby->Scale = 0.25 * size;
+			if (player->pMoby)
+				player->pMoby->Scale = 0.25 * size;
 
 			// update camera
 			player->fps.Vars.CameraPositionOffset[0] = -6 * size;
@@ -990,7 +990,7 @@ int runInvincibilityTimer(Player* player, int a1)
 		hurtPlayer = 0;
 	}
 	// if previous player state was resurrecting, start timer.
-	if (playerDeobfuscate(&player->PreviousState, 0, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
+	if (playerDeobfuscate(&player->previousState, 0, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
 		player->timers.unkTimer_346 = 0x78;
 
 	// run base function with our a1

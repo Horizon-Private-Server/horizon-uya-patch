@@ -160,13 +160,13 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
     currentPlayer->fps.Vars.CameraYMax = playerToSpectate->fps.Vars.CameraYMax;
     currentPlayer->fps.Vars.CameraPositionOffset[0] = -6;
 
-    if (playerToSpectate->Vehicle) {
-        struct Moby * vehicleMoby = playerToSpectate->Vehicle->pMoby;
-        int isPassenger = playerToSpectate->Vehicle->pPassenger == playerToSpectate;
+    if (playerToSpectate->vehicle) {
+        struct Moby * vehicleMoby = playerToSpectate->vehicle->pMoby;
+        int isPassenger = playerToSpectate->vehicle->pPassenger == playerToSpectate;
         cameraT = 1 - powf(MATH_E, -(isPassenger ? CAMERA_ROTATION_SHARPNESS : VEHICLE_CAMERA_ROTATION_SHARPNESS) * MATH_DT);
 
         // Grab rotation
-        float yaw = playerToSpectate->Vehicle->netUpdatedRot[2];
+        float yaw = playerToSpectate->vehicle->netUpdatedRot[2];
         float pitch = 0.08;
         float distance = 0;
         float elevation = 0;
@@ -177,8 +177,8 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
                 distance = VEHICLE_DISTANCE[0 + isPassenger];
                 elevation = VEHICLE_ELEVATION[0 + isPassenger];
                 if (isPassenger) {
-                    yaw = playerToSpectate->Vehicle->netUpdatedPassengerRot[2];
-                    pitch = playerToSpectate->Vehicle->netUpdatedPassengerRot[1] + (float)0.08;
+                    yaw = playerToSpectate->vehicle->netUpdatedPassengerRot[2];
+                    pitch = playerToSpectate->vehicle->netUpdatedPassengerRot[1] + (float)0.08;
                 }
                 break;
             }
@@ -186,8 +186,8 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
                 distance = VEHICLE_DISTANCE[2 + isPassenger];
                 elevation = VEHICLE_ELEVATION[2 + isPassenger];
                 if (isPassenger) {
-                    yaw = playerToSpectate->Vehicle->netUpdatedPassengerRot[2];
-                    pitch = playerToSpectate->Vehicle->netUpdatedPassengerRot[1];
+                    yaw = playerToSpectate->vehicle->netUpdatedPassengerRot[2];
+                    pitch = playerToSpectate->vehicle->netUpdatedPassengerRot[1];
                 }
                 break;
             }
@@ -195,8 +195,8 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
                 distance = VEHICLE_DISTANCE[4 + isPassenger];
                 elevation = VEHICLE_ELEVATION[4 + isPassenger];
                 if (isPassenger) {
-                    yaw = playerToSpectate->Vehicle->netUpdatedPassengerRot[2];
-                    pitch = playerToSpectate->Vehicle->netUpdatedPassengerRot[1] + (float)0.08;
+                    yaw = playerToSpectate->vehicle->netUpdatedPassengerRot[2];
+                    pitch = playerToSpectate->vehicle->netUpdatedPassengerRot[1] + (float)0.08;
                 }
                 break;
 			}
@@ -212,7 +212,7 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
         
         // Generate target based off distance and elevation
         VECTOR target;
-        vector_copy(target, playerToSpectate->Vehicle->pMoby->Position);
+        vector_copy(target, playerToSpectate->vehicle->pMoby->Position);
         target[0] -= cosf(spectateData->LastCameraZ) * distance;
         target[1] -= sinf(spectateData->LastCameraZ) * distance;
         target[2] += (sinf(spectateData->LastCameraY) * distance) + elevation;
@@ -303,7 +303,7 @@ void runSpectate(void)
 		Player * player = players[i];
 
 		// Next, we have to ensure the player is the local player and they are dead
-		if (playerIsLocal(player) || playerGetHealth(player) <= 0) {
+		if (player->isLocal || playerGetHealth(player) <= 0) {
 			// Grab player-specific spectate data
 			spectateData = SpectateData + player->mpIndex;
 			spectateIndex = spectateData->Index;

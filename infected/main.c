@@ -269,15 +269,15 @@ void processPlayer(Player * player)
 		// Check if player has shield, if not, enable.
 		if (!playerHasShield(player) && !playerIsDead(player) && !player->pSheepMoby) {
 			// if Local, run shield trigger, if not, run playerGiveShield function
-			if (player->IsLocal)
-				player->ShieldTrigger = 1;
+			if (player->isLocal)
+				player->shieldTrigger = 1;
 			else
 				playerGiveShield(player);
 		}
 
 		// Force wrench
-		if (player->WeaponHeldId != WEAPON_ID_WRENCH && player->WeaponHeldId != WEAPON_ID_SWINGSHOT)
-			player->ForceWrenchSwitch = 1;
+		if (player->weaponHeldId != WEAPON_ID_WRENCH && player->weaponHeldId != WEAPON_ID_SWINGSHOT)
+			player->forceWrenchSwitch = 1;
 
 		// Set Speed (via movement function)
 		int speed = GetAddress(&vaMovementSpeedModifier);

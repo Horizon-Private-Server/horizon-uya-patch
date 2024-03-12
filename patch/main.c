@@ -398,7 +398,7 @@ void runCameraSpeedPatch(void)
 		*(u16*)(updateCameraSpeedIGFunc + 0x154) = MAX_CAMERA_SPEED+1;
 
 		// if start menu isn't open
-		int p = playerGetFromSlot(0)->PauseOn;
+		int p = playerGetFromSlot(0)->pauseOn;
 		if (!p)
 			return;
 
@@ -485,9 +485,9 @@ void patchDeadJumping(void)
     		continue;
 
 		Player * player = players[i];
-		if (playerIsLocal(player) && playerIsDead(player)) {
+		if (player->isLocal && playerIsDead(player)) {
 			// get current player state
-			int PlayerState = playerDeobfuscate(&player->State, 0, 0);
+			int PlayerState = playerDeobfuscate(&player->state, 0, 0);
 			// if player is on bolt crank, set player state to idle.
 			if (PlayerState == PLAYER_STATE_BOLT_CRANK)
 				playerSetPlayerState(player, PLAYER_STATE_IDLE);
@@ -706,12 +706,12 @@ void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short
 	// {
 	// 	int delta = ActiveTime - gameGetTime();
 	// 	// Make player hold correct weapon.
-	// 	if (player->WeaponHeldId != msg->GadgetId)
+	// 	if (player->weaponHeldId != msg->GadgetId)
 	// 	{
 	// 		playerEquipWeapon(player, msg->GadgetId);
 	// 	}
 	// 	// Set weapon shot event time to now if its in the future
-	// 	if (player->WeaponHeldId == msg->GadgetId && (delta > 0 || delta < -TIME_SECOND))
+	// 	if (player->weaponHeldId == msg->GadgetId && (delta > 0 || delta < -TIME_SECOND))
 	// 	{
 	// 		ActiveTime = gameGetTime();
 	// 	}
@@ -844,9 +844,9 @@ void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
 {
 	int i;
 	// backup currently equipped weapons
-	if (player->IsLocal) {
+	if (player->isLocal) {
 		for (i = 0; i < 3; ++i)
-			weaponOrderBackup[player->mpIndex][i] = playerDeobfuscate(&player->QuickSelect.Slot[i], 1, 1);
+			weaponOrderBackup[player->mpIndex][i] = playerDeobfuscate(&player->quickSelect.Slot[i], 1, 1);
 	}
 
 	// call hooked WeaponStripMe function after backup
@@ -897,7 +897,7 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 		playerGiveRandomWeapons(player, weaponCount);
 
 	// then try and overwrite given weapon order if weapons match equipped weapons before death
-	if (player->IsLocal) {
+	if (player->isLocal) {
 		// if Loadout Weapons Only is not on
 		if (!gameConfig.prLoadoutWeaponsOnly) {
 			// restore backup if they match (regardless of order) newly assigned weapons
@@ -905,7 +905,7 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 				// if respawned weapons match backup weapons
 				u8 backedUpSlotValue = weaponOrderBackup[player->mpIndex][i];
 				for(j = 0; j < 3; j++) {
-					if (backedUpSlotValue == playerDeobfuscate(&player->QuickSelect.Slot[j], 1, 1)) {
+					if (backedUpSlotValue == playerDeobfuscate(&player->quickSelect.Slot[j], 1, 1)) {
 						++matchCount;
 					}
 				}
@@ -1104,25 +1104,25 @@ void patchFov(void)
 	Player *p = playerGetFromSlot(0);
 	// if not in FPS View, set
 	if (p->fps.active == 1) {
-		p->Camera->fov.ideal = newFOV;
+		p->camera->fov.ideal = newFOV;
 		// set Patched FOV to false
 		patched.config.playerFov = 0;
 	} else {
 		// if in FPS and not holding Flux, use new FOV, else use normal FOV.
-		if (p->WeaponHeldId != WEAPON_ID_FLUX) {
+		if (p->weaponHeldId != WEAPON_ID_FLUX) {
 			// set to new FOV
-			p->Camera->fov.ideal = newFOV;
+			p->camera->fov.ideal = newFOV;
 			patched.config.playerFov = 0;
 		// if in FPS and patched.config.playerFov is false
 		// or if the ideal camera is greater than the normal FOV.
-		} else if (!patched.config.playerFov || p->Camera->fov.ideal > normalFOV) {
+		} else if (!patched.config.playerFov || p->camera->fov.ideal > normalFOV) {
 			// set to normal FOV.
-			p->Camera->fov.ideal = normalFOV;
+			p->camera->fov.ideal = normalFOV;
 			patched.config.playerFov = 1;
 		}
 	}
-	p->Camera->fov.changeType = 3;
-	p->Camera->fov.state = 1;
+	p->camera->fov.changeType = 3;
+	p->camera->fov.state = 1;
 }
 
 /*
@@ -1203,15 +1203,15 @@ void patchDeathBarrierBug(void)
 	int i;
 	Player *player = playerGetFromSlot(0);
 	// if player is local
-	if (player && playerIsLocal(player)) {
+	if (player && player->isLocal) {
 		float deathbarrier = gameGetDeathHeight();
 		float pY = player->PlayerPosition[2];
-		//DPRINTF("deathheight: %d\nplayery: %d\ninbasehack: %d\n", (int)deathbarrier, (int)pY, player->InBaseHack);
+		//DPRINTF("deathheight: %d\nplayery: %d\ninbasehack: %d\n", (int)deathbarrier, (int)pY, player->inBaseHack);
 		// if player is above death barrier and inBaseHack equals 1.
-		if (player->InBaseHack && deathbarrier < pY) {
-			player->InBaseHack = 0;
-		} else if (!player->InBaseHack && deathbarrier > pY) {
-			player->InBaseHack = 1;
+		if (player->inBaseHack && deathbarrier < pY) {
+			player->inBaseHack = 0;
+		} else if (!player->inBaseHack && deathbarrier > pY) {
+			player->inBaseHack = 1;
 		}
 	}
 }
@@ -1294,7 +1294,7 @@ void patchAlwaysShowHealth(void)
 	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
 	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
 		*(u32*)healthbar_timer = 0;
-		player->HudHealthTimer = 3 * GAME_FPS;
+		player->hudHealthTimer = 3 * GAME_FPS;
 	} else if (!config.alwaysShowHealth && *(u32*)healthbar_timer == 0) {
 		*(u32*)healthbar_timer = old_value;
 	}
@@ -1411,7 +1411,7 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 		flagReturnToBase(flagMoby, 0, pIdx);
 	} else {
 		flagPickup(flagMoby, pIdx);
-		player->FlagMoby = flagMoby;
+		player->flagMoby = flagMoby;
 	}
 	DPRINTF("player %d picked up flag %X at %d\n", player->mpIndex, flagMoby->OClass, gameGetTime());
 }
@@ -1524,7 +1524,7 @@ void customFlagLogic(Moby* flagMoby)
 
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		Player* player = players[i];
-		if (!player || !player->IsLocal)
+		if (!player || !player->isLocal)
 			continue;
 
 		// only allow actions by living players, and non-chargebooting players
@@ -1541,11 +1541,11 @@ void customFlagLogic(Moby* flagMoby)
 			continue;
 
 		// skip player if in vehicle
-		if (player->Vehicle && playerDeobfuscate(&player->State, 0, 0) == PLAYER_STATE_VEHICLE)
+		if (player->vehicle && playerDeobfuscate(&player->state, 0, 0) == PLAYER_STATE_VEHICLE)
 			continue;
 
 		// skip if player state is in vehicle and critterMode is on
-		if (player->Camera && player->Camera->camHeroData.critterMode)
+		if (player->camera && player->camera->camHeroData.critterMode)
 			continue;
 
 		// skip if player is on teleport pad
@@ -1561,7 +1561,7 @@ void customFlagLogic(Moby* flagMoby)
 
 		// player is on different team than flag and player isn't already holding flag
 		if (player->mpTeam != pvars->Team) {
-			if (!player->FlagMoby) {
+			if (!player->flagMoby) {
 				flagRequestPickup(flagMoby, i);
 				return;
 			}
