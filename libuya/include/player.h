@@ -623,6 +623,11 @@ typedef struct HeroHeadIdle { // 0x20
 	/* 0x1c */ int pad;
 } HeroHeadIdle;
 
+typedef struct HeroTailIdle { // 0x50
+	/* 0x00 */ VECTOR rotOffsets[4];
+	/* 0x40 */ int timers[4];
+} HeroTailIdle;
+
 typedef struct FpsCam {
 	/* 0x11a0 */ MATRIX CameraMatrix;
 	/* 0x11e0 */ struct CameraAngleZ CameraZ;
@@ -857,6 +862,14 @@ typedef struct HeroSwing { // 0x40
 	/* 0x3c */ float radialLimit;
 } HeroSwing;
 
+typedef struct HeroDust { // 0x10
+	/* 0x0 */ float vel;
+	/* 0x4 */ float velvar;
+	/* 0x8 */ int timer;
+	/* 0xc */ short int rate;
+	/* 0xe */ short int flags;
+} HeroDust;
+
 typedef struct MotionBlur { // 0x150
 	/* 0x000 */ VECTOR posRing[8];
 	/* 0x080 */ VECTOR rotRing[8];
@@ -1047,7 +1060,9 @@ typedef struct Player { // 0x4500
 	/* 0x0590 */ Gadget gadget4;
 	/*        */ char unk_5e0[0x30];
 	/* 0x0610 */ HeroAnim anim;
-	/*        */ char unk_630[0x10];
+	/*        */ int unk_630; // Always gets written -1
+	/*        */ int animTimerToRestartWalkingAnim;
+	/*        */ char unk_638[0x8];
 	/* 0x0640 */ HeroJoints joints;
 	/* 0x0740 */ HeroAnimLayers animLayers;
 	/* 0x0760 */ HeroTweaker tweaker[12];
@@ -1055,7 +1070,8 @@ typedef struct Player { // 0x4500
 	/*        */ char unk_fc8[0x18];
 	/* 0x0fe0 */ HeroAttack attack;
 	/* 0x1090 */ HeroHeadIdle head;
-	/*        */ char unk_10b0[0xd0];
+	/* 0x10b0 */ HeroTailIdle tailIdle;
+	/*        */ char unk_1100[0x80];
 	/* 0x1180 */ HeroCamera fps;
 	/* 0x1340 */ HeroWeaponPosRec weaponPosRec;
 	/* 0x13c0 */ HeroWalkToPos walkToPos;
@@ -1067,7 +1083,8 @@ typedef struct Player { // 0x4500
 	/* 0x15a0 */ HeroWind wind;
 	/* 0x15c0 */ HeroFall fall;
 	/* 0x15e0 */ HeroSwing swing;
-	/*        */ char unk_1620[0x160];
+	/* 0x1620 */ HeroDust dust; // unsure
+	/* 0x1630 */ MotionBlur motionBlur;
 	/* 0x1780 */ MotionBlur wrenchMotionBlur;
 	/* 0x18D0 */ int weaponHeldId;
 	/*        */ char unk_18d4[0xec];
@@ -1118,7 +1135,20 @@ typedef struct Player { // 0x4500
 	/*        */ int unk_1da0;
 	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;
 	/* 0x1da8 */ struct Player *topOfPlayerStruct2;
-	/*        */ char unk_1dac[0x5f4];
+	/*        */ char unk_1dac[0x14];
+	/* 0x1dc0 */ VECTOR failsafePosRing[32];
+	/* 0x1fc0 */ float rotZRing[32];
+	/* 0x2040 */ mtx3 gadgetRotRing[16];
+	/* 0x2340 */ int rotZringIndex;
+	/* 0x2344 */ int rotZringValidSize;
+	/* 0x2348 */ int failsafeRingIndex;
+	/* 0x234c */ int failsafeRingValidSize;
+	/* 0x2350 */ int gadgetRotRingIndex;
+	/* 0x2354 */ int gadgetRotRingValidSize;
+	/* 0x2358 */ int cameraPosRing[8];
+	/* 0x2378 */ int cameraRotRing[8];
+	/* 0x2398 */ int camRingIndex;
+	/* 0x239c */ int camRingValidSize;
 	/* 0x23a0 */ VECTOR camPos;
 	/* 0x23b0 */ VECTOR camRot;
 	/* 0x23c0 */ VECTOR camUMtx[3];
