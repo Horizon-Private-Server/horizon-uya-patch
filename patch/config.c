@@ -255,8 +255,10 @@ MenuElem_ListData_t dataCustomModes = {
 // if the entry is NULL then the full name will be used
 const char* CustomModeShortNames[] = {
   [CUSTOM_MODE_NONE] NULL,
+#if DEBUG
   [CUSTOM_MODE_INFECTED] "Infected",
   [CUSTOM_MODE_JUGGERNAUGHT] NULL,
+#endif
 };
 
 MenuElem_ListData_t dataWeaponPacks = {
