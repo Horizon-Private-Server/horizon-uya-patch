@@ -382,8 +382,8 @@ void survivor(void)
 	if (!patched.disableRespawning)
 		disableRespawning();
 
-    static int DeadPlayers = 0;
-	static int TeamCount = 0;
+    int DeadPlayers = 0;
+	int TeamCount = 0;
     int i;
 	Player ** players = playerGetAll();
 	GameData * gameData = gameGetData();
@@ -653,9 +653,9 @@ void playerSize(void)
 {
 	int i, j;
 	Player** players = playerGetAll();
-	float size;
-	float cameraHeight;
-	float tpHeight;
+	float size = 1;
+	float cameraHeight = 1;
+	float tpHeight = 1;
 	float moveSpeed = 1;
 	
 	switch (gameConfig.prPlayerSize)
@@ -719,12 +719,11 @@ void playerSize(void)
  */
 void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay)
 {
-	float size;
-	float cameraHeight;
-	float tpHeight;
+	float size = 1;
+	float cameraHeight = 1;
+	float tpHeight = 1;
 	float moveSpeed = 1;
-	switch (gameConfig.prPlayerSize)
-	{
+	switch (gameConfig.prPlayerSize) {
 		case 1: size = 1.5; cameraHeight = 0.75; tpHeight = 3; moveSpeed = 1.5; break; // large
 		case 2: size = 3; cameraHeight = 2.5; tpHeight = 5; moveSpeed = 3; break; // giant
 		case 3: size = 0.2; cameraHeight = -0.80; tpHeight = 0.3; moveSpeed = 0.5; break; // tiny
@@ -849,11 +848,13 @@ void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, i
 				float x = (float)nameX;// / SCREEN_WIDTH;
 				float y = (float)nameY;// / SCREEN_HEIGHT;
 				float health = (float)((int)CurrentHealth / (int)PLAYER_MAX_HEALTH);
-				float w = (0.05 * 1) + 0.02, h = 0.02, p = 0.002;
+				float w = (0.05 * 1) + 0.02;
+				float h = 0.02;
+				float p = 0.002;
 				float right = w * health;
 				x -= w / 2;
-				gfxScreenSpaceBox(x,y,w-p,h-p, 0x80000000);
-				gfxScreenSpaceBox(x,y,right,h, nameColor);
+				gfxScreenSpaceBox(x, y, w - p, h - p, 0x80000000);
+				gfxScreenSpaceBox(x, y, right, h, nameColor);
 			}
 		}
 	}
