@@ -990,8 +990,14 @@ int runInvincibilityTimer(Player* player, int a1)
 		hurtPlayer = 0;
 	}
 	// if previous player state was resurrecting, start timer.
+	// Default timer is 2 frames (or 120 because 120/60pfs = 2)
+#if UYA_PAL
+	short timer = 100;
+#else
+	short timer = 120;
+#endif
 	if (playerDeobfuscate(&player->previousState, 0, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
-		player->timers.unkTimer_346 = 0x78;
+		player->timers.unkTimer_346 = timer;
 
 	// run base function with our a1
 	DPRINTF("\nhurtPlayer: %d", hurtPlayer);
