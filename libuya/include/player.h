@@ -1086,8 +1086,10 @@ typedef struct Player { // 0x4500
 	/* 0x1620 */ HeroDust dust; // unsure
 	/* 0x1630 */ MotionBlur motionBlur;
 	/* 0x1780 */ MotionBlur wrenchMotionBlur;
-	/* 0x18D0 */ int weaponHeldId;
-	/*        */ char unk_18d4[0xec];
+	/* 0x18d0 */ int weaponHeldId;
+	/*        */ char unk_18d4[0xc];
+	/* 0x18f0 */ VECTOR prevHandPos;
+	/*        */ char unk_1900[0xd0];
 	/*        */ void * pUnk_19c0;
 	/*        */ char unk_19c4[0x1c];
 	/* 0x19e0 */ short unk_19e0;
@@ -1134,7 +1136,7 @@ typedef struct Player { // 0x4500
 	/* 0x1a80 */ GadgetEvent gadgetEventSlots[10];
 	/*        */ int unk_1da0;
 	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;
-	/* 0x1da8 */ struct Player *topOfPlayerStruct2;
+	/* 0x1da8 */ struct Player *GadgetBox; // Doesn't work at all like Deadlocked's
 	/*        */ char unk_1dac[0x14];
 	/* 0x1dc0 */ VECTOR failsafePosRing[32];
 	/* 0x1fc0 */ float rotZRing[32];
@@ -1222,18 +1224,18 @@ typedef struct Player { // 0x4500
 	/* 0x252c */ Vehicle *vehiclePending;
 	/* 0x2530 */ GameCamera *camera;
 	/* 0x2534 */ PadButtonStatus *pPad;
-	/* 0x2538 */ float playerPositionX;
-	/* 0x253c */ float playerPositionZ;
-	/* 0x2540 */ float playerPositionY;
+	/* 0x2538 */ float cheatX;
+	/* 0x253c */ float cheatZ;
+	/* 0x2540 */ float cheatY;
 	/* 0x2544 */ int mpIndex;
 	/* 0x2548 */ int mpTeam;
 	/* 0x254c */ int vehicleState;
 	/* 0x2550 */ int vehicleStateTimer;
 	/* 0x2554 */ int pointsLastKill;
 	/* 0x2558 */ struct tNW_Player *pNetPlayer;
-	/*        */ char unk_255c[0x1c];
+	/* 0x255c */ tNW_PlayerStateMessage newStateMessage;
 	/* 0x2578 */ Moby *lastVehicleMoby;
-	/*        */ int unk_257c;
+	/* 0x257c */ int iLastVehicleOffTime;
 	/* 0x2580 */ char animation_RightArm[0x3c0];
 	/* 0x2940 */ char animation_LeftArm[0x3c0];
 	/* 0x2D00 */ char animation_RightArm_Unk1[0x400];
