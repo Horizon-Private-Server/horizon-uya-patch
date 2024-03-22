@@ -1023,17 +1023,17 @@ typedef struct HeroSpecialIdleDef { // 0x10
 } HeroSpecialIdleDef;
 
 typedef struct Player { // 0x4500
-	/* 0x0000 */ struct Guber Guber;
+	/* 0x0000 */ struct Guber guber;
 	/* 0x0018 */ int padding[1];
-	/* 0x0020 */ MATRIX Water;
-	/* 0x0060 */ MATRIX Terrain;
-	/* 0x00a0 */ VECTOR PlayerPosition;
+	/* 0x0020 */ MATRIX water;
+	/* 0x0060 */ MATRIX terrain;
+	/* 0x00a0 */ VECTOR playerPosition;
 			union {
-	/* 0x00b0 */ VECTOR PlayerRotation;
+	/* 0x00b0 */ VECTOR playerRotation;
 				 struct {
-	/* 0x00b0 */	float PlayerRoll;
-	/* 0x00b4 */	float PlayerPitch;
-	/* 0x00b8 */	float PlayerYaw;
+	/* 0x00b0 */	float playerRoll;
+	/* 0x00b4 */	float playerPitch;
+	/* 0x00b8 */	float playerYaw;
 	/* 0x00bc */	float pad;
 				 };
 			};
