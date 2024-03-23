@@ -535,6 +535,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
 
   if (gs)
   {
+    #if DEBUG
     switch (v)
     {
       case CUSTOM_MODE_INFECTED:
@@ -549,6 +550,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
         return 0;
       }
     }
+    #endif
   }
 
   return 1;

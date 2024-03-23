@@ -1204,7 +1204,7 @@ void patchDeathBarrierBug(void)
 	// if player is local
 	if (player && player->isLocal) {
 		float deathbarrier = gameGetDeathHeight();
-		float pY = player->PlayerPosition[2];
+		float pY = player->playerPosition[2];
 		//DPRINTF("deathheight: %d\nplayery: %d\ninbasehack: %d\n", (int)deathbarrier, (int)pY, player->inBaseHack);
 		// if player is above death barrier and inBaseHack equals 1.
 		if (player->inBaseHack && deathbarrier < pY) {
@@ -1553,7 +1553,7 @@ void customFlagLogic(Moby* flagMoby)
 			continue;
 
 		// player must be within 2 units of flag
-		vector_subtract(t, flagMoby->Position, player->PlayerPosition);
+		vector_subtract(t, flagMoby->Position, player->playerPosition);
 		float sqrDistance = vector_sqrmag(t);
 		if (sqrDistance > (2*2))
 			continue;

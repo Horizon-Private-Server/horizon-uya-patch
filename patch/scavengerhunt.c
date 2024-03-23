@@ -363,7 +363,7 @@ void scavHuntHBoltUpdate(Moby* moby)
     Player* p = playerGetFromSlot(i);
     if (!p || playerIsDead(p)) continue;
 
-    vector_subtract(t, p->PlayerPosition, moby->Position);
+    vector_subtract(t, p->playerPosition, moby->Position);
     if (vector_sqrmag(t) < (HBOLT_PICKUP_RADIUS * HBOLT_PICKUP_RADIUS)) {
       uiShowPopup(0, "You found a Horizon Bolt!\x0", 3);
       soundPlayByOClass(2, 0, moby, MOBY_ID_OMNI_SHIELD);
@@ -449,8 +449,8 @@ void scavHuntSpawnRandomNearPlayer(int pIdx)
 	Player* player = players[pIdx];
 	if (!player) return;
 
-	scavHuntSpawnRandomNearPosition(player->PlayerPosition);
-	// scavHuntSpawn(player->PlayerPosition);
+	scavHuntSpawnRandomNearPosition(player->playerPosition);
+	// scavHuntSpawn(player->playerPosition);
 }
 
 //--------------------------------------------------------------------------

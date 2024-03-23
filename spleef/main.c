@@ -286,7 +286,7 @@ void resetRoundState(void)
 	pos[2] = center[2] + (float)30;
 
 	playerRespawn(p);
-	playerSetPosRot(p, &pos, &p->PlayerRotation);
+	playerSetPosRot(p, &pos, &p->playerRotation);
 
     vector_copy(pos, StartPos);
 	memset(rot, 0, sizeof(rot));
@@ -408,7 +408,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 		return;
 
 	// Determine if host
-	SpleefState.IsHost = gameIsHost(localPlayer->Guber.Id.GID.HostId);
+	SpleefState.IsHost = gameIsHost(localPlayer->guber.Id.GID.HostId);
 
 	if (!Initialized)
 		initialize(gameConfig, gameState);
