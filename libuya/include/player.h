@@ -1156,7 +1156,7 @@ typedef struct Player { // 0x4500
 	/* 0x23c0 */ VECTOR camUMtx[3];
 	/* 0x23f0 */ HeroQueuedSound queuedSounds[2];
 	/* 0x2400 */ int loopingSounds[9];
-	/* 0x2424 */ HeroSpecialIdleDef specialIdles[4];
+	/* 0x2424 */ HeroSpecialIdleDef specialIdles;
 	/* 0x2434 */ Moby *skinMoby3;
 	/*        */ char unk_2438[0x10];
 	/* 0x2448 */ int firingAnim;
