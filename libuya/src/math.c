@@ -57,6 +57,34 @@ VariableAddress_t vaFastSinf = {
 #endif
 };
 
+VariableAddress_t vaFastArcTan = {
+#if UYA_PAL
+    .Lobby = 0x00590b30,
+    .Bakisi = 0x0045dda0,
+    .Hoven = 0x0045f950,
+    .OutpostX12 = 0x00456750,
+    .KorgonOutpost = 0x004542e0,
+    .Metropolis = 0x00453620,
+    .BlackwaterCity = 0x00450e50,
+    .CommandCenter = 0x00451748,
+    .BlackwaterDocks = 0x00453fc8,
+    .AquatosSewers = 0x004532c8,
+    .MarcadiaPalace = 0x00452c48,
+#else
+    .Lobby = 0x0058f980,
+    .Bakisi = 0x0045ccf0,
+    .Hoven = 0x0045e7e0,
+    .OutpostX12 = 0x00455620,
+    .KorgonOutpost = 0x00453230,
+    .Metropolis = 0x00452570,
+    .BlackwaterCity = 0x0044fd20,
+    .CommandCenter = 0x004507d8,
+    .BlackwaterDocks = 0x00453018,
+    .AquatosSewers = 0x00452358,
+    .MarcadiaPalace = 0x00451c98,
+#endif
+};
+
 //--------------------------------------------------------
 // -- https://stackoverflow.com/a/28050328
 // float cosf(float x)
@@ -130,28 +158,28 @@ float clampAngle(float theta)
 
 //--------------------------------------------------------
 // https://gist.github.com/volkansalma/2972237
-float atan2f(float y, float x)
-{
-    //http://pubs.opengroup.org/onlinepubs/009695399/functions/atan2.html
-    //Volkan SALMA
+// float atan2f(float y, float x)
+// {
+//     //http://pubs.opengroup.org/onlinepubs/009695399/functions/atan2.html
+//     //Volkan SALMA
 
-    const float ONEQTR_PI = MATH_PI / 4.0;
-	const float THRQTR_PI = 3.0 * MATH_PI / 4.0;
-	float r, angle;
-	float abs_y = fabsf(y) + 1e-10f;      // kludge to prevent 0/0 condition
-	if ( x < 0.0f )
-	{
-		r = (x + abs_y) / (abs_y - x);
-		angle = THRQTR_PI;
-	}
-	else
-	{
-		r = (x - abs_y) / (x + abs_y);
-		angle = ONEQTR_PI;
-	}
-	angle += (0.1963f * r * r - 0.9817f) * r;
-	if ( y < 0.0f )
-		return( -angle );     // negate if in quad III or IV
-	else
-		return( angle );
-}
+//     const float ONEQTR_PI = MATH_PI / 4.0;
+// 	const float THRQTR_PI = 3.0 * MATH_PI / 4.0;
+// 	float r, angle;
+// 	float abs_y = fabsf(y) + 1e-10f;      // kludge to prevent 0/0 condition
+// 	if ( x < 0.0f )
+// 	{
+// 		r = (x + abs_y) / (abs_y - x);
+// 		angle = THRQTR_PI;
+// 	}
+// 	else
+// 	{
+// 		r = (x - abs_y) / (x + abs_y);
+// 		angle = ONEQTR_PI;
+// 	}
+// 	angle += (0.1963f * r * r - 0.9817f) * r;
+// 	if ( y < 0.0f )
+// 		return( -angle );     // negate if in quad III or IV
+// 	else
+// 		return( angle );
+// }

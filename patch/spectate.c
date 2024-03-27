@@ -154,11 +154,11 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
         return;
 
     // Fix void fall spectate bug
-    currentPlayer->fps.Vars.flags = 2;
+    currentPlayer->fps.vars.flags = 2;
 
-    currentPlayer->fps.Vars.CameraYMin = playerToSpectate->fps.Vars.CameraYMin;
-    currentPlayer->fps.Vars.CameraYMax = playerToSpectate->fps.Vars.CameraYMax;
-    currentPlayer->fps.Vars.CameraPositionOffset[0] = -6;
+    currentPlayer->fps.vars.min_y_rot = playerToSpectate->fps.vars.min_y_rot;
+    currentPlayer->fps.vars.max_y_rot = playerToSpectate->fps.vars.max_y_rot;
+    currentPlayer->fps.vars.positionOffset[0] = -6;
 
     if (playerToSpectate->vehicle) {
         struct Moby * vehicleMoby = playerToSpectate->vehicle->pMoby;
@@ -204,10 +204,10 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
 
         // Interpolate camera rotation towards target player
         float lerpZ = lerpfAngle(spectateData->LastCameraZ, yaw, cameraT);
-        currentPlayer->fps.Vars.CameraZ.rotation = lerpZ;
+        currentPlayer->fps.vars.cameraZ.rotation = lerpZ;
         spectateData->LastCameraZ = lerpZ;
         float lerpY = lerpfAngle(spectateData->LastCameraY, pitch, cameraT);
-        currentPlayer->fps.Vars.CameraY.rotation = lerpY;
+        currentPlayer->fps.vars.cameraY.rotation = lerpY;
         spectateData->LastCameraY = lerpY;
         
         // Generate target based off distance and elevation
@@ -219,21 +219,21 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
 
         // Interpolate camera towards target player
         vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, target, 1 - powf(MATH_E, -CAMERA_POSITION_SHARPNESS * MATH_DT));
-        vector_copy(currentPlayer->fps.CameraPos, spectateData->LastCameraPos);
+        vector_copy(currentPlayer->fps.cameraPos, spectateData->LastCameraPos);
     } else {
         cameraT = 1 - powf(MATH_E, -CAMERA_ROTATION_SHARPNESS * MATH_DT);
 
         // Interpolate camera rotation towards target player
-        float playerToSpectateZ = playerToSpectate->fps.Vars.CameraZ.rotation;
-        currentPlayer->fps.Vars.CameraZ.rotation = playerToSpectateZ;
+        float playerToSpectateZ = playerToSpectate->fps.vars.cameraZ.rotation;
+        currentPlayer->fps.vars.cameraZ.rotation = playerToSpectateZ;
         spectateData->LastCameraZ = playerToSpectateZ;
-        float playerToSpectateY = playerToSpectate->fps.Vars.CameraY.rotation;
-        currentPlayer->fps.Vars.CameraY.rotation = playerToSpectateY;
+        float playerToSpectateY = playerToSpectate->fps.vars.cameraY.rotation;
+        currentPlayer->fps.vars.cameraY.rotation = playerToSpectateY;
         spectateData->LastCameraY = playerToSpectateY;
 
         // Interpolate camera towards target player
-        vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, playerToSpectate->fps.CameraPos, .5);
-        vector_copy(currentPlayer->fps.CameraPos, spectateData->LastCameraPos);
+        vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, playerToSpectate->fps.cameraPos, .5);
+        vector_copy(currentPlayer->fps.cameraPos, spectateData->LastCameraPos);
     }
 }
 
@@ -324,7 +324,7 @@ void runSpectate(void)
 						if (spectateIndex >= 0) {
 							enableSpectate(player, spectateData);
 							spectateData->Index = spectateIndex;
-							vector_copy(spectateData->LastCameraPos, players[spectateIndex]->fps.CameraPos);
+							vector_copy(spectateData->LastCameraPos, players[spectateIndex]->fps.cameraPos);
 						}
 					}
 				}
@@ -368,7 +368,7 @@ void runSpectate(void)
 							// Update last camera position to new target
 							// This snaps the camera to the new target instead of lerping
 							if (spectateIndex != spectateData->Index)
-								vector_copy(spectateData->LastCameraPos, nextPlayer->fps.CameraPos);
+								vector_copy(spectateData->LastCameraPos, nextPlayer->fps.cameraPos);
 
 							spectate(player, nextPlayer);
 						}

@@ -256,6 +256,7 @@ FUNCTION(strlen, 0x00120884)
 #--------------------------------------------------------
 VARIABLE_FUNCTION(cosf, vaFastCosf)
 VARIABLE_FUNCTION(sinf, vaFastSinf)
+VARIABLE_FUNCTION(atan2f, vaFastArcTan)
 # NTSC and PAL addresses are the same for the following.
 FUNCTION(powf, 0x00136d28)
 FUNCTION(asinf, 0x001348b8)
