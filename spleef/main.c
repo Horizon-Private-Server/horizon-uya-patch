@@ -429,7 +429,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 		{
 			if (SpleefState.RoundEndTicks)
 			{
-				int PlayerId = localPlayer->fps.Vars.camSettingsIndex;
+				int PlayerId = localPlayer->fps.vars.camSettingsIndex;
 				// draw round message
 				if (SpleefState.RoundResult[1] == PlayerId)
 					drawRoundMessage(SPLEEF_ROUND_WIN, 1.5);

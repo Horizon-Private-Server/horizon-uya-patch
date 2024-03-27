@@ -701,9 +701,9 @@ void playerSize(void)
 				player->pMoby->Scale = 0.25 * size;
 
 			// update camera
-			player->fps.Vars.CameraPositionOffset[0] = -6 * size;
-			player->fps.Vars.CameraPositionOffset[2] = cameraHeight;
-			player->fps.Vars.range = 2 + cameraHeight;
+			player->fps.vars.positionOffset[0] = -6 * size;
+			player->fps.vars.positionOffset[2] = cameraHeight;
+			player->fps.vars.range = 2 + cameraHeight;
 		}
 	}
 }

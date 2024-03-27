@@ -254,7 +254,7 @@ void playerPadUpdate(void)
             if (playerPad)
             {
                 memcpy(padHistory, &playerPad->btns, sizeof(struct PadHistory));
-                padHistory->id = player->fps.Vars.camSettingsIndex;
+                padHistory->id = player->fps.vars.camSettingsIndex;
             }
             // Reset pad if no player
             else if (padHistory->id >= 0)
@@ -292,7 +292,7 @@ int playerPadGetButtonDown(Player * player, u16 buttonMask)
         return 0;
 
     return playerPadGetButton(player, buttonMask) &&
-            (PlayerPadHistory[player->fps.Vars.camSettingsIndex].btns & buttonMask) != 0;
+            (PlayerPadHistory[player->fps.vars.camSettingsIndex].btns & buttonMask) != 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -302,7 +302,7 @@ int playerPadGetButtonUp(Player * player, u16 buttonMask)
         return 0;
 
     return !playerPadGetButton(player, buttonMask) &&
-        (PlayerPadHistory[player->fps.Vars.camSettingsIndex].btns & buttonMask) != 0;
+        (PlayerPadHistory[player->fps.vars.camSettingsIndex].btns & buttonMask) != 0;
 }
 
 //--------------------------------------------------------------------------------

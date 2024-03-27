@@ -1897,11 +1897,11 @@ void patchAimAssist(void)
 		return;
 
 	Player* p = playerGetFromSlot(0);
-	p->fps.Vars.CameraZ.target_slowness_factor_quick = 0;
-	p->fps.Vars.CameraZ.target_slowness_factor_aim = 0;
-	p->fps.Vars.CameraY.target_slowness_factor = 0;
-	p->fps.Vars.CameraY.strafe_turn_factor = 0;
-	p->fps.Vars.CameraY.strafe_tilt_factor = 0;
+	p->fps.vars.cameraZ.target_slowness_factor_quick = 0;
+	p->fps.vars.cameraZ.target_slowness_factor_aim = 0;
+	p->fps.vars.cameraY.target_slowness_factor = 0;
+	p->fps.vars.cameraY.strafe_turn_factor = 0;
+	p->fps.vars.cameraY.strafe_tilt_factor = 0;
 	patched.config.aimAssist = 1;
 }
 

@@ -628,23 +628,23 @@ typedef struct HeroTailIdle { // 0x50
 	/* 0x40 */ int timers[4];
 } HeroTailIdle;
 
-typedef struct FpsCam {
-	/* 0x11a0 */ MATRIX CameraMatrix;
-	/* 0x11e0 */ struct CameraAngleZ CameraZ;
-	/* 0x1200 */ struct CameraAngleY CameraY;
+typedef struct FpsCamVars {
+	/* 0x11a0 */ MATRIX cameraMatrix;
+	/* 0x11e0 */ struct CameraAngleZ cameraZ;
+	/* 0x1200 */ struct CameraAngleY cameraY;
 	/* 0x1220 */ int state;
 	/* 0x1224 */ short int quick_turn_input_time;
 	/* 0x1226 */ short int snap_hold_time;
 	/* 0x1228 */ float snap_input;
-	/* 0x122c */ struct Moby *Target;
+	/* 0x122c */ struct Moby *pTarget;
 	/* 0x1230 */ VECTOR target_last_pos;
 	/* 0x1240 */ VECTOR target_vel;
 	/* 0x1250 */ float target_blend_fac;
-	/* 0x1254 */ float CameraYMin; // aka: float mix_y_rot
-	/* 0x1258 */ float CameraYMax; // aka: float man_y_rot
+	/* 0x1254 */ float min_y_rot; // aka: float mix_y_rot
+	/* 0x1258 */ float max_y_rot; // aka: float man_y_rot
 	/* 0x125c */ struct Moby *pExcludeMoby;
-	/* 0x1260 */ VECTOR CameraPositionOffset;
-	/* 0x1270 */ VECTOR CameraRotationOffset;
+	/* 0x1260 */ VECTOR positionOffset;
+	/* 0x1270 */ VECTOR rotationOffset;
 	/* 0x1280 */ short int flags;
 	/* 0x1282 */ short int allegiance;
 	/* 0x1284 */ void *special_target_func;
@@ -667,12 +667,12 @@ typedef struct FpsCam {
 	/* 0x1304 */ float camZSpeed;
 	/* 0x1308 */ float gunInterp;
 	/* 0x130c */ float gunInterpSpeed;
-} FpsCam;
+} FpsCamVars;
 
 typedef struct HeroCamera { // 0x30
-	/* 0x1180 */ VECTOR CameraPos;
-	/* 0x1190 */ VECTOR CameraDir;
-	/* 0x11a0 */ FpsCam Vars;
+	/* 0x1180 */ VECTOR cameraPos;
+	/* 0x1190 */ VECTOR cameraDir;
+	/* 0x11a0 */ FpsCamVars vars;
 	/* 0x1310 */ int active;
 	/* 0x1314 */ float gunWithdrawSpeed;
 	/* 0x1318 */ float gunWithdrawDist;
