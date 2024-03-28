@@ -266,6 +266,7 @@ void gfxDrawSprite(float x, float y, float w, float h, int t0, int t1, int texW,
 void gfxStickyFX(void* a0, Moby* moby);
 void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
 void gfxDrawQuad(struct QuadDef * quadDef, MATRIX worldMatrix, u32 a3);
+void gfxSetScissor(int xmin, int xmax, int ymin, int ymax);
 
 //
 ScreenVBEffect* gfxScreenVBEffect(void);

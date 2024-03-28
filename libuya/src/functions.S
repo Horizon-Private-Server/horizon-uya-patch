@@ -291,12 +291,8 @@ VARIABLE_FUNCTION(gfxDrawSprite, vaDrawSprite)
 VARIABLE_FUNCTION(gfxStickyFX, vaSticky_FX)
 VARIABLE_FUNCTION(gfxDrawBillboardQuad, vaDrawBillboardQuad)
 VARIABLE_FUNCTION(gfxDrawQuad, vaFastDrawQuadReal)
-
-#VARIABLE_FUNCTION(gfxResetQuad, 0x005b6378)
-#VARIABLE_FUNCTION(gfxSetBlendMode, 0x004c97d8)
-#VARIABLE_FUNCTION(gfxSetTexture, 0x004c9a58)
-
 VARIABLE_FUNCTION(gfxGetPreLoadedImageBufferSource, vaGetPreLoadedImageBufferSource)
+VARIABLE_FUNCTION(gfxSetScissor, vaSetScissor)
 
 #--------------------------------------------------------
 #------------------------- GAME -------------------------
