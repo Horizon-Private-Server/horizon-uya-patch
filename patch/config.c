@@ -435,17 +435,6 @@ MenuElem_t menuElementsGameSettingsHelp[] = {
   { "the custom game settings.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
 };
 
-// // Custom Maps
-// MenuElem_t menuElementsCustomMap[] = {
-//   { "", labelActionHandler, menuStateHandler_InstalledCustomMaps, (void*)LABELTYPE_HEADER },
-//   { "To play on custom maps you must first go to", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-//   { "rac-horizon.com and download the maps.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-//   { "Then install the map files onto a USB drive", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-//   { "and insert it into your PS2.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-//   { "Finally install the custom maps modules here.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-//   { "Install custom map modules", buttonActionHandler, menuStateHandler_InstallCustomMaps, mapsSelectHandler },
-// };
-
 // tab items
 TabElem_t tabElements[] = {
   { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
@@ -719,7 +708,7 @@ void tabGameSettingsStateHandler(TabElem_t* tab, int * state)
   GameSettings * gameSettings = gameGetSettings();
   if (!gameSettings)
   {
-    *state = ELEMENT_VISIBLE;
+    *state = ELEMENT_HIDDEN;
   }
 
   // if game has started or not the host, disable editing
@@ -1377,7 +1366,7 @@ void drawTab(TabElem_t* tab)
           }
 
           // draw background
-          gfxScreenSpaceBox(frameX, frameY + frameH - 1.0/SCREEN_HEIGHT, frameW, LINE_HEIGHT, 0x80000000);
+          gfxScreenSpaceBox(frameX, frameY + frameH - 1.0/SCREEN_HEIGHT, frameW, LINE_HEIGHT, colorContentBg);
 
           // set scissor
           gfxSetScissor(
@@ -1392,7 +1381,7 @@ void drawTab(TabElem_t* tab)
           else if ((helpLastXOffset + w + contentPaddingX*2) >= frameW) helpLastXOffset -= 0.002;
           else if (helpItemCooldown2) --helpItemCooldown2;
           else { helpItemCooldown1 = 60 * 3; helpItemCooldown2 = 60 * 6; helpLastXOffset = 0; }
-          gfxScreenSpaceText((frameX + contentPaddingX + helpLastXOffset) * SCREEN_WIDTH, (frameY + frameH) * SCREEN_HEIGHT, 1, 1, 0x80FFFFFF, currentElement->help, -1, 0);
+          gfxScreenSpaceText((frameX + contentPaddingX + helpLastXOffset) * SCREEN_WIDTH, (frameY + frameH) * SCREEN_HEIGHT, 1, 1, colorText, currentElement->help, -1, 0);
 
           // reset scissor
           gfxSetScissor(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT);
