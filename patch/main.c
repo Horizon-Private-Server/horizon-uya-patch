@@ -886,9 +886,9 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 	int index = player->mpIndex;
 	// Set loadout/cycle weapons.  If not chosen, it will be set to default cycle.
 	char cycle[] = {
-		config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : WEAPON_ID_BLITZ,
-		config.cycleWeapon2 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon2) : WEAPON_ID_FLUX,
-		config.cycleWeapon3 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon3) : WEAPON_ID_GBOMB
+		config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : WEAPON_ID_GBOMB,
+		config.cycleWeapon2 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon2) : WEAPON_ID_BLITZ,
+		config.cycleWeapon3 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon3) : WEAPON_ID_FLUX
 	};
 
 	// call hooked GiveMeRandomWeapons function first
