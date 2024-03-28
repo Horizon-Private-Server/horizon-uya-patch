@@ -5,8 +5,8 @@ all:
 	$(MAKE) -C patch
 	$(MAKE) -C unpatch
 	# $(MAKE) -C example-cgm
-	$(MAKE) -C spleef
-	$(MAKE) -C infected
+	# $(MAKE) -C spleef
+	# $(MAKE) -C infected
 	
 clean:
 	$(MAKE) -C libuya clean

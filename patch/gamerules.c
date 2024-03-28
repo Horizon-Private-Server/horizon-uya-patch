@@ -88,6 +88,33 @@ void vampireLogic()
 	patched.gameConfig.grVampire = 1;
 }
 
+/*
+ * NAME :		aprilfools
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void aprilfools()
+{
+	// Check Servers date for April 1st.
+	// if (patchPointers.ServerTimeMonth != 4 && patchPointers.ServerTimeDay != 1)
+	// 	return;
+
+	// April Fools 2024: Random Skins
+	int skin = -1;
+	if (skin == -1)
+		skin = randRangeInt(0, 15);
+
+	GameSettings * gs = gameGetSettings();
+	int i;
+	for (i = 0; i < gs->PlayerCount; ++i) {
+		if (gs->PlayerSkins[i] != skin)
+			gs->PlayerSkins[i] = skin;
+	}
+}
+
 u32 onGameplayLoad(void* a0, long a1)
 {
 	GameplayHeaderDef_t * gameplay;
@@ -256,6 +283,8 @@ void grLobbyStart(void)
 		
 		if (gameConfig.grNoBaseDefense_SmallTurrets)
 			gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = 0;
+	
+		// aprilfools();
 	} else {
 		// If we're not in staging then reset
 		GameRulesInitialized = 0;

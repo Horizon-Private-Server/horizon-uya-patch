@@ -2450,10 +2450,8 @@ int main(void)
 		runFpsCounter();
 
 		// Run Spectate
-		#if DEBUG
 		if (config.enableSpectate)
 			runSpectate();
-		#endif
 
 		// Patches gadget events as they come in.
 		// patchGadgetEvents();
