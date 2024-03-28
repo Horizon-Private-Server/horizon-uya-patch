@@ -124,6 +124,7 @@ void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
 // tab state handlers
 void tabDefaultStateHandler(TabElem_t* tab, int * state);
 void tabGameSettingsStateHandler(TabElem_t* tab, int * state);
+void tabGameSettingsHelpStateHandler(TabElem_t* tab, int * state);
 
 // navigation functions
 void navMenu(TabElem_t* tab, int direction, int loop);
@@ -139,14 +140,14 @@ extern int scavHuntEnabled;
 extern VoteToEndState_t voteToEndState;
 
 MenuElem_ListData_t dataLevelOfDetail = {
-    &config.levelOfDetail,
-    NULL,
+    .value = &config.levelOfDetail,
+    .stateHandler = NULL,
 #if DEBUG
-    4,
+    .count = 4,
 #else
-    3,
+    .count = 3,
 #endif
-    { "Potato", "Low", "Normal", "High" }
+    .items = { "Potato", "Low", "Normal", "High" }
 };
 
 MenuElem_RangeData_t dataFieldOfView = {
@@ -164,10 +165,10 @@ MenuElem_RangeData_t dataQuickSelectTimeDelay = {
 };
 
 MenuElem_ListData_t dataCycleWeapon1 = {
-    &config.cycleWeapon1,
-    NULL,
-    10,
-    {
+    .value = &config.cycleWeapon1,
+    .stateHandler = NULL,
+    .count = 10,
+    .items = {
       "Off",
       "N60 Storm",
       "Blitz Cannon",
@@ -182,10 +183,10 @@ MenuElem_ListData_t dataCycleWeapon1 = {
 };
 
 MenuElem_ListData_t dataCycleWeapon2 = {
-    &config.cycleWeapon2,
-    NULL,
-    10,
-    {
+    .value = &config.cycleWeapon2,
+    .stateHandler = NULL,
+    .count = 10,
+    .items = {
       "Off",
       "N60 Storm",
       "Blitz Cannon",
@@ -200,10 +201,10 @@ MenuElem_ListData_t dataCycleWeapon2 = {
 };
 
 MenuElem_ListData_t dataCycleWeapon3 = {
-    &config.cycleWeapon3,
-    NULL,
-    10,
-    {
+    .value = &config.cycleWeapon3,
+    .stateHandler = NULL,
+    .count = 10,
+    .items = {
       "Off",
       "N60 Storm",
       "Blitz Cannon",
@@ -262,92 +263,92 @@ const char* CustomModeShortNames[] = {
 };
 
 MenuElem_ListData_t dataWeaponPacks = {
-    &gameConfig.grDisableWeaponPacks,
-    NULL,
-    2,
-    { "Default", "Off", "On Death" }
+    .value = &gameConfig.grDisableWeaponPacks,
+    .stateHandler = NULL,
+    .count = 2,
+    .items = { "Default", "Off", "On Death" }
 };
 
 MenuElem_ListData_t dataV2_Setting = {
-    &gameConfig.grV2s,
-    NULL,
-    3,
-    { "On", "Off", "Always" }
+    .value = &gameConfig.grV2s,
+    .stateHandler = NULL,
+    .count = 3,
+    .items = { "On", "Off", "Always" }
 };
 
 MenuElem_ListData_t dataVampire = {
-    &gameConfig.grVampire,
-    NULL,
-    5,
-    { "Off", "25%", "50%", "75%", "100%" }
+    .value = &gameConfig.grVampire,
+    .stateHandler = NULL,
+    .count = 5,
+    .items = { "Off", "25%", "50%", "75%", "100%" }
 };
 
 MenuElem_ListData_t dataSetGattlingTurretHealth = {
-    &gameConfig.grSetGattlingTurretHealth,
-    NULL,
-    10,
-    { "Default", ".5x", "1.5x", "2x", "3x", "4x", "5x", "6x", "7x", "8x" }
+    .value = &gameConfig.grSetGattlingTurretHealth,
+    .stateHandler = NULL,
+    .count = 10,
+    .items = { "Default", ".5x", "1.5x", "2x", "3x", "4x", "5x", "6x", "7x", "8x" }
 };
 
 MenuElem_ListData_t dataRespawnTimer_Player = {
-    &gameConfig.grRespawnTimer_Player,
-    NULL,
-    12,
-    { "1.5", "2", "3", "4", "5", "6", "7", "8", "9", "10", "0", "1", }
+    .value = &gameConfig.grRespawnTimer_Player,
+    .stateHandler = NULL,
+    .count = 12,
+    .items = { "1.5", "2", "3", "4", "5", "6", "7", "8", "9", "10", "0", "1", }
 };
 
 MenuElem_ListData_t dataPlayerSize = {
-    &gameConfig.prPlayerSize,
-    NULL,
-    5,
-    { "Normal", "Large", "Giant", "Tiny", "Small" }
+    .value = &gameConfig.prPlayerSize,
+    .stateHandler = NULL,
+    .count = 5,
+    .items = { "Normal", "Large", "Giant", "Tiny", "Small" }
 };
 
 MenuElem_ListData_t dataRadarBlipsDistance = {
-    &gameConfig.grRadarBlipsDistance,
-    NULL,
-    3,
-    { "Short", "Always", "Off" }
+    .value = &gameConfig.grRadarBlipsDistance,
+    .stateHandler = NULL,
+    .count = 3,
+    .items = { "Short", "Always", "Off" }
 };
 
 MenuElem_ListData_t dataMapScore_MapAccess = {
-    &config.mapScoreToggle_MapBtn,
-    NULL,
-    4,
-    { "Default", "Select", "L3", "R3" }
+    .value = &config.mapScoreToggle_MapBtn,
+    .stateHandler = NULL,
+    .count = 4,
+    .items = { "Default", "Select", "L3", "R3" }
 };
 
 MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
-    &config.mapScoreToggle_ScoreBtn,
-    NULL,
-    4,
-   { "Default", "Select", "L3", "R3" }
+    .value = &config.mapScoreToggle_ScoreBtn,
+    .stateHandler = NULL,
+    .count = 4,
+    .items = { "Default", "Select", "L3", "R3" }
 };
 
 MenuElem_ListData_t dataGameConfigPreset = {
-    &preset,
-    NULL,
-    3,
-    { "None", "Competitive", "1v1", }
+    .value = &preset,
+    .stateHandler = NULL,
+    .count = 3,
+    .items = { "None", "Competitive", "1v1", }
 };
 
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
-    &gameConfig.grRespawnTimer_HealthBoxes,
-    NULL,
-    7,
-    { "30", "0", "5", "10", "15", "20", "25" }
+    .value = &gameConfig.grRespawnTimer_HealthBoxes,
+    .stateHandler = NULL,
+    .count = 7,
+    .items = { "30", "0", "5", "10", "15", "20", "25" }
 };
 MenuElem_ListData_t dataRespawnTimer_WeaponCrates = {
-    &gameConfig.grRespawnTimer_WeaponCrates,
-    NULL,
-    7,
-    { "30", "0", "5", "10", "15", "20", "25" }
+    .value = &gameConfig.grRespawnTimer_WeaponCrates,
+    .stateHandler = NULL,
+    .count = 7,
+    .items = { "30", "0", "5", "10", "15", "20", "25" }
 };
 MenuElem_ListData_t dataRespawnTimer_AmmoPickups = {
-    &gameConfig.grRespawnTimer_AmmoPickups,
-    NULL,
-    7,
-    { "30", "0", "5", "10", "15", "20", "25" }
+    .value = &gameConfig.grRespawnTimer_AmmoPickups,
+    .stateHandler = NULL,
+    .count = 7,
+    .items = { "30", "0", "5", "10", "15", "20", "25" }
 };
 
 // General
@@ -355,28 +356,28 @@ MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
-  { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler },
-  { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler },
+  { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
+  { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
-  { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt },
+  { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
 #if DEBUG
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
   { "Always Show Health", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.alwaysShowHealth },
-  { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist },
-  { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake },
+  { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist, "Toggles code that pulls the camera towards nearby targets when aiming." },
+  { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake, "Toggles the camera shake caused by nearby explosions." },
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
-  { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter },
+  { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter, "Toggles the in game FPS counter." },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1 },
   { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2 },
   { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3 },
   // { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate },
-  { "Quick Select Delay", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataQuickSelectTimeDelay },
+  { "Quick Select Delay", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataQuickSelectTimeDelay, "Change how short/long you need to hold triangle before it opens the quick select." },
   { "Single Player Music", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSingleplayerMusic },
-  { "Toggle Map Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_MapAccess },
-  { "Toggle Scoreboard Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_ScoreboardAccess },
+  { "Toggle Map Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_MapAccess, "The button that you will need to press to show the Map." },
+  { "Toggle Scoreboard Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_ScoreboardAccess, "The button that you will need to press to show the Scoreboard." },
 };
 
 // Game Settings
@@ -384,64 +385,72 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps },
-  { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes },
-  { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset },
+  { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps, "Play on any of the custom maps from the Horizon Map Pack. Visit https://rac-horizon.com to download the map pack." },
+  { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
+  { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset, "Select one of the preconfigured game rule presets or manually set the custom game rules below." },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Radar Blips", listActionHandler, menuStateHandler_Default, &dataRadarBlipsDistance },
-  { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_Player },
-  { "Respawn Invincibility", toggleActionHandler, menuStateHandler_Default, &gameConfig.grRespawnInvincibility },
-  { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers },
-  { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks },
-  { "V2s", listActionHandler, menuStateHandler_Default, &dataV2_Setting },
-  { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown },
-  { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit },
-  { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled },
-  { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn },
-  { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire },
-  // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars },
-  { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes },
-  { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates },
-  { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups },
-  { "Health Boxes Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_HealthBoxes },
-  { "Weapon Crates Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_WeaponCrates },
-  { "Ammo Pickups Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_AmmoPickups },
+  { "Radar Blips", listActionHandler, menuStateHandler_Default, &dataRadarBlipsDistance, "Toggle the radar blips on the map short (default), Always, or Off (won't show any players on map)" },
+  { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_Player, "Time in seconds for the player to respawn." },
+  { "Respawn Invincibility", toggleActionHandler, menuStateHandler_Default, &gameConfig.grRespawnInvincibility, "Adds a small invincibility timer to players whom have just respawned." },
+  { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers, "Disables longer respawn timers for your team if your teams base turrets have been destroyed." },
+  { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks, "Toggle if weapon packs should spawn when a player dies." },
+  { "V2s", listActionHandler, menuStateHandler_Default, &dataV2_Setting, "Configures V2 weapon upgrades to be disabled, on (default), or always on (spawn with v2 weapons)." },
+  { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown, "Disables the brief hit invincibility after taking damage." },
+  { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit, "Forces sniper shots that hit to register on every client. Can result in shots that appear to phase through walls." },
+  { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled, "Forces sniper shots to always deal the correct amount of damage." },
+  { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn, "Automatically respawn players once the in game respawn timer hits zero." },
+  { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire, "Earn a percentage of health for each kill."},
+  // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars, "Draws a healthbar above each player's nametag." },
+  { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes, "Toggle Health Boxes on or off." },
+  { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates, "Toggle Weapon Crates on or off." },
+  { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups, "Toggle Ammo Pickups on or off." },
+  { "Health Boxes Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_HealthBoxes, "Time in seconds for the Health Boxes to respawn." },
+  { "Weapon Crates Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_WeaponCrates, "Time in seconds for the Weapon Crates to respawn." },
+  { "Ammo Pickups Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_AmmoPickups, "Time in seconds for the Ammo Pickups to respawn." },
 
-  { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones },
-  { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets },
+  { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones, "Toggle Drones on or off." },
+  { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets, "Toggle Player Turrets on or off." },
 #if DEBUG
-  { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots },
+  { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Returns a dropped flag if it lands on water, lava, or other non-walkable areas." },
 #endif
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
-  { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth },
-  { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive },
-  { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots },
+  { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth, "Increase or decrease the amount of health each teams base turrets have." },
+  { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive, "Let the Health and Ammo pads in each base always stay active, even if parts of the base are destroyed." },
+  { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots, "toggle Troopers (and other bots) on or off." },
   // { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever },
-  { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly },
-  // { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize },
-  { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor },
+  { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever, "Double tap and hold R2 to chargeboot forever." },
+  { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly, "Only allow the use of each players Loadout weapons, regardless of what weapons are enabled." },
+  // { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize, "Changes the size of the player model." },
+  { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor, "You only have one life!  Once you die, you can't respawn!" },
 };
 
-// Custom Maps
-MenuElem_t menuElementsCustomMap[] = {
-  { "", labelActionHandler, menuStateHandler_InstalledCustomMaps, (void*)LABELTYPE_HEADER },
-  { "To play on custom maps you must first go to", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "rac-horizon.com and download the maps.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Then install the map files onto a USB drive", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "and insert it into your PS2.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Finally install the custom maps modules here.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Install custom map modules", buttonActionHandler, menuStateHandler_InstallCustomMaps, mapsSelectHandler },
+// Game Settings (not in staging)
+MenuElem_t menuElementsGameSettingsHelp[] = {
+  { "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "Please create a game to configure", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "the custom game settings.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
 };
+
+// // Custom Maps
+// MenuElem_t menuElementsCustomMap[] = {
+//   { "", labelActionHandler, menuStateHandler_InstalledCustomMaps, (void*)LABELTYPE_HEADER },
+//   { "To play on custom maps you must first go to", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+//   { "rac-horizon.com and download the maps.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+//   { "Then install the map files onto a USB drive", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+//   { "and insert it into your PS2.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+//   { "Finally install the custom maps modules here.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+//   { "Install custom map modules", buttonActionHandler, menuStateHandler_InstallCustomMaps, mapsSelectHandler },
+// };
 
 // tab items
 TabElem_t tabElements[] = {
   { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
   { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
+  { "Game Settings", tabGameSettingsHelpStateHandler, menuElementsGameSettingsHelp, sizeof(menuElementsGameSettingsHelp)/sizeof(MenuElem_t) },
 };
 
 const int tabsCount = sizeof(tabElements)/sizeof(TabElem_t);
@@ -721,6 +730,16 @@ void tabGameSettingsStateHandler(TabElem_t* tab, int * state)
   else
   {
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+  }
+}
+
+void tabGameSettingsHelpStateHandler(TabElem_t* tab, int * state)
+{
+  GameSettings * gameSettings = gameGetSettings();
+  if (!gameSettings) {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+  } else {
+    *state = ELEMENT_HIDDEN;
   }
 }
 
@@ -1303,6 +1322,11 @@ void drawTab(TabElem_t* tab)
   if (!tab)
     return;
 
+  static int helpLastItemIdx = -1;
+  static int helpItemCooldown1 = 0;
+  static int helpItemCooldown2 = 0;
+  static float helpLastXOffset = 0;
+
   int i = 0, state = 0;
   int menuElementRenderEnd = tab->menuOffset;
   MenuElem_t * menuElements = tab->elements;
@@ -1341,6 +1365,38 @@ void drawTab(TabElem_t* tab)
       if (state & ELEMENT_SELECTABLE) {
         RangeBar_IsSelected = colorRangeBarSelected;
         gfxScreenSpaceQuad(&drawRect, colorSelected, colorSelected, colorSelected, colorSelected);
+
+        // draw help
+        if (currentElement->help && strlen(currentElement->help) > 0) {
+
+          if (i != helpLastItemIdx) {
+            helpLastItemIdx = i;
+            helpLastXOffset = 0;
+            helpItemCooldown1 = 60 * 3;
+            helpItemCooldown2 = 60 * 6;
+          }
+
+          // draw background
+          gfxScreenSpaceBox(frameX, frameY + frameH - 1.0/SCREEN_HEIGHT, frameW, LINE_HEIGHT, 0x80000000);
+
+          // set scissor
+          gfxSetScissor(
+            frameX * SCREEN_WIDTH,
+            (frameX + frameW) * SCREEN_WIDTH,
+            (frameY + frameH) * SCREEN_HEIGHT,
+            (frameY + frameH + LINE_HEIGHT) * SCREEN_HEIGHT);
+          
+          // get width
+          float w = gfxGetFontWidth(currentElement->help, -1, 1) / (float)SCREEN_WIDTH;
+          if (helpItemCooldown1) --helpItemCooldown1;
+          else if ((helpLastXOffset + w + contentPaddingX*2) >= frameW) helpLastXOffset -= 0.002;
+          else if (helpItemCooldown2) --helpItemCooldown2;
+          else { helpItemCooldown1 = 60 * 3; helpItemCooldown2 = 60 * 6; helpLastXOffset = 0; }
+          gfxScreenSpaceText((frameX + contentPaddingX + helpLastXOffset) * SCREEN_WIDTH, (frameY + frameH) * SCREEN_HEIGHT, 1, 1, 0x80FFFFFF, currentElement->help, -1, 0);
+
+          // reset scissor
+          gfxSetScissor(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT);
+        }
       }
     } else {
       RangeBar_IsSelected = colorRangeBar;

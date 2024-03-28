@@ -45,6 +45,7 @@ typedef struct MenuElem
   ActionHandler handler;
   MenuElementStateHandler stateHandler;
   void * userdata;
+  char * help;
 } MenuElem_t;
 
 typedef struct MenuElem_ListData
