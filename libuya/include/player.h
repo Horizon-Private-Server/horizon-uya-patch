@@ -1253,7 +1253,7 @@ typedef struct Player { // 0x4500
 	/* 0x430c */ PadStream padStream;
 	/* 0x44ec */ unsigned char startGameButtonOffFrames;
 	/* 0x44ed */ unsigned char curPadMsgSequenceNum;
-	/* 0x44ef */ char curPadMsgFrame;
+	/* 0x44ee */ char curPadMsgFrame;
 	/* 0x44ef */ char framesUntilStateRot;
 	/* 0x44F0 */ short mapTimer;
 	/* 0x44F2 */ short int lastMineId;
@@ -1262,25 +1262,26 @@ typedef struct Player { // 0x4500
 	};
 } Player;
 
-typedef void (*PlayerUpdate_func)(Player *player);
+typedef void (*PlayerUpdate_Func)(Player *player);
 typedef int (*GetTeam_Func)(Player *player);
 typedef void (*HandleEvent_Func)(Player *player, GuberEvent *event);
 typedef int (*FriendlyToTeam_Func)(Player *player, int team);
 typedef void (*ResetHero_Func)(Moby *pHeroMoby, VECTOR *pos, VECTOR *rot, int mpIndex);
 typedef void (*DoBehavior_Func)(Player *player);
 typedef void (*ZeroMovement_Func)(Player *player);
-typedef void (*PlayerUpdateState_func)(Player *player, PlayerState state, int anim_switch, int force, int playDeathSound);
+typedef void (*PlayerUpdateState_Func)(Player *player, PlayerState state, int anim_switch, int force, int playDeathSound);
 typedef int (*GetVehicleMoby_Func)(Player *player);
 typedef int (*IsMyLookCamDisabled_Func)(Player *player);
 typedef int (*AllowRemoteLedgeGrab_Func)(Player *player);
 typedef int (*GetSlot_Func)(Player *player);
+typedef int (*GetMoby_Func)(Player *player);
 
 typedef struct PlayerVTable
 {
 /* 0x00 */ void * FUNC_00; // no pointer
 /* 0x04 */ void * FUNC_04; // no pointer
 /* 0x08 */ void * FUNC_08; // just a return;
-/* 0x0c */ PlayerUpdate_func Update;
+/* 0x0c */ PlayerUpdate_Func Update;
 /* 0x10 */ GetTeam_Func GetTeam; // returns (player->pMoby)
 /* 0x14 */ HandleEvent_Func HandleEvent;
 /* 0x18 */ void * FUNC_18; // just a return;
@@ -1290,13 +1291,33 @@ typedef struct PlayerVTable
 /* 0x28 */ void * FUNC_28; // Updates Left Stick Movement
 /* 0x2c */ DoBehavior_Func DoBehavior;
 /* 0x30 */ ZeroMovement_Func ZeroMovement;
-/* 0x34 */ PlayerUpdateState_func UpdateState; // aka: InitBodyState()
+/* 0x34 */ PlayerUpdateState_Func UpdateState; // aka: InitBodyState()
 /* 0x38 */ void * FUNC_38;
 /* 0x3c */ void * FUNC_3C;
 /* 0x40 */ GetVehicleMoby_Func GetVehicleMoby; // Returns the vehicle moby pointer the player is in.
 /* 0x44 */ IsMyLookCamDisabled_Func IsMyLookCamDisabled; // returns true or false.
 /* 0x48 */ AllowRemoteLedgeGrab_Func AllowRemoteLedgeGrab; // Returns true or false.
 /* 0x4c */ GetSlot_Func GetSlot; // Returns 1 (In DL it returs -1)
+/* 0x50 */ void * FUNC_50;
+/* 0x54 */ void * FUNC_54;
+/* 0x58 */ void * FUNC_58;
+/* 0x5c */ void * FUNC_5c;
+/* 0x60 */ void * FUNC_60;
+/* 0x64 */ void * FUNC_64;
+/* 0x68 */ GetMoby_Func GetMoby; // Returns pMoby of player.
+/* 0x6c */ HandleEvent_Func HandleEvent2;
+/* 0x70 */ void * FUNC_70; // Just a return;
+/* 0x74 */ FriendlyToTeam_Func FriendlyToTeam2; // Retunrs True if friendly.
+/* 0x78 */ void * FUNC_78; //memset zero 0x4dc0 bytes
+/* 0x7c */ ResetHero_Func PlayerReset2;
+/* 0x80 */ void * FUNC_80;
+/* 0x84 */ void * FUNC_84;
+/* 0x88 */ void * FUNC_88;
+/* 0x8c */ void * FUNC_8c;
+/* 0x90 */ void * FUNC_90;
+/* 0x94 */ void * FUNC_94;
+/* 0x98 */ void * FUNC_98;
+/* 0x9c */ void * FUNC_9c;
 } PlayerVTable;
 
 /*
