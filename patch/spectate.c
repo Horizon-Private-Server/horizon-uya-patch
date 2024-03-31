@@ -15,11 +15,28 @@
 #include <libuya/uya.h>
 #include <libuya/utils.h>
 #include <libuya/interop.h>
+#include "config.h"
+
+extern PatchConfig_t config;
+extern PatchGameConfig_t gameConfig;
+
+int Initialized = 0;
+
+// This contains the spectate related info per local
+struct PlayerSpectateData
+{
+    int Enabled;
+    int Index;
+    int HasShownEnterMsg;
+    int HasShownNavMsg;
+    VECTOR LastCameraPos;
+    float LastCameraZ;
+    float LastCameraY;
+} SpectateData[GAME_MAX_LOCALS];
 
 const float CAMERA_POSITION_SHARPNESS = 50;
 const float CAMERA_ROTATION_SHARPNESS = 30;
 const float VEHICLE_CAMERA_ROTATION_SHARPNESS = 3;
-
 const float VEHICLE_DISTANCE[] =
 {
     3,                  // Turboslider
@@ -39,19 +56,6 @@ const float VEHICLE_ELEVATION[] =
 	3,					// Tank
 	3,					// Tank Passanger
 };
-
-struct PlayerSpectateData
-{
-    int Enabled;
-    int Index;
-    int HasShownEnterMsg;
-    int HasShownNavMsg;
-    VECTOR LastCameraPos;
-    float LastCameraZ;
-    float LastCameraY;
-} SpectateData[2];
-
-int InitSpectate = 0;
 
 VariableAddress_t vaGetMissionDefHook = {
 #if UYA_PAL
@@ -90,7 +94,7 @@ Player* playerGetFromSlot_Hook(int i)
             return player;
     }
     
-    return playerGetFromSlot(0);
+    return playerGetFromSlot(i);
 }
 
 void enableSpectate(Player * player, struct PlayerSpectateData * data)
@@ -149,7 +153,7 @@ void disableSpectate(Player * player, struct PlayerSpectateData * data)
 void spectate(Player * currentPlayer, Player * playerToSpectate)
 {
     float cameraT;
-    struct PlayerSpectateData * spectateData = SpectateData + currentPlayer->mpIndex;
+    struct PlayerSpectateData * spectateData = SpectateData + currentPlayer->fps.vars.cam_slot;
     if(!playerToSpectate)
         return;
 
@@ -237,12 +241,29 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
     }
 }
 
+int canSpectatePlayer(int currentPlayerIndex, int spectatePlayerIndex)
+{
+    Player ** players = playerGetAll();
+    int teamOnly = 0; // gameConfig.customModeId == CUSTOM_MODE_SEARCH_AND_DESTROY || gameConfig.customModeId == CUSTOM_MODE_INFECTED;
+    int enemyOnly = 0; // gameConfig.customModeId == CUSTOM_MODE_HNS;
+
+    // skip self
+    if (spectatePlayerIndex == currentPlayerIndex)
+        return 0;
+    // skip enemy team
+    if (teamOnly && players[spectatePlayerIndex] && players[spectatePlayerIndex]->mpTeam != players[currentPlayerIndex]->mpTeam)
+        return 0;
+    // skip friendly team
+    if (enemyOnly && players[spectatePlayerIndex] && players[spectatePlayerIndex]->mpTeam == players[currentPlayerIndex]->mpTeam)
+        return 0;
+
+    return 1;
+}
+
 int findNextPlayerIndex(int currentPlayerIndex, int currentSpectateIndex, int direction)
 {
     Player ** players = playerGetAll();
-    // int teamOnly = gameConfig.customModeId == CUSTOM_MODE_SEARCH_AND_DESTROY || gameConfig.customModeId == CUSTOM_MODE_INFECTED;
-    int teamOnly = 0;
-	int newIndex = currentSpectateIndex;
+    int newIndex = currentSpectateIndex;
 
     do {
     loop:
@@ -252,17 +273,16 @@ int findNextPlayerIndex(int currentPlayerIndex, int currentSpectateIndex, int di
             newIndex = GAME_MAX_PLAYERS - 1;
         else if (newIndex >= GAME_MAX_PLAYERS)
             newIndex = 0;
+
         // Fail if the only player is us
         if(newIndex == currentPlayerIndex && newIndex == currentSpectateIndex)
             return -1;
+
         // prevent infinite loop
         if (newIndex == currentSpectateIndex)
             return players[currentSpectateIndex] ? currentSpectateIndex : -1;
-        // skip self
-        if (newIndex == currentPlayerIndex)
-            goto loop;
-        // skip enemy team
-        if (teamOnly && players[newIndex] && players[newIndex]->mpTeam != players[currentPlayerIndex]->mpTeam)
+        
+        if (!canSpectatePlayer(currentPlayerIndex, newIndex))
             goto loop;
     }
     while(!players[newIndex]);
@@ -270,10 +290,36 @@ int findNextPlayerIndex(int currentPlayerIndex, int currentSpectateIndex, int di
     return newIndex;
 }
 
-void Init(void)
+void spectateSetSpectate(int localPlayerIndex, int playerToSpectateOrDisable)
+{
+    Player ** players = playerGetAll();
+    Player* player = playerGetFromSlot(localPlayerIndex);
+    struct PlayerSpectateData * spectateData = &SpectateData[localPlayerIndex];
+    if (!player)
+        return;
+
+    if (playerToSpectateOrDisable < 0) {
+        disableSpectate(player, spectateData);
+    }
+    else {
+        int spectateIndex = playerToSpectateOrDisable;
+        if (!canSpectatePlayer(player->fps.vars.camSettingsIndex, spectateIndex))
+            spectateIndex = findNextPlayerIndex(player->fps.vars.camSettingsIndex, spectateIndex, 1);
+
+        if (spectateIndex < 0)
+            return;
+
+        enableSpectate(player, spectateData);
+        spectateData->Index = spectateIndex;
+        vector_copy(spectateData->LastCameraPos, players[spectateIndex]->fps.cameraPos);
+    }
+}
+
+
+void initialize(void)
 {
     memset(SpectateData, 0, sizeof(SpectateData));
-    InitSpectate = 1;
+    Initialized = 1;
 }
 
 void runSpectate(void)
@@ -285,15 +331,16 @@ void runSpectate(void)
 	int direction = 0;
 	int spectateIndex = 0;
 
-	// First, we have to ensure we are in-game
+    // First, we have to ensure we are in-game
 	if (!gameSettings || !isInGame()) {
-		SpectateData->Enabled = 0;
-		InitSpectate = 0;
-		return;
-	}
+        SpectateData[0].Enabled = 0;
+        SpectateData[1].Enabled = 0;
+        Initialized = 0;
+        return;
+    }
 
-	if (InitSpectate != 1)
-		Init();
+	if (Initialized != 1)
+		initialize();
 
 	// Loop through every player
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
@@ -303,9 +350,9 @@ void runSpectate(void)
 		Player * player = players[i];
 
 		// Next, we have to ensure the player is the local player and they are dead
-		if (player->isLocal || playerGetHealth(player) <= 0) {
+		if (player->isLocal) {
 			// Grab player-specific spectate data
-			spectateData = SpectateData + player->mpIndex;
+			spectateData = SpectateData + player->fps.vars.cam_slot;
 			spectateIndex = spectateData->Index;
 
 			// If dead
