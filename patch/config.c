@@ -1361,8 +1361,8 @@ void drawTab(TabElem_t* tab)
           if (i != helpLastItemIdx) {
             helpLastItemIdx = i;
             helpLastXOffset = 0;
-            helpItemCooldown1 = 60 * 3;
-            helpItemCooldown2 = 60 * 6;
+            helpItemCooldown1 = GAME_FPS * 3;
+            helpItemCooldown2 = GAME_FPS * 6;
           }
 
           // draw background
@@ -1380,7 +1380,7 @@ void drawTab(TabElem_t* tab)
           if (helpItemCooldown1) --helpItemCooldown1;
           else if ((helpLastXOffset + w + contentPaddingX*2) >= frameW) helpLastXOffset -= 0.002;
           else if (helpItemCooldown2) --helpItemCooldown2;
-          else { helpItemCooldown1 = 60 * 3; helpItemCooldown2 = 60 * 6; helpLastXOffset = 0; }
+          else { helpItemCooldown1 = GAME_FPS * 3; helpItemCooldown2 = GAME_FPS * 6; helpLastXOffset = 0; }
           gfxScreenSpaceText((frameX + contentPaddingX + helpLastXOffset) * SCREEN_WIDTH, (frameY + frameH) * SCREEN_HEIGHT, 1, 1, colorText, currentElement->help, -1, 0);
 
           // reset scissor
