@@ -845,7 +845,7 @@ void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
 	// backup currently equipped weapons
 	if (player->isLocal) {
 		for (i = 0; i < 3; ++i)
-			weaponOrderBackup[player->mpIndex][i] = playerDeobfuscate(&player->quickSelect.Slot[i], 1, 1);
+			weaponOrderBackup[0][i] = playerDeobfuscate(&player->quickSelect.Slot[i], 1, 1);
 	}
 
 	// call hooked WeaponStripMe function after backup
@@ -883,7 +883,7 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 	int i, j;
 	char matchCount = 0;
 	char cycleWeaponCount = 0;
-	int index = player->mpIndex;
+	int index = player->fps.vars.cam_slot;
 	// Set loadout/cycle weapons.  If not chosen, it will be set to default cycle.
 	char cycle[] = {
 		config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : WEAPON_ID_GBOMB,
@@ -891,51 +891,51 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 		config.cycleWeapon3 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon3) : WEAPON_ID_FLUX
 	};
 
-	// call hooked GiveMeRandomWeapons function first
-	if (!gameConfig.prLoadoutWeaponsOnly)
+	// if Loadout Weapons Only is not on
+	if (!gameConfig.prLoadoutWeaponsOnly) {
+		// then try and overwrite given weapon order if weapons match equipped weapons before death
 		playerGiveRandomWeapons(player, weaponCount);
-
-	// then try and overwrite given weapon order if weapons match equipped weapons before death
-	if (player->isLocal) {
-		// if Loadout Weapons Only is not on
-		if (!gameConfig.prLoadoutWeaponsOnly) {
-			// restore backup if they match (regardless of order) newly assigned weapons
-			for (i = 0; i < 3; i++) {
-				// if respawned weapons match backup weapons
-				u8 backedUpSlotValue = weaponOrderBackup[player->mpIndex][i];
-				for(j = 0; j < 3; j++) {
-					if (backedUpSlotValue == playerDeobfuscate(&player->quickSelect.Slot[j], 1, 1)) {
-						++matchCount;
-					}
+		
+		// restore backup if they match (regardless of order) newly assigned weapons
+		for (i = 0; i < 3; ++i) {
+			// if respawned weapons match backup weapons
+			u8 backedUpSlotValue = weaponOrderBackup[index][i];
+			for(j = 0; j < 3; ++j) {
+				if (backedUpSlotValue == playerDeobfuscate(&player->quickSelect.Slot[j], 1, 1)) {
+					++matchCount;
+					DPRINTF("\ni: %d, j: %d, Matched: %d", i, j, playerDeobfuscate(&player->quickSelect.Slot[j], 1, 1));
 				}
-				// if all loadout weapons are set
-				if (config.cycleWeapon1 != 0 && config.cycleWeapon2 != 0 && config.cycleWeapon1 != 0) {
-					// if respawned weapons match cycle weapons
-					for(j = 0; j < 3; j++) {
-						if (backedUpSlotValue == cycle[j]) {
-							++cycleWeaponCount;
-						}
+			}
+		}
+		// if weaponOrderBackup matches respawnd weapons, then check for cycle weapons (regardless of order)
+		if (matchCount == 3) {
+			for (i = 0; i < 3; ++i) {
+				u8 backedUpSlotValue = weaponOrderBackup[index][i];
+				for(j = 0; j < 3; ++j) {
+					if (backedUpSlotValue == cycle[j]) {
+						++cycleWeaponCount;
+						DPRINTF("\ni: %d, j: %d, Cycle: %d", i, j, cycle[j]);
 					}
 				}
 			}
-			DPRINTF("Cycle Count: %d; Match Count: %d\n", cycleWeaponCount, matchCount);
 		}
-		// if cycleWeaponCount matches, set backup weapons.
-		// or if Party Rule LoadWeapons Only is on, force set to needed weapons.
-		if (cycleWeaponCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
-			for (i = 0; i < 3; ++i)
-				weaponOrderBackup[index][i] = cycle[i];
-		}
-		// we found a match, or loadout weapons only is on.
-		if (matchCount == 3 || cycleWeaponCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
-			// set equipped weapon in order
-			for (i = 0; i < 3; ++i)
-				playerGiveWeapon(player, weaponOrderBackup[index][i], 1);
+		DPRINTF("\nMatch Count: %d; Cycle Count: %d", matchCount, cycleWeaponCount);
+	}
+	// if cycleWeaponCount matches, set backup weapons.
+	// or if Party Rule LoadWeapons Only is on, force set to needed weapons.
+	if (cycleWeaponCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
+		for (i = 0; i < 3; ++i)
+			weaponOrderBackup[index][i] = cycle[i];
+	}
+	// we found a match, or loadout weapons only is on.
+	if (matchCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
+		// set equipped weapon in order
+		for (i = 0; i < 3; ++i)
+			playerGiveWeapon(player, weaponOrderBackup[index][i], 1);
 
-			// equip each weapon from last slot to first slot to keep correct order.
-			for (i = 2; i >= 0; --i)
-				playerEquipWeapon(player, weaponOrderBackup[index][i]);
-		}
+		// equip each weapon from last slot to first slot to keep correct order.
+		for (i = 2; i >= 0; --i)
+			playerEquipWeapon(player, weaponOrderBackup[index][i]);
 	}
 }
 
