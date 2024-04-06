@@ -250,6 +250,8 @@ FUNCTION(strncat, 0x001209c0)
 FUNCTION(strcmp, 0x001205b0)
 FUNCTION(strncmp, 0x00120b70)
 FUNCTION(strlen, 0x00120884)
+FUNCTION(malloc, 0x0011c7b8)
+FUNCTION(free, 0x0011c810)
 
 #--------------------------------------------------------
 #------------------------- MATH -------------------------
