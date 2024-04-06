@@ -1712,8 +1712,10 @@ void runCampaignMusic(void)
 	static int CustomSector = 0x1d8a;
 	static int FinishedConvertingTracks = 0;
 	static char SetupMusic = 0;
-	int AddedTracks = 0;
-	int TotalTracks = 0;
+	int DefaultMultiplayerTracks = 13;
+	static int TotalTracks = 0;
+	static int AddedTracks = 0;
+	int SetRangeMaxData = 0;
 	// We go by each wad because we have to have Multiplayer one first.
 	static short wadArray[][2] = {
 		// wad, song per wad
@@ -1756,84 +1758,83 @@ void runCampaignMusic(void)
 	};
 	// if music isn't loaded or enable singleplayermusic isn't on, or in menus, return.
 	u32 CodeSegmentPointer = *(u32*)0x01FFFD00;
-	if (!musicGetSector() || CodeSegmentPointer == 0x00574F88 || !config.enableSingleplayerMusic)
+	if (!musicGetSector() || CodeSegmentPointer == 0x00574F88)
 		return;
 	
-	u32 NewTracksLocation = 0x001F8588; // Overwrites current tracks too.
-	if (!FinishedConvertingTracks && musicGetSector() != CustomSector) {
-		// Set custom Sector
-		musicSetSector(CustomSector);
+	if (config.enableSingleplayerMusic) {
+		u32 NewTracksLocation = 0x001F8588; // Overwrites current tracks too.
+		if (!FinishedConvertingTracks) {
+			// Set custom Sector
+			if (musicGetSector() != CustomSector)
+				musicSetSector(CustomSector);
 
-		AddedTracks = 0;
-		int MultiplayerSector = *(u32*)0x001F8584;
-		int Stack = 0x000269300;
-		// int WAD_Table = 0x001f7f88; // Kept for historical purposes.
-		int a;
-		// Zero out stack by the appropriate heap size (0x2a0 in this case)
-		// This makes sure we get the correct values we need later on.
-		memset((u32*)Stack, 0, 0x1818);
+			int MultiplayerSector = *(u32*)0x001F8584;
+			int Stack = 0x000269300;
+			// int WAD_Table = 0x001f7f88; // Kept for historical purposes.
+			int a;
+			// Zero out stack by the appropriate heap size (0x2a0 in this case)
+			// This makes sure we get the correct values we need later on.
+			memset((u32*)Stack, 0, 0x1818);
 
-		// Loop through each WAD ID
-		for(a = 0; a < (sizeof(wadArray)/sizeof(wadArray[0])); a++)
-		{
-			int WAD = wadArray[a][0];
-			// Check if Map Sector is not zero
-			if (WAD != 0) {
-				internal_wadGetSectors(WAD, 1, Stack);
-				int WAD_Sector = *(u32*)(Stack + 0x4);
+			// Loop through each WAD ID
+			for(a = 0; a < (sizeof(wadArray)/sizeof(wadArray[0])); a++) {
+				int WAD = wadArray[a][0];
+				// Check if Map Sector is not zero
+				if (WAD != 0) {
+					internal_wadGetSectors(WAD, 1, Stack);
+					int WAD_Sector = *(u32*)(Stack + 0x4);
 
-				// make sure WAD_Sector isn't zero
-				if (WAD_Sector != 0) {
-					DPRINTF("WAD: 0x%X\n", WAD);
-					DPRINTF("WAD Sector: 0x%X\n", WAD_Sector);
+					// make sure WAD_Sector isn't zero
+					if (WAD_Sector != 0) {
+						DPRINTF("WAD: 0x%X\n", WAD);
+						DPRINTF("WAD Sector: 0x%X\n", WAD_Sector);
 
-					// do music stuffs~
-					// Get SP 2 MP Offset for current WAD_Sector.
-					// In UYA we use our own sector.
-					int SP2MP = WAD_Sector - CustomSector;
-					// Remember we skip the first track because it is the start of the sp track, not the body of it.
-					int b = 0;
-					int Songs = Stack + (a == 0 ? 0x8 : 0x18);
-					int j;
-					for (j = 0; j < wadArray[a][1]; ++j) {
-						int Track_LeftAudio = *(u32*)(Songs + b);
-						int Track_RightAudio = *(u32*)((u32)(Songs + b) + 0x8);
-						int ConvertedTrack_LeftAudio = SP2MP + Track_LeftAudio;
-						int ConvertedTrack_RightAudio = SP2MP + Track_RightAudio;
-						*(u32*)(NewTracksLocation) = (u32)ConvertedTrack_LeftAudio;
-						*(u32*)(NewTracksLocation + 0x8) = (u32)ConvertedTrack_RightAudio;
-						NewTracksLocation += 0x10;
-						b += (a == 0) ? 0x10 : 0x20;
-						AddedTracks++;
+						// do music stuffs~
+						// Get SP 2 MP Offset for current WAD_Sector.
+						// In UYA we use our own sector.
+						int SP2MP = WAD_Sector - CustomSector;
+						// Remember we skip the first track because it is the start of the sp track, not the body of it.
+						int b = 0;
+						int Songs = Stack + (a == 0 ? 0x8 : 0x18);
+						int j;
+						for (j = 0; j < wadArray[a][1]; ++j) {
+							int Track_LeftAudio = *(u32*)(Songs + b);
+							int Track_RightAudio = *(u32*)((u32)(Songs + b) + 0x8);
+							int ConvertedTrack_LeftAudio = SP2MP + Track_LeftAudio;
+							int ConvertedTrack_RightAudio = SP2MP + Track_RightAudio;
+							*(u32*)(NewTracksLocation) = (u32)ConvertedTrack_LeftAudio;
+							*(u32*)(NewTracksLocation + 0x8) = (u32)ConvertedTrack_RightAudio;
+							NewTracksLocation += 0x10;
+							b += (a == 0) ? 0x10 : 0x20;
+							++AddedTracks;
+							++TotalTracks;
+						}
 					}
 				}
+				// Zero out stack to finish the job.
+				memset((u32*)Stack, 0, 0x1818);
 			}
-		// Zero out stack to finish the job.
-		memset((u32*)Stack, 0, 0x1818);
+			DPRINTF("\nTracks: %d", AddedTracks);
+			FinishedConvertingTracks = 1;
 		}
-		DPRINTF("\nTracks: %d", AddedTracks);
-		FinishedConvertingTracks = 1;
-	}
-	
-	int DefaultMultiplayerTracks = 0x0d; // This number will never change
-	// Due to us overwriting original gracks, no need to do extra math like in DL.
-	TotalTracks = AddedTracks;
-	if (*(u32*)musicTrackRangeMax() != TotalTracks) {
-		int MusicFunctionData = CodeSegmentPointer + 0x1A8;
-		*(u16*)MusicFunctionData = TotalTracks;
+		
+		// Due to us overwriting original tracks, no need to do extra math like in DL.
+		// int MusicFunctionData = (CodeSegmentPointer + 0x1A8);
+		// if (*(u16*)MusicFunctionData != AddedTracks) {
+		// 	*(u16*)MusicFunctionData = AddedTracks;
+		// }
 	}
 
 	// If in game
-	if (isInGame())
-	{
+	if (isInGame()) {
 		short CurrentTrack = 0;
 		short NextTrack = 0;
 		music_Playing* music = musicGetTrackInfo();
 		// double check if min/max info are correct
 		if (config.enableSingleplayerMusic) {
-			if (*(int*)musicTrackRangeMax() != (TotalTracks - *(int*)musicTrackRangeMin()) || *(int*)musicTrackRangeMin() != 4) {
+			if (*(int*)musicTrackRangeMax() != (TotalTracks - 4) || *(int*)musicTrackRangeMin() != 4) {
 				*(int*)musicTrackRangeMin() = 4;
-				*(int*)musicTrackRangeMax() = TotalTracks - *(int*)musicTrackRangeMin();
+				*(int*)musicTrackRangeMax() = TotalTracks - 4;
 			}
 		} else {
 			if (*(int*)musicTrackRangeMax() != (DefaultMultiplayerTracks - *(int*)musicTrackRangeMin()) || *(int*)musicTrackRangeMin() != 4) {
@@ -1861,8 +1862,7 @@ void runCampaignMusic(void)
 		// If NextTrack does not equal the Track, that means that the song has switched.
 		// We need to move the NextTrack value into the CurrentTrack value, because it is now
 		// playing that track.  Then we set the NextTrack to the Track value.
-		else if (NextTrack != music->track)
-		{
+		else if (NextTrack != music->track) {
 			CurrentTrack = NextTrack;
 			NextTrack = music->track;
 		}
@@ -1870,8 +1870,7 @@ void runCampaignMusic(void)
 		// and if CurrentTrack does not equal -1
 		// and if the track duration is below 0x3000
 		// and if Status2 is 2, or Current Playing
-		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack != -1 && (music->remain <= 0x3000) && music->queuelen == QUEUELEN_PLAYING)
-		{
+		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack != -1 && (music->remain <= 0x3000) && music->queuelen == QUEUELEN_PLAYING) {
 			// This technically cues track 1 (the shortest track) with no sound to play.
 			// Doing this lets the current playing track to fade out.
 			musicTransitionTrack(0,0,0,0);
@@ -1879,6 +1878,8 @@ void runCampaignMusic(void)
 	} else if (isInMenus() && FinishedConvertingTracks) {
 		FinishedConvertingTracks = 0;
 		SetupMusic = 0;
+		TotalTracks = 0;
+		AddedTracks = 0;
 	}
 }
 
@@ -2250,7 +2251,7 @@ void onOnlineMenu(void)
     ((void (*)(void))0x0067C9C0)();
 #else
 	((void (*)(void))0x00679f08)();
-#endif	
+#endif
 	lastMenuInvokedTime = gameGetTime();
 	if (!hasInitialized) {
 		padEnableInput();
