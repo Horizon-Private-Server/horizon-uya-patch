@@ -45,6 +45,8 @@ const float VEHICLE_DISTANCE[] =
     0,                  // Hovership Passenger
 	3,					// Tank
 	0,					// Tank Passenger
+    3,                  // Player Turret
+    0                   // Player Turret Passenger
 };
 
 const float VEHICLE_ELEVATION[] =
@@ -55,6 +57,8 @@ const float VEHICLE_ELEVATION[] =
     3,                  // Hovership Passenger
 	3,					// Tank
 	3,					// Tank Passanger
+    3,                  // Player Turret
+    0                   // Player Turret Passenger
 };
 
 VariableAddress_t vaGetMissionDefHook = {
@@ -204,6 +208,15 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
                 }
                 break;
 			}
+            case MOBY_ID_PLAYER_TURRET: {
+                distance = VEHICLE_DISTANCE[6 + isPassenger];
+                elevation = VEHICLE_ELEVATION[6 + isPassenger];
+                if (isPassenger) {
+                    yaw = playerToSpectate->vehicle->netUpdatedPassengerRot[2];
+                    pitch = playerToSpectate->vehicle->netUpdatedPassengerRot[1] + (float)0.08;
+                }
+                break;
+			}
         }
 
         // Interpolate camera rotation towards target player
@@ -244,17 +257,17 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
 int canSpectatePlayer(int currentPlayerIndex, int spectatePlayerIndex)
 {
     Player ** players = playerGetAll();
-    int teamOnly = 0; // gameConfig.customModeId == CUSTOM_MODE_SEARCH_AND_DESTROY || gameConfig.customModeId == CUSTOM_MODE_INFECTED;
-    int enemyOnly = 0; // gameConfig.customModeId == CUSTOM_MODE_HNS;
+    int teamOnly = -1; // gameConfig.customModeId == CUSTOM_MODE_SEARCH_AND_DESTROY || gameConfig.customModeId == CUSTOM_MODE_INFECTED;
+    int enemyOnly = -1; // gameConfig.customModeId == CUSTOM_MODE_HNS;
 
     // skip self
     if (spectatePlayerIndex == currentPlayerIndex)
         return 0;
     // skip enemy team
-    if (teamOnly && players[spectatePlayerIndex] && players[spectatePlayerIndex]->mpTeam != players[currentPlayerIndex]->mpTeam)
+    if (teamOnly && players[spectatePlayerIndex] && (players[spectatePlayerIndex]->mpTeam != players[currentPlayerIndex]->mpTeam))
         return 0;
     // skip friendly team
-    if (enemyOnly && players[spectatePlayerIndex] && players[spectatePlayerIndex]->mpTeam == players[currentPlayerIndex]->mpTeam)
+    if (enemyOnly && players[spectatePlayerIndex] && (players[spectatePlayerIndex]->mpTeam == players[currentPlayerIndex]->mpTeam))
         return 0;
 
     return 1;

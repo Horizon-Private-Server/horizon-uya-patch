@@ -62,11 +62,12 @@ const int patches[][3] = {
 };
 
 const int clears[][2] = {
-	{ 0x000D0000, 0x00020000 }, // patch
-	{ 0x000F0000, 0x0000F000 }, // game mode
-	{ 0x000CF000, 0x00000800 }, // module definitions
-	{ 0x000CFFD0, 0x00000020 }, // patch hash
-	{ 0x000CFFC0, 0x00000010 }, // patch pointers
+	{ 0x000d0000, 0x00010000 }, // usb modules
+	{ 0x000e0000, 0x00010000 }, // patch
+	{ 0x000f0000, 0x0000F000 }, // game mode
+	{ 0x000cf000, 0x00000800 }, // module definitions
+	{ 0x000cffd0, 0x00000020 }, // patch hash
+	{ 0x000cffc0, 0x00000010 }, // patch pointers
 };
 int hasClearedMemory = 0;
 
@@ -97,24 +98,6 @@ int onServerDownloadDataRequest(void * connection, void * data)
 }
 
 /*
- * NAME :		drawFunction
- * DESCRIPTION :
- * 			Calls the normal draw function.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void drawFunction(void)
-{
-#ifdef UYA_PAL
-    ((void (*)(void))0x0067C9C0)();
-#else
-	((void (*)(void))0x00679F08)();
-#endif
-}
-
-/*
  * NAME :		onOnlineMenu
  * DESCRIPTION :
  * 			Called every ui update.
@@ -131,7 +114,11 @@ void onOnlineMenu(void)
 	u32 barFgColor = 0x8018608f;
 
 	// call normal draw routine
-	drawFunction();
+#ifdef UYA_PAL
+    ((void (*)(void))0x0067C9C0)();
+#else
+	((void (*)(void))0x00679F08)();
+#endif
 
 	// only show on main menu
 	if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)

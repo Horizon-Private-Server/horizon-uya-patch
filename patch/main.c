@@ -9,7 +9,6 @@
  */
 
 #include <tamtypes.h>
-
 #include <libuya/string.h>
 #include <libuya/game.h>
 #include <libuya/gamesettings.h>
@@ -2184,24 +2183,6 @@ void setupPatchConfigInGame(void)
 }
 
 /*
- * NAME :		drawFunction
- * DESCRIPTION :
- * 			Calls the normal draw function.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void drawFunction(void)
-{
-#ifdef UYA_PAL
-    ((void (*)(void))0x0067C9C0)();
-#else
-	((void (*)(void))0x00679f08)();
-#endif
-}
-
-/*
  * NAME :		processGameModules
  * DESCRIPTION :
  * NOTES :
@@ -2265,8 +2246,11 @@ void onOnlineMenu(void)
   int i;
 
 	// call normal draw routine
-	drawFunction();
-	
+#ifdef UYA_PAL
+    ((void (*)(void))0x0067C9C0)();
+#else
+	((void (*)(void))0x00679f08)();
+#endif	
 	lastMenuInvokedTime = gameGetTime();
 	if (!hasInitialized) {
 		padEnableInput();
