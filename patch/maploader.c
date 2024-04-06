@@ -698,17 +698,18 @@ void refreshCustomMapList(void)
   rpcUSBdclose(fd);
 	rpcUSBSync(0, NULL, NULL);
   
-    // // sort names alphabetically
-    // CustomMapDef_t temp[MAX_CUSTOM_MAP_DEFINITIONS];
-    // int k = 0;
-    // for(k; k < CustomMapDefCount; k++) {
-	// 	if(strcmp(CustomMapDefs[k].Name, CustomMapDefs[k + 1].Name) < 0) {
-	// 		printf("CMName0: %s\n", (char*)CustomMapDefs[k].Name);
-	// 		temp[k] = CustomMapDefs[k];
-	// 		CustomMapDefs[k] = CustomMapDefs[k + 1];
-	// 		CustomMapDefs[k + 1] = temp[k];
-	// 	}
-    // }
+    // sort names alphabetically
+	CustomMapDef_t temp[MAX_CUSTOM_MAP_DEFINITIONS];
+	int k = 0, j;
+    for(k; k < CustomMapDefCount; ++k) {
+        for(j = 0; j < CustomMapDefCount; ++j) {
+            if(strcmp(CustomMapDefs[k].Name, CustomMapDefs[j].Name) < 0) {
+                temp[k] = CustomMapDefs[k];
+                CustomMapDefs[k] = CustomMapDefs[j];
+                CustomMapDefs[j] = temp[k];
+            }
+        }
+    }
   // populate config
   for (i = 0; i < CustomMapDefCount; ++i)
   {
