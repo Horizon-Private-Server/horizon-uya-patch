@@ -283,8 +283,6 @@ void grLobbyStart(void)
 		
 		if (gameConfig.grNoBaseDefense_SmallTurrets)
 			gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = 0;
-	
-		// aprilfools();
 	} else {
 		// If we're not in staging then reset
 		GameRulesInitialized = 0;
