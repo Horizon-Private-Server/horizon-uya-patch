@@ -351,6 +351,13 @@ MenuElem_ListData_t dataRespawnTimer_AmmoPickups = {
     .items = { "30", "0", "5", "10", "15", "20", "25" }
 };
 
+MenuElem_ListData_t dataHealthBoxes = {
+    .value = &gameConfig.grHealthBoxes,
+    .stateHandler = NULL,
+    .count = 3,
+    .items = { "On", "No Glass Container", "Off" }
+};
+
 // General
 MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
@@ -402,7 +409,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn, "Automatically respawn players once the in game respawn timer hits zero." },
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire, "Earn a percentage of health for each kill."},
   // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars, "Draws a healthbar above each player's nametag." },
-  { "Health Boxes", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableHealthBoxes, "Toggle Health Boxes on or off." },
+  { "Health Boxes", listActionHandler, menuStateHandler_Default, &dataHealthBoxes, "Whether health pickups are enabled, or if there is a box enclosure that must be broken first before picking up." },
   { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates, "Toggle Weapon Crates on or off." },
   { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups, "Toggle Ammo Pickups on or off." },
   { "Health Boxes Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_HealthBoxes, "Time in seconds for the Health Boxes to respawn." },
@@ -1774,7 +1781,7 @@ void configMenuDisable(void)
         gameConfig.grVampire = 0;
         gameConfig.grNoCooldown = 1;
         gameConfig.grDisableWeaponPacks = 1;
-        gameConfig.grDisableHealthBoxes = 0;
+        gameConfig.grHealthBoxes = 0;
         gameConfig.grDisableWeaponCrates = 1;
         gameConfig.grDisableAmmoPickups = 1;
         gameConfig.grDisableDrones = 1;
@@ -1787,7 +1794,7 @@ void configMenuDisable(void)
       {
         gameConfig.grRadarBlipsDistance = 1; // Always
         gameConfig.grRespawnTimer_Player = 10; // 0 Seconds
-        gameConfig.grDisableHealthBoxes = 1;
+        gameConfig.grHealthBoxes = 2; // Disabled
         gameConfig.grDisableWeaponCrates = 1;
         gameConfig.grDisableAmmoPickups = 1;
         gameConfig.grDisableDrones = 1;

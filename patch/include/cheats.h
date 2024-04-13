@@ -7,7 +7,6 @@ void disableCameraShake(void);
 void disableWeaponPacks(void);
 void spawnWeaponPackOnDeath(void);
 void v2_Setting(int setting, int FirstPass);
-int disableHealthBoxes(void);
 void AutoRespawn(void);
 int setGattlingTurretHealth(int value);
 int deleteSiegeNodeTurrets(void);
@@ -22,6 +21,7 @@ void healthbars(void);
 void radarBlips(void);
 void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay);
 void respawnInvincTimer(void);
+void onGameplayLoad_disableHealthContainer(GameplayHeaderDef_t * gameplay);
 
 // Party Game Rules
 void survivor(void);

@@ -1038,3 +1038,32 @@ void loadoutWeaponsOnly(int first)
 	if (gameGetOptions()->GameFlags.MultiplayerGameFlags.Chargeboots == 1)
 		playerGiveWeapon(player, WEAPON_ID_CHARGEBOOTS, 0);
 }
+
+/*
+ * NAME :		disableHealthContainer
+ * DESCRIPTION :
+ *              Removes the health's glass container by setting the state to already broken.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void disableHealthContainer(void)
+{
+	if (patched.gameConfig.grHealthBoxes)
+		return;
+
+	Moby *moby = mobyListGetStart();
+	while ((moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP))) {
+		if (moby->PUpdate){
+			moby->State = 3;
+			*(u16*)((u32)moby->PUpdate + 0x1cc) = 3; // switch state 0, set to breaking state
+			// always set state to 4 (broken stsate) when respawning health
+			*(u32*)((u32)moby->PUpdate - 0x26c) = 0x24050004; // addiu a0, zero, 4;
+			*(u32*)((u32)moby->PUpdate - 0x268) = 0xA2050020; // sb a0, 0x20(s0);
+			printf("\nHealth Box Containers Disabled!");
+		}
+		++moby;
+	}
+	patched.gameConfig.grHealthBoxes = 1;
+}

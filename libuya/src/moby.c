@@ -3,9 +3,9 @@
 #include "guber.h"
 
 //--------------------------------------------------------
-#define BEGIN_MOBY_PTR							((Moby**)GetAddress(&vaBEGIN_MOBY_PTR))
-#define END_MOBY_PTR							((Moby**)((u32)GetAddress(&vaBEGIN_MOBY_PTR) + 0x8))
-#define MOBY_VARS_LIST_TOP_PTR					((Moby**)((u32)GetAddress(&vaBEGIN_MOBY_PTR) + 0x1b0))
+#define BEGIN_MOBY_PTR							((Moby**)GetAddressImmediate(&vaBEGIN_MOBY_PTR))
+#define END_MOBY_PTR							((Moby**)((u32)GetAddressImmediate(&vaBEGIN_MOBY_PTR) + 0x8))
+#define MOBY_VARS_LIST_TOP_PTR					((Moby**)((u32)GetAddressImmediate(&vaBEGIN_MOBY_PTR) + 0x1b0))
 
 // For Orxon x12.
 // Not needed anymore, but keeping just so I still have record of it.

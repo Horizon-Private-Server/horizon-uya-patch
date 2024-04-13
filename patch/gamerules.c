@@ -124,11 +124,14 @@ u32 onGameplayLoad(void* a0, long a1)
 		"move %0, $s6"
 		: : "r" (gameplay)
 	);
-    if (gameConfig.grDisableHealthBoxes)
+
+    if (gameConfig.grHealthBoxes == 2)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_HEALTH_BOX_MP, 0);
 
-	if (gameConfig.grDisableDrones)
+	if (gameConfig.grDisableDrones) {
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_DRONE_BOT_CLUSTER_CONFIG, 100);
+		onGameplayLoad_disableMoby(gameplay, MOBY_ID_MINI_DRONES_PLATFORM, 0);
+	}
 
 	if (gameConfig.grDisableWeaponCrates)
 		onGameplayLoad_disableWeaponCrates(gameplay);
@@ -200,6 +203,9 @@ void grGameStart(void)
 	// Initialize
 	if (GameRulesInitialized != 1)
 		grInitialize(gameSettings, gameOptions);
+
+	if (gameConfig.grHealthBoxes == 1)
+		disableHealthContainer();
 
 	if (gameConfig.grDisableWeaponPacks == 1)
 		disableWeaponPacks();

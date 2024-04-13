@@ -37,7 +37,7 @@ typedef struct PatchGameConfig {
   char grV2s;
   char grNoCooldown;
   char grHealthBars;
-  char grDisableHealthBoxes;
+  char grHealthBoxes;
   char grDisableWeaponCrates;
   char grDisableAmmoPickups;
   char grRespawnTimer_HealthBoxes;
