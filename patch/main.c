@@ -1758,7 +1758,12 @@ void runCampaignMusic(void)
 	};
 	// if music isn't loaded or enable singleplayermusic isn't on, or in menus, return.
 	u32 CodeSegmentPointer = *(u32*)0x01FFFD00;
-	if (!musicGetSector() || CodeSegmentPointer == 0x00574F88)
+	#if UYA_PAL
+	int CodeSegmentPointerValue = 0x00575CC8;
+	#else
+	int CodeSegmentPointerValue = 0x00574F88;
+	#endif
+	if (!musicGetSector() || CodeSegmentPointer == CodeSegmentPointerValue)
 		return;
 	
 	if (config.enableSingleplayerMusic) {
@@ -2341,8 +2346,7 @@ int main(void)
 	PATCH_POINTERS = &patchPointers;
 
 	// auto enable pad input to prevent freezing when popup shows
-	if (isInMenus() && lastMenuInvokedTime > 0 && (gameGetTime() - lastMenuInvokedTime) > TIME_SECOND)
-	{
+	if (isInMenus() && lastMenuInvokedTime > 0 && (gameGetTime() - lastMenuInvokedTime) > TIME_SECOND) {
 		padEnableInput();
 		lastMenuInvokedTime = 0;
 	}
