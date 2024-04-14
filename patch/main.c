@@ -541,10 +541,10 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
 	// if we've hit a target
 	// we check if we've hit by reading the source guber event
 	// which is passed in 0x5C of the shot's pvars
-	if (shotMoby && shotMoby->PVar) {
+	if (shotMoby && shotMoby->pVar) {
 		int shotOwner = *(u32*)((u32)shotMoby + 0x90) >> 28;
 		if (shotOwner != gameGetMyClientId()) {
-		void * event = *(void**)(shotMoby->PVar + 0x5C);
+		void * event = *(void**)(shotMoby->pVar + 0x5C);
 			if (event) {
 				u32 hitGuberUid = *(u32*)(event + 0x3C);
 				if (hitGuberUid != 0xFFFFFFFF) {
@@ -625,7 +625,7 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 				Moby* hitMoby = mobyGetByGuberUid(hitGuberId);
 				if (hitMoby) {
 					DPRINTF("sniper hit %08X\n", (u32)hitMoby);
-					vector_subtract(out, hitMoby->Position, (float*)event);
+					vector_subtract(out, hitMoby->position, (float*)event);
 					out[2] += 0.5;
 					return;
 				}
@@ -1384,12 +1384,12 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 	if (!player || !flagMoby)
 		return;
 	
-	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->PVar;
+	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
 	if (!pvars)
 		return;
 
 	// fi flag state isn't 1
-	if (flagMoby->State != 1)
+	if (flagMoby->state != 1)
 		return;
 
 	// flag is currently returning
@@ -1411,7 +1411,7 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 		flagPickup(flagMoby, pIdx);
 		player->flagMoby = flagMoby;
 	}
-	DPRINTF("player %d picked up flag %X at %d\n", player->mpIndex, flagMoby->OClass, gameGetTime());
+	DPRINTF("player %d picked up flag %X at %d\n", player->mpIndex, flagMoby->oClass, gameGetTime());
 }
 
 /*
@@ -1433,7 +1433,7 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
 	if (!player || !flagMoby)
 		return;
 	
-	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->PVar;
+	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
 	if (!pvars)
 		return;
 
@@ -1485,12 +1485,12 @@ void customFlagLogic(Moby* flagMoby)
 		return;
 
 	// if flag pvars don't exist
-	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->PVar;
+	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
 	if (!pvars)
 		return;
 
 	// if flag state doesn't equal 1
-	if (flagMoby->State != 1)
+	if (flagMoby->state != 1)
 		return;
 
 	// if flag is returning
@@ -1548,11 +1548,11 @@ void customFlagLogic(Moby* flagMoby)
 
 		// skip if player is on teleport pad
 		// AQuATOS BUG: player->ground.pMoby points to wrong area
-		if (player->ground.pMoby && player->ground.pMoby->OClass == MOBY_ID_TELEPORT_PAD)
+		if (player->ground.pMoby && player->ground.pMoby->oClass == MOBY_ID_TELEPORT_PAD)
 			continue;
 
 		// player must be within 2 units of flag
-		vector_subtract(t, flagMoby->Position, player->playerPosition);
+		vector_subtract(t, flagMoby->position, player->playerPosition);
 		float sqrDistance = vector_sqrmag(t);
 		if (sqrDistance > (2*2))
 			continue;
@@ -1565,7 +1565,7 @@ void customFlagLogic(Moby* flagMoby)
 			}
 		} else {
 			// if player is on same team as flag and close enough to return it
-			vector_subtract(t, pvars->BasePosition, flagMoby->Position);
+			vector_subtract(t, pvars->BasePosition, flagMoby->position);
 			float sqrDistanceToBase = vector_sqrmag(t);
 			if (sqrDistanceToBase > 0.1) {
 				flagRequestPickup(flagMoby, i);
@@ -1649,7 +1649,7 @@ void patchCTFFlag(void)
 	GuberMoby* gm = guberMobyGetFirst();
 	while (gm) {
 		if (gm->Moby) {
-			switch (gm->Moby->OClass) {
+			switch (gm->Moby->oClass) {
 				case MOBY_ID_CTF_RED_FLAG:
 				case MOBY_ID_CTF_BLUE_FLAG:
 				{

@@ -138,7 +138,7 @@ enum MobyId
 	MOBY_ID_CRATE_HOLOSHIELD = 0x1abf,
 	MOBY_ID_CRATE_MORPH_O_RAY = 0x1ac0,
 	MOBY_ID_CRATE_MINE = 0x1ac1,
-	MOBY_ID_GATTLING_TURRET = 0x1ad6,
+	MOBY_ID_GATLING_TURRET = 0x1ad6,
 	MOBY_ID_SKIN_NINJA = 0x1adc,
 	MOBY_ID_HACKER_TERMINAL = 0x1ae0,
 	MOBY_ID_OBANI_GLASS_CYLINDER = 0x1ae1,
@@ -156,11 +156,13 @@ enum MobyId
 	MOBY_ID_CRATE_CHARGEBOOTS = 0x1b09,
 	MOBY_ID_CHARGEBOOTS_PICKUP = 0x1b0c,
 	MOBY_ID_KORGON_BRIDGE_PIECE = 0x1b23,
+	MOBY_ID_GATLING_TURRET_SHOT = 0x1b35,
 	MOBY_ID_OMNI_SHIELD = 0x1b37,
 	MOBY_ID_GLASS_CRICLE_PLATFORM = 0x1b3b,
 	MOBY_ID_OBANI_BRIDGE_FRAME = 0x1b43,
 	MOBY_ID_HELGA = 0x1b66,
 	MOBY_ID_SHOCK_DROID_SP = 0x1b6C,
+	MOBY_ID_RANGER_AND_SMALL_TURRET_SHOT = 0x1b79,
 	MOBY_ID_OBANI_ASTEROID = 0x1b92,
 	MOBY_ID_OBANI_SATELITE = 0x1ba8,
 	MOBY_ID_ANIT_VEHICLE_TURRET = 0x1bbd,
@@ -312,45 +314,44 @@ struct MobyAnimLayer { // 0x20
 
 typedef struct Moby
 {
-	/*   0 */ VECTOR BSphere;
-	/*  10 */ VECTOR Position;
-	/*  20 */ char State;
-	/*  21 */ u8 Group;
-	/*  22 */ char MClass;
-	/*  23 */ u8 Opacity;
-	/*  24 */ void * PClass;
-	/*  28 */ struct Moby * PChain;
-	/*  2c */ float Scale;
-	/*  30 */ char UpdateDist;
-    /*  31 */ char Drawn;
-    /*  32 */ short DrawDist;
-	/*  34 */ u16 ModeBits;
-	/*  36 */ u16 ModeBits2;
-	/*  38 */ u32 Lights;
-	/*  3c */ u32 PrimaryColor;
+	/*   0 */ VECTOR bSphere;
+	/*  10 */ VECTOR position;
+	/*  20 */ char state;
+	/*  21 */ u8 group;
+	/*  22 */ char mClass;
+	/*  23 */ u8 opacity;
+	/*  24 */ void * pClass;
+	/*  28 */ struct Moby * pChain;
+	/*  2c */ float scale;
+	/*  30 */ char updateDist;
+    /*  31 */ char drawn;
+    /*  32 */ short drawDist;
+	/*  34 */ u16 modeBits;
+	/*  36 */ u16 modeBits2;
+	/*  38 */ u32 lights;
+	/*  3c */ u32 primaryColor;
 	/*     */ char unk_40[0x24];
-	/*  64 */ void * PUpdate;
-	/*  68 */ void * PVar;
+	/*  64 */ void * pUpdate;
+	/*  68 */ void * pVar;
 	/*     */ char unk_6c[0x2];
-	/*  6e */ char Shadow;
-    /*  6f */ char ShadowIndex;
-    /*  70 */ float ShadowPlane;
-    /*  74 */ float ShadowRange;
+	/*  6e */ char shadow;
+    /*  6f */ char shadowIndex;
+    /*  70 */ float shadowPlane;
+    /*  74 */ float shadowRange;
 	/*     */ char unk_78[0x8];
-	/*  80 */ VECTOR LSphere;
-	/*  90 */ struct GuberMoby * GuberMoby;
-	/*     */ char unk_94[0x10];
-	/*  a4 */ struct Moby * PParent;
-	/*  a8 */ char Triggers;
-    /*  a9 */ char StandardDeathCalled;
-	/*  aa */ short OClass;
+	/*  80 */ VECTOR lSphere;
+	/*  90 */ struct GuberMoby * guberMoby;
+	/*     */ char unk_94[0x14];
+	/*  a8 */ char triggers;
+    /*  a9 */ char standardDeathCalled;
+	/*  aa */ short oClass;
 	/*     */ char unk_ac[0xc];
-	/*  b8 */ struct Moby * VehicleOwner;
+	/*  b8 */ struct Moby * pParent;
 	/*  bc */ char unk_bc[0x4];
-    /*  c0 */ VECTOR M0_03;
-    /*  d0 */ VECTOR M1_03;
-    /*  e0 */ VECTOR M2_03;
-    /*  f0 */ VECTOR Rotation;
+    /*  c0 */ VECTOR m0_03;
+    /*  d0 */ VECTOR m1_03;
+    /*  e0 */ VECTOR m2_03;
+    /*  f0 */ VECTOR rotation;
 } Moby;
 
 typedef struct MobyColDamageIn {

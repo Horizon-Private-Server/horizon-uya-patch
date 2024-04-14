@@ -201,7 +201,7 @@ Moby * mobyListGetEnd(void)
  */
 int mobyIsDestroyed(Moby* moby)
 {
-    return moby && moby->State <= -2;
+    return moby && moby->state <= -2;
 }
 
 /*
@@ -221,7 +221,7 @@ Moby * mobyFindNextByOClass(Moby* start, int oClass)
     
 	// find
 	if (oClass > 0 && start) {
-		while (start < mEnd && (start->OClass != oClass || mobyIsDestroyed(start)))
+		while (start < mEnd && (start->oClass != oClass || mobyIsDestroyed(start)))
 			++start;
 	}
 

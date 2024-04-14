@@ -283,8 +283,8 @@ MenuElem_ListData_t dataVampire = {
     .items = { "Off", "25%", "50%", "75%", "100%" }
 };
 
-MenuElem_ListData_t dataSetGattlingTurretHealth = {
-    .value = &gameConfig.grSetGattlingTurretHealth,
+MenuElem_ListData_t dataSetGatlingTurretHealth = {
+    .value = &gameConfig.grSetGatlingTurretHealth,
     .stateHandler = NULL,
     .count = 10,
     .items = { "Default", ".5x", "1.5x", "2x", "3x", "4x", "5x", "6x", "7x", "8x" }
@@ -423,7 +423,7 @@ MenuElem_t menuElementsGameSettings[] = {
 #endif
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
-  { "Gattling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGattlingTurretHealth, "Increase or decrease the amount of health each teams base turrets have." },
+  { "Gatling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGatlingTurretHealth, "Increase or decrease the amount of health each teams base turrets have." },
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive, "Let the Health and Ammo pads in each base always stay active, even if parts of the base are destroyed." },
   { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots, "toggle Troopers (and other bots) on or off." },
   // { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },

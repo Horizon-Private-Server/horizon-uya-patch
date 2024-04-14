@@ -40,7 +40,7 @@ int Gameplay_Func = 0;
 
 int GameRulesInitialized = 0;
 int FirstPass = 1;
-int HasSetGattlingTurretHealth = 0;
+int HasSetGatlingTurretHealth = 0;
 int HasDisableSiegeNodeTurrets = 0;
 int HasKeepBaseHealthPadActive = 0;
 short PlayerKills[GAME_MAX_PLAYERS];
@@ -86,33 +86,6 @@ void vampireLogic()
 
 	HOOK_JAL((u32)GetAddress(&vaUpdateScoreboard) + 0x88, &vampireHeal);
 	patched.gameConfig.grVampire = 1;
-}
-
-/*
- * NAME :		aprilfools
- * DESCRIPTION :
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void aprilfools()
-{
-	// Check Servers date for April 1st.
-	// if (patchPointers.ServerTimeMonth != 4 && patchPointers.ServerTimeDay != 1)
-	// 	return;
-
-	// April Fools 2024: Random Skins
-	int skin = -1;
-	if (skin == -1)
-		skin = randRangeInt(0, 15);
-
-	GameSettings * gs = gameGetSettings();
-	int i;
-	for (i = 0; i < gs->PlayerCount; ++i) {
-		if (gs->PlayerSkins[i] != skin)
-			gs->PlayerSkins[i] = skin;
-	}
 }
 
 u32 onGameplayLoad(void* a0, long a1)
@@ -177,7 +150,7 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 		PlayerTeams[i] = 0;
 	}
 
-	HasSetGattlingTurretHealth = 0;
+	HasSetGatlingTurretHealth = 0;
 	HasDisableSiegeNodeTurrets = 0;
 	HasKeepBaseHealthPadActive = 0;
 	healRate = 0;
@@ -218,8 +191,8 @@ void grGameStart(void)
 	if (gameConfig.grAutoRespawn && gameSettings->GameType == GAMERULE_DM)
 		AutoRespawn();
 
-	if (gameConfig.grSetGattlingTurretHealth && !HasSetGattlingTurretHealth)
-		HasSetGattlingTurretHealth = setGattlingTurretHealth(gameConfig.grSetGattlingTurretHealth);
+	if (gameConfig.grSetGatlingTurretHealth && !HasSetGatlingTurretHealth)
+		HasSetGatlingTurretHealth = setGatlingTurretHealth(gameConfig.grSetGatlingTurretHealth);
 
 	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasDisableSiegeNodeTurrets) {
 		deleteNodeTurretsUpdate();

@@ -8,7 +8,7 @@ void disableWeaponPacks(void);
 void spawnWeaponPackOnDeath(void);
 void v2_Setting(int setting, int FirstPass);
 void AutoRespawn(void);
-int setGattlingTurretHealth(int value);
+int setGatlingTurretHealth(int value);
 int deleteSiegeNodeTurrets(void);
 void deleteNodeTurretsUpdate(void);
 void setRespawnTimer_Player(void);

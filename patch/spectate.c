@@ -180,7 +180,7 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
         float elevation = 0;
         
         // Determine distance and elevation by vehicle id
-        switch (vehicleMoby->OClass) {
+        switch (vehicleMoby->oClass) {
             case MOBY_ID_TURBOSLIDER: {
                 distance = VEHICLE_DISTANCE[0 + isPassenger];
                 elevation = VEHICLE_ELEVATION[0 + isPassenger];
@@ -229,7 +229,7 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
         
         // Generate target based off distance and elevation
         VECTOR target;
-        vector_copy(target, playerToSpectate->vehicle->pMoby->Position);
+        vector_copy(target, playerToSpectate->vehicle->pMoby->position);
         target[0] -= cosf(spectateData->LastCameraZ) * distance;
         target[1] -= sinf(spectateData->LastCameraZ) * distance;
         target[2] += (sinf(spectateData->LastCameraY) * distance) + elevation;

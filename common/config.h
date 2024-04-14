@@ -44,7 +44,7 @@ typedef struct PatchGameConfig {
   char grRespawnTimer_WeaponCrates;
   char grRespawnTimer_AmmoPickups;
   char grAutoRespawn;
-  char grSetGattlingTurretHealth;
+  char grSetGatlingTurretHealth;
   char grDisableDrones;
   char grDisablePlayerTurrets;
   char grNoBaseDefense_Bots;

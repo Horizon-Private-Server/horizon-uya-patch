@@ -280,7 +280,7 @@ void scavHuntDestroyParticle(struct PartInstance* particle)
 void scavHuntHBoltDestroy(Moby* moby)
 {
   if (mobyIsDestroyed(moby)) return;
-	struct HBoltPVar* pvars = (struct HBoltPVar*)moby->PVar;
+	struct HBoltPVar* pvars = (struct HBoltPVar*)moby->pVar;
 
 	// destroy particles
   int i;
@@ -301,7 +301,7 @@ void scavHuntHBoltPostDraw(Moby* moby)
 	// MATRIX m2;
 	// VECTOR t;
   int opacity = 0x80;
-	struct HBoltPVar* pvars = (struct HBoltPVar*)moby->PVar;
+	struct HBoltPVar* pvars = (struct HBoltPVar*)moby->pVar;
 	if (!pvars)
 		return;
 
@@ -321,12 +321,12 @@ void scavHuntHBoltPostDraw(Moby* moby)
 
   opacity = opacity << 24;
   color = opacity | (color & HBOLT_SPRITE_COLOR);
-  moby->PrimaryColor = color;
+  moby->primaryColor = color;
 
   u32 hook = (u32)GetAddress(&vaReplace_GetEffectTexJAL) + 0x20;
   HOOK_JAL(hook, GetAddress(&vaGetFrameTex));
-  gfxDrawBillboardQuad(0.55, 0, MATH_PI, moby->Position, 81, opacity, 0);
-  gfxDrawBillboardQuad(0.5, 0.01, MATH_PI, moby->Position, 81, color, 0);
+  gfxDrawBillboardQuad(0.55, 0, MATH_PI, moby->position, 81, opacity, 0);
+  gfxDrawBillboardQuad(0.5, 0.01, MATH_PI, moby->position, 81, color, 0);
   HOOK_JAL(hook, GetAddress(&vaGetEffectTex));
 }
 
@@ -337,7 +337,7 @@ void scavHuntHBoltUpdate(Moby* moby)
 	const int opacities[] = { 64, 32, 44, 51 };
 	VECTOR t;
 	int i;
-	struct HBoltPVar* pvars = (struct HBoltPVar*)moby->PVar;
+	struct HBoltPVar* pvars = (struct HBoltPVar*)moby->pVar;
 	if (!pvars)
 		return;
 
@@ -349,7 +349,7 @@ void scavHuntHBoltUpdate(Moby* moby)
 	for (i = 0; i < 4; ++i) {
 		struct PartInstance * particle = pvars->Particles[i];
 		if (!particle) {
-			particle = scavHuntSpawnParticle(moby->Position, color, 100, i);
+			particle = scavHuntSpawnParticle(moby->position, color, 100, i);
 		}
 
 		// update
@@ -363,7 +363,7 @@ void scavHuntHBoltUpdate(Moby* moby)
     Player* p = playerGetFromSlot(i);
     if (!p || playerIsDead(p)) continue;
 
-    vector_subtract(t, p->playerPosition, moby->Position);
+    vector_subtract(t, p->playerPosition, moby->position);
     if (vector_sqrmag(t) < (HBOLT_PICKUP_RADIUS * HBOLT_PICKUP_RADIUS)) {
       uiShowPopup(0, "You found a Horizon Bolt!\x0", 3);
       soundPlayByOClass(2, 0, moby, MOBY_ID_OMNI_SHIELD);
@@ -385,15 +385,15 @@ void scavHuntSpawn(VECTOR position)
   Moby* moby = mobySpawn(HBOLT_MOBY_OCLASS, sizeof(struct HBoltPVar));
   if (!moby) return;
 
-  moby->PUpdate = &scavHuntHBoltUpdate;
-  vector_copy(moby->Position, position);
-  moby->UpdateDist = -1;
-  moby->Drawn = 1;
-  moby->Opacity = 0x00;
-  moby->DrawDist = 0x00;
+  moby->pUpdate = &scavHuntHBoltUpdate;
+  vector_copy(moby->position, position);
+  moby->updateDist = -1;
+  moby->drawn = 1;
+  moby->opacity = 0x00;
+  moby->drawDist = 0x00;
 
   // update pvars
-  struct HBoltPVar* pvars = (struct HBoltPVar*)moby->PVar;
+  struct HBoltPVar* pvars = (struct HBoltPVar*)moby->pVar;
   pvars->DestroyAtTime = gameGetTime() + (TIME_SECOND * 30);
   memset(pvars->Particles, 0, sizeof(pvars->Particles));
 

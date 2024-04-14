@@ -214,7 +214,7 @@ void AutoRespawn(void)
 }
 
 /*
- * NAME :		setGatlinTurretHealth
+ * NAME :		setGatlingTurretHealth
  * DESCRIPTION :
  *              
  * NOTES :
@@ -222,17 +222,17 @@ void AutoRespawn(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-int setGattlingTurretHealth(int value)
+int setGatlingTurretHealth(int value)
 {
     int init = 0;
     Moby * moby = mobyListGetStart();
     // Iterate through mobys and change health
-    while ((moby = mobyFindNextByOClass(moby, MOBY_ID_GATTLING_TURRET))) {
-        if (moby->PVar) {
-			// Gattling Turret Health is stored as a float and as it's
+    while ((moby = mobyFindNextByOClass(moby, MOBY_ID_GATLING_TURRET))) {
+        if (moby->pVar) {
+			// Gatling Turret Health is stored as a float and as it's
 			// hexidecimal value.  We use the hex value and multiply it
 			// by our wanted value, then store it as it's float health
-			int HexHealth = ((u32)moby->PVar + 0x34);
+			int HexHealth = ((u32)moby->pVar + 0x34);
 			int NewHealth;
 			switch (value) {
 				case 1: // .5 Health
@@ -244,7 +244,7 @@ int setGattlingTurretHealth(int value)
 			}
 
 			*(u32*)HexHealth = NewHealth;
-			*(float*)((u32)moby->PVar + 0x30) = NewHealth;
+			*(float*)((u32)moby->pVar + 0x30) = NewHealth;
         }
         ++moby; // next moby
     }
@@ -267,8 +267,8 @@ int deleteSiegeNodeTurrets(void)
     int init = 0;
     Moby * moby = mobyListGetStart();
     while ((moby = mobyFindNextByOClass(moby, MOBY_ID_SIEGE_NODE))) {
-        if (moby->PUpdate)
-			*(u32*)((u32)moby->PUpdate + 0x810) = 0;
+        if (moby->pUpdate)
+			*(u32*)((u32)moby->pUpdate + 0x810) = 0;
 
         ++moby; // next moby
     }
@@ -537,18 +537,18 @@ int keepBaseHealthPadActive(void)
 	Moby * a = mobyListGetStart();
 	// if moby list finds the health pad
 	while ((a = mobyFindNextByOClass(a, MOBY_ID_HEALTH_PAD))) {
-		if (a->PUpdate) {
-			*(u32*)((u32)a->PUpdate + 0x68) = 0x24020001;
-			*(u32*)((u32)a->PUpdate + 0x8C) = 0x24150001;
+		if (a->pUpdate) {
+			*(u32*)((u32)a->pUpdate + 0x68) = 0x24020001;
+			*(u32*)((u32)a->pUpdate + 0x8C) = 0x24150001;
 		}
 		++a;
 	}
 	Moby * b = mobyListGetStart();
 	// if moby list finds the ammo pad
 	while ((b = mobyFindNextByOClass(b, MOBY_ID_AMMO_PAD))) {
-		if (b->PUpdate) {
-			*(u32*)((u32)b->PUpdate + 0x74) = 0x24020001;
-			*(u32*)((u32)b->PUpdate + 0x90) = 0x24020001;
+		if (b->pUpdate) {
+			*(u32*)((u32)b->pUpdate + 0x74) = 0x24020001;
+			*(u32*)((u32)b->pUpdate + 0x90) = 0x24020001;
 		}
 		++b;
 	}
@@ -565,15 +565,30 @@ int keepBaseHealthPadActive(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
+int noPostHitInvinc_Logic(void)
+{
+	// define ntsc and pal timer
+	#if UYA_PAL
+	int DEFAULT_TIMER = 0x27;
+	#else
+	int DEFAULT_TIMER = 0x2f;
+	#endif
+	// if player is getting shot by the gatling turret, set to default timer.
+	Player *p = playerGetFromSlot(0);
+	if (p->pWhoHitMe->oClass == MOBY_ID_GATLING_TURRET_SHOT && p->pWhoHitMe->pParent->oClass == MOBY_ID_GATLING_TURRET)
+		return DEFAULT_TIMER;
+	
+	// else return 1
+	return 1;
+}
 void noPostHitInvinc(void)
 {
 	if (patched.gameConfig.grNoCooldown)
 		return;
-	// PAL: 0x27, NTSC: 0x2f
-	int time = GetAddress(&vaPostHitInvinc);
-	// set post hit invincibility to 1 frame.
-	*(u32*)(time) = 0x24020001;
-	*(u32*)(time + 0x308) = 0x24020001;
+	// PAL: 0x27, NTSC: 
+	u32 time = GetAddress(&vaPostHitInvinc);
+	HOOK_JAL(time, &noPostHitInvinc_Logic);
+	POKE_U32(time + 0x4, 0);
 	patched.gameConfig.grNoCooldown = 1;
 }
 
@@ -698,7 +713,7 @@ void playerSize(void)
 		Player * player = players[i];
 		if (player) {
 			if (player->pMoby)
-				player->pMoby->Scale = 0.25 * size;
+				player->pMoby->scale = 0.25 * size;
 
 			// update camera
 			player->fps.vars.positionOffset[0] = -6 * size;
@@ -799,7 +814,7 @@ void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay)
 			case MOBY_ID_NODE_TURRET:
 			case MOBY_ID_SMALL_NODE_TURRET:
 			case MOBY_ID_SHOCK_DROID_SPAWNER:
-			case MOBY_ID_GATTLING_TURRET:
+			case MOBY_ID_GATLING_TURRET:
 			case MOBY_ID_ANIT_VEHICLE_TURRET:
 			case MOBY_ID_BASE_COMPUTER:
 			{
@@ -1055,13 +1070,13 @@ void disableHealthContainer(void)
 
 	Moby *moby = mobyListGetStart();
 	while ((moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP))) {
-		if (moby->PUpdate){
-			moby->State = 3;
-			*(u16*)((u32)moby->PUpdate + 0x1cc) = 3; // switch state 0, set to breaking state
+		if (moby->pUpdate){
+			moby->state = 3;
+			*(u16*)((u32)moby->pUpdate + 0x1cc) = 3; // switch state 0, set to breaking state
 			// always set state to 4 (broken stsate) when respawning health
-			*(u32*)((u32)moby->PUpdate - 0x26c) = 0x24050004; // addiu a0, zero, 4;
-			*(u32*)((u32)moby->PUpdate - 0x268) = 0xA2050020; // sb a0, 0x20(s0);
-			printf("\nHealth Box Containers Disabled!");
+			*(u32*)((u32)moby->pUpdate - 0x26c) = 0x24050004; // addiu a0, zero, 4;
+			*(u32*)((u32)moby->pUpdate - 0x268) = 0xA2050020; // sb a0, 0x20(s0);
+			DPRINTF("\nHealth Box Containers Disabled!");
 		}
 		++moby;
 	}

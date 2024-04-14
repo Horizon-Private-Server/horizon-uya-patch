@@ -210,9 +210,9 @@ void playerSetTeam(Player * player, int teamId)
         return;
 
     player->mpTeam = teamId;
-    // player->pMoby->GlowRGBA = TEAM_COLORS[teamId];
-    player->pMoby->ModeBits2 = player->pMoby->ModeBits2 & 0x8f | 0x80 | (teamId << 4);
-    // player->pMoby->Triggers = 0;
+    // player->pMoby->glowRGBA = TEAM_COLORS[teamId];
+    player->pMoby->modeBits2 = player->pMoby->modeBits2 & 0x8f | 0x80 | (teamId << 4);
+    // player->pMoby->triggers = 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -777,8 +777,8 @@ int playerHasShield(Player * player)
 {
     Moby *shield = mobyListGetStart();
     while ((shield = mobyFindNextByOClass(shield, MOBY_ID_OMNI_SHIELD))) {
-        if (shield->PVar) {
-            int PlayerShield = *(u32*)((u32)shield->PVar + 0x40);
+        if (shield->pVar) {
+            int PlayerShield = *(u32*)((u32)shield->pVar + 0x40);
             if (PlayerShield == player)
                 return 1;
         }
