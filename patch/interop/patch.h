@@ -1,3 +1,5 @@
+#include <libuya/interop.h>
+
 VariableAddress_t vaUpdateCameraSpeedIGFunc;
 VariableAddress_t vaDrawCameraSpeedInputIGFunc;
 VariableAddress_t vaWhoHitMeFunc;
@@ -29,3 +31,4 @@ VariableAddress_t vaMapScore_MapToggle;
 VariableAddress_t vaMapScore_ScoreboardToggle;
 VariableAddress_t vaQuickSelectCheck_Hook;
 VariableAddress_t vaQuickSelectCheck_Func;
+VariableAddress_t vaHypershotEquipBehavior_bits;

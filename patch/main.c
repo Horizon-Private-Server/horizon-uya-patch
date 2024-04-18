@@ -120,7 +120,8 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.aimAssist = 0,
 	.cycleWeapon1 = 0,
 	.cycleWeapon2 = 0,
-	.cycleWeapon3 = 0
+	.cycleWeapon3 = 0,
+	.hypershotEquipBehavior = 0
 };
 
 PatchGameConfig_t gameConfig;
@@ -2076,6 +2077,32 @@ void runVoteToEndLogic(void)
 	}
 }
 
+/*
+ * NAME :		runVoteToEndLogic
+ * DESCRIPTION :
+ * 			Handles all logic related to when a team Ends.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void hypershotEquipBehavior(void)
+{
+	// Force weaposn to only be taken out with only R1, and not both R1 or Circle.
+	if (!patched.config.hypershotEquipBehavior && config.hypershotEquipBehavior != 2) {
+		u32 a = GetAddress(&vaHypershotEquipBehavior_bits);
+		POKE_U32(a, 0x24020008);
+		POKE_U32(a + 0x4, 0x24020008);
+		patched.config.hypershotEquipBehavior = 1;
+	}
+	// get Player 1 struct
+	Player *p = playerGetFromSlot(0);
+	// if hypershot behavior doesn't equal 2 (meaning 1 or 3) and circle is pressed
+	// or if hupershot behavior doesn't not equal 1 (meaning 2 or 3) and flag is being held
+	if ((config.hypershotEquipBehavior != 2 && playerPadGetButtonDown(p, PAD_CIRCLE) > 0)
+		|| (config.hypershotEquipBehavior != 1 && p->flagMoby != 0))
+		playerEquipWeapon(p, WEAPON_ID_SWINGSHOT);
+}
 
 /*
  * NAME :		runGameStartMessager

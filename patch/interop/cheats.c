@@ -484,4 +484,3 @@ VariableAddress_t vaPlayerInvincibleTimer_Func = {
     .MarcadiaPalace = 0x004e97e8,
 #endif
 };
-

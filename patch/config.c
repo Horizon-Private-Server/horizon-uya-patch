@@ -157,6 +157,13 @@ MenuElem_RangeData_t dataFieldOfView = {
     .maxValue = 5,
 };
 
+MenuElem_ListData_t dataHypershotEquipBehavior = {
+  .value = &config.hypershotEquipBehavior,
+  .stateHandler = NULL,
+  .count = 4,
+  .items = { "Default", "Press Circle", "On Flag Pickup", "Press Circle and on Flag Pickup" }
+};
+
 MenuElem_RangeData_t dataQuickSelectTimeDelay = {
     .value = &config.quickSelectTimeDelay,
     .stateHandler = NULL,
@@ -376,6 +383,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake, "Toggles the camera shake caused by nearby explosions." },
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter, "Toggles the in game FPS counter." },
+  { "Hupershot Equip Behavior", listActionHandler, menuStateAlwaysEnabledHandler, &dataHypershotEquipBehavior, "Handle how you want to be able to equip the hypershot." },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1, "Main Weapon 1.  Defaults to Gravity Bomb if nothing is selected." },
   { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2, "Main Weapon 2.  Defaults to Blitz Cannon if nothing is selected." },

@@ -889,3 +889,34 @@ VariableAddress_t vaQuickSelectCheck_Func = {
     .MarcadiaPalace = 0x0053aae0,
 #endif
 };
+
+//================================================
+//=============  hypershotEquipBehavior
+//================================================
+VariableAddress_t vaHypershotEquipBehavior_bits = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00510f54,
+	.Hoven = 0x0051306c,
+	.OutpostX12 = 0x00508944,
+	.KorgonOutpost = 0x005060dc,
+	.Metropolis = 0x0050542c,
+	.BlackwaterCity = 0x00502cc4,
+	.CommandCenter = 0x00502c8c,
+	.BlackwaterDocks = 0x0050550c,
+	.AquatosSewers = 0x0050480c,
+	.MarcadiaPalace = 0x0050418c,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x0050e73c,
+	.Hoven = 0x00510794,
+	.OutpostX12 = 0x005060ac,
+	.KorgonOutpost = 0x005038c4,
+	.Metropolis = 0x00502c14,
+	.BlackwaterCity = 0x0050042c,
+	.CommandCenter = 0x018059e8,
+	.BlackwaterDocks = 0x00502df4,
+	.AquatosSewers = 0x00502134,
+	.MarcadiaPalace = 0x00501a74,
+#endif
+};
