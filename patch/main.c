@@ -2084,7 +2084,7 @@ void runVoteToEndLogic(void)
  * NOTES :
  * ARGS : 
  * RETURN :
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void hypershotEquipBehavior(void)
 {
@@ -2480,6 +2480,9 @@ int main(void)
 
 		if (config.aimAssist)
 			patchAimAssist();
+
+		if (config.hypershotEquipBehavior)
+			hypershotEquipBehavior();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
