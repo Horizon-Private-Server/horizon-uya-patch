@@ -160,7 +160,7 @@ MenuElem_RangeData_t dataFieldOfView = {
 MenuElem_ListData_t dataHypershotEquipBehavior = {
   .value = &config.hypershotEquipBehavior,
   .stateHandler = NULL,
-  .count = 4,
+  .count = 2,
   .items = { "Default", "Press Circle", "On Flag Pickup", "Press Circle and on Flag Pickup" }
 };
 
