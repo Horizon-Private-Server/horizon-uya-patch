@@ -574,12 +574,12 @@ int noPostHitInvinc_Logic(void)
 	int DEFAULT_TIMER = 0x2f;
 	#endif
 	// if player is getting shot by the gatling turret, set to default timer.
-	Player *p = playerGetFromSlot(0);
-	if (!p || !p->pWhoHitMe->oClass)
-		return 1;
+	// Player *p = playerGetFromSlot(0);
+	// if (!p || !p->pWhoHitMe->oClass)
+	// 	return 1;
 
-	if (p->pWhoHitMe->oClass == MOBY_ID_GATLING_TURRET_SHOT && p->pWhoHitMe->pParent->oClass == MOBY_ID_GATLING_TURRET)
-		return DEFAULT_TIMER;
+	// if (p->pWhoHitMe->oClass == MOBY_ID_GATLING_TURRET_SHOT && p->pWhoHitMe->pParent->oClass == MOBY_ID_GATLING_TURRET)
+	// 	return DEFAULT_TIMER;
 	
 	// else return 1
 	return 1;
