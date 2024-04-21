@@ -22,6 +22,25 @@
 #include <tamtypes.h>
 #include "common.h"
 
+#ifdef UYA_PAL
+// PAL
+#define PAD_POINTER                         ((PadButtonStatus**)0x00241164)
+#define P1_PAD                              ((PadButtonStatus*)0x00225800)
+#define P2_PAD                              ((PadButtonStatus*)0x00226F00)
+#define P3_PAD                              ((PadButtonStatus*)0x00228600)
+#define PAD_PROCESS_ADDR                    (*(u32*)0x00686300)
+#define PAD_PROCESS_VALUE                   (0x0c1a184e)
+#else
+// NTSC
+#define PAD_POINTER                         ((PadButtonStatus**)0x002412e4)
+#define P1_PAD                              ((PadButtonStatus*)0x00225980)
+#define P2_PAD                              ((PadButtonStatus*)0x00227080)
+#define P3_PAD                              ((PadButtonStatus*)0x00228780)
+#define PAD_PROCESS_ADDR                    (*(u32*)0x006837E0)
+#define PAD_PROCESS_VALUE                   (0x0C1A0D86)
+#endif
+
+
 #define PAD_PORT_MAX        2
 
 #define PAD_LEFT            0x0080
@@ -41,7 +60,7 @@
 #define PAD_R2              0x0200
 #define PAD_L2              0x0100
 
-struct PAD { // 0x5c0
+typedef struct PAD { // 0x5c0
 	/* 0x000 */ u128 pad_buf[16];
 	/* 0x100 */ float analog[16];
 	/* 0x140 */ float hudAnalog[16];
@@ -96,7 +115,7 @@ struct PAD { // 0x5c0
 	/* 0x570 */ void *pCallbackData;
 	/* 0x574 */ u8 rdata[32];
 	/* 0x594 */ int ipad[10];
-};
+} PAD;
 
 typedef struct padButtonStatus
 {

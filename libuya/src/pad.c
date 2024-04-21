@@ -3,28 +3,6 @@
 #include "game.h"
 #include "player.h"
 
-#ifdef UYA_PAL
-
-// PAL
-#define PAD_POINTER                         ((PadButtonStatus**)0x00241164)
-#define P1_PAD                              ((PadButtonStatus*)0x00225800)
-#define P2_PAD                              ((PadButtonStatus*)0x00226F00)
-#define P3_PAD                              ((PadButtonStatus*)0x00228600)
-#define PAD_PROCESS_ADDR                    (*(u32*)0x00686300)
-#define PAD_PROCESS_VALUE                   (0x0c1a184e)
-
-#else
-
-// NTSC
-#define PAD_POINTER                         ((PadButtonStatus**)0x002412e4)
-#define P1_PAD                              ((PadButtonStatus*)0x00225980)
-#define P2_PAD                              ((PadButtonStatus*)0x00227080)
-#define P3_PAD                              ((PadButtonStatus*)0x00228780)
-#define PAD_PROCESS_ADDR                    (*(u32*)0x006837E0)
-#define PAD_PROCESS_VALUE                   (0x0C1A0D86)
-
-#endif
-
 // Default value for pad history
 const PadHistory DefaultPadHistory = {
     0xFFFF,
