@@ -160,7 +160,7 @@ MenuElem_RangeData_t dataFieldOfView = {
 MenuElem_ListData_t dataHypershotEquipButton = {
   .value = &config.hypershotEquipButton,
   .stateHandler = NULL,
-  .count = 6,
+  .count = 8,
   .items = {
     "None",
     "Circle",
