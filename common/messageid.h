@@ -121,14 +121,19 @@ enum CustomMessageId
     CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS = 20,
 
     /*
-     * Setn to the server when a player votes to end
+     * Sent to the server when a player votes to end
      */
     CUSTOM_MSG_ID_PLAYER_VOTED_TO_END = 21,
 
     /*
-     * sent to the client to update voes to end state
+     * Sent to the client to update voes to end state
      */
     CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED = 22,
+
+    /*
+     * Setn to the server when a a player goes AFK.
+     */
+    CUSTOM_MSG_ID_CLIENT_AFK = 23,
 
     /*
      * Start of custom message ids reserved for custom game modes.

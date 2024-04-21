@@ -2102,9 +2102,9 @@ int hypershotGetButton(void)
 }
 
 /*
- * NAME :		hypershotEquipBehavior
+ * NAME :		hypershotEquipButton
  * DESCRIPTION :
- * 				Handles the hypershot equip behavior
+ * 				Changes the button on which the hyershot is able to be taken out.
  * NOTES :
  * ARGS : 
  * RETURN :
@@ -2119,6 +2119,15 @@ void hypershotEquipButton(void)
 		playerEquipWeapon(p, WEAPON_ID_SWINGSHOT);
 }
 
+/*
+ * NAME :		remapButtons
+ * DESCRIPTION :
+ * 				Logic to remap controller buttons.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 int remapButtons(pad)
 {
 	// disable the default action for the chosen hypershot button.
@@ -2159,7 +2168,16 @@ int remapButtons(pad)
 	}
 }
 
-void patchSceReadPad_memcpy(void * destination, void * source, int num)
+/*
+ * NAME :		patchSceReadPad_RemapButton
+ * DESCRIPTION :
+ * 				Patches the memcpy function in scePadData function and edits the needed values.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchSceReadPad_RemapButton(void * destination, void * source, int num)
 {
 	Player * player = playerGetFromSlot(0);
 	// make sure the pause menu is not open.  this way the pause menu can still be used.
@@ -2170,6 +2188,59 @@ void patchSceReadPad_memcpy(void * destination, void * source, int num)
 	}
 	// finish up by running the original function we took over.
 	memcpy(destination, source, num);
+}
+
+void patchAFK_SendResponse(int status)
+{
+	int afk = status;
+	void* connection = netGetLobbyServerConnection();
+	if (!connection)
+		return;
+	
+	netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_AFK, sizeof(afk), &afk);
+	printf("\nafk status: %d", afk);
+}
+
+/*
+ * NAME :		patchAFK
+ * DESCRIPTION :
+ * 				Checks to see if a player has not pressed any buttons in a set amount of time.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchAFK(void)
+{
+	int AFK_Wait_Time = 15; // in Minutes
+
+	int isAFK = -1;
+	int gameTime = gameGetTime();
+	static int afk_time = 0;
+	if (afk_time == 0)
+		afk_time = gameTime + (AFK_Wait_Time * TIME_SECOND);
+
+	PAD * src = (PAD*)((u32)P1_PAD - 0x80);
+	// if no buttons/analogs are pressed
+	if (src->handsOff && src->handsOffStick) {
+		// if is already AFK, return.
+		if (isAFK == 1)
+			return;
+
+		// if time left to go afk is greater than the game time, then not afk yet, return.
+		if (afk_time > gameTime)
+			return;
+
+		isAFK = 1;
+		patchAFK_SendResponse(isAFK);
+	} else {
+		afk_time = gameTime + (TIME_SECOND * AFK_Wait_Time);
+		if (isAFK == 0)
+			return;
+
+		isAFK = 0;
+		patchAFK_SendResponse(isAFK);
+	}
 }
 
 /*
@@ -2451,7 +2522,7 @@ int main(void)
   	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, &onClientVoteToEndRemote);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, &onClientVoteToEndStateUpdateRemote);
-	
+
 	// Run map loader
 	runMapLoader();
 
@@ -2490,8 +2561,8 @@ int main(void)
 	#endif
 
 	if(isInGame()) {
-		// Patch remap buttons configuration
-		HOOK_JAL(0x0013cae0, &patchSceReadPad_memcpy);
+		// Patch remap buttons configuration for in game
+		HOOK_JAL(0x0013cae0, &patchSceReadPad_RemapButton);
 
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
@@ -2568,6 +2639,9 @@ int main(void)
 
 		lastGameState = 1;
 	} else if (isInMenus()) {
+		// patch for player AFK status.
+		patchAFK();
+
 		// Patch various options on Create Game Screen
 		// Freezes on PAL
 		// patchCreateGameMenu();
