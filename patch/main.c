@@ -121,7 +121,8 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.cycleWeapon1 = 0,
 	.cycleWeapon2 = 0,
 	.cycleWeapon3 = 0,
-	.hypershotEquipBehavior = 0
+	.hypershotEquipButton = 0,
+	.disableDpadMovement = 0
 };
 
 PatchGameConfig_t gameConfig;
@@ -2078,30 +2079,97 @@ void runVoteToEndLogic(void)
 }
 
 /*
- * NAME :		runVoteToEndLogic
+ * NAME :		hypershotGetButton
  * DESCRIPTION :
- * 			Handles all logic related to when a team Ends.
+ * 				Retruns the needed value for the hysershot button config
  * NOTES :
  * ARGS : 
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void hypershotEquipBehavior(void)
+int hypershotGetButton(void)
 {
-	// Force weaposn to only be taken out with only R1, and not both R1 or Circle.
-	if (!patched.config.hypershotEquipBehavior && config.hypershotEquipBehavior != 2) {
-		u32 a = GetAddress(&vaHypershotEquipBehavior_bits);
-		POKE_U32(a, 0x24020008);
-		POKE_U32(a + 0x4, 0x24020008);
-		patched.config.hypershotEquipBehavior = 1;
+	switch (config.hypershotEquipButton) {
+		case 1: return PAD_CIRCLE;
+		case 2: return PAD_LEFT;
+		case 3: return PAD_DOWN;
+		case 4: return PAD_RIGHT;
+		case 5: return PAD_UP;
+		case 6: return PAD_L3;
+		case 7: return PAD_R3;
+		default: return 0;
 	}
+}
+
+/*
+ * NAME :		hypershotEquipBehavior
+ * DESCRIPTION :
+ * 				Handles the hypershot equip behavior
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void hypershotEquipButton(void)
+{
 	// get Player 1 struct
 	Player *p = playerGetFromSlot(0);
-	// if hypershot behavior doesn't equal 2 (meaning 1 or 3) and circle is pressed
-	// or if hupershot behavior doesn't not equal 1 (meaning 2 or 3) and flag is being held
-	if ((config.hypershotEquipBehavior != 2 && playerPadGetButtonDown(p, PAD_CIRCLE) > 0)
-		|| (config.hypershotEquipBehavior != 1 && p->flagMoby != 0))
+	// if player is found, and not holding flag, and prsses needed button.
+	if (p && !p->flagMoby && playerPadGetButtonDown(p, hypershotGetButton()) > 0)
 		playerEquipWeapon(p, WEAPON_ID_SWINGSHOT);
+}
+
+int remapButtons(pad)
+{
+	// disable the default action for the chosen hypershot button.
+	if (config.hypershotEquipButton) {
+		u16 hypershot = hypershotGetButton();
+		if ((pad & hypershot) == 0)
+			return 0xffff & (pad | hypershot);
+	}
+
+	if (config.disableDpadMovement) {
+		// Make a mask of the bits we want to filter
+		u16 mask = (PAD_LEFT | PAD_RIGHT | PAD_UP | PAD_DOWN);
+		// only grab the mask filter from the pad
+		u16 dpad = (pad ^ mask) & 0x00f0;
+		// if any dpad button is pressed, return data as if it's not pressed.
+		if ((dpad & pad) == 0)
+			return 0xffff & (pad | dpad);
+	}
+
+
+	switch (pad ^ 0xffff) {
+		// EXAMPLE: if Presssing X, return by telling it to press circle instead.
+		// case PAD_CROSS:
+		// 	return PAD_CIRCLE ^ (0xffff & (pad | PAD_CROSS));
+
+		// if dpad is pressed, return by acting as if they were not pressed.
+		// case PAD_LEFT: return configdisableDpadMovement ? (0xffff & (pad | PAD_LEFT)) : pad;
+		// case PAD_LEFT | PAD_UP: return configdisableDpadMovement ? (0xffff & (pad | (PAD_LEFT | PAD_UP))) : pad;
+		// case PAD_LEFT | PAD_DOWN: return configdisableDpadMovement ? (0xffff & (pad | (PAD_LEFT | PAD_DOWN))) : pad;
+		// case PAD_RIGHT: return configdisableDpadMovement ? (0xffff & (pad | PAD_RIGHT)) : pad;
+		// case PAD_RIGHT | PAD_UP: return configdisableDpadMovement ? (0xffff & (pad | (PAD_RIGHT | PAD_UP))) : pad;
+		// case PAD_RIGHT | PAD_DOWN: return configdisableDpadMovement ? (0xffff & (pad | (PAD_RIGHT | PAD_DOWN))) : pad;
+		// case PAD_UP: return configdisableDpadMovement ? (0xffff & (pad | PAD_UP)) : pad;
+		// case PAD_DOWN: return configdisableDpadMovement ? (0xffff & (pad | PAD_DOWN)) : pad;
+		// if nothing is pressed, then return original data.
+		default: return pad;
+
+	}
+}
+
+void patchSceReadPad_memcpy(void * destination, void * source, int num)
+{
+	Player * player = playerGetFromSlot(0);
+	// make sure the pause menu is not open.  this way the pause menu can still be used.
+	if (player && !player->pauseOn) {
+		u32 paddata = (void*)((u32)source + 0x2);
+		// edit the pad data.
+		*(u16*)paddata = remapButtons(*(u16*)paddata);
+	}
+	// finish up by running the original function we took over.
+	memcpy(destination, source, num);
 }
 
 /*
@@ -2422,6 +2490,9 @@ int main(void)
 	#endif
 
 	if(isInGame()) {
+		// Patch remap buttons configuration
+		HOOK_JAL(0x0013cae0, &patchSceReadPad_memcpy);
+
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
 
@@ -2481,8 +2552,8 @@ int main(void)
 		if (config.aimAssist)
 			patchAimAssist();
 
-		if (config.hypershotEquipBehavior)
-			hypershotEquipBehavior();
+		if (config.hypershotEquipButton)
+			hypershotEquipButton();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
