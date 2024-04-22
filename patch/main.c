@@ -2089,7 +2089,7 @@ void runVoteToEndLogic(void)
  */
 int hypershotGetButton(void)
 {
-	switch (confighypershotEquipButton) {
+	switch (config.hypershotEquipButton) {
 		case 1: return PAD_CIRCLE;
 		case 2: return PAD_LEFT;
 		case 3: return PAD_DOWN;

@@ -31,4 +31,4 @@ VariableAddress_t vaMapScore_MapToggle;
 VariableAddress_t vaMapScore_ScoreboardToggle;
 VariableAddress_t vaQuickSelectCheck_Hook;
 VariableAddress_t vaQuickSelectCheck_Func;
-VariableAddress_t vaHypershotEquipBehavior_bits;
+VariableAddress_t vaHypershotEquipButton_bits;
