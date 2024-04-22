@@ -2089,7 +2089,7 @@ void runVoteToEndLogic(void)
  */
 int hypershotGetButton(void)
 {
-	switch (config.hypershotEquipButton) {
+	switch (confighypershotEquipButton) {
 		case 1: return PAD_CIRCLE;
 		case 2: return PAD_LEFT;
 		case 3: return PAD_DOWN;
@@ -2112,6 +2112,14 @@ int hypershotGetButton(void)
  */
 void hypershotEquipButton(void)
 {
+	// Force weaposn to only be taken out with only R1, and not both R1 or Circle.
+	if (!patched.config.hypershotEquipButton && hypershotGetButton() == PAD_CIRCLE) {
+		u32 a = GetAddress(&vaHypershotEquipButton_bits);
+		u32 pad = 0x24020000 | 0x8;
+		POKE_U32(a, pad);
+		POKE_U32(a + 0x4, pad);
+		patched.config.hypershotEquipButton = 1;
+	}
 	// get Player 1 struct
 	Player *p = playerGetFromSlot(0);
 	// if player is found, and not holding flag, and prsses needed button.
@@ -2124,8 +2132,10 @@ int remapButtons(pad)
 	// disable the default action for the chosen hypershot button.
 	if (config.hypershotEquipButton) {
 		u16 hypershot = hypershotGetButton();
-		if ((pad & hypershot) == 0)
-			return 0xffff & (pad | hypershot);
+		if (hypershotGetButton() != PAD_CIRCLE) {
+			if ((pad & hypershot) == 0)
+				return 0xffff & (pad | hypershot);
+		}
 	}
 
 	if (config.disableDpadMovement) {
@@ -2144,16 +2154,6 @@ int remapButtons(pad)
 		// case PAD_CROSS:
 		// 	return PAD_CIRCLE ^ (0xffff & (pad | PAD_CROSS));
 
-		// if dpad is pressed, return by acting as if they were not pressed.
-		// case PAD_LEFT: return configdisableDpadMovement ? (0xffff & (pad | PAD_LEFT)) : pad;
-		// case PAD_LEFT | PAD_UP: return configdisableDpadMovement ? (0xffff & (pad | (PAD_LEFT | PAD_UP))) : pad;
-		// case PAD_LEFT | PAD_DOWN: return configdisableDpadMovement ? (0xffff & (pad | (PAD_LEFT | PAD_DOWN))) : pad;
-		// case PAD_RIGHT: return configdisableDpadMovement ? (0xffff & (pad | PAD_RIGHT)) : pad;
-		// case PAD_RIGHT | PAD_UP: return configdisableDpadMovement ? (0xffff & (pad | (PAD_RIGHT | PAD_UP))) : pad;
-		// case PAD_RIGHT | PAD_DOWN: return configdisableDpadMovement ? (0xffff & (pad | (PAD_RIGHT | PAD_DOWN))) : pad;
-		// case PAD_UP: return configdisableDpadMovement ? (0xffff & (pad | PAD_UP)) : pad;
-		// case PAD_DOWN: return configdisableDpadMovement ? (0xffff & (pad | PAD_DOWN)) : pad;
-		// if nothing is pressed, then return original data.
 		default: return pad;
 
 	}
