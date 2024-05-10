@@ -288,9 +288,12 @@ void grLoadStart(void)
 
 	// Returns needed hook and needed function.
 	Gameplay_Hook = GetAddressImmediate(&vaGameplayHook);
-	// Convert the JAL to the function address and save for later.
-	Gameplay_Func = JAL2ADDR(*(u32*)Gameplay_Hook);
-	
-	if (Gameplay_Hook != 0)
-		*(u32*)Gameplay_Hook = 0x0C000000 | (u32)&onGameplayLoad / 4;
+	if (Gameplay_Hook != 0) {
+		// Convert the JAL to the function address and save for later.
+		Gameplay_Func = JAL2ADDR(*(u32*)Gameplay_Hook);
+		// hook onGameplayLoad function.
+		HOOK_JAL(Gameplay_Hook, &onGameplayLoad);
+		// *(u32*)Gameplay_Hook = 0x0C000000 | (u32)&onGameplayLoad / 4;
+
+	}
 }
