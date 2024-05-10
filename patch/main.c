@@ -2163,7 +2163,8 @@ void patchSceReadPad_memcpy(void * destination, void * source, int num)
 {
 	Player * player = playerGetFromSlot(0);
 	// make sure the pause menu is not open.  this way the pause menu can still be used.
-	if (player && !player->pauseOn) {
+	// Also check to see is player is alive, if not, don't run.  (used for Siege if picking node to spawn at)
+	if (player && !player->pauseOn  && !playerIsDead(player)) {
 		u32 paddata = (void*)((u32)source + 0x2);
 		// edit the pad data.
 		*(u16*)paddata = remapButtons(*(u16*)paddata);
