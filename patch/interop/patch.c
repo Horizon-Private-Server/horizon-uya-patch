@@ -891,9 +891,9 @@ VariableAddress_t vaQuickSelectCheck_Func = {
 };
 
 //================================================
-//=============  hypershotEquipBehavior
+//=============  hypershotEquipButton
 //================================================
-VariableAddress_t vaHypershotEquipBehavior_bits = {
+VariableAddress_t vaHypershotEquipButton_bits = {
 #if UYA_PAL
 	.Lobby = 0,
 	.Bakisi = 0x00510f54,
