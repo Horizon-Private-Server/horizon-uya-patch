@@ -693,31 +693,28 @@ void patchWeaponShotLag(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void handleGadgetEvents(int message, char GadgetEventType, int ActiveTime, short GadgetId, int t0, int StackPointer)
+void handleGadgetEvents(int player, char gadgetEventType, int activeTime, short gadgetId, int gadgetType, struct tNW_GadgetEventMessage * message)
 {
-	Player * player = (Player*)((u32)message - 0x1a40);
-	struct tNW_GadgetEventMessage * msg = (struct tNW_GadgetEventMessage*)message;
-	// GadgetEventType 7 = Niked, or splash damage.
-	if (msg && GadgetEventType == 7 && GadgetId == 3)
-		GadgetEventType = 8;
+	// get top of player struct
+	Player * p = (Player*)((u32)player - 0x1a40);
 
-	// GadgetEventType 8 = Hit Something
-	// else if (msg && msg->GadgetEventType == 8)
-	// {
-	// 	int delta = ActiveTime - gameGetTime();
-	// 	// Make player hold correct weapon.
-	// 	if (player->weaponHeldId != msg->GadgetId)
-	// 	{
-	// 		playerEquipWeapon(player, msg->GadgetId);
-	// 	}
-	// 	// Set weapon shot event time to now if its in the future
-	// 	if (player->weaponHeldId == msg->GadgetId && (delta > 0 || delta < -TIME_SECOND))
-	// 	{
-	// 		ActiveTime = gameGetTime();
-	// 	}
-	// }
+	// Force all incoming weapon shot events to happen immediately.
+	const int MAX_DELAY = TIME_SECOND * 0.2;
+	int startTime = activeTime;
+	// put clamp on max delay
+	int delta = activeTime - gameGetTime();
+	if (delta > MAX_DELAY) {
+		activeTime = gameGetTime() + MAX_DELAY;
+		if (message)
+			message->ActiveTime = activeTime;
+	} else if (delta < 0) {
+		activeTime = gameGetTime() - 1;
+		if (message)
+			message->ActiveTime = activeTime;
+	}
+
 	// run base command
-	((void (*)(int, char, int, short, int, int))GetAddress(&vaGadgetEventFunc))(message, GadgetEventType, ActiveTime, GadgetId, t0, StackPointer);
+	((void (*)(int, char, int, short, int, int))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, activeTime, gadgetId, gadgetType, message);
 }
 
 /*
@@ -2542,7 +2539,7 @@ int main(void)
 			runSpectate();
 
 		// Patches gadget events as they come in.
-		// patchGadgetEvents();
+		patchGadgetEvents();
 
 		if (config.alwaysShowHealth)
 			patchAlwaysShowHealth();
