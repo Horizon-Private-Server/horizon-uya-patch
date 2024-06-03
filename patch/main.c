@@ -585,23 +585,6 @@ void patchSniperWallSniping(void)
 		if (hookAddr) {
 			POKE_U32(hookAddr, 0xAE35005C);
 		}
-	} else {
-		if (botsInGame())
-			return;
-
-		// hook when collision checking is done on the sniper shot
-		u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
-		if (hookAddr) {
-			POKE_U32(hookAddr + 0x04, 0x0260302D);
-			HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
-		}
-
-		// change sniper shot initialization code to write the guber event to the shot's pvars
-		// for use later by patchSniperWallSniping_Hook
-		hookAddr = GetAddress(&vaSniperShotCreatedHook);
-		if (hookAddr) {
-			POKE_U32(hookAddr, 0xAE35005C);
-		}
 	}
 }
 
@@ -714,7 +697,7 @@ void handleGadgetEvents(int player, char gadgetEventType, int activeTime, short 
 	}
 
 	// run base command
-	((void (*)(int, char, int, short, int, int))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, activeTime, gadgetId, gadgetType, message);
+	((void (*)(int, char, int, short, int, struct tNW_GadgetEventMessage*))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, activeTime, gadgetId, gadgetType, message);
 }
 
 /*
