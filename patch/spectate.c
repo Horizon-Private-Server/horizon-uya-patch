@@ -15,28 +15,11 @@
 #include <libuya/uya.h>
 #include <libuya/utils.h>
 #include <libuya/interop.h>
-#include "config.h"
-
-extern PatchConfig_t config;
-extern PatchGameConfig_t gameConfig;
-
-int Initialized = 0;
-
-// This contains the spectate related info per local
-struct PlayerSpectateData
-{
-    int Enabled;
-    int Index;
-    int HasShownEnterMsg;
-    int HasShownNavMsg;
-    VECTOR LastCameraPos;
-    float LastCameraZ;
-    float LastCameraY;
-} SpectateData[GAME_MAX_LOCALS];
 
 const float CAMERA_POSITION_SHARPNESS = 50;
 const float CAMERA_ROTATION_SHARPNESS = 30;
 const float VEHICLE_CAMERA_ROTATION_SHARPNESS = 3;
+
 const float VEHICLE_DISTANCE[] =
 {
     3,                  // Turboslider
@@ -45,8 +28,6 @@ const float VEHICLE_DISTANCE[] =
     0,                  // Hovership Passenger
 	3,					// Tank
 	0,					// Tank Passenger
-    3,                  // Player Turret
-    0                   // Player Turret Passenger
 };
 
 const float VEHICLE_ELEVATION[] =
@@ -57,9 +38,20 @@ const float VEHICLE_ELEVATION[] =
     3,                  // Hovership Passenger
 	3,					// Tank
 	3,					// Tank Passanger
-    3,                  // Player Turret
-    0                   // Player Turret Passenger
 };
+
+struct PlayerSpectateData
+{
+    int Enabled;
+    int Index;
+    int HasShownEnterMsg;
+    int HasShownNavMsg;
+    VECTOR LastCameraPos;
+    float LastCameraZ;
+    float LastCameraY;
+} SpectateData[2];
+
+int InitSpectate = 0;
 
 VariableAddress_t vaGetMissionDefHook = {
 #if UYA_PAL
@@ -98,7 +90,7 @@ Player* playerGetFromSlot_Hook(int i)
             return player;
     }
     
-    return playerGetFromSlot(i);
+    return playerGetFromSlot(0);
 }
 
 void enableSpectate(Player * player, struct PlayerSpectateData * data)
@@ -208,15 +200,6 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
                 }
                 break;
 			}
-            case MOBY_ID_PLAYER_TURRET: {
-                distance = VEHICLE_DISTANCE[6 + isPassenger];
-                elevation = VEHICLE_ELEVATION[6 + isPassenger];
-                if (isPassenger) {
-                    yaw = playerToSpectate->vehicle->netUpdatedPassengerRot[2];
-                    pitch = playerToSpectate->vehicle->netUpdatedPassengerRot[1] + (float)0.08;
-                }
-                break;
-			}
         }
 
         // Interpolate camera rotation towards target player
@@ -254,29 +237,12 @@ void spectate(Player * currentPlayer, Player * playerToSpectate)
     }
 }
 
-int canSpectatePlayer(int currentPlayerIndex, int spectatePlayerIndex)
-{
-    Player ** players = playerGetAll();
-    int teamOnly = -1; // gameConfig.customModeId == CUSTOM_MODE_SEARCH_AND_DESTROY || gameConfig.customModeId == CUSTOM_MODE_INFECTED;
-    int enemyOnly = -1; // gameConfig.customModeId == CUSTOM_MODE_HNS;
-
-    // skip self
-    if (spectatePlayerIndex == currentPlayerIndex)
-        return 0;
-    // skip enemy team
-    if (teamOnly && players[spectatePlayerIndex] && (players[spectatePlayerIndex]->mpTeam != players[currentPlayerIndex]->mpTeam))
-        return 0;
-    // skip friendly team
-    if (enemyOnly && players[spectatePlayerIndex] && (players[spectatePlayerIndex]->mpTeam == players[currentPlayerIndex]->mpTeam))
-        return 0;
-
-    return 1;
-}
-
 int findNextPlayerIndex(int currentPlayerIndex, int currentSpectateIndex, int direction)
 {
     Player ** players = playerGetAll();
-    int newIndex = currentSpectateIndex;
+    // int teamOnly = gameConfig.customModeId == CUSTOM_MODE_SEARCH_AND_DESTROY || gameConfig.customModeId == CUSTOM_MODE_INFECTED;
+    int teamOnly = 0;
+	int newIndex = currentSpectateIndex;
 
     do {
     loop:
@@ -286,16 +252,17 @@ int findNextPlayerIndex(int currentPlayerIndex, int currentSpectateIndex, int di
             newIndex = GAME_MAX_PLAYERS - 1;
         else if (newIndex >= GAME_MAX_PLAYERS)
             newIndex = 0;
-
         // Fail if the only player is us
         if(newIndex == currentPlayerIndex && newIndex == currentSpectateIndex)
             return -1;
-
         // prevent infinite loop
         if (newIndex == currentSpectateIndex)
             return players[currentSpectateIndex] ? currentSpectateIndex : -1;
-        
-        if (!canSpectatePlayer(currentPlayerIndex, newIndex))
+        // skip self
+        if (newIndex == currentPlayerIndex)
+            goto loop;
+        // skip enemy team
+        if (teamOnly && players[newIndex] && players[newIndex]->mpTeam != players[currentPlayerIndex]->mpTeam)
             goto loop;
     }
     while(!players[newIndex]);
@@ -303,36 +270,10 @@ int findNextPlayerIndex(int currentPlayerIndex, int currentSpectateIndex, int di
     return newIndex;
 }
 
-void spectateSetSpectate(int localPlayerIndex, int playerToSpectateOrDisable)
-{
-    Player ** players = playerGetAll();
-    Player* player = playerGetFromSlot(localPlayerIndex);
-    struct PlayerSpectateData * spectateData = &SpectateData[localPlayerIndex];
-    if (!player)
-        return;
-
-    if (playerToSpectateOrDisable < 0) {
-        disableSpectate(player, spectateData);
-    }
-    else {
-        int spectateIndex = playerToSpectateOrDisable;
-        if (!canSpectatePlayer(player->fps.vars.camSettingsIndex, spectateIndex))
-            spectateIndex = findNextPlayerIndex(player->fps.vars.camSettingsIndex, spectateIndex, 1);
-
-        if (spectateIndex < 0)
-            return;
-
-        enableSpectate(player, spectateData);
-        spectateData->Index = spectateIndex;
-        vector_copy(spectateData->LastCameraPos, players[spectateIndex]->fps.cameraPos);
-    }
-}
-
-
-void initialize(void)
+void Init(void)
 {
     memset(SpectateData, 0, sizeof(SpectateData));
-    Initialized = 1;
+    InitSpectate = 1;
 }
 
 void runSpectate(void)
@@ -344,16 +285,15 @@ void runSpectate(void)
 	int direction = 0;
 	int spectateIndex = 0;
 
-    // First, we have to ensure we are in-game
+	// First, we have to ensure we are in-game
 	if (!gameSettings || !isInGame()) {
-        SpectateData[0].Enabled = 0;
-        SpectateData[1].Enabled = 0;
-        Initialized = 0;
-        return;
-    }
+		SpectateData->Enabled = 0;
+		InitSpectate = 0;
+		return;
+	}
 
-	if (Initialized != 1)
-		initialize();
+	if (InitSpectate != 1)
+		Init();
 
 	// Loop through every player
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
@@ -363,9 +303,9 @@ void runSpectate(void)
 		Player * player = players[i];
 
 		// Next, we have to ensure the player is the local player and they are dead
-		if (player->isLocal) {
+		if (player->isLocal || playerGetHealth(player) <= 0) {
 			// Grab player-specific spectate data
-			spectateData = SpectateData + player->fps.vars.cam_slot;
+			spectateData = SpectateData + player->mpIndex;
 			spectateIndex = spectateData->Index;
 
 			// If dead
