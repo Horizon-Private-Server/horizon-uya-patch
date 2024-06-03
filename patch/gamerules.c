@@ -286,6 +286,10 @@ void grLoadStart(void)
 	if (!gs || gs->GameStartTime >= 0)
 		return;
 
+	// Reset Gameplay hook and function each time the we start a new game.
+	Gameplay_Hook = 0;
+	Gameplay_Func = 0;
+
 	// Returns needed hook and needed function.
 	Gameplay_Hook = GetAddressImmediate(&vaGameplayHook);
 	// Convert the JAL to the function address and save for later.
