@@ -319,6 +319,9 @@ char * checkMap(void)
 		else
 			return "Online Lobby";
 	} else if (isInGame()) {
+		if (SelectedCustomMapId > 0)
+			return MapLoaderState.MapName;
+
 		return mapGetName(gameGetCurrentMapId());
 	} else {
 		return "Loading Screen";
