@@ -469,11 +469,12 @@ void setRespawnTimer_Player(void)
 	if (gameConfig.grRespawnTimer_Player) {
 	    int Seconds;
 		switch (gameConfig.grRespawnTimer_Player) {
-			case 10:
-			case 11:
-				Seconds = gameConfig.grRespawnTimer_Player - 10; break;
+			case 1: Seconds = 2; break;
+			case 2: Seconds = 2.5; break;
+			case 11: Seconds = 0; break;
+			case 12: Seconds = 1; break;
 			default:
-				Seconds = gameConfig.grRespawnTimer_Player + 1; break;
+				Seconds = gameConfig.grRespawnTimer_Player; break;
 		}
         int RespawnTime = Seconds * GAME_FPS;
         

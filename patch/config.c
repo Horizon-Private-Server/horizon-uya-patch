@@ -309,8 +309,8 @@ MenuElem_ListData_t dataSetGatlingTurretHealth = {
 MenuElem_ListData_t dataRespawnTimer_Player = {
     .value = &gameConfig.grRespawnTimer_Player,
     .stateHandler = NULL,
-    .count = 12,
-    .items = { "1.5", "2", "3", "4", "5", "6", "7", "8", "9", "10", "0", "1", }
+    .count = 13,
+    .items = { "1.5", "2", "2.5", "3", "4", "5", "6", "7", "8", "9", "10", "0", "1", }
 };
 
 MenuElem_ListData_t dataPlayerSize = {
@@ -344,8 +344,8 @@ MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
 MenuElem_ListData_t dataGameConfigPreset = {
     .value = &preset,
     .stateHandler = NULL,
-    .count = 3,
-    .items = { "None", "Competitive", "1v1", }
+    .count = 4,
+    .items = { "None", "Meta", "Competitive", "1v1", }
 };
 
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
@@ -434,7 +434,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Weapon Crates Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_WeaponCrates, "Time in seconds for the Weapon Crates to respawn." },
   { "Ammo Pickups Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_AmmoPickups, "Time in seconds for the Ammo Pickups to respawn." },
 
-  { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones, "Toggle Drones on or off." },
+  // { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones, "Toggle Drones on or off." },
   { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets, "Toggle Player Turrets on or off." },
 #if DEBUG
   { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Returns a dropped flag if it lands on water, lava, or other non-walkable areas." },
@@ -1793,29 +1793,78 @@ void configMenuDisable(void)
     // force game config to preset
     switch (preset)
     {
-      case 1: // Competitive
+      case 1: // Meta / Bot
       {
-        gameConfig.grV2s = 0;
-        gameConfig.grVampire = 0;
-        gameConfig.grNoCooldown = 1;
-        gameConfig.grDisableWeaponPacks = 1;
-        gameConfig.grHealthBoxes = 0;
-        gameConfig.grDisableWeaponCrates = 1;
-        gameConfig.grDisableAmmoPickups = 1;
-        gameConfig.grDisableDrones = 1;
-        gameConfig.grDisablePlayerTurrets = 1;
-        // gameConfig.grFluxShotsAlwaysHit = 1;
-        // gameConfig.grFluxNikingDisabled = 1;
+        // Game Rules
+        gameConfig.grRadarBlipsDistance = 0; // Short
+        gameConfig.grRespawnTimer_Player = 0; // 1.5 Seconds
+        gameConfig.grRespawnInvincibility = 0; // Off
+        gameConfig.grDisablePenaltyTimers = 0; // On
+        gameConfig.grDisableWeaponPacks = 1; // Off
+        gameConfig.grV2s = 0; // On
+        gameConfig.grNoCooldown = 1; // Cooldown disabled
+        gameConfig.grFluxShotsAlwaysHit = 1; // Flux always hits
+        gameConfig.grFluxNikingDisabled = 1; // Niking disabled
+        gameConfig.grAutoRespawn = 0; // Off
+        gameConfig.grVampire = 0; // Off
+        gameConfig.grHealthBoxes = 1; // No glass container
+        gameConfig.grDisableWeaponCrates = 1; // Disabled
+        gameConfig.grDisableAmmoPickups = 1; // Disabled
+        gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
+        gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
+        gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
+        // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
+        gameConfig.grDisablePlayerTurrets = 1; // Disabled
+        // Base / Node mods
+        gameConfig.grSetGatlingTurretHealth = 1; // .5x
+        gameConfig.grBaseHealthPadActive = 0; // Off
+        gameConfig.grNoBaseDefense_Bots = 0; // Off
+        // Party Rules
+        gameConfig.prChargebootForever = 0; // Off 
+        gameConfig.prLoadoutWeaponsOnly = 0; // Off
+        gameConfig.prSurvivor = 0; // Off
         break;
       }
-      case 2: // 1v1
+      case 2: // Competitive
+      {
+        // Game Rules
+        gameConfig.grRadarBlipsDistance = 0; // Short
+        gameConfig.grRespawnTimer_Player = 0; // 1.5 Seconds
+        gameConfig.grRespawnInvincibility = 0; // Off
+        gameConfig.grDisablePenaltyTimers = 0; // On
+        gameConfig.grDisableWeaponPacks = 1; // Off
+        gameConfig.grV2s = 0; // On
+        gameConfig.grNoCooldown = 1; // Cooldown disabled
+        gameConfig.grFluxShotsAlwaysHit = 1; // Flux always hits
+        gameConfig.grFluxNikingDisabled = 1; // Niking disabled
+        gameConfig.grAutoRespawn = 0; // Off
+        gameConfig.grVampire = 0; // Off
+        gameConfig.grHealthBoxes = 1; // No glass container
+        gameConfig.grDisableWeaponCrates = 1; // Disabled
+        gameConfig.grDisableAmmoPickups = 1; // Disabled
+        gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
+        gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
+        gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
+        // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
+        gameConfig.grDisablePlayerTurrets = 1; // Disabled
+        // Base / Node mods
+        gameConfig.grSetGatlingTurretHealth = 0; // Default
+        gameConfig.grBaseHealthPadActive = 0; // Off
+        gameConfig.grNoBaseDefense_Bots = 0; // Off
+        // Party Rules
+        gameConfig.prChargebootForever = 0; // Off 
+        gameConfig.prLoadoutWeaponsOnly = 0; // Off
+        gameConfig.prSurvivor = 0; // Off
+        break;
+      }
+      case 3: // 1v1
       {
         gameConfig.grRadarBlipsDistance = 1; // Always
-        gameConfig.grRespawnTimer_Player = 10; // 0 Seconds
+        gameConfig.grRespawnTimer_Player = 11; // 0 Seconds
         gameConfig.grHealthBoxes = 2; // Disabled
         gameConfig.grDisableWeaponCrates = 1;
         gameConfig.grDisableAmmoPickups = 1;
-        gameConfig.grDisableDrones = 1;
+        // gameConfig.grDisableDrones = 1;
         gameConfig.grDisablePlayerTurrets = 1;
         gameConfig.grV2s = 1; // Off
         gameConfig.grNoCooldown = 1;
