@@ -1818,7 +1818,7 @@ void configMenuDisable(void)
         // Base / Node mods
         gameConfig.grSetGatlingTurretHealth = 1; // .5x
         gameConfig.grBaseHealthPadActive = 0; // Off
-        gameConfig.grNoBaseDefense_Bots = 0; // Off
+        gameConfig.grNoBaseDefense_Bots = 1; // Off
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
         gameConfig.prLoadoutWeaponsOnly = 0; // Off
@@ -1850,7 +1850,7 @@ void configMenuDisable(void)
         // Base / Node mods
         gameConfig.grSetGatlingTurretHealth = 0; // Default
         gameConfig.grBaseHealthPadActive = 0; // Off
-        gameConfig.grNoBaseDefense_Bots = 0; // Off
+        gameConfig.grNoBaseDefense_Bots = 1; // Off
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
         gameConfig.prLoadoutWeaponsOnly = 0; // Off
