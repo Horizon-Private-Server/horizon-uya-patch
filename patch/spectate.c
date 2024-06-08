@@ -367,8 +367,9 @@ void runSpectate(void)
 						if (nextPlayer) {
 							// Update last camera position to new target
 							// This snaps the camera to the new target instead of lerping
-							if (spectateIndex != spectateData->Index)
-								vector_copy(spectateData->LastCameraPos, nextPlayer->fps.cameraPos);
+                            // Commented out due to PAL bug.  I think "spectateIndex" isn't getting the correct data
+							// if (spectateIndex != spectateData->Index)
+							// 	vector_copy(spectateData->LastCameraPos, nextPlayer->fps.cameraPos);
 
 							spectate(player, nextPlayer);
 						}
