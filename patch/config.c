@@ -756,6 +756,12 @@ void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element)
 
   void * lobbyConnection = netGetLobbyServerConnection();
   netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_INVITE_BOT, sizeof(botConfig), &botConfig);
+
+  // popup
+  if (isInMenus())
+  {
+    uiShowOkDialog("Bots Invited", "Please Wait up to 60 seconds");
+  }
 }
 
 // 
