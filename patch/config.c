@@ -39,6 +39,14 @@ extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 extern PatchGameConfig_t gameConfigHostBackup;
 
+// Bot config
+struct BotConfig {
+  char numToInvite;
+  char mode;
+  char difficulty;
+  char profile;
+} botConfig;
+
 // constants
 const char footerText[] = "\x14 \x15 TAB     \x10 SELECT     \x12 BACK";
 
@@ -116,6 +124,8 @@ void mapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void voteToEndSelectHandler(TabElem_t* tab, MenuElem_t* element);
+void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element);
+
 
 #ifdef DEBUG
 void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
@@ -374,6 +384,36 @@ MenuElem_ListData_t dataHealthBoxes = {
     .items = { "On", "No Glass Container", "Off" }
 };
 
+// Bot options
+MenuElem_ListData_t botNumToInvite = {
+    .value = &botConfig.numToInvite,
+    .stateHandler = NULL,
+    .count = 8,
+    .items = { "All slots", "1", "2", "3", "4", "5", "6", "7" }
+};
+
+MenuElem_ListData_t botMode = {
+    .value = &botConfig.mode,
+    .stateHandler = NULL,
+    .count = 2,
+    .items = { "Training Idle", "Training Passive" }
+};
+
+MenuElem_ListData_t botDifficulty = {
+    .value = &botConfig.difficulty,
+    .stateHandler = NULL,
+    .count = 10,
+    .items = { "5", "6", "7", "8", "9", "10", "1", "2", "3", "4" }
+};
+
+MenuElem_ListData_t botProfile = {
+    .value = &botConfig.profile,
+    .stateHandler = NULL,
+    .count = 10,
+    .items = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
+};
+
+
 // General
 MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
@@ -460,11 +500,30 @@ MenuElem_t menuElementsGameSettingsHelp[] = {
   { "the custom game settings.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
 };
 
+// Bot Settings
+MenuElem_t menuElementsBotSettings[] = {
+  { "Invite Bot(s)", buttonActionHandler, menuStateAlwaysEnabledHandler, botInviteSelectHandler },
+  { "Number to Invite", listActionHandler, menuStateAlwaysEnabledHandler, &botNumToInvite, "Number of bots to invite" },
+  { "Mode", listActionHandler, menuStateAlwaysEnabledHandler, &botMode, "Bot Mode" },
+  { "Difficulty (1-10)", listActionHandler, menuStateAlwaysEnabledHandler, &botDifficulty, "Difficulty 1-10. Doesn't apply to training modes" },
+  { "Custom Profile", listActionHandler, menuStateAlwaysEnabledHandler, &botProfile, "Bot Profile you want to invite (0=any). Only applies when inviting 1 bot" },
+};
+
+// Bot Settings (not in staging)
+MenuElem_t menuElementsBotSettingsHelp[] = {
+  { "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "Please create a game to configure", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+  { "bots.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+};
+
+
 // tab items
 TabElem_t tabElements[] = {
   { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
   { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
   { "Game Settings", tabGameSettingsHelpStateHandler, menuElementsGameSettingsHelp, sizeof(menuElementsGameSettingsHelp)/sizeof(MenuElem_t) },
+  { "Bot Settings", tabGameSettingsStateHandler, menuElementsBotSettings, sizeof(menuElementsBotSettings)/sizeof(MenuElem_t) },
+  { "Bot Settings", tabGameSettingsHelpStateHandler, menuElementsBotSettingsHelp, sizeof(menuElementsBotSettingsHelp)/sizeof(MenuElem_t) },
 };
 
 const int tabsCount = sizeof(tabElements)/sizeof(TabElem_t);
@@ -686,6 +745,17 @@ void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element)
   preset = 0;
   memset(&gameConfig, 0, sizeof(gameConfig));
   SelectedCustomMapId = 0;
+}
+
+// 
+void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element)
+{
+  preset = 1;
+  memset(&gameConfig, 0, sizeof(gameConfig));
+  SelectedCustomMapId = 0;
+
+  void * lobbyConnection = netGetLobbyServerConnection();
+  netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_INVITE_BOT, sizeof(botConfig), &botConfig);
 }
 
 // 
