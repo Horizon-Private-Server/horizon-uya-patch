@@ -1763,6 +1763,16 @@ void onConfigUpdate(void)
 {
   int i;
 
+  // reset when we lose connection
+  void* connection = netGetLobbyServerConnection();
+  if (dlTotalBytes > 0 && (!connection || !dlIsActive))
+  {
+    dlTotalBytes = 0;
+    dlBytesReceived = 0;
+    dlIsActive = 0;
+    DPRINTF("lost connection\n");
+  }
+
   // in staging, update game info
   GameSettings * gameSettings = gameGetSettings();
   if (gameSettings && gameSettings->GameLoadStartTime < 0 && netGetLobbyServerConnection())
