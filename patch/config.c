@@ -32,12 +32,17 @@ u32 padPointer = 0;
 int SelectedCustomMapId = 0;
 int preset = 0;
 
+int dlBytesReceived = 0;
+int dlTotalBytes = 0;
+int dlIsActive = 0;
+
 // Config
 extern PatchConfig_t config;
 
 // game config
 extern PatchGameConfig_t gameConfig;
 extern PatchGameConfig_t gameConfigHostBackup;
+extern int redownloadCustomModeBinaries;
 
 // Bot config
 struct BotConfig {
@@ -1707,11 +1712,49 @@ void navTab(int direction)
 }
 
 //------------------------------------------------------------------------------
+int onServerDownloadDataRequest(void * connection, void * data)
+{
+	ServerDownloadDataRequest_t* request = (ServerDownloadDataRequest_t*)data;
+
+	// copy bytes to target
+  dlIsActive = request->Id;
+	dlTotalBytes = request->TotalSize;
+	dlBytesReceived += request->DataSize;
+	memcpy((void*)request->TargetAddress, request->Data, request->DataSize);
+	DPRINTF("DOWNLOAD: %d/%d, writing %d to %08X\n", dlBytesReceived, request->TotalSize, request->DataSize, request->TargetAddress);
+  
+	// respond
+	if (connection && (!request->Chunk || dlBytesReceived >= request->TotalSize)) {
+		ClientDownloadDataResponse_t response;
+		response.Id = request->Id;
+		response.BytesReceived = dlBytesReceived;
+		netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_DOWNLOAD_DATA_RESPONSE, sizeof(ClientDownloadDataResponse_t), &response);
+	}
+
+  // reset at end
+  if (dlBytesReceived >= request->TotalSize) {
+    dlTotalBytes = 0;
+    dlBytesReceived = 0;
+    dlIsActive = 0;
+  }
+
+	return sizeof(ServerDownloadDataRequest_t) - sizeof(request->Data) + request->DataSize;
+}
+
+//------------------------------------------------------------------------------
 int onSetGameConfig(void * connection, void * data)
 {
+  PatchGameConfig_t config;
+
+  // move to temporary object
+  memcpy(&config, data, sizeof(PatchGameConfig_t));
+
+  // check for changes
+  redownloadCustomModeBinaries |= config.customModeId != gameConfig.customModeId;
+
   // copy it over
   memcpy(&gameConfig, data, sizeof(PatchGameConfig_t));
-  DPRINTF("set gameconfig map:%d\n", SelectedCustomMapId);
+
   return sizeof(PatchGameConfig_t);
 }
 
@@ -1783,7 +1826,17 @@ void onConfigGameMenu(void)
 //------------------------------------------------------------------------------
 void onConfigOnlineMenu(void)
 {
-  //printf("config.c: onConfigOnlineMenu\n");
+  // draw download data box
+	if (dlTotalBytes > 0)
+	{
+    gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, colorBlack);
+    gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, colorContentBg);
+    gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, colorText, "Downloading...", 11 + (gameGetTime()/240 % 4), 3);
+
+		float w = (float)dlBytesReceived / (float)dlTotalBytes;
+		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, colorRed);
+	}
+
   onMenuUpdate(0);
 
   if (isConfigMenuActive && !netGetLobbyServerConnection()) {
@@ -1798,6 +1851,8 @@ void onConfigInitialize(void)
 	// install net handlers
   netInstallCustomMsgHook(1);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_SET_GAME_CONFIG, &onSetGameConfig);
+  netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
+
 
   // reset game configs
   memset(&gameConfigHostBackup, 0, sizeof(gameConfigHostBackup));

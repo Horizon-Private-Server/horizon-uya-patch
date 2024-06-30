@@ -69,15 +69,14 @@ const int clears[][2] = {
 	{ 0x000cffd0, 0x00000020 }, // patch hash
 	{ 0x000cffc0, 0x00000010 }, // patch pointers
 };
-int hasClearedMemory = 0;
 
+int hasClearedMemory = 0;
 int bytesReceived = 0;
 int totalBytes = 0;
 
 int onServerDownloadDataRequest(void * connection, void * data)
 {
 	ServerDownloadDataRequest_t* request = (ServerDownloadDataRequest_t*)data;
-
 
 	// copy bytes to target
 	totalBytes = request->TotalSize;
@@ -86,7 +85,7 @@ int onServerDownloadDataRequest(void * connection, void * data)
 	DPRINTF("DOWNLOAD: {%d} %d/%d, writing %d to %08X\n", request->Id, bytesReceived, request->TotalSize, request->DataSize, request->TargetAddress);
 
 	// respond
-	if (connection)
+	if (connection && (!request->Chunk || bytesReceived >= request->TotalSize))
 	{
 		ClientDownloadDataResponse_t response;
 		response.Id = request->Id;

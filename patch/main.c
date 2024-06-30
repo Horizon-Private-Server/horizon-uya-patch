@@ -61,8 +61,6 @@ void scavHuntRun(void);
 void runTest(void);
 #endif
 
-int dlBytesReceived = 0;
-int dlTotalBytes = 0;
 int hasInitialized = 0;
 int lastMenuInvokedTime = 0;
 int lastGameState = 0;
@@ -71,6 +69,7 @@ int isInStaging = 0;
 int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 1;
 char showNoMapPopup = 0;
+int redownloadCustomModeBinaries = 0;
 char weaponOrderBackup[2][3] = { {0,0,0}, {0,0,0} };
 float lastFps = 0;
 int renderTimeMs = 0;
@@ -145,34 +144,6 @@ struct FlagPVars
 	char UNK_16[6];
 	int TimeFlagDropped;
 };
-
-//------------------------------------------------------------------------------
-int onServerDownloadDataRequest(void * connection, void * data)
-{
-	ServerDownloadDataRequest_t* request = (ServerDownloadDataRequest_t*)data;
-
-	// copy bytes to target
-	dlTotalBytes = request->TotalSize;
-	dlBytesReceived += request->DataSize;
-	memcpy((void*)request->TargetAddress, request->Data, request->DataSize);
-	printf("DOWNLOAD: %d/%d, writing %d to %08X\n", dlBytesReceived, request->TotalSize, request->DataSize, request->TargetAddress);
-  
-	// respond
-	if (connection) {
-		ClientDownloadDataResponse_t response;
-		response.Id = request->Id;
-		response.BytesReceived = dlBytesReceived;
-		netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_DOWNLOAD_DATA_RESPONSE, sizeof(ClientDownloadDataResponse_t), &response);
-	}
-
-	// reset at end
-	if (dlBytesReceived >= request->TotalSize) {
-		dlTotalBytes = 0;
-		dlBytesReceived = 0;
-	}
-
-	return sizeof(ServerDownloadDataRequest_t) - sizeof(request->Data) + request->DataSize;
-}
 
 #if DSCRPRINT
 //------------------------------------------------------------------------------
@@ -2355,16 +2326,6 @@ void onOnlineMenu(void)
 	// settings
 	onConfigOnlineMenu();
 
-	// draw download data box
-	if (dlTotalBytes > 0) {
-		gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, 0x8004223f);
-		gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, 0x80123251);
-		gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, 0x8069cbf2, "Downloading...", 11 + (gameGetTime()/240 % 4), 3);
-
-		float w = (float)dlBytesReceived / (float)dlTotalBytes;
-		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, 0x8018608f);
-	}
-
 	// 
 	if (showNoMapPopup) {
 		if (mapOverrideResponse == -1) {
@@ -2431,7 +2392,6 @@ int main(void)
 	}
 
 	//
-  	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
   	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, &onClientVoteToEndRemote);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, &onClientVoteToEndStateUpdateRemote);

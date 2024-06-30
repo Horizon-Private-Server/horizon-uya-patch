@@ -147,6 +147,7 @@ typedef struct ServerDownloadDataRequest
     int TargetAddress;
     int TotalSize;
     int DataOffset;
+    short Chunk;
     short DataSize;
     char Data[2048];
 } ServerDownloadDataRequest_t;
