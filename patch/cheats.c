@@ -1086,3 +1086,38 @@ void disableHealthContainer(void)
 	}
 	patched.gameConfig.grHealthBoxes = 1;
 }
+
+/*
+ * NAME :		onGameplayLoad_destructableBridges
+ * DESCRIPTION :
+ *              Updates Various bridge pieces healths to a number thta makes it so it can't be destoyed.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay)
+{
+	int i;
+	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
+	u32 PVarOffsetPtr = ((u32)gameplay + gameplay->PVarTableOffset);
+	u32 PVarDataPtr = ((u32)gameplay + gameplay->PVarDataOffset);
+	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
+		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
+		switch (moby->OClass) {
+			case MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_SIDE:
+			case MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_SIDE: {
+				GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+				u32 data = PVarDataPtr + PVarOffset->Offset;
+				*(u32*)(data + 0x4) = 0x7f7fffff;
+			}
+			case MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_CENTER:
+			case MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER: {
+				GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+				u32 data = PVarDataPtr + PVarOffset->Offset;
+				*(u32*)(data + 0x10) = 0x7f7fffff;
+				*(u32*)(data + 0x14) = 0x7f7fffff;
+			}
+		}
+	}
+}

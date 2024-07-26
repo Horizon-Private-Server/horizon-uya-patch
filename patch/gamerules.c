@@ -124,6 +124,9 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grRespawnTimer_HealthBoxes || gameConfig.grRespawnTimer_WeaponCrates || gameConfig.grRespawnTimer_AmmoPickups)
 		onGameplayLoad_miscRespawnTimers(gameplay);
 
+	if (gameConfig.grDestructableBridges)
+		onGameplayLoad_destructableBridges(gameplay);
+
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
 }

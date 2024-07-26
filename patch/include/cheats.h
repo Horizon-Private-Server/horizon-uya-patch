@@ -22,6 +22,7 @@ void radarBlips(void);
 void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay);
 void respawnInvincTimer(void);
 void onGameplayLoad_disableHealthContainer(GameplayHeaderDef_t * gameplay);
+void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay);
 
 // Party Game Rules
 void survivor(void);

@@ -467,6 +467,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks, "Toggle if weapon packs should spawn when a player dies." },
   { "V2s", listActionHandler, menuStateHandler_Default, &dataV2_Setting, "Configures V2 weapon upgrades to be disabled, on (default), or always on (spawn with v2 weapons)." },
   { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown, "Disables the brief hit invincibility after taking damage." },
+  { "Destructable Bridges", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDestructableBridges, "turn on/off the ability to destroy bridges." },
   { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit, "Forces sniper shots that hit to register on every client. Can result in shots that appear to phase through walls." },
   { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled, "Forces sniper shots to always deal the correct amount of damage." },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn, "Automatically respawn players once the in game respawn timer hits zero." },
