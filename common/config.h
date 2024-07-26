@@ -74,6 +74,7 @@ typedef struct PatchPatches {
   char gadgetEvents;
   char resurrectWeaponOrdering;
   char ctfLogic;
+  char menuModifiers;
 
   // gameConfig misc.
   char spawnWeaponPackOnDeath;

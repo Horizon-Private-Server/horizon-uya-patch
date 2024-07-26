@@ -2353,6 +2353,19 @@ void onOnlineMenu(void)
   #endif
 }
 
+typedef int (*uiVTable_Func)(void * ui, int pad);
+uiVTable_Func stagingFunc = (uiVTable_Func)0x006883c0;
+
+int patchStaging(void * ui, int pad)
+{
+	// call game function we're replacing
+	int result = stagingFunc(ui, pad);
+
+	printf("\nbutton: %d, ui: %08x", pad, ui);
+
+	return result;
+}
+
 /*
  * NAME :		main
  * DESCRIPTION :
@@ -2515,6 +2528,13 @@ int main(void)
 		// Patch various options on Create Game Screen
 		// Freezes on PAL
 		// patchCreateGameMenu();
+
+		// Patch Menus (Staging, create game, ect.)
+		// if in Online Lobby, and SubPointer equals zero (not on find game)
+		if (patched.menuModifiers == 0 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0 && *(u32*)0x01C5C114 == 0) {
+			*(u32*)0x0047EB50 = &patchStaging;
+			patched.menuModifiers = 1;
+		}
 
 		// If in Lobby, run these game rules.
 		grLobbyStart();
