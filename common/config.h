@@ -56,6 +56,7 @@ typedef struct PatchGameConfig {
   char grFluxShotsAlwaysHit;
   char grFluxNikingDisabled;
   char grFlagHotspots;
+  char grDestructableBridges;
 
   // Party
   char prSurvivor;
