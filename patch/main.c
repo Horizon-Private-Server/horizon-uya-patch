@@ -2354,14 +2354,28 @@ void onOnlineMenu(void)
 }
 
 typedef int (*uiVTable_Func)(void * ui, int pad);
-uiVTable_Func stagingFunc = (uiVTable_Func)0x006883c0;
+uiVTable_Func stagingFunc = (uiVTable_Func)0x006bec18;
 
 int patchStaging(void * ui, int pad)
-{
+{	
 	// call game function we're replacing
 	int result = stagingFunc(ui, pad);
 
-	printf("\nbutton: %d, ui: %08x", pad, ui);
+	if (pad != 0)
+		printf("\nbutton: %d, ui: %08x", pad, ui);
+
+	// Patch Unkick (Still no worky)
+	// int i;
+	// GameSettings * gs = gameGetSettings();
+	// if (gs) {
+	// 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+	// 		// Check ClientID and if they are kicked and not viewing the kicked popup
+	// 		if (gs->PlayerClients[i] == gameGetMyClientId() && gs->PlayerStates[i] == 5) {
+	// 			((int (*)(void *, int, int, short))0x006c0c600)(ui, 1, 0, 0x1600);
+	// 			return 1;
+	// 		}
+	// 	}
+	// }
 
 	return result;
 }
@@ -2530,9 +2544,8 @@ int main(void)
 		// patchCreateGameMenu();
 
 		// Patch Menus (Staging, create game, ect.)
-		// if in Online Lobby, and SubPointer equals zero (not on find game)
-		if (patched.menuModifiers == 0 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0 && *(u32*)0x01C5C114 == 0) {
-			*(u32*)0x0047EB50 = &patchStaging;
+		if (patched.menuModifiers == 0) {
+			*(u32*)0x0047ea6c = &patchStaging;
 			patched.menuModifiers = 1;
 		}
 
