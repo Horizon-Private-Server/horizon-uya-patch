@@ -322,13 +322,24 @@ void runExceptionHandler(void)
 	}
 }
 
+/*
+ * NAME :		botsInGame
+ * DESCRIPTION :Returns 1 if bots are in game. returns 0 if not.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 int botsInGame(void)
 {
-	int i;
-	char * CPU = "CPU-";
 	GameSettings *gs = gameGetSettings();
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		if (strncmp(CPU, gs->PlayerNames[i], 4)) {
+	if (!gs)
+		return 0;
+
+	int i;
+	for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
+		int account_id = gs->PlayerAccountIds[i];
+		if (account_id <= 883 && account_id >= 1880) {
 			DPRINTF("\nBOTS IN GAME! UH OH, AI COMIN' FOR YA!\n");
 			return 1;
 		}
