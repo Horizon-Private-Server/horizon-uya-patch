@@ -26,7 +26,6 @@
 #define IS_WIDESCREEN               (*(char*)0x001a5a3c)
 #endif
 
-int isConfigMenuActive = 0;
 int selectedTabItem = 0;
 u32 padPointer = 0;
 int SelectedCustomMapId = 0;
@@ -38,6 +37,7 @@ int dlIsActive = 0;
 
 // Config
 extern PatchConfig_t config;
+extern isConfigMenuActive;
 
 // game config
 extern PatchGameConfig_t gameConfig;

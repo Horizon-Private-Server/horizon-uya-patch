@@ -69,6 +69,7 @@ typedef struct PatchPatches {
   PatchConfig_t config;
   PatchGameConfig_t gameConfig;
   char configStartOption;
+  char loadingPopup;
   char killStealing;
   char deadShooting;
   char weaponShotLag;
