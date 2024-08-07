@@ -69,6 +69,7 @@ int isInStaging = 0;
 int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 1;
 char showNoMapPopup = 0;
+int isConfigMenuActive = 0;
 int redownloadCustomModeBinaries = 0;
 char weaponOrderBackup[2][3] = { {0,0,0}, {0,0,0} };
 float lastFps = 0;
@@ -2139,6 +2140,52 @@ void patchSceReadPad_memcpy(void * destination, void * source, int num)
 }
 
 /*
+ * NAME :		patchLoadingPopup_isConfigMenuOpen
+ * DESCRIPTION :
+ * 				If patch menu is open, do not show the loading popup.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int patchLoadingPopup_isConfigMenuOpen(void* a0, long a1)
+{
+	// if patch menu is open, return 0 to not show the loading popup.
+	if (isConfigMenuActive)
+		return 0;
+
+	// return base if config menu isn't open.
+	#if UYA_PAL
+	int r = ((int (*)(void *, long))0x006cea18)(a0, a1);
+	#else
+	int r = ((int (*)(void *, long))0x006cc290)(a0, a1);
+	#endif
+	return r;
+}
+/*
+ * NAME :		patchLoadingPopup
+ * DESCRIPTION :
+ * 				Hooks "patchLoadingPopup_isConfigMenuOpen"
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchLoadingPopup(void)
+{
+	if (patched.loadingPopup)
+		return;
+
+	#if UYA_PAL
+	HOOK_JAL(0x006c40e0, &patchLoadingPopup_isConfigMenuOpen);
+	#else
+	HOOK_JAL(0x006c15c8, &patchLoadingPopup_isConfigMenuOpen);
+	#endif
+
+	patched.loadingPopup = 1;
+}
+
+/*
  * NAME :		runGameStartMessager
  * DESCRIPTION :
  * NOTES :
@@ -2534,6 +2581,9 @@ int main(void)
 		#if DEBUG
 		patchUnkick();
 		#endif
+
+		// Patches loading popup from not showing if patch menu is open.
+		patchLoadingPopup();
 
 		// Reset Level of Detail to -1
 		lastLodLevel = -1;
