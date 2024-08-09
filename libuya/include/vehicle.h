@@ -8,8 +8,8 @@
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
-#ifndef _LIBDL_VEHICLE_H_
-#define _LIBDL_VEHICLE_H_
+#ifndef _LIBUYA_VEHICLE_H_
+#define _LIBUYA_VEHICLE_H_
 
 #include "math.h"
 #include "weapon.h"
@@ -183,4 +183,4 @@ typedef struct VehicleBase {
 	/* 33c */ float fPassengerAttackDamage;
 } Vehicle;
 
-#endif // _LIBDL_VEHICLE_H_
+#endif // _LIBUYA_VEHICLE_H_
