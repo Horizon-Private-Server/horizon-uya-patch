@@ -240,6 +240,9 @@ void grGameStart(void)
 	if (gameConfig.prLoadoutWeaponsOnly)
 		loadoutWeaponsOnly(FirstPass);
 
+	if (gameConfig.grDestructableBridges)
+		destructableBridges();
+
 	FirstPass = 0;
 }
 

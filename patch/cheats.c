@@ -16,6 +16,7 @@
 #include <libuya/pad.h>
 #include <libuya/stdio.h>
 #include <libuya/uya.h>
+#include <libuya/math.h>
 #include <libuya/math3d.h>
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
@@ -1120,4 +1121,34 @@ void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay)
 			}
 		}
 	}
+}
+
+void destructableBridges(void)
+{
+	if (patched.gameConfig.grDestructableBridges)
+		return;
+
+	Moby* moby = mobyListGetStart();
+	Moby* mobyEnd = mobyListGetEnd();
+	while (moby < mobyEnd) {
+		if (moby->oClass == MOBY_ID_KORGON_BRIDGE_PIECE) {
+				// Copy Extended Bridge Locatoin to Retracted Bridge Location
+				// vector_copy(data + 0x90, data + 0xa0);
+				void * data = moby->pVar;
+				vector_copy(data + 0x90, data + 0xa0);
+				// Copy Extended Bridge Location to moby
+				vector_copy(moby->position, data + 0xa0);
+
+				// Bolt Crank Code
+				// grab associated bolt crank from bridge peice
+				int boltCrankInstanceNum = *(int*)(data + 0x8c);
+				Moby* list = mobyListGetStart();
+				// move bolt crank y position down so player can't use it.
+				Moby* boltCrank = list + boltCrankInstanceNum;
+				mobyDestroy(boltCrank);
+				// *(float*)(boltCrank + 0x18) -= 1.5f;
+		}
+		++moby;
+	}
+	patched.gameConfig.grDestructableBridges = 1;
 }
