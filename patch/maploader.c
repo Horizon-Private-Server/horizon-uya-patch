@@ -9,6 +9,7 @@
 #include <libuya/pad.h>
 #include <libuya/gamesettings.h>
 #include <libuya/game.h>
+#include <libuya/utils.h>
 #include <libuya/interop.h>
 #include "include/config.h"
 
@@ -48,6 +49,18 @@
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x006787a8)
 #define LOAD_LEVEL_TRANSITION_MAPNAME			(0x00352D20)
 
+#define SOUND_FLUSH_SOUND_COMMANDS_FUNC (0x00193590)
+#define LOAD_SOUND_LOADBUSY ((int*)0x00240BC8)
+#define LOAD_SOUND_LOCALLOADERROR ((int*)0x00240B88)
+#define LOAD_SOUND_LOADRETURNVALUE ((int*)0x00240140)
+#define LOAD_SOUND_LOADPARAMS ((int*)0x00240180)
+#define LOAD_SOUND_RPC_CLIENTDATA (0x00240100)
+#define LOAD_LEVEL_SOUND_BANK_HOOK        ((u32*)0x005c1354)
+#define LOAD_LEVEL_SOUND_INIT_FUNC        ((u32*)0x005f16f0)
+#define LOAD_LEVEL_SOUND_LOAD_BANK_FUNC   ((u32*)0x005c1310)
+#define LOAD_LEVEL_SOUND_BY_LOC_FUNC      ((u32*)0x00193888)
+#define LOAD_LEVEL_SOUND_NOP_ADDR         ((u32)0x005a41f4)
+
 #define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193340)
 #define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00192F68)
 
@@ -68,6 +81,7 @@ VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
 // paths for level specific files
 char * fWad = "%suya/%s.pal.wad";
 char * fWorld = "%suya/%s.pal.world";
+char * fSound = "%suya/%s.pal.sound";
 char * fBg = "%suya/%s.pal.bg";
 char * fMap = "%suya/%s.pal.map";
 char * fVersion = "%suya/%s.version";
@@ -87,6 +101,18 @@ char * fVersion = "%suya/%s.version";
 #define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x0019507c)
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x00675dc0)
 #define LOAD_LEVEL_TRANSITION_MAPNAME			(0x00352e20)
+
+#define SOUND_FLUSH_SOUND_COMMANDS_FUNC (0x00193680)
+#define LOAD_SOUND_LOADBUSY ((int*)0x00240D48)
+#define LOAD_SOUND_LOCALLOADERROR ((int*)0x00240D08)
+#define LOAD_SOUND_LOADRETURNVALUE ((int*)0x002402c0)
+#define LOAD_SOUND_LOADPARAMS ((int*)0x00240300)
+#define LOAD_SOUND_RPC_CLIENTDATA (0x00240280)
+#define LOAD_LEVEL_SOUND_BANK_HOOK        ((u32*)0x005bf36c)
+#define LOAD_LEVEL_SOUND_INIT_FUNC        ((u32*)0x005eeff0)
+#define LOAD_LEVEL_SOUND_LOAD_BANK_FUNC   ((u32*)0x005bf328)
+#define LOAD_LEVEL_SOUND_BY_LOC_FUNC      ((u32*)0x00193978)
+#define LOAD_LEVEL_SOUND_NOP_ADDR         ((u32)0x005a258c)
 
 #define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193430)
 #define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00193058)
@@ -108,6 +134,7 @@ VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
 // paths for level specific files
 char * fWad = "%suya/%s.wad";
 char * fWorld = "%suya/%s.world";
+char * fSound = "%suya/%s.sound";
 char * fBg = "%suya/%s.bg";
 char * fMap = "%suya/%s.map";
 char * fVersion = "%suya/%s.version";
@@ -744,6 +771,53 @@ void cdvdReadWadSectors(u32 startSector, u32 sectorCount, void * dest)
 }
 
 //------------------------------------------------------------------------------
+void soundFlushSoundCommands(void)
+{
+	((void (*)(void))SOUND_FLUSH_SOUND_COMMANDS_FUNC)();
+}
+
+//------------------------------------------------------------------------------
+int soundLoadBankFromEE(void* buf)
+{
+  int r;
+
+  *LOAD_SOUND_LOCALLOADERROR = 0;
+  if (*LOAD_SOUND_LOADBUSY == 0) {
+
+    // load from
+    LOAD_SOUND_LOADPARAMS[0] = buf;
+    LOAD_SOUND_LOADRETURNVALUE[0] = -1;
+
+    SyncDCache(LOAD_SOUND_LOADRETURNVALUE, LOAD_SOUND_LOADRETURNVALUE + 1);
+    while ((r = SifCheckStatRpc(LOAD_SOUND_RPC_CLIENTDATA)) != 0) {
+      soundFlushSoundCommands();
+      FlushCache(0);
+    }
+
+    // call RPC
+    r = SifCallRpc(LOAD_SOUND_RPC_CLIENTDATA, 0x57, 1, LOAD_SOUND_LOADPARAMS, 4, LOAD_SOUND_LOADRETURNVALUE, 4, 0, 0);
+    if (r < 0) {
+      // RPC call failed
+      *LOAD_SOUND_LOCALLOADERROR = 0x106;
+      return 0;
+    } else {
+
+      // wait for load to finish
+      int loadReturnValue = *LOAD_SOUND_LOADRETURNVALUE;
+      while (loadReturnValue == -1) {
+        FlushCache(0);
+        loadReturnValue = *LOAD_SOUND_LOADRETURNVALUE;
+      }
+
+      return loadReturnValue;
+    }
+  } else {
+    // busy (load already in progress), fail
+    return 0;
+  }
+}
+
+//------------------------------------------------------------------------------
 u64 hookedLevelExit(void)
 {
   u64 r = ((u64 (*)(void))LEVEL_EXIT_FUNCTION_FUNC)();
@@ -758,37 +832,87 @@ u64 hookedLevelExit(void)
 }
 
 //------------------------------------------------------------------------------
-void hookedLoad(void * dest, u32 sectorStart, u32 sectorSize)
+int beginLoadingLevelWad(int loadGameplay)
 {
 	char * filename = NULL;
+  void * dest = NULL;
+
+  switch (loadGameplay)
+  {
+    case 0: // loading level wad
+    {
+      filename = fWad;
+      dest = MapLoaderState.LevelBuffer;
+      break;
+    }
+    case 1: // loading gameplay
+    {
+      filename = fWorld;
+      dest = MapLoaderState.GameplayBuffer;
+      break;
+    }
+  }
+
+  if (filename != NULL)
+  {
+    printf("loading %s\n", filename);
+    int fSize = openUsb(filename);
+    if (fSize > 0)
+    {
+      if (readUsb(dest) > 0) {
+        MapLoaderState.Loaded |= loadGameplay ? MAPLOADED_GAMEPLAY : MAPLOADED_LEVEL;
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+int beginLoadingSoundWad(void* dest)
+{
+  int fSize = openUsb(fSound);
+  if (fSize > 0) {
+    MapLoaderState.SoundBuffer = dest;
+    printf("level: %08X\nsound: %08X\n", MapLoaderState.LevelBuffer, MapLoaderState.SoundBuffer);
+
+    // read sound bank in background
+    // let hookedCheck handle when sound is finished loading
+    printf("begin sound bank read\n");
+    if (readUsb(MapLoaderState.SoundBuffer) > 0) {
+      MapLoaderState.Loaded |= MAPLOADED_SOUND;
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+void hookedLoad(void * dest, u32 sectorStart, u32 sectorSize)
+{
+  if (LOAD_LEVEL_PART_ID == 0) {
+    MapLoaderState.LevelBuffer = dest;
+    MapLoaderState.GameplayBuffer = 0;
+    MapLoaderState.SoundBuffer = 0;
+    MapLoaderState.Loaded = 0;
+  } else {
+    MapLoaderState.GameplayBuffer = dest;
+  }
 
 	// Check if loading MP map
 	if (MapLoaderState.Enabled && HAS_LOADED_MODULES)
 	{
-		switch (LOAD_LEVEL_PART_ID)
-		{
-			case 0: // loading level wad
-			{
-				filename = fWad;
-				break;
-			}
-			case 1: // loading gameplay
-			{
-				filename = fWorld;
-				break;
-			}
-		}
+    // load sound wad first
+    // Generate sound filename
+    sprintf(membuffer, fSound, getMapPathPrefix(), MapLoaderState.MapFileName);
+    int filelen = readFileLength(membuffer);
+    if (filelen > 0)
+      if (beginLoadingSoundWad(dest)) return;
 
-		if (filename != NULL)
-		{
-			DPRINTF("loading %s\n", filename);
-			int fSize = openUsb(filename);
-			if (fSize > 0)
-			{
-				if (readUsb(dest) > 0)
-					return;
-			}
-		}
+    // if we've reached here, then the sound wad doesn't exist, so load the level wad
+    if (beginLoadingLevelWad(LOAD_LEVEL_PART_ID)) return;
 	}
 
 	// Default to cdvd load if the usb load failed
@@ -810,11 +934,35 @@ u32 hookedCheck(int a0)
 		// If the command is USBREAD close and return
 		if (cmd == 0x04)
 		{
-			DPRINTF("finished reading %d bytes from USB\n", r);
+			// DPRINTF("finished reading %d bytes from USB\n", r);
+			// rpcUSBclose(MapLoaderState.LoadingFd);
+			// rpcUSBSync(0, NULL, NULL);
+			// MapLoaderState.LoadingFd = -1;
+			// return cdvdSync(a0);
+
+      printf("finished reading %d bytes from USB\n", r);
 			rpcUSBclose(MapLoaderState.LoadingFd);
 			rpcUSBSync(0, NULL, NULL);
 			MapLoaderState.LoadingFd = -1;
-			return cdvdSync(a0);
+
+      if ((MapLoaderState.Loaded & MAPLOADED_SOUND_SENT) == 0 && (MapLoaderState.Loaded & MAPLOADED_SOUND)) {
+        // finish loading sound wad
+        ((void (*)())LOAD_LEVEL_SOUND_INIT_FUNC)();       // sound_LevelInit()
+        ((void (*)())LOAD_LEVEL_SOUND_LOAD_BANK_FUNC)();  // music_LoadCoreBank()
+        POKE_U32(LOAD_LEVEL_SOUND_NOP_ADDR, 0);           // nop sound_LevelInit()
+        POKE_U32(LOAD_LEVEL_SOUND_NOP_ADDR + 8, 0);       // nop music_LoadCoreBank()
+      }
+
+      if ((MapLoaderState.Loaded & MAPLOADED_LEVEL) == 0 && MapLoaderState.LevelBuffer) {
+        // load level wad
+        if (beginLoadingLevelWad(0)) return;
+      } else if ((MapLoaderState.Loaded & MAPLOADED_GAMEPLAY) == 0 && MapLoaderState.GameplayBuffer) {
+        // load gameplay wad
+        if (beginLoadingLevelWad(1)) return;
+      }
+
+      // finished loading level +/ sound wads
+			return 0;
 		}
 	}
 
@@ -894,9 +1042,29 @@ void hookedGetTable(u32 startSector, u32 sectorCount, u8 * dest)
 }
 
 //------------------------------------------------------------------------------
-void hookedGetAudio(u64 a0, void * dest, u32 startSector, u32 sectorCount, u64 t0, u64 t1, u64 t2)
+void hookedSoundCoreBankLoad(int loc, int offset, SndCompleteProc cb, u64 user_data)
 {
-	//((void (*)(u64, void*,u32,u32,u64,u64,u64))CDVD_LOAD_FUNC)(a0, dest, startSector, sectorCount, t0, t1, t2);
+	// Check if loading MP map
+	if (MapLoaderState.Enabled && HAS_LOADED_MODULES && (MapLoaderState.LevelBuffer > 0 || MapLoaderState.GameplayBuffer > 0) && MapLoaderState.SoundBuffer > 0)
+	{
+    MapLoaderState.SoundLoadCb = cb;
+    MapLoaderState.SoundLoadUserData = user_data;
+  
+    // sound wad finished, pass to Cb
+    if (cb && (MapLoaderState.Loaded & MAPLOADED_SOUND_SENT) == 0 && (MapLoaderState.Loaded & MAPLOADED_SOUND)) {
+      int r = soundLoadBankFromEE(MapLoaderState.SoundBuffer);
+      printf("load sound bank from EE %08X to IOP %08X\n", MapLoaderState.SoundBuffer, r);
+      MapLoaderState.SoundLoadCb(r, MapLoaderState.SoundLoadUserData);
+      MapLoaderState.SoundLoadCb = NULL; // reset
+      MapLoaderState.Loaded |= MAPLOADED_SOUND_SENT;
+    }
+
+    // we're loading the sound wad from USB
+    return;
+	}
+
+  // snd_BankLoadByLoc_CB
+	((void (*)(int, int, SndCompleteProc, u64))LOAD_LEVEL_SOUND_BY_LOC_FUNC)(loc, offset, cb, user_data);
 }
 
 //------------------------------------------------------------------------------
@@ -1067,6 +1235,7 @@ void hook(void)
 		*LOAD_LEVEL_CD_SYNC_HOOK = 0x0C000000 | ((u32)(&hookedCheck) / 4);
 		*LOAD_LEVEL_READ_WAD_HOOK = 0x0C000000 | ((u32)(&hookedLoad) / 4);
 		*LEVEL_EXIT_FUNCTION_HOOK = 0x0C000000 | ((u32)(&hookedLevelExit) / 4);
+    *LOAD_LEVEL_SOUND_BANK_HOOK = 0x0C000000 | ((u32)(&hookedSoundCoreBankLoad) / 4);
 	}
 
 	if (*LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK == 0x03E00008)
