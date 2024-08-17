@@ -84,6 +84,17 @@ typedef struct CustomMapVersionFileDef
   char Name[32];
 } CustomMapVersionFileDef_t;
 
+typedef void (*SndCompleteProc)(int loc, int user_data);
+
+enum MapLoaderLoaded
+{
+  MAPLOADED_NONE = 0,
+  MAPLOADED_LEVEL = 1,
+  MAPLOADED_GAMEPLAY = 2,
+  MAPLOADED_SOUND = 4,
+  MAPLOADED_SOUND_SENT = 8,
+};
+
 struct MapLoaderState
 {
     u8 Enabled;
@@ -93,6 +104,12 @@ struct MapLoaderState
     char MapFileName[128];
     int LoadingFileSize;
     int LoadingFd;
+    int Loaded;
+    void * LevelBuffer;
+    void * GameplayBuffer;
+    void * SoundBuffer;
+    SndCompleteProc SoundLoadCb;
+    u64 SoundLoadUserData;
 };
 
 typedef struct VoteToEndState
