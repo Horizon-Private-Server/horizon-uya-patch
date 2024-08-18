@@ -855,7 +855,7 @@ int beginLoadingLevelWad(int loadGameplay)
 
   if (filename != NULL)
   {
-    printf("loading %s\n", filename);
+    DPRINTF("loading %s\n", filename);
     int fSize = openUsb(filename);
     if (fSize > 0)
     {
@@ -875,11 +875,11 @@ int beginLoadingSoundWad(void* dest)
   int fSize = openUsb(fSound);
   if (fSize > 0) {
     MapLoaderState.SoundBuffer = dest;
-    printf("level: %08X\nsound: %08X\n", MapLoaderState.LevelBuffer, MapLoaderState.SoundBuffer);
+    DPRINTF("level: %08X\nsound: %08X\n", MapLoaderState.LevelBuffer, MapLoaderState.SoundBuffer);
 
     // read sound bank in background
     // let hookedCheck handle when sound is finished loading
-    printf("begin sound bank read\n");
+    DPRINTF("begin sound bank read\n");
     if (readUsb(MapLoaderState.SoundBuffer) > 0) {
       MapLoaderState.Loaded |= MAPLOADED_SOUND;
       return 1;
@@ -940,7 +940,7 @@ u32 hookedCheck(int a0)
 			// MapLoaderState.LoadingFd = -1;
 			// return cdvdSync(a0);
 
-      printf("finished reading %d bytes from USB\n", r);
+      DPRINTF("finished reading %d bytes from USB\n", r);
 			rpcUSBclose(MapLoaderState.LoadingFd);
 			rpcUSBSync(0, NULL, NULL);
 			MapLoaderState.LoadingFd = -1;
@@ -1053,7 +1053,7 @@ void hookedSoundCoreBankLoad(int loc, int offset, SndCompleteProc cb, u64 user_d
     // sound wad finished, pass to Cb
     if (cb && (MapLoaderState.Loaded & MAPLOADED_SOUND_SENT) == 0 && (MapLoaderState.Loaded & MAPLOADED_SOUND)) {
       int r = soundLoadBankFromEE(MapLoaderState.SoundBuffer);
-      printf("load sound bank from EE %08X to IOP %08X\n", MapLoaderState.SoundBuffer, r);
+      DPRINTF("load sound bank from EE %08X to IOP %08X\n", MapLoaderState.SoundBuffer, r);
       MapLoaderState.SoundLoadCb(r, MapLoaderState.SoundLoadUserData);
       MapLoaderState.SoundLoadCb = NULL; // reset
       MapLoaderState.Loaded |= MAPLOADED_SOUND_SENT;
