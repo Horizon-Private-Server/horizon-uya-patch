@@ -788,7 +788,7 @@ int soundLoadBankFromEE(void* buf)
     LOAD_SOUND_LOADPARAMS[0] = buf;
     LOAD_SOUND_LOADRETURNVALUE[0] = -1;
 
-    SyncDCache(LOAD_SOUND_LOADRETURNVALUE, LOAD_SOUND_LOADRETURNVALUE + 1);
+    InvalidDCache(LOAD_SOUND_LOADRETURNVALUE, LOAD_SOUND_LOADRETURNVALUE + 1);
     while ((r = SifCheckStatRpc(LOAD_SOUND_RPC_CLIENTDATA)) != 0) {
       soundFlushSoundCommands();
       FlushCache(0);
@@ -962,7 +962,7 @@ u32 hookedCheck(int a0)
       }
 
       // finished loading level +/ sound wads
-			return 0;
+			return cdvdSync(a0);
 		}
 	}
 
