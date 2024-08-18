@@ -784,10 +784,10 @@ int soundLoadBankFromEE(void* buf)
   *LOAD_SOUND_LOCALLOADERROR = 0;
   if (*LOAD_SOUND_LOADBUSY == 0) {
 
-    // load from
-    LOAD_SOUND_LOADPARAMS[0] = buf;
     LOAD_SOUND_LOADRETURNVALUE[0] = -1;
+    LOAD_SOUND_LOADPARAMS[0] = buf;
 
+    // load from
     InvalidDCache(LOAD_SOUND_LOADRETURNVALUE, LOAD_SOUND_LOADRETURNVALUE + 1);
     while ((r = SifCheckStatRpc(LOAD_SOUND_RPC_CLIENTDATA)) != 0) {
       soundFlushSoundCommands();
@@ -795,6 +795,7 @@ int soundLoadBankFromEE(void* buf)
     }
 
     // call RPC
+    *LOAD_SOUND_LOADBUSY = 1;
     r = SifCallRpc(LOAD_SOUND_RPC_CLIENTDATA, 0x57, 1, LOAD_SOUND_LOADPARAMS, 4, LOAD_SOUND_LOADRETURNVALUE, 4, 0, 0);
     if (r < 0) {
       // RPC call failed
@@ -875,6 +876,7 @@ int beginLoadingSoundWad(void* dest)
   int fSize = openUsb(fSound);
   if (fSize > 0) {
     MapLoaderState.SoundBuffer = dest;
+
     DPRINTF("level: %08X\nsound: %08X\n", MapLoaderState.LevelBuffer, MapLoaderState.SoundBuffer);
 
     // read sound bank in background
@@ -906,7 +908,7 @@ void hookedLoad(void * dest, u32 sectorStart, u32 sectorSize)
 	{
     // load sound wad first
     // Generate sound filename
-    if ((MapLoaderState.Loaded * MAPLOADED_SOUND) == 0) {
+    if ((MapLoaderState.Loaded & MAPLOADED_SOUND) == 0) {
       sprintf(membuffer, fSound, getMapPathPrefix(), MapLoaderState.MapFileName);
       int filelen = readFileLength(membuffer);
       if (filelen > 0)
@@ -1051,13 +1053,19 @@ void hookedSoundCoreBankLoad(int loc, int offset, SndCompleteProc cb, u64 user_d
 	{
     MapLoaderState.SoundLoadCb = cb;
     MapLoaderState.SoundLoadUserData = user_data;
+
+    *(u64*)0x00240d58 = user_data;
+    *(u32*)0x00240D50 = cb;
   
     // sound wad finished, pass to Cb
     if (cb && (MapLoaderState.Loaded & MAPLOADED_SOUND_SENT) == 0 && (MapLoaderState.Loaded & MAPLOADED_SOUND)) {
+
       int r = soundLoadBankFromEE(MapLoaderState.SoundBuffer);
       DPRINTF("load sound bank from EE %08X to IOP %08X\n", MapLoaderState.SoundBuffer, r);
-      MapLoaderState.SoundLoadCb(r, MapLoaderState.SoundLoadUserData);
-      MapLoaderState.SoundLoadCb = NULL; // reset
+      if (MapLoaderState.SoundLoadCb) {
+        MapLoaderState.SoundLoadCb(r, MapLoaderState.SoundLoadUserData);
+        MapLoaderState.SoundLoadCb = NULL; // reset
+      }
       MapLoaderState.Loaded |= MAPLOADED_SOUND_SENT;
     }
 
