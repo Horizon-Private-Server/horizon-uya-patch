@@ -906,10 +906,12 @@ void hookedLoad(void * dest, u32 sectorStart, u32 sectorSize)
 	{
     // load sound wad first
     // Generate sound filename
-    sprintf(membuffer, fSound, getMapPathPrefix(), MapLoaderState.MapFileName);
-    int filelen = readFileLength(membuffer);
-    if (filelen > 0)
-      if (beginLoadingSoundWad(dest)) return;
+    if ((MapLoaderState.Loaded * MAPLOADED_SOUND) == 0) {
+      sprintf(membuffer, fSound, getMapPathPrefix(), MapLoaderState.MapFileName);
+      int filelen = readFileLength(membuffer);
+      if (filelen > 0)
+        if (beginLoadingSoundWad(dest)) return;
+    }
 
     // if we've reached here, then the sound wad doesn't exist, so load the level wad
     if (beginLoadingLevelWad(LOAD_LEVEL_PART_ID)) return;
