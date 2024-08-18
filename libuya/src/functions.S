@@ -330,6 +330,8 @@ FUNCTION(_SifLoadModuleBuffer, 0x0012c2c0)
 FUNCTION(SifWriteBackDCache, 0x001293e0)
 FUNCTION(SifSetDma, 0x00126620)
 FUNCTION(SifDmaStat, 0x00126600)
+FUNCTION(FlushCache, 0x001264e0)
+FUNCTION(InvalidDCache, 0x00126b28)
 
 #--------------------------------------------------------
 #------------------------ COLOR -------------------------

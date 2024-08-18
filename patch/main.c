@@ -2440,6 +2440,16 @@ int main(void)
 	// Call this first
 	uyaPreUpdate();
 
+  //
+  #if DSCRPRINT
+  int i;
+  float y = 10;
+  for (i = 0; i < MAX_DEBUG_SCR_PRINT_LINES; ++i) {
+    gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0);
+    y += 20;
+  }
+  #endif
+
 	// update patch pointers
 	PATCH_POINTERS = &patchPointers;
 
