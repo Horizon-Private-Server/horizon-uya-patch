@@ -1803,6 +1803,15 @@ void runCampaignMusic(void)
 		short CurrentTrack = 0;
 		short NextTrack = 0;
 		music_Playing* music = musicGetTrackInfo();
+		// If CurrentTrack is ger than the default Multiplayer tracks
+		// and if CurrentTrack does not equal -1
+		// and if the track duration is below 0x3000
+		// and if Status2 is 2, or Current Playing
+		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack != -1 && (music->remain <= 0x3000) && music->queuelen == QUEUELEN_PLAYING) {
+			// This technically cues track 1 (the shortest track) with no sound to play.
+			// Doing this lets the current playing track to fade out.
+			musicTransitionTrack(0,0,0,0);
+		}
 		// double check if min/max info are correct
 		if (config.enableSingleplayerMusic) {
 			if (*(int*)musicTrackRangeMax() != (TotalTracks - 4) || *(int*)musicTrackRangeMin() != 4) {
@@ -1838,15 +1847,6 @@ void runCampaignMusic(void)
 		else if (NextTrack != music->track) {
 			CurrentTrack = NextTrack;
 			NextTrack = music->track;
-		}
-		// If CurrentTrack is ger than the default Multiplayer tracks
-		// and if CurrentTrack does not equal -1
-		// and if the track duration is below 0x3000
-		// and if Status2 is 2, or Current Playing
-		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack != -1 && (music->remain <= 0x3000) && music->queuelen == QUEUELEN_PLAYING) {
-			// This technically cues track 1 (the shortest track) with no sound to play.
-			// Doing this lets the current playing track to fade out.
-			musicTransitionTrack(0,0,0,0);
 		}
 	} else if (isInMenus() && FinishedConvertingTracks) {
 		FinishedConvertingTracks = 0;
@@ -1985,8 +1985,10 @@ int voteToEndNumberOfVotesRequired(void)
 		if (gs->PlayerClients[i] >= 0) playerCount += 1;
 	}
 
-	if (gameData->NumTeams > 2) return playerCount;
-	else return (int)(playerCount * 0.66) + 1;
+	// if (gameData->NumTeams > 2)
+	// 	return playerCount;
+	// else
+	return (int)(playerCount * 0.60);
 }
 
 /*

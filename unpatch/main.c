@@ -59,6 +59,7 @@ const int patches[][3] = {
 #endif
 	// patch (PAL and NTSC are same)
 	{ -1, 0x00153248, 0x03E00008 }, // GET_MEDIUS_APP_HANDLER_HOOK
+	{ -1, 0x0013cae0, 0x0c0474e0 }, // ScePadRead_memcpy Hook
 };
 
 const int clears[][2] = {
@@ -179,7 +180,7 @@ int main (void)
 	netInstallCustomMsgHook(1);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
 
-	if (state == 0)
+	if (state == 0 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
 	{
 		// Hook menu loop
 		#ifdef UYA_PAL
@@ -191,8 +192,8 @@ int main (void)
 		#endif
 
 		// disable pad on online main menu
-		if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
-			padDisableInput();
+		// if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
+		padDisableInput();
 	}
 
 	return 0;
