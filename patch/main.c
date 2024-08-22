@@ -1168,6 +1168,11 @@ void patchDeathBarrierBug(void)
 {
 	int i;
 	Player *player = playerGetFromSlot(0);
+	GameSettings *gameSettings = gameGetSettings();
+	// if Map doesn't match Metroplis, exit.
+	if (gameSettings->GameLevel != MAP_ID_METROPOLIS)
+		return;
+
 	// if player is local
 	if (player && player->isLocal) {
 		float deathbarrier = gameGetDeathHeight();
@@ -1684,6 +1689,8 @@ void runCampaignMusic(void)
 	static int TotalTracks = 0;
 	static int AddedTracks = 0;
 	int SetRangeMaxData = 0;
+	static short CurrentTrack = 0;
+	static short NextTrack = 0;
 	// We go by each wad because we have to have Multiplayer one first.
 	static short wadArray[][2] = {
 		// wad, song per wad
@@ -1800,18 +1807,8 @@ void runCampaignMusic(void)
 
 	// If in game
 	if (isInGame()) {
-		short CurrentTrack = 0;
-		short NextTrack = 0;
 		music_Playing* music = musicGetTrackInfo();
-		// If CurrentTrack is ger than the default Multiplayer tracks
-		// and if CurrentTrack does not equal -1
-		// and if the track duration is below 0x3000
-		// and if Status2 is 2, or Current Playing
-		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack != -1 && (music->remain <= 0x3000) && music->queuelen == QUEUELEN_PLAYING) {
-			// This technically cues track 1 (the shortest track) with no sound to play.
-			// Doing this lets the current playing track to fade out.
-			musicTransitionTrack(0,0,0,0);
-		}
+		// printf("\nafter trans");
 		// double check if min/max info are correct
 		if (config.enableSingleplayerMusic) {
 			if (*(int*)musicTrackRangeMax() != (TotalTracks - 4) || *(int*)musicTrackRangeMin() != 4) {
@@ -1848,11 +1845,23 @@ void runCampaignMusic(void)
 			CurrentTrack = NextTrack;
 			NextTrack = music->track;
 		}
+		// If CurrentTrack is ger than the default Multiplayer tracks
+		// and if CurrentTrack does not equal -1
+		// and if the track duration is below 0x3000
+		// and if Status2 is 2, or Current Playing
+		// printf("\nbefore trans");
+		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack != -1 && (music->remain <= 0x3000) && music->queuelen == QUEUELEN_PLAYING) {
+			// This technically cues track 1 (the shortest track) with no sound to play.
+			// Doing this lets the current playing track to fade out.
+			musicTransitionTrack(0,0,0,0);
+		}
 	} else if (isInMenus() && FinishedConvertingTracks) {
 		FinishedConvertingTracks = 0;
 		SetupMusic = 0;
 		TotalTracks = 0;
 		AddedTracks = 0;
+		CurrentTrack = 0;
+		NextTrack = 0;
 	}
 }
 
