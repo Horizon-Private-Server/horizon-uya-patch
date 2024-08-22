@@ -1,3 +1,8 @@
+#ifndef _LIBUYA_MUSIC_H_
+#define _LIBUYA_MISOC_H_
+
+#include <tamtypes.h>
+#include "common.h"
 #include "moby.h"
 
 enum TrackNumbers
@@ -163,4 +168,6 @@ int musicTrackRangeMax(void);
 
 void musicPlayTrack(int track, int flags, int volume);
 void musicStopTrack(void);
-int musicTransitionTrack(int track, int transition, int flags, int volume);
+void musicTransitionTrack(int track, int transition, int flags, int volume);
+
+#endif // _LIBUYA_MUSIC_H_

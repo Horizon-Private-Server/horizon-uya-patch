@@ -13,6 +13,7 @@
 #define CURRENT_TRACK               ((music_Playing*)0x00225824)
 #endif
 
+
 VariableAddress_t vaPlayTrackFunc = {
 #if UYA_PAL
 	.Lobby = 0x005c1a60,
