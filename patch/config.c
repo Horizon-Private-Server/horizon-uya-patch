@@ -756,7 +756,7 @@ void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element)
 // 
 void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
-  preset = 1;
+  preset = 4;
   memset(&gameConfig, 0, sizeof(gameConfig));
   SelectedCustomMapId = 0;
 
