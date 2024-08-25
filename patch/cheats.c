@@ -26,6 +26,7 @@
 #include <libuya/moby.h>
 #include <libuya/gameplay.h>
 #include <libuya/weapon.h>
+#include <libuya/map.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -1117,7 +1118,6 @@ void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay)
 				GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
 				u32 data = PVarDataPtr + PVarOffset->Offset;
 				*(u32*)(data + 0x10) = 0x7f7fffff;
-				*(u32*)(data + 0x14) = 0x7f7fffff;
 			}
 		}
 	}
@@ -1128,27 +1128,29 @@ void destructableBridges(void)
 	if (patched.gameConfig.grDestructableBridges)
 		return;
 
-	Moby* moby = mobyListGetStart();
-	Moby* mobyEnd = mobyListGetEnd();
-	while (moby < mobyEnd) {
-		if (moby->oClass == MOBY_ID_KORGON_BRIDGE_PIECE) {
-				// Copy Extended Bridge Locatoin to Retracted Bridge Location
-				// vector_copy(data + 0x90, data + 0xa0);
-				void * data = moby->pVar;
-				vector_copy(data + 0x90, data + 0xa0);
-				// Copy Extended Bridge Location to moby
-				vector_copy(moby->position, data + 0xa0);
+	if (gameGetSettings()->GameLevel == MAP_ID_KORGON) {
+		Moby* moby = mobyListGetStart();
+		Moby* mobyEnd = mobyListGetEnd();
+		while (moby < mobyEnd) {
+			if (moby->oClass == MOBY_ID_KORGON_BRIDGE_PIECE) {
+					// Copy Extended Bridge Locatoin to Retracted Bridge Location
+					void * data = moby->pVar;
+					vector_copy(data + 0x90, data + 0xa0);
+					// Copy Extended Bridge Location to moby
+					vector_copy(moby->position, data + 0xa0);
 
-				// Bolt Crank Code
-				// grab associated bolt crank from bridge peice
-				int boltCrankInstanceNum = *(int*)(data + 0x8c);
-				Moby* list = mobyListGetStart();
-				// move bolt crank y position down so player can't use it.
-				Moby* boltCrank = list + boltCrankInstanceNum;
-				mobyDestroy(boltCrank);
-				// *(float*)(boltCrank + 0x18) -= 1.5f;
+					// Bolt Crank Code
+					// grab associated bolt crank from bridge peice
+					int boltCrankInstanceNum = *(int*)(data + 0x8c);
+					Moby* list = mobyListGetStart();
+					// delete related bolt crank
+					Moby* boltCrank = list + boltCrankInstanceNum;
+					if (boltCrank->oClass == MOBY_ID_BOLT_CRANK)
+						mobyDestroy(boltCrank);
+					// *(float*)(boltCrank + 0x18) -= 1.5f;
+			}
+			++moby;
 		}
-		++moby;
 	}
 	patched.gameConfig.grDestructableBridges = 1;
 }
