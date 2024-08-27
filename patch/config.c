@@ -400,8 +400,8 @@ MenuElem_ListData_t botNumToInvite = {
 MenuElem_ListData_t botMode = {
     .value = &botConfig.mode,
     .stateHandler = NULL,
-    .count = 3,
-    .items = { "Dynamic", "Training Idle", "Training Passive" }
+    .count = 4,
+    .items = { "Dynamic", "Training Idle", "Training Passive", "God" }
 };
 
 MenuElem_ListData_t botDifficulty = {
