@@ -76,6 +76,8 @@ struct tDR_Vars {
 	/* 180 */ VECTOR prevKnownSyncedPos;
 };
 
+
+
 struct VehicleInterface {
 	/*   0 */ int iVehicleType;
 	/*   4 */ int bArialVehicle;
