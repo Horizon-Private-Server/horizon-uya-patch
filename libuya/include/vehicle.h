@@ -106,14 +106,14 @@ struct VehicleInterface {
 	/*  a0 */ /* function */ void** UpdatePassenger;
 	/*  a4 */ /* function */ void** UpdateRemoteVehicle;
 	/*  a8 */ /* function */ void** UpdateVisuals;
-	/*  ac */ /* function */ void** GetExitGroundHeight;
-	/*  b0 */ /* function */ void** CheckSpecialEnterRules;
-	/*  b4 */ /* function */ void** CheckSpecialExitRules;
-	/*  b8 */ /* function */ void** GetJustExitedPlayer;
-	/*  bc */ /* function */ void** SetAutoSpawn;
-	/*  c0 */ /* function */ void** GetCamera29Pitch;
-	/*  c4 */ /* function */ void** HandleSpecialDamageRules;
-	/*  c8 */ /* function */ void** IsPlayerLockedIn;
+	/*  ac */ /* function - float */ void** GetExitGroundHeight;
+	/*  b0 */ /* function - bool */ void** CheckSpecialEnterRules;
+	/*  b4 */ /* function - bool */ void** CheckSpecialExitRules;
+	/*  b8 */ /* function - int  */ void** GetJustExitedPlayer;
+	/*  bc */ /* function - void */ void** SetAutoSpawn;
+	/*  c0 */ /* function - float */ void** GetCamera29Pitch;
+	/*  c4 */ /* function - float */ void** HandleSpecialDamageRules;
+	/*  c8 */ /* function - bool */ void** IsPlayerLockedIn;
 };
 
 typedef struct VehicleBase {
