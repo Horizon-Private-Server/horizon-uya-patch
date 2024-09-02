@@ -323,7 +323,9 @@ typedef struct HeroTimers { // 0x80
 	/*       */ char unk_311; // Freezes if I change it.
 	/*       */ char unk_312; // Freezes if I change it.
 	/* 0x313 */ char postHitInvinc; // Freezes if I change it.
-	/*       */ char unk_314[0x8];
+	/*       */ char unk_314[0x2];
+	/* 0x316 */ char shield;
+	/* 0x317 */ char unk_317[0x5];
 	/* 0x31c */ char resurrectWait;
 	/* 0x31d */ char NotUsed;
 	/* 0x31e */ short int unkTimer_31e;

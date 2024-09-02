@@ -22,7 +22,8 @@ typedef enum TEAM_IDS {
     TEAM_YELLOW,
     TEAM_PURPLE,
     TEAM_AQUA,
-    TEAM_PINK
+    TEAM_PINK,
+    TEAM_WHITE
 } TEAM_IDS;
 
 typedef enum SKINS {
@@ -49,5 +50,7 @@ typedef enum SKINS {
     SKIN_CONSTRUCTOBOT,
     SKIN_DAN
 } SKINS;
+
+const u32 TEAM_COLORS[9];
 
 #endif // _LIBUYA_TEAM_H_

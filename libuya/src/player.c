@@ -3,6 +3,7 @@
 #include "interop.h"
 #include "game.h"
 #include "spawnpoint.h"
+#include "team.h"
 
 void playerRespawn(Player * player);
 void playerStripWeapons(Player * player);
@@ -210,9 +211,9 @@ void playerSetTeam(Player * player, int teamId)
         return;
 
     player->mpTeam = teamId;
-    // player->pMoby->glowRGBA = TEAM_COLORS[teamId];
-    player->pMoby->modeBits2 = player->pMoby->modeBits2 & 0x8f | 0x80 | (teamId << 4);
-    // player->pMoby->triggers = 0;
+    // player->pMoby->primaryColor = TEAM_COLORS[teamId];
+    player->pMoby->color = player->pMoby->color & 0x8f | 0x80 | (teamId << 4); // 0x80 + (0x10 * teamId);
+    player->pMoby->triggers = 0;
 }
 
 //--------------------------------------------------------------------------------

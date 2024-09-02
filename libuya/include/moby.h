@@ -342,7 +342,8 @@ typedef struct Moby
     /*  6f */ char shadowIndex;
     /*  70 */ float shadowPlane;
     /*  74 */ float shadowRange;
-	/*     */ char unk_78[0x8];
+	/*     */ char unk_78[0x6];
+	/*  7e */ short color;
 	/*  80 */ VECTOR lSphere;
 	/*  90 */ struct GuberMoby * guberMoby;
 	/*     */ char unk_94[0x14];
@@ -352,9 +353,7 @@ typedef struct Moby
 	/*     */ char unk_ac[0xc];
 	/*  b8 */ struct Moby * pParent;
 	/*  bc */ char unk_bc[0x4];
-    /*  c0 */ VECTOR m0_03;
-    /*  d0 */ VECTOR m1_03;
-    /*  e0 */ VECTOR m2_03;
+    /*  c0 */ mtx3 rMtx;
     /*  f0 */ VECTOR rotation;
 } Moby;
 
