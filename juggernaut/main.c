@@ -325,6 +325,7 @@ void initialize(void)
 	// hook into player kill event
 	HOOK_JAL(GetAddress(&vaOnPlayerKill_Hook), &onPlayerKill);
 
+	printf("Juggernaut Initilized!\n");
 	Initialized = 1;
 }
 

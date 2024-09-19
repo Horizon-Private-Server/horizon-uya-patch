@@ -275,10 +275,7 @@ MenuElem_ListData_t dataCustomModes = {
     CUSTOM_MODE_COUNT,
     {
       "None",
-#if DEBUG
-      "Infected",
       "Juggernaught"
-#endif
     }
 };
 
@@ -287,10 +284,7 @@ MenuElem_ListData_t dataCustomModes = {
 // if the entry is NULL then the full name will be used
 const char* CustomModeShortNames[] = {
   [CUSTOM_MODE_NONE] NULL,
-#if DEBUG
-  [CUSTOM_MODE_INFECTED] "Infected",
-  [CUSTOM_MODE_JUGGERNAUGHT] NULL,
-#endif
+  [CUSTOM_MODE_JUGGERNAUT] NULL,
 };
 
 MenuElem_ListData_t dataWeaponPacks = {
@@ -621,13 +615,9 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
   GameSettings* gs = gameGetSettings();
   char v = *value;
 
-  if (gs)
-  {
-    #if DEBUG
-    switch (v)
-    {
-      case CUSTOM_MODE_INFECTED:
-      case CUSTOM_MODE_JUGGERNAUGHT:
+  if (gs) {
+    switch (v) {
+      case CUSTOM_MODE_JUGGERNAUT:
       {
         // only allow deathmatch
         if (gs->GameType == GAMERULE_DM)
@@ -638,9 +628,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
         return 0;
       }
     }
-    #endif
   }
-
   return 1;
 }
 

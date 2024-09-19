@@ -105,11 +105,7 @@ enum CUSTOM_MAP_ID {
 
 enum CUSTOM_MODE_ID {
   CUSTOM_MODE_NONE = 0,
-#if DEBUG
-  CUSTOM_MODE_INFECTED,
-  CUSTOM_MODE_JUGGERNAUGHT,
-#endif
-  // CUSTOM_MODE_EXAMPLE = 1,
+  CUSTOM_MODE_JUGGERNAUT = 1,
   
   // always at the end to indicate how many items there are
   CUSTOM_MODE_COUNT
