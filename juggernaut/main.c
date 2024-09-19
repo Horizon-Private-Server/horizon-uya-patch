@@ -357,7 +357,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 		initialize();
 
 	if (!gameHasEnded()) {
-
+		if (WhoIsJuggernaut >= 0) {
 		// Iterate through players
 		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 			if (!players[i])
@@ -373,11 +373,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 			// else
 			// 	WinningTeam = players[i]->mpTeam;
 		}
-	}
-
-    // Give random player Juggernaut at start of game
-	if (!gameHasEnded()) {
-		if (WhoIsJuggernaut > 0) {
+		} else {
 			// Juggernaut first player after 3 seconds
 			if ((gameGetTime() - gameSettings->GameStartTime) > (3 * TIME_SECOND)) {
 				Player * p = getRandomPlayer(gameSettings->GameStartTime);
@@ -403,7 +399,7 @@ void setLobbyGameOptions(void)
 		
 	// apply options
 	gameSettings->GameType = GAMERULE_DM;
-	gameOptions->GameFlags.MultiplayerGameFlags.Teams = 0;
+	gameOptions->GameFlags.MultiplayerGameFlags.Teams = 1;
 	gameOptions->GameFlags.MultiplayerGameFlags.Nodes = 0;
 	gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = 0;
 	gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth = 0;
