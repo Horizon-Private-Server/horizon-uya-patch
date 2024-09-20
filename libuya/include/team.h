@@ -22,8 +22,7 @@ typedef enum TEAM_IDS {
     TEAM_YELLOW,
     TEAM_PURPLE,
     TEAM_AQUA,
-    TEAM_PINK,
-    TEAM_WHITE
+    TEAM_PINK
 } TEAM_IDS;
 
 typedef enum SKINS {
