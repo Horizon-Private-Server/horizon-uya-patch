@@ -275,7 +275,7 @@ MenuElem_ListData_t dataCustomModes = {
     CUSTOM_MODE_COUNT,
     {
       "None",
-      "Juggernaught"
+      "Juggernaut"
     }
 };
 
