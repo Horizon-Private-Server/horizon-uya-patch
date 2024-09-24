@@ -1450,6 +1450,10 @@ void customFlagLogic(Moby* flagMoby)
 	GameOptions* gameOptions = gameGetOptions();
 	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
 
+	// if flag moby or pvars don't exist, stop.
+	if (!flagMoby || !pvars)
+		return;
+
     // if flag state is not 1 (being picked up) and if flag is returning to base
     if (flagMoby->state != 1 || flagIsReturning(flagMoby))
         return;
