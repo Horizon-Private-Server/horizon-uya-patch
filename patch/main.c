@@ -1374,7 +1374,7 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 		return;
 
 	// only allow actions by living players
-	if (playerIsDead(player) || playerGetHealth(player) <= 0)
+	if (playerIsDead(player))
 		return;
 
 	// Handle pickup/return
@@ -1400,7 +1400,7 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
  */
 void flagRequestPickup(Moby* flagMoby, int pIdx)
 {
-	static int requestCounters[GAME_MAX_PLAYERS] = {0,0,0,0,0,0,0,0,0,0};
+	static int requestCounters[GAME_MAX_PLAYERS] = {0,0,0,0,0,0,0,0};
 	Player** players = playerGetAll();
 	Player* player = players[pIdx];
 	if (!player || !flagMoby)
@@ -1448,80 +1448,49 @@ void customFlagLogic(Moby* flagMoby)
 	Player** players = playerGetAll();
 	int gameTime = gameGetTime();
 	GameOptions* gameOptions = gameGetOptions();
-
-	// if not in game
-	if (!isInGame())
-		return;
-
-	// if flagMoby doesn't exist
-	if (!flagMoby)
-		return;
-
-	// if flag pvars don't exist
 	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
-	if (!pvars)
-		return;
 
-	// if flag state doesn't equal 1
-	if (flagMoby->state != 1)
-		return;
+    // if flag state is not 1 (being picked up) and if flag is returning to base
+    if (flagMoby->state != 1 || flagIsReturning(flagMoby))
+        return;
 
-	// if flag is returning
-	if (flagIsReturning(flagMoby))
-		return;
-
-	// if flag is being picked up
-	if (flagIsBeingPickedUp(flagMoby))
-		return;
-
-	// return to base if flag has been idle for 40 seconds
-	if ((pvars->TimeFlagDropped + (TIME_SECOND * 40)) < gameTime && !flagIsAtBase(flagMoby)) {
-		flagReturnToBase(flagMoby, 0, 0xFF);
+    // flag is being picked up
+    if (flagIsBeingPickedUp(flagMoby))
+        return;
+    
+	// return to base if flag has been idle for 40 seconds and not already at base.
+	if ((pvars->TimeFlagDropped + (TIME_SECOND * 40)) < gameTime && !flagIsAtBase(flagMoby) && !flagIsAtBase(flagMoby)) {
+		flagReturnToBase(flagMoby, 0, 0xff);
 		return;
 	}
-	
-	// if flag didn't land on safe ground, and after .5s a player died
-	static int flagIgnorePlayer = 0;
-	if(gameConfig.grFlagHotspots) {
-		if (!flagIsOnSafeGround(flagMoby) && !flagIsAtBase(flagMoby) && (flagIgnorePlayer + 300) < gameTime) {
-			flagReturnToBase(flagMoby, 0, 0xff);
-			return;
-		}
-	}
 
-	// wait 1.5 seconds for last carrier to be able to pick up again
-	if ((pvars->TimeFlagDropped + 1500) > gameTime)
-		return;
+    if ((pvars->TimeFlagDropped + (TIME_SECOND * 1.5)) > gameTime)
+        return;
 
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		Player* player = players[i];
-		if (!player || !player->isLocal)
-			continue;
+    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+        Player* player = players[i];
+        if (!player)
+            continue;
 
-		// only allow actions by living players, and non-chargebooting players
-		if ((playerIsDead(player) || playerGetHealth(player) <= 0) || (player->timers.IsChargebooting == 1 && (playerPadGetButton(player, PAD_R2) > 0) && player->timers.state > 55)){
-			// if flag holder died, update flagIgnorePlayer time.
-			if (pvars->LastCarrierIdx == player->mpIndex)
-				flagIgnorePlayer = gameTime;
+        // Don't allow input from players whom are dead
+        if (playerDeobfuscate(&player->stateType, 0, 0) == PLAYER_TYPE_DEATH)
+            return;
 
-			continue;
-		}
+        // skip player if they've only been alive for < 180ms
+        if (player->timers.timeAlive < 180)
+            return;
 
-		// skip player if they've only been alive for < 3 seconds
-		if (player->timers.timeAlive <= 180)
-			continue;
-
-		// skip player if in vehicle
-		if (player->vehicle && playerDeobfuscate(&player->state, 0, 0) == PLAYER_STATE_VEHICLE)
-			continue;
-
-		// skip if player state is in vehicle and critterMode is on
+        // skip if player state is in vehicle and critterMode is on
 		if (player->camera && player->camera->camHeroData.critterMode)
 			continue;
 
-		// skip if player is on teleport pad
+    	// skip player if in vehicle
+		if (player->vehicle && playerDeobfuscate(&player->state, 0, 0) == PLAYER_STATE_VEHICLE)
+			continue;
+
+        // skip if player is on teleport pad
 		// AQuATOS BUG: player->ground.pMoby points to wrong area
-		if (player->ground.pMoby && player->ground.pMoby->oClass == MOBY_ID_TELEPORT_PAD)
+		if (player->ground.pMoby || player->ground.pMoby->oClass == MOBY_ID_TELEPORT_PAD)
 			continue;
 
 		// player must be within 2 units of flag
@@ -1533,7 +1502,7 @@ void customFlagLogic(Moby* flagMoby)
 		// player is on different team than flag and player isn't already holding flag
 		if (player->mpTeam != pvars->Team) {
 			if (!player->flagMoby) {
-				flagRequestPickup(flagMoby, i);
+				flagRequestPickup(flagMoby, player->mpIndex);
 				return;
 			}
 		} else {
@@ -1541,7 +1510,7 @@ void customFlagLogic(Moby* flagMoby)
 			vector_subtract(t, pvars->BasePosition, flagMoby->position);
 			float sqrDistanceToBase = vector_sqrmag(t);
 			if (sqrDistanceToBase > 0.1) {
-				flagRequestPickup(flagMoby, i);
+				flagRequestPickup(flagMoby, player->mpIndex);
 				return;
 			}
 		}
@@ -1606,7 +1575,7 @@ void patchCTFFlag(void)
 	Player** players = playerGetAll();
 
 
-	static u32 flagFunc = 0;
+	u32 flagFunc = 0;
 	if (!patched.ctfLogic) {
 		netInstallCustomMsgHandler(CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, &onRemoteClientRequestPickUpFlag);
 		if (!flagFunc)
@@ -2548,7 +2517,8 @@ int main(void)
 		patchDeathBarrierBug();
 
 		// Patch CTF Flag Logic with our own.
-		// patchCTFFlag();
+		if (gameConfig.grFlagHotspots)
+			patchCTFFlag();
 
 		// Patch Level of Detail
 		patchLevelOfDetail();

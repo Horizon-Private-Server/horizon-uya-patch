@@ -105,6 +105,7 @@ void menuStateEnabledInMenusHandler(TabElem_t* tab, MenuElem_t* element, int* st
 void menuStateScavengerHuntEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuLabelStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstallCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_InstalledCustomMaps(TabElem_t* tab, MenuElem_t* element, int* state);
@@ -497,6 +498,9 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly, "Only allow the use of each players Loadout weapons, regardless of what weapons are enabled." },
   // { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize, "Changes the size of the player model." },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor, "You only have one life!  Once you die, you can't respawn!" },
+
+  { "Experimental CTF Rules", labelActionHandler, menuLabelStateHandler_CTF, (void*)LABELTYPE_HEADER },
+  { "CTF: Custom Flag Logic", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Replaces original CTF code for hopefully less lag." },
 };
 
 // Game Settings (not in staging)
@@ -715,6 +719,16 @@ void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* stat
 }
 
 void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+
+  if (!gs || gs->GameType == GAMERULE_DM)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuLabelStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
 
