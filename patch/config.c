@@ -2017,8 +2017,8 @@ void configMenuDisable(void)
         gameConfig.grNoCooldown = 1;
         gameConfig.grVampire = 4; // 100%
         gameConfig.grDisableWeaponPacks = 1;
-        // gameConfig.grFluxShotsAlwaysHit = 1;
-        // gameConfig.grFluxNikingDisabled = 1;
+        gameConfig.grFluxShotsAlwaysHit = 1; // Flux always hits
+        gameConfig.grFluxNikingDisabled = 1; // Niking disabled
         break;
       }
       case 4: // Bot
