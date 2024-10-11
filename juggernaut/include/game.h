@@ -22,8 +22,10 @@ struct JuggernautState {
 	int GameOver;
 	int WinningTeam;
 	int IsHost;
-	int currentJuggernaut;
-	int newJuggernaut;
+	short int currentJuggernaut;
+	short int currentJuggernautTeam;
+	short int newJuggernaut;
+	short int newJuggernautTeam;
 	struct PlayerGameData PlayerData[GAME_MAX_PLAYERS];
 };
 

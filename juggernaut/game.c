@@ -33,14 +33,18 @@ void giveJuggernaut(Player * player)
 		return;
 
     juggy.newJuggernaut = player->mpIndex;
+	juggy.newJuggernautTeam = player->mpTeam;
 	char buf[64];
 	sprintf(buf, JuggernautPopup, gameSettings->PlayerNames[juggy.newJuggernaut]);
 	uiShowPopup(player, buf, 3);
 }
 
-void juggernautLogic(Player *player)
+void juggernautLogic(void)
 {
-	// Upgrade Weapons to v2
+	Player * player = playerGetFromSlot(juggy.currentJuggernaut);
+	if (!player)
+		return;
+
 	int j;
 	for(j = 1; j < 10; ++j) {
 		playerGiveWeaponUpgrade(player, j);
@@ -50,9 +54,6 @@ void juggernautLogic(Player *player)
 //--------------------------------------------------------------------------
 void processPlayer(Player * player)
 {
-	if (!player)
-		return;
-
 	GameData * gameData = gameGetData();
 	GameSettings * gameSettings = gameGetSettings();
 	// DoCheats(player);
@@ -61,19 +62,12 @@ void processPlayer(Player * player)
 	
 		// Check if player has shield, if not, enable.
 		if (!playerHasShield(player) && !playerIsDead(player) && !player->pSheepMoby && !player->vehicle) {
-			// Updates shield color to match team color.
-			ShieldVars * shield = mobyGetShieldVars();
-			u32 color = TEAM_COLORS[player->mpTeam];
-			shield->mainColor = color;
-			shield->lightningColor = 0x20000000 | color;
-		
 			// if Local, run shield trigger, if not, run playerGiveShield function
 			if (player->isLocal)
 				player->shieldTrigger = 1;
 			else
 				playerGiveShield(player);
 		}
-
 
 		// if current juggy matches new juggy, don't run juggernaut logic again.
 		if (juggy.currentJuggernaut == juggy.newJuggernaut) {
@@ -86,11 +80,22 @@ void processPlayer(Player * player)
 				}
 			}
 		}
-
 		DPRINTF("Running juggy logic!\n");
-		juggernautLogic(player);
-		// set new juggernaut as current
+	}
+
+	juggernautLogic();
+
+	// Proccess Player: Is and isn't juggy
+	// Updates shield color to match team color.
+	ShieldVars * shield = mobyGetShieldVars();
+	u32 color = TEAM_COLORS[juggy.currentJuggernautTeam];
+	shield->mainColor = 0x20000000 | color;
+	shield->lightningColor = 0x20000000 | color;
+
+	// set new juggernaut as current
+	if (juggy.newJuggernaut > -1) {
 		juggy.currentJuggernaut = juggy.newJuggernaut;
+		juggy.currentJuggernautTeam = juggy.newJuggernautTeam;
 	}
 }
 
@@ -138,15 +143,12 @@ void gameTick(void)
 	}
 
 	 // If there is a jugggernaut, proccess players
-	else {
+	else if (juggy.newJuggernaut > -1) {
 		Player ** players = playerGetAll();
 		// Iterate through players
 		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-			if (!players[i])
-				continue;
-			
-			// Process
-			processPlayer(players[i]);
+			if (players[i])
+				processPlayer(players[i]);
 		}
 	}
 }
@@ -200,6 +202,8 @@ void initialize(PatchGameConfig_t* gameConfig)
 	// Set current and new juggernaut to -1
 	juggy.newJuggernaut = -1;
 	juggy.currentJuggernaut = -1;
+	juggy.newJuggernautTeam = -1;
+	juggy.currentJuggernautTeam = -1;
 
     // patch WhoHitMe so non-juggy players can't hurt each other.
     HOOK_JAL(GetAddress(&vaWhoHitMe_Hook), &patchWhoHitMe);
