@@ -50,6 +50,6 @@ typedef enum SKINS {
     SKIN_DAN
 } SKINS;
 
-const u32 TEAM_COLORS[9];
+const u32 TEAM_COLORS[8];
 
 #endif // _LIBUYA_TEAM_H_
