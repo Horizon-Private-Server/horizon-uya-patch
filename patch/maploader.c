@@ -827,6 +827,14 @@ u64 hookedLevelExit(void)
 	// We can still load our custom minimap
   hook();
 
+	// Change default "Waiting for Players.." time (Default: 0x1518 == 90s)
+	int playerWaitTime = 45; // 45s
+#if UYA_PAL
+	POKE_U32(0x00241a4c, playerWaitTime * 50);
+#else
+	POKE_U32(0x00241bcc, playerWaitTime * 60);
+#endif
+
   grLoadStart();
 
   return r;
