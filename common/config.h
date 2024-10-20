@@ -23,6 +23,7 @@ typedef struct PatchConfig {
   char cycleWeapon3;
   char hypershotEquipButton;
   char disableDpadMovement;
+  char enablePlayerSync;
 } PatchConfig_t;
 
 // Game Rules Tab

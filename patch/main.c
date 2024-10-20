@@ -2170,6 +2170,89 @@ void patchLoadingPopup(void)
 }
 
 /*
+ * NAME :		runPlayerPositionSmooth
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+void runPlayerPositionSmooth(void)
+{
+	static VECTOR smoothVelocity[GAME_MAX_PLAYERS];
+	static int applySmoothVelocityForFrames[GAME_MAX_PLAYERS];
+
+	Player ** players = playerGetAll();
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		Player* p = players[i];
+		if (p && !p->isLocal && p->pMoby) {
+			// determine if the player has strayed too far from the remote player's position
+			// it is critical that we run this each frame, regardless if we're already smoothing the player's velocity
+			// in case something has changed, we want to recalcuate the smooth velocity instantly
+			// instead of waiting for the (possibly) 10 smoothing frames to complete
+    		if (p->pNetPlayer && p->pNetPlayer->pNetPlayerData) {
+				VECTOR dt, rPos, lPos = {0,0,1,0};
+				vector_copy(dt, (float*)((u32)p + 0x4d60));
+				vector_copy(rPos, (float*)((u32)p + 0x4d40));
+
+				// apply when remote player's simulated position
+				// is more than 2 units from the received position
+				// at the time of receipt
+				// meaning, this value only updates when receivedSyncPos (0x4d40) is updated
+				// not every tick
+				float dist = vector_length(dt);
+				if (dist > 2) {
+					// reset syncPosDifference
+					// since it updates every 4 frames (I think)
+					// and we don't want to run this 4 times in a row on the same data
+					vector_write((float*)((u32)p + 0x4d60), 0);
+
+					// we want to apply this delta over multiple frames for the smoothest result
+					// however there are cases where we want to teleport
+					// in cases where the player has fallen under the ground on our screen
+					// we want to teleport them back up, since gravity will counteract our interpolation
+					int applyOverTicks = 10;
+					rPos[2] += 1;
+					vector_add(lPos, lPos, p->playerPosition);
+					if (dt[2] > 0 && (dt[2] / dist) > 0.8 && CollLine_Fix(lPos, rPos, 2, p->pMoby, 0)) {
+						applyOverTicks = 1;
+					}
+
+					// indicate number of ticks to apply additives over
+					// scale dt by number of ticks to add
+					// so that we add exactly dt over those frames
+					applySmoothVelocityForFrames[i] = applyOverTicks;
+					vector_scale(smoothVelocity[i], dt, 1.0 / applyOverTicks);
+				}
+			}
+			// apply adds
+			if (applySmoothVelocityForFrames[i] > 0) {
+				vector_add(p->playerPosition, p->playerPosition, smoothVelocity[i]);
+				vector_copy(p->pMoby->position, p->playerPosition);
+				--applySmoothVelocityForFrames[i];
+			}
+		}
+	}
+}
+
+/*
+ * NAME :		runPlayerSync
+ * DESCRIPTION: Runs various functions to help smooth players movements.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void runPlayerSync(void)
+{
+	if (!config.enablePlayerSync)
+		return;
+	
+	runPlayerPositionSmooth();
+}
+
+/*
  * NAME :		runGameStartMessager
  * DESCRIPTION :
  * NOTES :
@@ -2532,6 +2615,9 @@ int main(void)
 
 		// Runs FPS Counter
 		runFpsCounter();
+
+		// Run Playersynv v1
+		runPlayerSync();
 
 		// Run Spectate
 		// if (config.enableSpectate)
