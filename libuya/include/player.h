@@ -1264,6 +1264,30 @@ typedef struct Player { // 0x4500
 	};
 } Player;
 
+typedef struct RemotePlayer { // 0x4dc0
+	/* 0x0000 */ Player player;
+	/* 0x4500 */ GameCamera dummyCamera;
+	/* 0x4770 */ PAD remotePad;
+	/* 0x4d30 */ char completedEnoughUpdates;
+	/* 0x4d31 */ char rotOutOfSyncLastUpdate;
+	/* 0x4d32 */ char padFrameChunksReceived;
+	/* 0x4d33 */ char posOutOfSyncLastUpdate;
+	/* 0x4d34 */ char stateAtSyncFrame;
+	/* 0x4d40 */ VECTOR receivedSyncPos;
+	/* 0x4d50 */ VECTOR posAtSyncFrame;
+	/* 0x4d60 */ VECTOR syncPosDifference;
+	/* 0x4d70 */ VECTOR receivedSyncRot;
+	/*        */ VECTOR rotAtSyncFrame;
+	/*        */ float interpVel;
+	/*        */ float syncRotDifference;
+	/*        */ int flags;
+	/*        */ int sequenceIdOfSyncData;
+	/*        */ enum PlayerState receivedState;
+	/*        */ VECTOR remoteCorrectionVel;
+	/*        */ float remoteCorrectionRotVel;
+	/*        */ char syncFrameOffset;
+} RemotePlayer;
+
 typedef void (*PlayerUpdate_Func)(Player *player);
 typedef int (*GetTeam_Func)(Player *player);
 typedef void (*HandleEvent_Func)(Player *player, GuberEvent *event);
