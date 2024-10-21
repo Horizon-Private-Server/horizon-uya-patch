@@ -2193,8 +2193,8 @@ void runPlayerPositionSmooth(void)
 			// instead of waiting for the (possibly) 10 smoothing frames to complete
     		if (p->pNetPlayer && p->pNetPlayer->pNetPlayerData) {
 				VECTOR dt, rPos, lPos = {0,0,1,0};
-				vector_copy(dt, (float*)((u32)p + 0x4d60));
-				vector_copy(rPos, (float*)((u32)p + 0x4d40));
+				vector_copy(dt, (float*)(p->RemoteHero.syncPosDifference));
+				vector_copy(rPos, (float*)(p->RemoteHero.receivedSyncPos));
 
 				// apply when remote player's simulated position
 				// is more than 2 units from the received position
@@ -2206,7 +2206,7 @@ void runPlayerPositionSmooth(void)
 					// reset syncPosDifference
 					// since it updates every 4 frames (I think)
 					// and we don't want to run this 4 times in a row on the same data
-					vector_write((float*)((u32)p + 0x4d60), 0);
+					vector_write((float*)(p->RemoteHero.syncPosDifference), 0);
 
 					// we want to apply this delta over multiple frames for the smoothest result
 					// however there are cases where we want to teleport

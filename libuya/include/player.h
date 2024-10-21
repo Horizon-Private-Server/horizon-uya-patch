@@ -1262,11 +1262,9 @@ typedef struct Player { // 0x4500
 	/* 0x44F4 */ HeroCommand command;
 		} LocalHero;
 	};
-} Player;
-
-typedef struct RemotePlayer { // 0x4dc0
-	/* 0x0000 */ Player player;
-	/* 0x4500 */ GameCamera dummyCamera;
+	union {
+		struct {
+	/* 0x4500 */ char unk_4500[0x270];  //GameCamera dummyCamera;
 	/* 0x4770 */ PAD remotePad;
 	/* 0x4d30 */ char completedEnoughUpdates;
 	/* 0x4d31 */ char rotOutOfSyncLastUpdate;
@@ -1286,7 +1284,9 @@ typedef struct RemotePlayer { // 0x4dc0
 	/*        */ VECTOR remoteCorrectionVel;
 	/*        */ float remoteCorrectionRotVel;
 	/*        */ char syncFrameOffset;
-} RemotePlayer;
+		} RemoteHero;
+	};
+} Player;
 
 typedef void (*PlayerUpdate_Func)(Player *player);
 typedef int (*GetTeam_Func)(Player *player);
