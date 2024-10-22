@@ -2192,7 +2192,9 @@ void runPlayerPositionSmooth(void)
 			// in case something has changed, we want to recalcuate the smooth velocity instantly
 			// instead of waiting for the (possibly) 10 smoothing frames to complete
     		if (p->pNetPlayer && p->pNetPlayer->pNetPlayerData) {
-				VECTOR dt, rPos, lPos = {0,0,1,0};
+				VECTOR dt = {0, 0, 0, 0};
+				VECTOR rPos = {0, 0, 0, 0};
+				VECTOR lPos = {0, 0, 1, 0};
 				vector_copy(dt, (float*)(p->RemoteHero.syncPosDifference));
 				vector_copy(rPos, (float*)(p->RemoteHero.receivedSyncPos));
 
