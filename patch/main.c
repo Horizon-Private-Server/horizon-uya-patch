@@ -57,6 +57,7 @@ void grLoadStart(void);
 
 void runSpectate(void);
 void scavHuntRun(void);
+void runPing();
 #if TEST
 void runTest(void);
 #endif
@@ -2566,6 +2567,9 @@ int main(void)
 	// 
 	runVoteToEndLogic();
 
+	// Gets client ping
+	runPing();
+
 	#if TEST
 	void runTest(void);
 	#endif
@@ -2619,7 +2623,7 @@ int main(void)
 		runFpsCounter();
 
 		// Run Playersynv v1
-		runPlayerSync();
+		// runPlayerSync();
 
 		// Run Spectate
 		// if (config.enableSpectate)
