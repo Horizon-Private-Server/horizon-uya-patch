@@ -76,9 +76,10 @@ void runPing(void)
     static int pingCooldown = 0;
     static int reset = 0;
 
+    netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_LATENCY_TEST_PING, &pingRemoteLatencyPing);
+
     if (!isInGame()) {
         if (!reset) {
-            netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_LATENCY_TEST_PING, &pingRemoteLatencyPing);
             memset(clientLatency, 0, sizeof(clientLatency));
             pingCooldown = 0;
             reset = 1;
