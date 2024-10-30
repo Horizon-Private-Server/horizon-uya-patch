@@ -89,6 +89,9 @@ typedef struct PatchPatches {
 typedef struct PatchPointers {
   char ServerTimeMonth;
   char ServerTimeDay;
+  char ServerTimeHour;
+  char ServerTimeMinute;
+  char ServerTimeSecond;
 } PatchPointers_t;
 
 typedef struct CustomMapDef {

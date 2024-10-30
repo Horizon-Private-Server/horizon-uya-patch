@@ -177,10 +177,12 @@ typedef struct ScavengerHuntSettingsResponse
   float SpawnFactor;
 } ScavengerHuntSettingsResponse_t;
 
-typedef struct DateResponse
-{
+typedef struct DateResponse {
   char Month;
   char Day;
+  char Hour;
+  char Minute;
+  char Second;
 } DateResponse_t;
 
 #endif // _MESSAGEID_H_
