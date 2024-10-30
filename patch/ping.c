@@ -78,14 +78,21 @@ void runPing(void)
 
     netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_LATENCY_TEST_PING, &pingRemoteLatencyPing);
 
-    if (!isInGame()) {
-        if (!reset) {
-            memset(clientLatency, 0, sizeof(clientLatency));
-            pingCooldown = 0;
-            reset = 1;
-            printf("\nping: Reset!");
-        }
-        return;
+    // if (!isInGame()) {
+    //     if (!reset) {
+    //         memset(clientLatency, 0, sizeof(clientLatency));
+    //         pingCooldown = 0;
+    //         reset = 1;
+    //         printf("\nping: Reset!");
+    //     }
+    //     return;
+    // }
+
+    if (!reset) {
+        memset(clientLatency, 0, sizeof(clientLatency));
+        pingCooldown = 0;
+        reset = 1;
+        printf("\nping: Reset!");    
     }
 
     // send pings
@@ -96,5 +103,5 @@ void runPing(void)
         printf("\nmyPing: %d", myPing);
         pingCooldown = LATENCY_PING_COOLDOWN_TICKS;
     }
-    reset = 0;
+    // reset = 0;
 }
