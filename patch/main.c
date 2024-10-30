@@ -2261,7 +2261,7 @@ void runPlayerSync(void)
 	runPlayerPositionSmooth();
 }
 
-void runholidays(void)
+void runHolidays(void)
 {
 	if (!PATCH_POINTERS || patched.holidays)
 		return;
@@ -2611,7 +2611,8 @@ int main(void)
 	// 
 	runVoteToEndLogic();
 
-	runholidays();
+	// Run Holiday specific settings
+	runHolidays();
 
 	#if TEST
 	void runTest(void);
