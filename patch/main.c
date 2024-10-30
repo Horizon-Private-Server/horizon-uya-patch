@@ -135,7 +135,10 @@ PatchStateContainer_t patchStateContainer;
 
 PatchPointers_t patchPointers = {
   .ServerTimeMonth = 0,
-  .ServerTimeDay = 0
+  .ServerTimeDay = 0,
+  .ServerTimeHour = 0,
+  .ServerTimeMinute = 0,
+  .ServerTimeSecond = 0,
 };
 
 struct FlagPVars
@@ -263,10 +266,13 @@ void onServerTimeResponse(void* connection, void* data)
 	if (!connection) return;
 
 	memcpy(&response, data, sizeof(DateResponse_t));
-	DPRINTF("\nDate: %d/%d", response.Month, response.Day);
+	DPRINTF("\nDate: %d/%d\nTime: %02d:%02d", response.Month, response.Day, response.Hour, response.Minute);
 	patchPointers.ServerTimeMonth = response.Month;
 	// not adding 1 to the date broke things on January 31st.
-	patchPointers.ServerTimeDay = response.Day + 1;
+	patchPointers.ServerTimeDay = response.Day;
+	patchPointers.ServerTimeHour = response.Hour;
+	patchPointers.ServerTimeMinute = response.Minute;
+	patchPointers.ServerTimeSecond = response.Second;
 }
 
 //------------------------------------------------------------------------------
@@ -2286,6 +2292,7 @@ void runHolidays(void)
 	}
 
 	// DPRINTF("\nLocation/Month/Day/Skin: l:%d/m:%d/d:%d/s:%d/", location, month, day, skin);
+	// DPRINTF("\nDate: %02d/%02d\nTime: %02d:%02d:%02d", PATCH_POINTERS->ServerTimeMonth,  PATCH_POINTERS->ServerTimeDay,  PATCH_POINTERS->ServerTimeHour, PATCH_POINTERS->ServerTimeMinute, PATCH_POINTERS->ServerTimeSecond);
 
 	if (location == LOCATION_LOADING) {
 		if (skin > -1) {
@@ -2611,7 +2618,6 @@ int main(void)
 	// 
 	runVoteToEndLogic();
 
-	// Run Holiday specific settings
 	runHolidays();
 
 	#if TEST
