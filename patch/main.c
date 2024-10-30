@@ -27,6 +27,7 @@
 #include <libuya/map.h>
 #include <libuya/guber.h>
 #include <libuya/music.h>
+#include <libuya/team.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -66,6 +67,7 @@ int lastMenuInvokedTime = 0;
 int lastGameState = 0;
 int sentGameStart = 0;
 int isInStaging = 0;
+int location = LOCATION_NULL;
 int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 1;
 char showNoMapPopup = 0;
@@ -286,16 +288,21 @@ char * checkGameType(void)
 char * checkMap(void)
 {
 	if (isInMenus()) {
-		if (isInStaging)
+		if (isInStaging) {
+			location = LOCATION_STAGING;
 			return "Staging";
-		else
+		} else {
+			location = LOCATION_ONLINE_LOBBY;
 			return "Online Lobby";
+		}
 	} else if (isInGame()) {
+		location = LOCATION_IN_GAME;
 		if (SelectedCustomMapId > 0)
 			return MapLoaderState.MapName;
 
 		return mapGetName(gameGetCurrentMapId());
 	} else {
+		location = LOCATION_LOADING;
 		return "Loading Screen";
 	}
 }
@@ -2254,6 +2261,44 @@ void runPlayerSync(void)
 	runPlayerPositionSmooth();
 }
 
+void runholidays(void)
+{
+	if (!PATCH_POINTERS || patched.holidays)
+		return;
+
+	int i;
+	int month = PATCH_POINTERS->ServerTimeMonth;
+	int day = PATCH_POINTERS->ServerTimeDay - 1;
+	int skin = -1;
+	switch(month) {
+		case 10: {
+			if (day == 31)
+				skin = SKIN_BONES;
+
+			break;
+		}
+		case 12: {
+			if (day >= 24)
+				skin = SKIN_SNOWMAN;
+
+			break;
+		}
+	}
+
+	// DPRINTF("\nLocation/Month/Day/Skin: l:%d/m:%d/d:%d/s:%d/", location, month, day, skin);
+
+	if (location == LOCATION_LOADING) {
+		if (skin > -1) {
+			GameSettings *gs = gameGetSettings();
+			for (i = 0; i < gs->PlayerCount; ++i) {
+				gs->PlayerSkins[i] = skin;
+			}
+			// patched.holidays = 1;
+		}
+	}
+
+}
+
 /*
  * NAME :		runGameStartMessager
  * DESCRIPTION :
@@ -2566,6 +2611,8 @@ int main(void)
 	// 
 	runVoteToEndLogic();
 
+	runholidays();
+
 	#if TEST
 	void runTest(void);
 	#endif
@@ -2619,7 +2666,7 @@ int main(void)
 		runFpsCounter();
 
 		// Run Playersynv v1
-		runPlayerSync();
+		// runPlayerSync();
 
 		// Run Spectate
 		// if (config.enableSpectate)

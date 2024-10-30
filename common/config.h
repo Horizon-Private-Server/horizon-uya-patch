@@ -81,6 +81,9 @@ typedef struct PatchPatches {
   // gameConfig misc.
   char spawnWeaponPackOnDeath;
   char disableRespawning;
+
+  // Misc.
+  char holidays;
 } PatchPatches_t;
 
 typedef struct PatchPointers {

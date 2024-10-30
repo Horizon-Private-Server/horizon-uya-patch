@@ -444,7 +444,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1, "Main Weapon 1.  Defaults to Gravity Bomb if nothing is selected." },
   { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2, "Main Weapon 2.  Defaults to Blitz Cannon if nothing is selected." },
   { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3, "Main Weapon 3.  Defaults to Flux Rifle if nothing is selected." },
-  { "Player Sync (Experimental)", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enablePlayerSync, "Synces players movements for a smoother/less laggy experience." },
+  // { "Player Sync (Experimental)", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enablePlayerSync, "Synces players movements for a smoother/less laggy experience." },
   // { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate, "Toggles the custom spectate feature. Use \x13 when dead to spectate.  Some gomemodes may restrict whom you can spectate." },
   { "Quick Select Delay", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataQuickSelectTimeDelay, "Change how short/long you need to hold triangle to open the Quick Select menu." },
   { "Single Player Music", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSingleplayerMusic, "Tired of the same BORING songs in game?!  Spice it up by adding the music tracks from Single Player!" },

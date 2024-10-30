@@ -3,8 +3,7 @@
 
 #define MAX_CUSTOM_MAP_DEFINITIONS              (64)
 
-enum ActionType
-{
+enum ActionType {
   ACTIONTYPE_DRAW,
   ACTIONTYPE_GETHEIGHT,
   ACTIONTYPE_SELECT,
@@ -14,16 +13,14 @@ enum ActionType
   ACTIONTYPE_VALIDATE
 };
 
-enum ElementState
-{
+enum ElementState {
   ELEMENT_HIDDEN = 0,
   ELEMENT_VISIBLE = (1 << 0),
   ELEMENT_EDITABLE = (1 << 1),
   ELEMENT_SELECTABLE = (1 << 2),
 };
 
-enum LabelType
-{
+enum LabelType {
   LABELTYPE_HEADER,
   LABELTYPE_LABEL
 };
@@ -39,8 +36,7 @@ typedef int (*MenuElementListStateHandler)(struct MenuElem_ListData* listData, c
 typedef int (*MenuElementRangeStateHandler)(struct MenuElem_RangeData* listData, char* value);
 typedef void (*TabStateHandler)(struct TabElem* tab, int * state);
 
-typedef struct MenuElem
-{
+typedef struct MenuElem {
   char name[48];
   ActionHandler handler;
   MenuElementStateHandler stateHandler;
@@ -86,8 +82,7 @@ typedef struct CustomMapVersionFileDef
 
 typedef void (*SndCompleteProc)(int loc, int user_data);
 
-enum MapLoaderLoaded
-{
+enum MapLoaderLoaded {
   MAPLOADED_NONE = 0,
   MAPLOADED_LEVEL = 1,
   MAPLOADED_GAMEPLAY = 2,
@@ -95,8 +90,7 @@ enum MapLoaderLoaded
   MAPLOADED_SOUND_SENT = 8,
 };
 
-struct MapLoaderState
-{
+struct MapLoaderState {
     u8 Enabled;
     u8 MapId;
 	  u8 CheckState;
@@ -112,12 +106,19 @@ struct MapLoaderState
     u64 SoundLoadUserData;
 };
 
-typedef struct VoteToEndState
-{
+typedef struct VoteToEndState {
   int TimeoutTime;
   int Count;
   char Votes[GAME_MAX_PLAYERS];
 } VoteToEndState_t;
+
+typedef enum Locations {
+  LOCATION_NULL = -1,
+  LOCATION_ONLINE_LOBBY = 0,
+  LOCATION_STAGING = 1,
+  LOCATION_LOADING = 2,
+  LOCATION_IN_GAME = 3
+} Locations_t;
 
 extern struct MapLoaderState MapLoaderState;
 extern CustomMapDef_t CustomMapDefs[MAX_CUSTOM_MAP_DEFINITIONS];
