@@ -83,6 +83,7 @@ typedef struct PatchPatches {
   char disableRespawning;
 
   // Misc.
+  char uiModifiers;
   char holidays;
 } PatchPatches_t;
 
