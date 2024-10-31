@@ -52,6 +52,8 @@ void configMenuDisable(void);
 void runMapLoader(void);
 void onMapLoaderOnlineMenu(void);
 
+void patchStaging(void);
+
 void grGameStart(void);
 void grLobbyStart(void);
 void grLoadStart(void);
@@ -2274,7 +2276,7 @@ void runHolidays(void)
 
 	int i;
 	int month = PATCH_POINTERS->ServerTimeMonth;
-	int day = PATCH_POINTERS->ServerTimeDay - 1;
+	int day = PATCH_POINTERS->ServerTimeDay;
 	int skin = -1;
 	switch(month) {
 		case 10: {
@@ -2291,7 +2293,7 @@ void runHolidays(void)
 		}
 	}
 
-	// DPRINTF("\nLocation/Month/Day/Skin: l:%d/m:%d/d:%d/s:%d/", location, month, day, skin);
+	printf("\nLocation/Month/Day/Skin: l:%d/m:%d/d:%d/s:%d/", location, month, day, skin);
 	// DPRINTF("\nDate: %02d/%02d\nTime: %02d:%02d:%02d", PATCH_POINTERS->ServerTimeMonth,  PATCH_POINTERS->ServerTimeDay,  PATCH_POINTERS->ServerTimeHour, PATCH_POINTERS->ServerTimeMinute, PATCH_POINTERS->ServerTimeSecond);
 
 	if (location == LOCATION_LOADING) {
@@ -2721,6 +2723,16 @@ int main(void)
 
 		// Patches loading popup from not showing if patch menu is open.
 		patchLoadingPopup();
+
+		// Patch Menus (Staging, create game, ect.)
+		if (patched.uiModifiers == 0) {
+			#ifdef UYA_PAL
+			*(u32*)0x0047e9ac = &patchStaging;
+			#else
+			*(u32*)0x0047ea6c = &patchStaging;
+			#endif
+			patched.uiModifiers = 1;
+		}
 
 		// Reset Level of Detail to -1
 		lastLodLevel = -1;
