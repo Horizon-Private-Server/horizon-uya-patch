@@ -2293,7 +2293,7 @@ void runHolidays(void)
 		}
 	}
 
-	printf("\nLocation/Month/Day/Skin: l:%d/m:%d/d:%d/s:%d/", location, month, day, skin);
+	// DPRINTF("\nLocation/Month/Day/Skin: l:%d/m:%d/d:%d/s:%d/", location, month, day, skin);
 	// DPRINTF("\nDate: %02d/%02d\nTime: %02d:%02d:%02d", PATCH_POINTERS->ServerTimeMonth,  PATCH_POINTERS->ServerTimeDay,  PATCH_POINTERS->ServerTimeHour, PATCH_POINTERS->ServerTimeMinute, PATCH_POINTERS->ServerTimeSecond);
 
 	if (location == LOCATION_LOADING) {
