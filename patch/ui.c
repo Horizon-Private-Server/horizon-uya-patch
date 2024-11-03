@@ -41,6 +41,8 @@ typedef struct ChangeTeamRequest {
 	char Pool[GAME_MAX_PLAYERS];
 } ChangeTeamRequest_t;
 
+int allPlayersReady = -1;
+
 typedef int (*uiVTable_Func)(void * ui, int pad);
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
 
@@ -110,6 +112,7 @@ uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
 
 void hostStartGame(void)
 {
+    static int allPlayersReady = 1;
     GameSettings* gs = gameGetSettings();
     int clientId = gameGetMyClientId();
     int i;
@@ -117,13 +120,14 @@ void hostStartGame(void)
         return;
 
     // start
-    gs->GameLoadStartTime = gameGetTime() + 4000;
+    int playerCount = gs->PlayerCount;
     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-        if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] <= 6) {
+        // if not all players are ready
+        if (gs->PlayerStates[i] == 6) {
             gs->PlayerStates[i] = 7;
-            break;
         }
     }
+    gs->GameLoadStartTime = gameGetTime() + 4000;
 }
 
 int patchStaging(void * ui, int pad)
@@ -142,8 +146,9 @@ int patchStaging(void * ui, int pad)
     // }
 
     if (gameAmIHost()) {
-        if (pad == UI_PAD_CIRCLE) {
+        if (pad == UI_PAD_CIRCLE && allPlayersReady == 1) {
             hostStartGame();
+            allPlayersReady = 2;
             pad = UI_PAD_NONE;
         }
     } else {
@@ -162,7 +167,6 @@ int patchStaging(void * ui, int pad)
 	int result = stagingFunc(ui, pad);
 
     if (gameAmIHost()) {
-        int allPlayersReady = 1;
         for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
             // Set host to always ready
             if (gs->PlayerStates[0] != 7)
@@ -171,7 +175,19 @@ int patchStaging(void * ui, int pad)
             // if not all players are ready
             if (gs->PlayerClients[i] >= 0 && gs->PlayerStates[i] != 6 && gs->PlayerStates[i] != 7)
                 allPlayersReady = 0;
+            else if (gs->PlayerClients[i] >= 0 && gs->PlayerStates[i] == 6)
+                allPlayersReady = 1;
+            else if (allPlayersReady == 2)
+                allPlayersReady = -1;
         }
+        
+        // Replace "\x11 UNREADY" with "\x11 STSART"
+        int str = uiMsgString(0x16d9);
+        if (allPlayersReady)
+	        strncpy((char*)str, "\x11 START", 9);
+        else
+	        strncpy((char*)str, "         ", 9);
+     
     }
 
 	// if (pad != UI_PAD_NONE)
