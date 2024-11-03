@@ -136,6 +136,11 @@ enum CustomMessageId
     CUSTOM_MSG_ID_INVITE_BOT = 23,
 
     /*
+     * Sent from the server to the host when the server wants the host to update all the teams
+     */
+    CUSTOM_MSG_ID_SERVER_REQUEST_TEAM_CHANGE = 24,
+
+    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,
