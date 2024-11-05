@@ -41,8 +41,6 @@ typedef struct ChangeTeamRequest {
 	char Pool[GAME_MAX_PLAYERS];
 } ChangeTeamRequest_t;
 
-int allPlayersReady = -1;
-
 typedef int (*uiVTable_Func)(void * ui, int pad);
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
 
@@ -110,32 +108,14 @@ uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
 
 // }
 
-void hostStartGame(void)
-{
-    static int allPlayersReady = 1;
-    GameSettings* gs = gameGetSettings();
-    int clientId = gameGetMyClientId();
-    int i;
-    if (!gs || !gameAmIHost())
-        return;
-
-    // start
-    int playerCount = gs->PlayerCount;
-    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-        // if not all players are ready
-        if (gs->PlayerStates[i] == 6) {
-            gs->PlayerStates[i] = 7;
-        }
-    }
-    gs->GameLoadStartTime = gameGetTime() + 4000;
-}
-
 int patchStaging(void * ui, int pad)
 {
+    static int allPlayersReady = -1;
     int i;
     int j;
     GameSettings* gs = gameGetSettings();
     int clientId = gameGetMyClientId();
+    // ui address: 0x01dc06a8
     u32 * uiElements = (u32*)((u32)ui + 0x110);
 
     // Install net messsages
@@ -147,9 +127,12 @@ int patchStaging(void * ui, int pad)
 
     if (gameAmIHost()) {
         if (pad == UI_PAD_CIRCLE && allPlayersReady == 1) {
-            hostStartGame();
+            // hostStartGame(ui);
+
+            // Force "Start" to be selected
+            *(int*)((u32)ui + 0x290) = 4;
             allPlayersReady = 2;
-            pad = UI_PAD_NONE;
+            pad = UI_PAD_CROSS;
         }
     } else {
 	    // Patch Unkick
@@ -189,9 +172,6 @@ int patchStaging(void * ui, int pad)
 	        strncpy((char*)str, "         ", 9);
      
     }
-
-	// if (pad != UI_PAD_NONE)
-	// 	DPRINTF("\nbutton: %d, ui: %08x", pad, ui);
-
+    
 	return result;
 }
