@@ -10,8 +10,10 @@
 
 #ifdef UYA_PAL
 #define STAGING_BASE_FUNC (0x006c1730)
+#define CREATE_GAME_BASE_FUNC (0x0069a630)
 #else
 #define STAGING_BASE_FUNC (0x006bec18)
+#define CREATE_GAME_BASE_FUNC (0x00697e20)
 #endif
 
 typedef enum uiPadButtons {
@@ -42,8 +44,8 @@ typedef struct ChangeTeamRequest {
 } ChangeTeamRequest_t;
 
 typedef int (*uiVTable_Func)(void * ui, int pad);
+uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
-
 // Data Recieved from server
 // int onRecieveSetTeams(void * connection, void * data)
 // {
@@ -174,4 +176,14 @@ int patchStaging(void * ui, int pad)
     }
     
 	return result;
+}
+
+int patchCreateGame(void * ui, long pad)
+{
+    int result = createGameFunc(ui, pad);
+
+    if (pad > 0)
+        printf("\npad: %d, ui: 0x%08x", pad, ui);
+
+    return result;
 }

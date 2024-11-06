@@ -52,7 +52,8 @@ void configMenuDisable(void);
 void runMapLoader(void);
 void onMapLoaderOnlineMenu(void);
 
-void patchStaging(void);
+void patchCreateGame(void *ui, long pad);
+void patchStaging(void * ui, long pad);
 
 void grGameStart(void);
 void grLobbyStart(void);
@@ -2727,8 +2728,10 @@ int main(void)
 		// Patch Menus (Staging, create game, ect.)
 		if (patched.uiModifiers == 0) {
 			#ifdef UYA_PAL
+			POKE_U32(0x0047cfec, &patchCreateGame);
 			*(u32*)0x0047e9ac = &patchStaging;
 			#else
+			POKE_U32(0x0047d0ac, &patchCreateGame);
 			*(u32*)0x0047ea6c = &patchStaging;
 			#endif
 			patched.uiModifiers = 1;
