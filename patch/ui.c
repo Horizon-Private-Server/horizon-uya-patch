@@ -18,22 +18,22 @@
 
 typedef enum uiPadButtons {
     UI_PAD_NONE = 0,
-    UI_PAD_DPAD_UP,
-    UI_PAD_DPAD_DOWN,
-    UI_PAD_DPAD_LEFT,
-    UI_PAD_DPAD_RIGHT,
-    UI_PAD_TRIANGLE,
-    UI_PAD_CIRCLE,
-    UI_PAD_CROSS,
-    UI_PAD_SQUARE,
-    UI_PAD_SELECT,
-    UI_PAD_START,
-    UI_PAD_L1,
-    UI_PAD_L2,
-    UI_PAD_L3,
-    UI_PAD_R1,
-    UI_PAD_R2,
-    UI_PAD_R3,
+    UI_PAD_DPAD_UP = 1,
+    UI_PAD_DPAD_DOWN = 2,
+    UI_PAD_DPAD_LEFT = 3,
+    UI_PAD_DPAD_RIGHT = 4,
+    UI_PAD_TRIANGLE = 5,
+    UI_PAD_CIRCLE = 6,
+    UI_PAD_CROSS = 7,
+    UI_PAD_SQUARE = 8,
+    UI_PAD_SELECT = 9,
+    UI_PAD_START = 10,
+    UI_PAD_L1 = 11,
+    UI_PAD_L2 = 12,
+    UI_PAD_L3 = 13,
+    UI_PAD_R1 = 14,
+    UI_PAD_R2 = 15,
+    UI_PAD_R3 = 16,
     UI_PAD_TOTAL = UI_PAD_R3
 } uiPadButtons_t;
 
@@ -180,10 +180,11 @@ int patchStaging(void * ui, int pad)
 
 int patchCreateGame(void * ui, long pad)
 {
-    int result = createGameFunc(ui, pad);
+    // ui address: 0x01d20954
+    u32 * uiElements = (u32*)((u32)ui + 0x110);
+    int itemSelected = *(int*)(ui + 0x290);
 
-    if (pad > 0)
-        printf("\npad: %d, ui: 0x%08x", pad, ui);
+    int result = createGameFunc(ui, pad);
 
     return result;
 }
