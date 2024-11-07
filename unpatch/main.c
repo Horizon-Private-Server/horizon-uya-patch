@@ -35,7 +35,8 @@ const int patches[][3] = {
 	{ 0, 0x005760E4, 0x0c19f270 }, // menu loop hook 1
 	{ 0, 0x0057611C, 0x0c19f270 }, // menu loop hook 2
 	{ -1, 0x002405e8, 0x00000000 }, // DME_CALLBACK_TABLE
-	{ 0, 0x006872b0, 0x0c1a1b90}, // patchUnkick Hook
+	{ 0, 0x0047cfec, 0x0069a630 }, // patchCreateGame
+	{ 0, 0x0047e9ac, 0x006c1730 }, // patchStaging
 
 	// maploader
 	{ 0, 0x005a41c8, 0x0c170a90 }, // LOAD_LEVEL_READ_WAD_HOOK
@@ -48,7 +49,8 @@ const int patches[][3] = {
 	{ 0, 0x005753A4, 0x0c19e7c2 }, // menu loop hook 1
 	{ 0, 0x005753DC, 0x0c19e7c2 }, // menu loop hook 2
 	{ -1, 0x00240768, 0x00000000 }, // DME_CALLBACK_TABLE
-	{ 0, 0x00684790, 0x0c1a10c8 }, // patchUnkick Hook
+	{ 0, 0x0047d0ac, 0x00697e20 }, // patchCreateGame
+	{ 0, 0x0047ea6c, 0x006bec18 }, // patchStaging
 
 	// maploader
 	{ 0, 0x005a2560, 0x0c17027e }, // LOAD_LEVEL_READ_WAD_HOOK
