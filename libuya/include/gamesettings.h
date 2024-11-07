@@ -35,23 +35,23 @@ enum GameRuleIds
  */
 typedef struct GameSettings
 {
-    char PlayerNames[GAME_MAX_PLAYERS][16];
-    char PlayerClanTags[GAME_MAX_PLAYERS][8];
-    short PlayerSkins[GAME_MAX_PLAYERS];
-    short PlayerTeams[GAME_MAX_PLAYERS];
-    short PlayerClients[GAME_MAX_PLAYERS];
-    short PlayerStates[GAME_MAX_PLAYERS];
-    char UNK_OFFSET_100[16];
-    float PlayerRanks[GAME_MAX_PLAYERS];
-    float PlayerRankDeviations[GAME_MAX_PLAYERS];
-    int PlayerAccountIds[GAME_MAX_PLAYERS];
-    int GameStartTime;
-    int GameLoadStartTime;
-    int PlayerCount;
-    int GameLevel;
-    int GameType;
-    int UNK_OFFSET_184;
-    char GameRules[0x17];
+ /* 0x000 */ char PlayerNames[GAME_MAX_PLAYERS][16];
+ /* 0x080 */ char PlayerClanTags[GAME_MAX_PLAYERS][8];
+ /* 0x090 */ short PlayerSkins[GAME_MAX_PLAYERS];
+ /* 0x0b0 */ short PlayerTeams[GAME_MAX_PLAYERS];
+ /* 0x0d0 */ short PlayerClients[GAME_MAX_PLAYERS];
+ /* 0x0f0 */ short PlayerStates[GAME_MAX_PLAYERS];
+ /* 0x100 */ char UNK_OFFSET_100[16];
+ /* 0x110 */ float PlayerRanks[GAME_MAX_PLAYERS];
+ /* 0x130 */ float PlayerRankDeviations[GAME_MAX_PLAYERS];
+ /* 0x150 */ int PlayerAccountIds[GAME_MAX_PLAYERS];
+ /* 0x170 */ int GameStartTime;
+ /* 0x174 */ int GameLoadStartTime;
+ /* 0x178 */ int PlayerCount;
+ /* 0x17c */ int GameLevel;
+ /* 0x180 */ int GameType;
+ /* 0x184 */ int UNK_OFFSET_184;
+ /* 0x188 */ char GameRules[0x17];
 
     // the following have not been found, if they are there.
     // short PlayerHeadset;
