@@ -39,8 +39,10 @@
 #define EXCEPTION_DISPLAY_ADDR								(0x000C8000)
 #if UYA_PAL
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006c2d80)
+#define RANK_TABLE                              			((u32)0x001a6a64)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
+#define RANK_TABLE                              			((u32)0x001a6Be4)
 #endif
 
 void onConfigOnlineMenu(void);
@@ -153,6 +155,17 @@ struct FlagPVars
 	char UNK_16[6];
 	int TimeFlagDropped;
 };
+
+typedef struct RankTable {
+    // Deviation 1 (275.0)
+    // Deviation 2 (250.0)
+    // Deviation 3 (100.0)
+    // Rank 1 (0.0 - 1000.0 - 1349.0)
+    // Rank 2 (1350.0 - 1699.0)
+    // Rank 3 (1700.0 and Above)
+    float deviation[3];
+    float range[3];
+} RankTable_t;
 
 #if DSCRPRINT
 //------------------------------------------------------------------------------
@@ -2717,11 +2730,6 @@ int main(void)
 		// If in Lobby, run these game rules.
 		grLobbyStart();
 
-		// Patch Unkick Bug
-		#if DEBUG
-		patchUnkick();
-		#endif
-
 		// Patches loading popup from not showing if patch menu is open.
 		patchLoadingPopup();
 
@@ -2735,6 +2743,19 @@ int main(void)
 			*(u32*)0x0047ea6c = &patchStaging;
 			#endif
 			patched.uiModifiers = 1;
+		}
+
+		// Patch Rank Table
+		if (!patched.rankTable) {
+			// Sets deviation rank higher than that of player deviation, this way it goes by rank, not deviation.
+			int rangeMultiplier = 100;
+			*(float*)RANK_TABLE = 1000000000.00; // Deviation 1
+			*(float*)(RANK_TABLE + 0x4) = 0; // Deviation 2
+			*(float*)(RANK_TABLE + 0x8) = 0; // Deviation 3
+			*(float*)(RANK_TABLE + 0xc) = 1000 * rangeMultiplier; // Rank Rage 1 (2 bolts)
+			*(float*)(RANK_TABLE + 0x10) = 1300 * rangeMultiplier; // Rank Rage 2 (3 bolts)
+			*(float*)(RANK_TABLE + 0x14) = 1700 * rangeMultiplier; // Rank Range 3 (4 bolts)
+			patched.rankTable = 1;
 		}
 
 		// Reset Level of Detail to -1

@@ -85,6 +85,7 @@ typedef struct PatchPatches {
   // Misc.
   char uiModifiers;
   char holidays;
+  char rankTable;
 } PatchPatches_t;
 
 typedef struct PatchPointers {

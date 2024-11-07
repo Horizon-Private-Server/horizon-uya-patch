@@ -43,6 +43,26 @@ typedef struct ChangeTeamRequest {
 	char Pool[GAME_MAX_PLAYERS];
 } ChangeTeamRequest_t;
 
+// int RankTable[] = {
+//     // Function Address: 0x006dca38
+//     // {Address, Default Value, New Value?}
+// #if UYA_PAL
+//     {0x001a6a64, 0x43898000}, // Deviation 1 (275.0)
+//     {0x001a6a68, 0x437a0000}, // Deviation 2 (250.0)
+//     {0x001a6a6c, 0x42C80000}, // Deviation 3 (100.0)
+//     {0x001a6a70, 0x447a0000}, // Rank 1 (1000.0)
+//     {0x001a6a74, 0x44a8c000}, // Rank 2 (1350.0)
+//     {0x001a6a78, 0x44d48000}, // Rank 3 (1700.0)
+// #else
+//     {0x001a6Be4, 0x43898000}, // Deviation 1 (275.0)
+//     {0x001a6Be8, 0x437a0000}, // Deviation 2 (250.0)
+//     {0x001a6Bec, 0x42C80000}, // Deviation 3 (100.0)
+//     {0x001a6Bf0, 0x447a0000}, // Rank 1 (1000.0)
+//     {0x001a6Bf4, 0x44a8c000}, // Rank 2 (1350.0)
+//     {0x001a6Bf8, 0x44d48000}, // Rank 3 (1700.0)
+// #endif
+// }
+
 typedef int (*uiVTable_Func)(void * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
