@@ -37,6 +37,9 @@ const int patches[][3] = {
 	{ -1, 0x002405e8, 0x00000000 }, // DME_CALLBACK_TABLE
 	{ 0, 0x0047cfec, 0x0069a630 }, // patchCreateGame
 	{ 0, 0x0047e9ac, 0x006c1730 }, // patchStaging
+	{ 0, 0x0047c834, 0x00690de8 }, // patchBuddies
+	{ 0, 0x0047e44c, 0x006b48c8 }, // patchPlayerDetails
+	{ 0, 0x0047eab4, 0x006c5cc8 }, // patchStatsCategories
 
 	// maploader
 	{ 0, 0x005a41c8, 0x0c170a90 }, // LOAD_LEVEL_READ_WAD_HOOK
@@ -51,6 +54,9 @@ const int patches[][3] = {
 	{ -1, 0x00240768, 0x00000000 }, // DME_CALLBACK_TABLE
 	{ 0, 0x0047d0ac, 0x00697e20 }, // patchCreateGame
 	{ 0, 0x0047ea6c, 0x006bec18 }, // patchStaging
+	{ 0, 0x0047c8f4, 0x0068e6f8 }, // patchBuddies
+	{ 0, 0x0047e50c, 0x006b1f60 }, // patchPlayerDetails
+	{ 0, 0x0047eb74, 0x006c31b8 }, // patchStatsCategories
 
 	// maploader
 	{ 0, 0x005a2560, 0x0c17027e }, // LOAD_LEVEL_READ_WAD_HOOK

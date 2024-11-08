@@ -54,8 +54,12 @@ void configMenuDisable(void);
 void runMapLoader(void);
 void onMapLoaderOnlineMenu(void);
 
-void patchCreateGame(void *ui, long pad);
-void patchStaging(void * ui, long pad);
+int patchCreateGame(void *ui, long pad);
+int patchStaging(void * ui, long pad);
+int patchBuddies(void * ui, long pad);
+int patchPlayerDetails(void * ui, long pad);
+int patchStatsCategories(void * ui, int pad);
+int patchStatsListings(void * ui, int pad);
 
 void grGameStart(void);
 void grLobbyStart(void);
@@ -2737,10 +2741,16 @@ int main(void)
 		if (patched.uiModifiers == 0) {
 			#ifdef UYA_PAL
 			POKE_U32(0x0047cfec, &patchCreateGame);
-			*(u32*)0x0047e9ac = &patchStaging;
+			POKE_U32(0x0047e9ac, &patchStaging);
+			POKE_U32(0x0047c834, &patchBuddies);
+			POKE_U32(0x0047e44c, &patchPlayerDetails);
+			POKE_U32(0x0047eab4, &patchStatsCategories);
 			#else
 			POKE_U32(0x0047d0ac, &patchCreateGame);
-			*(u32*)0x0047ea6c = &patchStaging;
+			POKE_U32(0x0047ea6c, &patchStaging);
+			POKE_U32(0x0047c8f4, &patchBuddies);
+			POKE_U32(0x0047e50c, &patchPlayerDetails);
+			POKE_U32(0x0047eb74, &patchStatsCategories);
 			#endif
 			patched.uiModifiers = 1;
 		}
