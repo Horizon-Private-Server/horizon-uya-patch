@@ -13,13 +13,13 @@
 #define CREATE_GAME_BASE_FUNC (0x0069a630)
 #define BUDDIES_BASE_FUNC (0x00690de8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b48c8)
-#define STATS_CATEGORIES_BASE_FUNC (0x006c5cc8)
+#define STATS_BASE_FUNC (0x006c5cc8)
 #else
 #define STAGING_BASE_FUNC (0x006bec18)
 #define CREATE_GAME_BASE_FUNC (0x00697e20)
 #define BUDDIES_BASE_FUNC (0x0068e6f8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b1f60)
-#define STATS_CATEGORIES_BASE_FUNC (0x006c31b8)
+#define STATS_BASE_FUNC (0x006c31b8)
 #endif
 
 typedef enum uiPadButtons {
@@ -74,7 +74,7 @@ uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
 uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
-uiVTable_Func statsCategoriesFunc = (uiVTable_Func)STATS_CATEGORIES_BASE_FUNC;
+uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
 
 // Data Recieved from server
 // int onRecieveSetTeams(void * connection, void * data)
@@ -239,12 +239,12 @@ int patchPlayerDetails(void * ui, long pad)
     return result;
 }
 
-int patchStatsCategories(void * ui, int pad)
+int patchStats(void * ui, int pad)
 {
     u32 * uiElements = (u32*)((u32)ui + 0x110);
     int itemSelected = *(int*)(ui + 0x290);
 
-    int result = statsCategoriesFunc(ui, pad);
+    int result = statsFunc(ui, pad);
 
     return result;
 }

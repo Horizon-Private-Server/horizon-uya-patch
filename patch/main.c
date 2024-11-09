@@ -37,12 +37,23 @@
 
 #define GLOBAL_GAME_MODULES_START							((GameModule*)0x000CF000)
 #define EXCEPTION_DISPLAY_ADDR								(0x000C8000)
+
 #if UYA_PAL
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006c2d80)
 #define RANK_TABLE                              			((u32)0x001a6a64)
+#define UI_PTR_FUNC_CREATE_GAME								(0x0047cfec)
+#define UI_PTR_FUNC_STAGING									(0x0047e9ac)
+#define UI_PTR_FUNC_BUDDIES									(0x0047c834)
+#define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
+#define UI_PTR_FUNC_STATS									(0x0047eab4)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
 #define RANK_TABLE                              			((u32)0x001a6Be4)
+#define UI_PTR_FUNC_CREATE_GAME								(0x0047d0ac)
+#define UI_PTR_FUNC_STAGING									(0x0047ea6c)
+#define UI_PTR_FUNC_BUDDIES									(0x0047c8f4)
+#define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
+#define UI_PTR_FUNC_STATS									(0x0047eb74)
 #endif
 
 void onConfigOnlineMenu(void);
@@ -58,8 +69,7 @@ int patchCreateGame(void *ui, long pad);
 int patchStaging(void * ui, long pad);
 int patchBuddies(void * ui, long pad);
 int patchPlayerDetails(void * ui, long pad);
-int patchStatsCategories(void * ui, int pad);
-int patchStatsListings(void * ui, int pad);
+int patchStats(void * ui, int pad);
 
 void grGameStart(void);
 void grLobbyStart(void);
@@ -2739,19 +2749,11 @@ int main(void)
 
 		// Patch Menus (Staging, create game, ect.)
 		if (patched.uiModifiers == 0) {
-			#ifdef UYA_PAL
-			POKE_U32(0x0047cfec, &patchCreateGame);
-			POKE_U32(0x0047e9ac, &patchStaging);
-			POKE_U32(0x0047c834, &patchBuddies);
-			POKE_U32(0x0047e44c, &patchPlayerDetails);
-			POKE_U32(0x0047eab4, &patchStatsCategories);
-			#else
-			POKE_U32(0x0047d0ac, &patchCreateGame);
-			POKE_U32(0x0047ea6c, &patchStaging);
-			POKE_U32(0x0047c8f4, &patchBuddies);
-			POKE_U32(0x0047e50c, &patchPlayerDetails);
-			POKE_U32(0x0047eb74, &patchStatsCategories);
-			#endif
+			POKE_U32(UI_PTR_FUNC_CREATE_GAME, &patchCreateGame);
+			POKE_U32(UI_PTR_FUNC_STAGING, &patchStaging);
+			POKE_U32(UI_PTR_FUNC_BUDDIES, &patchBuddies);
+			POKE_U32(UI_PTR_FUNC_PLAYER_DETAILS, &patchPlayerDetails);
+			POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
 			patched.uiModifiers = 1;
 		}
 
