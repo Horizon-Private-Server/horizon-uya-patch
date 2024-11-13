@@ -27,19 +27,16 @@
 #define GAME_FPS                            (60.0)
 #endif
 
-//--------------------------------------------------------
-typedef struct DeathMatchKD {
-    short Kills;
-    short Deaths;
-} DeathMatchKD;
+struct FragCount {
+/* 0x0 */ short kills;
+/* 0x2 */ short deaths;
+};
 
-typedef struct PlayerGameStats { // 0x40
-/*0x00*/ DeathMatchKD DeathMatch[GAME_MAX_PLAYERS];
-/*0x20*/ char NodesCaptured[GAME_MAX_PLAYERS];
-/*0x28*/ char NodesSaved[GAME_MAX_PLAYERS];
-/*0x30*/ char FlagsCaptured[GAME_MAX_PLAYERS];
-/*0x38*/ char FlagsSaved[GAME_MAX_PLAYERS];
-} PlayerGameStats;
+struct PlayerStats { // 0x40
+/* 0x00 */ FragCount frag[GAME_MAX_PLAYERS];
+/* 0x20 */ int nodesCaptured[GAME_MAX_PLAYERS];
+/* 0x40 */ float baseDamage[GAME_MAX_PLAYERS];
+};
 
 //=================   =For DL:
 // typedef struct PlayerGameStats
@@ -76,8 +73,7 @@ typedef struct PlayerGameStats { // 0x40
 // } PlayerGameStats;
 
 //--------------------------------------------------------
-typedef struct TeamGameStats
-{
+struct TeamStats {
     short TeamTicketScore[GAME_MAX_PLAYERS];
     char TeamUpgradesLevel1[GAME_MAX_PLAYERS];
     char TeamUpgradesLevel2[GAME_MAX_PLAYERS];
@@ -88,72 +84,58 @@ typedef struct TeamGameStats
     float PercentNodesCaptured[GAME_MAX_PLAYERS];
     float NodeHoldTime[GAME_MAX_PLAYERS];
     char FlagCaptureCounts[GAME_MAX_PLAYERS];
-} TeamGameStats;
+};
 
-//--------------------------------------------------------
-typedef struct DeathMatchGameData
-{
-    int ResurrectionPts[64];
-    int Pad1;
-    int RandomSpawn;
-    int SmartSpawnPts;
+struct LocalPlayerYourBaseGameData { // 0x1b0
+/* 0x000 */ int team1_StartBase;
+/* 0x004 */ int team2_StartBase;
+/* 0x008 */ int unk_08[6];
+/* 0x020 */ int nodeResurrectionPts[8];
+/* 0x040 */ int unk_SpawnPts[8];
+/* 0x060 */ int unk_BaseMobySpawnPts[8];
+/* 0x080 */ int unk_team1;
+/* 0x084 */ int unk_team2;
+/* 0x088 */ int team1_BaseComputerTeam;
+/* 0x08c */ int team2_BaseComputerTeam;
+/* 0x090 */ int unk_090[6];
+/* 0x0a8 */ int nodeTeam[8];
+/* 0x0c8 */ int unk_0c8[8];
+/* 0x0e8 */ int baseHealth[8];
+/* 0x108 */ float totalHudHealth[8];
+/* 0x128 */ float prevHudHealth[8];
+/* 0x148 */ float hudHealth[8];
+/* 0x168 */ int unk_168[18];
+};
+
+struct CTFGameData {
+/* 0x00 */ int blueFlagCuboid;
+/* 0x04 */ int redflagCuboid;
+/* 0x08 */ int blueTeamCaptures;
+/* 0x0c */ int redTeamCaptures;
+/* 0x10 */ int blueTeamSaves;
+/* 0x14 */ int redTeamSaves;
+};
+
+struct DeathMatchGameData {
+    int resurrectionPts[64];
+    int pad1;
+    int randomSpawn;
+    int smartSpawnPts;
     int pad[13];
-} DeathMatchGameData;
+};
 
-//--------------------------------------------------------
-typedef struct CTFGameData
-{
-    int Unk_00[2];
-    short TeamCaptures;
-    short TeamSaves;
-} CTFGameData;
-
-//--------------------------------------------------------
-typedef struct LocalPlayerYourBaseGameData
-{
-    int Team1_SpawnPts[3];
-    int Team2_SpawnPts[3];
-    int NodeResurrectionPts[8];
-    Moby* BaseMobys[8];
-    Moby* NodeMobys[8];
-    int Team1_StartBase;
-    int Team2_StartBase;
-    int BaseTeam[8];
-    int NodeTeam[8];
-    int OrigBaseTeam[8];
-    int BaseHealth[8];
-    float TotalHudHealth[8];
-    float PrevHudHealth[8];
-    float HudHealth[8];
-    int NumBases;
-    int WinScore;
-    int Team3_SpawnPts[3];
-    int Team4_SpawnPts[3];
-    Moby* HomeNodeMobys[2];
-    int pad[8];
-} LocalPlayerYourBaseGameData;
-
-//--------------------------------------------------------
-typedef struct ScoreboardItem
-{
-    int TeamId;
-    int UNK;
-    int Value;
-} ScoreboardItem;
-
-//--------------------------------------------------------
 typedef struct GameData {
-/* 0x000 */ int TimeEnd;
-/* 0x004 */ int TimeStart;
-/* 0x008 */ int GameState;
-/* 0x00c */ int NumTeams;
-/* 0x010 */ int WinningTeam;
-/* 0x014 */ int WinningPlayer;
-/* 0x018 */ PlayerGameStats PlayerStats;
+/* 0x000 */ int timeEnd;
+/* 0x004 */ int timeStart;
+/* 0x008 */ int gameState;
+/* 0x00c */ int numTeams;
+/* 0x010 */ int winningTeam;
+/* 0x014 */ int winningPlayer;
+/* 0x018 */ PlayerStats PlayerStats;
 /* 0x058 */ char unk_058[0x1b4];
-/* 0x20c */ void* unk_ptr_20c;
-/* 0x210 */ CTFGameData* CTFGameData;
-/* 0x214 */ DeathMatchGameData* DeathMatchGameData;
+/* 0x20c */ LocalPlayerYourBaseGameData *allYourBaseGameData;
+/* 0x210 */ CTFGameData *CTFGameData;
+/* 0x214 */ DeathMatchGameData *DeathMatchGameData;
 } GameData;
 
 //=================   =For DL:
