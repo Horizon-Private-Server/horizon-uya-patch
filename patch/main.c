@@ -2454,7 +2454,7 @@ void setupPatchConfigInGame(void)
  * NOTES :
  * ARGS : 
  * RETURN :
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ * AUTHOR :			Troy "Metroynopme" Pruitt
  */
 int runSendGameUpdate(void)
 {
@@ -2531,6 +2531,13 @@ int runSendGameUpdate(void)
 			}
 			patchStateContainer.GameStateUpdate.Flags[0] = gameData->CTFGameData->blueTeamCaptures;
 			patchStateContainer.GameStateUpdate.Flags[1] = gameData->CTFGameData->redTeamCaptures;
+		} else if (gameSettings->GameType == GAMERULE_DM) {
+			for (i = 0; i < gameSettings->PlayerCount; ++i) {
+				int team = gameSettings->PlayerTeams[i];
+				int kills = gameData->playerStats.frag[i].kills;
+				int deaths = gameData->playerStats.frag[i].deaths;
+				patchStateContainer.GameStateUpdate.TeamScores[team] += kills - deaths;
+			}
 		}
 	}
 	return 1;
@@ -2915,6 +2922,11 @@ int main(void)
 
 	// process modules
 	processGameModules();
+
+	if (patchStateContainer.UpdateGameState) {
+		patchStateContainer.UpdateGameState = 0;
+		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_GAME_STATE, sizeof(UpdateGameStateRequest_t), &patchStateContainer.GameStateUpdate);
+	}
 
 	// Call this last
 	uyaPostUpdate();
