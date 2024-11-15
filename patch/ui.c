@@ -5,6 +5,9 @@
 #include <libuya/pad.h>
 #include <libuya/stdio.h>
 #include <libuya/uya.h>
+#include <libuya/random.h>
+#include <libuya/sha1.h>
+#include <libuya/time.h>
 #include "messageid.h"
 #include "config.h"
 
@@ -49,25 +52,11 @@ typedef struct ChangeTeamRequest {
 	char Pool[GAME_MAX_PLAYERS];
 } ChangeTeamRequest_t;
 
-// int RankTable[] = {
-//     // Function Address: 0x006dca38
-//     // {Address, Default Value, New Value?}
-// #if UYA_PAL
-//     {0x001a6a64, 0x43898000}, // Deviation 1 (275.0)
-//     {0x001a6a68, 0x437a0000}, // Deviation 2 (250.0)
-//     {0x001a6a6c, 0x42C80000}, // Deviation 3 (100.0)
-//     {0x001a6a70, 0x447a0000}, // Rank 1 (1000.0)
-//     {0x001a6a74, 0x44a8c000}, // Rank 2 (1350.0)
-//     {0x001a6a78, 0x44d48000}, // Rank 3 (1700.0)
-// #else
-//     {0x001a6Be4, 0x43898000}, // Deviation 1 (275.0)
-//     {0x001a6Be8, 0x437a0000}, // Deviation 2 (250.0)
-//     {0x001a6Bec, 0x42C80000}, // Deviation 3 (100.0)
-//     {0x001a6Bf0, 0x447a0000}, // Rank 1 (1000.0)
-//     {0x001a6Bf4, 0x44a8c000}, // Rank 2 (1350.0)
-//     {0x001a6Bf8, 0x44d48000}, // Rank 3 (1700.0)
-// #endif
-// }
+typedef struct ForceTeamsRequest {
+    int AccountIds[GAME_MAX_PLAYERS];
+    char Teams[GAME_MAX_PLAYERS];
+} ForceTeamsRequest_t;
+ForceTeamsRequest_t TeamsRequest;
 
 typedef int (*uiVTable_Func)(void * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
@@ -77,68 +66,86 @@ uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
 uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
 
 // Data Recieved from server
-// int onRecieveSetTeams(void * connection, void * data)
-// {
-//     int i, j;
-//     ChangeTeamRequest_t request;
-// 	u32 seed;
-// 	char teamByClientId[GAME_MAX_PLAYERS];
+void setTeams(int num)
+{
+    int i, j;
+    ChangeTeamRequest_t request;
+	u32 seed;
+	char teamByClientId[GAME_MAX_PLAYERS];
 
-// 	memcpy(&request, data, sizeof(ChangeTeamRequest_t));
-// 	memcpy(&seed, &request.Seed, 4);
-// 	memset(teamByClientId, -1, sizeof(teamByClientId));
+    request.Seed = timerGetSystemTime();
+    request.PoolSize = num;
+	memcpy(&seed, &request.Seed, 4);
+	memset(teamByClientId, -1, sizeof(teamByClientId));
 
-// 	printf("pool size: %d\npool: ", request.PoolSize);
-// 	for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-// 		printf("%d=%d,", i, request.Pool[i]);
-// 	printf("\n");
+	// printf("pool size: %d\npool: ", request.PoolSize);
+	// for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+	// 	printf("%d=%d,", i, request.Pool[i]);
+	// printf("\n");
 
-// 	// get game settings
-// 	GameSettings* gameSettings = gameGetSettings();
-// 	if (gameSettings) {
-// 		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-// 			int clientId = gameSettings->PlayerClients[i];
-// 			if (clientId >= 0) {
-// 				int teamId = teamByClientId[clientId];
-// 				if (teamId < 0) {
-// 					if (request.PoolSize == 0) {
-// 						teamId = 0;
-// 					} else {
-// 						// psuedo random
-// 						sha1(&seed, 4, &seed, 4);
+	// get game settings
+	GameSettings* gameSettings = gameGetSettings();
+	if (gameSettings) {
+		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+			int clientId = gameSettings->PlayerClients[i];
+			if (clientId >= 0) {
+				int teamId = teamByClientId[clientId];
+				if (teamId < 0) {
+					if (request.PoolSize == 0) {
+						teamId = 0;
+					} else {
+						// psuedo random
+						sha1(&seed, 4, &seed, 4);
 
-// 						// get pool index from rng
-// 						int teamPoolIndex = seed % request.PoolSize;
+						// get pool index from rng
+						int teamPoolIndex = seed %  request.PoolSize;
 
-// 						// set team
-// 						teamId = request.Pool[teamPoolIndex];
+						// set team
+						teamId = request.Pool[teamPoolIndex];
 
-// 						printf("pool info pid:%d poolIndex:%d poolSize:%d team:%d\n", i, teamPoolIndex, request.PoolSize, teamId);
+						printf("\npool info pid: %d\npoolIndex: %d\npoolSize: %d\nteam: %d", i, teamPoolIndex, request.PoolSize, teamId);
 
-// 						// remove element from pool
-// 						if (request.PoolSize > 0) {
-// 							for (j = teamPoolIndex+1; j < request.PoolSize; ++j)
-// 								request.Pool[j-1] = request.Pool[j];
-// 							request.PoolSize -= 1;
-// 						}
-// 					}
-// 					// set client id team
-// 					teamByClientId[clientId] = teamId;
-// 				}
-// 				// set team
-// 				DPRINTF("setting pid:%d to %d\n", i, teamId);
-// 				gameSettings->PlayerTeams[i] = teamId;
-// 			}
-// 		}
-// 	}
-// 	return sizeof(ChangeTeamRequest_t);
-// }
+						// remove element from pool
+						if (request.PoolSize > 0) {
+							for (j = teamPoolIndex+1; j < request.PoolSize; ++j)
+								request.Pool[j-1] = request.Pool[j];
+							request.PoolSize -= 1;
+						}
+					}
+					// set client id team
+					teamByClientId[clientId] = teamId;
+				}
+				// set team
+				printf("\nsetting pid:%d to %d", i, teamId);
+				gameSettings->PlayerTeams[i] = teamId;
+			}
+		}
+	}
+}
 
-// // Data sent to server
-// void onSendSetTeams(void)
-// {
+int onForceTeamsRequest(void * connection, void * data)
+{
+    // move message payload into local
+    memcpy(&TeamsRequest, data, sizeof(ForceTeamsRequest_t));
 
-// }
+    return sizeof(ForceTeamsRequest_t);
+}
+
+void doTheTeams(void)
+{
+    int i, j;
+    GameSettings* gs = gameGetSettings();
+    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+        // force teams
+        int accountId = TeamsRequest.AccountIds[i];
+        for (j = 0; j < GAME_MAX_PLAYERS; ++j) {
+            if (gs->PlayerAccountIds[j] == accountId) {
+                gs->PlayerTeams[j] = TeamsRequest.Teams[i];
+                break;
+            }
+        }
+    }
+}
 
 int patchStaging(void * ui, int pad)
 {
@@ -153,7 +160,7 @@ int patchStaging(void * ui, int pad)
     // Install net messsages
     // static int init = 0;
     // if (!init) {
-	//     netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_REQUEST_TEAM_CHANGE, &onRecieveSetTeams);
+    //     netInstallCustomMsgHandler(CUSTOM_MSG_ID_FORCE_TEAMS_REQUEST, &onForceTeamsRequest);
     //     init = 1;
     // }
 
@@ -165,6 +172,18 @@ int patchStaging(void * ui, int pad)
             *(int*)((u32)ui + 0x290) = 4;
             allPlayersReady = 2;
             pad = UI_PAD_CROSS;
+        } else if (pad == UI_PAD_L1) {
+            // netSendCustomAppMessage(NET_DELIVERY_CRITICAL, netGetLobbyServerConnection(), CUSTOM_MSG_ID_VOTE_REQUEST, sizeof(request), &request);
+            pad = UI_PAD_NONE;
+        } else if (pad == UI_PAD_R1) {
+            setTeams(2);
+            pad = UI_PAD_NONE;
+        } else if (pad == UI_PAD_R2) {
+            setTeams(0);
+            pad = UI_PAD_NONE;
+        } else if (pad == UI_PAD_L2) {
+            setTeams(8);
+            pad = UI_PAD_NONE;
         }
     } else {
 	    // Patch Unkick

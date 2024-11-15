@@ -97,7 +97,9 @@ typedef struct UpdateGameStateRequest {
 	char TeamsEnabled;
     char PADDING;
     short Version;
-	int RoundNumber;
+    float BaseHealth[2]; // Blue Team, Red Team
+    int Nodes[2]; // Blue Team, Red Team
+    int Flags[2]; // Blue Team, Red Team
 	int TeamScores[GAME_MAX_PLAYERS];
 	char ClientIds[GAME_MAX_PLAYERS];
 	char Teams[GAME_MAX_PLAYERS];

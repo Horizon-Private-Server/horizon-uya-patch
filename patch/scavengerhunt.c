@@ -548,9 +548,9 @@ if (p->pNetPlayer->pNetPlayerData->accountId == 85) {
   static int lastFlagsCaptured = 0;
   static int lastNodesCaptured = 0;
   static int lastNodesSaved = 0;
-  int flagsCaptured = gameData->PlayerStats.FlagsCaptured[localPlayer->mpIndex];
-  int nodesCaptured = gameData->PlayerStats.NodesCaptured[localPlayer->mpIndex];
-  int nodesSaved = gameData->PlayerStats.NodesSaved[localPlayer->mpIndex];
+  int flagsCaptured = gameData->playerStats.flagsCaptured[localPlayer->mpIndex];
+  int nodesCaptured = gameData->playerStats.nodesCaptured[localPlayer->mpIndex];
+  int nodesSaved = gameData->playerStats.nodesSaved[localPlayer->mpIndex];
 
   // decrement cooldown or check for event
   if (scavHuntBoltSpawnCooldown) {

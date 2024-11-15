@@ -408,8 +408,8 @@ void survivor(void)
 				continue;
 					
 		    // Save current deaths for all players, and how many players have died.
-			if (gameData->PlayerStats.DeathMatch[i].Deaths > PlayerDeaths[i]) {
-				PlayerDeaths[i] = gameData->PlayerStats.DeathMatch[i].Deaths;
+			if (gameData->playerStats.frag[i].kills > PlayerDeaths[i]) {
+				PlayerDeaths[i] = gameData->playerStats.frag[i].deaths;
 				// Subtract player from their team.
 				--PlayerTeams[players[i]->mpTeam];
 				// if the team of the player who died noe equals zero, subject team coutn.
@@ -418,13 +418,13 @@ void survivor(void)
 			}
 			// If only one player in game, don't let game end until they die.
 			if (playerCount == 1 && TeamCount == 0) {
-				gameData->TimeEnd = 0;
-				gameData->WinningTeam = i;
+				gameData->timeEnd = 0;
+				gameData->winningTeam = i;
 			}
 			// if only one team remains
 			else if (playerCount > 1 && TeamCount == 1) {
-				gameData->TimeEnd = 0;
-                gameData->WinningTeam = i;
+				gameData->timeEnd = 0;
+                gameData->winningTeam = i;
 			}
 		}
 	}
@@ -432,21 +432,21 @@ void survivor(void)
 	else {
 		for (i = 0; i < playerCount; ++i) {
 			// Save current deaths for all players, and how many players have died.
-			if (gameData->PlayerStats.DeathMatch[i].Deaths > PlayerDeaths[i]) {
-				PlayerDeaths[i] = gameData->PlayerStats.DeathMatch[i].Deaths;
+			if (gameData->playerStats.frag[i].deaths > PlayerDeaths[i]) {
+				PlayerDeaths[i] = gameData->playerStats.frag[i].deaths;
 				++DeadPlayers;
 			}
 			// If only one player in game, don't let game end until they die.
 			if (playerCount == 1 && DeadPlayers == 1) {
-				gameData->TimeEnd = 0;
-				gameData->WinningTeam = i;
+				gameData->timeEnd = 0;
+				gameData->winningTeam = i;
 			}
 			// if player count is greater than 1, and Dead Players == Player Count - 1
 			else if (playerCount > 1 && DeadPlayers == (playerCount - 1)) {
 				// Check to see who has not died
-				if (gameData->PlayerStats.DeathMatch[i].Deaths == 0) {
-					gameData->TimeEnd = 0;
-					gameData->WinningTeam = i;
+				if (gameData->playerStats.frag[i].deaths == 0) {
+					gameData->timeEnd = 0;
+					gameData->winningTeam = i;
 				}
 			}
 		}

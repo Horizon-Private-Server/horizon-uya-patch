@@ -37,6 +37,7 @@
 
 #define GLOBAL_GAME_MODULES_START							((GameModule*)0x000CF000)
 #define EXCEPTION_DISPLAY_ADDR								(0x000C8000)
+#define GAME_UPDATE_SENDRATE								(5 * TIME_SECOND)
 
 #if UYA_PAL
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006c2d80)
@@ -2448,6 +2449,94 @@ void setupPatchConfigInGame(void)
 }
 
 /*
+ * NAME :		runSendGameUpdate
+ * DESCRIPTION : Sends the current game info to the server.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
+ */
+int runSendGameUpdate(void)
+{
+	static int lastGameUpdate = 0;
+	static int newGame = 0;
+	GameSettings * gameSettings = gameGetSettings();
+	GameOptions * gameOptions = gameGetOptions();
+	GameData * gameData = gameGetData();
+	Player** players = playerGetAll();
+	int gameTime = gameGetTime();
+	int i;
+	void * connection = netGetLobbyServerConnection();
+
+	// skip if not online, in lobby, or the game host
+	if (!connection || !gameSettings || !gameAmIHost()) {
+		lastGameUpdate = -GAME_UPDATE_SENDRATE;
+		newGame = 1;
+		return 0;
+	}
+
+	// skip if time since last update is less than sendrate
+	if ((gameTime - lastGameUpdate) < GAME_UPDATE_SENDRATE)
+		return 0;
+
+	// update last sent time
+	lastGameUpdate = gameTime;
+
+	// construct
+	patchStateContainer.GameStateUpdate.TeamsEnabled = gameOptions->GameFlags.MultiplayerGameFlags.Teams;
+	patchStateContainer.GameStateUpdate.Version = 1;
+
+	// copy over client ids
+	memcpy(patchStateContainer.GameStateUpdate.ClientIds, gameSettings->PlayerClients, sizeof(patchStateContainer.GameStateUpdate.ClientIds));
+
+	// reset some stuff whenever we enter a new game
+	if (newGame) {
+		memset(patchStateContainer.GameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.GameStateUpdate.TeamScores));
+		newGame = 0;
+	}
+
+	// copy teams over
+	memcpy(patchStateContainer.GameStateUpdate.Teams, gameSettings->PlayerTeams, sizeof(patchStateContainer.GameStateUpdate.Teams));
+
+	// 
+	if (isInGame()) {
+		int i;
+		// reset
+		memset(patchStateContainer.GameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.GameStateUpdate.TeamScores));
+		memset(patchStateContainer.GameStateUpdate.Nodes, 0, sizeof(patchStateContainer.GameStateUpdate.Nodes));
+		memset(patchStateContainer.GameStateUpdate.BaseHealth, 0, sizeof(patchStateContainer.GameStateUpdate.BaseHealth));
+		memset(patchStateContainer.GameStateUpdate.Flags, 0, sizeof(patchStateContainer.GameStateUpdate.Flags));
+
+		if (gameSettings->GameType == GAMERULE_SIEGE) {	
+			for (i = 0; i < 8; ++i) {
+				if (gameData->allYourBaseGameData->nodeTeam[i] == 0)
+					++patchStateContainer.GameStateUpdate.Nodes[0];
+				else if (gameData->allYourBaseGameData->nodeTeam[i] == 1)
+					++patchStateContainer.GameStateUpdate.Nodes[1];
+			}
+			patchStateContainer.GameStateUpdate.BaseHealth[0] = gameData->allYourBaseGameData->hudHealth[0];
+			patchStateContainer.GameStateUpdate.BaseHealth[1] = gameData->allYourBaseGameData->hudHealth[1];
+		} else if (gameSettings->GameType == GAMERULE_CTF) {
+			// Nodes are turned off
+			patchStateContainer.GameStateUpdate.Nodes[0] = -1;
+			patchStateContainer.GameStateUpdate.Nodes[1] = -1;
+			// Check if nodes are on
+			if (gameOptions->GameFlags.MultiplayerGameFlags.Nodes) {
+				for (i = 0; i < 8; ++i) {
+					if (gameData->allYourBaseGameData->nodeTeam[i] == 0)
+						++patchStateContainer.GameStateUpdate.Nodes[0];
+					else if (gameData->allYourBaseGameData->nodeTeam[i] == 1)
+						++patchStateContainer.GameStateUpdate.Nodes[1];
+				}	
+			}
+			patchStateContainer.GameStateUpdate.Flags[0] = gameData->CTFGameData->blueTeamCaptures;
+			patchStateContainer.GameStateUpdate.Flags[1] = gameData->CTFGameData->redTeamCaptures;
+		}
+	}
+	return 1;
+}
+
+/*
  * NAME :		processGameModules
  * DESCRIPTION :
  * NOTES :
@@ -2631,6 +2720,10 @@ int main(void)
 
 	// Run Scavenger Hunt
 	scavHuntRun();
+
+	// Run Send Gameupdate for Helga
+	patchStateContainer.UpdateGameState = runSendGameUpdate();
+
 
 	// 
 	runCameraSpeedPatch();

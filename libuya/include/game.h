@@ -27,16 +27,19 @@
 #define GAME_FPS                            (60.0)
 #endif
 
-struct FragCount {
+typedef struct FragCount {
 /* 0x0 */ short kills;
 /* 0x2 */ short deaths;
-};
+} FragCount;
 
-struct PlayerStats { // 0x40
+typedef struct PlayerStats { // 0x40
 /* 0x00 */ FragCount frag[GAME_MAX_PLAYERS];
-/* 0x20 */ int nodesCaptured[GAME_MAX_PLAYERS];
+/* 0x20 */ char nodesCaptured[GAME_MAX_PLAYERS];
+/* 0x28 */ char nodesSaved[GAME_MAX_PLAYERS];
+/* 0x30 */ char flagsCaptured[GAME_MAX_PLAYERS];
+/* 0x38 */ char flagsSaved[GAME_MAX_PLAYERS];
 /* 0x40 */ float baseDamage[GAME_MAX_PLAYERS];
-};
+} PlayerStats;
 
 //=================   =For DL:
 // typedef struct PlayerGameStats
@@ -73,7 +76,7 @@ struct PlayerStats { // 0x40
 // } PlayerGameStats;
 
 //--------------------------------------------------------
-struct TeamStats {
+typedef struct TeamStats {
     short TeamTicketScore[GAME_MAX_PLAYERS];
     char TeamUpgradesLevel1[GAME_MAX_PLAYERS];
     char TeamUpgradesLevel2[GAME_MAX_PLAYERS];
@@ -84,9 +87,9 @@ struct TeamStats {
     float PercentNodesCaptured[GAME_MAX_PLAYERS];
     float NodeHoldTime[GAME_MAX_PLAYERS];
     char FlagCaptureCounts[GAME_MAX_PLAYERS];
-};
+} TeamStats;
 
-struct LocalPlayerYourBaseGameData { // 0x1b0
+typedef struct LocalPlayerYourBaseGameData { // 0x1b0
 /* 0x000 */ int team1_StartBase;
 /* 0x004 */ int team2_StartBase;
 /* 0x008 */ int unk_08[6];
@@ -105,24 +108,24 @@ struct LocalPlayerYourBaseGameData { // 0x1b0
 /* 0x128 */ float prevHudHealth[8];
 /* 0x148 */ float hudHealth[8];
 /* 0x168 */ int unk_168[18];
-};
+} LocalPlayerYourBaseGameData;
 
-struct CTFGameData {
+typedef struct CTFGameData {
 /* 0x00 */ int blueFlagCuboid;
 /* 0x04 */ int redflagCuboid;
 /* 0x08 */ int blueTeamCaptures;
 /* 0x0c */ int redTeamCaptures;
 /* 0x10 */ int blueTeamSaves;
 /* 0x14 */ int redTeamSaves;
-};
+} CTFGameData;
 
-struct DeathMatchGameData {
+typedef struct DeathMatchGameData {
     int resurrectionPts[64];
     int pad1;
     int randomSpawn;
     int smartSpawnPts;
     int pad[13];
-};
+} DeathMatchGameData;
 
 typedef struct GameData {
 /* 0x000 */ int timeEnd;
@@ -131,7 +134,7 @@ typedef struct GameData {
 /* 0x00c */ int numTeams;
 /* 0x010 */ int winningTeam;
 /* 0x014 */ int winningPlayer;
-/* 0x018 */ PlayerStats PlayerStats;
+/* 0x018 */ PlayerStats playerStats;
 /* 0x058 */ char unk_058[0x1b4];
 /* 0x20c */ LocalPlayerYourBaseGameData *allYourBaseGameData;
 /* 0x210 */ CTFGameData *CTFGameData;
