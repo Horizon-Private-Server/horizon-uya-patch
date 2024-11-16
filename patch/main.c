@@ -384,7 +384,7 @@ int botsInGame(void)
 	int i;
 	for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
 		int account_id = gs->PlayerAccountIds[i];
-		if (account_id <= 883 && account_id >= 1880) {
+		if (account_id >= 883 && account_id <= 1880) {
 			DPRINTF("\nBOTS IN GAME! UH OH, AI COMIN' FOR YA!\n");
 			return 1;
 		}
@@ -515,7 +515,7 @@ void patchDeadJumping(void)
     		continue;
 
 		Player * player = players[i];
-		if (player->isLocal && playerIsDead(player)) {
+		if (player->isLocal && (playerIsDead(player) || playerGetHealth(player) <= 0)) {
 			// get current player state
 			int PlayerState = playerDeobfuscate(&player->state, 0, 0);
 			// if player is on bolt crank, set player state to idle.
