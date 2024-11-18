@@ -472,6 +472,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Destructable Bridges", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDestructableBridges, "turn on/off the ability to destroy bridges." },
   { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit, "Forces sniper shots that hit to register on every client. Can result in shots that appear to phase through walls." },
   { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled, "Forces sniper shots to always deal the correct amount of damage." },
+  { "Fix Weapon Shot Lag", toggleActionHandler, menuStateHandler_Default, &gameConfig.grWeaponShotLag, "Send shots reliably." },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn, "Automatically respawn players once the in game respawn timer hits zero." },
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire, "Earn a percentage of health for each kill."},
   // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars, "Draws a healthbar above each player's nametag." },
@@ -500,8 +501,8 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize, "Changes the size of the player model." },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor, "You only have one life!  Once you die, you can't respawn!" },
 
-  { "Experimental CTF Rules", labelActionHandler, menuLabelStateHandler_CTF, (void*)LABELTYPE_HEADER },
-  { "CTF: Custom Flag Logic", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Replaces original CTF code for hopefully less lag." },
+  // { "Experimental CTF Rules", labelActionHandler, menuLabelStateHandler_CTF, (void*)LABELTYPE_HEADER },
+  // { "CTF: Custom Flag Logic", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Replaces original CTF code for hopefully less lag." },
 };
 
 // Game Settings (not in staging)

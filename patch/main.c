@@ -712,7 +712,7 @@ void handleGadgetEvents(int player, char gadgetEventType, int activeTime, short 
 	Player * p = (Player*)((u32)player - 0x1a40);
 
 	// Force all incoming weapon shot events to happen immediately.
-	const int MAX_DELAY = TIME_SECOND * 0.2;
+	const int MAX_DELAY = TIME_SECOND * 0;
 	int startTime = activeTime;
 	// put clamp on max delay
 	int delta = activeTime - gameGetTime();
@@ -2808,7 +2808,8 @@ int main(void)
 		// 	runSpectate();
 
 		// Patches gadget events as they come in.
-		// patchGadgetEvents();
+		if(gameConfig.grWeaponShotLag)
+			patchGadgetEvents();
 
 		if (config.alwaysShowHealth)
 			patchAlwaysShowHealth();
