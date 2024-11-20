@@ -32,7 +32,7 @@ typedef struct FragCount {
 /* 0x2 */ short deaths;
 } FragCount;
 
-typedef struct PlayerStats { // 0x40
+typedef struct PlayerStats { // 0x60
 /* 0x00 */ FragCount frag[GAME_MAX_PLAYERS];
 /* 0x20 */ char nodesCaptured[GAME_MAX_PLAYERS];
 /* 0x28 */ char nodesSaved[GAME_MAX_PLAYERS];
@@ -135,7 +135,7 @@ typedef struct GameData {
 /* 0x010 */ int winningTeam;
 /* 0x014 */ int winningPlayer;
 /* 0x018 */ PlayerStats playerStats;
-/* 0x058 */ char unk_058[0x1b4];
+/* 0x078 */ char unk_078[0x194];
 /* 0x20c */ LocalPlayerYourBaseGameData *allYourBaseGameData;
 /* 0x210 */ CTFGameData *CTFGameData;
 /* 0x214 */ DeathMatchGameData *DeathMatchGameData;

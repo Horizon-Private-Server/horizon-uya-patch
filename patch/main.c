@@ -76,6 +76,7 @@ void grGameStart(void);
 void grLobbyStart(void);
 void grLoadStart(void);
 
+void runPing(void);
 void runSpectate(void);
 void scavHuntRun(void);
 #if TEST
@@ -2722,6 +2723,9 @@ int main(void)
 
 	// 
 	runCheckGameMapInstalled();
+
+	// Run Ping.  (onRemote doesn't respond :( )
+	// runPing();
 
 	// Run Scavenger Hunt
 	scavHuntRun();
