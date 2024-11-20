@@ -166,8 +166,6 @@ int patchStaging(void * ui, int pad)
 
     if (gameAmIHost()) {
         if (pad == UI_PAD_CIRCLE && allPlayersReady == 1) {
-            // hostStartGame(ui);
-
             // Force "Start" to be selected
             *(int*)((u32)ui + 0x290) = 4;
             allPlayersReady = 2;
@@ -176,13 +174,13 @@ int patchStaging(void * ui, int pad)
             // netSendCustomAppMessage(NET_DELIVERY_CRITICAL, netGetLobbyServerConnection(), CUSTOM_MSG_ID_VOTE_REQUEST, sizeof(request), &request);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R1) {
-            setTeams(2);
+            // setTeams(2);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R2) {
-            setTeams(0);
+            // setTeams(0);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_L2) {
-            setTeams(8);
+            // setTeams(8);
             pad = UI_PAD_NONE;
         }
     } else {
