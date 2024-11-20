@@ -2503,7 +2503,7 @@ int runSendGameUpdate(void)
 		int i;
 		// reset
 		memset(patchStateContainer.GameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.GameStateUpdate.TeamScores));
-		memset(patchStateContainer.GameStateUpdate.Nodes, 0, sizeof(patchStateContainer.GameStateUpdate.Nodes));
+		// memset(patchStateContainer.GameStateUpdate.Nodes, 0, sizeof(patchStateContainer.GameStateUpdate.Nodes));
 
 		if (gameSettings->GameType == GAMERULE_SIEGE) {	
 			for (i = 0; i < 8; ++i) {
