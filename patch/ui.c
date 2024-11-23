@@ -8,6 +8,7 @@
 #include <libuya/random.h>
 #include <libuya/sha1.h>
 #include <libuya/time.h>
+#include <libuya/ui.h>
 #include "messageid.h"
 #include "config.h"
 
@@ -52,6 +53,16 @@ uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
 uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
 uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
+
+const char * SELECT_VOTE_TITLE = "first try?";
+const char * SELECT_VOTE_NAMES[] = {
+  "OMG!",
+  "IT TWAS",
+  "HUG YOUR MOTHER",
+  "SUPPORT YOURSELF",
+  "GIVE ME HUGS! :D"
+};
+const int SELECT_VOTE_NAMES_SIZE = sizeof(SELECT_VOTE_NAMES)/sizeof(char*);
 
 void setTeams(int numTeams)
 {
@@ -119,13 +130,7 @@ int patchStaging(void * ui, int pad)
     int clientId = gameGetMyClientId();
     // ui address: 0x01dc06a8
     u32 * uiElements = (u32*)((u32)ui + 0x110);
-
-    // Install net messsages
-    // static int init = 0;
-    // if (!init) {
-    //     netInstallCustomMsgHandler(CUSTOM_MSG_ID_FORCE_TEAMS_REQUEST, &onForceTeamsRequest);
-    //     init = 1;
-    // }
+    int itemSelected = *(int*)(ui + 0x290);
 
     if (gameAmIHost()) {
         if (pad == UI_PAD_CIRCLE && allPlayersReady == 1) {
@@ -135,6 +140,7 @@ int patchStaging(void * ui, int pad)
             pad = UI_PAD_CROSS;
         } else if (pad == UI_PAD_L1) {
             // setTeams(2);
+            // int a = uiShowSelectDialog(SELECT_VOTE_TITLE, SELECT_VOTE_NAMES, SELECT_VOTE_NAMES_SIZE, 0);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R1) {
             pad = UI_PAD_NONE;
