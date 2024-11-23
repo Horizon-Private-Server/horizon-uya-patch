@@ -53,49 +53,50 @@ uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
 uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
 
-void setTeams(int poolsize)
+void setTeams(int numTeams)
 {
     int i, j;
-	u32 seed = randRangeInt(0, 10); // timerGetSystemTime();
+	u32 seed = timerGetSystemTime();
 	char teamByClientId[GAME_MAX_PLAYERS];
 	char Pool[GAME_MAX_PLAYERS];
-    int num = poolsize;
+    int PlayerSize;
 
 	memset(teamByClientId, -1, sizeof(teamByClientId));
-
-	// printf("pool size: %d\npool: ", request.PoolSize);
-	// for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-	// 	printf("%d=%d,", i, request.Pool[i]);
-	// printf("\n");
-
 	// get game settings
 	GameSettings* gameSettings = gameGetSettings();
 	if (gameSettings) {
+        // fill pool with needed teams
+        PlayerSize = gameSettings->PlayerCount;
+        for (i = 0; i < PlayerSize; ++i)
+            Pool[i] = i % 2;
+
 		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 			int clientId = gameSettings->PlayerClients[i];
 			if (clientId >= 0) {
 				int teamId = teamByClientId[clientId];
 				if (teamId < 0) {
-					if (num == 0) {
+					if (PlayerSize == 0 || numTeams == 0) {
 						teamId = 0;
+                    } else if (numTeams == 8) {
+                        teamId = i;
 					} else {
 						// psuedo random
 						sha1(&seed, 4, &seed, 4);
 
 						// get pool index from rng
-						int teamPoolIndex = seed % num;
+						int teamPoolIndex = seed % PlayerSize;
 
 						// set team
 						teamId = Pool[teamPoolIndex];
 
-						printf("\npool info pid: %d\npoolIndex: %d\npoolSize: %d\nteam: %d", i, teamPoolIndex, num, teamId);
+						printf("\npool info pid: %d\npoolIndex: %d\npoolSize: %d\nteam: %d", i, teamPoolIndex, PlayerSize, teamId);
 
 						// remove element from pool
-						if (num > 0) {
-							for (j = teamPoolIndex+1; j < num; ++j)
+						if (PlayerSize > 0) {
+							for (j = teamPoolIndex+1; j < PlayerSize; ++j)
 								Pool[j-1] = Pool[j];
                         
-							num -= 1;
+							PlayerSize -= 1;
 						}
 					}
 					// set client id team
@@ -133,16 +134,15 @@ int patchStaging(void * ui, int pad)
             allPlayersReady = 2;
             pad = UI_PAD_CROSS;
         } else if (pad == UI_PAD_L1) {
-            setTeams(2);
+            // setTeams(2);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R1) {
-            setTeams(4);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_L2) {
-            setTeams(8);
+            // setTeams(8);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R2) {
-            setTeams(0);
+            // setTeams(0);
             pad = UI_PAD_NONE;
         }
     } else {
