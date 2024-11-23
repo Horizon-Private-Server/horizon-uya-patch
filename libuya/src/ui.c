@@ -3,11 +3,12 @@
 #include "time.h"
 #include "interop.h"
 
-#define UI_ACTIVE_ID                            (*(int*)0x003434B8)
 #define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
 
 int internal_uiDialog(void *, const char *, const char *, int, int, float);
 void internal_uiShowPopup(const char *, int, Player * player);
+int internal_uiSelectDialog_Simple(void *, const char *, const char *, int);
+int internal_uiSelectDialog(void *, const char *, const char **, int, int, int, int);
 
 VariableAddress_t vaUiMsgStringFunc = {
 #ifdef UYA_PAL
@@ -90,11 +91,6 @@ u32 uiGetActiveSubPointer(int UI)
 	return 0;
 }
 
-int uiGetActive(void)
-{
-    return UI_ACTIVE_ID;
-}
-
 int uiShowYesNoDialog(const char * title, const char * description)
 {
     return internal_uiDialog(UI_DIALOG_A0, title, description, 3, 0, 0.6);
@@ -105,9 +101,9 @@ int uiShowOkDialog(const char * title, const char * description)
     return internal_uiDialog(UI_DIALOG_A0, title, description, 4, 0, 0.6);
 }
 
-int uiShowSelectDialog(const char * option1, const char * option2)
+int uiShowSelectDialog_Simple_Simple(const char * option1, const char * option2)
 {
-    return internal_uiSelectDialog(UI_DIALOG_A0, option1, option2, 0);
+    return internal_uiSelectDialog_Simple(UI_DIALOG_A0, option1, option2, 0);
 }
 
 int uiShowInputDialog(const char * title, char * value, int maxLength)
@@ -118,4 +114,9 @@ int uiShowInputDialog(const char * title, char * value, int maxLength)
 void uiShowPopup(Player * player, const char * message, int seconds)
 {
 	internal_uiShowPopup(message, seconds * 100, (!player ? 0 : player->unk_24c9));
+}
+
+int uiShowSelectDialog(const char * title, const char * items[], int itemCount, int selectedIndex)
+{
+    return internal_uiSelectDialog(UI_DIALOG_A0, title, items, itemCount, selectedIndex, 0, 0);
 }

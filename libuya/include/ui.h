@@ -143,7 +143,9 @@ int uiShowYesNoDialog(const char * title, const char * description);
  */
 int uiShowOkDialog(const char * title, const char * description);
 int uiShowInputDialog(const char * title, char * value, int maxLength);
-int uiShowSelectDialog(const char * option1, const char * option2);
+int uiShowSelectDialog_Simple(const char * option1, const char * option2);
+int uiShowSelectDialog(const char * title, const char * items[], int itemCount, int selectedIndex);
+
 /*
  * NAME :		uiShowPopup
  * DESCRIPTION :
