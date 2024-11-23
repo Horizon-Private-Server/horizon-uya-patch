@@ -46,18 +46,6 @@ typedef enum uiPadButtons {
     UI_PAD_TOTAL = UI_PAD_R3
 } uiPadButtons_t;
 
-typedef struct ChangeTeamRequest {
-	u32 Seed;
-	int PoolSize;
-	char Pool[GAME_MAX_PLAYERS];
-} ChangeTeamRequest_t;
-
-typedef struct ForceTeamsRequest {
-    int AccountIds[GAME_MAX_PLAYERS];
-    char Teams[GAME_MAX_PLAYERS];
-} ForceTeamsRequest_t;
-ForceTeamsRequest_t TeamsRequest;
-
 typedef int (*uiVTable_Func)(void * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
@@ -65,17 +53,14 @@ uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
 uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
 
-// Data Recieved from server
-void setTeams(int num)
+void setTeams(int poolsize)
 {
     int i, j;
-    ChangeTeamRequest_t request;
-	u32 seed;
+	u32 seed = randRangeInt(0, 10); // timerGetSystemTime();
 	char teamByClientId[GAME_MAX_PLAYERS];
+	char Pool[GAME_MAX_PLAYERS];
+    int num = poolsize;
 
-    request.Seed = timerGetSystemTime();
-    request.PoolSize = num;
-	memcpy(&seed, &request.Seed, 4);
 	memset(teamByClientId, -1, sizeof(teamByClientId));
 
 	// printf("pool size: %d\npool: ", request.PoolSize);
@@ -91,60 +76,37 @@ void setTeams(int num)
 			if (clientId >= 0) {
 				int teamId = teamByClientId[clientId];
 				if (teamId < 0) {
-					if (request.PoolSize == 0) {
+					if (num == 0) {
 						teamId = 0;
 					} else {
 						// psuedo random
 						sha1(&seed, 4, &seed, 4);
 
 						// get pool index from rng
-						int teamPoolIndex = seed %  request.PoolSize;
+						int teamPoolIndex = seed % num;
 
 						// set team
-						teamId = request.Pool[teamPoolIndex];
+						teamId = Pool[teamPoolIndex];
 
-						printf("\npool info pid: %d\npoolIndex: %d\npoolSize: %d\nteam: %d", i, teamPoolIndex, request.PoolSize, teamId);
+						printf("\npool info pid: %d\npoolIndex: %d\npoolSize: %d\nteam: %d", i, teamPoolIndex, num, teamId);
 
 						// remove element from pool
-						if (request.PoolSize > 0) {
-							for (j = teamPoolIndex+1; j < request.PoolSize; ++j)
-								request.Pool[j-1] = request.Pool[j];
-							request.PoolSize -= 1;
+						if (num > 0) {
+							for (j = teamPoolIndex+1; j < num; ++j)
+								Pool[j-1] = Pool[j];
+                        
+							num -= 1;
 						}
 					}
 					// set client id team
 					teamByClientId[clientId] = teamId;
 				}
 				// set team
-				printf("\nsetting pid:%d to %d", i, teamId);
+				printf("\nsetting pid:%d  team to %d", i, teamId);
 				gameSettings->PlayerTeams[i] = teamId;
 			}
 		}
 	}
-}
-
-int onForceTeamsRequest(void * connection, void * data)
-{
-    // move message payload into local
-    memcpy(&TeamsRequest, data, sizeof(ForceTeamsRequest_t));
-
-    return sizeof(ForceTeamsRequest_t);
-}
-
-void doTheTeams(void)
-{
-    int i, j;
-    GameSettings* gs = gameGetSettings();
-    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-        // force teams
-        int accountId = TeamsRequest.AccountIds[i];
-        for (j = 0; j < GAME_MAX_PLAYERS; ++j) {
-            if (gs->PlayerAccountIds[j] == accountId) {
-                gs->PlayerTeams[j] = TeamsRequest.Teams[i];
-                break;
-            }
-        }
-    }
 }
 
 int patchStaging(void * ui, int pad)
@@ -171,16 +133,16 @@ int patchStaging(void * ui, int pad)
             allPlayersReady = 2;
             pad = UI_PAD_CROSS;
         } else if (pad == UI_PAD_L1) {
-            // netSendCustomAppMessage(NET_DELIVERY_CRITICAL, netGetLobbyServerConnection(), CUSTOM_MSG_ID_VOTE_REQUEST, sizeof(request), &request);
+            setTeams(2);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R1) {
-            // setTeams(2);
-            pad = UI_PAD_NONE;
-        } else if (pad == UI_PAD_R2) {
-            // setTeams(0);
+            setTeams(4);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_L2) {
-            // setTeams(8);
+            setTeams(8);
+            pad = UI_PAD_NONE;
+        } else if (pad == UI_PAD_R2) {
+            setTeams(0);
             pad = UI_PAD_NONE;
         }
     } else {
