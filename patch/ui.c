@@ -140,14 +140,26 @@ int patchStaging(void * ui, int pad)
             pad = UI_PAD_CROSS;
         } else if (pad == UI_PAD_L1) {
             // setTeams(2);
-            // int a = uiShowSelectDialog(SELECT_VOTE_TITLE, SELECT_VOTE_NAMES, SELECT_VOTE_NAMES_SIZE, 0);
+            int a = uiShowSelectDialog(SELECT_VOTE_TITLE, SELECT_VOTE_NAMES, SELECT_VOTE_NAMES_SIZE, 0);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R1) {
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_L2) {
-            // setTeams(8);
+            // int selectedPlayer = itemSelected - 0xf;
+            // if (selectedPlayer > 0) {
+            //     short gsTeam = gs->PlayerTeams[selectedPlayer];
+            //     short gsSkin = gs->PlayerSkins[selectedPlayer];
+
+            //     // Save chosen skin and/or team.
+            //     int changeTeamSkin = ((int(*)(int, int, int, int, int, int, int, int))0x00684dd0)(0x01c5c000, &gsTeam, &gsSkin, 0, 8, 1, 1, 1);
+            //     u32 getUI = uiGetPointer(UIP_CHANGE_SKIN_TEAM);
+            //     gs->PlayerTeams[selectedPlayer] = *(int*)(*(u32*)(getUI + 0x110) + 0x146c);
+            //     gs->PlayerSkins[selectedPlayer] = *(int*)(*(u32*)(getUI + 0x114) + 0x146c);
+            //     // setTeams(8);
+            // }
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R2) {
+            // ui, selectedTeam, SelectedSkin, controllerPort, numTeamColors, bChangeTeams, bDan, bNefarious
             // setTeams(0);
             pad = UI_PAD_NONE;
         }
