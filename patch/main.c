@@ -2863,7 +2863,7 @@ int main(void)
 		// Patch Rank Table
 		if (!patched.rankTable) {
 			// Sets deviation rank higher than that of player deviation, this way it goes by rank, not deviation.
-			int rangeMultiplier = 100;
+			int rangeMultiplier = 1;
 			*(float*)RANK_TABLE = 1000000000.00; // Deviation 1
 			*(float*)(RANK_TABLE + 0x4) = 0; // Deviation 2
 			*(float*)(RANK_TABLE + 0x8) = 0; // Deviation 3
