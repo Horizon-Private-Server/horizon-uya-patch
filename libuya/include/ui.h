@@ -61,7 +61,7 @@ enum UIPointers
     UIP_UNK_POPUP = 14,
     UIP_FIND_GAME = 15,
     UIP_GAME_DETAILS = 16,
-    UIP_STAGING_SECONDARY_PLAYER_OPTIONS = 17,
+    UIP_STAGING_INVITE_PLAYERS = 17,
     UIP_END_GAME_DETAILS = 18,
     UIP_KEYBOARD = 19,
     UIP_ONLINE_AGREEMENT_2 = 20,
@@ -145,6 +145,8 @@ int uiShowOkDialog(const char * title, const char * description);
 int uiShowInputDialog(const char * title, char * value, int maxLength);
 int uiShowSelectDialog_Simple(const char * option1, const char * option2);
 int uiShowSelectDialog(const char * title, const char * items[], int itemCount, int selectedIndex);
+int uiShowChangeTeamSkinDialog(void * team, void * skin, int numTeams, int bChangeTeams, int bUnlockDan, int bUnlockNefarious);
+int uiShowInvitePlayersDialog(void);
 
 /*
  * NAME :		uiShowPopup

@@ -24,6 +24,14 @@
 #define GAME_MAP_ID                         (*(int*)0x001F8528)
 #define GAME_CLIENT_ID                      (*(int*)0x001a5e58)
 #define GAME_HOST_ID                        (*(int*)0x001a5fbc)
+// UNK Not Ported to PAL
+#define GAME_UNK_001a5e54                   (*(int*)0x001a5e54)
+#define GAME_UNK_001a5fb8                   (*(int*)0x001a5fb8)
+#define GAME_UNK_001a5f80                   (*(int*)0x001a5f80)
+#define GAME_UNK_001a5f88                   (*(int*)0x001a5f88)
+#define GAME_UNK_001a5f8c                   (*(int*)0x001a5f8c)
+#define GAME_UNK_001a6444                   (*(int*)0x001a6444)
+
 /*
  * Array of round trip time divided by 2.
  */

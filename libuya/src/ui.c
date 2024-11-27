@@ -9,6 +9,8 @@ int internal_uiDialog(void *, const char *, const char *, int, int, float);
 void internal_uiShowPopup(const char *, int, Player * player);
 int internal_uiSelectDialog_Simple(void *, const char *, const char *, int);
 int internal_uiSelectDialog(void *, const char *, const char **, int, int, int, int);
+int internal_uiChangeTeamSkinDialog(void *, void *, void *, int, int, int, int, int);
+int internal_uiInvitePlayersDialog(void *, void *, int, int);
 
 VariableAddress_t vaUiMsgStringFunc = {
 #ifdef UYA_PAL
@@ -119,4 +121,15 @@ void uiShowPopup(Player * player, const char * message, int seconds)
 int uiShowSelectDialog(const char * title, const char * items[], int itemCount, int selectedIndex)
 {
     return internal_uiSelectDialog(UI_DIALOG_A0, title, items, itemCount, selectedIndex, 0, 0);
+}
+
+int uiShowChangeTeamSkinDialog(void * team, void * skin, int numTeams, int bChangeTeams, int bUnlockDan, int bUnlockNefarious)
+{
+	int controllerPort = 0; // Player 1 has opened menu
+	internal_uiChangeTeamSkinDialog(UI_DIALOG_A0, &team, &skin, controllerPort, numTeams, bChangeTeams, bUnlockDan, bUnlockNefarious);
+}
+
+int uiShowInvitePlayersDialog(void)
+{
+	internal_uiInvitePlayersDialog(UI_DIALOG_A0, 0x002496a0, 3, 0);
 }

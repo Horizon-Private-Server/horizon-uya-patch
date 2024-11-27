@@ -18,12 +18,14 @@
 #define BUDDIES_BASE_FUNC (0x00690de8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b48c8)
 #define STATS_BASE_FUNC (0x006c5cc8)
+#define REQUEST_TEAM_CHANGE_BASE_FUNC (0)
 #else
 #define STAGING_BASE_FUNC (0x006bec18)
 #define CREATE_GAME_BASE_FUNC (0x00697e20)
 #define BUDDIES_BASE_FUNC (0x0068e6f8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b1f60)
 #define STATS_BASE_FUNC (0x006c31b8)
+#define REQUEST_TEAM_CHANGE_BASE_FUNC (0x006c1848)
 #endif
 
 typedef enum uiPadButtons {
@@ -45,7 +47,14 @@ typedef enum uiPadButtons {
     UI_PAD_R2 = 15,
     UI_PAD_R3 = 16,
     UI_PAD_TOTAL = UI_PAD_R3
-} uiPadButtons_t;
+} uiPadButtons_e;
+
+typedef enum playerOptions {
+    PLAYER_OPTION_TEAMSKIN = 0,
+    PLAYER_OPTION_KICK,
+    PLAYER_OPTION_ADD_BUDDY,
+    PLAYER_OPTION_IGNORE
+} PlayerOptions_e;
 
 typedef int (*uiVTable_Func)(void * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
@@ -54,15 +63,16 @@ uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
 uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
 
-const char * SELECT_VOTE_TITLE = "first try?";
-const char * SELECT_VOTE_NAMES[] = {
-  "OMG!",
-  "IT TWAS",
-  "HUG YOUR MOTHER",
-  "SUPPORT YOURSELF",
-  "GIVE ME HUGS! :D"
+typedef void (*requestTeamChange_Func)(void * ui, int index);
+requestTeamChange_Func requestTeamChange = (requestTeamChange_Func)REQUEST_TEAM_CHANGE_BASE_FUNC;
+
+// Craete playerOptions stack
+char * playerOptions[4] = {
+    "Change Team",
+    "Kick Player",
+    "Add to Buddies",
+    "Ignore Player"
 };
-const int SELECT_VOTE_NAMES_SIZE = sizeof(SELECT_VOTE_NAMES)/sizeof(char*);
 
 void setTeams(int numTeams)
 {
@@ -121,6 +131,101 @@ void setTeams(int numTeams)
 	}
 }
 
+/*
+ * This function is needed to return the correct
+ * index of where the selected player is at.
+ * If people leave/get kicked, it messes up
+ * the selectedItem -> needed player order.
+*/
+int getPlayerIndex(void * ui,int selectedPlayer)
+{
+    GameSettings * gs = gameGetSettings();
+    int uiElement = *(int*)(ui + (selectedPlayer + 0xf) * 4 + 0x110);
+    long compareNames;
+    int i = 0;
+    while (((gs == 0 || (gs->PlayerClients[i] == -1)) || (compareNames = strcmp(uiElement + 0x14, gs->PlayerNames[i]), compareNames != 0))) {
+        ++i;
+        if (7 < i) return -1;
+    }
+    return i;
+}
+
+void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int isBot, int isTeams)
+{
+    // Get correct player index
+    int i =  getPlayerIndex(ui, selectedItem);
+    // check gametype
+    int isDeathmatch = gs->GameType == GAMERULE_DM;
+    // Get the needed number of teams dependent on gametype.
+    int numTeams = (isDeathmatch) ? 8 : 2;
+
+    // if not a bot and
+    if (!isBot && isTeams) {
+        // ended up not needing this...keeping just in case.
+        // requestTeamChange(ui, selectedItem);
+        short gsTeam = gs->PlayerTeams[i];
+        if (isDeathmatch)
+            gsTeam = (gsTeam > (numTeams - 1)) ? 0 : gsTeam + 1;
+        else
+            gsTeam = !gsTeam;
+    } else if (isBot) {
+        // Open Team/Skin Menu
+        uiShowChangeTeamSkinDialog(gs->PlayerTeams[i], gs->PlayerSkins[i], numTeams, isTeams, 1, 1);
+        // Save chosen Team/Skin
+        u32 getUI = uiGetPointer(UIP_CHANGE_SKIN_TEAM);
+        gs->PlayerTeams[i] = *(int*)(*(u32*)(getUI + 0x110) + 0x146c);
+        gs->PlayerSkins[i] = *(int*)(*(u32*)(getUI + 0x114) + 0x146c);
+    }
+}
+
+void getOptions(GameSettings * gs, int selectedPlayer, int isBot, int isTeams)
+{
+    char changeTeamSkinOption = "Change Team";
+    if (isBot) {
+        sprintf(changeTeamSkinOption, "Change Team/Skin");
+    }
+
+    memset(playerOptions[0], changeTeamSkinOption, 16);
+    // playerOptions[2] = addBuddyOption;
+    // playerOptions[3] = ignorePlayerOption;
+}
+
+int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected)
+{
+    int selectedItem = itemSelected - 0xf;
+    int selectedPlayer = getPlayerIndex(ui, selectedItem);
+    int account_id = gs->PlayerAccountIds[selectedPlayer];
+    int isBot = (account_id >= 883) && (account_id <= 1880);
+    int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
+    // if selected player isn't first player (host)
+    if (selectedItem > 0) {
+        // getOptions(gs, selectedPlayer, isBot, isTeams);
+        char * title = "Player Options";
+        int optionsSize = sizeof(playerOptions)/sizeof(char*);
+        // if bot, change title and remove last two options.
+        if (isBot) {
+            title = "Bot Options";
+            optionsSize -= 2;
+        }
+        int select = uiShowSelectDialog(title, playerOptions, optionsSize, 0);
+        switch (select) {
+            case PLAYER_OPTION_TEAMSKIN: optionChangeTeamSkin(ui, gs, selectedItem, isBot, isTeams); break;
+            case PLAYER_OPTION_KICK: {
+                int kickDialog = uiShowYesNoDialog("", "Are you sure you want to kick this player?");
+                if (kickDialog == 1) {
+                    gs->PlayerStates[selectedPlayer] = 5;
+                }
+                break;
+            };
+            case PLAYER_OPTION_ADD_BUDDY: break;
+            case PLAYER_OPTION_IGNORE: break;
+        }
+        return UI_PAD_NONE;
+    }
+    // return pressing X if nothing else.
+    return UI_PAD_CROSS;
+}
+
 int patchStaging(void * ui, int pad)
 {
     static int allPlayersReady = -1;
@@ -138,25 +243,19 @@ int patchStaging(void * ui, int pad)
             *(int*)((u32)ui + 0x290) = 4;
             allPlayersReady = 2;
             pad = UI_PAD_CROSS;
+        } else if (pad == UI_PAD_CROSS) {
+            // open new player options if host
+            // pad = openPlayerOptions(ui, gs, itemSelected);
         } else if (pad == UI_PAD_L1) {
+            // int gsClientID = gs->PlayerClients[getPlayerIndex(ui, itemSelected - 0xf)];
+            // u64 data = 0x0000000000040000;
+            // ((void(*)(u8, u32, u32, u32, u32, u64))0x0014AD08)(0x50, *(u32*)0x001a5e54, gsClientID, *(u32*)0x002407c0, 0x20, &data);
             // setTeams(2);
-            int a = uiShowSelectDialog(SELECT_VOTE_TITLE, SELECT_VOTE_NAMES, SELECT_VOTE_NAMES_SIZE, 0);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R1) {
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_L2) {
-            // int selectedPlayer = itemSelected - 0xf;
-            // if (selectedPlayer > 0) {
-            //     short gsTeam = gs->PlayerTeams[selectedPlayer];
-            //     short gsSkin = gs->PlayerSkins[selectedPlayer];
-
-            //     // Save chosen skin and/or team.
-            //     int changeTeamSkin = ((int(*)(int, int, int, int, int, int, int, int))0x00684dd0)(0x01c5c000, &gsTeam, &gsSkin, 0, 8, 1, 1, 1);
-            //     u32 getUI = uiGetPointer(UIP_CHANGE_SKIN_TEAM);
-            //     gs->PlayerTeams[selectedPlayer] = *(int*)(*(u32*)(getUI + 0x110) + 0x146c);
-            //     gs->PlayerSkins[selectedPlayer] = *(int*)(*(u32*)(getUI + 0x114) + 0x146c);
-            //     // setTeams(8);
-            // }
+            // setTeams(8);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R2) {
             // ui, selectedTeam, SelectedSkin, controllerPort, numTeamColors, bChangeTeams, bDan, bNefarious

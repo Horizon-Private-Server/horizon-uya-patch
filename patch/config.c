@@ -1826,7 +1826,7 @@ void onConfigUpdate(void)
     }
 
     u32 * stagingUiElements = (u32*)(uiGetActivePointer(UIP_STAGING) + 0x110);
-    u32 * stagingDetailsUiElements = (u32*)(uiGetActivePointer(UIP_STAGING_SECONDARY_PLAYER_OPTIONS) + 0x110);
+    u32 * stagingDetailsUiElements = (u32*)(uiGetActivePointer(UIP_STAGING_INVITE_PLAYERS) + 0x110);
 
     // update ui strings
     if ((u32)stagingUiElements > 0x100000)

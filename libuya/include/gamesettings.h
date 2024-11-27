@@ -37,9 +37,9 @@ typedef struct GameSettings
 {
  /* 0x000 */ char PlayerNames[GAME_MAX_PLAYERS][16];
  /* 0x080 */ char PlayerClanTags[GAME_MAX_PLAYERS][8];
- /* 0x090 */ short PlayerSkins[GAME_MAX_PLAYERS];
- /* 0x0b0 */ short PlayerTeams[GAME_MAX_PLAYERS];
- /* 0x0d0 */ short PlayerClients[GAME_MAX_PLAYERS];
+ /* 0x0c0 */ short PlayerSkins[GAME_MAX_PLAYERS];
+ /* 0x0d0 */ short PlayerTeams[GAME_MAX_PLAYERS];
+ /* 0x0e0 */ short PlayerClients[GAME_MAX_PLAYERS];
  /* 0x0f0 */ short PlayerStates[GAME_MAX_PLAYERS];
  /* 0x100 */ char UNK_OFFSET_100[16];
  /* 0x110 */ float PlayerRanks[GAME_MAX_PLAYERS];
