@@ -1632,14 +1632,16 @@ void onMenuUpdate(int inGame)
 	else if (!inGame)
   {
     // if in Online Lobby, and SubPointer equals zero (not on find game)
-		if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0 && *(u32*)0x01C5C114 == 0)
-		{
+		if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0 && *(u32*)0x01C5C114 == 0) {
 			// render message
 			// gfxScreenSpaceBox(SCREEN_WIDTH * 0.2, SCREEN_HEIGHT * 0.81, 0.4, 0.3, colorOpenBg);
       float scale = .85;
 	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.77, scale, scale, 0x80FFFFFF, "Press START to", -1, 4);
 			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4);
-
+    }
+    if (uiGetActivePointer(UIP_STAGING) > 0 && *(u32*)0x01C5C114 == 0) {
+      if (gameAmIHost() && gameGetSettings()->GameType != GAMERULE_DM)
+        gfxScreenSpaceText(SCREEN_WIDTH * 0.205, SCREEN_HEIGHT * 0.07, 0.7, .85, 0x8069cbf2, "\x14 RANDOM TEAMS", -1, 4);
     }
 		// check for pad input
 		if (padGetButtonUp(0, PAD_START) > 0)

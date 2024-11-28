@@ -9,6 +9,7 @@
 #include <libuya/sha1.h>
 #include <libuya/time.h>
 #include <libuya/ui.h>
+#include <libuya/graphics.h>
 #include "messageid.h"
 #include "config.h"
 
@@ -18,7 +19,7 @@
 #define BUDDIES_BASE_FUNC (0x00690de8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b48c8)
 #define STATS_BASE_FUNC (0x006c5cc8)
-#define REQUEST_TEAM_CHANGE_BASE_FUNC (0)
+#define REQUEST_TEAM_CHANGE_BASE_FUNC (0x006c4360)
 #else
 #define STAGING_BASE_FUNC (0x006bec18)
 #define CREATE_GAME_BASE_FUNC (0x00697e20)
@@ -154,27 +155,33 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
 {
     // Get correct player index
     int i =  getPlayerIndex(ui, selectedItem);
-    // check gametype
-    int isDeathmatch = gs->GameType == GAMERULE_DM;
     // Get the needed number of teams dependent on gametype.
-    int numTeams = (isDeathmatch) ? 8 : 2;
+    int numTeams = (gs->GameType == GAMERULE_DM) ? 8 : 2;
 
-    // if not a bot and
-    if (!isBot && isTeams) {
-        // ended up not needing this...keeping just in case.
-        // requestTeamChange(ui, selectedItem);
-        short gsTeam = gs->PlayerTeams[i];
-        if (isDeathmatch)
-            gsTeam = (gsTeam > (numTeams - 1)) ? 0 : gsTeam + 1;
-        else
-            gsTeam = !gsTeam;
-    } else if (isBot) {
+    if (isBot) {
         // Open Team/Skin Menu
         uiShowChangeTeamSkinDialog(gs->PlayerTeams[i], gs->PlayerSkins[i], numTeams, isTeams, 1, 1);
         // Save chosen Team/Skin
         u32 getUI = uiGetPointer(UIP_CHANGE_SKIN_TEAM);
         gs->PlayerTeams[i] = *(int*)(*(u32*)(getUI + 0x110) + 0x146c);
         gs->PlayerSkins[i] = *(int*)(*(u32*)(getUI + 0x114) + 0x146c);
+    } else if (!isBot && isTeams) {
+        // Keep this function just in case.
+        // requestTeamChange(ui, selectedItem);
+        // reset request
+        int gsTeam = gs->PlayerTeams[i];
+        // Change Teams depending on game type.
+        int team = 0;
+        if (gs->GameType == GAMERULE_DM) {
+            if (gsTeam >= (numTeams - 1)) {
+                team = 0;
+            } else {
+                team = gsTeam + 1;
+            }
+        } else {
+            team = !gsTeam;
+        }
+        gs->PlayerTeams[i] = team;
     }
 }
 
@@ -201,11 +208,11 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected)
     if (selectedItem > 0) {
         // getOptions(gs, selectedPlayer, isBot, isTeams);
         char * title = "Player Options";
-        int optionsSize = sizeof(playerOptions)/sizeof(char*);
+        int optionsSize = (sizeof(playerOptions)/sizeof(char*)) - 2;
         // if bot, change title and remove last two options.
         if (isBot) {
             title = "Bot Options";
-            optionsSize -= 2;
+            // optionsSize -= 2;
         }
         int select = uiShowSelectDialog(title, playerOptions, optionsSize, 0);
         switch (select) {
@@ -236,6 +243,8 @@ int patchStaging(void * ui, int pad)
     // ui address: 0x01dc06a8
     u32 * uiElements = (u32*)((u32)ui + 0x110);
     int itemSelected = *(int*)(ui + 0x290);
+    int isLoading = *(u8*)(ui + 0x2b6);
+    int isRequstingTeamChange = *(u8*)(ui + 0x2c8);
 
     if (gameAmIHost()) {
         if (pad == UI_PAD_CIRCLE && allPlayersReady == 1) {
@@ -245,12 +254,11 @@ int patchStaging(void * ui, int pad)
             pad = UI_PAD_CROSS;
         } else if (pad == UI_PAD_CROSS) {
             // open new player options if host
-            // pad = openPlayerOptions(ui, gs, itemSelected);
+            pad = openPlayerOptions(ui, gs, itemSelected);
         } else if (pad == UI_PAD_L1) {
-            // int gsClientID = gs->PlayerClients[getPlayerIndex(ui, itemSelected - 0xf)];
-            // u64 data = 0x0000000000040000;
-            // ((void(*)(u8, u32, u32, u32, u32, u64))0x0014AD08)(0x50, *(u32*)0x001a5e54, gsClientID, *(u32*)0x002407c0, 0x20, &data);
-            // setTeams(2);
+            if (gs->GameType != GAMERULE_DM)
+                setTeams(2);
+
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R1) {
             pad = UI_PAD_NONE;
@@ -262,16 +270,6 @@ int patchStaging(void * ui, int pad)
             // setTeams(0);
             pad = UI_PAD_NONE;
         }
-    } else {
-	    // Patch Unkick
-        u32 leaveGamePopup = uiGetActiveSubPointer(11);
-		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-			// Check ClientID and if they are kicked and not viewing the kicked popup
-			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 5 && leaveGamePopup > 0) {
-                // Force close leave game popup.
-                *(u32*)0x01C5C284 = 0x2c;
-			}
-		}
     }
 
 	// call game function we're replacing
@@ -284,12 +282,13 @@ int patchStaging(void * ui, int pad)
                 gs->PlayerStates[0] = 6;
 
             // if not all players are ready
-            if (gs->PlayerClients[i] >= 0 && gs->PlayerStates[i] != 6 && gs->PlayerStates[i] != 7)
+            if (gs->PlayerClients[i] > -1 && gs->PlayerStates[i] < 6) {
                 allPlayersReady = 0;
-            else if (gs->PlayerClients[i] >= 0 && gs->PlayerStates[i] == 6)
+            } else if (gs->PlayerClients[i] > -1 && gs->PlayerStates[i] == 6) {
                 allPlayersReady = 1;
-            else if (allPlayersReady == 2)
+            } else if (allPlayersReady == 2) {
                 allPlayersReady = -1;
+            }
         }
         
         // Replace "\x11 UNREADY" with "\x11 STSART"
@@ -298,9 +297,23 @@ int patchStaging(void * ui, int pad)
 	        strncpy((char*)str, "\x11 START", 9);
         else
 	        strncpy((char*)str, "         ", 9);
-     
+        
+    } else {
+        // Nont Host Stuff
+        for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+            // if server client id matches local client id.
+            if (gs->PlayerClients[i] == clientId) {
+                // Patch Unkick: if leave game pop is up, close it.
+                u32 popup = uiGetActiveSubPointer(11);
+                if (gs->PlayerStates[i] == 5 && popup > 0) {
+                    // Compare popup text and "Leave Game" string.
+                    if (strcmp(*(u32*)(popup + 0x110) + 0x64, uiMsgString(0x1643))) {
+                        *(u32*)0x01C5C284 = 0x2c;
+                    }
+                }
+            }
+        }
     }
-    
 	return result;
 }
 
