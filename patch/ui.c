@@ -57,6 +57,13 @@ typedef enum playerOptions {
     PLAYER_OPTION_IGNORE
 } PlayerOptions_e;
 
+typedef enum teamOptions {
+    TEAM_OPTION_RANDOM = 0,
+    TEAM_OPTION_BLUE,
+    TEAM_OPTION_RED,
+    TEAM_OPTION_FFA
+} TeamOptions_e;
+
 typedef int (*uiVTable_Func)(void * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
@@ -73,6 +80,13 @@ char * playerOptions[4] = {
     "Kick Player",
     "Add to Buddies",
     "Ignore Player"
+};
+
+char * randomTeamOptions[4] = {
+    "Random Teams",
+    "All Blue",
+    "All Red",
+    "Free For All"
 };
 
 void setTeams(int numTeams)
@@ -97,11 +111,11 @@ void setTeams(int numTeams)
 			if (clientId >= 0) {
 				int teamId = teamByClientId[clientId];
 				if (teamId < 0) {
-					if (PlayerSize == 0 || numTeams == 0) {
-						teamId = 0;
-                    } else if (numTeams == 8) {
+					if (PlayerSize == 0 || numTeams == TEAM_OPTION_BLUE || numTeams == TEAM_OPTION_RED) {
+						teamId = numTeams - 1;
+                    } else if (numTeams == TEAM_OPTION_FFA) {
                         teamId = i;
-					} else {
+					} else if (numTeams == TEAM_OPTION_RANDOM) {
 						// psuedo random
 						sha1(&seed, 4, &seed, 4);
 
@@ -111,7 +125,7 @@ void setTeams(int numTeams)
 						// set team
 						teamId = Pool[teamPoolIndex];
 
-						printf("\npool info pid: %d\npoolIndex: %d\npoolSize: %d\nteam: %d", i, teamPoolIndex, PlayerSize, teamId);
+						// printf("\npool info pid: %d\npoolIndex: %d\npoolSize: %d\nteam: %d", i, teamPoolIndex, PlayerSize, teamId);
 
 						// remove element from pool
 						if (PlayerSize > 0) {
@@ -125,7 +139,7 @@ void setTeams(int numTeams)
 					teamByClientId[clientId] = teamId;
 				}
 				// set team
-				printf("\nsetting pid:%d  team to %d", i, teamId);
+				// printf("\nsetting pid:%d  team to %d", i, teamId);
 				gameSettings->PlayerTeams[i] = teamId;
 			}
 		}
@@ -197,13 +211,12 @@ void getOptions(GameSettings * gs, int selectedPlayer, int isBot, int isTeams)
     // playerOptions[3] = ignorePlayerOption;
 }
 
-int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected)
+int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
 {
     int selectedItem = itemSelected - 0xf;
     int selectedPlayer = getPlayerIndex(ui, selectedItem);
     int account_id = gs->PlayerAccountIds[selectedPlayer];
     int isBot = (account_id >= 883) && (account_id <= 1880);
-    int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
     // if selected player isn't first player (host)
     if (selectedItem > 0) {
         // getOptions(gs, selectedPlayer, isBot, isTeams);
@@ -233,14 +246,25 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected)
     return UI_PAD_CROSS;
 }
 
+void openTeamsOptions(GameSettings * gs, int isTeams)
+{
+    int size = sizeof(randomTeamOptions)/sizeof(char*);
+    int optionsSize = (gs->GameType == GAMERULE_DM) ? size : (size - 1);
+    int select = uiShowSelectDialog("Team Options", randomTeamOptions, size, 0);
+    if (select > -1)
+        setTeams(select);
+}
+
 int patchStaging(void * ui, int pad)
 {
     static int allPlayersReady = -1;
+    static int pressedL1 = 0;
+    static int holdingL1time = 0; 
     int i;
     int j;
     GameSettings* gs = gameGetSettings();
     int clientId = gameGetMyClientId();
-    // ui address: 0x01dc06a8
+    int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
     u32 * uiElements = (u32*)((u32)ui + 0x110);
     int itemSelected = *(int*)(ui + 0x290);
     int isLoading = *(u8*)(ui + 0x2b6);
@@ -254,20 +278,14 @@ int patchStaging(void * ui, int pad)
             pad = UI_PAD_CROSS;
         } else if (pad == UI_PAD_CROSS) {
             // open new player options if host
-            pad = openPlayerOptions(ui, gs, itemSelected);
+            pad = openPlayerOptions(ui, gs, itemSelected, isTeams);
         } else if (pad == UI_PAD_L1) {
-            if (gs->GameType != GAMERULE_DM)
-                setTeams(2);
-
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R1) {
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_L2) {
-            // setTeams(8);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R2) {
-            // ui, selectedTeam, SelectedSkin, controllerPort, numTeamColors, bChangeTeams, bDan, bNefarious
-            // setTeams(0);
             pad = UI_PAD_NONE;
         }
     }
@@ -276,6 +294,22 @@ int patchStaging(void * ui, int pad)
 	int result = stagingFunc(ui, pad);
 
     if (gameAmIHost()) {
+        // Opem Teams Options Menu
+        if (isTeams) {
+            // if L1 isn't pressed and no other menu is open
+            if (!padGetButton(0, PAD_L1) && *(u32*)0x01c5c114 == 0) {
+                // reset pressed l1 if nothing is pressed.
+                pressedL1 = 0;
+                holdingL1time = gameGetTime() + .5 * TIME_SECOND;
+            }
+            if (pressedL1 == 0) {
+                pressedL1 = 1;
+                setTeams(TEAM_OPTION_RANDOM);
+            } else if (pressedL1 == 1 && holdingL1time <= gameGetTime()) {
+                pressedL1 = 2;
+                openTeamsOptions(gs, isTeams);
+            }
+        }
         for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
             // Set host to always ready
             if (gs->PlayerStates[0] != 7)
