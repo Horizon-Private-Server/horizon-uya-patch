@@ -13,6 +13,7 @@
 #define GAME_TIME                           (*(int*)0x001a5df8)
 #define GAME_MAP_ID                         (*(int*)0x001f83a8)
 #define GAME_CLIENT_ID                      (*(int*)0x001a5cd8)
+#define GAME_IS_HOST                        (*(int*)0x001a5e38)
 #define GAME_HOST_ID                        (*(int*)0x001a5e3c)
 #else
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
@@ -23,10 +24,11 @@
 #define GAME_TIME                           (*(int*)0x001a5f78)
 #define GAME_MAP_ID                         (*(int*)0x001F8528)
 #define GAME_CLIENT_ID                      (*(int*)0x001a5e58)
+#define GAME_IS_HOST                        (*(int*)0x001a5fb8)
 #define GAME_HOST_ID                        (*(int*)0x001a5fbc)
+
 // UNK Not Ported to PAL
 #define GAME_UNK_001a5e54                   (*(int*)0x001a5e54)
-#define GAME_UNK_001a5fb8                   (*(int*)0x001a5fb8)
 #define GAME_UNK_001a5f80                   (*(int*)0x001a5f80)
 #define GAME_UNK_001a5f88                   (*(int*)0x001a5f88)
 #define GAME_UNK_001a5f8c                   (*(int*)0x001a5f8c)

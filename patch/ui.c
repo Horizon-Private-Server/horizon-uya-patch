@@ -29,6 +29,8 @@
 #define REQUEST_TEAM_CHANGE_BASE_FUNC (0x006c1848)
 #endif
 
+#define OPTIONS_SCROLL_CHECK ((u32)STAGING_BASE_FUNC + 0xae0)
+
 typedef enum uiPadButtons {
     UI_PAD_NONE = 0,
     UI_PAD_DPAD_UP = 1,
@@ -50,7 +52,7 @@ typedef enum uiPadButtons {
     UI_PAD_TOTAL = UI_PAD_R3
 } uiPadButtons_e;
 
-typedef enum playerOptions {
+typedef enum playerOptions_Host {
     PLAYER_OPTION_TEAMSKIN = 0,
     PLAYER_OPTION_KICK,
     PLAYER_OPTION_ADD_BUDDY,
@@ -75,9 +77,14 @@ typedef void (*requestTeamChange_Func)(void * ui, int index);
 requestTeamChange_Func requestTeamChange = (requestTeamChange_Func)REQUEST_TEAM_CHANGE_BASE_FUNC;
 
 // Craete playerOptions stack
-char * playerOptions[4] = {
+char * playerOption_Host[4] = {
     "Change Team",
     "Kick Player",
+    "Add to Buddies",
+    "Ignore Player"
+};
+
+char * playerOption_Client[2] = {
     "Add to Buddies",
     "Ignore Player"
 };
@@ -199,36 +206,30 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
     }
 }
 
-void getOptions(GameSettings * gs, int selectedPlayer, int isBot, int isTeams)
-{
-    char changeTeamSkinOption = "Change Team";
-    if (isBot) {
-        sprintf(changeTeamSkinOption, "Change Team/Skin");
-    }
-
-    memset(playerOptions[0], changeTeamSkinOption, 16);
-    // playerOptions[2] = addBuddyOption;
-    // playerOptions[3] = ignorePlayerOption;
-}
-
 int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
 {
     int selectedItem = itemSelected - 0xf;
     int selectedPlayer = getPlayerIndex(ui, selectedItem);
     int account_id = gs->PlayerAccountIds[selectedPlayer];
+    int client_id = gs->PlayerClients[selectedPlayer];
     int isBot = (account_id >= 883) && (account_id <= 1880);
+    int isHost = gameAmIHost();
     // if selected player isn't first player (host)
-    if (selectedItem > 0) {
+    if (selectedItem > -1 && client_id != gameGetMyClientId()) {
         // getOptions(gs, selectedPlayer, isBot, isTeams);
         char * title = "Player Options";
-        int optionsSize = (sizeof(playerOptions)/sizeof(char*)) - 2;
+        int optionsSize = (isHost) ? 4 : 2;
         // if bot, change title and remove last two options.
         if (isBot) {
             title = "Bot Options";
-            // optionsSize -= 2;
+            optionsSize -= 2;
         }
-        int select = uiShowSelectDialog(title, playerOptions, optionsSize, 0);
-        switch (select) {
+        int select = uiShowSelectDialog(title, (isHost) ? playerOption_Host : playerOption_Client, optionsSize, 0);
+        int selection = -1;
+        if (select > -1)
+            selection = (isHost) ? select : (select + 2);
+
+        switch (selection) {
             case PLAYER_OPTION_TEAMSKIN: optionChangeTeamSkin(ui, gs, selectedItem, isBot, isTeams); break;
             case PLAYER_OPTION_KICK: {
                 int kickDialog = uiShowYesNoDialog("", "Are you sure you want to kick this player?");
@@ -258,7 +259,7 @@ void openTeamsOptions(GameSettings * gs, int isTeams)
 int patchStaging(void * ui, int pad)
 {
     static int allPlayersReady = -1;
-    static int pressedL1 = 0;
+    static int pressedL1 = -1;
     static int holdingL1time = 0; 
     int i;
     int j;
@@ -270,17 +271,17 @@ int patchStaging(void * ui, int pad)
     int isLoading = *(u8*)(ui + 0x2b6);
     int isRequstingTeamChange = *(u8*)(ui + 0x2c8);
 
+    // Change pad buttons for all players
+    if (pad == UI_PAD_CROSS) {
+        pad = openPlayerOptions(ui, gs, itemSelected, isTeams);
+    }
+    // Change pad buttons on for host
     if (gameAmIHost()) {
         if (pad == UI_PAD_CIRCLE && allPlayersReady == 1) {
             // Force "Start" to be selected
             *(int*)((u32)ui + 0x290) = 4;
             allPlayersReady = 2;
             pad = UI_PAD_CROSS;
-        } else if (pad == UI_PAD_CROSS) {
-            // open new player options if host
-            pad = openPlayerOptions(ui, gs, itemSelected, isTeams);
-        } else if (pad == UI_PAD_L1) {
-            pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R1) {
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_L2) {
@@ -297,15 +298,17 @@ int patchStaging(void * ui, int pad)
         // Opem Teams Options Menu
         if (isTeams) {
             // if L1 isn't pressed and no other menu is open
-            if (!padGetButton(0, PAD_L1) && *(u32*)0x01c5c114 == 0) {
+            if (!padGetButton(0, PAD_L1)) {
                 // reset pressed l1 if nothing is pressed.
+                pressedL1 = -1;
+                holdingL1time = gameGetTime() + .75 * TIME_SECOND;
+            } else if (padGetButton(0, PAD_L1) && pressedL1 < 1 && (*(u32*)0x01c5c114 == 0)) {
                 pressedL1 = 0;
-                holdingL1time = gameGetTime() + .5 * TIME_SECOND;
             }
             if (pressedL1 == 0) {
                 pressedL1 = 1;
                 setTeams(TEAM_OPTION_RANDOM);
-            } else if (pressedL1 == 1 && holdingL1time <= gameGetTime()) {
+            } else if (pressedL1 == 1 && holdingL1time <= gameGetTime() && *(u32*)0x01c5c114 == 0) {
                 pressedL1 = 2;
                 openTeamsOptions(gs, isTeams);
             }
@@ -347,6 +350,9 @@ int patchStaging(void * ui, int pad)
                 }
             }
         }
+        // Make it so all clients can scroll over users names
+        if (*(u32*)OPTIONS_SCROLL_CHECK == 0x24050001)
+            *(u32*)OPTIONS_SCROLL_CHECK = 0x24050003;
     }
 	return result;
 }
