@@ -18,9 +18,16 @@
 #else
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
 #define SCENE_LOADED                        (*(int*)0x002459C8)
-/*
- * Game time (ms).
- */
+
+#define GAME_IS_CLAN_CHALLENGE              (*(u8*)0x001a5e58)
+#define GAME_MY_SKIN                        (*(int*0x001a5e6c)
+#define GAME_MY_ACCOUNT_ID                  (*(int*)0x201a5e84)
+#define GAME_MY_CLAN_ID                     (*(int*)0x001a5e88)
+#define GAME_MY_CLAN_NAME                   (0x001a5e8c)
+#define GAME_IS_CLAN_LEADER                 (*(u8*)0x001a5ead)
+#define GAME_MY_USERNAME                    (0x001a5eae)
+#define GAME_CREATE_GAME_NAME               (0x001a5f0e)
+#define GAME_CREATE_GAME_PASSWORD           (0x001a5f4e)
 #define GAME_TIME                           (*(int*)0x001a5f78)
 #define GAME_MAP_ID                         (*(int*)0x001F8528)
 #define GAME_CLIENT_ID                      (*(int*)0x001a5e58)
