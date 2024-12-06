@@ -14,22 +14,48 @@
 #include "config.h"
 
 #ifdef UYA_PAL
+// UI Functions
 #define STAGING_BASE_FUNC (0x006c1730)
 #define CREATE_GAME_BASE_FUNC (0x0069a630)
 #define BUDDIES_BASE_FUNC (0x00690de8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b48c8)
 #define STATS_BASE_FUNC (0x006c5cc8)
-#define REQUEST_TEAM_CHANGE_BASE_FUNC (0x006c4360)
+
+// Needed Staging Functions
+#define OPTION_REQUEST_TEAM_CHANGE_BASE_FUNC (0x006c4360)
+#define BUDDY_IGNORE_LIST_PTR (*(u32*)0x0024d760)
+#define GET_BUDDY_LIST_BASE_FUNC (0x006cd768)
+#define GET_IGNORE_LIST_BASE_FUNC (0x006d5d68)
+#define OPTION_ADD_BUDDY_BASE_FUNC (0x006cdc30)
+#define OPTION_REMOVE_BUDDY_BASE_FUNC (0x006cddb0)
+#define OPTION_IGNORE_PLAYER_BASE_FUNC (0x006d6210)
+#define OPTION_UNIGNORE_PLAYER_BASE_FUNC (0x006d6398)
 #else
+// UI Functions
 #define STAGING_BASE_FUNC (0x006bec18)
 #define CREATE_GAME_BASE_FUNC (0x00697e20)
 #define BUDDIES_BASE_FUNC (0x0068e6f8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b1f60)
 #define STATS_BASE_FUNC (0x006c31b8)
-#define REQUEST_TEAM_CHANGE_BASE_FUNC (0x006c1848)
+
+// Needed Staging Functions
+#define OPTION_REQUEST_TEAM_CHANGE_BASE_FUNC (0x006c1848)
+#define BUDDY_IGNORE_LIST_PTR (*(u32*)0x0024d860)
+#define GET_BUDDY_LIST_BASE_FUNC (0x006cafe0)
+#define GET_IGNORE_LIST_BASE_FUNC (0x006d35d8)
+#define OPTION_ADD_BUDDY_BASE_FUNC (0x006cb4a8)
+#define OPTION_REMOVE_BUDDY_BASE_FUNC (0x006cb628)
+#define OPTION_IGNORE_PLAYER_BASE_FUNC (0x006d3a80)
+#define OPTION_UNIGNORE_PLAYER_BASE_FUNC (0x006d3c08)
 #endif
 
+#define MAX_BUDDIES (64)
+#define MAX_IGNORED (25)
 #define OPTIONS_SCROLL_CHECK ((u32)STAGING_BASE_FUNC + 0xae0)
+#define BUDDY_LIST_STACK (*(u32*)(BUDDY_IGNORE_LIST_PTR + 0x34))
+#define IGNORE_LIST_STACK (*(u32*)(BUDDY_IGNORE_LIST_PTR + 0x40))
+#define BUDDY_LIST_COUNT (*(int*)(BUDDY_LIST_STACK + *(int*)(BUDDY_LIST_STACK + 0x4) * 0xc + 0x2c))
+#define IGNORE_LIST_COUNT (*(int*)(IGNORE_LIST_STACK + *(int*)(IGNORE_LIST_STACK + 0x4) * 0xc + 0x2c))
 
 typedef enum uiPadButtons {
     UI_PAD_NONE = 0,
@@ -73,18 +99,26 @@ uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
 uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
 
+typedef int (*buddy_Func)(int stack, int account_id);
+buddy_Func getBuddyList = (buddy_Func)GET_BUDDY_LIST_BASE_FUNC;
+buddy_Func getIgnoreList = (buddy_Func)GET_IGNORE_LIST_BASE_FUNC;
+buddy_Func addBuddy = (buddy_Func)GET_IGNORE_LIST_BASE_FUNC;
+buddy_Func removeBuddy = (buddy_Func)OPTION_REMOVE_BUDDY_BASE_FUNC;
+buddy_Func ignorePlayer = (buddy_Func)OPTION_IGNORE_PLAYER_BASE_FUNC;
+buddy_Func unignorePlayer = (buddy_Func)OPTION_UNIGNORE_PLAYER_BASE_FUNC;
+
 typedef void (*requestTeamChange_Func)(void * ui, int index);
-requestTeamChange_Func requestTeamChange = (requestTeamChange_Func)REQUEST_TEAM_CHANGE_BASE_FUNC;
+requestTeamChange_Func requestTeamChange = (requestTeamChange_Func)OPTION_REQUEST_TEAM_CHANGE_BASE_FUNC;
 
 // Craete playerOptions stack
-char * playerOption_Host[4] = {
+char * playerOption_Host[4][20] = {
     "Change Team",
     "Kick Player",
     "Add to Buddies",
     "Ignore Player"
 };
 
-char * playerOption_Client[2] = {
+char * playerOption_Client[2][20] = {
     "Add to Buddies",
     "Ignore Player"
 };
@@ -206,6 +240,19 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
     }
 }
 
+int optionAddRemoveBuddy(int account_id)
+{
+    return -1;
+ // do stuff for Add/Remove Buddies
+}
+
+void updateOptions(GameSettings *gs, int account_id)
+{
+    return;
+    // updating of remov/add buddies go here
+    // also for ignore/unignore player
+}
+
 int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
 {
     int selectedItem = itemSelected - 0xf;
@@ -216,7 +263,9 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
     int isHost = gameAmIHost();
     // if selected player isn't first player (host)
     if (selectedItem > -1 && client_id != gameGetMyClientId()) {
-        // getOptions(gs, selectedPlayer, isBot, isTeams);
+        if (!isBot)
+            updateOptions(gs, account_id);
+        
         char * title = "Player Options";
         int optionsSize = (isHost) ? 4 : 2;
         // if bot, change title and remove last two options.
@@ -261,6 +310,7 @@ int patchStaging(void * ui, int pad)
     static int allPlayersReady = -1;
     static int pressedL1 = -1;
     static int holdingL1time = 0; 
+    static int a = 0;
     int i;
     int j;
     GameSettings* gs = gameGetSettings();
@@ -283,10 +333,20 @@ int patchStaging(void * ui, int pad)
             allPlayersReady = 2;
             pad = UI_PAD_CROSS;
         } else if (pad == UI_PAD_R1) {
+            a = addBuddy(BUDDY_LIST_STACK, 0x1a6);
+            printf("addBuddy: %x %08x\n", a, &a);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_L2) {
+            a = getBuddyList(BUDDY_LIST_STACK, 2);
+            printf("getBuddyList: %x %08x\n", a, &a);
+            printf("Buddy List Count: %d\n", BUDDY_LIST_COUNT);
+            a = getIgnoreList(IGNORE_LIST_STACK, 0);
+            printf("getIgnoreList: %x %08x\n", a, &a);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R2) {
+            a = removeBuddy(BUDDY_LIST_STACK, 0x1a6);
+            printf("removeBuddy: %x %08x\n", a, &a);
+            printf("Buddy List Count: %d\n", BUDDY_LIST_COUNT);
             pad = UI_PAD_NONE;
         }
     }
@@ -382,6 +442,7 @@ int patchPlayerDetails(void * ui, long pad)
 {
     u32 * uiElements = (u32*)((u32)ui + 0x110);
     int itemSelected = *(int*)(ui + 0x290);
+    int account_id = *(u32*)(ui + 0x2a8);
 
     int result = playerDetailsFunc(ui, pad);
 
