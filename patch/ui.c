@@ -78,7 +78,15 @@ typedef enum uiPadButtons {
     UI_PAD_TOTAL = UI_PAD_R3
 } uiPadButtons_e;
 
-typedef enum playerOptions_Host {
+typedef enum initStaging {
+    INIT_NOPE = 0,
+    INIT_DONE = 1,
+    INIT_GAME_START = 2,
+    INIT_GAME_START_DONE = 3
+} initStaging_e;
+
+typedef enum playerOptions {
+    PLAYER_OPTION_CANCEL = -1,
     PLAYER_OPTION_TEAMSKIN = 0,
     PLAYER_OPTION_KICK,
     PLAYER_OPTION_ADD_BUDDY,
@@ -86,9 +94,12 @@ typedef enum playerOptions_Host {
 } PlayerOptions_e;
 
 typedef enum teamOptions {
+    TEAM_OPTION_CANCEL = -1,
     TEAM_OPTION_RANDOM = 0,
     TEAM_OPTION_BLUE,
     TEAM_OPTION_RED,
+    // TEAM_OPTION_TVB_BVR,
+    // TEAM_OPTION_TVB_RVB,
     TEAM_OPTION_FFA
 } TeamOptions_e;
 
@@ -113,22 +124,33 @@ requestTeamChange_Func requestTeamChange = (requestTeamChange_Func)OPTION_REQUES
 // Craete playerOptions stack
 char * playerOption_Host[4][20] = {
     "Change Team",
-    "Kick Player",
-    "Add to Buddies",
-    "Ignore Player"
+    "Kick Player"
 };
 
-char * playerOption_Client[2][20] = {
-    "Add to Buddies",
-    "Ignore Player"
-};
+char * playerOption_Client[2][20];
+
+char * addBuddyStr = "Add to Buddies";
+char * removeBuddyStr = "Remove Buddy";
+char * ignorePlayerStr = "Ignore Player";
+char * unignorePlayeStr = "Unignore Player";
 
 char * randomTeamOptions[4] = {
     "Random Teams",
+    // "Top vs Bottom (BvR)",
+    // "Top vs Buttom (RvB)",
     "All Blue",
     "All Red",
     "Free For All"
 };
+
+typedef struct buddyIgnoreInfo {
+/* 0x00 */ short buddyCount;
+/* 0x02 */ short ignoredCount;
+/* 0x04 */ char client_ids[GAME_MAX_PLAYERS];
+/* 0x0c */ char buddies[GAME_MAX_PLAYERS];
+/* 0x14 */ char ignored[GAME_MAX_PLAYERS];
+} buddyIgnoreInfo_t;
+buddyIgnoreInfo_t info;
 
 void setTeams(int numTeams)
 {
@@ -240,31 +262,95 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
     }
 }
 
-int optionAddRemoveBuddy(int account_id)
+int optionAddRemoveBuddy(int account_id, int selectedIndex)
 {
-    return -1;
- // do stuff for Add/Remove Buddies
+    int i = selectedIndex;
+    int ret = 0;
+    // if isn't buddy
+    if (!info.buddies[i]) {
+        // check if buddy list is full, if so, show ok dialog and return 0.
+        if (BUDDY_LIST_COUNT > MAX_BUDDIES) {
+            uiShowOkDialog("", uiMsgString(0x184d));
+            return 0;
+        }
+        ret = addBuddy(BUDDY_LIST_STACK, account_id);
+    } else {
+        // else Remove Buddy if is buddy
+        ret = removeBuddy(BUDDY_LIST_STACK, account_id);
+    }
+    // if ignored/unignored, update needed info struct.
+    if (ret) {
+        info.buddies[i] = !info.buddies[i];
+        info.buddyCount = (info.buddies[i] ? (info.buddyCount + 1) : (info.buddyCount - 1));
+    } else {
+        // if Already added/removed buddy, or other problem, so ok dialog.
+        uiShowOkDialog("Error", "There was an error trying to add/remove buddy.");
+    }
+    // return ret
+    return ret;
 }
 
-void updateOptions(GameSettings *gs, int account_id)
+int optionIgnorePlayer(int account_id, int selectedIndex)
 {
-    return;
-    // updating of remov/add buddies go here
-    // also for ignore/unignore player
+    int i = selectedIndex;
+    int ret = 0;
+    // if isn't ignored
+    if (!info.ignored[i]) {
+        // check if ignore list is full, if so, show ok dialog and return 0.
+        if (IGNORE_LIST_COUNT > MAX_IGNORED) {
+            uiShowOkDialog("", uiMsgString(0x18d3));
+            return 0;
+        }
+        ret = ignorePlayer(IGNORE_LIST_STACK, account_id);
+    } else {
+        // else Remove unignore player if ignored
+        ret = unignorePlayer(BUDDY_LIST_STACK, account_id);
+    }
+    // if ignored/unignored, update needed info struct.
+    if (ret) {
+        info.ignored[i] = !info.ignored[i];
+        info.ignoredCount = (info.ignored[i] ? (info.ignoredCount + 1) : (info.ignoredCount - 1));
+    } else {
+        // if Already ignored, or already unignoredy, or other problem, so ok dialog.
+        uiShowOkDialog("Error", "There was an error trying to ignore/unignore player.");
+    }
+    // return ret
+    return ret;
+}
+
+void updateInfo(GameSettings *gs, int selectedIndex)
+{
+    int i = selectedIndex;
+    int account_id = gs->PlayerAccountIds[i];
+    int client_id = gs->PlayerClients[i];
+    int isHost = gameAmIHost();
+
+    // loop through buddy list and ignore list
+
+
+    // update player options
+    if (isHost) {
+        memset(&playerOption_Host[2], (info.buddies[i]) ? (char*)addBuddyStr : (char*)removeBuddyStr, 20);
+        memset(&playerOption_Host[3], (info.ignored[i]) ? (char*)ignorePlayerStr : (char*)unignorePlayeStr, 20);
+    } else {
+        memset(&playerOption_Client[0], (info.buddies[i]) ? (char*)addBuddyStr : (char*)removeBuddyStr, 20);
+        memset(&playerOption_Client[1], (info.ignored[i]) ? (char*)ignorePlayerStr : (char*)unignorePlayeStr, 20);
+    }
 }
 
 int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
 {
     int selectedItem = itemSelected - 0xf;
-    int selectedPlayer = getPlayerIndex(ui, selectedItem);
-    int account_id = gs->PlayerAccountIds[selectedPlayer];
-    int client_id = gs->PlayerClients[selectedPlayer];
+    int i = getPlayerIndex(ui, selectedItem);
+    int account_id = gs->PlayerAccountIds[i];
+    int client_id = gs->PlayerClients[i];
     int isBot = (account_id >= 883) && (account_id <= 1880);
     int isHost = gameAmIHost();
     // if selected player isn't first player (host)
     if (selectedItem > -1 && client_id != gameGetMyClientId()) {
+        // if not botupdate info struct and player option names.
         if (!isBot)
-            updateOptions(gs, account_id);
+            updateInfo(gs, i);
         
         char * title = "Player Options";
         int optionsSize = (isHost) ? 4 : 2;
@@ -275,7 +361,7 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
         }
         int select = uiShowSelectDialog(title, (isHost) ? playerOption_Host : playerOption_Client, optionsSize, 0);
         int selection = -1;
-        if (select > -1)
+        if (select > PLAYER_OPTION_CANCEL)
             selection = (isHost) ? select : (select + 2);
 
         switch (selection) {
@@ -283,12 +369,40 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
             case PLAYER_OPTION_KICK: {
                 int kickDialog = uiShowYesNoDialog("", "Are you sure you want to kick this player?");
                 if (kickDialog == 1) {
-                    gs->PlayerStates[selectedPlayer] = 5;
+                    gs->PlayerStates[i] = 5;
                 }
                 break;
-            };
-            case PLAYER_OPTION_ADD_BUDDY: break;
-            case PLAYER_OPTION_IGNORE: break;
+            }
+            case PLAYER_OPTION_ADD_BUDDY: {
+                // if not on ignore list, then must be adding/removing buddy.
+                if (!info.ignored[i]) {
+                    optionAddRemoveBuddy(account_id, i);
+                } else {
+                    // if player is ignored, unignore first, then add buddy.
+                    // player isn't a buddy because they were ignored.
+                    int r = optionIgnorePlayer(account_id, i);
+                    // once unignored, add buddy.
+                    if (r) {
+                        optionAddRemoveBuddy(account_id, i);
+                    }
+                }
+                break;
+            }
+            case PLAYER_OPTION_IGNORE: {
+                // if not on buddy list, then must be ignoreing/unignoring buddy.
+                if (!info.buddies[i]) {
+                    optionIgnorePlayer(account_id, i);
+                } else {
+                    // if player is buddy, remove buddy first, then ignore.
+                    // player can't be buddy and ignored.
+                    int r = optionAddRemoveBuddy(account_id, i);
+                    // once removed buddy, ignore.
+                    if (r) {
+                        optionIgnorePlayer(account_id, i);
+                    }
+                }
+                break;
+            }
         }
         return UI_PAD_NONE;
     }
@@ -301,16 +415,16 @@ void openTeamsOptions(GameSettings * gs, int isTeams)
     int size = sizeof(randomTeamOptions)/sizeof(char*);
     int optionsSize = (gs->GameType == GAMERULE_DM) ? size : (size - 1);
     int select = uiShowSelectDialog("Team Options", randomTeamOptions, size, 0);
-    if (select > -1)
+    if (select > TEAM_OPTION_CANCEL)
         setTeams(select);
 }
 
 int patchStaging(void * ui, int pad)
 {
+    static int init_staging = INIT_NOPE;
     static int allPlayersReady = -1;
     static int pressedL1 = -1;
     static int holdingL1time = 0; 
-    static int a = 0;
     int i;
     int j;
     GameSettings* gs = gameGetSettings();
@@ -333,20 +447,10 @@ int patchStaging(void * ui, int pad)
             allPlayersReady = 2;
             pad = UI_PAD_CROSS;
         } else if (pad == UI_PAD_R1) {
-            a = addBuddy(BUDDY_LIST_STACK, 0x1a6);
-            printf("addBuddy: %x %08x\n", a, &a);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_L2) {
-            a = getBuddyList(BUDDY_LIST_STACK, 2);
-            printf("getBuddyList: %x %08x\n", a, &a);
-            printf("Buddy List Count: %d\n", BUDDY_LIST_COUNT);
-            a = getIgnoreList(IGNORE_LIST_STACK, 0);
-            printf("getIgnoreList: %x %08x\n", a, &a);
             pad = UI_PAD_NONE;
         } else if (pad == UI_PAD_R2) {
-            a = removeBuddy(BUDDY_LIST_STACK, 0x1a6);
-            printf("removeBuddy: %x %08x\n", a, &a);
-            printf("Buddy List Count: %d\n", BUDDY_LIST_COUNT);
             pad = UI_PAD_NONE;
         }
     }
@@ -354,6 +458,20 @@ int patchStaging(void * ui, int pad)
 	// call game function we're replacing
 	int result = stagingFunc(ui, pad);
 
+    //  init staging if not done already, or equals 2
+    if (!init_staging || init_staging == INIT_GAME_START) {
+        info.buddyCount = BUDDY_LIST_COUNT;
+        info.ignoredCount = IGNORE_LIST_COUNT;
+        memset(info.client_ids, -1, sizeof(info.client_ids));
+        memset(info.buddies, -1, sizeof(info.buddies));
+        memset(info.ignored, -1, sizeof(info.ignored));
+        ++init_staging;
+    }
+
+    if (gs->GameStartTime > 0 && init_staging == INIT_DONE)
+        init_staging = INIT_GAME_START;
+
+    // if host
     if (gameAmIHost()) {
         // Opem Teams Options Menu
         if (isTeams) {
