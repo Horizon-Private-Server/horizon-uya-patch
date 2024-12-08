@@ -53,9 +53,13 @@
 #define MAX_IGNORED (25)
 #define OPTIONS_SCROLL_CHECK ((u32)STAGING_BASE_FUNC + 0xae0)
 #define BUDDY_LIST_STACK (*(u32*)(BUDDY_IGNORE_LIST_PTR + 0x34))
-#define IGNORE_LIST_STACK (*(u32*)(BUDDY_IGNORE_LIST_PTR + 0x40))
 #define BUDDY_LIST_COUNT (*(int*)(BUDDY_LIST_STACK + *(int*)(BUDDY_LIST_STACK + 0x4) * 0xc + 0x2c))
+#define BUDDY_LIST_START (*(u32*)(BUDDY_LIST_STACK + 0x40) + 0x10)
+#define BUDDY_LIST_END (*(u32*)(BUDDY_LIST_STACK + 0x40) + 0x1c)
+#define IGNORE_LIST_STACK (*(u32*)(BUDDY_IGNORE_LIST_PTR + 0x40))
 #define IGNORE_LIST_COUNT (*(int*)(IGNORE_LIST_STACK + *(int*)(IGNORE_LIST_STACK + 0x4) * 0xc + 0x2c))
+#define IGNORE_LIST_START (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x10)
+#define IGNORE_LIST_END (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x1c)
 
 typedef enum uiPadButtons {
     UI_PAD_NONE = 0,
@@ -124,10 +128,15 @@ requestTeamChange_Func requestTeamChange = (requestTeamChange_Func)OPTION_REQUES
 // Craete playerOptions stack
 char * playerOption_Host[4][20] = {
     "Change Team",
-    "Kick Player"
+    "Kick Player",
+    "Add to Buddies",
+    "Ignore Player"
 };
 
-char * playerOption_Client[2][20];
+char * playerOption_Client[2][20] = {
+    "Add to Buddies",
+    "Ignore Player"
+};
 
 char * addBuddyStr = "Add to Buddies";
 char * removeBuddyStr = "Remove Buddy";
@@ -150,6 +159,25 @@ typedef struct buddyIgnoreInfo {
 /* 0x0c */ char buddies[GAME_MAX_PLAYERS];
 /* 0x14 */ char ignored[GAME_MAX_PLAYERS];
 } buddyIgnoreInfo_t;
+
+typedef struct buddyListInfo { // 0xd0
+	/* 0x00 */ char messageID[21];
+	/* 0x18 */ int statusCode;
+	/* 0x1c */ int accountID;
+	/* 0x20 */ char accountName[32];
+	/* 0x40 */ char onlineState[0x8c];
+	/* 0xcc */ int EndOfList;
+} buddyListInfo_t;
+
+typedef struct ignoreListInfo { // 0x48
+	/* 0x00 */ char messageID[21];
+	/* 0x18 */ int statusCode;
+	/* 0x1c */ int accountID;
+	/* 0x20 */ char accountName[32];
+	/* 0x40 */ int onlinetatus;
+	/* 0x44 */ int EndOfList;
+} ignoreListInfo_t;
+
 buddyIgnoreInfo_t info;
 
 void setTeams(int numTeams)
@@ -267,24 +295,26 @@ int optionAddRemoveBuddy(int account_id, int selectedIndex)
     int i = selectedIndex;
     int ret = 0;
     // if isn't buddy
-    if (!info.buddies[i]) {
+    if (info.buddies[i] == 0 && info.ignored[i] == 0) {
         // check if buddy list is full, if so, show ok dialog and return 0.
         if (BUDDY_LIST_COUNT > MAX_BUDDIES) {
             uiShowOkDialog("", uiMsgString(0x184d));
             return 0;
         }
         ret = addBuddy(BUDDY_LIST_STACK, account_id);
-    } else {
+    } else if (info.buddies[i] == 1){
         // else Remove Buddy if is buddy
         ret = removeBuddy(BUDDY_LIST_STACK, account_id);
     }
     // if ignored/unignored, update needed info struct.
-    if (ret) {
+    if (ret && info.buddies[i] > -1) {
         info.buddies[i] = !info.buddies[i];
         info.buddyCount = (info.buddies[i] ? (info.buddyCount + 1) : (info.buddyCount - 1));
     } else {
         // if Already added/removed buddy, or other problem, so ok dialog.
-        uiShowOkDialog("Error", "There was an error trying to add/remove buddy.");
+        char buff[64];
+        snprintf(buff, 64, "There was an error trying to add/remove buddy.\n\nn: %d; c: %d; b: %d; i: %d;", i, info.client_ids[i], info.buddies[i], info.ignored[i]);
+        uiShowOkDialog("Error", buff);
     }
     // return ret
     return ret;
@@ -295,46 +325,100 @@ int optionIgnorePlayer(int account_id, int selectedIndex)
     int i = selectedIndex;
     int ret = 0;
     // if isn't ignored
-    if (!info.ignored[i]) {
+    if (info.ignored[i] == 0 && info.buddies[i] == 0) {
         // check if ignore list is full, if so, show ok dialog and return 0.
         if (IGNORE_LIST_COUNT > MAX_IGNORED) {
             uiShowOkDialog("", uiMsgString(0x18d3));
             return 0;
         }
         ret = ignorePlayer(IGNORE_LIST_STACK, account_id);
-    } else {
+    } else if (info.ignored[i] == 1){
         // else Remove unignore player if ignored
         ret = unignorePlayer(BUDDY_LIST_STACK, account_id);
     }
     // if ignored/unignored, update needed info struct.
-    if (ret) {
+    if (ret &&  info.ignored[i] > -1) {
         info.ignored[i] = !info.ignored[i];
         info.ignoredCount = (info.ignored[i] ? (info.ignoredCount + 1) : (info.ignoredCount - 1));
     } else {
         // if Already ignored, or already unignoredy, or other problem, so ok dialog.
-        uiShowOkDialog("Error", "There was an error trying to ignore/unignore player.");
+        char buff[64];
+        snprintf(buff, 64, "There was an error trying to ignore/unignore player.\n\nn: %d; c: %d; b: %d; i: %d;", i, info.client_ids[i], info.buddies[i], info.ignored[i]);
+        uiShowOkDialog("Error", buff);
     }
     // return ret
     return ret;
 }
 
+int loopBuddyList(int account_id, buddyListInfo_t * list, int listCount)
+{
+    int k;
+    int r = 0;
+    for (k = 0; k < listCount; ++k) {
+        // if account id is found on list, it's a buddy!
+        if (list[k].accountID == account_id){
+            r = 1;
+        }
+    }
+    return r;
+}
+
+int loopIgnoreList(int account_id, ignoreListInfo_t * list, int listCount)
+{
+    int k;
+    int r = 0;
+    for (k = 0; k < listCount; ++k) {
+        // if account id is found on list, it's a buddy!
+        if (list[k].accountID == account_id){
+            r = 1;
+        }
+    }
+    return r;
+}
+
 void updateInfo(GameSettings *gs, int selectedIndex)
 {
+    int k;
     int i = selectedIndex;
     int account_id = gs->PlayerAccountIds[i];
     int client_id = gs->PlayerClients[i];
     int isHost = gameAmIHost();
+    struct buddyListInfo_t * buddy = (struct buddyListInfo_t *)(*(u32*)BUDDY_LIST_START);
+    struct ignoreListInfo_t * ignore = (struct ignoreListInfo_t*)(*(u32*)IGNORE_LIST_START);
 
-    // loop through buddy list and ignore list
+    // Check if client is alraedy in info list.
+    if (info.client_ids[i] != client_id) {
+        // store client id
+        info.client_ids[i] = client_id;
+        info.buddies[i] = 0;
+        info.ignored[i] = 0;
 
+        // Check if B uddy
+        if (info.buddyCount > 0) {
+            // Update Buddy list
+            getBuddyList(BUDDY_LIST_STACK, 2);
+
+            int isBuddy = loopBuddyList(account_id, buddy, info.buddyCount);
+            info.buddies[i] = isBuddy;
+            if (isBuddy)
+                info.ignored[i] = 0;
+        }
+        // Check Ignored: if ignore list isn't zero, and player isn't a buddy
+        if (info.ignoredCount > 0 && info.buddies[i] == 0) {
+            // reload ignore list
+            getIgnoreList(IGNORE_LIST_STACK, 0);
+            // check if ignored
+            info.ignored[i] = loopIgnoreList(account_id, ignore, info.ignoredCount);
+        }
+    }
 
     // update player options
     if (isHost) {
-        memset(&playerOption_Host[2], (info.buddies[i]) ? (char*)addBuddyStr : (char*)removeBuddyStr, 20);
-        memset(&playerOption_Host[3], (info.ignored[i]) ? (char*)ignorePlayerStr : (char*)unignorePlayeStr, 20);
+        strncpy((char*)playerOption_Host[2], (info.buddies[i]) ? removeBuddyStr : addBuddyStr, 20);
+        strncpy((char*)playerOption_Host[3], (info.ignored[i]) ? unignorePlayeStr : ignorePlayerStr, 20);
     } else {
-        memset(&playerOption_Client[0], (info.buddies[i]) ? (char*)addBuddyStr : (char*)removeBuddyStr, 20);
-        memset(&playerOption_Client[1], (info.ignored[i]) ? (char*)ignorePlayerStr : (char*)unignorePlayeStr, 20);
+        strncpy((char*)playerOption_Client[0], (info.buddies[i]) ? removeBuddyStr : addBuddyStr, 20);
+        strncpy((char*)playerOption_Client[1], (info.ignored[i]) ? unignorePlayeStr : ignorePlayerStr, 20);
     }
 }
 
@@ -349,15 +433,15 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
     // if selected player isn't first player (host)
     if (selectedItem > -1 && client_id != gameGetMyClientId()) {
         // if not botupdate info struct and player option names.
-        if (!isBot)
-            updateInfo(gs, i);
+        // if (!isBot)
+        updateInfo(gs, i);
         
         char * title = "Player Options";
         int optionsSize = (isHost) ? 4 : 2;
         // if bot, change title and remove last two options.
         if (isBot) {
             title = "Bot Options";
-            optionsSize -= 2;
+            // optionsSize -= 2;
         }
         int select = uiShowSelectDialog(title, (isHost) ? playerOption_Host : playerOption_Client, optionsSize, 0);
         int selection = -1;
@@ -375,9 +459,9 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
             }
             case PLAYER_OPTION_ADD_BUDDY: {
                 // if not on ignore list, then must be adding/removing buddy.
-                if (!info.ignored[i]) {
+                if (info.ignored[i] == 0) {
                     optionAddRemoveBuddy(account_id, i);
-                } else {
+                } else if (info.ignored[i] == 1) {
                     // if player is ignored, unignore first, then add buddy.
                     // player isn't a buddy because they were ignored.
                     int r = optionIgnorePlayer(account_id, i);
@@ -385,14 +469,18 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
                     if (r) {
                         optionAddRemoveBuddy(account_id, i);
                     }
+                } else {
+                    char buff[64];
+                    snprintf(buff, 64, "n: %d; c: %d; b: %d; i: %d;", i, info.client_ids[i], info.buddies[i], info.ignored[i]);
+                    uiShowOkDialog("Add/Remove Buddy Err", buff);
                 }
                 break;
             }
             case PLAYER_OPTION_IGNORE: {
                 // if not on buddy list, then must be ignoreing/unignoring buddy.
-                if (!info.buddies[i]) {
+                if (info.buddies[i] == 0) {
                     optionIgnorePlayer(account_id, i);
-                } else {
+                } else if (info.buddies[i] == 1) {
                     // if player is buddy, remove buddy first, then ignore.
                     // player can't be buddy and ignored.
                     int r = optionAddRemoveBuddy(account_id, i);
@@ -400,6 +488,10 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
                     if (r) {
                         optionIgnorePlayer(account_id, i);
                     }
+                } else {
+                    char buff[64];
+                    snprintf(buff, 64, "n: %d; c: %d; b: %d; i: %d;", i, info.client_ids[i], info.buddies[i], info.ignored[i]);
+                    uiShowOkDialog("Ignore/Unignore Err", buff);
                 }
                 break;
             }
@@ -459,13 +551,16 @@ int patchStaging(void * ui, int pad)
 	int result = stagingFunc(ui, pad);
 
     //  init staging if not done already, or equals 2
-    if (!init_staging || init_staging == INIT_GAME_START) {
+    if ((!init_staging && gs->GameStartTime <= 0) || init_staging == INIT_GAME_START) {
         info.buddyCount = BUDDY_LIST_COUNT;
         info.ignoredCount = IGNORE_LIST_COUNT;
         memset(info.client_ids, -1, sizeof(info.client_ids));
         memset(info.buddies, -1, sizeof(info.buddies));
         memset(info.ignored, -1, sizeof(info.ignored));
-        ++init_staging;
+        init_staging += 1;
+        // if game is starting, set init back to zero for next game.
+        if (init_staging == INIT_GAME_START_DONE)
+            init_staging = 0;
     }
 
     if (gs->GameStartTime > 0 && init_staging == INIT_DONE)
