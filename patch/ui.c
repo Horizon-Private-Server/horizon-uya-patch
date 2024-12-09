@@ -151,22 +151,14 @@ buddy_Func unignorePlayer = (buddy_Func)OPTION_UNIGNORE_PLAYER_BASE_FUNC;
 typedef void (*requestTeamChange_Func)(void * ui, int index);
 requestTeamChange_Func requestTeamChange = (requestTeamChange_Func)OPTION_REQUEST_TEAM_CHANGE_BASE_FUNC;
 
+char changeTeamStr[] = "Change Team";
+char kickPlayerStr[] = "Kick Player";
 char addBuddyStr[] = "Add to Buddies";
 char removeBuddyStr[] = "Remove Buddy";
 char ignorePlayerStr[] = "Ignore Player";
 char unignorePlayeStr[] = "Unignore Player";
 
-char *playerOption_Host[4][20] = {
-    "Change Team",
-    "Kick Player",
-    "Add to Buddies",
-    "Ignore Player"
-};
-
-char *playerOption_Client[2][20] = {
-    "Add to Buddies",
-    "Ignore Player"
-};
+char *playerOptions[4];
 
 char *randomTeamOptions[4] = {
     "Random Teams",
@@ -476,28 +468,11 @@ void updateInfo(GameSettings *gs, int selectedIndex)
 
     // update player options
     if (isHost) {
-        if (info.buddies[i] == 0) {
-            strncpy((char*)*(u32*)playerOption_Host[2], addBuddyStr, 20);
-        } else {
-            strncpy((char*)*(u32*)playerOption_Host[2], removeBuddyStr, 20); 
-        }
-        if (info.ignored[i] == 0) {
-            strncpy((char*)*(u32*)playerOption_Host[3], ignorePlayerStr, 20);
-        } else {
-            strncpy((char*)*(u32*)playerOption_Host[3], unignorePlayeStr, 20);
-        }
-    } else {
-        if (info.buddies[i] == 0) {
-            strncpy(playerOption_Client[0], (char*)addBuddyStr, 20);
-        } else {
-            strncpy(playerOption_Client[0], (char*)removeBuddyStr, 20); 
-        }
-        if (info.ignored[i] == 0) {
-            strncpy(playerOption_Client[1], (char*)ignorePlayerStr, 20);
-        } else {
-            strncpy(playerOption_Client[1], (char*)unignorePlayeStr, 20);
-        }  
+        playerOptions[0] = changeTeamStr;
+        playerOptions[1] = kickPlayerStr;
     }
+    playerOptions[(isHost ? 2 : 0)] = info.buddies[i] ? removeBuddyStr : addBuddyStr;
+    playerOptions[(isHost ? 3 : 1)] = info.ignored[i] ? unignorePlayeStr : ignorePlayerStr;
 }
 
 int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
@@ -522,13 +497,14 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
         printf("\n========");
         
         char * title = "Player Options";
-        int optionsSize = (isHost) ? 4 : 2;
+        int size = sizeof(playerOptions)/sizeof(char*);
+        int optionsSize = (isHost) ? size : size - 2;
         // if bot, change title and remove last two options.
         if (isBot) {
             title = "Bot Options";
             // optionsSize -= 2;
         }
-        int select = uiShowSelectDialog(title, (isHost) ? playerOption_Host : playerOption_Client, optionsSize, 0);
+        int select = uiShowSelectDialog(title, playerOptions, optionsSize, 0);
         int selection = -1;
         if (select > PLAYER_OPTION_CANCEL)
             selection = (isHost) ? select : (select + 2);
