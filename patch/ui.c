@@ -287,8 +287,9 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
     using the first "removeBuddy" function worked, but
     always gave a network error for some reason.
 */
-int removeBuddy_2(int account_id)
+int addOrRemoveBuddy(int selectedIndex, int account_id)
 {
+    int i = selectedIndex;
     u32 msg[11];
     msg[0] = 0x001A0031;
     msg[1] = 0x00000000;
@@ -302,10 +303,13 @@ int removeBuddy_2(int account_id)
     msg[9] = 0x00000000;
     msg[10] = account_id;
     #ifdef UYA_PAL
-        return ((int (*)(void *, u32, int))0x0017ed28)(msg, 0x00197858, 0);
+        u32 removeOrAdd = (info.buddies[i]) ? 0x0017ed28 : 0x0017eca8;
     #else
-        return ((int (*)(void *, u32, int))0x0017ee18)(msg, 0x00197858, 0);
+        u32 removeOrAdd = (info.buddies[i]) ? 0x0017ee18 : 0x0017ed98;
     #endif
+    // flip return type.  (True usually equals 0 with medius functions)
+    return 0 == ((int (*)(void *, u32, int))removeOrAdd)(msg, 0x00197858, 0);
+
 }
 
 int optionAddRemoveBuddy(int account_id, int selectedIndex)
@@ -325,7 +329,8 @@ int optionAddRemoveBuddy(int account_id, int selectedIndex)
             return ret;
         }
         printf("\n====Add buddy====");
-        ret = addBuddy(BUDDY_LIST_STACK, account_id);
+        // ret = addBuddy(BUDDY_LIST_STACK, account_id);
+        ret = addOrRemoveBuddy(i, account_id);
         printf("\nadd buddy ret: %d", ret);
         printf("\n====Add buddy====");
         if (ret) {
@@ -340,15 +345,14 @@ int optionAddRemoveBuddy(int account_id, int selectedIndex)
     } else if (info.buddies[i] == 1) {
         // else Remove Buddy if is buddy
         // ret = removeBuddy(BUDDY_LIST_STACK, account_id);
-        // removeBuddy_2: return 0 = pased, else failed
         printf("\n====Remove buddy====");
-        ret = removeBuddy_2(account_id);
+        ret = addOrRemoveBuddy(i, account_id);
         printf("\nremove buddy ret: %d", ret);
         printf("\n====Remove buddy====");
-        if (ret == 0) {
+        if (ret) {
             info.buddies[i] = 0;
             info.buddyCount -= 1;
-        } else if (ret == 1) {
+        } else if (!ret) {
             char buff[64];
             snprintf(buff, 64, "n: %d; ret: %d; c: %d; b: %d; i: %d;", i, ret, info.client_ids[i], info.buddies[i], info.ignored[i]);
             uiShowOkDialog("Remove Buddy Error", buff);
@@ -512,7 +516,10 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
         switch (selection) {
             case PLAYER_OPTION_TEAMSKIN: optionChangeTeamSkin(ui, gs, selectedItem, isBot, isTeams); break;
             case PLAYER_OPTION_KICK: {
-                int kickDialog = uiShowYesNoDialog("", "Are you sure you want to kick this player?");
+                char kickingPlayer[32];
+                char * kickEm = uiMsgString(0x15ff);
+                snprintf(kickingPlayer, 32, kickEm, gs->PlayerNames[i]);
+                int kickDialog = uiShowYesNoDialog("", kickingPlayer);
                 if (kickDialog == 1) {
                     gs->PlayerStates[i] = 5;
                 }
