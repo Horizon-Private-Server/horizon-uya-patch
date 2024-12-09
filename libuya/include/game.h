@@ -360,4 +360,14 @@ __LIBUYA_GETTER__ GameData* gameGetData(void);
  */
 int gameGetGSFrame(void);
 
+/*
+ * NAME :		gameGetWorldId
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int gameGetWorldId(void);
+
 #endif // _LIBUYA_GAME_H_

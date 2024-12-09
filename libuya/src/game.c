@@ -15,6 +15,8 @@
 #define GAME_CLIENT_ID                      (*(int*)0x001a5cd8)
 #define GAME_IS_HOST                        (*(int*)0x001a5e38)
 #define GAME_HOST_ID                        (*(int*)0x001a5e3c)
+#define GAME_WORLD_ID                       (*(int*)0x001a7034)
+
 #else
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
 #define SCENE_LOADED                        (*(int*)0x002459C8)
@@ -33,6 +35,7 @@
 #define GAME_CLIENT_ID                      (*(int*)0x001a5e58)
 #define GAME_IS_HOST                        (*(int*)0x001a5fb8)
 #define GAME_HOST_ID                        (*(int*)0x001a5fbc)
+#define GAME_WORLD_ID                       (*(int*)0x001a71b4)
 
 // UNK Not Ported to PAL
 #define GAME_UNK_001a5e54                   (*(int*)0x001a5e54)
@@ -275,4 +278,9 @@ GameData* gameGetData(void)
 int gameGetGSFrame(void)
 {
     return GAME_GS_FRAME;
+}
+
+int gameGetWorldId(void)
+{
+    return GAME_WORLD_ID;
 }
