@@ -414,6 +414,7 @@ int loopBuddyList(int account_id, buddyListInfo_t * list, int listCount)
         // if account id is found on list, it's a buddy!
         if (list[k].accountID == account_id){
             r = 1;
+            break;
         }
     }
     return r;
@@ -427,6 +428,7 @@ int loopIgnoreList(int account_id, ignoreListInfo_t * list, int listCount)
         // if account id is found on list, it's a buddy!
         if (list[k].accountID == account_id){
             r = 1;
+            break;
         }
     }
     return r;
@@ -434,7 +436,6 @@ int loopIgnoreList(int account_id, ignoreListInfo_t * list, int listCount)
 
 void updateInfo(GameSettings *gs, int selectedIndex)
 {
-    int k;
     int i = selectedIndex;
     int account_id = gs->PlayerAccountIds[i];
     int client_id = gs->PlayerClients[i];
@@ -444,10 +445,6 @@ void updateInfo(GameSettings *gs, int selectedIndex)
 
     // Check if client is alraedy in info list.
     if (info.client_ids[i] != client_id) {
-        // only refresh buddy list if they have buddies.
-        if (info.buddyCount > 0)
-            getBuddyList(BUDDY_LIST_STACK, 2);
-
         // store client id
         info.client_ids[i] = client_id;
         info.buddies[i] = 0;
@@ -455,8 +452,6 @@ void updateInfo(GameSettings *gs, int selectedIndex)
 
         // Check if uddy
         if (info.buddyCount > 0) {
-            // refresh ignore list
-            getIgnoreList(IGNORE_LIST_STACK, 0);
             int isBuddy = loopBuddyList(account_id, buddy, info.buddyCount);
             info.buddies[i] = isBuddy;
             if (isBuddy)
@@ -471,12 +466,14 @@ void updateInfo(GameSettings *gs, int selectedIndex)
     }
 
     // update player options
+    int n = 0;
     if (isHost) {
-        playerOptions[0] = changeTeamStr;
-        playerOptions[1] = kickPlayerStr;
+        n = 2;
+        playerOptions[PLAYER_OPTION_TEAMSKIN] = changeTeamStr;
+        playerOptions[PLAYER_OPTION_KICK] = kickPlayerStr;
     }
-    playerOptions[(isHost ? 2 : 0)] = info.buddies[i] ? removeBuddyStr : addBuddyStr;
-    playerOptions[(isHost ? 3 : 1)] = info.ignored[i] ? unignorePlayeStr : ignorePlayerStr;
+    playerOptions[PLAYER_OPTION_ADD_BUDDY - n] = info.buddies[i] ? removeBuddyStr : addBuddyStr;
+    playerOptions[PLAYER_OPTION_IGNORE - n] = info.ignored[i] ? unignorePlayeStr : ignorePlayerStr;
 }
 
 int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
