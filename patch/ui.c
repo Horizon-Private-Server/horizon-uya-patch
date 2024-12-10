@@ -672,10 +672,37 @@ int patchCreateGame(void * ui, long pad)
 
 int patchBuddies(void * ui, long pad)
 {
+    static int pressedSquare = -1;
+    static int holdingSquareTime = 0;
     u32 * uiElements = (u32*)((u32)ui + 0x110);
     int itemSelected = *(int*)(ui + 0x290);
+    int isLoading = *(u8*)(ui + 0x2b6);
+
+    // override square button.
+    // if (pad == UI_PAD_SQUARE && pressedSquare != 3) {
+    //     pad = UI_PAD_NONE;
+    // }
 
     int result = buddiesFunc(ui, pad);
+
+    // if square isn't pressed
+    // if (!padGetButton(0, PAD_SQUARE)) {
+    //     // reset pressedSquare if nothing is pressed.
+    //     pressedSquare = -1;
+    //     holdingSquareTime = gameGetTime() + .75 * TIME_SECOND;
+    // } else if (padGetButtonUp(0, PAD_SQUARE)){
+    //         pressedSquare = 3;
+    //  }else if (padGetButton(0, PAD_SQUARE) && pressedSquare < 1 && (*(u32*)0x01c5c114 == 0)) {
+    //     pressedSquare = 0;
+    // }
+    // if (pressedSquare == 0) {
+    //     pressedSquare = 1;
+    // } else if (pressedSquare == 1 && holdingSquareTime <= gameGetTime() && *(u32*)0x01c5c114 == 0) {
+    //     pressedSquare = 2;
+    //     int select = uiShowSelectDialog_Simple("DELETE ALL BUDDIES", "DELETE ALL IGNORED");
+    //     // if (select > -1)
+    //     //     printf("\nYou chose: %d", select);
+    // }
 
     return result;
 }

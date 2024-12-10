@@ -351,7 +351,8 @@ VARIABLE_FUNCTION(internal_colorLerp, vaColorLerpFunc)
 	FUNCTION(internal_uiCitySelectDialog, 0x006877B0)
 	FUNCTION(internal_uiSelectDialog, 0x00687800)
 	FUNCTION(internal_uiSelectDialog_Simple, 0x006878A0)
-	FUNCTION(internal_uiChangeTeamSkinDialog, 0x006878F0)
+	FUNCTION(internal_uiChangeTeamSkinDialog, 0x006878F0) 
+	FUNCTION(internal_uiInvitePlayersDialog, 0x006873f0)
 #else
 	FUNCTION(internal_uiDialog, 0x006847C8)
 	FUNCTION(internal_uiInputDialog, 0x00684930)
@@ -363,7 +364,7 @@ VARIABLE_FUNCTION(internal_colorLerp, vaColorLerpFunc)
 	FUNCTION(internal_uiSelectDialog, 0x00684ce0)
 	FUNCTION(internal_uiSelectDialog_Simple, 0x00684d80)
 	FUNCTION(internal_uiChangeTeamSkinDialog, 0x00684dd0)
-	FUNCTION(internal_uiInvitePlayersDialog, 0x006848d0) # not ported
+	FUNCTION(internal_uiInvitePlayersDialog, 0x006848d0)
 #endif
 VARIABLE_FUNCTION(internal_uiShowPopup, vaUIShowPopup)
 FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported (For in game)

@@ -103,7 +103,7 @@ int uiShowOkDialog(const char * title, const char * description)
     return internal_uiDialog(UI_DIALOG_A0, title, description, 4, 0, 0.6);
 }
 
-int uiShowSelectDialog_Simple_Simple(const char * option1, const char * option2)
+int uiShowSelectDialog_Simple(const char * option1, const char * option2)
 {
     return internal_uiSelectDialog_Simple(UI_DIALOG_A0, option1, option2, 0);
 }
