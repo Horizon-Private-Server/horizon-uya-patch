@@ -129,7 +129,7 @@ void onOnlineMenu(void)
 #endif
 
 	// only show on main menu
-	if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
+	if (uiGetActivePointer(UI_MENU_ONLINE_LOBBY) != 0)
 	{
     gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
     gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
@@ -188,7 +188,7 @@ int main (void)
 	netInstallCustomMsgHook(1);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
 
-	if (state == 0 && uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
+	if (state == 0 && uiGetActivePointer(UI_MENU_ONLINE_LOBBY) != 0)
 	{
 		// Hook menu loop
 		#ifdef UYA_PAL
@@ -200,7 +200,7 @@ int main (void)
 		#endif
 
 		// disable pad on online main menu
-		// if (uiGetActivePointer(UIP_ONLINE_LOBBY) != 0)
+		// if (uiGetActivePointer(UI_MENU_ONLINE_LOBBY) != 0)
 		padDisableInput();
 	}
 

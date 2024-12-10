@@ -260,7 +260,7 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
         // Open Team/Skin Menu
         uiShowChangeTeamSkinDialog(gs->PlayerTeams[i], gs->PlayerSkins[i], numTeams, isTeams, 1, 1);
         // Save chosen Team/Skin
-        u32 getUI = uiGetPointer(UIP_CHANGE_SKIN_TEAM);
+        u32 getUI = uiGetPointer(UI_MENU_CHANGE_SKIN_TEAM);
         gs->PlayerTeams[i] = *(int*)(*(u32*)(getUI + 0x110) + 0x146c);
         gs->PlayerSkins[i] = *(int*)(*(u32*)(getUI + 0x114) + 0x146c);
     } else if (!isBot && isTeams) {
