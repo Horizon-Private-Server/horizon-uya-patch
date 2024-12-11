@@ -266,7 +266,6 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
     } else if (!isBot && isTeams) {
         // Keep this function just in case.
         // requestTeamChange(ui, selectedItem);
-        // reset request
         int gsTeam = gs->PlayerTeams[i];
         // Change Teams depending on game type.
         int team = 0;
@@ -279,7 +278,10 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
         } else {
             team = !gsTeam;
         }
+        // Set players team
         gs->PlayerTeams[i] = team;
+        // Unready the player.
+        gs->PlayerStates[i] = 0;
     }
 }
 
@@ -466,14 +468,14 @@ void updateInfo(GameSettings *gs, int selectedIndex)
     }
 
     // update player options
-    int n = 0;
+    int offset = 2;
     if (isHost) {
-        n = 2;
+        offset = 0;
         playerOptions[PLAYER_OPTION_TEAMSKIN] = changeTeamStr;
         playerOptions[PLAYER_OPTION_KICK] = kickPlayerStr;
     }
-    playerOptions[PLAYER_OPTION_ADD_BUDDY - n] = info.buddies[i] ? removeBuddyStr : addBuddyStr;
-    playerOptions[PLAYER_OPTION_IGNORE - n] = info.ignored[i] ? unignorePlayeStr : ignorePlayerStr;
+    playerOptions[PLAYER_OPTION_ADD_BUDDY - offset] = info.buddies[i] ? removeBuddyStr : addBuddyStr;
+    playerOptions[PLAYER_OPTION_IGNORE - offset] = info.ignored[i] ? unignorePlayeStr : ignorePlayerStr;
 }
 
 int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
@@ -634,21 +636,22 @@ int patchStaging(void * ui, int pad)
         else
 	        strncpy((char*)str, "         ", 9);
         
-    } else {
-        // Nont Host Stuff
-        for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-            // if server client id matches local client id.
-            if (gs->PlayerClients[i] == clientId) {
-                // Patch Unkick: if leave game pop is up, close it.
-                u32 popup = uiGetActiveSubPointer(11);
-                if (gs->PlayerStates[i] == 5 && popup > 0) {
-                    // Compare popup text and "Leave Game" string.
-                    if (strcmp(*(u32*)(popup + 0x110) + 0x64, uiMsgString(0x1643))) {
-                        *(u32*)0x01C5C284 = 0x2c;
-                    }
-                }
-            }
-        }
+    }
+    // else {
+    //     // Nont Host Stuff
+    //     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+    //         // if server client id matches local client id.
+    //         if (gs->PlayerClients[i] == clientId) {
+    //             // Patch Unkick: if leave game pop is up, close it.
+    //             u32 popup = uiGetActiveSubPointer(11);
+    //             if (gs->PlayerStates[i] == 5 && popup > 0) {
+    //                 // Compare popup text and "Leave Game" string.
+    //                 if (strcmp(*(u32*)(popup + 0x110) + 0x64, uiMsgString(0x1643))) {
+    //                     *(u32*)0x01C5C284 = 0x2c;
+    //                 }
+    //             }
+    //         }
+    //     }
         // Make it so all clients can scroll over users names
         if (*(u32*)OPTIONS_SCROLL_CHECK == 0x24050001)
             *(u32*)OPTIONS_SCROLL_CHECK = 0x24050003;
