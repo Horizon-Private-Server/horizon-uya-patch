@@ -330,11 +330,8 @@ int optionAddRemoveBuddy(int account_id, int selectedIndex)
             uiShowOkDialog("", uiMsgString(0x184d));
             return ret;
         }
-        printf("\n====Add buddy====");
         // ret = addBuddy(BUDDY_LIST_STACK, account_id);
         ret = addOrRemoveBuddy(i, account_id);
-        printf("\nadd buddy ret: %d", ret);
-        printf("\n====Add buddy====");
         if (ret) {
             info.buddies[i] = 1;
             info.buddyCount += 1;
@@ -347,10 +344,7 @@ int optionAddRemoveBuddy(int account_id, int selectedIndex)
     } else if (info.buddies[i] == 1) {
         // else Remove Buddy if is buddy
         // ret = removeBuddy(BUDDY_LIST_STACK, account_id);
-        printf("\n====Remove buddy====");
         ret = addOrRemoveBuddy(i, account_id);
-        printf("\nremove buddy ret: %d", ret);
-        printf("\n====Remove buddy====");
         if (ret) {
             info.buddies[i] = 0;
             info.buddyCount -= 1;
@@ -489,8 +483,10 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
     // if selected player isn't first player (host)
     if (selectedItem > -1 && client_id != gameGetMyClientId()) {
         // if not botupdate info struct and player option names.
-        // if (!isBot)
-        updateInfo(gs, i);
+        if (!isBot)
+            updateInfo(gs, i);
+        
+#ifdef DEBUG
         int a;
         printf("\n========");
         printf("\nbuddies: %d, ignored: %d", info.buddyCount, info.ignoredCount);
@@ -498,14 +494,15 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
             printf("\nc: %d, b: %d, i: %d", info.client_ids[a], info.buddies[a], info.ignored[a]);
         }
         printf("\n========");
-        
+#endif
+
         char * title = "Player Options";
         int size = sizeof(playerOptions)/sizeof(char*);
         int optionsSize = (isHost) ? size : size - 2;
         // if bot, change title and remove last two options.
         if (isBot) {
             title = "Bot Options";
-            // optionsSize -= 2;
+            optionsSize -= 2;
         }
         int select = uiShowSelectDialog(title, playerOptions, optionsSize, 0);
         int selection = -1;
@@ -636,22 +633,21 @@ int patchStaging(void * ui, int pad)
         else
 	        strncpy((char*)str, "         ", 9);
         
-    }
-    // else {
-    //     // Nont Host Stuff
-    //     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-    //         // if server client id matches local client id.
-    //         if (gs->PlayerClients[i] == clientId) {
-    //             // Patch Unkick: if leave game pop is up, close it.
-    //             u32 popup = uiGetActiveSubPointer(11);
-    //             if (gs->PlayerStates[i] == 5 && popup > 0) {
-    //                 // Compare popup text and "Leave Game" string.
-    //                 if (strcmp(*(u32*)(popup + 0x110) + 0x64, uiMsgString(0x1643))) {
-    //                     *(u32*)0x01C5C284 = 0x2c;
-    //                 }
-    //             }
-    //         }
-    //     }
+    } else {
+        // Nont Host Stuff
+        // for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+        //     // if server client id matches local client id.
+        //     if (gs->PlayerClients[i] == clientId) {
+        //         // Patch Unkick: if leave game pop is up, close it.
+        //         u32 popup = uiGetActiveSubPointer(11);
+        //         if (gs->PlayerStates[i] == 5 && popup > 0) {
+        //             // Compare popup text and "Leave Game" string.
+        //             if (strcmp(*(u32*)(popup + 0x110) + 0x64, uiMsgString(0x1643))) {
+        //                 *(u32*)0x01C5C284 = 0x2c;
+        //             }
+        //         }
+        //     }
+        // }
         // Make it so all clients can scroll over users names
         if (*(u32*)OPTIONS_SCROLL_CHECK == 0x24050001)
             *(u32*)OPTIONS_SCROLL_CHECK = 0x24050003;
