@@ -70,17 +70,18 @@ struct QuadDef
 };
 
 //--------------------------------------------------------
-typedef enum FontAlignment {
-	TOP_LEFT = 0,
-	TOP_CENTER = 1,
-	TOP_RIGHT = 2,
-	CENTER_LEFT = 3,
-	CENTER_CENTER = 4,
-	CENTER_RIGHT = 5,
-	BOTTOM_LEFT = 6,
-	BOTTOM_CENTER = 7,
-	BOTTOM_RIGHT = 8
-} FontAlignment;
+enum TextAlign
+{
+  TEXT_ALIGN_TOPLEFT,
+  TEXT_ALIGN_TOPCENTER,
+  TEXT_ALIGN_TOPRIGHT,
+  TEXT_ALIGN_MIDDLELEFT,
+  TEXT_ALIGN_MIDDLECENTER,
+  TEXT_ALIGN_MIDDLERIGHT,
+  TEXT_ALIGN_BOTTOMLEFT,
+  TEXT_ALIGN_BOTTOMCENTER,
+  TEXT_ALIGN_BOTTOMRIGHT,
+};
 
 typedef struct ScreenVBEffect { // 0x34
 	/* 0x00 */ int enabled;

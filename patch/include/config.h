@@ -3,14 +3,17 @@
 
 #define MAX_CUSTOM_MAP_DEFINITIONS              (64)
 
-enum ActionType {
+enum ActionType
+{
   ACTIONTYPE_DRAW,
   ACTIONTYPE_GETHEIGHT,
   ACTIONTYPE_SELECT,
   ACTIONTYPE_SELECT_SECONDARY,
   ACTIONTYPE_INCREMENT,
   ACTIONTYPE_DECREMENT,
-  ACTIONTYPE_VALIDATE
+  ACTIONTYPE_VALIDATE,
+  ACTIONTYPE_DRAW_HIGHLIGHT,
+  ACTIONTYPE_INPUT
 };
 
 enum ElementState {
@@ -28,11 +31,14 @@ enum LabelType {
 struct MenuElem;
 struct TabElem;
 struct MenuElem_ListData;
+struct MenuElem_OrderedListData;
+struct MenuElem_RangeData;
 
 typedef void (*ActionHandler)(struct TabElem* tab, struct MenuElem* element, int actionType, void * actionArg);
 typedef void (*ButtonSelectHandler)(struct TabElem* tab, struct MenuElem* element);
 typedef void (*MenuElementStateHandler)(struct TabElem* tab, struct MenuElem* element, int * state);
 typedef int (*MenuElementListStateHandler)(struct MenuElem_ListData* listData, char* value);
+typedef int (*MenuElementOrderedListStateHandler)(struct MenuElem_OrderedListData* listData, char* value);
 typedef int (*MenuElementRangeStateHandler)(struct MenuElem_RangeData* listData, char* value);
 typedef void (*TabStateHandler)(struct TabElem* tab, int * state);
 
@@ -49,8 +55,23 @@ typedef struct MenuElem_ListData
   char * value;
   MenuElementListStateHandler stateHandler;
   int count;
+  int rows;
   char * items[];
 } MenuElem_ListData_t;
+
+typedef struct MenuElem_OrderedListDataItem
+{
+  char value;
+  char* name;
+} MenuElem_OrderedListDataItem_t;
+
+typedef struct MenuElem_OrderedListData
+{
+  char * value;
+  MenuElementOrderedListStateHandler stateHandler;
+  int count;
+  MenuElem_OrderedListDataItem_t items[];
+} MenuElem_OrderedListData_t;
 
 typedef struct MenuElem_RangeData
 {
@@ -67,7 +88,7 @@ typedef struct TabElem
   TabStateHandler stateHandler;
   MenuElem_t * elements;
   int elementsCount;
-  int selectedMenuItem;
+  int selectedMenuItemIdx;
   int menuOffset;
 } TabElem_t;
 
