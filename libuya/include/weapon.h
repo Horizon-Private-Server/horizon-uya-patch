@@ -49,6 +49,14 @@ enum WEAPON_IDS
     WEAPON_ID_WRENCH_V2 = 24,
 };
 
+struct gravityBombTweakers { // Bakisi: 0x00247280
+/* 0x00 */ float maxThrowDist;
+/* 0x04 */ float minthrowDist;
+/* 0x08 */ float gravity;
+/* 0x0c */ float maxThrowSpeed;
+/* 0x10 */ float mp_maxThrowSpeed;
+}
+
 typedef struct WeaponQuickSelect {
     char Slot[7];
 } WeaponQuickSelect;
