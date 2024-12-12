@@ -461,7 +461,7 @@ MenuElem_t menuElementsGameSettings[] = {
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   // { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps, "Play on any of the custom maps from the Horizon Map Pack. Visit https://rac-horizon.com to download the map pack." },
-  { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
+  // { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
   { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset, "Select one of the preconfigured game rule presets or manually set the custom game rules below." },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
@@ -1671,12 +1671,11 @@ void gmOverrideListActionHandler(TabElem_t* tab, MenuElem_t* element, int action
 {
   // update name to be based on current gamemode
   GameSettings* gs = gameGetSettings();
-  if (gs && actionType == ACTIONTYPE_DRAW) {
-    sprintf(element->name, "%s override", gameGetGameModeName(gs->GameType));
-  }
+  if (gs && actionType == ACTIONTYPE_DRAW)
+    snprintf(element->name, 40, "%s override", gameGetGameModeName(gs->GameRules));
 
   // pass to default list action handler
-  listActionHandler(tab, element, actionType, actionArg);
+  orderedListActionHandler(tab, element, actionType, actionArg);
 }
 
 //------------------------------------------------------------------------------
