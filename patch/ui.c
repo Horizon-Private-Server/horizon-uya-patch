@@ -151,6 +151,8 @@ buddy_Func unignorePlayer = (buddy_Func)OPTION_UNIGNORE_PLAYER_BASE_FUNC;
 typedef void (*requestTeamChange_Func)(void * ui, int index);
 requestTeamChange_Func requestTeamChange = (requestTeamChange_Func)OPTION_REQUEST_TEAM_CHANGE_BASE_FUNC;
 
+extern isConfigMenuActive;
+
 char changeTeamStr[] = "Change Team";
 char kickPlayerStr[] = "Kick Player";
 char addBuddyStr[] = "Add to Buddies";
@@ -594,7 +596,8 @@ int patchStaging(void * ui, int pad)
     // if host
     if (gameAmIHost()) {
         // Opem Teams Options Menu
-        if (isTeams) {
+        // if teams and config menu is closed
+        if (isTeams && !isConfigMenuActive) {
             // if L1 isn't pressed and no other menu is open
             if (!padGetButton(0, PAD_L1)) {
                 // reset pressed l1 if nothing is pressed.

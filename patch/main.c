@@ -2050,18 +2050,19 @@ void runVoteToEndLogic(void)
 		gameEnd(4);
 		return;
 	}
-
-	int haveVoted = 0;
-	if (player)
-		haveVoted = voteToEndState.Votes[player->mpIndex];
-
+	
 	if (voteToEndState.TimeoutTime > gameTime) {
+		int haveVoted = 0;
+		if (player)
+			haveVoted = voteToEndState.Votes[player->mpIndex];
+
 		// draw
 		int secondsLeft = (voteToEndState.TimeoutTime - gameTime) / TIME_SECOND;
-		snprintf(buf, sizeof(buf), "(L3 + R3) Vote to End (%d/%d)    %d...", voteToEndState.Count, votesNeeded, secondsLeft);
+		char* buttonCombo = "(\x18+\x19) ";
+		snprintf(buf, sizeof(buf), "%sVote to End (%d/%d)    %d...", haveVoted ? "" : buttonCombo, voteToEndState.Count, votesNeeded, secondsLeft);
 		gfxScreenSpaceText(12, SCREEN_HEIGHT - 18, 1, 1, 0x80000000, buf, -1, 0);
 		gfxScreenSpaceText(10, SCREEN_HEIGHT - 20, 1, 1, 0x80FFFFFF, buf, -1, 0);
-		
+			
 		// vote to end
 		if (!haveVoted && padGetButtonDown(0, PAD_L3 | PAD_R3) > 0)
     		sendClientVoteForEnd();
