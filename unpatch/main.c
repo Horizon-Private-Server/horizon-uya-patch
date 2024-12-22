@@ -40,6 +40,7 @@ const int patches[][3] = {
 	{ 0, 0x0047c834, 0x00690de8 }, // patchBuddies
 	{ 0, 0x0047e44c, 0x006b48c8 }, // patchPlayerDetails
 	{ 0, 0x0047eab4, 0x006c5cc8 }, // patchStats
+	{ 0, 0x0047dbac, 0x006aaa08 }, // patchKeyboard
 
 	// maploader
 	{ 0, 0x005a41c8, 0x0c170a90 }, // LOAD_LEVEL_READ_WAD_HOOK
@@ -56,7 +57,8 @@ const int patches[][3] = {
 	{ 0, 0x0047ea6c, 0x006bec18 }, // patchStaging
 	{ 0, 0x0047c8f4, 0x0068e6f8 }, // patchBuddies
 	{ 0, 0x0047e50c, 0x006b1f60 }, // patchPlayerDetails
-	{ 0, 0x0047eb74, 0x006c31b8}, // patchStats
+	{ 0, 0x0047eb74, 0x006c31b8 }, // patchStats
+	{ 0, 0x0047dc6c, 0x006a80b8 }, // patchKeyboard
 
 	// maploader
 	{ 0, 0x005a2560, 0x0c17027e }, // LOAD_LEVEL_READ_WAD_HOOK
@@ -129,7 +131,7 @@ void onOnlineMenu(void)
 #endif
 
 	// only show on main menu
-	if (uiGetActivePointer(UI_MENU_ONLINE_LOBBY) != 0)
+	if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY) != 0)
 	{
     gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
     gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
@@ -188,7 +190,7 @@ int main (void)
 	netInstallCustomMsgHook(1);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
 
-	if (state == 0 && uiGetActivePointer(UI_MENU_ONLINE_LOBBY) != 0)
+	if (state == 0 && uiGetActiveMenu(UI_MENU_ONLINE_LOBBY) != 0)
 	{
 		// Hook menu loop
 		#ifdef UYA_PAL
@@ -200,7 +202,7 @@ int main (void)
 		#endif
 
 		// disable pad on online main menu
-		// if (uiGetActivePointer(UI_MENU_ONLINE_LOBBY) != 0)
+		// if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY) != 0)
 		padDisableInput();
 	}
 

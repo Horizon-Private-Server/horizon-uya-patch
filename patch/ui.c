@@ -10,6 +10,7 @@
 #include <libuya/time.h>
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
+#include <libuya/utils.h>
 #include "messageid.h"
 #include "config.h"
 
@@ -20,6 +21,7 @@
 #define BUDDIES_BASE_FUNC (0x00690de8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b48c8)
 #define STATS_BASE_FUNC (0x006c5cc8)
+#define KEYBOARD_BASE_FUNC (0x6aaa08)
 
 // Needed Staging Functions
 #define OPTION_REQUEST_TEAM_CHANGE_BASE_FUNC (0x006c4360)
@@ -37,6 +39,7 @@
 #define BUDDIES_BASE_FUNC (0x0068e6f8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b1f60)
 #define STATS_BASE_FUNC (0x006c31b8)
+#define KEYBOARD_BASE_FUNC (0x006a80b8)
 
 // Needed Staging Functions
 #define OPTION_REQUEST_TEAM_CHANGE_BASE_FUNC (0x006c1848)
@@ -133,12 +136,18 @@ typedef struct BuddyIgnoreRequest { // 0x2c
 /* 0x28 */ int accountID;
 } BuddyIgnoreRequest_t;
 
-typedef int (*uiVTable_Func)(void * ui, int pad);
+typedef struct keyboardNew { // 0x4
+/* 0x0 */ u8 index;
+/* 0x1 */char text[3];
+} keyboardNew_t;
+
+typedef int (*uiVTable_Func)(UiMenu_t * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
 uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
 uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
+uiVTable_Func keyboardFunc = (uiVTable_Func)KEYBOARD_BASE_FUNC;
 
 typedef int (*buddy_Func)(int stack, int account_id);
 buddy_Func getBuddyList = (buddy_Func)GET_BUDDY_LIST_BASE_FUNC;
@@ -173,6 +182,27 @@ char *randomTeamOptions[4] = {
 
 buddyIgnoreInfo_t info = {
     .currentWorldId = -1
+};
+
+keyboardNew_t keys[] = {
+    {KEY_1, "\x08 D"}, // Default
+    {KEY_2, "\x09 B"}, // Blue
+    {KEY_3, "\x0aG"}, // Green
+    {KEY_4, "\x0bP"}, // Pink
+    {KEY_5, "\x0cW"}, // White
+    {KEY_6, "\x0dG"}, // Gray
+    {KEY_7, "\x0eB"}, // Black
+    {KEY_Q, "\x10"}, // Cross
+    {KEY_W, "\x11"}, // Circle
+    {KEY_E, "\x12"}, // Triangle
+    {KEY_R, "\x13"}, // Square
+    {KEY_T, "\x14"}, // L1
+    {KEY_Y, "\x15"}, // R1
+    {KEY_U, "\x16"}, // L2
+    {KEY_I, "\x17"}, // R2
+    {KEY_O, "\x18"}, // L3
+    {KEY_P, "\x19"}, // R3
+    {KEY_BRACKET_OPEN, "\x1a"} // Select
 };
 
 void setTeams(int numTeams)
@@ -642,7 +672,7 @@ int patchStaging(void * ui, int pad)
         //     // if server client id matches local client id.
         //     if (gs->PlayerClients[i] == clientId) {
         //         // Patch Unkick: if leave game pop is up, close it.
-        //         u32 popup = uiGetActiveSubPointer(11);
+        //         u32 popup = uiGetActiveSubMenu(11);
         //         if (gs->PlayerStates[i] == 5 && popup > 0) {
         //             // Compare popup text and "Leave Game" string.
         //             if (strcmp(*(u32*)(popup + 0x110) + 0x64, uiMsgString(0x1643))) {
@@ -725,4 +755,45 @@ int patchStats(void * ui, int pad)
     int result = statsFunc(ui, pad);
 
     return result;
+}
+
+int patchKeyboard(UiMenu_t * ui, int pad)
+{
+    int i;
+    int selectedIndex = ui->selectedIndex;
+    // UiElement_t * keyboardEnd = (UiElement_t*)((u32)ui + 0x294);
+    // int keyboardSize = *(u32*)(u32)ui + 0x298;
+    // UiElement_t * keyboardStart = (UiElement_t*)((u32)ui + 0x2a4);
+    int currentPage = ((u32)ui + 0x2b0);
+    int pages = ((u32)ui + 0x2b4);
+    static int setPages = 0;
+
+    int result = keyboardFunc(ui, pad);
+
+    // if on clan details or cities menu, then update keyboard.
+    if (uiGetActiveMenu(UI_MENU_CLAN_DETAILS) > 0 || uiGetActiveMenu(UI_MENU_CITY) > 0) {
+        // Update number of pages.  We have to account for different number of pages per language.
+        if (setPages !=  *(int*)pages) {
+            *(int*)pages += 1;
+            setPages =  *(int*)pages;
+        }
+        // Change SHIFT to COLOR if on page 2
+        if (*(int*)currentPage ==  *(int*)pages - 2) {
+            strncpy(ui->pChildren[KEY_SHIFT]->text, "\x14MISC", 6);
+        } else {
+            strncpy(ui->pChildren[KEY_SHIFT]->text, "\x14SHIFT", 6); 
+        }
+        // Update keyboard
+        if (*(int*)currentPage ==  *(int*)pages - 1) {
+            for (i = 0; i < COUNT_OF(keys); ++i) {
+                // don't let the use of buttons in clan tags
+                if (uiGetActiveMenu(UI_MENU_CLAN_DETAILS) > 0 && keys[i].index < KEY_1)
+                    break;
+
+                strncpy(ui->pChildren[keys[i].index]->text, keys[i].text, 3);
+            }
+        }
+    }
+
+    return result;  
 }

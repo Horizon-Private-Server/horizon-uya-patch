@@ -47,6 +47,7 @@
 #define UI_PTR_FUNC_BUDDIES									(0x0047c834)
 #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
 #define UI_PTR_FUNC_STATS									(0x0047eab4)
+#define UI_PTR_FUNC_KEYBOARD								(0x0047dbac)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
 #define RANK_TABLE                              			((u32)0x001a6Be4)
@@ -55,6 +56,7 @@
 #define UI_PTR_FUNC_BUDDIES									(0x0047c8f4)
 #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
 #define UI_PTR_FUNC_STATS									(0x0047eb74)
+#define UI_PTR_FUNC_KEYBOARD								(0x0047dc6c)
 #endif
 
 void onConfigOnlineMenu(void);
@@ -71,6 +73,7 @@ int patchStaging(void * ui, long pad);
 int patchBuddies(void * ui, long pad);
 int patchPlayerDetails(void * ui, long pad);
 int patchStats(void * ui, int pad);
+int patchKeyboard(void * ui, int pad);
 
 void grGameStart(void);
 void grLobbyStart(void);
@@ -409,14 +412,14 @@ void runCameraSpeedPatch(void)
 		// overwrite menu camera controls max cam speed
 		// also display speed text next to input
 		u32 ui = uiGetPointer(UI_MENU_CONTROLS);
-		if (ui && uiGetActivePointer(UI_MENU_EDIT_PROFILE)) {
+		if (ui && uiGetActiveMenu(UI_MENU_EDIT_PROFILE)) {
 			u32 cameraRotationUIPtr = *(u32*)(ui + 0x11C);
 			if (cameraRotationUIPtr) {
 				// max speed
 				*(u32*)(cameraRotationUIPtr + 0x7C) = MAX_CAMERA_SPEED;
 
 				// draw %
-				if (uiGetActiveSubPointer(UI_MENU_CONTROLS)) {
+				if (uiGetActiveSubMenu(UI_MENU_CONTROLS)) {
 					sprintf(buf, "%d%%", *(u32*)(cameraRotationUIPtr + 0x80));
 					gfxScreenSpaceText(340, 310, 1, 1, 0x8069cbf2, buf, -1, 2);
 				}
@@ -1269,7 +1272,7 @@ void patchCreateGameMenu_Option(int option, int new_value)
 // }
 void patchCreateGameMenu(void)
 {
-	u32 menu = uiGetActivePointer(UI_MENU_CREATE_GAME);
+	u32 menu = uiGetActiveMenu(UI_MENU_CREATE_GAME);
 	if (!menu) return;
 
 	// Patch LastSettings options
@@ -1288,7 +1291,7 @@ void patchCreateGameMenu(void)
 // #endif
 
 	// if in Advanced Options
-	menu = uiGetActiveSubPointer(UI_MENU_CREATE_GAME_ADVANCED_OPTIONS);
+	menu = uiGetActiveSubMenu(UI_MENU_CREATE_GAME_ADVANCED_OPTIONS);
 	if (!menu) return;
 	int frag_limit = (*(u32*)(menu + 0x12c) + 0x70);
 	patchCreateGameMenu_Option(frag_limit, 50); // Frag Limit = 50
@@ -2354,7 +2357,7 @@ void runGameStartMessager(void)
 		return;
 
 	// in staging
-	if (uiGetActivePointer(UI_MENU_STAGING) != 0) {
+	if (uiGetActiveMenu(UI_MENU_STAGING) != 0) {
 		// check if game started
 		if (!sentGameStart && gameSettings->GameLoadStartTime > 0) {
 			// check if host
@@ -2407,9 +2410,9 @@ void runCheckGameMapInstalled(void)
 		for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
 			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 6) {
 		#if UYA_PAL
-				((void (*)(u32, u32, u32))0x006c4308)(uiGetActivePointer(UI_MENU_STAGING), 5, 0);
+				((void (*)(u32, u32, u32))0x006c4308)(uiGetActiveMenu(UI_MENU_STAGING), 5, 0);
 		#else
-				((void (*)(u32, u32, u32))0x006c17f0)(uiGetActivePointer(UI_MENU_STAGING), 5, 0);
+				((void (*)(u32, u32, u32))0x006c17f0)(uiGetActiveMenu(UI_MENU_STAGING), 5, 0);
 		#endif
 				gs->PlayerStates[i] = 0; // unready up
 				showNoMapPopup = 1;
@@ -2620,7 +2623,7 @@ void onOnlineMenu(void)
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		hasInitialized = 1;
 	}
-	if (hasInitialized == 1 && uiGetActivePointer(UI_MENU_ONLINE_LOBBY) != 0) {
+	if (hasInitialized == 1 && uiGetActiveMenu(UI_MENU_ONLINE_LOBBY) != 0) {
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
 	}
@@ -2858,6 +2861,7 @@ int main(void)
 			POKE_U32(UI_PTR_FUNC_BUDDIES, &patchBuddies);
 			POKE_U32(UI_PTR_FUNC_PLAYER_DETAILS, &patchPlayerDetails);
 			POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
+			POKE_U32(UI_PTR_FUNC_KEYBOARD, &patchKeyboard);
 			patched.uiModifiers = 1;
 		}
 

@@ -497,7 +497,7 @@ void scavHuntRun(void)
 
   // if the hunt is live then show a first time popup on the online lobby
   // MOVED TO "main.c->onOnlineMenu()"
-  // if (isInMenus() && uiGetActivePointer(UI_MENU_ONLINE_LOBBY) && !scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled) {
+  // if (isInMenus() && uiGetActiveMenu(UI_MENU_ONLINE_LOBBY) && !scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled) {
   //   //uiShowOkDialog("Scavenger Hunt", "The Horizon Scavenger Hunt is live! Hunt for Horizon Bolts for a chance to win prizes! Join our discord for more info: discord.gg/horizonps");
   //   scavHuntShownPopup = 1;
   // }

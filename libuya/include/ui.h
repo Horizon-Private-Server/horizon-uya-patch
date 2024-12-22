@@ -21,7 +21,7 @@ enum UiMenuIds {
     UI_MENU_CLAN_2 = 6,
     UI_MENU_CLAN_3 = 7,
     UI_MENU_CLAN_4 = 8,
-    UI_MENU_CLAN_5 = 9,
+    UI_MENU_CLAN_DETAILS = 9,
     UI_MENU_CLAN_6 = 10,
     UI_MENU_CLAN_7 = 11,
     UI_MENU_CREATE_GAME = 12,
@@ -66,12 +66,75 @@ enum UiElementType {
     UI_ELEMENT_TEXT = 10,
 };
 
-typedef struct UiElement {
+enum KeyboardKeys {
+    KEY_DESCIPTION = 0,
+    KEY_UNK_1 = 1,
+    KEY_A,
+    KEY_B,
+    KEY_C,
+    KEY_D,
+    KEY_E,
+    KEY_F,
+    KEY_G,
+    KEY_H,
+    KEY_I,
+    KEY_J,
+    KEY_K,
+    KEY_L,
+    KEY_M,
+    KEY_N,
+    KEY_O,
+    KEY_P,
+    KEY_Q,
+    KEY_R,
+    KEY_S,
+    KEY_T,
+    KEY_U,
+    KEY_V,
+    KEY_W,
+    KEY_X,
+    KEY_Y,
+    KEY_Z,
+    KEY_1,
+    KEY_2,
+    KEY_3,
+    KEY_4,
+    KEY_5,
+    KEY_6,
+    KEY_7,
+    KEY_8,
+    KEY_9,
+    KEY_0,
+    KEY_COMMA,
+    KEY_PERIOD,
+    KEY_BACKSLASH,
+    KEY_SEMICOLON,
+    KEY_APOSTROPHIE,
+    KEY_BRACKET_OPEN,
+    KEY_BRACKET_CLOSED,
+    KEY_MINUS,
+    KEY_EQUALS,
+    KEY_SHIFT,
+    KEY_CAPS,
+    KEY_SPACE,
+    KEY_DONE,
+    KEY_DEL,
+    KEY_CANCEL,
+    KEY_ALT
+} KeyboardKeys_t;
+
+typedef struct UiElement { // 0x6c
 /* 0x00 */ enum UiElementType type;
 /* 0x04 */ int state;
 /* 0x08 */ int lastState;
 /* 0x00 */ int unk_0c;
 /* 0x10 */ struct UiElement* pParent;
+/* 0x14 */ char text[56];
+/* 0x4c */ int pad;
+/* 0x50 */ float boxSize[4];
+/* 0x60 */ void * vtable;
+/* 0x64 */ int unk_64;
+/* 0x68 */ int unk_68;
 } UiElement_t;
 
 typedef struct UiMenu {
@@ -81,7 +144,7 @@ typedef struct UiMenu {
 /* 0x108 */ int returnToMenuId;
 /* 0x10c */ int childCount;
 /* 0x110 */ UiElement_t* pChildren[96];
-/* 0x290 */ int selectedItem;
+/* 0x290 */ int selectedIndex;
 } UiMenu_t;
 
 typedef struct FontWindow { // 0x1c
@@ -182,7 +245,7 @@ void uiShowHelpPopup(int localPlayerIndex, const char * message, int seconds);
 char * uiMsgString(int textId);
 
 u32 uiGetPointer(int UI);
-u32 uiGetActivePointer(int UI);
-u32 uiGetActiveSubPointer(int UI);
+u32 uiGetActiveMenu(int UI);
+u32 uiGetActiveSubMenu(int UI);
 
 #endif // _LIBUYA_UI_H_

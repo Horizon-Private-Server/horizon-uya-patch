@@ -73,7 +73,7 @@ u32 uiGetPointer(int UI)
 	return *(u32*)(0x01C5C064 + UI*4);
 }
 
-u32 uiGetActivePointer(int UI)
+u32 uiGetActiveMenu(int UI)
 {
 	u32 UI_POINTERS = 0x01C5C064;
 	u32 Pointer = *(u32*)(UI_POINTERS + (UI * 0x4));
@@ -83,7 +83,7 @@ u32 uiGetActivePointer(int UI)
 	return 0;
 }
 
-u32 uiGetActiveSubPointer(int UI)
+u32 uiGetActiveSubMenu(int UI)
 {
 	u32 UI_POINTERS = 0x01C5C064;
 	u32 Pointer = *(u32*)(UI_POINTERS + (UI * 0x4));

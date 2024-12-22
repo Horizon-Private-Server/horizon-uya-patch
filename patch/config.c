@@ -2053,14 +2053,14 @@ void onMenuUpdate(int inGame)
 	else if (!inGame)
   {
     // if in Online Lobby, and SubPointer equals zero (not on find game)
-		if (uiGetActivePointer(UI_MENU_ONLINE_LOBBY) != 0 && *(u32*)0x01C5C114 == 0) {
+		if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY) != 0 && *(u32*)0x01C5C114 == 0) {
 			// render message
 			// gfxScreenSpaceBox(SCREEN_WIDTH * 0.2, SCREEN_HEIGHT * 0.81, 0.4, 0.3, colorOpenBg);
       float scale = .85;
 	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.77, scale, scale, 0x80FFFFFF, "Press START to", -1, 4);
 			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4);
     }
-    if (uiGetActivePointer(UI_MENU_STAGING) > 0 && *(u32*)0x01C5C114 == 0) {
+    if (uiGetActiveMenu(UI_MENU_STAGING) > 0 && *(u32*)0x01C5C114 == 0) {
       int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
       if (gameAmIHost() && isTeams)
         gfxScreenSpaceText(SCREEN_WIDTH * 0.205, SCREEN_HEIGHT * 0.07, 0.7, .85, 0x8069cbf2, "\x14 RANDOM TEAMS", -1, 4);
@@ -2249,8 +2249,8 @@ void onConfigUpdate(void)
       }
     }
 
-    u32 * stagingUiElements = (u32*)(uiGetActivePointer(UI_MENU_STAGING) + 0x110);
-    u32 * stagingDetailsUiElements = (u32*)(uiGetActivePointer(UI_MENU_STAGING_INVITE_PLAYERS) + 0x110);
+    u32 * stagingUiElements = (u32*)(uiGetActiveMenu(UI_MENU_STAGING) + 0x110);
+    u32 * stagingDetailsUiElements = (u32*)(uiGetActiveMenu(UI_MENU_STAGING_INVITE_PLAYERS) + 0x110);
 
     // update ui strings
     if ((u32)stagingUiElements > 0x100000)
