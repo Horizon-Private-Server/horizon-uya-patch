@@ -191,7 +191,8 @@ keyboardNew_t keys[] = {
     {KEY_4, "\x0bP"}, // Pink
     {KEY_5, "\x0cW"}, // White
     {KEY_6, "\x0dG"}, // Gray
-    {KEY_7, "\x0eB"}, // Black
+    {KEY_7, "\x0e B"}, // Black
+    {KEY_8, "\x0f A"}, // Aqua
     {KEY_Q, "\x10"}, // Cross
     {KEY_W, "\x11"}, // Circle
     {KEY_E, "\x12"}, // Triangle
