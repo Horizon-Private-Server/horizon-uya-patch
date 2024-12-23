@@ -179,6 +179,17 @@ typedef struct PartInstance { // 0x40
 	/* 0x20 */ int update[8];
 } PartInstance_t;
 
+typedef struct ColorExtTable {
+/* 0x00 */ u32 normal; // aka default
+/* 0x04 */ u32 blue;
+/* 0x08 */ u32 green;
+/* 0x0c */  u32 pink;
+/* 0x10 */  u32 white;
+/* 0x14 */  u32 gray;
+/* 0x18 */  u32 black1;
+/* 0x1c */  u32 black2;
+} ColorExtTable_t;
+
 /*
  * NAME :		drawFunction
  * DESCRIPTION :
@@ -274,5 +285,6 @@ ScreenVBEffect* gfxScreenVBEffect(void);
 ScreenInsertEffect* gfxScreenInsertEffect(void);
 ViewContext* gfxViewContext(void);
 ConcretePreLoadedImageBuffer* gfxGetPreLoadedImageBufferSource(int which);
+ColorExtTable_t* gfxColorExtTable(void);
 
 #endif // _LIBUYA_GRAPHICS_H_
