@@ -2303,6 +2303,14 @@ void runPlayerSync(void)
 	runPlayerPositionSmooth();
 }
 
+/*
+ * NAME :		runHolidyas
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
 void runHolidays(void)
 {
 	if (!PATCH_POINTERS || patched.holidays)
@@ -2340,6 +2348,27 @@ void runHolidays(void)
 		}
 	}
 
+}
+
+/*
+ * NAME :		patchColors
+ * DESCRIPTION : Patches color extended table for new colors
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchColors(void)
+{
+	if (patched.colorsExtTable)
+		return;
+
+	ColorExtTable_t* color = gfxColorExtTable();
+	color->white = 0x80ffffff;
+	color->gray = 0x80808080; // Patch Gray in game due to it being black in game.
+	color->black2 = 0x80e0e040; // Aqua
+
+	patched.colorsExtTable = 1;
 }
 
 /*
@@ -2737,7 +2766,6 @@ int main(void)
 	// Run Send Gameupdate for Helga
 	patchStateContainer.UpdateGameState = runSendGameUpdate();
 
-
 	// 
 	runCameraSpeedPatch();
 
@@ -2755,6 +2783,8 @@ int main(void)
 	runVoteToEndLogic();
 
 	runHolidays();
+
+	patchColors();
 
 	#if TEST
 	void runTest(void);
