@@ -293,7 +293,7 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
         // Open Team/Skin Menu
         uiShowChangeTeamSkinDialog(gs->PlayerTeams[i], gs->PlayerSkins[i], numTeams, isTeams, 1, 1);
         // Save chosen Team/Skin
-        u32 getUI = uiGetPointer(UI_MENU_CHANGE_SKIN_TEAM);
+        u32 getUI = uiGetMenu(UI_MENU_CHANGE_SKIN_TEAM);
         gs->PlayerTeams[i] = *(int*)(*(u32*)(getUI + 0x110) + 0x146c);
         gs->PlayerSkins[i] = *(int*)(*(u32*)(getUI + 0x114) + 0x146c);
     } else if (!isBot && isTeams) {
@@ -673,7 +673,7 @@ int patchStaging(void * ui, int pad)
         //     // if server client id matches local client id.
         //     if (gs->PlayerClients[i] == clientId) {
         //         // Patch Unkick: if leave game pop is up, close it.
-        //         u32 popup = uiGetActiveSubMenu(11);
+        //         u32 popup = uiGetActiveMenu(11, 1);
         //         if (gs->PlayerStates[i] == 5 && popup > 0) {
         //             // Compare popup text and "Leave Game" string.
         //             if (strcmp(*(u32*)(popup + 0x110) + 0x64, uiMsgString(0x1643))) {
@@ -772,7 +772,7 @@ int patchKeyboard(UiMenu_t * ui, int pad)
     int result = keyboardFunc(ui, pad);
 
     // if on clan details or cities menu, then update keyboard.
-    if (uiGetActiveMenu(UI_MENU_CLAN_DETAILS) > 0 || uiGetActiveMenu(UI_MENU_CITY) > 0) {
+    if (uiGetActiveMenu(UI_MENU_CLAN_DETAILS, 0) > 0 || uiGetActiveMenu(UI_MENU_CITY, 0) > 0) {
         // Update number of pages.  We have to account for different number of pages per language.
         if (setPages !=  *(int*)pages) {
             *(int*)pages += 1;
@@ -788,7 +788,7 @@ int patchKeyboard(UiMenu_t * ui, int pad)
         if (*(int*)currentPage ==  *(int*)pages - 1) {
             for (i = 0; i < COUNT_OF(keys); ++i) {
                 // don't let the use of buttons in clan tags
-                if (uiGetActiveMenu(UI_MENU_CLAN_DETAILS) > 0 && keys[i].index < KEY_1)
+                if (uiGetActiveMenu(UI_MENU_CLAN_DETAILS, 0) > 0 && keys[i].index < KEY_1)
                     break;
 
                 strncpy(ui->pChildren[keys[i].index]->text, keys[i].text, 3);

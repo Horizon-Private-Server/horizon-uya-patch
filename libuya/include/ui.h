@@ -59,16 +59,9 @@ enum UiMenuIds {
     UI_MENU_NULL = 44,
 };
 
-enum UiElementType {
-    UI_ELEMENT_MENU = -1,
-    UI_ELEMENT_BUTTON = 0,
-    UI_ELEMENT_NUMBER_SELECT = 8,
-    UI_ELEMENT_TEXT = 10,
-};
-
-enum KeyboardKeys {
+enum UiKeyboard {
     KEY_DESCIPTION = 0,
-    KEY_UNK_1 = 1,
+    KEY_TEXT_INPUT = 1,
     KEY_A,
     KEY_B,
     KEY_C,
@@ -121,30 +114,68 @@ enum KeyboardKeys {
     KEY_DEL,
     KEY_CANCEL,
     KEY_ALT
-} KeyboardKeys_t;
+};
 
-typedef struct UiElement { // 0x6c
+enum UiAdvancedOptions {
+    ADVANED_OPTIONS_VEHICLES = 0,
+    ADVANED_OPTIONS_NODES,
+    ADVANED_OPTIONS_NAMES,
+    ADVANED_OPTIONS_BASE_DEFENSES,
+    ADVANED_OPTIONS_UNLIMITED_AMMO,
+    ADVANED_OPTIONS_SPAWN_WITH_WEAPONS,
+    ADVANED_OPTIONS_CHARGEBOOTS,
+    ADVANED_OPTIONS_FRAG_LIMIT,
+    ADVANED_OPTIONS_TEAMS,
+    ADVANED_OPTIONS_CTF_MODE,
+    ADVANED_OPTIONS_CTF_CAPS,
+    ADVANED_OPTIONS_SIEGE_RULES
+};
+
+enum UiCreateGame {
+    CREATE_GAME_
+};
+
+enum UiElementType {
+    UI_ELEMENT_MENU = -1,
+    UI_ELEMENT_BUTTON = 0,
+    UI_ELEMENT_BOOL_SELECT = 2,
+    UI_ELEMENT_NUMBER_SELECT = 8,
+    UI_ELEMENT_TEXT = 10,
+};
+
+typedef struct UiElement { // 0x74
 /* 0x00 */ enum UiElementType type;
 /* 0x04 */ int state;
 /* 0x08 */ int lastState;
-/* 0x00 */ int unk_0c;
+/* 0x0c */ int unk_0c;
 /* 0x10 */ struct UiElement* pParent;
 /* 0x14 */ char text[56];
 /* 0x4c */ int pad;
-/* 0x50 */ float boxSize[4];
+/* 0x50 */ float selectorBoxSize[4];
 /* 0x60 */ void * vtable;
 /* 0x64 */ int unk_64;
 /* 0x68 */ int unk_68;
+/* 0x6c */ int unk_6c;
+/* 0x70 */ int unk_70;
 } UiElement_t;
 
 typedef struct UiMenu {
-/* 0x000 */ char unk_00[0x60];
+/* 0x000 */ char unk_00[0x58];
+/* 0x058 */ float shadow[2];
 /* 0x060 */ void* vTable;
 /* 0x064 */ char unk_064[0xa4];
 /* 0x108 */ int returnToMenuId;
 /* 0x10c */ int childCount;
 /* 0x110 */ UiElement_t* pChildren[96];
 /* 0x290 */ int selectedIndex;
+/* 0x294 */ UiElement_t* pLastChild;
+/* 0x298 */ int menuSize; // Fromst pFirstChild to pLastChild
+/* 0x29c */ int startItem;
+/* 0x2a0 */ float unk_2a4;
+/* 0x2a4 */ UiElement_t* pFirstChild;
+/* 0x2a8 */ int unk_2a8;
+/* 0x2ac */ int unk_2ac;
+/* 0x2b0 */ char itemValues;
 } UiMenu_t;
 
 typedef struct FontWindow { // 0x1c
@@ -244,8 +275,7 @@ void uiShowHelpPopup(int localPlayerIndex, const char * message, int seconds);
  */
 char * uiMsgString(int textId);
 
-u32 uiGetPointer(int UI);
-u32 uiGetActiveMenu(int UI);
-u32 uiGetActiveSubMenu(int UI);
+UiMenu_t* uiGetMenu(int UI);
+UiMenu_t* uiGetActiveMenu(int UI, int whichMenu);
 
 #endif // _LIBUYA_UI_H_

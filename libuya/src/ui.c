@@ -4,6 +4,11 @@
 #include "interop.h"
 
 #define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
+#define UI_POINTERS								((u32)0x01c5C064)
+#define UI_ACTIVE_MENU_1						(0x01c5c110)
+#define UI_ACTIVE_MENU_2						(0x01c5c114)
+#define UI_ACTIVE_MENU_3						(0x01c5c118)
+
 
 int internal_uiDialog(void *, const char *, const char *, int, int, float);
 void internal_uiShowPopup(const char *, int, Player * player);
@@ -68,27 +73,16 @@ VariableAddress_t vaUIShowPopup = {
 #endif
 };
 
-u32 uiGetPointer(int UI)
+UiMenu_t* uiGetMenu(int UI)
 {
-	return *(u32*)(0x01C5C064 + UI*4);
+	return *(u32*)(UI_POINTERS + (UI * 4));
 }
 
-u32 uiGetActiveMenu(int UI)
+UiMenu_t* uiGetActiveMenu(int UI, int whichMenu)
 {
-	u32 UI_POINTERS = 0x01C5C064;
-	u32 Pointer = *(u32*)(UI_POINTERS + (UI * 0x4));
-	if (*(u32*)0x01C5C110 == Pointer)
-		return Pointer;
-    
-	return 0;
-}
-
-u32 uiGetActiveSubMenu(int UI)
-{
-	u32 UI_POINTERS = 0x01C5C064;
-	u32 Pointer = *(u32*)(UI_POINTERS + (UI * 0x4));
-	if (*(u32*)0x01C5C114 == Pointer)
-		return Pointer;
+	u32 pointer = *(u32*)((u32)UI_ACTIVE_MENU_1 + (whichMenu * 4));
+	if (pointer == uiGetMenu(UI))
+		return pointer;
     
 	return 0;
 }
