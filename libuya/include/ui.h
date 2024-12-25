@@ -116,45 +116,16 @@ enum UiKeyboard {
     KEY_ALT
 };
 
-enum UiCreateGame {
-    CREATE_GAME_NAME,
-    CREATE_GAME_MAP,
-    CREATE_GAME_MODE,
-    CREATE_GAME_PLAYERS,
-    CREATE_GAME_BUDDY_SLOTS,
-    CREATE_GAME_CLAN_SLOTS,
-    CREATE_GAME_LOCAL_PLAYERS,
-    CREATE_GAME_TIMED,
-    CREATE_GAME_USE_PASSWORD,
-    CREATE_GAME_PASSWORD,
-    CREATE_GAME_WEAPONS,
-    CREATE_GAME_ADVANCED_OPTIONS,
-    CREATE_GAME_IMAGE_SCREENSHOT,
-    CREATE_GAME_IMAGE_MAP,
-};
-
-enum UiAdvancedOptions {
-    ADVANED_OPTIONS_VEHICLES = 0,
-    ADVANED_OPTIONS_NODES,
-    ADVANED_OPTIONS_NAMES,
-    ADVANED_OPTIONS_BASE_DEFENSES,
-    ADVANED_OPTIONS_UNLIMITED_AMMO,
-    ADVANED_OPTIONS_SPAWN_WITH_WEAPONS,
-    ADVANED_OPTIONS_CHARGEBOOTS,
-    ADVANED_OPTIONS_FRAG_LIMIT,
-    ADVANED_OPTIONS_TEAMS,
-    ADVANED_OPTIONS_CTF_MODE,
-    ADVANED_OPTIONS_CTF_CAPS,
-    ADVANED_OPTIONS_SIEGE_RULES
-};
-
 enum UiElementType {
     UI_ELEMENT_MENU = -1,
     UI_ELEMENT_TEXT = 1,
     UI_ELEMENT_BOOL_SELECT = 2,
-    UI_ELEEMNT_VALUE_SELECT = 3,
+    UI_ELEEMNT_STRING_SELECT = 3,
     UI_ELEMENT_IMAGE = 4,
-    UI_ELEMENT_TEXT_INPUT = 7,
+    UI_ELEMENT_LIST = 5,
+    UI_ELEMENT_RANGE_SELECT = 6,
+    UI_ELEMENT_TEXT_INFO = 7,
+    UI_ELEMENT_TEXT_INPUT = 8,
     UI_ELEMENT_SPRITE = 12,
 };
 
@@ -180,8 +151,8 @@ typedef union UiElementGeneric {
 /* 0x08 */ int lastState;
 /* 0x0c */ int unk_0c;
 /* 0x10 */ struct UiElement* pParent;
-/* 0x14 */ char text[56];
-/* 0x4c */ int pad;
+/* 0x14 */ char title[56];
+/* 0x4c */ int padding;
 /* 0x50 */ float selectorBoxSize[4];
 /* 0x60 */ void * vTable;
 } UiElementGeneric_t;
@@ -189,28 +160,67 @@ typedef union UiElementGeneric {
 typedef struct UiElementText { // 0x6c
 /* 0x00 */ UiElementGeneric_t;
 /* 0x64 */ int unk_64;
-/* 0x68 */ int sprite;
+/* 0x68 */ int unk_68;
 } UiElementText_t;
 
 typedef struct UiElementBoolSelect { // 0x74
 /* 0x00 */ UiElementGeneric_t;
-/* 0x64 */ int unk_64;
-/* 0x68 */ int sprite;
-/* 0x6c */ u32 spriteColor;
+/* 0x64 */ int selectedIndex;
+/* 0x68 */ int unk_68;
+/* 0x6c */ int unk_6c;
 /* 0x70 */ int unk_70;
 } UiElementBoolSelect_t;
 
+typedef struct UiElementStringSelect { // 0x1494
+/* 0x0000 */ UiElementGeneric_t;
+/* 0x0064 */ int itemCount;
+/* 0x0068 */ char items[64][80];
+/* 0x1468 */ int selectedIndex;
+/* 0x146c */ int selectedIndex2;
+/* 0x1470 */ char unk_1470[0x24];
+} UiElementStringSelect_t;
+
 typedef struct UiElementImage { // 0x84
 /* 0x00 */ UiElementGeneric_t;
-/* 0x64 */ int unk_64;
-/* 0x68 */ u32 sprite;
-/* 0x6c */ int spriteColor;
-/* 0x70 */ int unk_70;
-/* 0x74 */ int unk_74;
-/* 0x78 */ int unk_78;
+/* 0x64 */ char unk_64[0x18];
 /* 0x7c */ int imageId;
 /* 0x80 */ int unk_80;
 } UiElementImage_t;
+
+typedef struct UiElementList { // 105a4
+/* 0x00000 */ UiElementGeneric_t;
+/* 0x00064 */ int itemCount;
+/* 0x00068 */ char unk_00064[0x1053c];
+} UiElementList_t;
+
+typedef struct UiElementRangeSelect { // 0xb8
+/* 0x00 */ UiElementGeneric_t;
+/* 0x64 */ int selectedIndex;
+/* 0x68 */ int selectedIndex2;
+/* 0x6c */ int rangeMin;
+/* 0x70 */ int rangeMax;
+/* 0x74 */ int rangeStep;
+/* 0x78 */ char text[40];
+/* 0xa0 */ char unk_a0[0x18];
+} UiElementRangeSelect_t;
+
+typedef struct UiElementTextInfo { // 0xd0
+/* 0x00 */ UiElementGeneric_t;
+/* 0x64 */ char text[76];
+/* 0xb4 */ int unk_b4;
+/* 0xb8 */ int unk_b8;
+/* 0xbc */ int unk_bc;
+/* 0xc0 */ int bShowText;
+/* 0xc4 */ int unk_c4;
+/* 0xc8 */ u32 color;
+/* 0xcc */ int pad;
+} UiElementTextInfo_t;
+
+typedef struct UiElementTextInput { // 0x4a8
+/* 0x000 */ UiElementGeneric_t;
+/* 0x064 */ char textInput[16];
+/* 0x074*/ char unk_74[0x434];
+} UiElementTextInput_t;
 
 typedef struct UiElementSprite { // 0x84
 /* 0x00 */ UiElementGeneric_t;
@@ -239,7 +249,24 @@ typedef struct UiMenu {
 /* 0x2b0 */ char itemValues;
 } UiMenu_t;
 
-typedef struct UiWeaponsElements {
+typedef struct UiCreateGameElements {
+/* 0x00 */ UiElementTextInput_t* name;
+/* 0x04 */ UiElementStringSelect_t* map;
+/* 0x08 */ UiElementStringSelect_t* mode;
+/* 0x0c */ UiElementRangeSelect_t* players;
+/* 0x10 */ UiElementRangeSelect_t* buddySlots;
+/* 0x14 */ UiElementRangeSelect_t* clanSlots;
+/* 0x18 */ UiElementRangeSelect_t* localPlayers;
+/* 0x1c */ UiElementRangeSelect_t* time;
+/* 0x20 */ UiElementBoolSelect_t* usePassword;
+/* 0x24 */ UiElementText_t* password;
+/* 0x28 */ UiElementText_t* weapons;
+/* 0x2c */ UiElementText_t* advancedOptions;
+/* 0x30 */ UiElementImage_t* mapScreenshot;
+/* 0x34 */ UiElementImage_t* miniMap;
+} UiCreateGame_t;
+
+typedef struct UiWeaponsElements { // 0x24
 /* 0x00 */ UiElementSprite_t* fluxRifleSprite;
 /* 0x04 */ UiElementSprite_t* n60StormSprite;
 /* 0x08 */ UiElementSprite_t* blitzGunSprite;
@@ -251,7 +278,22 @@ typedef struct UiWeaponsElements {
 /* 0x20 */ UiElementText_t* descriptionText;
 } UiWeaponsElements_t;
 
-typedef struct UiStagingElements {
+typedef struct UiAdvancedOptionsElements { // 0x30
+/* 0x00 */ UiElementBoolSelect_t* vehicles;
+/* 0x04 */ UiElementBoolSelect_t* nodes;
+/* 0x08 */ UiElementBoolSelect_t* names;
+/* 0x0c */ UiElementBoolSelect_t* baseDefenses;
+/* 0x10 */ UiElementBoolSelect_t* unlimitedAmmo;
+/* 0x14 */ UiElementBoolSelect_t* spawnWithWeapons;
+/* 0x18 */ UiElementBoolSelect_t* chargeboots;
+/* 0x1c */ UiElementRangeSelect_t* fragLimit;
+/* 0x20 */ UiElementStringSelect_t* teams;
+/* 0x24 */ UiElementStringSelect_t* ctfMode;
+/* 0x28 */ UiElementRangeSelect_t* ctfCaps;
+/* 0x2c */ UiElementStringSelect_t* siegeRules;
+} UiAdvancedOptionsElements_t;
+
+typedef struct UiStagingElements { // 0x180
 /* 0x000 */ UiElementText_t* nameText;
 /* 0x004 */ UiElementText_t* mapText;
 /* 0x008 */ UiElementText_t* modeText;
@@ -279,21 +321,41 @@ typedef struct UiStagingElements {
 /* 0x15c */ UiElementSprite_t* readySprite[8];
 } UiStagingElements_t;
 
+typedef struct UiClanDetailsElements {
+UiElementText_t* clanMembersText;
+UiElementList_t* clanMembersList;
+UiElementText_t* clanStatsText;
+UiElementTextInfo_t* status;
+UiElementTextInfo_t* overallRank;
+UiElementTextInfo_t* winsLosses;
+UiElementTextInfo_t* killsDeaths;
+UiElementTextInfo_t* clanTagPreview;
+UiElementTextInfo_t* challenges;
+UiElementText_t* clanRoom;
+UiElementText_t* invites;
+UiElementText_t* clanMessage;
+UiElementText_t* challengeClan;
+UiElementText_t* challengeCancel;
+UiElementText_t* challengeRoom;
+UiElementText_t* clanTag;
+UiElementText_t* leaveClan
+} UiClanDetailsElements_t;
+
 typedef struct FontWindow { // 0x1c
-	/* 0x00 */ short int win_top;
-	/* 0x02 */ short int win_bot;
-	/* 0x04 */ short int win_left;
-	/* 0x06 */ short int win_right;
-	/* 0x08 */ short int text_x;
-	/* 0x0a */ short int text_y;
-	/* 0x0c */ short int max_width;
-	/* 0x0e */ short int max_height;
-	/* 0x10 */ short int line_spacing;
-	/* 0x12 */ short int flags;
-	/* 0x14 */ short int sub_pixel_x;
-	/* 0x16 */ short int sub_pixel_y;
-	/* 0x18 */ short int drop_shadow_offset_x;
-	/* 0x1a */ short int drop_shadow_offset_y;
+/* 0x00 */ short int win_top;
+/* 0x02 */ short int win_bot;
+/* 0x04 */ short int win_left;
+/* 0x06 */ short int win_right;
+/* 0x08 */ short int text_x;
+/* 0x0a */ short int text_y;
+/* 0x0c */ short int max_width;
+/* 0x0e */ short int max_height;
+/* 0x10 */ short int line_spacing;
+/* 0x12 */ short int flags;
+/* 0x14 */ short int sub_pixel_x;
+/* 0x16 */ short int sub_pixel_y;
+/* 0x18 */ short int drop_shadow_offset_x;
+/* 0x1a */ short int drop_shadow_offset_y;
 } FontWindow;
 
 /*
