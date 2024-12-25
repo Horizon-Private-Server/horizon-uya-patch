@@ -116,6 +116,23 @@ enum UiKeyboard {
     KEY_ALT
 };
 
+enum UiCreateGame {
+    CREATE_GAME_NAME,
+    CREATE_GAME_MAP,
+    CREATE_GAME_MODE,
+    CREATE_GAME_PLAYERS,
+    CREATE_GAME_BUDDY_SLOTS,
+    CREATE_GAME_CLAN_SLOTS,
+    CREATE_GAME_LOCAL_PLAYERS,
+    CREATE_GAME_TIMED,
+    CREATE_GAME_USE_PASSWORD,
+    CREATE_GAME_PASSWORD,
+    CREATE_GAME_WEAPONS,
+    CREATE_GAME_ADVANCED_OPTIONS,
+    CREATE_GAME_IMAGE_SCREENSHOT,
+    CREATE_GAME_IMAGE_MAP,
+};
+
 enum UiAdvancedOptions {
     ADVANED_OPTIONS_VEHICLES = 0,
     ADVANED_OPTIONS_NODES,
@@ -131,16 +148,14 @@ enum UiAdvancedOptions {
     ADVANED_OPTIONS_SIEGE_RULES
 };
 
-enum UiCreateGame {
-    CREATE_GAME_
-};
-
 enum UiElementType {
     UI_ELEMENT_MENU = -1,
-    UI_ELEMENT_BUTTON = 0,
+    UI_ELEMENT_TEXT = 1,
     UI_ELEMENT_BOOL_SELECT = 2,
-    UI_ELEMENT_NUMBER_SELECT = 8,
-    UI_ELEMENT_TEXT = 10,
+    UI_ELEEMNT_VALUE_SELECT = 3,
+    UI_ELEMENT_IMAGE = 4,
+    UI_ELEMENT_TEXT_INPUT = 7,
+    UI_ELEMENT_SPRITE = 12,
 };
 
 typedef struct UiElement { // 0x74
@@ -152,15 +167,61 @@ typedef struct UiElement { // 0x74
 /* 0x14 */ char text[56];
 /* 0x4c */ int pad;
 /* 0x50 */ float selectorBoxSize[4];
-/* 0x60 */ void * vtable;
+/* 0x60 */ void * vTable;
 /* 0x64 */ int unk_64;
-/* 0x68 */ int unk_68;
-/* 0x6c */ int unk_6c;
+/* 0x68 */ int sprite;
+/* 0x6c */ int spriteColor;
 /* 0x70 */ int unk_70;
 } UiElement_t;
 
+typedef union UiElementGeneric {
+/* 0x00 */ enum UiElementType type;
+/* 0x04 */ int state;
+/* 0x08 */ int lastState;
+/* 0x0c */ int unk_0c;
+/* 0x10 */ struct UiElement* pParent;
+/* 0x14 */ char text[56];
+/* 0x4c */ int pad;
+/* 0x50 */ float selectorBoxSize[4];
+/* 0x60 */ void * vTable;
+} UiElementGeneric_t;
+
+typedef struct UiElementText { // 0x6c
+/* 0x00 */ UiElementGeneric_t;
+/* 0x64 */ int unk_64;
+/* 0x68 */ int sprite;
+} UiElementText_t;
+
+typedef struct UiElementBoolSelect { // 0x74
+/* 0x00 */ UiElementGeneric_t;
+/* 0x64 */ int unk_64;
+/* 0x68 */ int sprite;
+/* 0x6c */ u32 spriteColor;
+/* 0x70 */ int unk_70;
+} UiElementBoolSelect_t;
+
+typedef struct UiElementImage { // 0x84
+/* 0x00 */ UiElementGeneric_t;
+/* 0x64 */ int unk_64;
+/* 0x68 */ u32 sprite;
+/* 0x6c */ int spriteColor;
+/* 0x70 */ int unk_70;
+/* 0x74 */ int unk_74;
+/* 0x78 */ int unk_78;
+/* 0x7c */ int imageId;
+/* 0x80 */ int unk_80;
+} UiElementImage_t;
+
+typedef struct UiElementSprite { // 0x84
+/* 0x00 */ UiElementGeneric_t;
+/* 0x64 */ int unk_64;
+/* 0x68 */ int sprite;
+/* 0x6c */ u32 spriteColor;
+/* 0x70 */ int unk_70[5];
+} UiElementSprite_t;
+
 typedef struct UiMenu {
-/* 0x000 */ char unk_00[0x58];
+/* 0x000 */ char unk_000[0x58];
 /* 0x058 */ float shadow[2];
 /* 0x060 */ void* vTable;
 /* 0x064 */ char unk_064[0xa4];
@@ -177,6 +238,46 @@ typedef struct UiMenu {
 /* 0x2ac */ int unk_2ac;
 /* 0x2b0 */ char itemValues;
 } UiMenu_t;
+
+typedef struct UiWeaponsElements {
+/* 0x00 */ UiElementSprite_t* fluxRifleSprite;
+/* 0x04 */ UiElementSprite_t* n60StormSprite;
+/* 0x08 */ UiElementSprite_t* blitzGunSprite;
+/* 0x0c */ UiElementSprite_t* miniRocketTubeSprite;
+/* 0x10 */ UiElementSprite_t* gravityBombSprite;
+/* 0x14 */ UiElementSprite_t* mineGloveSprite;
+/* 0x18 */ UiElementSprite_t* morphORaySprite;
+/* 0x1c */ UiElementSprite_t* lavaGunSprite;
+/* 0x20 */ UiElementText_t* descriptionText;
+} UiWeaponsElements_t;
+
+typedef struct UiStagingElements {
+/* 0x000 */ UiElementText_t* nameText;
+/* 0x004 */ UiElementText_t* mapText;
+/* 0x008 */ UiElementText_t* modeText;
+/* 0x00c */ UiElementText_t* inviteText;
+/* 0x010 */ UiElementText_t* startText;
+/* 0x014 */ UiElementText_t* detailsText;
+/* 0x018 */ UiElementImage_t* screenshotImage;
+/* 0x01c */ UiElementText_t* playerHeadingText;
+/* 0x020 */ UiElementText_t* skillHeadingText;
+/* 0x024 */ UiElementSprite_t* voiceHeadingSprite;
+/* 0x028 */ UiElementText_t* teamHeadingText;
+/* 0x02c */ UiElementText_t* skinHeadingText;
+/* 0x030 */ UiElementText_t* readyHeadingText;
+/* 0x034 */ UiElementSprite_t* changeTeamRequestHeadingSprite;
+/* 0x038 */ UiElementSprite_t* changeTeamRequestSprite;
+/* 0x03c */ UiElementText_t* playerNameText[8];
+/* 0x05c */ UiElementSprite_t* playerSkillOneSprite[8];
+/* 0x07c */ UiElementSprite_t* playerSkillTwoSprite[8];
+/* 0x09c */ UiElementSprite_t* playerSkillthreeSprite[8];
+/* 0x0bc */ UiElementSprite_t* playerSkillFourSprite[8];
+/* 0x0dc */ UiElementSprite_t* voiceSprite[8];
+/* 0x0fc */ UiElementSprite_t* teamBackgroundSprite[8];
+/* 0x11c */ UiElementSprite_t* teamForegroundSprite[8];
+/* 0x13c */ UiElementText_t* skinText[8];
+/* 0x15c */ UiElementSprite_t* readySprite[8];
+} UiStagingElements_t;
 
 typedef struct FontWindow { // 0x1c
 	/* 0x00 */ short int win_top;
