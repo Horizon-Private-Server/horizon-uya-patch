@@ -56,3 +56,4 @@ bin/
 .vscode/
 *.bin
 *.elf
+debug.log
