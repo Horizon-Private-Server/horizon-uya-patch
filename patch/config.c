@@ -2251,21 +2251,15 @@ void onConfigUpdate(void)
       }
     }
 
-    u32 * stagingUiElements = (u32*)(uiGetActiveMenu(UI_MENU_STAGING, 0) + 0x110);
-    u32 * stagingDetailsUiElements = (u32*)(uiGetActiveMenu(UI_MENU_STAGING_INVITE_PLAYERS, 0) + 0x110);
-
-    // update ui strings
-    if ((u32)stagingUiElements > 0x100000)
-    {
+    UiMenu_t* uiStaging = uiGetActiveMenu(UI_MENU_STAGING, 0);
+    if (uiStaging > 0) {
+      u32 * stagingChild = uiStaging->pChildren;
+      u32 mapText = (u32)stagingChild[1] + 0x14;
+      u32 modeText = (u32)stagingChild[2] + 0x14;
       if (mapName)
-        strncpy((char*)(stagingUiElements[1] + 0x14), mapName, 32);
+        strncpy((char*)mapText, mapName, 32);
       if (modeName)
-        strncpy((char*)(stagingUiElements[2] + 0x14), modeName, 32);
-    }
-    if ((u32)stagingDetailsUiElements > 0x100000)
-    {
-      // strncpy((char*)(stagingDetailsUiElements[2] + 0x14), mapName, 32);
-      // strncpy((char*)(stagingDetailsUiElements[3] + 0x14), modeName, 32);
+        strncpy((char*)modeText, modeName, 32);
     }
   }
 }
