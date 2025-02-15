@@ -915,13 +915,28 @@ void radarBlips(void)
 	u32 float_dist = GetAddress(&vaRadarBlips_FloatVal);
 	if (*(u32*)float_dist == 0x3c014499) {
 		switch (gameConfig.grRadarBlipsDistance) {
-			case 1: { // Always
+			case 1: { // 2x
+				*(u32*)float_dist = 0x3c014519;
+				*(u32*)(float_dist + 0x4) = 0x34210000;
+				break;	
+			}
+			case 2: { // 4x
+				*(u32*)float_dist = 0x3c014599;
+				*(u32*)(float_dist + 0x4) = 0x34210000;
+				break;	
+			}
+			case 3: { // Always
 				*(u32*)float_dist = 0x3c017fff;
 				*(u32*)(float_dist + 0x4) = 0x3421ffff;
 				break;
 			}
-			case 2: { // Off
+			case 4: { // Off
 				*(u32*)float_dist = 0x3c010000;
+				*(u32*)(float_dist + 0x4) = 0x34210000;
+				break;	
+			}
+			case 5: { // .5x
+				*(u32*)float_dist = 0x3c014419;
 				*(u32*)(float_dist + 0x4) = 0x34210000;
 				break;	
 			}

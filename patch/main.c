@@ -148,7 +148,8 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.cycleWeapon2 = 0,
 	.cycleWeapon3 = 0,
 	.hypershotEquipButton = 0,
-	.disableDpadMovement = 0
+	.disableDpadMovement = 0,
+	.hideFluxReticle = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -2304,6 +2305,31 @@ void runPlayerSync(void)
 }
 
 /*
+ * NAME :		patchHideFluxReticle
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchHideFluxReticle(void)
+{
+	if (patched.config.hideFluxReticle == config.hideFluxReticle)
+		return;
+
+	Moby* mobyStart = mobyListGetStart();
+	Moby* mobyEnd = mobyListGetEnd();
+	while (mobyStart < mobyEnd) {
+		if (mobyStart->oClass == MOBY_ID_WEAPON_FLUX_RIFLE) {
+			*(u32*)(mobyStart->pUpdate + 0x3ac) = 0x24040000 | config.hideFluxReticle;
+			patched.config.hideFluxReticle = config.hideFluxReticle;
+			break;
+		}
+		++mobyStart;
+	}
+}
+
+/*
  * NAME :		runHolidyas
  * DESCRIPTION :
  * NOTES :
@@ -2857,6 +2883,9 @@ int main(void)
 
 		if (config.aimAssist)
 			patchAimAssist();
+
+		// Patch hiding of Flux Reticle
+		patchHideFluxReticle();
 
 		if (config.hypershotEquipButton)
 			hypershotEquipButton();

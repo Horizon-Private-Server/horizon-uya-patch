@@ -342,8 +342,8 @@ MenuElem_ListData_t dataPlayerSize = {
 MenuElem_ListData_t dataRadarBlipsDistance = {
     .value = &gameConfig.grRadarBlipsDistance,
     .stateHandler = NULL,
-    .count = 3,
-    .items = { "Short", "Always", "Off" }
+    .count = 6,
+    .items = { "Short", "2x", "4x", "Always", "Off", ".5x" }
 };
 
 MenuElem_ListData_t dataMapScore_MapAccess = {
@@ -442,6 +442,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Disable D-Pad Movement", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.disableDpadMovement, "Disables the d-pad moving your character in game." },
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter, "Toggles the in game FPS counter." },
+  { "Hide Flux Reticle", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.hideFluxReticle, "Hide the Flux's reticle to show how tough you really are!" },
   { "Hypershot Equip Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataHypershotEquipButton, "The button that you will press to take out the hypershot." },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1, "Main Weapon 1.  Defaults to Gravity Bomb if nothing is selected." },
