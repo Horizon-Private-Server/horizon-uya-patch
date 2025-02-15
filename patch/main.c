@@ -43,6 +43,7 @@
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006c2d80)
 #define RANK_TABLE                              			((u32)0x001a6a64)
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047cfec)
+#define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d124)
 #define UI_PTR_FUNC_STAGING									(0x0047e9ac)
 #define UI_PTR_FUNC_BUDDIES									(0x0047c834)
 #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
@@ -52,6 +53,7 @@
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
 #define RANK_TABLE                              			((u32)0x001a6Be4)
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047d0ac)
+#define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d1e4)
 #define UI_PTR_FUNC_STAGING									(0x0047ea6c)
 #define UI_PTR_FUNC_BUDDIES									(0x0047c8f4)
 #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
@@ -2915,7 +2917,8 @@ int main(void)
 
 		// Patch Menus (Staging, create game, ect.)
 		if (patched.uiModifiers == 0) {
-			POKE_U32(UI_PTR_FUNC_CREATE_GAME, &patchCreateGame);
+			// POKE_U32(UI_PTR_FUNC_CREATE_GAME, &patchCreateGame);
+			// POKE_U32(UI_PTR_FUNC_ADVANCED_OPTIONS, &patchAdvancedOptions);
 			POKE_U32(UI_PTR_FUNC_STAGING, &patchStaging);
 			POKE_U32(UI_PTR_FUNC_BUDDIES, &patchBuddies);
 			POKE_U32(UI_PTR_FUNC_PLAYER_DETAILS, &patchPlayerDetails);

@@ -18,6 +18,7 @@
 // UI Functions
 #define STAGING_BASE_FUNC (0x006c1730)
 #define CREATE_GAME_BASE_FUNC (0x0069a630)
+#define ADVANCED_OPTIONS_BASE_FUNC (0x0069ce50)
 #define BUDDIES_BASE_FUNC (0x00690de8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b48c8)
 #define STATS_BASE_FUNC (0x006c5cc8)
@@ -36,6 +37,7 @@
 // UI Functions
 #define STAGING_BASE_FUNC (0x006bec18)
 #define CREATE_GAME_BASE_FUNC (0x00697e20)
+#define ADVANCED_OPTIONS_BASE_FUNC (0x0069a640)
 #define BUDDIES_BASE_FUNC (0x0068e6f8)
 #define PLAYER_DETAILS_BASE_FUNC (0x006b1f60)
 #define STATS_BASE_FUNC (0x006c31b8)
@@ -143,6 +145,7 @@ typedef struct keyboardNew { // 0x4
 
 typedef int (*uiVTable_Func)(UiMenu_t * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
+uiVTable_Func advancedOptionsFunc = (uiVTable_Func)ADVANCED_OPTIONS_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
 uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
@@ -689,14 +692,55 @@ int patchStaging(void * ui, int pad)
 	return result;
 }
 
-int patchCreateGame(void * ui, long pad)
+int patchCreateGame(UiMenu_t* ui, long pad)
 {
-    // ui address: 0x01d20954
-    u32 * uiElements = (u32*)((u32)ui + 0x110);
-    int itemSelected = *(int*)(ui + 0x290);
-
+    int time_limit = 120; // in minutes
     int result = createGameFunc(ui, pad);
 
+    UiCreateGameElements_t * createGame = &ui->pChildren;
+    if (createGame->time->rangeMax != time_limit) {
+        // Change Time Limit
+        createGame->time->rangeMax = time_limit;
+        // Change time limit if frag limit is 0.
+        *(u32*)((u32)CREATE_GAME_BASE_FUNC + 0x3f8) = 0x24040000 | time_limit;
+    }
+    // Let password field always be active.
+    if (createGame->usePassword->header.state == 2) {
+        createGame->usePassword->header.state = 3;
+        createGame->password->header.state = 3;
+    }
+    // Lock local players to 1
+    if (createGame->localPlayers->header.state == 3) {
+        createGame->localPlayers->header.state = 2;
+        createGame->localPlayers->rangeMax = 1;
+    }
+
+    return result;
+}
+
+int patchAdvancedOptions(UiMenu_t* ui, int pad)
+{
+    static int savedTeams = 0;
+    int frag_limit = 50;
+    int ctfCaps_limit = 50;
+
+    int result = advancedOptionsFunc(ui, pad);
+    UiAdvancedOptionsElements_t* ao = &ui->pChildren;
+    UiMenu_t* menu = uiGetMenu(UI_MENU_CREATE_GAME);
+    UiCreateGameElements_t* createGame = &menu->pChildren;
+    int isDeathmatch = createGame->mode->selectedIndex == 2;
+    if (isDeathmatch) {
+        // set savedteams to last team value.
+        savedTeams = ao->teams->selectedIndex;
+        if (ao->fragLimit->rangeMax != frag_limit)
+            ao->fragLimit->rangeMax = frag_limit;
+    } else if (createGame->mode->selectedIndex == 1) {
+        if (ao->ctfCaps->rangeMax != ctfCaps_limit)
+            ao->ctfCaps->rangeMax = ctfCaps_limit;
+    }
+    if (isDeathmatch && ao->teams->selectedIndex != savedTeams)
+        ao->teams->selectedIndex = savedTeams;
+    
     return result;
 }
 
@@ -708,31 +752,7 @@ int patchBuddies(void * ui, long pad)
     int itemSelected = *(int*)(ui + 0x290);
     int isLoading = *(u8*)(ui + 0x2b6);
 
-    // override square button.
-    // if (pad == UI_PAD_SQUARE && pressedSquare != 3) {
-    //     pad = UI_PAD_NONE;
-    // }
-
     int result = buddiesFunc(ui, pad);
-
-    // if square isn't pressed
-    // if (!padGetButton(0, PAD_SQUARE)) {
-    //     // reset pressedSquare if nothing is pressed.
-    //     pressedSquare = -1;
-    //     holdingSquareTime = gameGetTime() + .75 * TIME_SECOND;
-    // } else if (padGetButtonUp(0, PAD_SQUARE)){
-    //         pressedSquare = 3;
-    //  }else if (padGetButton(0, PAD_SQUARE) && pressedSquare < 1 && (*(u32*)0x01c5c114 == 0)) {
-    //     pressedSquare = 0;
-    // }
-    // if (pressedSquare == 0) {
-    //     pressedSquare = 1;
-    // } else if (pressedSquare == 1 && holdingSquareTime <= gameGetTime() && *(u32*)0x01c5c114 == 0) {
-    //     pressedSquare = 2;
-    //     int select = uiShowSelectDialog_Simple("DELETE ALL BUDDIES", "DELETE ALL IGNORED");
-    //     // if (select > -1)
-    //     //     printf("\nYou chose: %d", select);
-    // }
 
     return result;
 }

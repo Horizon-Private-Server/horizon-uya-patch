@@ -158,13 +158,13 @@ typedef union UiElementGeneric {
 } UiElementGeneric_t;
 
 typedef struct UiElementText { // 0x6c
-/* 0x00 */ UiElementGeneric_t;
+/* 0x00 */ UiElementGeneric_t header;
 /* 0x64 */ int unk_64;
 /* 0x68 */ int unk_68;
 } UiElementText_t;
 
 typedef struct UiElementBoolSelect { // 0x74
-/* 0x00 */ UiElementGeneric_t;
+/* 0x00 */ UiElementGeneric_t header;
 /* 0x64 */ int selectedIndex;
 /* 0x68 */ int unk_68;
 /* 0x6c */ int unk_6c;
@@ -172,7 +172,7 @@ typedef struct UiElementBoolSelect { // 0x74
 } UiElementBoolSelect_t;
 
 typedef struct UiElementStringSelect { // 0x1494
-/* 0x0000 */ UiElementGeneric_t;
+/* 0x0000 */ UiElementGeneric_t header;
 /* 0x0064 */ int itemCount;
 /* 0x0068 */ char items[64][80];
 /* 0x1468 */ int selectedIndex;
@@ -181,20 +181,20 @@ typedef struct UiElementStringSelect { // 0x1494
 } UiElementStringSelect_t;
 
 typedef struct UiElementImage { // 0x84
-/* 0x00 */ UiElementGeneric_t;
+/* 0x00 */ UiElementGeneric_t header;
 /* 0x64 */ char unk_64[0x18];
 /* 0x7c */ int imageId;
 /* 0x80 */ int unk_80;
 } UiElementImage_t;
 
 typedef struct UiElementList { // 105a4
-/* 0x00000 */ UiElementGeneric_t;
+/* 0x00000 */ UiElementGeneric_t header;
 /* 0x00064 */ int itemCount;
 /* 0x00068 */ char unk_00064[0x1053c];
 } UiElementList_t;
 
 typedef struct UiElementRangeSelect { // 0xb8
-/* 0x00 */ UiElementGeneric_t;
+/* 0x00 */ UiElementGeneric_t header;
 /* 0x64 */ int selectedIndex;
 /* 0x68 */ int selectedIndex2;
 /* 0x6c */ int rangeMin;
@@ -205,7 +205,7 @@ typedef struct UiElementRangeSelect { // 0xb8
 } UiElementRangeSelect_t;
 
 typedef struct UiElementTextInfo { // 0xd0
-/* 0x00 */ UiElementGeneric_t;
+/* 0x00 */ UiElementGeneric_t header;
 /* 0x64 */ char text[76];
 /* 0xb4 */ int unk_b4;
 /* 0xb8 */ int unk_b8;
@@ -217,13 +217,13 @@ typedef struct UiElementTextInfo { // 0xd0
 } UiElementTextInfo_t;
 
 typedef struct UiElementTextInput { // 0x4a8
-/* 0x000 */ UiElementGeneric_t;
+/* 0x000 */ UiElementGeneric_t header;
 /* 0x064 */ char textInput[16];
 /* 0x074*/ char unk_74[0x434];
 } UiElementTextInput_t;
 
 typedef struct UiElementSprite { // 0x84
-/* 0x00 */ UiElementGeneric_t;
+/* 0x00 */ UiElementGeneric_t header;
 /* 0x64 */ int unk_64;
 /* 0x68 */ int sprite;
 /* 0x6c */ u32 spriteColor;
@@ -264,7 +264,7 @@ typedef struct UiCreateGameElements {
 /* 0x2c */ UiElementText_t* advancedOptions;
 /* 0x30 */ UiElementImage_t* mapScreenshot;
 /* 0x34 */ UiElementImage_t* miniMap;
-} UiCreateGame_t;
+} UiCreateGameElements_t;
 
 typedef struct UiWeaponsElements { // 0x24
 /* 0x00 */ UiElementSprite_t* fluxRifleSprite;

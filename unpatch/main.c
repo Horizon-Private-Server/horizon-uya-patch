@@ -36,6 +36,7 @@ const int patches[][3] = {
 	{ 0, 0x0057611C, 0x0c19f270 }, // menu loop hook 2
 	{ -1, 0x002405e8, 0x00000000 }, // DME_CALLBACK_TABLE
 	{ 0, 0x0047cfec, 0x0069a630 }, // patchCreateGame
+	{ 0, 0x0047d124, 0x0069ce50 }, // patchAdvancedOptions
 	{ 0, 0x0047e9ac, 0x006c1730 }, // patchStaging
 	{ 0, 0x0047c834, 0x00690de8 }, // patchBuddies
 	{ 0, 0x0047e44c, 0x006b48c8 }, // patchPlayerDetails
@@ -54,6 +55,7 @@ const int patches[][3] = {
 	{ 0, 0x005753DC, 0x0c19e7c2 }, // menu loop hook 2
 	{ -1, 0x00240768, 0x00000000 }, // DME_CALLBACK_TABLE
 	{ 0, 0x0047d0ac, 0x00697e20 }, // patchCreateGame
+	{ 0, 0x0047d1e4, 0x0069a640 }, // patchAdvancedOptions
 	{ 0, 0x0047ea6c, 0x006bec18 }, // patchStaging
 	{ 0, 0x0047c8f4, 0x0068e6f8 }, // patchBuddies
 	{ 0, 0x0047e50c, 0x006b1f60 }, // patchPlayerDetails
