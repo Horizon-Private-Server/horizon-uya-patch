@@ -34,6 +34,11 @@
 #include "include/cheats.h"
 #include "interop/cheats.h"
 
+Tweaker_GravityBomb_t gBombTweaker[] = {
+	{12, 0.00001, 12, 15}, // UYA Default
+	{16, 0.00001, 16, 24} // DL Default
+};
+
 extern PlayerKills[GAME_MAX_PLAYERS];
 extern PlayerDeaths[GAME_MAX_PLAYERS];
 extern PlayerTeams[GAME_MAX_PLAYERS];
@@ -1168,4 +1173,27 @@ void destructableBridges(void)
 		}
 	}
 	patched.gameConfig.grDestructableBridges = 1;
+}
+
+/*
+ * NAME :		modifyWeaponTweakers
+ * DESCRIPTION :
+ *             Modifies weapon tweakers (behavior)
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void modifyWeaponTweakers(void)
+{
+	if (gameConfig.prGravityBombTweakers && patched.gameConfig.prGravityBombTweakers == 0) {
+		TweakersGravityBomb_t * gBomb = weaponGravityBombTweakers();
+		int i = gameConfig.prGravityBombTweakers;
+		gBomb->maxThrowDist = gBombTweaker[i].maxThrowDist;
+		gBomb->minThrowDist = gBombTweaker[i].minThrowDist;
+		gBomb->gravity = gBombTweaker[i].gravity;
+		gBomb->maxThrowSpeed = gBombTweaker[i].maxThrowSpeed;
+
+		patched.gameConfig.prGravityBombTweakers = 1;
+	}
 }

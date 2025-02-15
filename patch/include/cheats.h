@@ -31,9 +31,17 @@ void chargebootForever(void);
 void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay);
 void playerSize(void);
 void loadoutWeaponsOnly(int FirstPass);
+void modifyWeaponTweakers(void);
 
 // Other
 void disableRespawning(void);
 
 // variable addresses
 VariableAddress_t vaUpdateWeaponKill;
+
+typedef struct Tweaker_GravityBomb {
+	float maxThrowDist;
+	float minThrowDist;
+	float gravity;
+	float maxThrowSpeed;
+} Tweaker_GravityBomb_t;

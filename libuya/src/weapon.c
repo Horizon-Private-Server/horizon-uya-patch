@@ -3,7 +3,7 @@
 
 #define GADGET_TABLE                    ((GadgetDef *)GetAddress(&vaWeaponsPvar))
 #define END_GADGETS                     ((GadgetDef *)((u32)GetAddress(&vaWeaponsPvar) + 0xc00))
-#define TWEAKERS_GRAVITY_BOMB           ((TweakersGravityBomb_t *)GetAddress(&vaWeapon_GravityBomb_Tweakers))
+#define TWEAKERS_GRAVITY_BOMB           (GetAddress(&vaWeapon_GravityBomb_Tweakers))
 
 VariableAddress_t vaWeaponsPvar = {
 #if UYA_PAL
@@ -64,31 +64,32 @@ VariableAddress_t vaGB_IsWeaponEnabled = {
 
 VariableAddress_t vaWeapon_GravityBomb_Tweakers = {
 #if UYA_PAL
-	.Lobby = 0x0024afd0,
-	.Bakisi = 0x002470c0,
-	.Hoven = 0x00247100,
-	.OutpostX12 = 0x00247100,
-	.KorgonOutpost = 0x002470a0,
-	.Metropolis = 0x002470d0,
-	.BlackwaterCity = 0x00246fb0,
-	.CommandCenter = 0x00246fe0,
-	.BlackwaterDocks = 0x00247010,
-	.AquatosSewers = 0x002470b0,
-	.MarcadiaPalace = 0x00247050,
+	.Lobby = 0x0024b010,
+	.Bakisi = 0x00247100,
+	.Hoven = 0x00247140,
+	.OutpostX12 = 0x00247140,
+	.KorgonOutpost = 0x002470e0,
+	.Metropolis = 0x00247110,
+	.CommandCenter = 0x00247020,
+	.BlackwaterDocks = 0x00247050,
+	.AquatosSewers = 0x002470f0,
+	.MarcadiaPalace = 0x00247090,
 #else
-	.Lobby = 0x0024b0e0,
-	.Bakisi = 0x00247240,
-	.Hoven = 0x00247280,
-	.OutpostX12 = 0x00247280,
-	.KorgonOutpost = 0x00247220,
-	.Metropolis = 0x00247250,
-	.BlackwaterCity = 0x00247130,
-	.CommandCenter = 0x00247160,
-	.BlackwaterDocks = 0x00247190,
-	.AquatosSewers = 0x00247230,
-	.MarcadiaPalace = 0x002471d0,
+	.Lobby = 0x0024b120,
+	.Bakisi = 0x00247280,
+	.Hoven = 0x002472c0,
+	.OutpostX12 = 0x002472c0,
+	.KorgonOutpost = 0x00247260,
+	.Metropolis = 0x00247290,
+	.BlackwaterCity = 0x00247170,
+	.CommandCenter = 0x002471a0,
+	.BlackwaterDocks = 0x002471d0,
+	.AquatosSewers = 0x00247270,
+	.MarcadiaPalace = 0x00247210,
 #endif
 };
+
+
 
 /*
  * Returns pointer to the start of the moby list.

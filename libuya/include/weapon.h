@@ -51,7 +51,7 @@ enum WEAPON_IDS
 
 typedef struct TweakersGravityBomb {
 /* 0x00 */ float maxThrowDist;
-/* 0x04 */ float minthrowDist;
+/* 0x04 */ float minThrowDist;
 /* 0x08 */ float gravity;
 /* 0x0c */ float maxThrowSpeed;
 /* 0x10 */ float mp_maxThrowSpeed;

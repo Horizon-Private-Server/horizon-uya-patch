@@ -501,6 +501,7 @@ MenuElem_t menuElementsGameSettings[] = {
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever, "Double tap and hold R2 to chargeboot forever." },
+  { "Gravity Bomb->B6 Obliterator", toggleActionHandler, menuStateHandler_Default, &gameConfig.prGravityBombTweakers, "Changes the Gravity Bomb Physics to that of the B6 Obliterator from Ratchet: Deadlocked!" },
   { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly, "Only allow the use of each players Loadout weapons, regardless of what weapons are enabled." },
   // { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize, "Changes the size of the player model." },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor, "You only have one life!  Once you die, you can't respawn!" },

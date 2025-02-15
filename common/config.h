@@ -66,6 +66,7 @@ typedef struct PatchGameConfig {
   char prChargebootForever;
   char prPlayerSize;
   char prLoadoutWeaponsOnly;
+  char prGravityBombTweakers;
 } PatchGameConfig_t;
 
 typedef struct PatchPatches {

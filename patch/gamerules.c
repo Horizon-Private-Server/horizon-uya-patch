@@ -242,6 +242,9 @@ void grGameStart(void)
 
 	if (gameConfig.grDestructableBridges)
 		destructableBridges();
+	
+	// Always run.  If statements inside to check if values need to change.
+	modifyWeaponTweakers();
 
 	FirstPass = 0;
 }
