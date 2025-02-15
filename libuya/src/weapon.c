@@ -1,9 +1,9 @@
 #include "weapon.h"
 #include "interop.h"
 
-#define GADGET_TABLE                          ((GadgetDef *)GetAddress(&vaWeaponsPvar))
-#define END_GADGETS                            ((GadgetDef *)((u32)GetAddress(&vaWeaponsPvar) + 0xc00))
-
+#define GADGET_TABLE                    ((GadgetDef *)GetAddress(&vaWeaponsPvar))
+#define END_GADGETS                     ((GadgetDef *)((u32)GetAddress(&vaWeaponsPvar) + 0xc00))
+#define TWEAKERS_GRAVITY_BOMB           ((TweakersGravityBomb_t *)GetAddress(&vaWeapon_GravityBomb_Tweakers))
 
 VariableAddress_t vaWeaponsPvar = {
 #if UYA_PAL
@@ -62,10 +62,43 @@ VariableAddress_t vaGB_IsWeaponEnabled = {
 #endif
 };
 
+VariableAddress_t vaWeapon_GravityBomb_Tweakers = {
+#if UYA_PAL
+	.Lobby = 0x0024afd0,
+	.Bakisi = 0x002470c0,
+	.Hoven = 0x00247100,
+	.OutpostX12 = 0x00247100,
+	.KorgonOutpost = 0x002470a0,
+	.Metropolis = 0x002470d0,
+	.BlackwaterCity = 0x00246fb0,
+	.CommandCenter = 0x00246fe0,
+	.BlackwaterDocks = 0x00247010,
+	.AquatosSewers = 0x002470b0,
+	.MarcadiaPalace = 0x00247050,
+#else
+	.Lobby = 0x0024b0e0,
+	.Bakisi = 0x00247240,
+	.Hoven = 0x00247280,
+	.OutpostX12 = 0x00247280,
+	.KorgonOutpost = 0x00247220,
+	.Metropolis = 0x00247250,
+	.BlackwaterCity = 0x00247130,
+	.CommandCenter = 0x00247160,
+	.BlackwaterDocks = 0x00247190,
+	.AquatosSewers = 0x00247230,
+	.MarcadiaPalace = 0x002471d0,
+#endif
+};
+
 /*
  * Returns pointer to the start of the moby list.
  */
 GadgetDef * weaponGadgetList(void)
 {
     return GADGET_TABLE;
+}
+
+TweakersGravityBomb_t * weaponGravityBombTweakers(void)
+{
+    return TWEAKERS_GRAVITY_BOMB;
 }

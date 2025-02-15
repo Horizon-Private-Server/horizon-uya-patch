@@ -49,13 +49,13 @@ enum WEAPON_IDS
     WEAPON_ID_WRENCH_V2 = 24,
 };
 
-struct gravityBombTweakers { // Bakisi: 0x00247280
+typedef struct TweakersGravityBomb {
 /* 0x00 */ float maxThrowDist;
 /* 0x04 */ float minthrowDist;
 /* 0x08 */ float gravity;
 /* 0x0c */ float maxThrowSpeed;
 /* 0x10 */ float mp_maxThrowSpeed;
-};
+} TweakersGravityBomb_t;
 
 typedef struct WeaponQuickSelect {
     char Slot[7];
@@ -151,5 +151,7 @@ __LIBUYA_GETTER__ GadgetDef * weaponGadgetList(void);
 
 // Returns true if given Weapon ID is available in game.
 int weaponIsEnabled(int weaponId);
+
+TweakersGravityBomb_t * weaponGravityBombTweakers(void);
 
 #endif // _LIBUYA_WEAPON_H_
