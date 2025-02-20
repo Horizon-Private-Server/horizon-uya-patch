@@ -115,9 +115,6 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grDisablePlayerTurrets)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_PLAYER_TURRET, 0);
 
-	if (gameConfig.prPlayerSize)
-		onGameplayLoad_playerSize(gameplay);
-
 	if (gameConfig.grNoBaseDefense_SmallTurrets)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_NODE_TURRET, 100);
 
@@ -183,10 +180,8 @@ void grGameStart(void)
 	if (gameConfig.grHealthBoxes == 1)
 		disableHealthContainer();
 
-	if (gameConfig.grDisableWeaponPacks == 1)
+	if (gameConfig.grDisableWeaponPacks)
 		disableWeaponPacks();
-	else if (gameConfig.grDisableWeaponPacks == 2)
-		spawnWeaponPackOnDeath();
 	
 	if (gameConfig.grV2s)
 		v2_Setting(gameConfig.grV2s, FirstPass);
@@ -224,9 +219,6 @@ void grGameStart(void)
 
 	if (gameConfig.grNoCooldown)
 		noPostHitInvinc();
-
-	if (gameConfig.prPlayerSize)
-		playerSize();
 
 	if (gameConfig.grHealthBars)
 		healthbars();

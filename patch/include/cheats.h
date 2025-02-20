@@ -28,8 +28,6 @@ void destructableBridges(void);
 // Party Game Rules
 void survivor(void);
 void chargebootForever(void);
-void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay);
-void playerSize(void);
 void loadoutWeaponsOnly(int FirstPass);
 void modifyWeaponTweakers(void);
 

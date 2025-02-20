@@ -297,13 +297,6 @@ const char* CustomModeShortNames[] = {
 #endif
 };
 
-MenuElem_ListData_t dataWeaponPacks = {
-    .value = &gameConfig.grDisableWeaponPacks,
-    .stateHandler = NULL,
-    .count = 2,
-    .items = { "Default", "Off", "On Death" }
-};
-
 MenuElem_ListData_t dataV2_Setting = {
     .value = &gameConfig.grV2s,
     .stateHandler = NULL,
@@ -330,13 +323,6 @@ MenuElem_ListData_t dataRespawnTimer_Player = {
     .stateHandler = NULL,
     .count = 13,
     .items = { "1.5", "2", "2.5", "3", "4", "5", "6", "7", "8", "9", "10", "0", "1", }
-};
-
-MenuElem_ListData_t dataPlayerSize = {
-    .value = &gameConfig.prPlayerSize,
-    .stateHandler = NULL,
-    .count = 5,
-    .items = { "Normal", "Large", "Giant", "Tiny", "Small" }
 };
 
 MenuElem_ListData_t dataRadarBlipsDistance = {
@@ -470,25 +456,23 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_Player, "Time in seconds for the player to respawn." },
   { "Respawn Invincibility", toggleActionHandler, menuStateHandler_Default, &gameConfig.grRespawnInvincibility, "Adds a small invincibility timer to players whom have just respawned." },
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers, "Disables longer respawn timers for your team if your teams base turrets have been destroyed." },
-  { "Weapon Pack Spawning", listActionHandler, menuStateHandler_Default, &dataWeaponPacks, "Toggle if weapon packs should spawn when a player dies." },
   { "V2s", listActionHandler, menuStateHandler_Default, &dataV2_Setting, "Configures V2 weapon upgrades to be disabled, on (default), or always on (spawn with v2 weapons)." },
   { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown, "Disables the brief hit invincibility after taking damage." },
   { "Destructable Bridges", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDestructableBridges, "turn on/off the ability to destroy bridges." },
   { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit, "Forces sniper shots that hit to register on every client. Can result in shots that appear to phase through walls." },
   { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled, "Forces sniper shots to always deal the correct amount of damage." },
-  { "Fix Weapon Shot Lag", toggleActionHandler, menuStateHandler_Default, &gameConfig.grWeaponShotLag, "Send shots reliably." },
-  { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn, "Automatically respawn players once the in game respawn timer hits zero." },
-  { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire, "Earn a percentage of health for each kill."},
-  // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars, "Draws a healthbar above each player's nametag." },
+  { "Weapon Packs", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponPacks, "Toggle if weapon packs should spawn when a player dies." },
   { "Health Boxes", listActionHandler, menuStateHandler_Default, &dataHealthBoxes, "Whether health pickups are enabled, or if there is a box enclosure that must be broken first before picking up." },
+  // { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones, "Toggle Drones on or off." },
+  { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets, "Toggle Player Turrets on or off." },
   { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates, "Toggle Weapon Crates on or off." },
   { "Ammo Pickups", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableAmmoPickups, "Toggle Ammo Pickups on or off." },
   { "Health Boxes Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_HealthBoxes, "Time in seconds for the Health Boxes to respawn." },
   { "Weapon Crates Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_WeaponCrates, "Time in seconds for the Weapon Crates to respawn." },
   { "Ammo Pickups Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_AmmoPickups, "Time in seconds for the Ammo Pickups to respawn." },
-
-  // { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones, "Toggle Drones on or off." },
-  { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets, "Toggle Player Turrets on or off." },
+  { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn, "Automatically respawn players once the in game respawn timer hits zero." },
+  { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire, "Earn a percentage of health for each kill."},
+  // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars, "Draws a healthbar above each player's nametag." },
 #if DEBUG
   { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Returns a dropped flag if it lands on water, lava, or other non-walkable areas." },
 #endif
@@ -503,7 +487,6 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever, "Double tap and hold R2 to chargeboot forever." },
   { "Gravity Bomb->B6 Obliterator", toggleActionHandler, menuStateHandler_Default, &gameConfig.prGravityBombTweakers, "Changes the Gravity Bomb Physics to that of the B6 Obliterator from Ratchet: Deadlocked!" },
   { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly, "Only allow the use of each players Loadout weapons, regardless of what weapons are enabled." },
-  // { "Player Size", listActionHandler, menuStateHandler_Default, &dataPlayerSize, "Changes the size of the player model." },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor, "You only have one life!  Once you die, you can't respawn!" },
 
   // { "Experimental CTF Rules", labelActionHandler, menuLabelStateHandler_CTF, (void*)LABELTYPE_HEADER },

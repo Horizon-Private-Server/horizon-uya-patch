@@ -57,14 +57,12 @@ typedef struct PatchGameConfig {
   char grVampire;
   char grFluxShotsAlwaysHit;
   char grFluxNikingDisabled;
-  char grWeaponShotLag;
   char grFlagHotspots;
   char grDestructableBridges;
 
   // Party
   char prSurvivor;
   char prChargebootForever;
-  char prPlayerSize;
   char prLoadoutWeaponsOnly;
   char prGravityBombTweakers;
 } PatchGameConfig_t;
@@ -77,7 +75,6 @@ typedef struct PatchPatches {
   char killStealing;
   char deadShooting;
   char weaponShotLag;
-  char gadgetEvents;
   char resurrectWeaponOrdering;
   char ctfLogic;
 

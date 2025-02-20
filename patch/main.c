@@ -705,57 +705,6 @@ void patchWeaponShotLag(void)
 }
 
 /*
- * NAME :		handleGadgetEvent
- * DESCRIPTION :
- * 			Reads gadget events and patches them if needed.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void handleGadgetEvents(int player, char gadgetEventType, int activeTime, short gadgetId, int gadgetType, struct tNW_GadgetEventMessage * message)
-{
-	// get top of player struct
-	Player * p = (Player*)((u32)player - 0x1a40);
-
-	// Force all incoming weapon shot events to happen immediately.
-	const int MAX_DELAY = TIME_SECOND * 0;
-	int startTime = activeTime;
-	// put clamp on max delay
-	int delta = activeTime - gameGetTime();
-	if (delta > MAX_DELAY) {
-		activeTime = gameGetTime() + MAX_DELAY;
-		if (message)
-			message->ActiveTime = activeTime;
-	} else if (delta < 0) {
-		activeTime = gameGetTime() - 1;
-		if (message)
-			message->ActiveTime = activeTime;
-	}
-
-	// run base command
-	((void (*)(int, char, int, short, int, struct tNW_GadgetEventMessage*))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, activeTime, gadgetId, gadgetType, message);
-}
-
-/*
- * NAME :		patchGadgetEvents
- * DESCRIPTION :
- * 			Hook for the handleGadgetEVentLag function.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void patchGadgetEvents(void)
-{
-	if (patched.gadgetEvents)
-		return;
-
-	HOOK_JAL(GetAddress(&vaGadgetEventHook), &handleGadgetEvents);
-	patched.gadgetEvents = 1;
-}
-
-/*
  * NAME :		patchLevelOfDetail
  * DESCRIPTION :
  * 			Sets the level of detail.
@@ -1143,69 +1092,6 @@ void patchFov(void)
 }
 
 /*
- * NAME :		patchUnkick_Logic
- * DESCRIPTION :
- * 				Logic behind fixingi the unkick exploit.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-int patchUnkick_Logic(u32 uip)
-{
-#if UYA_PAL
-	// run base command
-	int r = ((int (*)(u32))0x00686e40)(uip);
-#else
-	// run base command
-	int r = ((int (*)(u32))0x00684320)(uip);
-#endif
-	// which option is selected for popup.
-	int selectedOption = 0x01d20234;
-	int i;
-	GameSettings * gs = gameGetSettings();
-	if (gs) {
-		int clientId = gameGetMyClientId();
-		for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
-			// Check ClientID and if they are kicked and not viewing the kicked popup
-			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 5 && *(u32*)selectedOption != 3) {
-				// Select "No" Option
-				*(u32*)selectedOption = 2;
-				// Press X
-#if UYA_PAL
-				*(u8*)0x00225800 = 0xbf;
-#else
-				*(u8*)0x00225983 = 0xbf;
-#endif
-			}
-		}
-	}
-	return r;
-}
-
-/*
- * NAME :		patchUnkick
- * DESCRIPTION :
- * 				Hook for the patchUnkick_Logic.
- * 				Hooks into the popup loop.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void patchUnkick(void)
-{
-	// Hook into popup loop
-#if UYA_PAL
-	int hook = 0x006872b0;
-#else
-	int hook = 0x00684790;
-#endif
-	if (hook)
-		HOOK_JAL(hook, &patchUnkick_Logic);
-}
-
-/*
  * NAME :		patchDeathBarrierBug
  * DESCRIPTION :
  * 				Patches death barrier bug/teleport glitch
@@ -1236,68 +1122,6 @@ void patchDeathBarrierBug(void)
 			player->inBaseHack = 1;
 		}
 	}
-}
-
-/*
- * NAME :		patchCreateGameMenu
- * DESCRIPTION :
- * 				Patches various options on the create game screen
- * 				such as higher frag limit and time limit.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void patchCreateGameMenu_Option(int option, int new_value)
-{
-	if (*(int*)option != new_value)
-		*(int*)option = new_value;
-}
-// void patchCreateGameMenu_LastSettings(void)
-// {
-// 	u32 menu = uiGetMenu(UI_MENU_CREATE_GAME);
-// 	// Normal Options
-// 	// Enable Password if Disabled
-// 	int use_password = (*(u32*)(menu + 0x130) + 0x4);
-// 	int password = (*(u32*)(menu + 0x134) + 0x4);
-// 	// If "USE PASWORD" is "Yes" and also disabled to edit
-// 	if (*(u32*)use_password == 2) {
-// 		patchCreateGameMenu_Option(use_password, 3); // enable "use password"
-// 		patchCreateGameMenu_Option(password, 3); // enable password option
-// 	}
-
-// 	// Advanced Options
-// 	menu = uiGetMenu(UI_MENU_CREATE_GAME_ADVANCED_OPTIONS);
-// 	int nodes = (*(u32*)(menu + 0x114) + 0x64);
-// 	patchCreateGameMenu_Option(nodes, lastNodes);
-
-// 	lastSettings = 0;
-// }
-void patchCreateGameMenu(void)
-{
-	u32 menu = uiGetActiveMenu(UI_MENU_CREATE_GAME, 0);
-	if (!menu) return;
-
-	// Patch LastSettings options
-	// printf("\nlastsettings: %d", lastSettings);
-	// if (lastSettings)
-	// 	patchCreateGameMenu_LastSettings();
-
-	// Modify Normal Options
-// 	int time_limit = (*(u32*)(menu + 0x12c) + 0x70);
-// 	patchCreateGameMenu_Option(time_limit, 120); // Time Limit = 120 Minutes
-// 	// Assembly time limit max (if frag limit = none, it reads from this)
-// #if UYA_PAL
-// 	*(u32*)0x0069aa28 = 0x24020078;
-// #else
-// 	*(u32*)0x00698218 = 0x24020078;
-// #endif
-
-	// if in Advanced Options
-	menu = uiGetActiveMenu(UI_MENU_CREATE_GAME_ADVANCED_OPTIONS, 1);
-	if (!menu) return;
-	int frag_limit = (*(u32*)(menu + 0x12c) + 0x70);
-	patchCreateGameMenu_Option(frag_limit, 50); // Frag Limit = 50
 }
 
 /*
@@ -2873,10 +2697,6 @@ int main(void)
 		// if (config.enableSpectate)
 		// 	runSpectate();
 
-		// Patches gadget events as they come in.
-		if(gameConfig.grWeaponShotLag)
-			patchGadgetEvents();
-
 		if (config.alwaysShowHealth)
 			patchAlwaysShowHealth();
 
@@ -2905,10 +2725,6 @@ int main(void)
 
 		lastGameState = 1;
 	} else if (isInMenus()) {
-		// Patch various options on Create Game Screen
-		// Freezes on PAL
-		// patchCreateGameMenu();
-
 		// If in Lobby, run these game rules.
 		grLobbyStart();
 

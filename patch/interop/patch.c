@@ -349,64 +349,6 @@ VariableAddress_t vaFluxUDPtoTCP = {
 };
 
 //================================================
-//=============  patchGadgetEvents
-//================================================
-VariableAddress_t vaGadgetEventFunc = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x00546510,
-    .Hoven = 0x005486d8,
-    .OutpostX12 = 0x0053dfb0,
-    .KorgonOutpost = 0x0053b698,
-    .Metropolis = 0x0053aa98,
-    .BlackwaterCity = 0x00538280,
-    .CommandCenter = 0x00537ad8,
-    .BlackwaterDocks = 0x0053a358,
-    .AquatosSewers = 0x00539658,
-    .MarcadiaPalace = 0x00538fd8,
-#else
-    .Lobby = 0,
-    .Bakisi = 0x00543c00,
-    .Hoven = 0x00545d08,
-    .OutpostX12 = 0x0053b620,
-    .KorgonOutpost = 0x00538d88,
-    .Metropolis = 0x00538188,
-    .BlackwaterCity = 0x005358f0,
-    .CommandCenter = 0x00535320,
-    .BlackwaterDocks = 0x00537b60,
-    .AquatosSewers = 0x00536ea0,
-    .MarcadiaPalace = 0x005367e0,
-#endif
-};
-VariableAddress_t vaGadgetEventHook = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x0054b23c,
-    .Hoven = 0x0054d404,
-    .OutpostX12 = 0x00542cdc,
-    .KorgonOutpost = 0x005403c4,
-    .Metropolis = 0x0053f7c4,
-    .BlackwaterCity = 0x0053cfac,
-    .CommandCenter = 0x0053c804,
-    .BlackwaterDocks = 0x0053f084,
-    .AquatosSewers = 0x0053e384,
-    .MarcadiaPalace = 0x0053dd04,
-#else
-    .Lobby = 0,
-    .Bakisi = 0x00548894,
-    .Hoven = 0x0054a99c,
-    .OutpostX12 = 0x005402b4,
-    .KorgonOutpost = 0x0053da1c,
-    .Metropolis = 0x0053ce1c,
-    .BlackwaterCity = 0x0053a584,
-    .CommandCenter = 0x00539fb4,
-    .BlackwaterDocks = 0x0053c7f4,
-    .AquatosSewers = 0x0053bb34,
-    .MarcadiaPalace = 0x0053b474,
-#endif
-};
-
-//================================================
 //=============  patchLevelOfDetail
 //================================================
 VariableAddress_t vaLevelOfDetail_Hook = {

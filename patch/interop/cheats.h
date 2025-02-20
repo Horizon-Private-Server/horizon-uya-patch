@@ -1,9 +1,6 @@
 #include <libuya/interop.h>
 
 VariableAddress_t vaWeaponPackSpawnFunc;
-VariableAddress_t vaRespawnTimerFunc;
-VariableAddress_t vaSpawnWeaponPackFunc;
-VariableAddress_t vaRespawnTimerHook;
 VariableAddress_t vaCheckWeaponKill;
 VariableAddress_t vaUpdateWeaponKill;
 VariableAddress_t vaDM_PressXToRespawn;

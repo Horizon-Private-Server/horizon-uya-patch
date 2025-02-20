@@ -12,8 +12,6 @@ VariableAddress_t vaGetSniperShotDirectionFunc;
 VariableAddress_t vaGetSniperShotDirectionHook;
 VariableAddress_t vaAllWeaponsUDPtoTCP;
 VariableAddress_t vaFluxUDPtoTCP;
-VariableAddress_t vaGadgetEventFunc;
-VariableAddress_t vaGadgetEventHook;
 VariableAddress_t vaLevelOfDetail_Hook;
 VariableAddress_t vaLevelOfDetail_Shrubs;
 VariableAddress_t vaLevelOfDetail_Terrain;
