@@ -74,7 +74,7 @@ enum MobyId
 	MOBY_ID_BLACK_SQUARE = 0x10c6,
 	MOBY_ID_OBANI_BEAM_DIRECTOR = 0x11c1,
 	MOBY_ID_AMMO_PAD = 0x1388,
-	MOBY_ID_SMALL_NODE_TURRET = 0x15ca,
+	MOBY_ID_SMALL_NODE_TURRET_SHOT = 0x15ca,
 	MOBY_ID_HEALTH_PAD = 0x15ee,
 	MOBY_ID_DYNAMO_PLATFORM = 0x1607,
 	MOBY_ID_HOVEN_BRIDGE_BREAKABLE1 = 0x1632,
@@ -333,7 +333,9 @@ typedef struct Moby {
 	/* 0x36 */ u16 modeBits2;
 	/* 0x38 */ u32 lights;
 	/* 0x3c */ u32 primaryColor;
-	/*      */ char unk_40[0x24];
+	/*		*/ char unk_40[0x8];
+	/* 0x48 */ float unk_float_48;
+	/*      */ char unk_4c[0x18];
 	/* 0x64 */ void * pUpdate;
 	/* 0x68 */ void * pVar;
 	/*      */ char unk_6c[0x2];
