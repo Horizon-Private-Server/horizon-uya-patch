@@ -24,6 +24,7 @@ void respawnInvincTimer(void);
 void onGameplayLoad_disableHealthContainer(GameplayHeaderDef_t * gameplay);
 void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay);
 void destructableBridges(void);
+void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay);
 
 // Party Game Rules
 void survivor(void);

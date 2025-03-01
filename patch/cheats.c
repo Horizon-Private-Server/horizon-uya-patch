@@ -784,6 +784,21 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
 				}
 			}
 		}
+		// if (gameConfig.grRespawnTimer_SmallTurrets > 0 || gameConfig.grNoBaseDefense_SmallTurrets) {
+		// 	int grRespawn = gameConfig.grRespawnTimer_SmallTurrets;
+		// 	int grDisable = gameConfig.grNoBaseDefense_SmallTurrets;
+		// 	int time = 0; // default
+		// 	if ((grDisable && !grRespawn) || (grDisable && grRespawn)) {
+		// 		time = -1;
+		// 	} else if (!grDisable && grRespawn) {
+		// 		time = (grRespawn - 1) * 5;
+		// 	}
+		// 	if (moby->OClass == MOBY_ID_NODE_TURRET) {
+		// 		GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+		// 		u32 data = PVarDataPtr + PVarOffset->Offset;
+		// 		*(int*)(data + 0x70) = (gameConfig.grRespawnTimer_WeaponCrates - 1) * 5;
+		// 	}
+		// }
 	}
 }
 
@@ -968,5 +983,31 @@ void modifyWeaponTweakers(void)
 		gBomb->maxThrowSpeed = gBombTweaker[i].maxThrowSpeed;
 
 		patched.gameConfig.prGravityBombTweakers = 1;
+	}
+}
+
+/*
+ * NAME :		onGameplayLoad_disableDrones
+ * DESCRIPTION :
+ *             Modifies weapon tweakers (behavior)
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay)
+{
+	int i;
+	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
+	u32 PVarOffsetPtr = ((u32)gameplay + gameplay->PVarTableOffset);
+	u32 PVarDataPtr = ((u32)gameplay + gameplay->PVarDataOffset);
+	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
+		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
+		if (moby->OClass ==  MOBY_ID_DRONE_BOT_CLUSTER_CONFIG) {
+			GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+			u32 data = PVarDataPtr + PVarOffset->Offset;
+			*(int*)(data + 0xb8) = 1;
+			*(int*)(data + 0xa0) = 1;
+		}
 	}
 }
