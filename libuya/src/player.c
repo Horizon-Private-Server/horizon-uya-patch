@@ -5,51 +5,21 @@
 #include "spawnpoint.h"
 #include "team.h"
 
+#define PLAYER_STRUCT_ARRAY                         ((Player**)GetAddress(&vaPlayerStructArray))
+//Local player 1 dme player index.
+#define PLAYER_1_ID                                 (*(u32*)0x0017218C)
+// Local player 2 dme player index.
+#define PLAYER_2_ID                                 (*(u32*)0x001B6ED8)
+
+#if UYA_PAL
+#define PLAYER_LOCAL_PLAYER_COUNT (0)
+#else
+#define PLAYER_LOCAL_PLAYER_COUNT (*(int*)0x001a5e5c)
+#endif
+
 void playerRespawn(Player * player);
 void playerStripWeapons(Player * player);
 void internal_HurtPlayer(Player * player, float health);
-
-VariableAddress_t vaEmpty = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0,
-    .Hoven = 0,
-    .OutpostX12 = 0,
-    .KorgonOutpost = 0,
-    .Metropolis = 0,
-    .BlackwaterCity = 0,
-    .CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
-#else
-    .Lobby = 0,
-    .Bakisi = 0,
-    .Hoven = 0,
-    .OutpostX12 = 0,
-    .KorgonOutpost = 0,
-    .Metropolis = 0,
-    .BlackwaterCity = 0,
-    .CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
-#endif
-};
-
-/*
- */
-#define PLAYER_STRUCT_ARRAY                         ((Player**)GetAddress(&vaPlayerStructArray))
-
-/*
- * Local player 1 dme player index.
- */
-#define PLAYER_1_ID                                 (*(u32*)0x0017218C)
-
-/*
- * Local player 2 dme player index.
- */
-#define PLAYER_2_ID                                 (*(u32*)0x001B6ED8)
 
 VariableAddress_t vaPlayerStructArray = {
 #if UYA_PAL

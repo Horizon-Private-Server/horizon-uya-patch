@@ -339,6 +339,9 @@ __LIBUYA_GETTER__ float gameGetDeathHeight(void);
  */
 __LIBUYA_SETTER__ void gameSetDeathHeight(float height);
 
+__LIBUYA_SETTER__ void gameGetQuickSandhHeight(void);
+__LIBUYA_SETTER__ void gameSetQuickSandHeight(float height);
+
 /*
  * NAME :		gameGetData
  * DESCRIPTION :

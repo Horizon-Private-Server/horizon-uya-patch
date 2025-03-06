@@ -54,6 +54,7 @@
 #endif
 
 #define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))
+#define GAME_QUICKSAND                      (*(float*)GetAddress(&vaQuickSandHeight))
 
 #define GAME_DATA                           ((GameData*)GetAddress(&vaGAME_DATA))
 #define GAME_TIME_LIMIT                     (*(int*)GetAddress(&vaGAME_DATA))
@@ -124,6 +125,34 @@ VariableAddress_t vaDeathBarrier = {
     .BlackwaterDocks = 0x00247f30,
     .AquatosSewers = 0x00247f30,
     .MarcadiaPalace = 0x00247f30,
+#endif
+};
+
+VariableAddress_t vaQuickSandHeight = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0,
+	.Hoven = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
+	.Metropolis = 0,
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x0025BB28,
+	.Hoven = 0,
+	.OutpostX12 = 0,
+    .KorgonOutpost = 0,
+	.Metropolis = 0,
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
 #endif
 };
 
@@ -262,6 +291,16 @@ float gameGetDeathHeight(void)
 void gameSetDeathHeight(float height)
 {
     GAME_DEATH_BARRIER = height;
+}
+
+float gameGeQuickSandHeight(void)
+{
+    return GAME_QUICKSAND;
+}
+
+void gameSetQuickSandHeight(float height)
+{
+    GAME_QUICKSAND = height;
 }
 
 void gameSetWinner(int teamOrPlayerId, int isTeam)

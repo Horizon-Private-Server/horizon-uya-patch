@@ -1063,7 +1063,7 @@ typedef struct Player { // 0x4500
 	/*        */ char unk_5e0[0x30];
 	/* 0x0610 */ HeroAnim anim;
 	/*        */ int unk_630; // Always gets written -1
-	/*        */ int animTimerToRestartWalkingAnim;
+	/* 0x0634 */ int animTimerToRestartWalkingAnim;
 	/*        */ char unk_638[0x8];
 	/* 0x0640 */ HeroJoints joints;
 	/* 0x0740 */ HeroAnimLayers animLayers;
@@ -1090,8 +1090,8 @@ typedef struct Player { // 0x4500
 	/* 0x1780 */ MotionBlur wrenchMotionBlur;
 	/* 0x18d0 */ int weaponHeldId;
 	/*        */ char unk_18d4[0xc];
-	/* 0x18f0 */ VECTOR prevHandPos;
-	/*        */ char unk_1900[0xd0];
+	/* 0x18e0 */ VECTOR prevHandPos;
+	/*        */ char unk_18f0[0xd0];
 	/*        */ void * pUnk_19c0;
 	/*        */ char unk_19c4[0x1c];
 	/* 0x19e0 */ short unk_19e0;
@@ -1130,11 +1130,12 @@ typedef struct Player { // 0x4500
 	/* 0x1a32 */ WeaponQuickSelect quickSelect;
 	/*        */ char unk_1a3a[0x6];
 	/* 0x1a40 */ char chargebootsSlot;
-	/*        */ char unk_1a41[0x11];
+	/* 0x1a41 */ char unk_1a41; // obfuscated
+	/*        */ char unk_1a42[0x10];
 	/* 0x1a52 */ WeaponAmmo weaponAmmo;
 	/*        */ char unk_1a5e[0x4];
 	/* 0x1a62 */ WeaponMeter weaponMeter;
-	/*        */ char unk_1a6d[0x12];
+	/*        */ char unk_1a6d[0x13];
 	/* 0x1a80 */ GadgetEvent gadgetEventSlots[10];
 	/*        */ int unk_1da0;
 	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;
@@ -1193,8 +1194,8 @@ typedef struct Player { // 0x4500
 	/* 0x24a6 */ short int GadgetPADDelayTimer;
 	/* 0x24a8 */ short int unkGadgetTimer_24a8;
 	/*        */ char unk_24aa[0x1e];
-	/*        */ char unk_24c8;
-	/*        */ char unk_24c9; // hides reticle/hud, does something with CTF Flag and setting to 0x32 shows save filed popup.
+	/* 0x24c8 */ char unk_24c8;
+	/* 0x24c9 */ char unk_24c9; // hides reticle/hud, does something with CTF Flag and setting to 0x32 shows save filed popup.
 	/*        */ char unk_24ca;
 	/*        */ char unk_24cb;
 	/* 0x24cc */ u32 lastDamagedMeOwnerUID;
@@ -1271,6 +1272,7 @@ typedef struct Player { // 0x4500
 	/* 0x4d32 */ char padFrameChunksReceived;
 	/* 0x4d33 */ char posOutOfSyncLastUpdate;
 	/* 0x4d34 */ char stateAtSyncFrame;
+	/* 0x4d35 */ char unk_4d35[0xb];
 	/* 0x4d40 */ VECTOR receivedSyncPos;
 	/* 0x4d50 */ VECTOR posAtSyncFrame;
 	/* 0x4d60 */ VECTOR syncPosDifference;
