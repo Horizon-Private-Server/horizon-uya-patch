@@ -1620,4 +1620,6 @@ void playerGiveShield(Player * player);
  */
 Player * playerGetFromSlot(int index);
 
+int playerGetLocalCount(void);
+
 #endif // _LIBUYA_PLAYER_H_

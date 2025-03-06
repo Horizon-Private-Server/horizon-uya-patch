@@ -12,7 +12,7 @@
 #define PLAYER_2_ID                                 (*(u32*)0x001B6ED8)
 
 #if UYA_PAL
-#define PLAYER_LOCAL_PLAYER_COUNT (0)
+#define PLAYER_LOCAL_PLAYER_COUNT (*(int*)0x001a5cdc)
 #else
 #define PLAYER_LOCAL_PLAYER_COUNT (*(int*)0x001a5e5c)
 #endif
@@ -756,4 +756,9 @@ int playerHasShield(Player * player)
         ++shield;
     }
     return 0;
+}
+
+int playerGetLocalCount(void)
+{
+    return PLAYER_LOCAL_PLAYER_COUNT;
 }
