@@ -211,6 +211,20 @@ typedef enum PlayerType {
 	PLAYER_TYPE_CNT = 38
 } PlayerType;
 
+typedef enum DeobfuscateAddress {
+	DEOBFUSCATE_ADDRESS_HEALTH = 0,
+	DEOBFUSCATE_ADDRESS_STATE = 0,
+	DEOBFUSCATE_ADDRESS_TIMER = 0,
+	DEOBFUSCATE_ADDRESS_WEAPON = 1,
+} DeobfuscateAddress_e;
+
+typedef enum DeobfuscateMode {
+	DEOBFUSCATE_MODE_HEALTH = 0,
+	DEOBFUSCATE_MODE_STATE = 0,
+	DEOBFUSCATE_MODE_WEAPON = 1,
+	DEOBFUSCATE_MODE_TIMER = 1,
+} DeobfuscateMode_e;
+
 typedef struct CameraAngleZ { // 0x20
 	/* 0x11e0 */ float rotation;
 	/* 0x11e4 */ float speed_current;
@@ -1584,11 +1598,11 @@ void playerGiveRandomWeapons(Player * player, int amount);
  * 							1: vaPlayerObfuscateWeaponAddr
  * 		mode	:			0: Used for: Health, Player State, other.
  * 							1: Used for: Weapon IDs, other.
- * 							2: Used for: Respawn Timer, other.
+ * 							1: Used for: Respawn Timer, other.
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-u32 playerDeobfuscate(u32 src, int addr, int mode);
+u32 playerDeobfuscate(u32 src, DeobfuscateAddress_e addr, DeobfuscateMode_e mode);
 /*
  * NAME :		playerHasShield
  * DESCRIPTION :

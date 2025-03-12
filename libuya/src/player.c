@@ -334,17 +334,20 @@ VariableAddress_t vaPlayerObfuscateWeaponAddr = {
     .MarcadiaPalace = 0x003b1ac1,
 #endif
 };
-u32 playerDeobfuscate(u32 src, int addr, int mode)
+u32 playerDeobfuscate(u32 src, DeobfuscateAddress_e addr, DeobfuscateMode_e mode)
 {
     static int StackAddr[2];
     u32 Player_Addr = src;
     u32 Player_Value = *(u8*)Player_Addr;
+    if (Player_Value == 0)
+        return 0;
+
     int RandDataAddr = !addr ? GetAddress(&vaPlayerObfuscateAddr) : GetAddress(&vaPlayerObfuscateWeaponAddr);
     int n = 0;
     int rawr = 0;
     int Converted;
     // Mode 0: For Health and Player State (Possibly more)
-    if (mode == 0) {
+    if (mode == DEOBFUSCATE_MODE_HEALTH) {
         do {
             u32 Offset = (u32)((int)Player_Addr - (u32)Player_Value & 7) + n;
             n = n + 5;
@@ -357,7 +360,7 @@ u32 playerDeobfuscate(u32 src, int addr, int mode)
         StackAddr[1] = (u32)((u32)StackAddr[1] ^ StackAddr[0]);
         Converted = StackAddr[1];
     // Mode 1: Meant for Weapons (and other items)
-    } else if (mode == 1) {
+    } else if (mode == DEOBFUSCATE_MODE_WEAPON) {
         do {
             u32 Offset = (u32)((u32)Player_Addr - (u8)Player_Value & 7) + n;
             n = n + 3;
