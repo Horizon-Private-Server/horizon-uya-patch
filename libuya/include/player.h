@@ -1131,11 +1131,11 @@ typedef struct Player { // 0x4500
 	/*        */ char unk_1a3a[0x6];
 	/* 0x1a40 */ char chargebootsSlot;
 	/* 0x1a41 */ char unk_1a41; // obfuscated
-	/*        */ char unk_1a42[0x10];
-	/* 0x1a52 */ WeaponAmmo weaponAmmo;
-	/*        */ char unk_1a5e[0x4];
-	/* 0x1a62 */ WeaponMeter weaponMeter;
-	/*        */ char unk_1a6d[0x13];
+	/*        */ char unk_1a42[0x11];
+	/* 0x1a53 */ Weapons weaponAmmo;
+	/*        */ char unk_1a5f[0x4];
+	/* 0x1a63 */ Weapons weaponMeter;
+	/*        */ char unk_1a6f[0x11];
 	/* 0x1a80 */ GadgetEvent gadgetEventSlots[10];
 	/*        */ int unk_1da0;
 	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;

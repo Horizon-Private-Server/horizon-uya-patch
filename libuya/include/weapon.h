@@ -61,33 +61,24 @@ typedef struct WeaponQuickSelect {
     char Slot[7];
 } WeaponQuickSelect;
 
-typedef struct WeaponAmmo {
-    char N60;
-    char Blitz;
-    char Flux;
-    char Rocket;
-    char GBomb;
-    char Mine;
-    char Lava;
-    char Empty_1; // Morph-O-Ray
-    char Empty_2; // Wrench
-    char Empty_3; // Swingshot
-    char Holo;
-} WeaponAmmo;
-
-typedef struct WeaponMeter {
-    char N60;
-    char Blitz;
-    char Flux;
-    char Rocket;
-    char GBomb;
-    char Mine;
-    char Lava;
-    char Morph;
-    char Empty_1; // Wrench
-    char Empty_2; // Swingshot
-    char Holo;
-} WeaponMeter;
+typedef struct Weapons {
+    union {
+        char Slot[12];
+        struct {
+            char N60;
+            char Blitz;
+            char Flux;
+            char Rocket;
+            char GBomb;
+            char Mine;
+            char Lava;
+            char Morph;
+            char Wrench;
+            char Swingshot;
+            char Holo;
+        }
+    }
+} Weapons;
 
 struct tNW_GadgetEventMessage { // 0x24
 	/*   0 */ short int GadgetId;
@@ -124,7 +115,7 @@ typedef struct GadgetDef { // 0x80
     /* 0x0c */ short int fullFireAnim;
 	/* 0x0e */ short int armFireAnimDefault;
 	/* 0x10 */ short int armFireAnimCrouch;
-	/* 0x12 */ short int icon;
+	/* 0x12 */ short int sprite;
 	/* 0x14 */ short int ammotag;
 	/* 0x16 */ short int upgAmmotag;
     /* 0x18 */ short int unk_18; 
