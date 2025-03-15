@@ -21,13 +21,89 @@
 #define SCREEN_HEIGHT          (416)
 #endif
 
-//--------------------------------------------------------
-// typedef void (*gfxDrawFuncDef)(Moby*);
+enum Sprite {
+	SPRITE_R = 0xed1b,
+	SPRITE_NUMBER_0 = 0xed1c,
+	SPRITE_NUMBER_1 = 0xed1d,
+	SPRITE_NUMBER_2 = 0xed1e,
+	SPRITE_NUMBER_3 = 0xed1f,
+	SPRITE_NUMBER_4 = 0xed20,
+	SPRITE_NUMBER_5 = 0xed21,
+	SPRITE_NUMBER_6 = 0xed22,
+	SPRITE_NUMBER_7 = 0xed23,
+	SPRITE_NUMBER_8 = 0xed24,
+	SPRITE_NUMBER_9 = 0xed25,
+	SPRITE_BOLT = 0xed26,
+	SPRITE_CIRCLE = 0xed27,
+	SPRITE_SQUARE = 0xed28,
+	SPRITE_TRIANGLE = 0xed29,
+	SPRITE_CROSS = 0xed2a,
+	SPRITE_ARROW_SWITCH_TEAM = 0xed2b,
+	SPRITE_WEAPON_WHOLLOPER = 0xed2c,
+	SPRITE_WEAPON_MINE_GLOVE = 0xed2d,
+	SPRITE_WEAPON_N60_STORM = 0xed2e,
+	SPRITE_WEAPON_MINI_ROCKET_TUBE = 0xed2f,
+	SPRITE_WEAPON_HOLOSHIELD_GLOVE = 0xed30,
+	SPRITE_WEAPON_BLITZ_CANNON = 0xed31,
+	SPRITE_WEAPON_FLUX_RIFLE_MP = 0xed32,
+	SPRITE_BASE = 0xed33,
+	SPRITE_NODE = 0xed34,
+	SPRITE_PLAYER_ARROW = 0xed35,
+	SPRITE_TURBOSLIDER = 0xed36,
+	SPRITE_HOVERSHIP = 0xed37,
+	SPRITE_UNK_1 = 0xed38,
+	SPRITE_CAMERA = 0xed39,
+	SPRITE_DRONE = 0xed3a,
+	SPRITE_SKULL = 0xed3b,
+	SPRITE_PLAYER = 0xed3c,
+	SPRITE_DOT = 0xed3d,
+	SPRITE_SHIELD = 0xed3e,
+	SPRITE_HEADPHONES = 0xed3f,
+	SPRITE_ARROW = 0xed40,
+	SPRITE_AMMO = 0xed41,
+	SPRITE_PLAYER_TURRET = 0xed42,
+	SPRITE_TYHRRANOID = 0xed43,
+	SPRITE_WAVEFORM = 0xed44,
+	SPRITE_X = 0xed45,
+	SPRITE_KILLER_FISH = 0xed46,
+	SPRITE_WEAPON_CLANK_ZAPPER = 0xed47,
+	SPRITE_UNK_2 = 0xed48,
+	SPRITE_FIRST_PERSON_MODE = 0xed49,
+	SPRITE_WARP_PAD = 0xed4a,
+	SPRITE_PLAYER_TURRET_2 = 0xed4b,
+	SPRITE_THIRD_PERSON_MODE = 0xed4c,
+	SPRITE_WEAPON_OMNISHIELD = 0xed4d,
+	SPRITE_LOCKSTRAFE_MODE = 0xed4e,
+	SPRITE_WEAPON_GRAVITY_BOMB = 0xed4f,
+	SPRITE_QWARK = 0xed50,
+	SPRITE_R1 = 0xed51,
+	SPRITE_UNK_3 = 0xed52,
+	SPRITE_UNK_4 = 0xed53,
+	SPRITE_UNK_5 = 0xed54,
+	SPRITE_UNK_6 = 0xed55,
+	SPRITE_R2 = 0xed56,
+	SPRITE_UNK_7 = 0xed57,
+	SPRITE_VIDCOMIC_1 = 0xed58,
+	SPRITE_UNK_8 = 0xed59,
+	SPRITE_UNK_9 = 0xed5a,
+	SPRITE_FLAG = 0xed5b,
+	SPRITE_LOADING = 0xed5c,
+};
 
-//--------------------------------------------------------
+enum TextAlign {
+  TEXT_ALIGN_TOPLEFT,
+  TEXT_ALIGN_TOPCENTER,
+  TEXT_ALIGN_TOPRIGHT,
+  TEXT_ALIGN_MIDDLELEFT,
+  TEXT_ALIGN_MIDDLECENTER,
+  TEXT_ALIGN_MIDDLERIGHT,
+  TEXT_ALIGN_BOTTOMLEFT,
+  TEXT_ALIGN_BOTTOMCENTER,
+  TEXT_ALIGN_BOTTOMRIGHT,
+};
+
 typedef float POINT[2] __attribute__((__aligned__(8)));
 
-//--------------------------------------------------------
 typedef struct RECT
 {
     POINT TopLeft;
@@ -36,7 +112,6 @@ typedef struct RECT
     POINT BottomRight;
 } RECT;
 
-//--------------------------------------------------------
 typedef struct CubicLineEndPoint {
 	/*   0 */ int iCoreRGBA;
 	/*   4 */ int iGlowRGBA;
@@ -50,14 +125,12 @@ typedef struct CubicLineEndPoint {
 	/*  30 */ VECTOR vTangentOccQuat;
 } CubicLineEndPoint;
 
-//--------------------------------------------------------
 struct UV
 {
 	float U;
 	float V;
 };
 
-//--------------------------------------------------------
 struct QuadDef
 {
 	VECTOR VertexPositions[4];
@@ -67,20 +140,6 @@ struct QuadDef
 	u64 Tex0;
 	u64 Tex1;
 	u64 Alpha;
-};
-
-//--------------------------------------------------------
-enum TextAlign
-{
-  TEXT_ALIGN_TOPLEFT,
-  TEXT_ALIGN_TOPCENTER,
-  TEXT_ALIGN_TOPRIGHT,
-  TEXT_ALIGN_MIDDLELEFT,
-  TEXT_ALIGN_MIDDLECENTER,
-  TEXT_ALIGN_MIDDLERIGHT,
-  TEXT_ALIGN_BOTTOMLEFT,
-  TEXT_ALIGN_BOTTOMCENTER,
-  TEXT_ALIGN_BOTTOMRIGHT,
 };
 
 typedef struct ScreenVBEffect { // 0x34
