@@ -1240,7 +1240,7 @@ typedef struct Player { // 0x4500
 	/* 0x2528 */ Vehicle *vehicle;
 	/* 0x252c */ Vehicle *vehiclePending;
 	/* 0x2530 */ GameCamera *camera;
-	/* 0x2534 */ PadButtonStatus *pPad;
+	/* 0x2534 */ PAD *pPad;
 	/* 0x2538 */ float cheatX;
 	/* 0x253c */ float cheatZ;
 	/* 0x2540 */ float cheatY;
@@ -1372,7 +1372,7 @@ typedef struct PlayerVTable
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-__LIBUYA_GETTER__ PadButtonStatus * playerGetPad(Player * player);
+__LIBUYA_GETTER__ PAD * playerGetPad(Player * player);
 
 /*
  * NAME :		playerPadGetButton

@@ -187,7 +187,7 @@ void playerSetTeam(Player * player, int teamId)
 }
 
 //--------------------------------------------------------------------------------
-PadButtonStatus * playerGetPad(Player * player)
+PAD * playerGetPad(Player * player)
 {
     if (!player)
         return 0;
@@ -207,7 +207,7 @@ PadButtonStatus * playerGetPad(Player * player)
 void playerPadUpdate(void)
 {
     int i;
-    PadButtonStatus * playerPad;
+    PAD * playerPad;
     struct PadHistory * padHistory;
     Player ** players = playerGetAll();
     Player * player;
@@ -224,8 +224,8 @@ void playerPadUpdate(void)
             // Copy last player pad
             if (playerPad)
             {
-                memcpy(padHistory, &playerPad->btns, sizeof(struct PadHistory));
-                padHistory->id = player->fps.vars.camSettingsIndex;
+                memcpy(padHistory, &playerPad->buffer.btns, sizeof(struct PadHistory));
+                padHistory->id = player->mpIndex;
             }
             // Reset pad if no player
             else if (padHistory->id >= 0)
@@ -249,11 +249,11 @@ int playerPadGetButton(Player * player, u16 buttonMask)
     if (!player)
         return 0;
 
-    PadButtonStatus * paddata = playerGetPad(player);
+   PAD * paddata = playerGetPad(player);
     if (!paddata)
         return 0;
 
-    return (paddata->btns & buttonMask) == 0;
+    return (paddata->buffer.btns & buttonMask) == 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -263,7 +263,7 @@ int playerPadGetButtonDown(Player * player, u16 buttonMask)
         return 0;
 
     return playerPadGetButton(player, buttonMask) &&
-            (PlayerPadHistory[player->fps.vars.camSettingsIndex].btns & buttonMask) != 0;
+            (PlayerPadHistory[player->mpIndex].btns & buttonMask) != 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -273,7 +273,7 @@ int playerPadGetButtonUp(Player * player, u16 buttonMask)
         return 0;
 
     return !playerPadGetButton(player, buttonMask) &&
-        (PlayerPadHistory[player->fps.vars.camSettingsIndex].btns & buttonMask) != 0;
+        (PlayerPadHistory[player->mpIndex].btns & buttonMask) != 0;
 }
 
 //--------------------------------------------------------------------------------
