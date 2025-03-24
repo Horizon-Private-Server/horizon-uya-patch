@@ -66,26 +66,7 @@
 #define IGNORE_LIST_START (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x10)
 #define IGNORE_LIST_END (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x1c)
 
-typedef enum uiPadButtons {
-    UI_PAD_NONE = 0,
-    UI_PAD_DPAD_UP = 1,
-    UI_PAD_DPAD_DOWN = 2,
-    UI_PAD_DPAD_LEFT = 3,
-    UI_PAD_DPAD_RIGHT = 4,
-    UI_PAD_TRIANGLE = 5,
-    UI_PAD_CIRCLE = 6,
-    UI_PAD_CROSS = 7,
-    UI_PAD_SQUARE = 8,
-    UI_PAD_SELECT = 9,
-    UI_PAD_START = 10,
-    UI_PAD_L1 = 11,
-    UI_PAD_L2 = 12,
-    UI_PAD_L3 = 13,
-    UI_PAD_R1 = 14,
-    UI_PAD_R2 = 15,
-    UI_PAD_R3 = 16,
-    UI_PAD_TOTAL = UI_PAD_R3
-} uiPadButtons_e;
+
 
 typedef enum playerOptions {
     PLAYER_OPTION_CANCEL = -1,
