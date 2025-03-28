@@ -1206,8 +1206,9 @@ typedef struct Player { // 0x4500
 	/*        */ char unk_24a3;
 	/* 0x24a4 */ short int unkGadgetTimer_24a4;
 	/* 0x24a6 */ short int GadgetPADDelayTimer;
-	/* 0x24a8 */ short int unkGadgetTimer_24a8;
-	/*        */ char unk_24aa[0x1e];
+	/* 0x24a8 */ short int unkGadgetTimer_24a8; // gets set when flag is captured.
+	/* 0x24aa */ char unk_24aa; // gets set when flag is captured.
+	/*        */ char unk_24ab[0x1d];
 	/* 0x24c8 */ char unk_24c8;
 	/* 0x24c9 */ char unk_24c9; // hides reticle/hud, does something with CTF Flag and setting to 0x32 shows save filed popup.
 	/*        */ char unk_24ca;

@@ -67,5 +67,6 @@ __LIBUYA_SETTER__ void spawnPointSet(SpawnPoint * sp, int index);
  */
 int spawnPointGetRandom(Player * player, u32 vPosition, u32 vRotation);
 
+int spawnPointIsPlayer(int index);
 
 #endif // _LIBUYA_SPAWNPOINT_H_

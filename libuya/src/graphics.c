@@ -4,11 +4,9 @@
 
 #if UYA_PAL
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
-#define IS_WIDESCREEN                       (*(char*)0x001a58bd)
 #define COLOR_EXT_TABLE                     ((ColorExtTable_t*)0x00242830)
 #else
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
-#define IS_WIDESCREEN                       (*(char*)0x001a5a3d)
 #define COLOR_EXT_TABLE                     ((ColorExtTable_t*)0x002429b0)
 #endif
 

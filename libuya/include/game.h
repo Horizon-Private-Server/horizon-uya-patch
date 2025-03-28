@@ -171,6 +171,27 @@ typedef struct GameData {
 // } GameData;
 //--------------------------------------------------------
 
+typedef struct GameLocalSettings { // 0xc4
+	/* 0x00 */ int PalMode;
+	/* 0x04 */ char HelpVoiceOn;
+	/* 0x05 */ char HelpTextOn;
+	/* 0x06 */ char SubtitlesActive;
+	/* 0x08 */ int Stereo;
+	/* 0x0c */ int MusicVolume;
+	/* 0x10 */ int EffectsVolume;
+    /* 0x14 */ char unk_14[0x90];
+	/* 0xa4 */ unsigned char FirstPersonModeOn[8];
+    /* 0xac */ char _was_NTSCProgessive;
+    /* 0xad */ char Wide;
+	/* 0xae */ char ControllerVibrationOn[8];
+	/* 0xb6 */ char QuickSelectPauseOn;
+	/* 0xb7 */ char Language;
+	/* 0xb8 */ char AuxSetting2;
+	/* 0xb9 */ char AuxSetting3;
+	/* 0xba */ char AuxSetting4;
+	/* 0xbb */ char AutoSaveOn;
+} GameLocalSettings;
+
 /*
  * NAME :		isInGame
  * DESCRIPTION :
@@ -372,5 +393,9 @@ int gameGetGSFrame(void);
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 int gameGetWorldId(void);
+
+// Gets local (PS2) settings
+GameLocalSettings *gameGetLocalSettings(void);
+
 
 #endif // _LIBUYA_GAME_H_

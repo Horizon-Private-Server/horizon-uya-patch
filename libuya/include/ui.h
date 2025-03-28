@@ -272,7 +272,7 @@ typedef struct UiMenu {
 
 typedef struct UiOnlineLobbyelements {
 // do stuff here later
-} UiOnlineLobbyElements_t
+} UiOnlineLobbyElements_t;
 
 typedef struct UiCreateGameElements {
 /* 0x00 */ UiElementTextInput_t* name;

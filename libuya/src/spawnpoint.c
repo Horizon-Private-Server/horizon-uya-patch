@@ -69,6 +69,19 @@ int spawnPointGetCount(void)
     return SPAWNPOINTS_COUNT;
 }
 
+int spawnPointIsPlayer(int index)
+{
+  int i;
+  GameData* gameData = gameGetData();
+  for (i = 0; i < 64; ++i)
+  {
+    if (gameData->DeathMatchGameData->resurrectionPts[i] == index)
+      return 1;
+  }
+
+  return 0;
+}
+
 SpawnPoint * spawnPointGet(int index)
 {
     SpawnPoint * spawnPoints = SPAWNPOINTS;
