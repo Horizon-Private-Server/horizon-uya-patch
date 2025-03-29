@@ -2138,27 +2138,6 @@ void runPlayerSync(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-<<<<<<< HEAD
-void patchHideFluxReticle(void)
-{
-	if (patched.config.hideFluxReticle == config.hideFluxReticle)
-		return;
-
-	Moby* mobyStart = mobyListGetStart();
-	Moby* mobyEnd = mobyListGetEnd();
-	while (mobyStart < mobyEnd) {
-		if (mobyStart->oClass == MOBY_ID_WEAPON_FLUX_RIFLE) {
-			int reticule =((u32)mobyStart->pUpdate + 0x3ac);
-			if (*(u32*)reticule != 0) {
-				*(u32*)reticule = 0x24040000 | config.hideFluxReticle;
-				patched.config.hideFluxReticle = config.hideFluxReticle;
-			}
-			break;
-		}
-		++mobyStart;
-	}
-}
-=======
  void patchHideFluxReticle(void)
  {
 	 if (patched.config.hideFluxReticle == config.hideFluxReticle)
@@ -2178,7 +2157,6 @@ void patchHideFluxReticle(void)
 		 ++mobyStart;
 	 }
  }
->>>>>>> 96a7881 (Tested:  It all works again!)
 
 /*
  * NAME :		runHolidyas
