@@ -17,23 +17,17 @@
 #define GAME_HOST_ID                        (*(int*)0x001a5e3c)
 #define GAME_WORLD_ID                       (*(int*)0x001a7034)
 #define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5810)
-<<<<<<< HEAD
-=======
 #define GAME_NET_INFO                       ((tNw_Info*)0x0)
->>>>>>> 96a7881 (Tested:  It all works again!)
 
 #else
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
-#define SCENE_LOADED                        (*(int*)0x002459C0)
+#define SCENE_LOADED                        (*(int*)0x002459C8)
 
 #define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5990)
 #define GAME_NET_INFO                       ((tNw_Info*)0x001a5e40)
-<<<<<<< HEAD
-=======
 
->>>>>>> 96a7881 (Tested:  It all works again!)
 #define GAME_MY_SKIN                        (*(int*0x001a5e6c)
-#define GAME_MY_ACCOUNT_ID                  (*(int*)0x001a5e84)
+#define GAME_MY_ACCOUNT_ID                  (*(int*)0x201a5e84)
 #define GAME_MY_CLAN_ID                     (*(int*)0x001a5e88)
 #define GAME_MY_CLAN_NAME                   (0x001a5e8c)
 #define GAME_IS_CLAN_LEADER                 (*(u8*)0x001a5ead)
@@ -53,10 +47,7 @@
 #define GAME_UNK_001a5f88                   (*(int*)0x001a5f88)
 #define GAME_UNK_001a5f8c                   (*(int*)0x001a5f8c)
 #define GAME_UNK_001a6444                   (*(int*)0x001a6444)
-<<<<<<< HEAD
-=======
 
->>>>>>> 96a7881 (Tested:  It all works again!)
 #endif
 
 #define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))
@@ -74,6 +65,9 @@
 
 #define GAME_GS_FRAME                       (*(int*)GetAddress(&vaGSFrame))
 
+#define SPAWNPOINTS_SIEGE                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x20c))
+#define SPAWNPOINTS_CTF                     (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x210))
+#define SPAWNPOINTS_DM                      (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x214))
 
 VariableAddress_t vaGSFrame = {
 #if UYA_PAL
@@ -325,9 +319,4 @@ int gameGetGSFrame(void)
 int gameGetWorldId(void)
 {
     return GAME_WORLD_ID;
-}
-
-GameLocalSettings * gameGetLocalSettings(void)
-{
-    return (GameLocalSettings*)GAME_LOCAL_SETTINGS;
 }
