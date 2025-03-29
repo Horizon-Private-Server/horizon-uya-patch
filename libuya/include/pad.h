@@ -24,22 +24,23 @@
 
 #ifdef UYA_PAL
 // PAL
-#define PAD_POINTER                         ((PadButtonStatus**)0x00241164)
-#define P1_PAD                              ((PadButtonStatus*)0x00225800)
-#define P2_PAD                              ((PadButtonStatus*)0x00226F00)
-#define P3_PAD                              ((PadButtonStatus*)0x00228600)
+#define PAD_POINTER                         ((PAD**)0x00241164)
+#define P1_PAD                              ((PAD*)0x00225800)
+#define P2_PAD                              ((PAD*)0x00226F00)
+#define P3_PAD                              ((PAD*)0x00228600)
 #define PAD_PROCESS_ADDR                    (*(u32*)0x00686300)
 #define PAD_PROCESS_VALUE                   (0x0c1a184e)
 #else
 // NTSC
-#define PAD_POINTER                         ((PadButtonStatus**)0x002412e4)
-#define P1_PAD                              ((PadButtonStatus*)0x00225980)
-#define P2_PAD                              ((PadButtonStatus*)0x00227080)
-#define P3_PAD                              ((PadButtonStatus*)0x00228780)
+#define PAD_POINTER                         ((PAD**)0x002412e4)
+#define P1_PAD                              ((PAD*)0x00225980)
+#define P2_PAD                              ((PAD*)0x00227080)
+#define P3_PAD                              ((PAD*)0x00228780)
 #define PAD_PROCESS_ADDR                    (*(u32*)0x006837E0)
-#define PAD_PROCESS_VALUE                   (0x0C1A0D86)
+#define PAD_PROCESS_VALUE                   (0x0c1a0d86)
 #endif
 
+#define REVERSE_U16(bytes) (bytes >> 8) | (bytes << 8) 
 
 #define PAD_PORT_MAX        2
 
@@ -61,7 +62,32 @@
 #define PAD_L2              0x0100
 
 typedef struct PAD { // 0x5c0
+	union {
 	/* 0x000 */ u128 pad_buf[16];
+			struct {
+				unsigned char ok;
+				unsigned char mode;
+				unsigned short btns;
+				// joysticks
+				unsigned char rjoy_h;
+				unsigned char rjoy_v;
+				unsigned char ljoy_h;
+				unsigned char ljoy_v;
+				// pressure mode
+				unsigned char right_p;
+				unsigned char left_p;
+				unsigned char up_p;
+				unsigned char down_p;
+				unsigned char triangle_p;
+				unsigned char circle_p;
+				unsigned char cross_p;
+				unsigned char square_p;
+				unsigned char l1_p;
+				unsigned char r1_p;
+				unsigned char l2_p;
+				unsigned char r2_p;
+			} buffer;
+	};
 	/* 0x100 */ float analog[16];
 	/* 0x140 */ float hudAnalog[16];
 	/* 0x180 */ unsigned char profile[4];
@@ -117,8 +143,7 @@ typedef struct PAD { // 0x5c0
 	/* 0x594 */ int ipad[10];
 } PAD;
 
-typedef struct padButtonStatus
-{
+typedef struct padButtonStatus {
     unsigned char ok;
     unsigned char mode;
     unsigned short btns;
@@ -140,10 +165,9 @@ typedef struct padButtonStatus
     unsigned char r1_p;
     unsigned char l2_p;
     unsigned char r2_p;
-} __attribute__((packed)) PadButtonStatus;
+} PadButtonStatus;
 
-typedef struct PadHistory
-{
+typedef struct PadHistory {
     u16 btns;
     u8 rjoy_h;
     u8 rjoy_v;

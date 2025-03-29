@@ -16,12 +16,16 @@
 #define GAME_IS_HOST                        (*(int*)0x001a5e38)
 #define GAME_HOST_ID                        (*(int*)0x001a5e3c)
 #define GAME_WORLD_ID                       (*(int*)0x001a7034)
+#define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5810)
+#define GAME_NET_INFO                       ((tNw_Info*)0x0)
 
 #else
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
 #define SCENE_LOADED                        (*(int*)0x002459C8)
 
-#define GAME_IS_CLAN_CHALLENGE              (*(u8*)0x001a5e58)
+#define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5990)
+#define GAME_NET_INFO                       ((tNw_Info*)0x001a5e40)
+
 #define GAME_MY_SKIN                        (*(int*0x001a5e6c)
 #define GAME_MY_ACCOUNT_ID                  (*(int*)0x201a5e84)
 #define GAME_MY_CLAN_ID                     (*(int*)0x001a5e88)
@@ -44,13 +48,6 @@
 #define GAME_UNK_001a5f8c                   (*(int*)0x001a5f8c)
 #define GAME_UNK_001a6444                   (*(int*)0x001a6444)
 
-/*
- * Array of round trip time divided by 2.
- */
-// #define GAME_PING_ARRAY                     ((int*)0x001B2420)
-// #define GAME_PING_CURRENT_INDEX             (*(int*)0x001B25B4)
-// Ping Array (Goes up every 1 second)
-// 0x001D3B58
 #endif
 
 #define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))

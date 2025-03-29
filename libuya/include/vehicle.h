@@ -119,70 +119,44 @@ struct VehicleInterface {
 };
 
 typedef struct VehicleBase {
-    /*   0 */ struct Guber Guber;
-	/*  20 */ struct tDR_Vars drVars;
-	/* 1b0 */ MATRIX invMtx;
-	/* 1f0 */ VECTOR netLocalPos;
-	/* 200 */ VECTOR netLocalRot;
-	/* 210 */ VECTOR netUpdatedPos;
-	/* 220 */ VECTOR netUpdatedRot;
-	/* 230 */ VECTOR netLocalPassengerRot;
-	/* 240 */ VECTOR netUpdatedPassengerRot;
-	/* 250 */ VECTOR vel;
-	/* 260 */ VECTOR rotSpeed;
-	/* 270 */ VECTOR initPos;
-	/* 280 */ VECTOR initRot;
-	/* 290 */ VECTOR comeToRestStart;
-	/* 2a0 */ VECTOR comeToRestTotal;
-
-    // Unsure if Following is correct
-	/* 2b0 */ int timeSinceLastMessage;
-	/* 2b4 */ struct VehicleInterface* pInterface;
-	/* 2b8 */ struct Player* pCutSceneDriver;
-	/* 2bc */ struct Player* pCutScenePassenger;
-	/* 2c0 */ struct Moby* pSpawningEffect;
-	/* 2c4 */ struct Moby* pSpawningPad;
-	/* 2c8 */ float fRunOverDamageMultiplier;
-	/* 2cc */ int iPad;
-
-    // Unsure if ALL of following is correct.
-    // pMoby pointers and hitpoints are for a fact correct.
-	/* 2d0 */ struct Moby* pMoby;
-	/* 2d4 */ struct Moby* pTarget;
-	/* 2d8 */ struct Player* pDriver;
-	/* 2dc */ struct Player* pPassenger;
-	/* 2e0 */ int netUpdatedTimeStamp;
-	/* 2e4 */ int netUpdatedPassengerTimeStamp;
-	/* 2e8 */ int explodeTime;
-	/* 2ec */ int noRiderTimer;
-	/* 2f0 */ int resurrectTimer;
-	/* 2f4 */ int resurrectTimeTotal;
-	/* 2f8 */ unsigned int flags;
-	/* 2fc */ short int vehicleType;
-	/* 2fe */ char whichGun;
-	/* 2ff */ char whichGun2;
-	/* 300 */ char inAir;
-	/* 301 */ char masterInAir;
-	/* 302 */ short int inAirTimer;
-	/* 304 */ short int vehicleMobyUID;
-	/* 3e6 */ short int exitToggle;
-	/* 308 */ float hitPoints;
-	/* 30c */ float maxHP;
-	/* 310 */ float speed;
-	/* 314 */ int comeToRestTime;
-	/* 318 */ int waitDriverTime;
-	/* 31c */ char bDriverInValidState;
-	/* 31d */ char bPassengerInValidState;
-	/* 31e */ char bDoPostSinkingCameraRaise;
-	/* 31f */ char cPad[1];
-	/* 320 */ int waitPassengerTime;
-	/* 324 */ int explodeRequestSent;
-	/* 328 */ int justExited;
-	/* 32c */ int teamNum;
-	/* 330 */ int iLastExplodedTime;
-	/* 334 */ int iLastDamageTime;
-	/* 338 */ float fDriverAttackDamage;
-	/* 33c */ float fPassengerAttackDamage;
+	/* 0x000 */ struct Guber guber;
+	/* 0x018 */ char unk_018[0x2b8]; 
+	/* 0x2d0 */ struct Moby* pMoby;
+	/* 0x2d4 */ struct Moby* pTarget;
+	/* 0x2d8 */ struct Player* pDriver;
+	/* 0x2dc */ struct Player* pPassenger;
+	/* 0x2e0 */ int netUpdatedTimeStamp;
+	/* 0x2e4 */ int netUpdatedPassengerTimeStamp;
+	/* 0x2e8 */ int explodeTime;
+	/* 0x2ec */ int noRiderTimer;
+	/* 0x2f0 */ int resurrectTimer;
+	/* 0x2f4 */ int resurrectTimeTotal;
+	/* 0x2f8 */ unsigned int flags;
+	/* 0x2fc */ short int vehicleType;
+	/* 0x2fe */ char whichGun;
+	/* 0x2ff */ char whichGun2;
+	/* 0x300 */ char inAir;
+	/* 0x301 */ char masterInAir;
+	/* 0x302 */ short int inAirTimer;
+	/* 0x304 */ short int vehicleMobyUID;
+	/* 0x3e6 */ short int exitToggle;
+	/* 0x308 */ float hitPoints;
+	/* 0x30c */ float maxHP;
+	/* 0x310 */ float speed;
+	/* 0x314 */ int comeToRestTime;
+	/* 0x318 */ int waitDriverTime;
+	/* 0x0x31c */ char bDriverInValidState;
+	/* 0x31d */ char bPassengerInValidState;
+	/* 0x31e */ char bDoPostSinkingCameraRaise;
+	/* 0x31f */ char cPad[1];
+	/* 0x320 */ int waitPassengerTime;
+	/* 0x324 */ int explodeRequestSent;
+	/* 0x328 */ int justExited;
+	/* 0x32c */ int teamNum;
+	/* 0x330 */ int iLastExplodedTime;
+	/* 0x334 */ int iLastDamageTime;
+	/* 0x338 */ float fDriverAttackDamage;
+	/* 0x33c */ float fPassengerAttackDamage;
 } Vehicle;
 
 #endif // _LIBUYA_VEHICLE_H_
