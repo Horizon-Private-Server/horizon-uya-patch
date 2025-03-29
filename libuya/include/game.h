@@ -169,7 +169,55 @@ typedef struct GameData {
 //     CTFGameData * CtfGameData;
 //     DeathMatchGameData * DeathmatchGameData;
 // } GameData;
-//--------------------------------------------------------
+
+typedef struct GameLocalSettings { // 0xc4
+	/* 0x00 */ int PalMode;
+	/* 0x04 */ char HelpVoiceOn;
+	/* 0x05 */ char HelpTextOn;
+	/* 0x06 */ char SubtitlesActive;
+	/* 0x08 */ int Stereo;
+	/* 0x0c */ int MusicVolume;
+	/* 0x10 */ int EffectsVolume;
+    /* 0x14 */ char unk_14[0x90];
+	/* 0xa4 */ unsigned char FirstPersonModeOn[8];
+    /* 0xac */ char _was_NTSCProgessive;
+    /* 0xad */ char Wide;
+	/* 0xae */ char ControllerVibrationOn[8];
+	/* 0xb6 */ char QuickSelectPauseOn;
+	/* 0xb7 */ char Language;
+	/* 0xb8 */ char AuxSetting2;
+	/* 0xb9 */ char AuxSetting3;
+	/* 0xba */ char AuxSetting4;
+	/* 0xbb */ char AutoSaveOn;
+} GameLocalSettings;
+
+struct tNW_Info {
+	/* 0x0000 */ char unk_0000[0x18];
+	/* 0x0018 */ int myClientIndex;
+	/* 0x001c */ int numLocalPlayers;
+	/* 0x0020 */ char unk_0020[0x8];
+	/* 0x0028 */ int myTeam;
+	/* 0x002c */ int mySkin;
+	/* 0x0030 */ char unk_0030[0x18];
+	/* 0x0044 */ int myAccountId;
+	/* 0x0048 */ int unk_00048;
+	/* 0x004c */ char myClanName[0x21];
+	/* 0x006d */ char isClanLeader;
+	/* 0x006e */ char myUserName[0xf];
+	/* 0x007d */ char pad[0x3];
+	/* 0x0080 */ int myAccountCityId;
+	/* 0x0084 */ char myLicenseAccepted;
+	/* 0x0085 */ char unk_0085[0x49];
+	/* 0x00ce */ char gameName[64];
+	/* 0x0108 */ char gamePassword[32];
+	/* 0x0138 */ int gameTime;
+	/* 0x0178 */ char isSessionMaster;
+	/* 0x0179 */ char isNewSessionMaster;
+	/* 0x017a */ char pad_017a[2];
+	/* 0x017c */ int sessionMasterClientIndex;
+	/* 0x0180 */ char unk_0180[0x11f4];
+	/* 0x1374 */ int gameWorldId;
+} tNW_Info_t;
 
 typedef struct GameLocalSettings { // 0xc4
 	/* 0x00 */ int PalMode;
