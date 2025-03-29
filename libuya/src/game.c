@@ -20,12 +20,12 @@
 
 #else
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
-#define SCENE_LOADED                        (*(int*)0x002459C8)
+#define SCENE_LOADED                        (*(int*)0x002459C0)
 
 #define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5990)
-#define GAME_IS_CLAN_CHALLENGE              (*(u8*)0x001a5e58)
+#define GAME_NET_INFO                       ((tNw_Info*)0x001a5e40)
 #define GAME_MY_SKIN                        (*(int*0x001a5e6c)
-#define GAME_MY_ACCOUNT_ID                  (*(int*)0x201a5e84)
+#define GAME_MY_ACCOUNT_ID                  (*(int*)0x001a5e84)
 #define GAME_MY_CLAN_ID                     (*(int*)0x001a5e88)
 #define GAME_MY_CLAN_NAME                   (0x001a5e8c)
 #define GAME_IS_CLAN_LEADER                 (*(u8*)0x001a5ead)

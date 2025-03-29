@@ -16,16 +16,6 @@
 #define LINE_HEIGHT_3_2     (0.075)
 #define DEFAULT_GAMEMODE    (0)
 
-#if UYA_PAL
-
-#define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
-#define IS_WIDESCREEN               (*(char*)0x001a58bc)
-#else
-
-#define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
-#define IS_WIDESCREEN               (*(char*)0x001a5a3c)
-#endif
-
 int selectedTabItem = 0;
 u32 padPointer = 0;
 int SelectedCustomMapId = 0;
