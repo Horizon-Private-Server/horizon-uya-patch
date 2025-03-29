@@ -17,11 +17,10 @@
 #define GAME_HOST_ID                        (*(int*)0x001a5e3c)
 #define GAME_WORLD_ID                       (*(int*)0x001a7034)
 #define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5810)
-#define GAME_NET_INFO                       ((tNw_Info*)0x0)
 <<<<<<< HEAD
->>>>>>> 96a7881 (Tested:  It all works again!)
 =======
->>>>>>> 36e397c (rawr)
+#define GAME_NET_INFO                       ((tNw_Info*)0x0)
+>>>>>>> 96a7881 (Tested:  It all works again!)
 
 #else
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
@@ -30,12 +29,9 @@
 #define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5990)
 #define GAME_NET_INFO                       ((tNw_Info*)0x001a5e40)
 <<<<<<< HEAD
-<<<<<<< HEAD
 =======
 
 >>>>>>> 96a7881 (Tested:  It all works again!)
-=======
->>>>>>> 36e397c (rawr)
 #define GAME_MY_SKIN                        (*(int*0x001a5e6c)
 #define GAME_MY_ACCOUNT_ID                  (*(int*)0x001a5e84)
 #define GAME_MY_CLAN_ID                     (*(int*)0x001a5e88)
@@ -58,12 +54,9 @@
 #define GAME_UNK_001a5f8c                   (*(int*)0x001a5f8c)
 #define GAME_UNK_001a6444                   (*(int*)0x001a6444)
 <<<<<<< HEAD
-<<<<<<< HEAD
 =======
 
 >>>>>>> 96a7881 (Tested:  It all works again!)
-=======
->>>>>>> 36e397c (rawr)
 #endif
 
 #define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))
