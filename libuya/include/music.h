@@ -26,26 +26,22 @@ enum TrackNumbers
     // Added Tracks if Single Player Music is activated
 };
 
-enum queuelenFlags
-{
-    QUEUELEN_PLAYING = 0x2,
-    QUEUELEN_TRANSITIONING = 0x3,
-    QUEUELEN_SWITCHING = 0xA,
+typedef enum queuelenFlags {
+    MUSIC_QUEUELEN_PLAYING = 2,
+    MUSIC_QUEUELEN_TRANSITIONING = 3,
+    MUSIC_QUEUELEN_SWITCHING = 10,
 };
 
-enum flagsFlags
-{
-    FLAG_STOP_PLAYING_AFTER,
-    FLAG_KEEP_PLAYING_AFTER,
+typedef enum flagsFlags {
+    MUSIC_FLAG_STOP_PLAYING_AFTER,
+    MUSIC_FLAG_KEEP_PLAYING_AFTER,
 };
 
-enum unpauseFlags
-{
-    UNPAUSE_STOP_PLAYING_AFTER = 3,
-    UNPAUSE_KEEP_PLAYING_AFTER = 4,
-    UNPAUSE_PLAY_NEXT = 5,
-    UNPAUSE_LOADING = 8, // This only happens at beginning of game.
-
+typedef enum statusFlags {
+    MUSIC_STATUS_STOP_PLAYING_AFTER = 3,
+    MUSIC_STATUS_KEEP_PLAYING_AFTER = 4,
+    MUSIC_STATUS_PLAY_NEXT = 5,
+    MUSIC_STATUS_LOADING = 8, // This only happens at beginning of game.
 };
 
 typedef struct music_Playing { // 0x28
@@ -58,7 +54,7 @@ typedef struct music_Playing { // 0x28
 	/* 0x0e */ short int unpause;
 	/* 0x10 */ short int transition;
 	/* 0x12 */ short int fade;
-	/* 0x14 */ int queuelen;
+	/* 0x14 */  int queuelen;
 	/* 0x18 */ int remain;
 	/* 0x1c */ struct Moby * pMoby;
 	/* 0x20 */ int channel;
@@ -124,7 +120,7 @@ void musicSetSector(int sector);
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-music_Playing * musicGetTrackInfo(void);
+music_Globals * musicGetGlobals(void);
 
 /*
  * NAME :		musicGetNextTrack
@@ -168,6 +164,6 @@ int musicTrackRangeMax(void);
 
 void musicPlayTrack(int track, int flags, int volume);
 void musicStopTrack(void);
-void musicTransitionTrack(int track, int transition, int flags, int volume);
+int musicTransitionTrack(int track, int transition, int flags, int volume);
 
 #endif // _LIBUYA_MUSIC_H_

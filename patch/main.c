@@ -1530,15 +1530,11 @@ void patchQuickSelectTimer(void)
  */
 void runCampaignMusic(void)
 {
-	static int CustomSector = 0x1d8a;
 	static int FinishedConvertingTracks = 0;
-	static char SetupMusic = 0;
-	int DefaultMultiplayerTracks = 13;
 	static int TotalTracks = 0;
-	static int AddedTracks = 0;
-	int SetRangeMaxData = 0;
-	static short CurrentTrack = 0;
-	static short NextTrack = 0;
+	static short CurrentTrack = -1;
+	static short NextTrack = -1;
+	int DefaultMultiplayerTracks = 13;
 	// We go by each wad because we have to have Multiplayer one first.
 	static short wadArray[][2] = {
 		// wad, song per wad
@@ -1579,20 +1575,19 @@ void runCampaignMusic(void)
 		{0x539, 1}, // 
 		{0x543, 1}  // 
 	};
-	// if music isn't loaded or enable singleplayermusic isn't on, or in menus, return.
-	u32 CodeSegmentPointer = *(u32*)0x01FFFD00;
+
 	#if UYA_PAL
-	int CodeSegmentPointerValue = 0x00575CC8;
+	int CodeSegmentCheck = *(u32*)0x01FFFD00 == 0x00575CC8;
 	#else
-	int CodeSegmentPointerValue = 0x00574F88;
+	int CodeSegmentCheck = *(u32*)0x01FFFD00 == 0x00574F88;
 	#endif
-	if (!musicGetSector() || CodeSegmentPointer == CodeSegmentPointerValue)
+	if (!musicGetSector() || CodeSegmentCheck)
 		return;
 	
 	if (config.enableSingleplayerMusic) {
-		u32 NewTracksLocation = 0x001F8588; // Overwrites current tracks too.
 		if (!FinishedConvertingTracks) {
-			// Set custom Sector
+			int CustomSector = 0x1d8a;
+			u32 NewTracksLocation = 0x001f8588; // Overwrites current tracks too.
 			if (musicGetSector() != CustomSector)
 				musicSetSector(CustomSector);
 
@@ -1600,8 +1595,6 @@ void runCampaignMusic(void)
 			int Stack = 0x000269300;
 			// int WAD_Table = 0x001f7f88; // Kept for historical purposes.
 			int a;
-			// Zero out stack by the appropriate heap size (0x2a0 in this case)
-			// This makes sure we get the correct values we need later on.
 			memset((u32*)Stack, 0, 0x1818);
 
 			// Loop through each WAD ID
@@ -1634,30 +1627,21 @@ void runCampaignMusic(void)
 							*(u32*)(NewTracksLocation + 0x8) = (u32)ConvertedTrack_RightAudio;
 							NewTracksLocation += 0x10;
 							b += (a == 0) ? 0x10 : 0x20;
-							++AddedTracks;
 							++TotalTracks;
 						}
 					}
 				}
 				// Zero out stack to finish the job.
 				memset((u32*)Stack, 0, 0x1818);
+				
+				FinishedConvertingTracks = 1;
 			}
-			DPRINTF("\nTracks: %d", AddedTracks);
-			FinishedConvertingTracks = 1;
 		}
-		
-		// Due to us overwriting original tracks, no need to do extra math like in DL.
-		// int MusicFunctionData = (CodeSegmentPointer + 0x1A8);
-		// if (*(u16*)MusicFunctionData != AddedTracks) {
-		// 	*(u16*)MusicFunctionData = AddedTracks;
-		// }
 	}
 
 	// If in game
 	if (isInGame()) {
-		music_Playing* music = musicGetTrackInfo();
-		// printf("\nafter trans");
-		// double check if min/max info are correct
+		music_Globals* music = musicGetGlobals();
 		if (config.enableSingleplayerMusic) {
 			if (*(int*)musicTrackRangeMax() != (TotalTracks - 4) || *(int*)musicTrackRangeMin() != 4) {
 				*(int*)musicTrackRangeMin() = 4;
@@ -1670,46 +1654,34 @@ void runCampaignMusic(void)
 			}
 		}
 		// Fixes bug where music doesn't always want to start playing at start of game
-		// might not be needed anymore due to forcing Min/Max Track info above
-		if (music->track == -1 && music->status == 0) {
+		if (music->play.track == -1 && music->play.status == 0) {
 			// plays a random track
 			int randomTrack = randRangeInt(*(int*)musicTrackRangeMin(), *(int*)musicTrackRangeMax()) % *(int*)musicTrackRangeMax();
 			DPRINTF("\nrandomTrack: %d", randomTrack);
-			musicPlayTrack(randomTrack, FLAG_KEEP_PLAYING_AFTER, 1024);
+			musicPlayTrack(randomTrack, MUSIC_FLAG_KEEP_PLAYING_AFTER, 1024);
 		}
-		// If Status is 8 and both Current Track and Next Track equal zero
-		if (music->unpause == UNPAUSE_LOADING && CurrentTrack == 0 && NextTrack == 0 && music->track != -1) {
-			// Set CurrentTrack to Track.  This will make it so we know which was is currently playing.
-			// The game automatically sets the track variable to the next track to play after the music starts.
-			CurrentTrack = music->track;
-		} else if ((music->unpause == UNPAUSE_KEEP_PLAYING_AFTER || music->unpause == UNPAUSE_STOP_PLAYING_AFTER) && NextTrack == 0) {
-			// Set NextTrack to Track value.
-			NextTrack = music->track;
-		}
-		// If NextTrack does not equal the Track, that means that the song has switched.
-		// We need to move the NextTrack value into the CurrentTrack value, because it is now
-		// playing that track.  Then we set the NextTrack to the Track value.
-		else if (NextTrack != music->track) {
+		// save current and next track
+		if (music->play.status == MUSIC_STATUS_LOADING && CurrentTrack < 0 && NextTrack < 0 && music->play.track != -1) {
+			CurrentTrack = music->play.track;
+		} else if ((music->play.status == MUSIC_STATUS_KEEP_PLAYING_AFTER || music->play.status == MUSIC_STATUS_STOP_PLAYING_AFTER) && NextTrack < 0) {
+			NextTrack = music->play.track;
+		} else if (NextTrack != music->play.track) {
 			CurrentTrack = NextTrack;
-			NextTrack = music->track;
+			NextTrack = music->play.track;
 		}
-		// If CurrentTrack is ger than the default Multiplayer tracks
-		// and if CurrentTrack does not equal -1
-		// and if the track duration is below 0x3000
-		// and if Status2 is 2, or Current Playing
-		// printf("\nbefore trans");
-		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack != -1 && (music->remain <= 0x3000) && music->queuelen == QUEUELEN_PLAYING) {
-			// This technically cues track 1 (the shortest track) with no sound to play.
-			// Doing this lets the current playing track to fade out.
-			musicTransitionTrack(0,0,0,0);
+		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack > -1 && (music->play.remain <= 0x3000) && music->play.queuelen == MUSIC_QUEUELEN_PLAYING) {
+			musicTransitionTrack(0 ,0 ,0 ,0);
 		}
+		// printf("\n t: %x c: %x, n: %x", *(int*)musicTrackRangeMax(), CurrentTrack, NextTrack);
+		// R3 + Up: Random Track
+		int randomTrackButton = padGetButtonDown(0, PAD_UP | PAD_R3) > 0;
+		if (randomTrackButton)
+			music->play.status = MUSIC_STATUS_PLAY_NEXT;
 	} else if (isInMenus() && FinishedConvertingTracks) {
 		FinishedConvertingTracks = 0;
-		SetupMusic = 0;
 		TotalTracks = 0;
-		AddedTracks = 0;
-		CurrentTrack = 0;
-		NextTrack = 0;
+		CurrentTrack = -1;
+		NextTrack = -1;
 	}
 }
 
@@ -2630,9 +2602,9 @@ int main(void)
 	// 
 	sendMACAddress();
 
-	// Adds Single Player Music to Multiplayer
-	if (config.enableSingleplayerMusic)
-		runCampaignMusic();
+		// Adds Single Player Music to Multiplayer
+		if (config.enableSingleplayerMusic)
+			runCampaignMusic();
 
 	// 
 	runVoteToEndLogic();

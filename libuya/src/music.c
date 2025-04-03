@@ -5,12 +5,12 @@
 #define MUSIC_SECTOR                (0x001f8404)
 #define TRACK_RANGE_MIN             (0x00243478)
 #define TRACK_RANGE_MAX             (0x0024347c)
-#define CURRENT_TRACK               ((music_Playing*)0x002256a4)
+#define MUSIC_GLOBALS               ((music_Globals*)0x00225660)
 #else
 #define MUSIC_SECTOR                (0x001F8584)
 #define TRACK_RANGE_MIN             (0x002435B8)
 #define TRACK_RANGE_MAX             (0x002435BC)
-#define CURRENT_TRACK               ((music_Playing*)0x00225824)
+#define MUSIC_GLOBALS               ((music_Globals*)0x002257e0)
 #endif
 
 
@@ -108,19 +108,19 @@ void musicSetSector(int sector)
     *(u32*)MUSIC_SECTOR = sector;
 }
 
- music_Playing * musicGetTrackInfo(void)
+music_Globals *musicGetGlobals(void)
 {
-    return CURRENT_TRACK;
+    return MUSIC_GLOBALS;
 }
 
 int musicGetNextTrack(void)
 {
-    return CURRENT_TRACK->track;
+    return MUSIC_GLOBALS->play.track;
 }
 
 int musicGetTrackDuration(void)
 {
-    return CURRENT_TRACK->remain;
+    return MUSIC_GLOBALS->play.remain;
 }
 
 int musicTrackRangeMin(void)
