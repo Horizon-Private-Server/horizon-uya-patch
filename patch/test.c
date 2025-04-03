@@ -139,8 +139,8 @@ void Test_Sprites(float x, float y, float scale)
 
 void drawEffectQuad(VECTOR position, int texId, float scale)
 {
-	struct QuadDef quad;
-	MATRIX m2;
+	QuadDef quad;
+	mtx4 m2;
 	VECTOR t;
 	VECTOR pTL = {0.5,0,0.5,1};
 	VECTOR pTR = {-0.5,0,0.5,1};
@@ -157,19 +157,19 @@ void drawEffectQuad(VECTOR position, int texId, float scale)
 	// gfxResetQuad(&quad);
 
 	// color of each corner?
-	vector_copy(quad.VertexPositions[0], pTL);
-	vector_copy(quad.VertexPositions[1], pTR);
-	vector_copy(quad.VertexPositions[2], pBL);
-	vector_copy(quad.VertexPositions[3], pBR);
-	quad.VertexColors[0] = quad.VertexColors[1] = quad.VertexColors[2] = quad.VertexColors[3] = color;
-	quad.VertexUVs[0] = (struct UV){0,0};
-	quad.VertexUVs[1] = (struct UV){1,0};
-	quad.VertexUVs[2] = (struct UV){0,1};
-	quad.VertexUVs[3] = (struct UV){1,1};
-	quad.Clamp = 0;
-	quad.Tex0 = gfxGetEffectTex(texId, 1);
-	quad.Tex1 = 0xFF9000000260;
-	quad.Alpha = 0x8000000044;
+	vector_copy(quad.xzyw[0], pTL);
+	vector_copy(quad.xzyw[1], pTR);
+	vector_copy(quad.xzyw[2], pBL);
+	vector_copy(quad.xzyw[3], pBR);
+	quad.rgba[0] = quad.rgba[1] = quad.rgba[2] = quad.rgba[3] = color;
+	quad.uv[0] = (struct UV){0, 0};
+	quad.uv[1] = (struct UV){1, 0};
+	quad.uv[2] = (struct UV){0, 1};
+	quad.uv[3] = (struct UV){1, 1};
+	quad.clamp = 0;
+	quad.tex0 = gfxGetEffectTex(texId, 1);
+	quad.tex1 = 0xFF9000000260;
+	quad.alpha = 0x8000000044;
 
 	GameCamera* camera = cameraGetGameCamera(0);
 	if (!camera)
@@ -194,7 +194,7 @@ void drawEffectQuad(VECTOR position, int texId, float scale)
 	memcpy(&m2[12], position, sizeof(VECTOR));
 
 	// draw
-	gfxDrawQuad(&quad, m2, 1);
+	gfxDrawQuad(&quad, m2);
 }
 
 int ping(void)
@@ -334,7 +334,7 @@ void Test()
 		*(u32*)0x001A5A70 = 0;
 
 		// gfxStickyFX(&PostDraw, p->PlayerMoby);
-		// drawEffectQuad(p->PlayerMoby->Position, 1, .5);
+		drawEffectQuad(p->pMoby->Position, 1, .5);
 		// drawSomething(p->PlayerMoby);
 		
 		// base light follow player
