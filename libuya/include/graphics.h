@@ -125,22 +125,20 @@ typedef struct CubicLineEndPoint {
 	/*  30 */ VECTOR vTangentOccQuat;
 } CubicLineEndPoint;
 
-struct UV
-{
-	float U;
-	float V;
+struct UV {
+	float x; // U: horizontal position
+	float y; // V: vertical position
 };
 
-struct QuadDef
-{
-	VECTOR VertexPositions[4];
-	u32 VertexColors[4];
-	struct UV VertexUVs[4];
-	u64 Clamp;
-	u64 Tex0;
-	u64 Tex1;
-	u64 Alpha;
-};
+typedef struct QuadDef { // 0x90
+/* 0x00 */ vec4 xzyw[4];
+/* 0x40 */ u32 rgba[4];
+/* 0x50 */ struct UV uv[4];
+/* 0x70 */ u64 clamp;
+/* 0x78 */ u64 tex0;
+/* 0x80 */ u64 tex1;
+/* 0x88 */ u64 alpha;
+} QuadDef;
 
 typedef struct ScreenVBEffect { // 0x34
 	/* 0x00 */ int enabled;
@@ -332,11 +330,11 @@ void gfxOcclusion(int OnOff);
 void gfxDoGifPaging(void);
 void gfxSetupGifPaging(int);
 u64 gfxGetFrameTex(int id);
-u64 gfxGetEffectTex(int id, int);
+u64 gfxGetEffectTex(int id);
 void gfxDrawSprite(float x, float y, float w, float h, int t0, int t1, int texW, int texH, u64 color, u64 texture);
 void gfxStickyFX(void* a0, Moby* moby);
 void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
-void gfxDrawQuad(struct QuadDef * quadDef, MATRIX worldMatrix, u32 a3);
+void gfxDrawQuad(QuadDef *quadDef, MATRIX worldMatrix);
 void gfxSetScissor(int xmin, int xmax, int ymin, int ymax);
 
 //
