@@ -621,6 +621,18 @@ typedef struct AmmoPickupVars { // 0x30
 /* 0x28 */ int particleColor[2];
 } AmmoPickupVars_t;
 
+typedef struct flagPVars {
+/* 0x00 */ VECTOR basePos;
+/* 0x10 */ int carrierIdx;
+/* 0x14 */ int team;
+/* 0x18 */ int captureCuboid; 
+/* 0x1c */ int timeFlagDropped;
+/* 0x20 */ int unk_20;
+/* 0x24 */ int unk_24;
+/* 0x28 */ float unk_28;
+/* 0x2c */ int unk_2c;
+} flagPVars_t;
+
 /*
  * Spawns a moby with the given id and properties size.
  */

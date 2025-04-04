@@ -19,6 +19,7 @@
 
 int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
 void internal_drawBox(void *, void *);
+// int internal_SpawnPart_059(VECTOR, u32, char, u32, u32, int, int, int, float);
 
 // drawTextFunc -> widthFunc Offset: -0x2a0
 VariableAddress_t vaFontPrintFunc = {
@@ -668,6 +669,62 @@ void gfxOcclusion(int OnOff)
     *(u32*)GetAddress(&vaOcclusionAddr) = OnOff;
 }
 
+VariableAddress_t vaSpawnPart_059 = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x004a0508,
+    .Hoven = 0x004a2620,
+    .OutpostX12 = 0x00497ef8,
+    .KorgonOutpost = 0x00495690,
+    .Metropolis = 0x004949e0,
+    .BlackwaterCity = 0x00492278,
+    .CommandCenter = 0x00492270,
+    .BlackwaterDocks = 0x00494af0,
+    .AquatosSewers = 0x00493df0,
+    .MarcadiaPalace = 0x00493770,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0049e150,
+    .Hoven = 0x004a01a8,
+    .OutpostX12 = 0x00495ac0,
+    .KorgonOutpost = 0x004932d8,
+    .Metropolis = 0x00492628,
+    .BlackwaterCity = 0x0048fe40,
+    .CommandCenter = 0x0048fff8,
+    .BlackwaterDocks = 0x00492838,
+    .AquatosSewers = 0x00491b78,
+    .MarcadiaPalace = 0x004914b8,
+#endif
+};
+    
+VariableAddress_t vaDeletePart = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00496c58,
+    .Hoven = 0x00498d70,
+    .OutpostX12 = 0x0048e648,
+    .KorgonOutpost = 0x0048bd18,
+    .Metropolis = 0x0048b130,
+    .BlackwaterCity = 0x004889c8,
+    .CommandCenter = 0x004889c0,
+    .BlackwaterDocks = 0x0048b240,
+    .AquatosSewers = 0x0048a540,
+    .MarcadiaPalace = 0x00489ec0,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x00494a60,
+    .Hoven = 0x00496ab8,
+    .OutpostX12 = 0x0048c3d0,
+    .KorgonOutpost = 0x00489b20,
+    .Metropolis = 0x00488f38,
+    .BlackwaterCity = 0x00486750,
+    .CommandCenter = 0x00486908,
+    .BlackwaterDocks = 0x00489148,
+    .AquatosSewers = 0x00488488,
+    .MarcadiaPalace = 0x00487dc8,
+#endif
+};
+
 ScreenVBEffect* gfxScreenVBEffect(void)
 {
     return SCREEN_VISIBOMB_EFFECT;
@@ -685,3 +742,9 @@ ColorExtTable_t* gfxColorExtTable(void)
 {
     return COLOR_EXT_TABLE;
 }
+
+PartInstance_t * gfxSpawnParticle(VECTOR position, u32 texId, u32 color, char opacity, float rotation)
+{
+	return internal_SpawnPart_059(position, color, opacity, texId, 0, 2, 0, 0, rotation);
+}
+

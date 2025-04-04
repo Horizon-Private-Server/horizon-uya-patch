@@ -295,6 +295,8 @@ VARIABLE_FUNCTION(gfxDrawBillboardQuad, vaDrawBillboardQuad)
 VARIABLE_FUNCTION(gfxDrawQuad, vaFastDrawQuadReal)
 VARIABLE_FUNCTION(gfxGetPreLoadedImageBufferSource, vaGetPreLoadedImageBufferSource)
 VARIABLE_FUNCTION(gfxSetScissor, vaSetScissor)
+VARIABLE_FUNCTION(internal_SpawnPart_059, vaSpawnPart_059)
+VARIABLE_FUNCTION(gfxDestroyParticle, vaDeletePart)
 
 #--------------------------------------------------------
 #------------------------- GAME -------------------------

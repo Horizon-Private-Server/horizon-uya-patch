@@ -84,90 +84,6 @@ VariableAddress_t vaOnPlayerKill_Func = {
 #endif
 };
 
-VariableAddress_t vaEmpty_TROY_IS_AMAZING = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0,
-    .Hoven = 0,
-    .OutpostX12 = 0,
-    .KorgonOutpost = 0,
-    .Metropolis = 0,
-    .BlackwaterCity = 0,
-    .CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
-#else
-    .Lobby = 0,
-    .Bakisi = 0,
-    .Hoven = 0,
-    .OutpostX12 = 0,
-    .KorgonOutpost = 0,
-    .Metropolis = 0,
-    .BlackwaterCity = 0,
-    .CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
-#endif
-};
-
-VariableAddress_t vaSpawnPart_059 = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x004a0508,
-    .Hoven = 0x004a2620,
-    .OutpostX12 = 0x00497ef8,
-    .KorgonOutpost = 0x00495690,
-    .Metropolis = 0x004949e0,
-    .BlackwaterCity = 0x00492278,
-    .CommandCenter = 0x00492270,
-    .BlackwaterDocks = 0x00494af0,
-    .AquatosSewers = 0x00493df0,
-    .MarcadiaPalace = 0x00493770,
-#else
-    .Lobby = 0,
-    .Bakisi = 0x0049e150,
-    .Hoven = 0x004a01a8,
-    .OutpostX12 = 0x00495ac0,
-    .KorgonOutpost = 0x004932d8,
-    .Metropolis = 0x00492628,
-    .BlackwaterCity = 0x0048fe40,
-    .CommandCenter = 0x0048fff8,
-    .BlackwaterDocks = 0x00492838,
-    .AquatosSewers = 0x00491b78,
-    .MarcadiaPalace = 0x004914b8,
-#endif
-};
-
-VariableAddress_t vaDeletePart = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x00496c58,
-    .Hoven = 0x00498d70,
-    .OutpostX12 = 0x0048e648,
-    .KorgonOutpost = 0x0048bd18,
-    .Metropolis = 0x0048b130,
-    .BlackwaterCity = 0x004889c8,
-    .CommandCenter = 0x004889c0,
-    .BlackwaterDocks = 0x0048b240,
-    .AquatosSewers = 0x0048a540,
-    .MarcadiaPalace = 0x00489ec0,
-#else
-    .Lobby = 0,
-    .Bakisi = 0x00494a60,
-    .Hoven = 0x00496ab8,
-    .OutpostX12 = 0x0048c3d0,
-    .KorgonOutpost = 0x00489b20,
-    .Metropolis = 0x00488f38,
-    .BlackwaterCity = 0x00486750,
-    .CommandCenter = 0x00486908,
-    .BlackwaterDocks = 0x00489148,
-    .AquatosSewers = 0x00488488,
-    .MarcadiaPalace = 0x00487dc8,
-#endif
-};
-
 VariableAddress_t vaReplace_GetEffectTexJAL = {
 #if UYA_PAL
     .Lobby = 0,
@@ -213,7 +129,7 @@ int scavHuntBoltSpawnCooldown = 0;
 
 struct HBoltPVar {
 	int DestroyAtTime;
-	struct PartInstance* Particles[4];
+	PartInstance_t* Particles[4];
 };
 
 //--------------------------------------------------------------------------
@@ -263,19 +179,6 @@ void scavHuntSendHorizonBoltPickedUpMessage(void)
 
   netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_PICKED_UP_HORIZON_BOLT, 0, NULL);
 }
-
-//--------------------------------------------------------------------------
-struct PartInstance * scavHuntSpawnParticle(VECTOR position, u32 color, char opacity, int idx)
-{
-	return ((struct PartInstance* (*)(VECTOR, u32, char, u32, u32, int, int, int, float))GetAddress(&vaSpawnPart_059))(position, color, opacity, 53, 0, 2, 0, 0, 1.25 + (0.5 * idx));
-}
-
-//--------------------------------------------------------------------------
-void scavHuntDestroyParticle(struct PartInstance* particle)
-{
-	((void (*)(struct PartInstance*))GetAddress(&vaDeletePart))(particle);
-}
-
 //--------------------------------------------------------------------------
 void scavHuntHBoltDestroy(Moby* moby)
 {
@@ -286,7 +189,7 @@ void scavHuntHBoltDestroy(Moby* moby)
   int i;
 	for (i = 0; i < 4; ++i) {
 		if (pvars->Particles[i]) {
-			scavHuntDestroyParticle(pvars->Particles[i]);
+			gfxDestroyParticle(pvars->Particles[i]);
 			pvars->Particles[i] = NULL;
 		}
 	}
@@ -347,9 +250,9 @@ void scavHuntHBoltUpdate(Moby* moby)
 	u32 color = colorLerp(0, HBOLT_PARTICLE_COLOR, 1.0 / 4);
 	color |= 0x80000000;
 	for (i = 0; i < 4; ++i) {
-		struct PartInstance * particle = pvars->Particles[i];
+		PartInstance_t * particle = pvars->Particles[i];
 		if (!particle) {
-			particle = scavHuntSpawnParticle(moby->position, color, 100, i);
+			particle = gfxSpawnParticle(moby->position, HBOLT_MOBY_OCLASS, color, 100, i);
 		}
 
 		// update
