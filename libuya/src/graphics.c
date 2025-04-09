@@ -3,9 +3,11 @@
 #include "interop.h"
 
 #if UYA_PAL
+#define SCREEN ((Screen*)0x00240480)
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
 #define COLOR_EXT_TABLE                     ((ColorExtTable_t*)0x00242830)
 #else
+#define SCREEN ((Screen*)0x00240480)
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
 #define COLOR_EXT_TABLE                     ((ColorExtTable_t*)0x002429b0)
 #endif
@@ -446,79 +448,24 @@ VariableAddress_t vaSetScissor = {
 //--------------------------------------------------------
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 {
-    int output = 0;
+	Screen *screen = gfxGetScreen();
+	VECTOR screenPos;
+    float scale = 0.0625;
+	((void(*)(u32, u32))0x00452268)(&screenPos, position);
 
-    asm __volatile__ (
-        "addiu      $sp, $sp, -0x40     \n"
-        "sq         $ra, 0x00($sp)      \n"
-        "sq         $s0, 0x10($sp)      \n"
-        "sq         $s1, 0x20($sp)      \n"
-        "swc1       $f20, 0x30($sp)     \n"
+    *x = (int)((screenPos[0] - screen->ofs_x) * scale);
+    *y = (int)((screenPos[1] - screen->ofs_y) * scale);
+	int inViewX = *x < -64 || *x > screen->size_x + 64;
+	int inViewY = *y < -64 || *y > screen->size_x + 64;
+    if (inViewX || inViewY)\
+		return 0;
 
-        "move       $s0, %0             \n"
-        "move       $s1, %1             \n"
-        "li.s       $f20, 0.0625        \n"
-        
-        "lq		    $a0, 0x00(%2)	    \n"
-        "jal		0x004BFCA8	        \n"
-        "lui		$v1, 0x001D	        \n"
-        "mtc1		$v0, $f01   	    \n"
-        "addiu		$a0, $v1, 0x3F40    \n"
-        "lwc1		$f02, 0x10($a0)	    \n"
-        "cvt.s.w	$f02, $f02	        \n"
-        "prot3w		$v1, $v0	        \n"
-        "mtc1		$v1, $f00	        \n"
-        "lwc1		$f03, 0x14($a0)	    \n"
-        "cvt.s.w	$f03, $f03	        \n"
-        "lw		    $v0, 0x18($a0)	    \n"
-        "sub.s		$f01, $f01, $f02    \n"
-        "addiu		$v0, $v0, 0x40	    \n"
-        "sub.s		$f00, $f00, $f03    \n"
-        "mul.s		$f01, $f01, $f20    \n"
-        "mul.s		$f00, $f00, $f20    \n"
-        "cvt.w.s	$f02, $f01  	    \n"
-        "mfc1       $t0, $f02           \n"
-        "sw		    $t0, 0x00($s0)	    \n"
-        "cvt.w.s	$f01, $f00	        \n"
-        "mfc1       $t1, $f01           \n"
-        "sw		    $t1, 0x00($s1)	    \n"
-
-        "lw         $v0, 0x18($a0)      \n"
-        "addiu      $v0, $v0, 0x40      \n"
-        "slt        $v1, $v0, $t0       \n"
-        "bne        $v1, $0, exit       \n"
-        "slti       $v1, $t0, -0x40     \n"
-        "bne        $v1, $0, exit       \n"
-        "lw         $v0, 0x1C($a0)      \n"
-        "addiu      $v0, $v0, 0x40      \n"
-        "slt        $v1, $v0, $t1       \n"
-        "bne        $v1, $0, exit       \n"
-        "slti       $v1, $t1, -0x40     \n"
-        "bne        $v1, $0, exit       \n"
-        "li         %3, 1              \n"
-
-        "exit:                          \n"
-        "lq         $ra, 0x00($sp)      \n"
-        "lq         $s0, 0x10($sp)      \n"
-        "lq         $s1, 0x20($sp)      \n"
-        "lwc1       $f20, 0x30($sp)     \n"
-        "addiu      $sp, $sp, 0x40      \n"
-        : : "r" (x), "r" (y), "r" (position), "r" (output)
-    );
-
-    return output;
+    return 1;
 }
 
 //--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment)
 {
-    /*
-        Aligntment: 0: Right
-                    1: Left
-                    2: Center
-                    3: ????
-                    4: None
-    */
     // float x, float y, float scaleX, float scaleY, float shadowX, float shadowY, u32 color, const char* string, u64 length, u64 alignment, int bold, u32 shadowColor
     internal_drawFunc(x, y, scaleX, scaleY, 0, 0, color, string, length, alignment, 1, 0x80000000);
     return x + gfxGetFontWidth(string, length, scaleX);
@@ -738,6 +685,11 @@ ViewContext* gfxViewContext(void)
     return VIEW_CONTEXT;
 }
 
+Screen *gfxGetScreen(void)
+{
+    return SCREEN;
+}
+
 ColorExtTable_t* gfxColorExtTable(void)
 {
     return COLOR_EXT_TABLE;
@@ -748,3 +700,37 @@ PartInstance_t * gfxSpawnParticle(VECTOR position, u32 texId, u32 color, char op
 	return internal_SpawnPart_059(position, color, opacity, texId, 0, 2, 0, 0, rotation);
 }
 
+void gfxHelperAlign(float* pX, float* pY, float w, float h, enum TextAlign alignment)
+{
+  float x = 0, y = 0;
+	if (pX) x = *pX;
+	if (pY) y = *pY;
+
+	switch (alignment) {
+		case TEXT_ALIGN_TOPLEFT: break;
+		case TEXT_ALIGN_TOPCENTER: x -= w * 0.5; break;
+		case TEXT_ALIGN_TOPRIGHT: x -= w; break;
+		case TEXT_ALIGN_MIDDLELEFT: y -= h * 0.5; break;
+		case TEXT_ALIGN_MIDDLECENTER: x -= w * 0.5; y -= h * 0.5; break;
+		case TEXT_ALIGN_MIDDLERIGHT: x -= w; y -= h * 0.5; break;
+		case TEXT_ALIGN_BOTTOMLEFT: y -= h; break;
+		case TEXT_ALIGN_BOTTOMCENTER: x -= w * 0.5; y -= h; break;
+		case TEXT_ALIGN_BOTTOMRIGHT: x -= w; y -= h; break;
+	}
+	if (pX) *pX = x;
+	if (pY) *pY = y;
+}
+
+void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u32 color, enum TextAlign alignment)
+{
+	if (!isInGame())
+		return;
+	int x, y;
+	if(gfxWorldSpaceToScreenSpace(worldPosition, &x, &y)) {
+		float fx = x, fy = y;
+		gfxHelperAlign(&fx, &fy, w, h, alignment);
+		gfxSetupGifPaging(0);
+		gfxDrawSprite(fx, fy, w, h, 0, 0, 32, 32, color, gfxGetFrameTex(texId));
+		gfxDoGifPaging();
+	}
+}

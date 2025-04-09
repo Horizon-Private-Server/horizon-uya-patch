@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "interop.h"
 
+#define CAMERA								((Camera_t*)GetAddress(&vaCAMERA));
 #define GAME_CAMERA                         ((GameCamera*)GetAddress(&vaGAME_CAMERA))
 
 VariableAddress_t vaGAME_CAMERA = {
@@ -34,7 +35,40 @@ VariableAddress_t vaGAME_CAMERA = {
 #endif
 };
 
+VariableAddress_t vaCAMERA = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0,
+	.Hoven = 0,
+	.OutpostX12 = 0,
+	.KorgonOutpost = 0,
+	.Metropolis = 0,
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+	.BlackwaterDocks = 0,
+	.AquatosSewers = 0,
+	.MarcadiaPalace = 0,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00249f80,
+	.Hoven = 0,
+	.OutpostX12 = 0,
+	.KorgonOutpost = 0,
+	.Metropolis = 0,
+	.BlackwaterCity = 0,
+	.CommandCenter = 0,
+	.BlackwaterDocks = 0,
+	.AquatosSewers = 0,
+	.MarcadiaPalace = 0,
+#endif
+};
+
 //--------------------------------------------------------------------------------
+Camera_t *cameraGetCamera()
+{
+	return CAMERA;
+}
+
 GameCamera* cameraGetGameCamera(int cameraIndex)
 {
     return GAME_CAMERA + cameraIndex;

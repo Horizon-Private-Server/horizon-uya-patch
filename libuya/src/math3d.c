@@ -485,3 +485,13 @@ float matrix_determinant(MATRIX input0)
     -   input0[12] *(input0[1]*input0[6]*input0[11] + input0[2]*input0[7]*input0[9] + input0[3]*input0[5]*input0[10]
                     -input0[3]*input0[6]*input0[9] - input0[2]*input0[5]*input0[11] - input0[1]*input0[7]*input0[10]);
 }
+
+void multiply_matrix_vector(VECTOR output, MATRIX m, VECTOR v) {
+    VECTOR i = {
+        m[0] * v[0] + m[1] * v[1] + m[2] * v[2] + m[3] * v[3],
+        m[4] * v[0] + m[5] * v[1] + m[6] * v[2] + m[7] * v[3],
+        m[8] * v[0] + m[9] * v[1] + m[10] * v[2] + m[11] * v[3],
+        m[12] * v[0] + m[13] * v[1] + m[14] * v[2] + m[15] * v[3]
+    };
+    vector_copy(&output, i);
+}
