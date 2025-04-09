@@ -158,7 +158,6 @@ struct CameraExternal {
 	/*   0 */ VECTOR move;
 };
 
-// warning: multiple differing types with the same name, only one recovered
 struct CameraHeroData {
 	/*   0 */ MATRIX mtx;
 	/*  40 */ VECTOR pos;
@@ -208,33 +207,46 @@ struct CameraHeroData {
 	/* 154 */ int pad[3];
 };
 
+typedef struct CAMERA { // 0x1d0
+/* 0x000 */ mtx4 rMtx;
+/* 0x040 */ mtx4 fMtx;
+/* 0x080 */ mtx4 nfMtx;
+/* 0x0c0 */ mtx4 hMtx;
+/* 0x100 */ mtx4 hsMtx;
+/* 0x140 */ vec4 pos;
+/* 0x150 */ vec4f rot;
+/* 0x160 */ mtx3 uMtx;
+/* 0x190 */ mtx4 uvMtx;
+} Camera_t;
+
 typedef struct GameCamera {
-	/*   0 */ VECTOR pos;
-	/*  10 */ VECTOR rot;
-	/*  20 */ struct CameraShake shake;
-	/*  30 */ struct CameraShake shakeFwd;
-	/*  40 */ struct CameraShake shakeTilt;
-	/*  50 */ struct UpdateCam* pCurrentUpdCam;
-	/*  54 */ struct UpdateCam* pLastUpdCam;
-	/*  60 */ struct CameraStatics camStatics;
-	/* 150 */ struct CameraHeroData camHeroData;
-	/* 2b0 */ struct CamBlender blender;
-	/* 390 */ VECTOR uMtx[3];
-	/* 3c0 */ MATRIX bsMtx;
-	/* 400 */ struct CameraWidget widget;
-	/* 420 */ // struct CameraExternal external;
-	/*
-		UYA's Camera Struct is different from DLs.
-		Unsure if I have it correct
-		Commented CameraExternal
-		Added `int pad[3]` to  CameraWidget
-	*/
-	/* 420 */ struct CameraFov fov;
-	/* 450 */ int CamUnderWater;
-	/* 454 */ int camTimer;
-	/* 458 */ int disableBlendTimer;
+/*   0 */ VECTOR pos;
+/*  10 */ VECTOR rot;
+/*  20 */ struct CameraShake shake;
+/*  30 */ struct CameraShake shakeFwd;
+/*  40 */ struct CameraShake shakeTilt;
+/*  50 */ struct UpdateCam* pCurrentUpdCam;
+/*  54 */ struct UpdateCam* pLastUpdCam;
+/*  60 */ struct CameraStatics camStatics;
+/* 150 */ struct CameraHeroData camHeroData;
+/* 2b0 */ struct CamBlender blender;
+/* 390 */ VECTOR uMtx[3];
+/* 3c0 */ MATRIX bsMtx;
+/* 400 */ struct CameraWidget widget;
+/* 420 */ // struct CameraExternal external;
+/*
+	UYA's Camera Struct is different from DLs.
+	Unsure if I have it correct
+	Commented CameraExternal
+	Added `int pad[3]` to  CameraWidget
+*/
+/* 420 */ struct CameraFov fov;
+/* 450 */ int CamUnderWater;
+/* 454 */ int camTimer;
+/* 458 */ int disableBlendTimer;
 } GameCamera;
 
+Camera_t *cameraGetCamera(void);
 GameCamera* cameraGetGameCamera(int cameraIndex);
 
 #endif // _LIBUYA_CAMERA_H_

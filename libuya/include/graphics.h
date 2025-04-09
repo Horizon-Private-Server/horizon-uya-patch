@@ -22,7 +22,7 @@
 #endif
 
 enum SpriteS {
-	SPRITE_CHROME,
+	SPRITE_CHROME = -27,
 	SPRITE_GLASS,
 	SPRITE_NEW_GAME_PLUS_1,
 	SPRITE_NEW_GAME_PLUS_2,
@@ -106,7 +106,7 @@ enum SpriteS {
 	SPRITE_NUMBER_7,
 	SPRITE_NUMBER_8,
 	SPRITE_NUMBER_9,
-	SPRITE_BOLT = 81,
+	SPRITE_BOLT,
 	SPRITE_CIRCLE,
 	SPRITE_SQUARE,
 	SPRITE_TRIANGLE,
@@ -430,6 +430,21 @@ struct DataSource { // 0x8
 	/* 0x4 */ void *__vtable;
 };
 
+typedef struct Screen { // 0x50
+	/* 0x00 */ int size_x;
+	/* 0x04 */ int size_y;
+	/* 0x08 */ int center_x;
+	/* 0x0c */ int center_y;
+	/* 0x10 */ int ofs_x;
+	/* 0x14 */ int ofs_y;
+	/* 0x18 */ int lim_x;
+	/* 0x1c */ int lim_y;
+	/* 0x20 */ float oneOverSize_x;
+	/* 0x24 */ float oneOverSize_y;
+	/* 0x30 */ vec4 vHalfSize;
+	/* 0x40 */ vec4 vOneOverSize;
+} Screen;
+
 typedef struct ConcretePreLoadedImageBuffer {
 	/* 0x00 */ struct DataSource DataSourceImageBuffer;
 	/* 0x08 */ unsigned int tex0;
@@ -513,17 +528,6 @@ void gfxScreenSpaceQuad(RECT * rect, u32 colorTL, u32 colorTR, u32 colorBL, u32 
  */
 void gfxScreenSpaceBox(float x, float y, float w, float h, u32 color);
 
-/*
- * NAME :		gfxWorldSpaceToScreenSpace
- * DESCRIPTION :
- * 			Converts world space to screen space pixel coordinates.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
- */
-int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y);
-
 int gfxGetFontWidth(const char * string, int length, float scale);
 void gfxPixelSpaceBox(float x, float y, float w, float h, u32 color);
 
@@ -552,6 +556,8 @@ void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR positio
 void gfxDrawQuad(QuadDef *quadDef, MATRIX worldMatrix);
 void gfxSetScissor(int xmin, int xmax, int ymin, int ymax);
 PartInstance_t * gfxSpawnParticle(VECTOR position, u32 texId, u32 color, char opacity, float rotation);
+void gfxHelperAlign(float* pX, float* pY, float w, float h, enum TextAlign alignment);
+void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u32 color, enum TextAlign alignment);
 
 //
 ScreenVBEffect* gfxScreenVBEffect(void);

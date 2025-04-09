@@ -76,4 +76,6 @@ void matrix_transpose(MATRIX output, MATRIX input0);
 void matrix_unit(MATRIX output);
 float matrix_determinant(MATRIX input0);
 
+void multiply_matrix_vector(VECTOR output, MATRIX m, VECTOR v);
+
 #endif // _LIBUYA_MATH3D_H_
