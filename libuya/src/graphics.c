@@ -3,7 +3,7 @@
 #include "interop.h"
 
 #if UYA_PAL
-#define SCREEN ((Screen*)0x00240480)
+#define SCREEN ((Screen*)0x00240330)
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
 #define COLOR_EXT_TABLE                     ((ColorExtTable_t*)0x00242830)
 #else
@@ -22,6 +22,8 @@
 int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
 void internal_drawBox(void *, void *);
 // int internal_SpawnPart_059(VECTOR, u32, char, u32, u32, int, int, int, float);
+void internal_WorldSpaceToScreenSpace(VECTOR *, VECTOR);
+
 
 // drawTextFunc -> widthFunc Offset: -0x2a0
 VariableAddress_t vaFontPrintFunc = {
@@ -444,6 +446,33 @@ VariableAddress_t vaSetScissor = {
 #endif
 };
 
+VariableAddress_t vaWorldSpaceToScreenSpace = {
+#if UYA_PAL
+    .Lobby = 0x00585fc0,
+    .Bakisi = 0x00452ed8,
+    .Hoven = 0x00454a58,
+    .OutpostX12 = 0x0044b858,
+    .Metropolis = 0x00448758,
+    .BlackwaterCity = 0x00445f58,
+    .CommandCenter = 0x00446bd8,
+    .BlackwaterDocks = 0x00449458,
+    .AquatosSewers = 0x00448758,
+    .MarcadiaPalace = 0x004480d8,
+#else
+    .Lobby = 0x00585250,
+    .Bakisi = 0x00452268,
+    .Hoven = 0x00453d28,
+    .OutpostX12 = 0x0044ab68,
+    .KorgonOutpost = 0x004487a8,
+    .Metropolis = 0x00447ae8,
+    .BlackwaterCity = 0x00445268,
+    .CommandCenter = 0x004460a8,
+    .BlackwaterDocks = 0x004488e8,
+    .AquatosSewers = 0x016f3038,
+    .MarcadiaPalace = 0x00447568,
+#endif
+};
+    
 
 //--------------------------------------------------------
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
@@ -451,12 +480,12 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 	Screen *screen = gfxGetScreen();
 	VECTOR screenPos;
     float scale = 0.0625;
-	((void(*)(u32, u32))0x00452268)(&screenPos, position);
+	internal_WorldSpaceToScreenSpace(&screenPos, position);
 
     *x = (int)((screenPos[0] - screen->ofs_x) * scale);
     *y = (int)((screenPos[1] - screen->ofs_y) * scale);
-	int inViewX = *x < -64 || *x > screen->size_x + 64;
-	int inViewY = *y < -64 || *y > screen->size_x + 64;
+	int inViewX = x < -64 || x > screen->screen_x + 64;
+	int inViewY = y < -64 || y > screen->screen_x + 64;
     if (inViewX || inViewY)\
 		return 0;
 

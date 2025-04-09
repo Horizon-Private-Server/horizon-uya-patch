@@ -297,7 +297,7 @@ VARIABLE_FUNCTION(gfxGetPreLoadedImageBufferSource, vaGetPreLoadedImageBufferSou
 VARIABLE_FUNCTION(gfxSetScissor, vaSetScissor)
 VARIABLE_FUNCTION(internal_SpawnPart_059, vaSpawnPart_059)
 VARIABLE_FUNCTION(gfxDestroyParticle, vaDeletePart)
-
+VARIABLE_FUNCTION(internal_WorldSpaceToScreenSpace, vaWorldSpaceToScreenSpace)
 #--------------------------------------------------------
 #------------------------- GAME -------------------------
 #--------------------------------------------------------
