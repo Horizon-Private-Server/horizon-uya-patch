@@ -305,6 +305,143 @@ enum SpriteHud {
 	SPRITE_HUD_LOADING = 0xed5c,
 };
 
+typedef enum {
+	FX_TEXTURE_FIRST_SPECIAL = -8,
+	FX_BACK_ALPHA_CLUT = -8,
+	FX_RAW_FRONT_BUFFER = -7,
+	FX_RAW_BACK_BUFFER = -6,
+	FX_RAW_Z_BUFFER = -5,
+	FX_BACK_BUFFER_RECOPY64 = -4,
+	FX_BACK_BUFFER_COPY64 = -3,
+	FX_BACK_BUFFER_RECOPY = -2,
+	FX_BACK_BUFFER_COPY = -1,
+	FX_LAME_SHADOW = 0,
+	FX_GROUND_OUTER_RETICULE = 1,
+	FX_GROUND_INNER_RETICULE = 2,
+	FX_CENTER_SCREEN_RETICULE1 = 3,
+	FX_CENTER_SCREEN_RETICULE2 = 4,
+	FX_GENERIC_RETICULE = 5,
+	FX_CMD_ATTACK = 6,
+	FX_CMD_DEFEND = 7,
+	FX_CMD_EMP = 8,
+	FX_CMD_SHIELD = 9,
+	FX_CMD_MINE = 10,
+	FX_JP_THRUST_GLOW = 11,
+	FX_JP_THRUST_HIGHLIGHT = 12,
+	FX_JP_THRUST_FIRE = 13,
+	FX_LIGHTNING1 = 14,
+	FX_ENGINE = 15,
+	FX_GLOW_PILL = 16,
+	FX_LENS_FLARE_2 = 17,
+	FX_SHIP_SHADOW = 18,
+	FX_SPARKLE = 19,
+	FX_WRENCH_BLUR = 20,
+	FX_SUCK_TORNADO = 21,
+	FX_WHITE = 22,
+	FX_ALPHA_SPARK = 23,
+	FX_HOLOGRAM = 24,
+	FX_TV_HIGHLIGHT = 25,
+	FX_TV_SMALLSCAN = 26,
+	FX_HALO = 27,
+	FX_TV_SCANLINES = 28,
+	FX_TV_SHINE = 29,
+	FX_TARGET_RETICULE = 30,
+	FX_CONE_FIRE01_SLIM = 31,
+	FX_SANDSTORM = 32,
+	FX_PROGRESSBAR_INNER = 33,
+	FX_PROGRESSBAR_OUTER = 34,
+	FX_RYNO_RETICULE = 35,
+	FX_SWINGSHOT_RETICULE = 36,
+	FX_STATIC = 37,
+	FX_BLASTER_RETICULE = 38,
+	FX_DEVASTATOR_RETICULE = 39,
+	FX_TRIANGLE_RETICULE = 40,
+	FX_PLASMA_BALL_CORE = 41,
+	FX_PLASMA_BALL_AURA = 42,
+	FX_PLASMA_LIGHTNING_BOLT = 43,
+	FX_PLASMA_BALL_FLARE = 44,
+	FX_PLASMA_BALL_GLOW_RING = 45,
+	FX_STEAM_SMOKE_GAS = 46,
+	FX_FORK_LIGHTNING = 47,
+	FX_FORK_LIGHTNING_GLOW_CORE = 48,
+	FX_STARRY_FLASH = 49,
+	FX_LAVA_GLOB = 50,
+	FX_MAIN_RET1 = 51,
+	FX_MAIN_RET2 = 52,
+	FX_MAIN_RET3 = 53,
+	FX_SMOKE_RING = 54,
+	FX_EXPLOTYPE1 = 55,
+	FX_SHOCKWAVE = 56,
+	FX_EXPLOSION = 57,
+	FX_PLASMA_SHOT = 58,
+	FX_HEATMASK2 = 59,
+	FX_CONCRETE = 60,
+	FX_SHOCKWAVE01_KEITH = 61,
+	FX_MUZZLEFLASH1 = 62,
+	FX_MUZZLEFLASH2 = 63,
+	FX_STREAMER_KEITH = 64,
+	FX_MUZZLE_FLOWER = 65,
+	FX_RADIALBLUR_SNIPER = 66,
+	FX_HOLOSHIELD_BASE = 67,
+	FX_SNIPER_OUTER_RETICULE = 68,
+	FX_REFRACTOR_BEAM = 69,
+	FX_SNIPER_INNER_RETICULE = 70,
+	FX_STARBURST1_KEITH = 71,
+	FX_STARBURST2_KEITH = 72,
+	FX_FIRECIRCLE02_KEITH = 73,
+	FX_HALFRING_KEITH = 74,
+	FX_WHIRLPOOL_KEITH = 75,
+	FX_CORONA_KEITH = 76,
+	FX_PINCH_ALPHA_MASK = 77,
+	FX_DUCK_FEATHER1 = 78,
+	FX_DUCK_FEATHER2 = 79,
+	FX_CELL_STREAM01 = 80,
+	FX_CELL_STREAM02 = 81,
+	FX_BULLET_TRAIL_SLIM = 82,
+	FX_LIGHTNING02_KEITH = 83,
+	FX_LIGHTNING01_SLIM = 84,
+	FX_WARPOUT_SHOCKWAVE = 85,
+	FX_N60_RETICULE = 86,
+	FX_GROUND1_RETICULE = 87,
+	FX_GROUND2_RETICULE = 88,
+	FX_HEALTH_BALL = 89,
+	FX_DISCBLADE_RETICULE = 90,
+	FX_SHOCKBLASTER_RETICULE = 91,
+	FX_FOCUS_RATCHET_RED = 92,
+	FX_FOCUS_RATCHET_BLUE = 93,
+	FX_FOCUS_RATCHET_RED_DEAD = 94,
+	FX_FOCUS_RATCHET_BLUE_DEAD = 95,
+	FX_LOCK_ON_RETICULE = 96,
+	FX_CRACKS = 97,
+	FX_LEVEL_0 = 98,
+	FX_LEVEL_1 = 99,
+	FX_LEVEL_2 = 100,
+	FX_LEVEL_3 = 101,
+	FX_LEVEL_4 = 102,
+	FX_LEVEL_5 = 103,
+	FX_LEVEL_6 = 104,
+	FX_LEVEL_7 = 105,
+	FX_LEVEL_8 = 106,
+	FX_LEVEL_9 = 107,
+	FX_LEVEL_10 = 108,
+	FX_LEVEL_11 = 109,
+	FX_LEVEL_12 = 110,
+	FX_LEVEL_13 = 111,
+	FX_LEVEL_14 = 112,
+	FX_LEVEL_15 = 113,
+	FX_LEVEL_16 = 114,
+	FX_LEVEL_17 = 115,
+	FX_LEVEL_18 = 116,
+	FX_LEVEL_19 = 117,
+	FX_LEVEL_20 = 118,
+	FX_LEVEL_21 = 119,
+	FX_LEVEL_22 = 120,
+	FX_LEVEL_23 = 121,
+	FX_LEVEL_24 = 122,
+	FX_LEVEL_25 = 123,
+	FX_TEXTURE_CNT = 124
+} FX_TEXTURE_ENUM;
+
 enum TextAlign {
   TEXT_ALIGN_TOPLEFT,
   TEXT_ALIGN_TOPCENTER,
@@ -477,6 +614,31 @@ typedef struct ColorExtTable {
 /* 0x1c */  u32 black2;
 } ColorExtTable_t;
 
+
+typedef struct SUB_RETICULE { // 0x40
+	/* 0x00 */ VECTOR targetPos;
+	/* 0x10 */ float scale;
+	/* 0x14 */ int rgba;
+	/* 0x18 */ int fxTex;
+	/* 0x1c */ float rotAmt;
+	/* 0x20 */ Moby *pMoby;
+	/* 0x24 */ char type;
+	/* 0x25 */ char cameraIndex;
+	/* 0x26 */ short int segments;
+	/* 0x28 */ float segment_rot;
+	/* 0x2c */ int draw_style;
+	/* 0x30 */ float retX;
+	/* 0x34 */ float retY;
+	/* 0x38 */ float retWidth;
+	/* 0x3c */ float retHeight;
+} SUB_RETICULE;
+
+struct RETICULE { // 0x390
+	/* 0x000 */ SUB_RETICULE instance[14];
+	/* 0x380 */ int numActive;
+	/* 0x384 */ int pad[3];
+};
+
 /*
  * NAME :		drawFunction
  * DESCRIPTION :
@@ -550,7 +712,8 @@ void gfxDoGifPaging(void);
 void gfxSetupGifPaging(int);
 u64 gfxGetFrameTex(int id);
 u64 gfxGetEffectTex(int id);
-void gfxDrawSprite(float x, float y, float w, float h, int t0, int t1, int texW, int texH, u64 color, u64 texture);
+void gfxDrawSprite(float x, float y, float w, float h, int tex_x, int tex_y, int tex_w, int tex_h, u64 color, u64 texture);
+void gfxDrawEffect(float x, float y, float w, float h, int r, int tex_x, int tex_y, int tex_w, int tex_h, u64 texture, u64 color1, u64 color2, char bSetting1, char bSetting2);
 void gfxStickyFX(void* a0, Moby* moby);
 void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
 void gfxDrawQuad(QuadDef *quadDef, MATRIX worldMatrix);

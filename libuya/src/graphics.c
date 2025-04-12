@@ -1,6 +1,7 @@
 #include "graphics.h"
 #include "game.h"
 #include "interop.h"
+#include "player.h"
 
 #if UYA_PAL
 #define SCREEN ((Screen*)0x00240330)
@@ -278,6 +279,36 @@ VariableAddress_t vaDrawSprite = {
 #endif
 };
 
+VariableAddress_t vaDrawEffect = {
+#if UYA_PAL
+    .Lobby = 0x0058c218,
+    .Bakisi = 0x00459130,
+    .Hoven = 0x0045acb0,
+    .OutpostX12 = 0x00451ab0,
+    .KorgonOutpost = 0x0044f670,
+    .Metropolis = 0x0044e9b0,
+    .BlackwaterCity = 0x0044c1b0,
+    .CommandCenter = 0x0044ce30,
+    .BlackwaterDocks = 0x0044f6b0,
+    .AquatosSewers = 0x0044e9b0,
+    .MarcadiaPalace = 0x0044e330,
+#else
+    .Lobby = 0x0058b048,
+    .Bakisi = 0x00458060,
+    .Hoven = 0x00459b20,
+    .OutpostX12 = 0x00450960,
+    .KorgonOutpost = 0x0044e5a0,
+    .Metropolis = 0x0044d8e0,
+    .BlackwaterCity = 0x0044b060,
+    .CommandCenter = 0x0044bea0,
+    .BlackwaterDocks = 0x0044e6e0,
+    .AquatosSewers = 0x0044da20,
+    .MarcadiaPalace = 0x0044d360,
+#endif
+};
+    
+    
+
 VariableAddress_t vaSticky_FX = {
 #if UYA_PAL
     .Lobby = 0,
@@ -468,29 +499,67 @@ VariableAddress_t vaWorldSpaceToScreenSpace = {
     .BlackwaterCity = 0x00445268,
     .CommandCenter = 0x004460a8,
     .BlackwaterDocks = 0x004488e8,
-    .AquatosSewers = 0x016f3038,
+    .AquatosSewers = 0x00447c28,
     .MarcadiaPalace = 0x00447568,
 #endif
 };
+
+VariableAddress_t vaSpawnPart_059 = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x004a0508,
+    .Hoven = 0x004a2620,
+    .OutpostX12 = 0x00497ef8,
+    .KorgonOutpost = 0x00495690,
+    .Metropolis = 0x004949e0,
+    .BlackwaterCity = 0x00492278,
+    .CommandCenter = 0x00492270,
+    .BlackwaterDocks = 0x00494af0,
+    .AquatosSewers = 0x00493df0,
+    .MarcadiaPalace = 0x00493770,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0049e150,
+    .Hoven = 0x004a01a8,
+    .OutpostX12 = 0x00495ac0,
+    .KorgonOutpost = 0x004932d8,
+    .Metropolis = 0x00492628,
+    .BlackwaterCity = 0x0048fe40,
+    .CommandCenter = 0x0048fff8,
+    .BlackwaterDocks = 0x00492838,
+    .AquatosSewers = 0x00491b78,
+    .MarcadiaPalace = 0x004914b8,
+#endif
+};
     
+VariableAddress_t vaDeletePart = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00496c58,
+    .Hoven = 0x00498d70,
+    .OutpostX12 = 0x0048e648,
+    .KorgonOutpost = 0x0048bd18,
+    .Metropolis = 0x0048b130,
+    .BlackwaterCity = 0x004889c8,
+    .CommandCenter = 0x004889c0,
+    .BlackwaterDocks = 0x0048b240,
+    .AquatosSewers = 0x0048a540,
+    .MarcadiaPalace = 0x00489ec0,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x00494a60,
+    .Hoven = 0x00496ab8,
+    .OutpostX12 = 0x0048c3d0,
+    .KorgonOutpost = 0x00489b20,
+    .Metropolis = 0x00488f38,
+    .BlackwaterCity = 0x00486750,
+    .CommandCenter = 0x00486908,
+    .BlackwaterDocks = 0x00489148,
+    .AquatosSewers = 0x00488488,
+    .MarcadiaPalace = 0x00487dc8,
+#endif
+};
 
-//--------------------------------------------------------
-int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
-{
-	Screen *screen = gfxGetScreen();
-	VECTOR screenPos;
-    float scale = 0.0625;
-	internal_WorldSpaceToScreenSpace(&screenPos, position);
-
-    *x = (int)((screenPos[0] - screen->ofs_x) * scale);
-    *y = (int)((screenPos[1] - screen->ofs_y) * scale);
-	int inViewX = x < -64 || x > screen->screen_x + 64;
-	int inViewY = y < -64 || y > screen->screen_x + 64;
-    if (inViewX || inViewY)\
-		return 0;
-
-    return 1;
-}
 
 //--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment)
@@ -645,62 +714,6 @@ void gfxOcclusion(int OnOff)
     *(u32*)GetAddress(&vaOcclusionAddr) = OnOff;
 }
 
-VariableAddress_t vaSpawnPart_059 = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x004a0508,
-    .Hoven = 0x004a2620,
-    .OutpostX12 = 0x00497ef8,
-    .KorgonOutpost = 0x00495690,
-    .Metropolis = 0x004949e0,
-    .BlackwaterCity = 0x00492278,
-    .CommandCenter = 0x00492270,
-    .BlackwaterDocks = 0x00494af0,
-    .AquatosSewers = 0x00493df0,
-    .MarcadiaPalace = 0x00493770,
-#else
-    .Lobby = 0,
-    .Bakisi = 0x0049e150,
-    .Hoven = 0x004a01a8,
-    .OutpostX12 = 0x00495ac0,
-    .KorgonOutpost = 0x004932d8,
-    .Metropolis = 0x00492628,
-    .BlackwaterCity = 0x0048fe40,
-    .CommandCenter = 0x0048fff8,
-    .BlackwaterDocks = 0x00492838,
-    .AquatosSewers = 0x00491b78,
-    .MarcadiaPalace = 0x004914b8,
-#endif
-};
-    
-VariableAddress_t vaDeletePart = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x00496c58,
-    .Hoven = 0x00498d70,
-    .OutpostX12 = 0x0048e648,
-    .KorgonOutpost = 0x0048bd18,
-    .Metropolis = 0x0048b130,
-    .BlackwaterCity = 0x004889c8,
-    .CommandCenter = 0x004889c0,
-    .BlackwaterDocks = 0x0048b240,
-    .AquatosSewers = 0x0048a540,
-    .MarcadiaPalace = 0x00489ec0,
-#else
-    .Lobby = 0,
-    .Bakisi = 0x00494a60,
-    .Hoven = 0x00496ab8,
-    .OutpostX12 = 0x0048c3d0,
-    .KorgonOutpost = 0x00489b20,
-    .Metropolis = 0x00488f38,
-    .BlackwaterCity = 0x00486750,
-    .CommandCenter = 0x00486908,
-    .BlackwaterDocks = 0x00489148,
-    .AquatosSewers = 0x00488488,
-    .MarcadiaPalace = 0x00487dc8,
-#endif
-};
-
 ScreenVBEffect* gfxScreenVBEffect(void)
 {
     return SCREEN_VISIBOMB_EFFECT;
@@ -750,6 +763,99 @@ void gfxHelperAlign(float* pX, float* pY, float w, float h, enum TextAlign align
 	if (pY) *pY = y;
 }
 
+int gfxIsInView(Player *player, VECTOR position)
+{
+    int output = 0;
+    asm __volatile__ (
+        "addiu      $sp, $sp, -0x40     \n"
+        "sq         $ra, 0x00($sp)      \n"
+        "sq         $s0, 0x10($sp)      \n"
+        "sq         $s1, 0x20($sp)      \n"
+        "swc1       $f20, 0x30($sp)     \n"
+
+        // check we're facing the position
+        "vmaxw.xyzw $vf6, $vf0, $vf0w   \n"
+        "lqc2       $vf2, 0x00(%0)  \n"
+        "lqc2       $vf1, 0x00(%2)      \n"
+        "vsub.xyz   $vf1, $vf1, $vf2    \n"
+        "vmul.xyzw  $vf2, $vf1, $vf1    \n"
+        "vadday.x   ACC, $vf2, $vf2y    \n"
+        "vmaddz.x   $vf2, $vf6, $vf2z   \n"
+        "vrsqrt     Q, $vf0w, $vf2x     \n"
+        "vwaitq                         \n"
+        "vmulq.xyz  $vf1, $vf1, Q       \n"
+        "lqc2       $vf3, 0x00(%1)  \n"
+        "li.s       $f0, 0.0            \n"
+        "vmul.xyzw  $vf1, $vf3, $vf1    \n"
+        "vadday.x   ACC, $vf1, $vf1y    \n"
+        "vmaddz.x   $vf1, $vf6, $vf1z   \n"
+        "qmfc2.I    $v0, $vf1           \n"
+        "mtc1       $v0, $f1            \n"
+        "nop                            \n"
+        "c.lt.s     $f1, $f0            \n"
+        "nop                            \n"
+        "bc1t       fail                \n"
+        "li         %3, 1               \n"
+        "b          exit                \n"
+
+        "fail:                          \n"
+        "li         %3, 0               \n"
+
+        "exit:                          \n"
+        "lq         $ra, 0x00($sp)      \n"
+        "lq         $s0, 0x10($sp)      \n"
+        "lq         $s1, 0x20($sp)      \n"
+        "lwc1       $f20, 0x30($sp)     \n"
+        "addiu      $sp, $sp, 0x40      \n"
+        : : "r" (&player->camera->uMtx[0]), "r" (&player->camera->pos), "r" (position), "r" (output)
+    );
+    return output;
+}
+
+int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
+{
+    Player *player = playerGetFromSlot(0);
+    if (!isInGame() || !player)
+        return 0;
+
+	Screen *screen = gfxGetScreen();
+	VECTOR screenPos;
+    VECTOR toMoby;
+    VECTOR cameraDir = {player->camera->uMtx[0][1], player->camera->uMtx[1][1], player->camera->uMtx[2][1], 0};
+    VECTOR offsetCamDir = {0, 0, 4, 0};
+    float scale = 0.0625;
+
+    vector_subtract(toMoby, position, player->camera->pos);
+    vector_normalize(toMoby, toMoby);
+    vector_add(offsetCamDir, cameraDir, offsetCamDir);
+    vector_normalize(offsetCamDir, offsetCamDir);
+    float dot = vector_innerproduct_unscaled(offsetCamDir, toMoby);
+    if (dot > 0)
+        return 0;
+    // {
+    //     printf("\nlooking at moby");
+    // } else {
+    //     printf("\nhaha you're blind. :(");
+    //     return 0;
+    // }
+
+    // int inView = gfxIsInView(player, position);
+
+    // printf("\ninView: %d", inView);
+    // if (!inView) return 0;
+
+    printf("\nDO INTERNAL WS");
+	internal_WorldSpaceToScreenSpace(&screenPos, position);
+    printf("\nX AND Y");
+    *x = (int)((screenPos[0] - screen->ofs_x) * scale);
+    *y = (int)((screenPos[1] - screen->ofs_y) * scale);
+    printf("\nIF X AND Y");
+    if (*x < -64 || *x > screen->size_x + 64) return 0;
+    if (*y < -64 || *y > screen->size_y + 64) return 0;
+    printf("\nRETURN 1");
+    return 1;
+}
+
 void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u32 color, enum TextAlign alignment)
 {
 	if (!isInGame())
@@ -760,6 +866,7 @@ void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u
 		gfxHelperAlign(&fx, &fy, w, h, alignment);
 		gfxSetupGifPaging(0);
 		gfxDrawSprite(fx, fy, w, h, 0, 0, 32, 32, color, gfxGetFrameTex(texId));
-		gfxDoGifPaging();
+        // gfxDrawEffect(fx, fy, w , h, 63, 63, gfxGetEffectTex(0x20), 0xfffff3, color, 1, 0);
+        gfxDoGifPaging();
 	}
 }

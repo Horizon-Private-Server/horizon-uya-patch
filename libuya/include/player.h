@@ -685,7 +685,7 @@
 	 /* 0x130c */ float gunInterpSpeed;
  } FpsCamVars;
  
- typedef struct HeroCamera { // 0x30
+ typedef struct HeroFps { // 0x30
 	 /* 0x1180 */ VECTOR cameraPos;
 	 /* 0x1190 */ VECTOR cameraDir;
 	 /* 0x11a0 */ FpsCamVars vars;
@@ -701,7 +701,7 @@
 	 /* 0x1334 */ int ignoreGroundHeight;
 	 /* 0x1338 */ float reticlePulseAng;
 	 /* 0x133c */ int reticleFadeInTimer;
- } HeroCamera;
+ } HeroFps;
  
  typedef struct HeroWeaponPosRec { // 0x80
 	 /* 0x00 */ VECTOR fpGunMtx[4];
@@ -1088,7 +1088,7 @@
 	 /* 0x1090 */ HeroHeadIdle head;
 	 /* 0x10b0 */ HeroTailIdle tailIdle;
 	 /*        */ char unk_1100[0x80];
-	 /* 0x1180 */ HeroCamera fps;
+	 /* 0x1180 */ HeroFps fps;
 	 /* 0x1340 */ HeroWeaponPosRec weaponPosRec;
 	 /* 0x13c0 */ HeroWalkToPos walkToPos;
 	 /* 0x13e0 */ HeroSurf surf;
