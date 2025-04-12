@@ -2,6 +2,8 @@
 #include "game.h"
 #include "interop.h"
 #include "player.h"
+#include "gamesettings.h"
+#include "map.h"
 
 #if UYA_PAL
 #define SCREEN ((Screen*)0x00240330)
@@ -815,7 +817,7 @@ int gfxIsInView(Player *player, VECTOR position)
 int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 {
     Player *player = playerGetFromSlot(0);
-    if (!isInGame() || !player)
+    if (!player)
         return 0;
 
 	Screen *screen = gfxGetScreen();
@@ -832,27 +834,25 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
     float dot = vector_innerproduct_unscaled(offsetCamDir, toMoby);
     if (dot > 0)
         return 0;
-    // {
+
+    // if(dot > 0) {
     //     printf("\nlooking at moby");
     // } else {
     //     printf("\nhaha you're blind. :(");
     //     return 0;
     // }
 
-    // int inView = gfxIsInView(player, position);
+    // Current a crash with internal_worldSpacetoScreenSpace
+    // on blackwater docks.  Look into later.
+    GameSettings *gs = gameGetSettings();
+    if (gs->GameLevel == MAP_ID_BLACKWATER_DOCKS)
+        return 0;
 
-    // printf("\ninView: %d", inView);
-    // if (!inView) return 0;
-
-    printf("\nDO INTERNAL WS");
 	internal_WorldSpaceToScreenSpace(&screenPos, position);
-    printf("\nX AND Y");
     *x = (int)((screenPos[0] - screen->ofs_x) * scale);
     *y = (int)((screenPos[1] - screen->ofs_y) * scale);
-    printf("\nIF X AND Y");
     if (*x < -64 || *x > screen->size_x + 64) return 0;
     if (*y < -64 || *y > screen->size_y + 64) return 0;
-    printf("\nRETURN 1");
     return 1;
 }
 
@@ -860,6 +860,7 @@ void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u
 {
 	if (!isInGame())
 		return;
+
 	int x, y;
 	if(gfxWorldSpaceToScreenSpace(worldPosition, &x, &y)) {
 		float fx = x, fy = y;
