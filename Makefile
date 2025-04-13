@@ -4,9 +4,7 @@ all:
 	$(MAKE) -C libuya
 	$(MAKE) -C patch
 	$(MAKE) -C unpatch
-	# $(MAKE) -C example-cgm
-	# $(MAKE) -C spleef
-	# $(MAKE) -C infected
+	$(MAKE) -C midflag
 	
 clean:
 	$(MAKE) -C libuya clean
@@ -15,6 +13,7 @@ clean:
 	$(MAKE) -C example-cgm clean
 	$(MAKE) -C spleef clean
 	$(MAKE) -C infected clean
+	$(MAKE) -C midflag clean
 
 install:
 	$(MAKE) -C libuya install
