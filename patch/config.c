@@ -112,9 +112,8 @@ void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_VoteToEndStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_DisabledInGame(TabElem_t* tab, MenuElem_t* element, int* state);
 
-int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value);
-// int menuStateHandler_SelectedWorldOverride(MenuElem_ListData_t* listData, char* value);
-int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, char* value);
+int menuStateHandler_SelectedMapOverride(MenuElem_OrderedListData_t* listData, char* value);
+int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listData, char* value);
 
 
 // list select handlers
@@ -262,18 +261,16 @@ char dataCustomMapsWithExclusiveGameMode[] = {
 };
 const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithExclusiveGameMode)/sizeof(char);
 
-// gamemode override list item
-MenuElem_ListData_t dataCustomModes = {
-    &gameConfig.customModeId,
-    menuStateHandler_SelectedGameModeOverride,
-    CUSTOM_MODE_COUNT,
-    {
-      "None",
-#if DEBUG
-      "Infected",
-      "Juggernaught"
-#endif
-    }
+MenuElem_OrderedListData_t dataCustomModes = {
+  .value = &gameConfig.customModeId,
+  .stateHandler = menuStateHandler_SelectedGameModeOverride,
+  .count = 2,
+  .items = {
+    {CUSTOM_MODE_NONE, "None"},
+    // {CUSTOM_MODE_INFECTED, "Infected"},
+    // {CUSTOM_MODE_JUGGERNAUGHT, "Juggernaut"},
+    {CUSTOM_MODE_MIDFLAG, "MidFlag"},
+  }
 };
 
 // array of alternative "short" names for game modes
@@ -281,10 +278,9 @@ MenuElem_ListData_t dataCustomModes = {
 // if the entry is NULL then the full name will be used
 const char* CustomModeShortNames[] = {
   [CUSTOM_MODE_NONE] NULL,
-#if DEBUG
-  [CUSTOM_MODE_INFECTED] "Infected",
-  [CUSTOM_MODE_JUGGERNAUGHT] NULL,
-#endif
+  // [CUSTOM_MODE_INFECTED] "Infected",
+  // [CUSTOM_MODE_JUGGERNAUGHT] NULL,
+  [CUSTOM_MODE_MIDFLAG] NULL
 };
 
 MenuElem_ListData_t dataV2_Setting = {
@@ -438,7 +434,7 @@ MenuElem_t menuElementsGameSettings[] = {
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   // { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps, "Play on any of the custom maps from the Horizon Map Pack. Visit https://rac-horizon.com to download the map pack." },
-  // { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
+  { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
   { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset, "Select one of the preconfigured game rule presets or manually set the custom game rules below." },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
@@ -546,7 +542,7 @@ void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element)
 //------------------------------------------------------------------------------
 //------------------------------ GAME SETTINGS TAB -----------------------------
 //------------------------------------------------------------------------------
-int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* value)
+int menuStateHandler_SelectedMapOverride(MenuElem_OrderedListData_t* listData, char* value)
 {
   int i;
   if (!value)
@@ -585,12 +581,9 @@ int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* va
   */
 
   // hide maps with gamemode override
-  if (gm > CUSTOM_MODE_NONE)
-  {
-    for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
-    {
-      if (v == dataCustomMapsWithExclusiveGameMode[i])
-      {
+  if (gm > CUSTOM_MODE_NONE) {
+    for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i) {
+      if (v == dataCustomMapsWithExclusiveGameMode[i]) {
         *value = CUSTOM_MAP_NONE;
         return 0;
       }
@@ -602,7 +595,7 @@ int menuStateHandler_SelectedMapOverride(MenuElem_ListData_t* listData, char* va
 }
 
 // 
-int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, char* value)
+int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listData, char* value)
 {
   if (!value)
     return 0;
@@ -610,14 +603,11 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
   GameSettings* gs = gameGetSettings();
   char v = *value;
 
-  if (gs)
-  {
-    #if DEBUG
-    switch (v)
-    {
+  if (gs) {
+    switch (v) {
+      #ifdef DEBUG
       case CUSTOM_MODE_INFECTED:
-      case CUSTOM_MODE_JUGGERNAUGHT:
-      {
+      case CUSTOM_MODE_JUGGERNAUGHT: {
         // only allow deathmatch
         if (gs->GameType == GAMERULE_DM)
           return 1;
@@ -626,8 +616,13 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_ListData_t* listData, cha
         *value = CUSTOM_MODE_NONE;
         return 0;
       }
+      #endif
+      CUSTOM_MODE_MIDFLAG: {
+        if (gs->GameType == GAMERULE_CTF) return 1;
+        *value = CUSTOM_MODE_NONE;
+        return 0; 
+      }
     }
-    #endif
   }
 
   return 1;
@@ -1407,6 +1402,7 @@ void listActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void
   }
 }
 
+//------------------------------------------------------------------------------
 void orderedListActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg)
 {
   MenuElem_OrderedListData_t* listData = (MenuElem_OrderedListData_t*)element->userdata;
@@ -1647,7 +1643,7 @@ void gmOverrideListActionHandler(TabElem_t* tab, MenuElem_t* element, int action
   // update name to be based on current gamemode
   GameSettings* gs = gameGetSettings();
   if (gs && actionType == ACTIONTYPE_DRAW)
-    snprintf(element->name, 40, "%s override", gameGetGameModeName(gs->GameRules));
+    snprintf(element->name, 40, "%s override", gameGetGameModeName(gs->GameType));
 
   // pass to default list action handler
   orderedListActionHandler(tab, element, actionType, actionArg);
@@ -2204,22 +2200,14 @@ void onConfigUpdate(void)
       mapName = MapLoaderState.MapName;
 
     // get mode override name
-    if (gameConfig.customModeId > 0)
-    {
+    if (gameConfig.customModeId > 0) {
       modeName = (char*)CustomModeShortNames[(int)gameConfig.customModeId];
-      if (!modeName)
-        modeName = dataCustomModes.items[(int)gameConfig.customModeId];
-    }
-
-    // override gamemode name with map if map has exclusive gamemode
-    if (SelectedCustomMapId)
-    {
-      for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
-      {
-        if (CustomMapDefs[SelectedCustomMapId-1].ForcedCustomModeId != 0)
-        {
-          modeName = mapName;
-          break;
+      if (!modeName) {
+        for (i = 0; i < dataCustomModes.count; ++i) {
+          if (dataCustomModes.items[i].value == (int)gameConfig.customModeId) {
+            modeName = dataCustomModes.items[i].name;
+            break;
+          }
         }
       }
     }
@@ -2329,7 +2317,7 @@ void configMenuDisable(void)
 {
   if (!isConfigMenuActive)
     return;
-  
+
   isConfigMenuActive = 0;
 
   // send config to server for saving

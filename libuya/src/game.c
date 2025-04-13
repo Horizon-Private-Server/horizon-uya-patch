@@ -266,11 +266,10 @@ int gameGetCurrentMapId(void)
 
 char* gameGetGameModeName(int gameModeId)
 {
-    switch (gameModeId)
-    {
-        case GAMERULE_SIEGE: return uiMsgString(HELP_STRING_ID_SIEGE);
-        case GAMERULE_CTF: return uiMsgString(HELP_STRING_ID_CTF);
-        case GAMERULE_DM: return uiMsgString(HELP_STRING_ID_DEATHMATCH);
+    switch (gameModeId) {
+        case GAMERULE_SIEGE: return uiMsgString(0x1024);
+        case GAMERULE_CTF: return uiMsgString(0x10e2);
+        case GAMERULE_DM: return uiMsgString(0x1026);
         default: return NULL;
     }
 }
