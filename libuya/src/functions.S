@@ -299,10 +299,14 @@ VARIABLE_FUNCTION(gfxSetScissor, vaSetScissor)
 VARIABLE_FUNCTION(internal_SpawnPart_059, vaSpawnPart_059)
 VARIABLE_FUNCTION(gfxDestroyParticle, vaDeletePart)
 VARIABLE_FUNCTION(internal_WorldSpaceToScreenSpace, vaWorldSpaceToScreenSpace)
+VARIABLE_FUNCTION(gfxDrawScreenOverlay, vaDrawScreenOverlay)
+
 #--------------------------------------------------------
 #------------------------- GAME -------------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(internal_gameEnd, vaGameEndFunc)
+VARIABLE_FUNCTION(internal_mode_requestChange, vaModeRequestChange)
+VARIABLE_FUNCTION(internal_mode_doChange, vaModeDoChange)
 
 #--------------------------------------------------------
 #------------------------- SHA1 -------------------------
@@ -487,3 +491,8 @@ VARIABLE_FUNCTION(randRadian, vaMB_randRot)
 #------------------------ WEAPON ------------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(weaponIsEnabled, vaGB_IsWeaponEnabled)
+
+#--------------------------------------------------------
+#------------------------ CAMERA ------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(cameraSetFov, vaCameraSetFOV)

@@ -69,6 +69,9 @@
 #define SPAWNPOINTS_CTF                     (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x210))
 #define SPAWNPOINTS_DM                      (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x214))
 
+int internal_mode_requestChange(int, int, int, int, char *);
+void internal_mode_doChange(void);
+
 VariableAddress_t vaGSFrame = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -209,6 +212,35 @@ VariableAddress_t vaGameEndFunc = {
 #endif
 };
 
+VariableAddress_t vaModeRequestChange = {
+#if UYA_PAL
+    .Lobby = 0x005bf798,
+    .Bakisi = 0x00491f18,
+    .Hoven = 0x00494030,
+    .OutpostX12 = 0x00489908,
+    .KorgonOutpost = 0x00486fd8,
+    .Metropolis = 0x004863f0,
+    .BlackwaterCity = 0x00483ca8,
+    .CommandCenter = 0x00483c80,
+    .BlackwaterDocks = 0x00486500,
+    .AquatosSewers = 0x0172dd50,
+    .MarcadiaPalace = 0x00485180,
+#else
+    .Lobby = 0x005bd7d8,
+    .Bakisi = 0x0048ffb0,
+    .OutpostX12 = 0x00487920,
+    .KorgonOutpost = 0x00485070,
+    .Metropolis = 0x00484488,
+    .BlackwaterCity = 0x00481cc0,
+    .CommandCenter = 0x00481e58,
+    .BlackwaterDocks = 0x00484698,
+    .AquatosSewers = 0x004839d8,
+    .MarcadiaPalace = 0x00483318,
+#endif
+};
+    
+    
+
 __LIBUYA_GETTER__ int isInGame(void)
 {
     return GAME_ACTIVE && GAME_MAP_ID != 0x27  && SCENE_LOADED == 1;
@@ -318,4 +350,10 @@ int gameGetGSFrame(void)
 int gameGetWorldId(void)
 {
     return GAME_WORLD_ID;
+}
+
+void gameModeChange(gameMode_t newMode, rmc_t switchType, int arg0, int arg1, char *callback_flag)
+{
+    internal_mode_requestChange(newMode, switchType, arg0, arg1, callback_flag);
+    internal_mode_doChange();
 }

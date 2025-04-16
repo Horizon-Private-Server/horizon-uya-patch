@@ -63,6 +63,33 @@ VariableAddress_t vaCAMERA = {
 #endif
 };
 
+VariableAddress_t vaCameraSetFOV = {
+#if UYA_PAL
+	.Lobby = 0x005789e0,
+	.Bakisi = 0x004452e0,
+	.Hoven = 0x00446e60,
+	.OutpostX12 = 0x0043dc60,
+	.KorgonOutpost = 0x0043b820,
+	.CommandCenter = 0x0173a554,
+	.BlackwaterDocks = 0x0043b860,
+	.AquatosSewers = 0x016e30b0,
+	.MarcadiaPalace = 0x0043a4e0,
+#else
+	.Lobby = 0x00577a68,
+	.Bakisi = 0x00444468,
+	.Hoven = 0x00445f28,
+	.OutpostX12 = 0x0043cd68,
+	.KorgonOutpost = 0x0043a9a8,
+	.Metropolis = 0x00439ce8,
+	.BlackwaterCity = 0x00437468,
+	.CommandCenter = 0x004382a8,
+	.BlackwaterDocks = 0x0043aae8,
+	.AquatosSewers = 0x00439e28,
+#endif
+};
+	
+	
+
 //--------------------------------------------------------------------------------
 Camera_t *cameraGetCamera()
 {

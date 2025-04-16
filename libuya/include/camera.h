@@ -248,5 +248,6 @@ typedef struct GameCamera {
 
 Camera_t *cameraGetCamera(void);
 GameCamera* cameraGetGameCamera(int cameraIndex);
+void cameraSetFov(float fov, float gain, float damp, float limit, int cameraIndex, int frames, int type);
 
 #endif // _LIBUYA_CAMERA_H_

@@ -728,5 +728,5 @@ ScreenInsertEffect* gfxScreenInsertEffect(void);
 ViewContext* gfxViewContext(void);
 ConcretePreLoadedImageBuffer* gfxGetPreLoadedImageBufferSource(int which);
 ColorExtTable_t* gfxColorExtTable(void);
-
+void gfxDrawScreenOverlay(int r, int g, int b, int a);
 #endif // _LIBUYA_GRAPHICS_H_
