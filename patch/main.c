@@ -2112,21 +2112,17 @@ void runPlayerSync(void)
  */
 void patchHideFluxReticle(void)
 {
-	if (!patched.config.hideFluxReticle)
+	if (patched.config.hideFluxReticle == config.hideFluxReticle)
 		return;
  
 	Moby* mobyStart = mobyListGetStart();
 	Moby* mobyEnd = mobyListGetEnd();
 	while (mobyStart < mobyEnd) {
 		if (mobyStart->oClass == MOBY_ID_WEAPON_FLUX_RIFLE) {
-			// if update function does equal zero, return to try again next cycle.
-			if (mobyStart->pUpdate == 0)
-				return;
-
 			int reticule = ((u32)mobyStart->pUpdate + 0x3ac);
-			if (*(u32*)reticule != 0) {
-				*(u32*)reticule = 0x24040001;
-				patched.config.hideFluxReticle = 1;
+			if (mobyStart->pUpdate && *(u32*)reticule != 0) {
+				*(u32*)reticule = 0x24040000 | config.hideFluxReticle;
+				patched.config.hideFluxReticle = config.hideFluxReticle;
 			}
 			break;
 		}

@@ -16,14 +16,16 @@ enum ActionType
   ACTIONTYPE_INPUT
 };
 
-enum ElementState {
+enum ElementState
+{
   ELEMENT_HIDDEN = 0,
   ELEMENT_VISIBLE = (1 << 0),
   ELEMENT_EDITABLE = (1 << 1),
   ELEMENT_SELECTABLE = (1 << 2),
 };
 
-enum LabelType {
+enum LabelType
+{
   LABELTYPE_HEADER,
   LABELTYPE_LABEL
 };
@@ -42,7 +44,8 @@ typedef int (*MenuElementOrderedListStateHandler)(struct MenuElem_OrderedListDat
 typedef int (*MenuElementRangeStateHandler)(struct MenuElem_RangeData* listData, char* value);
 typedef void (*TabStateHandler)(struct TabElem* tab, int * state);
 
-typedef struct MenuElem {
+typedef struct MenuElem
+{
   char name[48];
   ActionHandler handler;
   MenuElementStateHandler stateHandler;

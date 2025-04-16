@@ -11,6 +11,7 @@
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
 #include <libuya/utils.h>
+#include <libuya/net.h>
 #include "messageid.h"
 #include "config.h"
 
@@ -572,6 +573,10 @@ int patchStaging(void * ui, int pad)
     int isLoading = *(u8*)(ui + 0x2b6);
     int isRequstingTeamChange = *(u8*)(ui + 0x2c8);
 
+    // check for connetion
+    if (!netGetLobbyServerConnection())
+        return stagingFunc(ui, pad);
+
     // Change pad buttons for all players
     if (pad == UI_PAD_CROSS) {
         pad = openPlayerOptions(ui, gs, itemSelected, isTeams);
@@ -676,6 +681,11 @@ int patchStaging(void * ui, int pad)
 int patchCreateGame(UiMenu_t* ui, long pad)
 {
     int time_limit = 120; // in minutes
+ 
+    // check for connetion
+    if (!netGetLobbyServerConnection())
+        return createGameFunc(ui, pad);
+
     int result = createGameFunc(ui, pad);
 
     UiCreateGameElements_t * createGame = &ui->pChildren;
@@ -705,6 +715,10 @@ int patchAdvancedOptions(UiMenu_t* ui, int pad)
     int frag_limit = 50;
     int ctfCaps_limit = 50;
 
+    // check for connetion
+    if (!netGetLobbyServerConnection())
+        return advancedOptionsFunc(ui, pad);
+
     int result = advancedOptionsFunc(ui, pad);
     UiAdvancedOptionsElements_t* ao = &ui->pChildren;
     UiMenu_t* menu = uiGetMenu(UI_MENU_CREATE_GAME);
@@ -733,6 +747,10 @@ int patchBuddies(void * ui, long pad)
     int itemSelected = *(int*)(ui + 0x290);
     int isLoading = *(u8*)(ui + 0x2b6);
 
+    // check for connetion
+    if (!netGetLobbyServerConnection())
+        return buddiesFunc(ui, pad);
+
     int result = buddiesFunc(ui, pad);
 
     return result;
@@ -744,6 +762,10 @@ int patchPlayerDetails(void * ui, long pad)
     int itemSelected = *(int*)(ui + 0x290);
     int account_id = *(u32*)(ui + 0x2a8);
 
+    // check for connetion
+    if (!netGetLobbyServerConnection())
+        return playerDetailsFunc(ui, pad);
+
     int result = playerDetailsFunc(ui, pad);
 
     return result;
@@ -753,6 +775,10 @@ int patchStats(void * ui, int pad)
 {
     u32 * uiElements = (u32*)((u32)ui + 0x110);
     int itemSelected = *(int*)(ui + 0x290);
+
+    // check for connetion
+    if (!netGetLobbyServerConnection())
+        return statsFunc(ui, pad);
 
     int result = statsFunc(ui, pad);
 
