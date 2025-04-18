@@ -1,6 +1,6 @@
 BIN_PATH = ../bin/
 EE_OBJS = functions.o interop/patch.o interop/gamerules.o interop/cheats.o main.o config.o maploader.o rpc.o \
-			cheats.o gamerules.o scavengerhunt.o ui.o
+			cheats.o gamerules.o ui.o
 EE_LIBS := $(EE_LIBS) -lkernel
 
 EE_INCS := -I../common -I../libuya/include
@@ -9,11 +9,14 @@ EE_LDFLAGS = -fno-builtin -nostdlib -nostartfiles -L. -L../libuya/lib -L$(PS2SDK
 #EE_DEFS += -DDSCRPRINT
 #EE_DEFS += -DTEST
 #EE_DEFS += -DSCAVENGER_HUNT
-#EE_DEFS += -DBENCHMARK
 
 # build test if defined
 ifneq (,$(findstring -DTEST,$(EE_DEFS)))
     EE_OBJS += test.o
+endif
+
+ifneq (,$(findstring -DSCAVENGER_HUNT,$(EE_DEFS)))
+    EE_OBJS += scavengerhunt.o
 endif
 
 all: $(EE_BIN) clean copy

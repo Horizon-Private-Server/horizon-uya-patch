@@ -81,9 +81,11 @@ void grGameStart(void);
 void grLobbyStart(void);
 void grLoadStart(void);
 
-void runPing(void);
-void runSpectate(void);
+// void runPing(void);
+// void runSpectate(void);
+#ifdef SCAVENGER_HUNT
 void scavHuntRun(void);
+#endif
 #if TEST
 void runTest(void);
 #endif
@@ -2234,8 +2236,10 @@ void runGameStartMessager(void)
 			// request server time
 			requestServerTime();
 
+			#ifdef SCAVENGER_HUNT
 			// request latest scavenger hunt settings
       		scavHuntQueryForRemoteSettings();
+			#endif
 
 			sentGameStart = 1;
 		}
@@ -2512,12 +2516,12 @@ void onOnlineMenu(void)
 		}
 		showNoMapPopup = 0;
 	}
-
+	#ifdef SCAVENGER_HUNT
 	if (!scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled){
 		uiShowOkDialog("Scavenger Hunt", "The Horizon Scavenger Hunt is live! Hunt for Horizon Bolts for a chance to win prizes! Join our discord for more info: discord.gg/horizonps");
     	scavHuntShownPopup = 1;
 	}
-
+	#endif
   //
   #if DSCRPRINT
   float y = 10;
@@ -2598,8 +2602,10 @@ int main(void)
 	// Run Ping.  (onRemote doesn't respond :( )
 	// runPing();
 
+	#ifdef SCAVENGER_HUNT
 	// Run Scavenger Hunt
 	scavHuntRun();
+	#endif
 
 	// Run Send Gameupdate for Helga
 	patchStateContainer.UpdateGameState = runSendGameUpdate();

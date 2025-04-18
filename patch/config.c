@@ -94,7 +94,9 @@ void menuStateAlwaysHiddenHandler(TabElem_t* tab, MenuElem_t* element, int* stat
 void menuStateAlwaysDisabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateAlwaysEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateEnabledInMenusHandler(TabElem_t* tab, MenuElem_t* element, int* state);
+#ifdef SCAVENGER_HUNT
 void menuStateScavengerHuntEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state);
+#endif
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuLabelStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state);
@@ -403,8 +405,10 @@ MenuElem_t menuElementsGeneral[] = {
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
+  #if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
-#if DEBUG
+#endif
+  #if DEBUG
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
@@ -887,6 +891,7 @@ void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int*
 
   *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
+#ifdef SCAVENGER_HUNT
 void menuStateScavengerHuntEnabledHandler(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   if (!scavHuntEnabled)
@@ -894,6 +899,7 @@ void menuStateScavengerHuntEnabledHandler(TabElem_t* tab, MenuElem_t* element, i
   else
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
+#endif
 // 
 void menuLabelStateHandler(TabElem_t* tab, MenuElem_t* element, int* state)
 {
