@@ -1,7 +1,7 @@
 #ifndef __PATCH_CONFIG_H__
 #define __PATCH_CONFIG_H__
 
-#define MAX_CUSTOM_MAP_DEFINITIONS              (64)
+#define MAX_CUSTOM_MAP_DEFINITIONS              (40)
 
 enum ActionType
 {

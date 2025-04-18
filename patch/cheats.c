@@ -46,6 +46,7 @@ extern PatchGameConfig_t gameConfig;
 extern PatchPatches_t patched;
 extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaGiveWeaponFunc;
+extern VariableAddress_t vaGiveWeaponUpgradeFunc;
 
 /*
  * NAME :		disableWeaponPacks
@@ -101,20 +102,17 @@ void v2_Setting(int setting, int FirstPass)
 
 	// Disable V2's
 	if (setting == 1) {
-		// Prevent Weapon Meter value from going up.
-		// u32 addr = GetAddress(&vaCheckWeaponKill);
-		// if (*(u32*)(addr + 0x138) == 0x24630001) { // addiu v1, v1, 0x1;
-		// 	*(u32*)(addr + 0xb8) = 0; // addiu v0, v0, 0x1;
-		// 	*(u32*)(addr + 0x108) = 0; // addiu v0, v0, 0x1;
-		// 	*(u32*)(addr + 0x138) = 0; // addiu v1, v1, 0x1;
+		// u32 addr = GetAddress(&vaUpdateWeaponKill);
+		// if (*(u32*)(addr + 0x27c) == 0x24420001) { // addiu v0, v0, 0x1;
+		// 	*(u32*)(addr + 0x27c) = 0; // addiu v0, v0, 0x1;
+		// 	*(u32*)(addr + 0x288) = 0; // sb v0, 0x0(t1);
+		// 	*(u32*)(addr + 0x298) = 0;
+		// 	patched.gameConfig.grV2s = 1;
 		// }
-		u32 addr = GetAddress(&vaUpdateWeaponKill);
-		if (*(u32*)(addr + 0x27c) == 0x24420001) { // addiu v0, v0, 0x1;
-			*(u32*)(addr + 0x27c) = 0; // addiu v0, v0, 0x1;
-			*(u32*)(addr + 0x288) = 0; // sb v0, 0x0(t1);
-			*(u32*)(addr + 0x298) = 0;
-			patched.gameConfig.grV2s = 1;
-		}
+		u32 addr = GetAddress(&vaGiveWeaponUpgradeFunc);
+		*(u32*)addr = 0x03e00008;
+		*(u32*)(addr + 0x4) = 0;
+		patched.gameConfig.grV2s = 1;
 	}
 	// Always V2's
 	else {
@@ -749,41 +747,41 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
 				}
 			}
 		}
-		if (gameConfig.grRespawnTimer_AmmoPickups > 0) {
-			switch (moby->OClass) {
-				case MOBY_ID_AMMO_PACK_GRAVITY_BOMB:
-				case MOBY_ID_AMMO_PACK_BLITZ:
-				case MOBY_ID_AMMO_PACK_FLUX:
-				case MOBY_ID_AMMO_PACK_ROCKET_TUBE:
-				case MOBY_ID_AMMO_PACK_MINE:
-				case MOBY_ID_AMMO_PACK_LAVA_GUN:
-				case MOBY_ID_AMMO_PACK_HOLOSIELD:
-				case MOBY_ID_AMMO_PACK_N60:
-				case MOBY_ID_CHARGEBOOTS_PICKUP: {
-					GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
-					AmmoPickupVars_t* data = (AmmoPickupVars_t*)((u32)PVarDataPtr + (u32)PVarOffset->Offset);
-					data->respawnTime = (gameConfig.grRespawnTimer_AmmoPickups - 1) * 5;
-				}
-			}
-		}
-		if (gameConfig.grRespawnTimer_WeaponCrates > 0) {
-			switch (moby->OClass) {
-				case MOBY_ID_CRATE_CHARGEBOOTS:
-				case MOBY_ID_CRATE_GRAVITY_BOMB:
-				case MOBY_ID_CRATE_ROCKET_TUBE:
-				case MOBY_ID_CRATE_FLUX:
-				case MOBY_ID_CRATE_BLITZ:
-				case MOBY_ID_CRATE_LAVA_GUN:
-				case MOBY_ID_CRATE_HOLOSHIELD:
-				case MOBY_ID_CRATE_MORPH_O_RAY:
-				case MOBY_ID_CRATE_MINE:
-				case MOBY_ID_CRATE_RANDOM_PICKUP: {
-					GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
-					u32 data = PVarDataPtr + PVarOffset->Offset;
-					*(int*)(data + 0x70) = (gameConfig.grRespawnTimer_WeaponCrates - 1) * 5;
-				}
-			}
-		}
+		// if (gameConfig.grRespawnTimer_AmmoPickups > 0) {
+		// 	switch (moby->OClass) {
+		// 		case MOBY_ID_AMMO_PACK_GRAVITY_BOMB:
+		// 		case MOBY_ID_AMMO_PACK_BLITZ:
+		// 		case MOBY_ID_AMMO_PACK_FLUX:
+		// 		case MOBY_ID_AMMO_PACK_ROCKET_TUBE:
+		// 		case MOBY_ID_AMMO_PACK_MINE:
+		// 		case MOBY_ID_AMMO_PACK_LAVA_GUN:
+		// 		case MOBY_ID_AMMO_PACK_HOLOSIELD:
+		// 		case MOBY_ID_AMMO_PACK_N60:
+		// 		case MOBY_ID_CHARGEBOOTS_PICKUP: {
+		// 			GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+		// 			AmmoPickupVars_t* data = (AmmoPickupVars_t*)((u32)PVarDataPtr + (u32)PVarOffset->Offset);
+		// 			data->respawnTime = (gameConfig.grRespawnTimer_AmmoPickups - 1) * 5;
+		// 		}
+		// 	}
+		// }
+		// if (gameConfig.grRespawnTimer_WeaponCrates > 0) {
+		// 	switch (moby->OClass) {
+		// 		case MOBY_ID_CRATE_CHARGEBOOTS:
+		// 		case MOBY_ID_CRATE_GRAVITY_BOMB:
+		// 		case MOBY_ID_CRATE_ROCKET_TUBE:
+		// 		case MOBY_ID_CRATE_FLUX:
+		// 		case MOBY_ID_CRATE_BLITZ:
+		// 		case MOBY_ID_CRATE_LAVA_GUN:
+		// 		case MOBY_ID_CRATE_HOLOSHIELD:
+		// 		case MOBY_ID_CRATE_MORPH_O_RAY:
+		// 		case MOBY_ID_CRATE_MINE:
+		// 		case MOBY_ID_CRATE_RANDOM_PICKUP: {
+		// 			GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+		// 			u32 data = PVarDataPtr + PVarOffset->Offset;
+		// 			*(int*)(data + 0x70) = (gameConfig.grRespawnTimer_WeaponCrates - 1) * 5;
+		// 		}
+		// 	}
+		// }
 		// if (gameConfig.grRespawnTimer_SmallTurrets > 0 || gameConfig.grNoBaseDefense_SmallTurrets) {
 		// 	int grRespawn = gameConfig.grRespawnTimer_SmallTurrets;
 		// 	int grDisable = gameConfig.grNoBaseDefense_SmallTurrets;
