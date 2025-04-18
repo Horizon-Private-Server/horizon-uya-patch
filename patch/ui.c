@@ -20,9 +20,9 @@
 #define STAGING_BASE_FUNC (0x006c1730)
 #define CREATE_GAME_BASE_FUNC (0x0069a630)
 #define ADVANCED_OPTIONS_BASE_FUNC (0x0069ce50)
-#define BUDDIES_BASE_FUNC (0x00690de8)
-#define PLAYER_DETAILS_BASE_FUNC (0x006b48c8)
-#define STATS_BASE_FUNC (0x006c5cc8)
+// #define BUDDIES_BASE_FUNC (0x00690de8)
+// #define PLAYER_DETAILS_BASE_FUNC (0x006b48c8)
+// #define STATS_BASE_FUNC (0x006c5cc8)
 #define KEYBOARD_BASE_FUNC (0x6aaa08)
 
 // Needed Staging Functions
@@ -30,8 +30,8 @@
 #define BUDDY_IGNORE_LIST_PTR (*(u32*)0x0024d760)
 #define GET_BUDDY_LIST_BASE_FUNC (0x006cd768)
 #define GET_IGNORE_LIST_BASE_FUNC (0x006d5d68)
-#define OPTION_ADD_BUDDY_BASE_FUNC (0x006cdc30)
-#define OPTION_REMOVE_BUDDY_BASE_FUNC (0x006cddb0)
+// #define OPTION_ADD_BUDDY_BASE_FUNC (0x006cdc30)
+// #define OPTION_REMOVE_BUDDY_BASE_FUNC (0x006cddb0)
 #define OPTION_IGNORE_PLAYER_BASE_FUNC (0x006d6210)
 #define OPTION_UNIGNORE_PLAYER_BASE_FUNC (0x006d6398)
 #else
@@ -39,9 +39,9 @@
 #define STAGING_BASE_FUNC (0x006bec18)
 #define CREATE_GAME_BASE_FUNC (0x00697e20)
 #define ADVANCED_OPTIONS_BASE_FUNC (0x0069a640)
-#define BUDDIES_BASE_FUNC (0x0068e6f8)
-#define PLAYER_DETAILS_BASE_FUNC (0x006b1f60)
-#define STATS_BASE_FUNC (0x006c31b8)
+// #define BUDDIES_BASE_FUNC (0x0068e6f8)
+// #define PLAYER_DETAILS_BASE_FUNC (0x006b1f60)
+// #define STATS_BASE_FUNC (0x006c31b8)
 #define KEYBOARD_BASE_FUNC (0x006a80b8)
 
 // Needed Staging Functions
@@ -49,8 +49,8 @@
 #define BUDDY_IGNORE_LIST_PTR (*(u32*)0x0024d860)
 #define GET_BUDDY_LIST_BASE_FUNC (0x006cafe0)
 #define GET_IGNORE_LIST_BASE_FUNC (0x006d35d8)
-#define OPTION_ADD_BUDDY_BASE_FUNC (0x006cb4a8)
-#define OPTION_REMOVE_BUDDY_BASE_FUNC (0x006cb628)
+// #define OPTION_ADD_BUDDY_BASE_FUNC (0x006cb4a8)
+// #define OPTION_REMOVE_BUDDY_BASE_FUNC (0x006cb628)
 #define OPTION_IGNORE_PLAYER_BASE_FUNC (0x006d3a80)
 #define OPTION_UNIGNORE_PLAYER_BASE_FUNC (0x006d3c08)
 #endif
@@ -129,16 +129,16 @@ typedef int (*uiVTable_Func)(UiMenu_t * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
 uiVTable_Func advancedOptionsFunc = (uiVTable_Func)ADVANCED_OPTIONS_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
-uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
-uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
-uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
+// uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
+// uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
+// uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
 uiVTable_Func keyboardFunc = (uiVTable_Func)KEYBOARD_BASE_FUNC;
 
 typedef int (*buddy_Func)(int stack, int account_id);
 buddy_Func getBuddyList = (buddy_Func)GET_BUDDY_LIST_BASE_FUNC;
 buddy_Func getIgnoreList = (buddy_Func)GET_IGNORE_LIST_BASE_FUNC;
-buddy_Func addBuddy = (buddy_Func)GET_IGNORE_LIST_BASE_FUNC;
-buddy_Func removeBuddy = (buddy_Func)OPTION_REMOVE_BUDDY_BASE_FUNC;
+// buddy_Func addBuddy = (buddy_Func)OPTION_ADD_BUDDY_BASE_FUNC;
+// buddy_Func removeBuddy = (buddy_Func)OPTION_REMOVE_BUDDY_BASE_FUNC;
 buddy_Func ignorePlayer = (buddy_Func)OPTION_IGNORE_PLAYER_BASE_FUNC;
 buddy_Func unignorePlayer = (buddy_Func)OPTION_UNIGNORE_PLAYER_BASE_FUNC;
 
@@ -739,51 +739,51 @@ int patchAdvancedOptions(UiMenu_t* ui, int pad)
     return result;
 }
 
-int patchBuddies(void * ui, long pad)
-{
-    static int pressedSquare = -1;
-    static int holdingSquareTime = 0;
-    u32 * uiElements = (u32*)((u32)ui + 0x110);
-    int itemSelected = *(int*)(ui + 0x290);
-    int isLoading = *(u8*)(ui + 0x2b6);
+// int patchBuddies(void * ui, long pad)
+// {
+//     static int pressedSquare = -1;
+//     static int holdingSquareTime = 0;
+//     u32 * uiElements = (u32*)((u32)ui + 0x110);
+//     int itemSelected = *(int*)(ui + 0x290);
+//     int isLoading = *(u8*)(ui + 0x2b6);
 
-    // check for connetion
-    if (!netGetLobbyServerConnection())
-        return buddiesFunc(ui, pad);
+//     // check for connetion
+//     if (!netGetLobbyServerConnection())
+//         return buddiesFunc(ui, pad);
 
-    int result = buddiesFunc(ui, pad);
+//     int result = buddiesFunc(ui, pad);
 
-    return result;
-}
+//     return result;
+// }
 
-int patchPlayerDetails(void * ui, long pad)
-{
-    u32 * uiElements = (u32*)((u32)ui + 0x110);
-    int itemSelected = *(int*)(ui + 0x290);
-    int account_id = *(u32*)(ui + 0x2a8);
+// int patchPlayerDetails(void * ui, long pad)
+// {
+//     u32 * uiElements = (u32*)((u32)ui + 0x110);
+//     int itemSelected = *(int*)(ui + 0x290);
+//     int account_id = *(u32*)(ui + 0x2a8);
 
-    // check for connetion
-    if (!netGetLobbyServerConnection())
-        return playerDetailsFunc(ui, pad);
+//     // check for connetion
+//     if (!netGetLobbyServerConnection())
+//         return playerDetailsFunc(ui, pad);
 
-    int result = playerDetailsFunc(ui, pad);
+//     int result = playerDetailsFunc(ui, pad);
 
-    return result;
-}
+//     return result;
+// }
 
-int patchStats(void * ui, int pad)
-{
-    u32 * uiElements = (u32*)((u32)ui + 0x110);
-    int itemSelected = *(int*)(ui + 0x290);
+// int patchStats(void * ui, int pad)
+// {
+//     u32 * uiElements = (u32*)((u32)ui + 0x110);
+//     int itemSelected = *(int*)(ui + 0x290);
 
-    // check for connetion
-    if (!netGetLobbyServerConnection())
-        return statsFunc(ui, pad);
+//     // check for connetion
+//     if (!netGetLobbyServerConnection())
+//         return statsFunc(ui, pad);
 
-    int result = statsFunc(ui, pad);
+//     int result = statsFunc(ui, pad);
 
-    return result;
-}
+//     return result;
+// }
 
 int patchKeyboard(UiMenu_t * ui, int pad)
 {

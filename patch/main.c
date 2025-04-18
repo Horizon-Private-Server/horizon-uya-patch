@@ -45,9 +45,9 @@
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047cfec)
 #define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d124)
 #define UI_PTR_FUNC_STAGING									(0x0047e9ac)
-#define UI_PTR_FUNC_BUDDIES									(0x0047c834)
-#define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
-#define UI_PTR_FUNC_STATS									(0x0047eab4)
+// #define UI_PTR_FUNC_BUDDIES									(0x0047c834)
+// #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
+// #define UI_PTR_FUNC_STATS									(0x0047eab4)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dbac)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
@@ -55,9 +55,9 @@
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047d0ac)
 #define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d1e4)
 #define UI_PTR_FUNC_STAGING									(0x0047ea6c)
-#define UI_PTR_FUNC_BUDDIES									(0x0047c8f4)
-#define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
-#define UI_PTR_FUNC_STATS									(0x0047eb74)
+// #define UI_PTR_FUNC_BUDDIES									(0x0047c8f4)
+// #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
+// #define UI_PTR_FUNC_STATS									(0x0047eb74)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dc6c)
 #endif
 
@@ -72,9 +72,9 @@ void onMapLoaderOnlineMenu(void);
 
 int patchCreateGame(void *ui, long pad);
 int patchStaging(void * ui, long pad);
-int patchBuddies(void * ui, long pad);
-int patchPlayerDetails(void * ui, long pad);
-int patchStats(void * ui, int pad);
+// int patchBuddies(void * ui, long pad);
+// int patchPlayerDetails(void * ui, long pad);
+// int patchStats(void * ui, int pad);
 int patchKeyboard(void * ui, int pad);
 
 void grGameStart(void);
@@ -177,17 +177,6 @@ struct FlagPVars
 	char UNK_16[6];
 	int TimeFlagDropped;
 };
-
-typedef struct RankTable {
-    // Deviation 1 (275.0)
-    // Deviation 2 (250.0)
-    // Deviation 3 (100.0)
-    // Rank 1 (0.0 - 1000.0 - 1349.0)
-    // Rank 2 (1350.0 - 1699.0)
-    // Rank 3 (1700.0 and Above)
-    float deviation[3];
-    float range[3];
-} RankTable_t;
 
 #if DSCRPRINT
 //------------------------------------------------------------------------------
@@ -341,13 +330,13 @@ char * checkMap(void)
 		}
 	} else if (isInGame()) {
 		location = LOCATION_IN_GAME;
-		if (SelectedCustomMapId > 0)
-			return MapLoaderState.MapName;
+		// if (SelectedCustomMapId > 0)
+		// 	return MapLoaderState.MapName;
 
 		return mapGetName(gameGetCurrentMapId());
 	} else {
 		location = LOCATION_LOADING;
-		return "Loading Screen";
+		return "Loading";
 	}
 }
 void runExceptionHandler(void)
@@ -2711,9 +2700,9 @@ int main(void)
 			// POKE_U32(UI_PTR_FUNC_CREATE_GAME, &patchCreateGame);
 			// POKE_U32(UI_PTR_FUNC_ADVANCED_OPTIONS, &patchAdvancedOptions);
 			POKE_U32(UI_PTR_FUNC_STAGING, &patchStaging);
-			POKE_U32(UI_PTR_FUNC_BUDDIES, &patchBuddies);
-			POKE_U32(UI_PTR_FUNC_PLAYER_DETAILS, &patchPlayerDetails);
-			POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
+			// POKE_U32(UI_PTR_FUNC_BUDDIES, &patchBuddies);
+			// POKE_U32(UI_PTR_FUNC_PLAYER_DETAILS, &patchPlayerDetails);
+			// POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
 			POKE_U32(UI_PTR_FUNC_KEYBOARD, &patchKeyboard);
 			patched.uiModifiers = 1;
 		}
@@ -2722,12 +2711,12 @@ int main(void)
 		if (!patched.rankTable) {
 			// Sets deviation rank higher than that of player deviation, this way it goes by rank, not deviation.
 			int rangeMultiplier = 1;
-			*(float*)RANK_TABLE = 1000000000.00; // Deviation 1
-			*(float*)(RANK_TABLE + 0x4) = 0; // Deviation 2
-			*(float*)(RANK_TABLE + 0x8) = 0; // Deviation 3
-			*(float*)(RANK_TABLE + 0xc) = 1000 * rangeMultiplier; // Rank Rage 1 (2 bolts)
-			*(float*)(RANK_TABLE + 0x10) = 1300 * rangeMultiplier; // Rank Rage 2 (3 bolts)
-			*(float*)(RANK_TABLE + 0x14) = 1700 * rangeMultiplier; // Rank Range 3 (4 bolts)
+			*(float*)RANK_TABLE = 1000000000.00; // Deviation 1 (275.0)
+			*(float*)(RANK_TABLE + 0x4) = 0; // Deviation 2 (250.0)
+			*(float*)(RANK_TABLE + 0x8) = 0; // Deviation 3 (100.0)
+			*(float*)(RANK_TABLE + 0xc) = 1000 * rangeMultiplier; // Rank Rage 1 (0.0 - 1000.0 - 1349.0) (2 bolts)
+			*(float*)(RANK_TABLE + 0x10) = 1300 * rangeMultiplier; // Rank Rage 2 (1350.0 - 1699.0) (3 bolts)
+			*(float*)(RANK_TABLE + 0x14) = 1700 * rangeMultiplier; // Rank Range 3 (1700.0 and Above) (4 bolts)
 			patched.rankTable = 1;
 		}
 
