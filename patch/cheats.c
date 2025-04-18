@@ -539,7 +539,7 @@ void noPostHitInvinc(void)
 {
 	if (patched.gameConfig.grNoCooldown)
 		return;
-	// PAL: 0x27, NTSC: 
+	// PAL: 0x27, NTSC: 0x2f
 	u32 time = GetAddress(&vaPostHitInvinc);
 	HOOK_JAL(time, &noPostHitInvinc_Logic);
 	POKE_U32(time + 0x4, 0);
@@ -840,32 +840,6 @@ void respawnInvincTimer(void)
 
 	HOOK_JAL(GetAddress(&vaPlayerInvincibleTimer_Hook), &runInvincibilityTimer);
 	patched.gameConfig.grRespawnInvincibility = 1;
-}
-
-/*
- * NAME :		loadoutWeaponsOnly
- * DESCRIPTION :
- *              Forces players to use their loudout weapons.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void loadoutWeaponsOnly(int first)
-{
-	// only call once at the start of the game.
-	if (!first)
-		return;
-
-	int i;
-	Player *player = playerGetFromSlot(0);
-	// Strip all Weapons
-	patchResurrectWeaponOrdering_HookWeaponStripMe(player);
-	// Give needed weapons
-	patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(player, 3);
-	// Give chargeboots if needed
-	if (gameGetOptions()->GameFlags.MultiplayerGameFlags.Chargeboots == 1)
-		playerGiveWeapon(player, WEAPON_ID_CHARGEBOOTS, 0);
 }
 
 /*

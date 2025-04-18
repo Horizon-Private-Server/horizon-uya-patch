@@ -839,7 +839,7 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 	int i, j;
 	char matchCount = 0;
 	char cycleWeaponCount = 0;
-	int index = player->fps.vars.cam_slot;
+	int index = player->mpIndex;
 	// Set loadout/cycle weapons.  If not chosen, it will be set to default cycle.
 	char cycle[] = {
 		config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : WEAPON_ID_GBOMB,
@@ -894,6 +894,26 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 			playerEquipWeapon(player, weaponOrderBackup[index][i]);
 	}
 }
+/*
+ * NAME :		spawnWithLoadoutWeapons
+ * DESCRIPTION :
+ *              Spawns players loudout at start of game.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void spawnWithLoadoutWeapons(void)
+{
+	Player *player = playerGetFromSlot(0);
+	// Strip all Weapons
+	patchResurrectWeaponOrdering_HookWeaponStripMe(player);
+	// Give needed weapons
+	patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(player, 3);
+	// Give chargeboots if needed
+	if (gameGetOptions()->GameFlags.MultiplayerGameFlags.Chargeboots == 1)
+		playerGiveWeapon(player, WEAPON_ID_CHARGEBOOTS, 0);
+}
 
 /*
  * NAME :		patchResurrectWeaponOrdering
@@ -914,6 +934,8 @@ void patchResurrectWeaponOrdering(void)
 	u32 hook_RandomWeapons = hook_StripMe + 0x1c;
 	HOOK_JAL(hook_StripMe, &patchResurrectWeaponOrdering_HookWeaponStripMe);
 	HOOK_JAL(hook_RandomWeapons, &patchResurrectWeaponOrdering_HookGiveMeRandomWeapons);
+	// set weapons at start of game.
+	spawnWithLoadoutWeapons();
 
 	patched.resurrectWeaponOrdering = 1;
 }
