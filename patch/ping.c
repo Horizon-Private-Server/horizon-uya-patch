@@ -73,7 +73,7 @@ void pingSendLatencyPings(void)
 
 void runPing(void)
 {
-    static int pingCooldown = 0;
+    static int pingCooldown = 1 * TIME_SECOND;
     static int reset = 0;
 
     netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_LATENCY_TEST_PING, &pingRemoteLatencyPing);
