@@ -29,7 +29,6 @@ void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay);
 // Party Game Rules
 void survivor(void);
 void chargebootForever(void);
-void loadoutWeaponsOnly(int FirstPass);
 void modifyWeaponTweakers(void);
 
 // Other
