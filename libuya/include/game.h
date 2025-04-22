@@ -215,7 +215,11 @@ struct tNW_Info {
 	/* 0x0179 */ char isNewSessionMaster;
 	/* 0x017a */ char pad_017a[2];
 	/* 0x017c */ int sessionMasterClientIndex;
-	/* 0x0180 */ char unk_0180[0x11f4];
+	/* 0x0180 */ char unk_0180[0x12];
+	/* 0x0192 */ char myIP[0x20];
+	/* 0x01b2 */ char unk_01b2[0x50b];
+	/* 0x06bd */ char clientIndex[8];
+	/* 0x06c5 */ char unk_06c5[0xcaf];
 	/* 0x1374 */ int gameWorldId;
 } tNW_Info_t;
 
@@ -416,9 +420,6 @@ __LIBUYA_GETTER__ float gameGetDeathHeight(void);
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 __LIBUYA_SETTER__ void gameSetDeathHeight(float height);
-
-__LIBUYA_SETTER__ void gameGetQuickSandhHeight(void);
-__LIBUYA_SETTER__ void gameSetQuickSandHeight(float height);
 
 /*
  * NAME :		gameGetData
