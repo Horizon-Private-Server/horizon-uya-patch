@@ -12,6 +12,7 @@
 #include <libuya/utils.h>
 #include <libuya/interop.h>
 #include "include/config.h"
+#include "module.h"
 
 #include <sifcmd.h>
 #include <iopheap.h>
@@ -246,7 +247,7 @@ int onSetMapOverride(void * connection, void * data)
   MapOverrideResponseMessage msg;
 
   // reset
-  SelectedCustomMapId = 0;
+  patchStateContainer.CustomMapId = 0;
 
 	if (payload->CustomMap.BaseMapId == 0)
 	{
@@ -267,13 +268,13 @@ int onSetMapOverride(void * connection, void * data)
     int i = 0;
     for (i = 0; i < CustomMapDefCount; ++i) {
       if (strcmp(CustomMapDefs[i].Filename, payload->CustomMap.Filename) == 0) {
-        SelectedCustomMapId = i + 1;
+        patchStateContainer.CustomMapId = i + 1;
         version = CustomMapDefs[i].Version;
         break;
       }
     }
 
-		if (!SelectedCustomMapId) {
+		if (!patchStateContainer.CustomMapId) {
 			version = -2;
     }
 
@@ -745,8 +746,8 @@ void refreshCustomMapList(void)
   }
 
   // clamp
-  if (SelectedCustomMapId >= dataCustomMaps.count)
-    SelectedCustomMapId = dataCustomMaps.count - 1;
+  if (patchStateContainer.CustomMapId >= dataCustomMaps.count)
+    patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
 }
 
 //------------------------------------------------------------------------------
