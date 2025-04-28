@@ -71,12 +71,14 @@ typedef struct midFlagInfo {
 	int setup;
 	Moby *pRedFlag;
 	Moby *pBlueFlag;
+	int flagCuboid;
 	short baseCuboid[2];
 } midFlagInfo_t;
 midFlagInfo_t midFlag = {
 	.setup = 0,
 	.pRedFlag = 0,
 	.pBlueFlag = 0,
+	.flagCuboid = -1,
 	.baseCuboid = 0,
 };
 
@@ -201,8 +203,8 @@ void midflagConfigBasesAndSpawn(int customMapId, Moby *redFlag, Moby *blueFlag)
 		vector_add(spMedianPosition, spMedianPosition, red->basePos);
 		vector_add(spMedianPosition, spMedianPosition, blue->basePos);
 		vector_scale(spMedianPosition, spMedianPosition, 0.5);
-		int medianSpIdx = findClosestSpawnPointToPosition(spMedianPosition, 0);
-		centerSpawn = &spawnPointGet(medianSpIdx)->M0[12];
+		midFlag.flagCuboid = findClosestSpawnPointToPosition(spMedianPosition, 0);
+		centerSpawn = &spawnPointGet(midFlag.flagCuboid)->M0[12];
 	}
 	// set flag spawn
 	vector_copy(red->basePos, centerSpawn);
@@ -272,6 +274,18 @@ void gameTick(int customMapId)
 		if (!isPaused)
 			gfxHelperDrawSprite_WS(t, 24, 24, SPRITE_FLAG, 0x80000000 | color, TEXT_ALIGN_MIDDLECENTER);
 	}
+
+	#ifdef DEBUG
+	player = playerGetFromSlot(0);
+	if (player->pauseOn == 0 && playerPadGetButtonDown(player, PAD_CIRCLE | PAD_CROSS) > 0) {
+		printf("\n================");
+		printf("\nflagCube: %d", midFlag.flagCuboid);
+		printf("\nbaseCube (r, b): %d, %d", midFlag.baseCuboid[0], midFlag.baseCuboid[1]);
+		printf("\nr+b: %08x, %08x", midFlag.pRedFlag, midFlag.pBlueFlag);
+		printf("\ngd: %08x", gameGetData()->CTFGameData);
+		printf("\n");
+	}
+	#endif
 }
 
 void initialize(PatchGameConfig_t* gameConfig)
@@ -283,7 +297,7 @@ void initialize(PatchGameConfig_t* gameConfig)
 
 	// give a 1 second delay before finalizing the initialization.
 	// this helps prevent the slow loaders from desyncing
-	static int startDelay = 60 * 1;
+	static int startDelay = 60 * 2;
 	if (startDelay > 0) {
 		--startDelay;
 		return;
