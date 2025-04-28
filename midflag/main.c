@@ -24,11 +24,11 @@
 
 struct CGMState State;
 
-void initialize(PatchGameConfig_t* gameConfig);
-void gameTick(void);
+void initialize(PatchGameConfig_t*gameConfig);
+void gameTick(int customMapId);
 
 //--------------------------------------------------------------------------
-void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig)
+void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t *gameState)
 {
 	GameSettings * gameSettings = gameGetSettings();
 	GameOptions * gameOptions = gameGetOptions();
@@ -57,7 +57,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	//
 	if (!State.GameOver) {
 		// handle tick
-		gameTick();
+		gameTick(gameState->CustomMapId);
 	} else {
 		// end game
 		if (State.GameOver == 1) {

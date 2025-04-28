@@ -1,6 +1,8 @@
 #ifndef __PATCH_CONFIG_H__
 #define __PATCH_CONFIG_H__
 
+#include "module.h"
+
 #define MAX_CUSTOM_MAP_DEFINITIONS              (40)
 
 enum ActionType
@@ -147,6 +149,6 @@ typedef enum Locations {
 extern struct MapLoaderState MapLoaderState;
 extern CustomMapDef_t CustomMapDefs[MAX_CUSTOM_MAP_DEFINITIONS];
 extern int CustomMapDefCount;
-extern int SelectedCustomMapId;
+extern PatchStateContainer_t patchStateContainer;
 
 #endif // __PATCH_CONFIG_H__

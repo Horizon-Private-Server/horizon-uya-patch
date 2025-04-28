@@ -22,7 +22,7 @@
 #include "config.h"
 #include "include/game.h"
 
-VariableAddress_t vaflagEventUiPopup_Hook = {
+VariableAddress_t vaFlagEventUiPopup_Hook = {
 #if UYA_PAL
 	.Lobby = 0,
 	.Bakisi = 0x00430568,
@@ -40,6 +40,7 @@ VariableAddress_t vaflagEventUiPopup_Hook = {
 	.Bakisi = 0x0042fae0,
 	.Hoven = 0x00431470,
 	.OutpostX12 = 0x004283b8,
+	.KorgonOutpost = 0x00426008,
 	.Metropolis = 0x00425368,
 	.BlackwaterCity = 0x00421188,
 	.CommandCenter = 0x00425a38,
@@ -138,7 +139,7 @@ void patchFlagUiPopup_Logic(short stringId, int seconds, int player)
 void patchFlagUiPopup(void)
 {
 	flagPVars_t * flag = &midFlag.pRedFlag->pVar;
-	u32 hook = GetAddress(&vaflagEventUiPopup_Hook);
+	u32 *hook = GetAddress(&vaFlagEventUiPopup_Hook);
 
 	// stop original function nulling  flag carrierId
 	// *(u32*)(hook - 0x44) = 0;
@@ -165,7 +166,7 @@ void midFlagGetFlags(void)
 	midFlag.setup = 1;
 }
 
-void midflagConfigBasesAndSpawn(Moby *redFlag, Moby *blueFlag)
+void midflagConfigBasesAndSpawn(int customMapId, Moby *redFlag, Moby *blueFlag)
 {
 	flagPVars_t *red = (Moby *)redFlag->pVar;
 	flagPVars_t *blue = (Moby *)((u32)redFlag->pVar + 0x30);
@@ -183,14 +184,16 @@ void midflagConfigBasesAndSpawn(Moby *redFlag, Moby *blueFlag)
 	// check if flag spawn override.
 	int mapId = gameGetSettings()->GameLevel;
 	int i = 0;
-	for (i; i < COUNT_OF(midFlagPos); ++i) {
-		if (mapId == midFlagPos[i].mapId) {
-			spMedianPosition[0] = midFlagPos[i].x;
-			spMedianPosition[1] = midFlagPos[i].z;
-			spMedianPosition[2] = midFlagPos[i].y;
-			// set centerspawn pointer.
-			centerSpawn = &spMedianPosition;
-			break;
+	if (customMapId == 0) {
+		for (i; i < COUNT_OF(midFlagPos); ++i) {
+			if (mapId == midFlagPos[i].mapId) {
+				spMedianPosition[0] = midFlagPos[i].x;
+				spMedianPosition[1] = midFlagPos[i].z;
+				spMedianPosition[2] = midFlagPos[i].y;
+				// set centerspawn pointer.
+				centerSpawn = &spMedianPosition;
+				break;
+			}
 		}
 	}
 	// if centerSpawn wasn't overided by manual coordinates, find center spawn.
@@ -212,7 +215,7 @@ void midflagConfigBasesAndSpawn(Moby *redFlag, Moby *blueFlag)
 	midFlag.setup = 2;
 }
 
-void gameTick(void)
+void gameTick(int customMapId)
 {
 	// find and store flag moby address
 	if (midFlag.setup == 0)
@@ -228,7 +231,7 @@ void gameTick(void)
 	flagPVars_t *blue = (Moby *)((u32)redFlag->pVar + 0x30);
 	// setup bases and find center spawn for flag
 	if (midFlag.setup == 1)
-		midflagConfigBasesAndSpawn(redFlag, blueFlag);
+		midflagConfigBasesAndSpawn(customMapId, redFlag, blueFlag);
 
 	// Flag Logic
 	// if flag not carried, set team to 3 so all teams can pick it up.
@@ -244,7 +247,7 @@ void gameTick(void)
 		red->team = mpTeam;
 		red->captureCuboid = midFlag.baseCuboid[mpTeam];
 	}
-	
+
 	// Sprite Logic
 	Player *player = playerGetFromSlot(0);
 	int isPaused = player->pauseOn;
@@ -266,7 +269,7 @@ void gameTick(void)
 			t[2] += 2;
 			t[0] += .07;	
 		}
-		if (t != 0 && !isPaused)
+		if (!isPaused)
 			gfxHelperDrawSprite_WS(t, 24, 24, SPRITE_FLAG, 0x80000000 | color, TEXT_ALIGN_MIDDLECENTER);
 	}
 }

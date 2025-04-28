@@ -108,8 +108,8 @@ typedef struct CustomGameModeStats
   u8 Payload[1024 * 6];
 } __attribute__((aligned(16))) CustomGameModeStats_t;
 
-typedef struct PatchStateContainer
-{
+typedef struct PatchStateContainer {
+    int CustomMapId;
     int UpdateGameState;
     UpdateGameStateRequest_t GameStateUpdate;
     int UpdateCustomGameStats;

@@ -11,6 +11,7 @@
 #include "config.h"
 #include "messageid.h"
 #include "include/config.h"
+#include "module.h"
 
 #define LINE_HEIGHT         (0.05)
 #define LINE_HEIGHT_3_2     (0.075)
@@ -18,7 +19,6 @@
 
 int selectedTabItem = 0;
 u32 padPointer = 0;
-int SelectedCustomMapId = 0;
 int preset = 0;
 
 int dlBytesReceived = 0;
@@ -245,7 +245,7 @@ MenuElem_ListData_t dataCycleWeapon3 = {
 
 // map select list
 MenuElem_ListData_t dataCustomMaps = {
-  .value = &SelectedCustomMapId,
+  .value = &patchStateContainer.CustomMapId,
   .stateHandler = menuStateHandler_SelectedMapOverride,
   .count = 1,
   .rows = 10,
@@ -748,7 +748,7 @@ void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   preset = 0;
   memset(&gameConfig, 0, sizeof(gameConfig));
-  SelectedCustomMapId = 0;
+  patchStateContainer.CustomMapId = 0;
 }
 
 // 
@@ -756,7 +756,7 @@ void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   preset = 4;
   memset(&gameConfig, 0, sizeof(gameConfig));
-  SelectedCustomMapId = 0;
+  patchStateContainer.CustomMapId = 0;
 
   void * lobbyConnection = netGetLobbyServerConnection();
   netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_INVITE_BOT, sizeof(botConfig), &botConfig);
@@ -882,7 +882,7 @@ void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int*
   // hide gamemode for maps with exclusive gamemode
   for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
   {
-    if (SelectedCustomMapId == dataCustomMapsWithExclusiveGameMode[i])
+    if (patchStateContainer.CustomMapId == dataCustomMapsWithExclusiveGameMode[i])
     {
       *state = ELEMENT_HIDDEN;
       return;
@@ -2200,8 +2200,8 @@ void onConfigUpdate(void)
     char * modeName = gameGetGameModeName(gameSettings->GameType);
 
     // get map override name
-    if (SelectedCustomMapId > 0)
-      mapName = dataCustomMaps.items[SelectedCustomMapId];
+    if (patchStateContainer.CustomMapId > 0)
+      mapName = dataCustomMaps.items[patchStateContainer.CustomMapId];
     else if (MapLoaderState.MapName[0])
       mapName = MapLoaderState.MapName;
 
@@ -2310,8 +2310,8 @@ void configTrySendGameConfig(void)
       ClientSetGameConfig_t msg;
 
       memset(&msg, 0, sizeof(msg));
-      if (SelectedCustomMapId > 0)
-        memcpy(&msg.CustomMap, &CustomMapDefs[SelectedCustomMapId-1], sizeof(msg.CustomMap));
+      if (patchStateContainer.CustomMapId > 0)
+        memcpy(&msg.CustomMap, &CustomMapDefs[patchStateContainer.CustomMapId-1], sizeof(msg.CustomMap));
       memcpy(&msg.GameConfig, &gameConfig, sizeof(msg.GameConfig));
       netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(ClientSetGameConfig_t), &msg);
     }

@@ -130,9 +130,10 @@ extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern VariableAddress_t vaFlagUpdate_Func;
 extern MenuElem_ListData_t dataCustomMaps;
-extern SelectedCustomMapId;
+#ifdef SCAVENGER_HUNT
 extern scavHuntEnabled;
 extern scavHuntShownPopup;
+#endif
 
 PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableAutoMaps = 0,
@@ -332,7 +333,7 @@ char * checkMap(void)
 		}
 	} else if (isInGame()) {
 		location = LOCATION_IN_GAME;
-		// if (SelectedCustomMapId > 0)
+		// if (patchStateContainer.CustomMapId > 0)
 		// 	return MapLoaderState.MapName;
 
 		return mapGetName(gameGetCurrentMapId());
@@ -1214,7 +1215,7 @@ void patchMapAndScoreboardToggle(void)
 	}
 	// Check to see if Level ID is less than or equal to blackwater docks, or if not on custom map.
 	// This is due to Aquatos and Marcadia not having a mini-map.
-	if (gameSettings->GameLevel <= MAP_ID_BLACKWATER_DOCKS || SelectedCustomMapId > 0) {
+	if (gameSettings->GameLevel <= MAP_ID_BLACKWATER_DOCKS || patchStateContainer.CustomMapId > 0) {
 		// If Maps Button Toggle isn't set to "Default"
 		if (MapToggle != -1) {
 			// Run Map Main Logic only if gametype is deathmatch.
@@ -2782,8 +2783,8 @@ int main(void)
 			if (gameAmIHost() && !isInStaging) {
 				// copy over last game config as host
 				memcpy(&gameConfig, &gameConfigHostBackup, sizeof(PatchGameConfig_t));
-				// Reset SelectedCustomMapId to none
-				SelectedCustomMapId = 0;
+				// Reset patchStateContainer.CustomMapId to none
+				patchStateContainer.CustomMapId = 0;
 
 				// send
 				configTrySendGameConfig();

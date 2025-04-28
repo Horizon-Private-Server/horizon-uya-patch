@@ -34,7 +34,7 @@ extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 extern PatchPatches_t patched;
 extern PatchConfig_t lobbyPlayerConfigs[GAME_MAX_PLAYERS];
-extern SelectedCustomMapId;
+extern PatchStateContainer_t patchStateContainer;
 
 int Gameplay_Hook = 0;
 int Gameplay_Func = 0;
@@ -105,7 +105,7 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grDisableDrones) {
 		onGameplayLoad_disableDrones(gameplay);
 		// GameSettings *gameSettings = gameGetSettings();
-		// if ((SelectedCustomMapId == 0) && (gameSettings->GameLevel == MAP_ID_METROPOLIS))
+		// if ((patchetStateContainer.CustomMapId == 0) && (gameSettings->GameLevel == MAP_ID_METROPOLIS))
 		// 	onGameplayLoad_disableMoby(gameplay, MOBY_ID_MINI_DRONES_PLATFORM, 0);
 	}
 
