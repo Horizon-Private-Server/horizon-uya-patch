@@ -23,7 +23,7 @@ VariableAddress_t vaSpawnPointsPtr = {
     .MarcadiaPalace = 0x00248180,
 #else
 	.Lobby = 0,
-	.Bakisi = 0x00248680                                     ,
+	.Bakisi = 0x00248680,
 	.Hoven = 0x00248880,
 	.OutpostX12 = 0x00248780,
     .KorgonOutpost = 0x00248600,
@@ -73,8 +73,7 @@ int spawnPointIsPlayer(int index)
 {
   int i;
   GameData* gameData = gameGetData();
-  for (i = 0; i < 64; ++i)
-  {
+  for (i = 0; i < 64; ++i) {
     if (gameData->DeathMatchGameData->resurrectionPts[i] == index)
       return 1;
   }
