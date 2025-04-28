@@ -24,7 +24,7 @@
 #define SCENE_LOADED                        (*(int*)0x002459C8)
 
 #define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5990)
-#define GAME_NET_INFO                       ((tNw_Info*)0x001a5e40)
+#define GAME_NET_INFO                       ((tNw_Info_t*)0x001a5e40)
 
 #define GAME_MY_SKIN                        (*(int*0x001a5e6c)
 #define GAME_MY_ACCOUNT_ID                  (*(int*)0x201a5e84)

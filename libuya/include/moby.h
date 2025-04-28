@@ -633,6 +633,18 @@ typedef struct flagPVars {
 /* 0x2c */ int unk_2c;
 } flagPVars_t;
 
+typedef struct MupltiplayerConfig { // 0x3a0
+/* 0x000 */ int base[2];
+/* 0x008 */ int node[8];
+/* 0x040 */ int baseLight[2];
+/* 0x048 */ int siedgeNode[8];
+/* 0x080 */ int unk_080[76];
+/* 0x1b0 */ int blueFlag;
+/* 0x1b4 */ int redFlag;
+/* 0x1b8 */ int unk_1b8[18];
+/* 0x200 */ int spawnpoint[104];
+} MultiplayerConfig_t;
+
 /*
  * Spawns a moby with the given id and properties size.
  */
