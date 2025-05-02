@@ -938,7 +938,7 @@ void patchResurrectWeaponOrdering(void)
 	HOOK_JAL(hook_StripMe, &patchResurrectWeaponOrdering_HookWeaponStripMe);
 	HOOK_JAL(hook_RandomWeapons, &patchResurrectWeaponOrdering_HookGiveMeRandomWeapons);
 	// set weapons at start of game.
-	spawnWithLoadoutWeapons();
+	// spawnWithLoadoutWeapons();
 
 	patched.resurrectWeaponOrdering = 1;
 }

@@ -95,9 +95,9 @@ int findClosestSpawnPointToPosition(VECTOR position, float deadzone)
 	for (i = 0; i < spCount; ++i) {
 		if (!spawnPointIsPlayer(i)) continue;
 
-		struct SpawnPoint* sp = spawnPointGet(i);
+		Cuboid* sp = spawnPointGet(i);
 		VECTOR delta;
-		vector_subtract(delta, position, &sp->M0[12]);
+		vector_subtract(delta, position, &sp->pos);
 		float sqrDist = vector_sqrmag(delta);
 		if (sqrDist < bestDist && sqrDist >= sqrDeadzone) {
 			bestDist = sqrDist;
@@ -204,7 +204,7 @@ void midflagConfigBasesAndSpawn(int customMapId, Moby *redFlag, Moby *blueFlag)
 		vector_add(spMedianPosition, spMedianPosition, blue->basePos);
 		vector_scale(spMedianPosition, spMedianPosition, 0.5);
 		midFlag.flagCuboid = findClosestSpawnPointToPosition(spMedianPosition, 0);
-		centerSpawn = &spawnPointGet(midFlag.flagCuboid)->M0[12];
+		centerSpawn = &spawnPointGet(midFlag.flagCuboid)->pos;
 	}
 	// set flag spawn
 	vector_copy(red->basePos, centerSpawn);
