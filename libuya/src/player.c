@@ -591,7 +591,7 @@ VariableAddress_t vaPlayerSetPosRotFunc = {
     .MarcadiaPalace = 0x004fa908,
 #endif
 };
-void playerSetPosRot(Player * player, u32 * vPosition, u32 * vRotation)
+void playerSetPosRot(Player *player, VECTOR position, VECTOR rotation)
 {
     /*
         a4: warpToState
@@ -599,15 +599,14 @@ void playerSetPosRot(Player * player, u32 * vPosition, u32 * vRotation)
         t1: resurrecting
         t2: dropFlag
     */
-    if (!vPosition || !vRotation)
-    {
-        SpawnPointPosRot pos;
-        spawnPointGetRandom(player, &pos.position, &pos.rotation);
-        internal_playerWarp(player, &pos.position, &pos.rotation, 0, 1, 1, 1);
+    if (!position || !rotation) {
+        Cuboid pos;
+        spawnPointGetRandom(player, &pos.pos, &pos.rot);
+        internal_playerWarp(player, &pos.pos, &pos.rot, 0, 1, 1, 1);
         return;
     }
 
-    internal_playerWarp(player, vPosition, vRotation, 0, 1, 1, 1);
+    internal_playerWarp(player, &position, &rotation, 0, 1, 1, 1);
 }
 
 //--------------------------------------------------------------------------------

@@ -4,8 +4,8 @@
 #include "game.h"
 #include "interop.h"
 
-#define SPAWNPOINTS             ((SpawnPoint*)(*(u32*)GetAddress(&vaSpawnPointsPtr)))
-#define SPAWNPOINTS_COUNT       ((SpawnPoint*)(*(u32*)((u32)GetAddress(&vaSpawnPointsPtr) + 0x4)))
+#define SPAWNPOINTS             ((Cuboid*)(*(u32*)GetAddress(&vaSpawnPointsPtr)))
+#define SPAWNPOINTS_COUNT       ((Cuboid*)(*(u32*)((u32)GetAddress(&vaSpawnPointsPtr) + 0x4)))
 
 
 VariableAddress_t vaSpawnPointsPtr = {
@@ -81,20 +81,20 @@ int spawnPointIsPlayer(int index)
   return 0;
 }
 
-SpawnPoint * spawnPointGet(int index)
+Cuboid * spawnPointGet(int index)
 {
-    SpawnPoint * spawnPoints = SPAWNPOINTS;
+   Cuboid *spawnPoints = SPAWNPOINTS;
     if (!spawnPoints)
         return NULL;
 
     return &spawnPoints[index];
 }
 
-void spawnPointSet(SpawnPoint * sp, int index)
+void spawnPointSet(Cuboid *sp, int index)
 {
-    SpawnPoint * spawnPoints = SPAWNPOINTS;
+    Cuboid *spawnPoints = SPAWNPOINTS;
     if (!spawnPoints)
         return;
 
-    memcpy(&spawnPoints[index], sp, sizeof(SpawnPoint));
+    memcpy(&spawnPoints[index], sp, sizeof(Cuboid));
 }

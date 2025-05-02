@@ -24,19 +24,25 @@ typedef float VECTOR[4] __attribute__((__aligned__(16)));
 typedef float vec3[3] __attribute__((__aligned__(16)));
 typedef float vec4[4] __attribute__((__aligned__(16)));
 typedef float MATRIX[16] __attribute__((__aligned__(16)));
-typedef float mtx3[12] __attribute__((__aligned__(16)));
+// typedef float mtx3[12] __attribute__((__aligned__(16)));
 typedef struct vec4f { // 0x10
-	/* 0x0 */ float x;
-	/* 0x4 */ float y;
-	/* 0x8 */ float z;
-	/* 0xc */ float w;
+/* 0x0 */ float x;
+/* 0x4 */ float y;
+/* 0x8 */ float z;
+/* 0xc */ float w;
 } vec4f;
 
-typedef struct mtx4 {
-/* 0x00 */ vec4 v0;
-/* 0x10 */ vec4 v1;
-/* 0x20 */ vec4 v2;
-/* 0x30 */ vec4 v3;
+typedef struct mtx3 { // 0x30
+/* 0x00 */ VECTOR v0;
+/* 0x10 */ VECTOR v1;
+/* 0x20 */ VECTOR v2;
+} mtx3;
+
+typedef struct mtx4 { // 0x40
+/* 0x00 */ VECTOR v0;
+/* 0x10 */ VECTOR v1;
+/* 0x20 */ VECTOR v2;
+/* 0x30 */ VECTOR v3;
 } mtx4;
 
 //--------------------------------------------------------

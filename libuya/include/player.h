@@ -912,10 +912,10 @@
  };
  
  struct tNW_PlayerData { // 0xc0
-	 /* 0x00 */ VECTOR vPosition;
-	 /* 0x10 */ float vRotation[3];
+	 /* 0x00 */ VECTOR position;
+	 /* 0x10 */ float rotation[3];
 	 /* 0x1c */ int timeStamp;
-	 /* 0x20 */ VECTOR vIdealVec;
+	 /* 0x20 */ VECTOR idealVec;
 	 /* 0x30 */ int idealVecTime;
 	 /* 0x34 */ int accountId;
 	 /* 0x38 */ u32 UID;
@@ -1508,7 +1508,7 @@
   * RETURN :
   * AUTHOR :			Troy "Metroynome" Pruitt
   */
- __LIBUYA_SETTER__ void playerSetPosRot(Player * player, u32 * position, u32 * rotation);
+ __LIBUYA_SETTER__ void playerSetPosRot(Player *player, VECTOR position, VECTOR rotation);
  
  /*
   * NAME :		playerIsDead

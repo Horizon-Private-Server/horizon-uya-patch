@@ -53,8 +53,6 @@
 #define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))
 
 #define GAME_DATA                           ((GameData*)GetAddress(&vaGAME_DATA))
-#define GAME_TIME_LIMIT                     (*(int*)GetAddress(&vaGAME_DATA))
-#define GAME_START_TIME                     (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x4))
 #define GAME_TIME_ENDGAME                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x1f0))
 #define GAME_HAS_ENDED                      (GAME_TIME_ENDGAME > 0)
 // Set to Team ID that won.

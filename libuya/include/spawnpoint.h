@@ -5,24 +5,12 @@
 #include "common.h"
 #include "player.h"
 
-struct Cuboid { // 0x80
-	/* 0x00 */ mtx3 matrix;
-	/* 0x30 */ vec4 pos;
-	/* 0x40 */ mtx3 imatrix;
-	/* 0x70 */ vec4f rot;
-};
-
-typedef struct SpawnPoint
-{
-    MATRIX M0;
-    MATRIX M1;
-} SpawnPoint;
-
-typedef struct SpawnPointPosRot
-{
-    VECTOR position;
-    VECTOR rotation;
-} SpawnPointPosRot;
+typedef struct Cuboid { // 0x80
+/* 0x00 */ mtx3 matrix;
+/* 0x30 */ VECTOR pos;
+/* 0x40 */ mtx3 imatrix;
+/* 0x70 */ VECTOR rot;
+} Cuboid;
 
 /*
  * NAME :		spawnPointGetCount
@@ -42,7 +30,7 @@ __LIBUYA_GETTER__ int spawnPointGetCount(void);
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-__LIBUYA_GETTER__ SpawnPoint * spawnPointGet(int index);
+__LIBUYA_GETTER__ Cuboid *spawnPointGet(int index);
 
 /*
  * NAME :		spawnPointSet
@@ -52,7 +40,7 @@ __LIBUYA_GETTER__ SpawnPoint * spawnPointGet(int index);
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-__LIBUYA_SETTER__ void spawnPointSet(SpawnPoint * sp, int index);
+__LIBUYA_SETTER__ void spawnPointSet(Cuboid *sp, int index);
 
 /*
  * NAME :		spawnPointGetRandom
