@@ -27,6 +27,8 @@ struct CGMState State;
 void initialize(PatchGameConfig_t*gameConfig);
 void gameTick(int customMapId);
 
+int isCustomMap = 0;
+
 //--------------------------------------------------------------------------
 void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t *gameState)
 {
@@ -57,7 +59,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	//
 	if (!State.GameOver) {
 		// handle tick
-		gameTick(gameState->CustomMapId);
+		gameTick(isCustomMap);
 	} else {
 		// end game
 		if (State.GameOver == 1) {
@@ -70,13 +72,18 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 }
 
 //--------------------------------------------------------------------------
-void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig)
+void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t *gameState)
 {
 	u32 menu;
 	static int initializedScoreboard = 0;
 
 	// Lobby
 	if (menu = uiGetActiveMenu(UI_MENU_STAGING, 0), menu > 0) {
+		if (gameState->CustomMapId > 0) {
+			isCustomMap = gameState->CustomMapId;
+			printf("\n========");
+			printf("\ncMap: %d", gameState->CustomMapId);
+		}
 		setLobbyGameOptions();
 	} else if (menu = uiGetActiveMenu(UI_MENU_END_GAME_DETAILS, 0), menu > 0) {
 		// scoreboard stuff

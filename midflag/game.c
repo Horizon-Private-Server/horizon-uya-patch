@@ -83,6 +83,7 @@ midFlagInfo_t midFlag = {
 };
 
 extern isConfigMenuActive;
+extern isCustomMap;
 
 int findClosestSpawnPointToPosition(VECTOR position, float deadzone)
 {
@@ -168,10 +169,10 @@ void midFlagGetFlags(void)
 	midFlag.setup = 1;
 }
 
-void midflagConfigBasesAndSpawn(int customMapId, Moby *redFlag, Moby *blueFlag)
+void midflagConfigBasesAndSpawn(Moby *redFlag, Moby *blueFlag)
 {
 	flagPVars_t *red = (Moby *)redFlag->pVar;
-	flagPVars_t *blue = (Moby *)((u32)redFlag->pVar + 0x30);
+	flagPVars_t *blue = (Moby *)blueFlag->pVar;
 	VECTOR spMedianPosition = {0, 0, 0, 0};
 	int centerSpawn = 0;
 	// save capture cuboids
@@ -185,30 +186,29 @@ void midflagConfigBasesAndSpawn(int customMapId, Moby *redFlag, Moby *blueFlag)
 	blueFlag->modeBits |= MOBY_MODE_BIT_DISABLED | MOBY_MODE_BIT_HIDDEN | MOBY_MODE_BIT_NO_UPDATE;
 	// check if flag spawn override.
 	int mapId = gameGetSettings()->GameLevel;
+	int forceFlagPos = 0;
 	int i = 0;
-	if (customMapId == 0) {
+	if (isCustomMap == 0) {
 		for (i; i < COUNT_OF(midFlagPos); ++i) {
 			if (mapId == midFlagPos[i].mapId) {
 				spMedianPosition[0] = midFlagPos[i].x;
 				spMedianPosition[1] = midFlagPos[i].z;
 				spMedianPosition[2] = midFlagPos[i].y;
-				// set centerspawn pointer.
-				centerSpawn = &spMedianPosition;
+				forceFlagPos = 1;
 				break;
 			}
 		}
 	}
-	// if centerSpawn wasn't overided by manual coordinates, find center spawn.
-	if (centerSpawn == 0) {
+	if (!forceFlagPos) {
 		vector_add(spMedianPosition, spMedianPosition, red->basePos);
 		vector_add(spMedianPosition, spMedianPosition, blue->basePos);
 		vector_scale(spMedianPosition, spMedianPosition, 0.5);
 		midFlag.flagCuboid = findClosestSpawnPointToPosition(spMedianPosition, 0);
-		centerSpawn = &spawnPointGet(midFlag.flagCuboid)->pos;
+		vector_copy(spMedianPosition, spawnPointGet(midFlag.flagCuboid)->pos);
 	}
 	// set flag spawn
-	vector_copy(red->basePos, centerSpawn);
-	vector_copy(redFlag->position, centerSpawn);
+	vector_copy(red->basePos, spMedianPosition);
+	vector_copy(redFlag->position, spMedianPosition);
 	redFlag->position[2] += .25;
 
 	// hook flag event ui popup so we can use our own strings.
@@ -217,7 +217,7 @@ void midflagConfigBasesAndSpawn(int customMapId, Moby *redFlag, Moby *blueFlag)
 	midFlag.setup = 2;
 }
 
-void gameTick(int customMapId)
+void gameTick(int isCustomMap)
 {
 	// find and store flag moby address
 	if (midFlag.setup == 0)
@@ -233,7 +233,7 @@ void gameTick(int customMapId)
 	flagPVars_t *blue = (Moby *)((u32)redFlag->pVar + 0x30);
 	// setup bases and find center spawn for flag
 	if (midFlag.setup == 1)
-		midflagConfigBasesAndSpawn(customMapId, redFlag, blueFlag);
+		midflagConfigBasesAndSpawn(redFlag, blueFlag);
 
 	// Flag Logic
 	// if flag not carried, set team to 3 so all teams can pick it up.
