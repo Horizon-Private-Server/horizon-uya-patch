@@ -188,7 +188,7 @@ void midflagConfigBasesAndSpawn(Moby *redFlag, Moby *blueFlag)
 	int mapId = gameGetSettings()->GameLevel;
 	int forceFlagPos = 0;
 	int i = 0;
-	if (isCustomMap == 0) {
+	if (!isCustomMap) {
 		for (i; i < COUNT_OF(midFlagPos); ++i) {
 			if (mapId == midFlagPos[i].mapId) {
 				spMedianPosition[0] = midFlagPos[i].x;

@@ -25,7 +25,9 @@
 struct CGMState State;
 
 void initialize(PatchGameConfig_t*gameConfig);
-void gameTick(int customMapId);
+void gameTick(void);
+
+int isCustomMap = 0;
 
 //--------------------------------------------------------------------------
 void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t *gameState)
@@ -47,6 +49,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 
 	// initialize
 	if (!State.Initialized) {
+		isCustomMap = gameConfig->isCustomMap;
 		initialize(gameConfig);
 		return;
 	}
@@ -54,7 +57,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	//
 	if (!State.GameOver) {
 		// handle tick
-		gameTick(gameConfig->isCustomMap);
+		gameTick();
 	} else {
 		// end game
 		if (State.GameOver == 1) {
