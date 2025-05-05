@@ -27,8 +27,6 @@ struct CGMState State;
 void initialize(PatchGameConfig_t*gameConfig);
 void gameTick(int customMapId);
 
-int isCustomMap = 0;
-
 //--------------------------------------------------------------------------
 void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t *gameState)
 {
@@ -36,9 +34,6 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	GameOptions * gameOptions = gameGetOptions();
 	Player ** players = playerGetAll();
 	int gameTime = gameGetTime();
-
-	// set patch game options
-	// gameOptions->grDestructableBridges = 1;
 
 	//
 	uyaPreUpdate();
@@ -59,7 +54,7 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 	//
 	if (!State.GameOver) {
 		// handle tick
-		gameTick(isCustomMap);
+		gameTick(gameConfig->isCustomMap);
 	} else {
 		// end game
 		if (State.GameOver == 1) {
@@ -79,12 +74,7 @@ void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameCon
 
 	// Lobby
 	if (menu = uiGetActiveMenu(UI_MENU_STAGING, 0), menu > 0) {
-		if (gameState->CustomMapId > 0) {
-			isCustomMap = gameState->CustomMapId;
-			printf("\n========");
-			printf("\ncMap: %d", gameState->CustomMapId);
-		}
-		setLobbyGameOptions();
+		setLobbyGameOptions(gameState);
 	} else if (menu = uiGetActiveMenu(UI_MENU_END_GAME_DETAILS, 0), menu > 0) {
 		// scoreboard stuff
 	}
@@ -96,7 +86,7 @@ void loadStart(struct GameModule * module, PatchStateContainer_t * gameState)
 	setLobbyGameOptions();
 }
 
-void setLobbyGameOptions(void)
+void setLobbyGameOptions(PatchStateContainer_t *gameState)
 {
 	int i;
 
@@ -105,7 +95,7 @@ void setLobbyGameOptions(void)
 	GameSettings* gameSettings = gameGetSettings();
 	if (!gameOptions || !gameSettings || gameSettings->GameLoadStartTime <= 0)
 		return;
-		
+	
 	// apply options
 	gameSettings->GameType = GAMERULE_CTF;
 	gameOptions->GameFlags.MultiplayerGameFlags.Nodes = 0;

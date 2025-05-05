@@ -30,6 +30,7 @@ typedef struct PatchConfig {
 // Game Rules Tab
 typedef struct PatchGameConfig {
   // Maps
+  char isCustomMap;
   char customModeId;
 
   // Game Rules
