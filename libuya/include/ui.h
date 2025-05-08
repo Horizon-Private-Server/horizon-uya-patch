@@ -227,7 +227,7 @@ typedef struct UiElementRangeSelect { // 0xb8
 
 typedef struct UiElementTextInfo { // 0xd0
 /* 0x00 */ UiElementGeneric_t header;
-/* 0x64 */ char text[76];
+/* 0x64 */ char text[80];
 /* 0xb4 */ int unk_b4;
 /* 0xb8 */ int unk_b8;
 /* 0xbc */ int unk_bc;
@@ -263,14 +263,14 @@ typedef struct UiMenu {
 /* 0x294 */ UiElement_t* pLastChild;
 /* 0x298 */ int menuSize; // Fromst pFirstChild to pLastChild
 /* 0x29c */ int startItem;
-/* 0x2a0 */ float unk_2a4;
+/* 0x2a0 */ float unk_2a0;
 /* 0x2a4 */ UiElement_t* pFirstChild;
 /* 0x2a8 */ int unk_2a8;
 /* 0x2ac */ int unk_2ac;
 /* 0x2b0 */ char itemValues;
 } UiMenu_t;
 
-typedef struct UiOnlineLobbyelements {
+typedef struct UiOnlineLobbyElements {
 // do stuff here later
 } UiOnlineLobbyElements_t;
 
