@@ -146,6 +146,7 @@ typedef void (*requestTeamChange_Func)(void * ui, int index);
 requestTeamChange_Func requestTeamChange = (requestTeamChange_Func)OPTION_REQUEST_TEAM_CHANGE_BASE_FUNC;
 
 extern isConfigMenuActive;
+extern mapOverrideResponse;
 
 char changeTeamStr[] = "Change Team";
 char kickPlayerStr[] = "Kick Player";
@@ -824,4 +825,25 @@ int patchKeyboard(UiMenu_t * ui, int pad)
     }
 
     return result;  
+}
+
+void patchHeadsetSprite(UiElementSprite_t* ui, u32 color)
+{
+    GameSettings* gs = gameGetSettings();
+    // find index
+    UiMenu_t* stagingUi = uiGetActiveMenu(UI_MENU_STAGING, 0);
+    UiStagingElements_t* child = &stagingUi->pChildren;
+    int firstChild = child->voiceSprite[0];
+    int index = ((int)ui - (int)firstChild) / (int)sizeof(UiElementSprite_t);
+    // remove headphones header sprite
+    if (child->voiceHeadingSprite->sprite != 0)
+        child->voiceHeadingSprite->sprite = 0;
+
+    ui->sprite = SPRITE_HUD_X;
+    color = 0x80ffffff;
+    // if (mapOverrideResponse < 1 && index > 0)
+    if (index > 0 && gs->PlayerStates[index] == 1)
+        color = 0x80ff0000;
+    
+    ui->spriteColor = color;
 }

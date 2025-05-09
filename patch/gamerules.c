@@ -257,6 +257,9 @@ void grLobbyStart(void)
 	GameOptions * gameOptions = gameGetOptions();
 	// if in staging
 	if (gameSettings && gameSettings->GameLoadStartTime < 0) {
+		// Enable Headsets for all! (used to tell which players have the current custom map)
+		gameOptions->GameFlags.MultiplayerGameFlags.Headsets = 0xff;
+
 		// Let Gameconfig set GameOptions.
 		if (gameConfig.grNoBaseDefense_Bots)
 			gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = 0;

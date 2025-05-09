@@ -49,6 +49,9 @@
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
 // #define UI_PTR_FUNC_STATS									(0x0047eab4)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dbac)
+// Player Headset UI (sprite, color, eect.)
+#define STAGING_JALR_HEADSET_SET_COLOR						(0x0)
+#define UI_PTR_FUNC_HEADSET_ENABLE							(0x0)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
 #define RANK_TABLE                              			((u32)0x001a6Be4)
@@ -59,6 +62,9 @@
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
 // #define UI_PTR_FUNC_STATS									(0x0047eb74)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dc6c)
+// Player Headset UI (sprite, color, eect.)
+#define STAGING_JALR_HEADSET_SET_COLOR						(0x006bf834)
+#define UI_PTR_FUNC_HEADSET_ENABLE							(0x0047c1f8)
 #endif
 
 void onConfigOnlineMenu(void);
@@ -76,6 +82,7 @@ int patchStaging(void * ui, long pad);
 // int patchPlayerDetails(void * ui, long pad);
 // int patchStats(void * ui, int pad);
 int patchKeyboard(void * ui, int pad);
+void patchHeadsetSprite(UiElementSprite_t* ui, u32 color);
 
 void grGameStart(void);
 void grLobbyStart(void);
@@ -2263,7 +2270,7 @@ void runCheckGameMapInstalled(void)
 	GameSettings* gs = gameGetSettings();
 	if (!gs || !isInMenus())
 		return;
-
+ 
 	// if start game button is enabled
 	// then disable it if maps are enabled
 	if (gameAmIHost()) {
@@ -2276,22 +2283,29 @@ void runCheckGameMapInstalled(void)
 			STAGING_START_BUTTON_STATE = 3;
 		}
 	}
-	
+ 
 	int clientId = gameGetMyClientId();
-	if (mapOverrideResponse < 0) {
-		for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
-			if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 6) {
-		#if UYA_PAL
-				((void (*)(u32, u32, u32))0x006c4308)(uiGetActiveMenu(UI_MENU_STAGING, 0), 5, 0);
-		#else
-				((void (*)(u32, u32, u32))0x006c17f0)(uiGetActiveMenu(UI_MENU_STAGING, 0), 5, 0);
-		#endif
-				gs->PlayerStates[i] = 0; // unready up
+	UiMenu_t* stagingUi = uiGetActiveMenu(UI_MENU_STAGING, 0);
+	for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
+		if (mapOverrideResponse < 0) {
+			int isMe = gs->PlayerClients[i] == clientId;
+			if (isMe && gs->PlayerStates[i] == 6) {
+				#if UYA_PAL
+				((void (*)(u32, u32, u32))0x006c4308)(stagingUi, 5, 0);
+				#else
+				((void (*)(u32, u32, u32))0x006c17f0)(stagingUi, 5, 0);
+				#endif
+				gs->PlayerStates[i] = 1; // unready up
 				showNoMapPopup = 1;
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
-			} else if (gs->PlayerClients[i] == clientId && gs->PlayerStates[i] == 5) {
+			} else if (isMe && gs->PlayerStates[i] == 5) {
 				showNoMapPopup = 0;
 			}
+		}
+		if (gs->PlayerStates[i] == 1) {
+			UiStagingElements_t* c = &stagingUi->pChildren;
+			c->voiceSprite[i]->sprite = SPRITE_HUD_X;
+			c->voiceSprite[i]->spriteColor = 0x80ff0000;
 		}
 	}
 }
@@ -2733,6 +2747,7 @@ int main(void)
 			// POKE_U32(UI_PTR_FUNC_PLAYER_DETAILS, &patchPlayerDetails);
 			// POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
 			POKE_U32(UI_PTR_FUNC_KEYBOARD, &patchKeyboard);
+			HOOK_JAL(STAGING_JALR_HEADSET_SET_COLOR, &patchHeadsetSprite);
 			patched.uiModifiers = 1;
 		}
 
