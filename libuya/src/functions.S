@@ -383,6 +383,11 @@ VARIABLE_FUNCTION(uiMsgString, vaUiMsgStringFunc)
 FUNCTION(internal_netSendMessage, 0x0014ac48)
 FUNCTION(internal_netSendAppMessage, 0x0014ad08)
 FUNCTION(netInterfaceControl, 0x00148b40)
+#ifdef UYA_PAL
+FUNCTION(internal_netUpdatetNWGameSettings, 0x006d4ed8)
+#else
+FUNCTION(internal_netUpdatetNWGameSettings, 0x006d2750)
+#endif
 
 #--------------------------------------------------------
 #------------------------- WAD --------------------------

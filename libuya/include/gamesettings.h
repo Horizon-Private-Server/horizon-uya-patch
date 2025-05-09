@@ -106,4 +106,9 @@ GameSettings * gameGetSettings(void);
 
 GameOptions * gameGetOptions(void);
 
+void gameSetClientState(int pid, char state);
+void gameSetClientTeam(int pid, char team);
+void gameSetClientSkin(int pid, char skin);
+void gameSetClientName(int pid, char* name);
+
 #endif // _LIBUYA_GAMESETTINGS_H_
