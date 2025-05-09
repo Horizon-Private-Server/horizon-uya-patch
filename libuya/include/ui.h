@@ -166,7 +166,7 @@ typedef struct UiElement { // 0x74
 /* 0x70 */ int unk_70;
 } UiElement_t;
 
-typedef union UiElementGeneric {
+typedef struct UiElementGeneric {
 /* 0x00 */ enum UiElementType type;
 /* 0x04 */ int state;
 /* 0x08 */ int lastState;

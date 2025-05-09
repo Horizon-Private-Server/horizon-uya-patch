@@ -86,7 +86,7 @@ typedef struct GameOptions
 /* 0x13 */  char UnlimitedAmmo : 8;
 /* 0x14 */  char SpawnWithWeapons : 8;
 /* 0x15 */  char Teams : 8;
-/* 0x16 */  char UNK_16 : 8;
+/* 0x16 */  char Headsets : 8;
 /* 0x17 */  char PlayerNames : 8;
         } MultiplayerGameFlags;
     } GameFlags;
