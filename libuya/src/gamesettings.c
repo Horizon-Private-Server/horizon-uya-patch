@@ -23,7 +23,7 @@
 #define GAME_WEAPONS                            (*(u8*)0x0024165A)
 #define CTF_CAP_LIMIT                           (*(u8*)0x0024165C)
 
-#define CLIENT_UPDATE_A0                        (*(u32*)0x0024d760 + 0x3c)
+#define CLIENT_UPDATE_A0                        (*(u32*)(*(u32*)0x0024d760) + 0x3c)
 #else
 
 /*
@@ -44,10 +44,10 @@
 #define GAME_WEAPONS                            (*(u8*)0x002417DA)
 #define CTF_CAP_LIMIT                           (*(u8*)0x002417DC)
 
-#define CLIENT_UPDATE_A0                        (*(u32*)0x0024d860 + 0x3c)
+#define CLIENT_UPDATE_A0                        (*(u32*)(*(u32*)0x0024d860) + 0x3c)
 #endif
 
-void internal_netUpdatetNWGameSettings(void*, int pid, char* name, int skin, int team, int state, void*);
+void internal_netUpdatetNWGameSettings(int stack, int isLocalSelected, char* name, int skin, int team, int state, int gs);
 
 //--------------------------------------------------------
 GameSettings * gameGetSettings(void)
@@ -69,7 +69,7 @@ void gameSetClientState(int pid, char state)
         return;
     
     gs->PlayerStates[pid] = state;
-    internal_netUpdatetNWGameSettings(*(void**)(CLIENT_UPDATE_A0), pid, gs->PlayerNames[pid], gs->PlayerSkins[pid], gs->PlayerTeams[pid], state, (void*)((u32)gs + 0x80));
+    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, gs->PlayerNames[pid], gs->PlayerSkins[pid], gs->PlayerTeams[pid], state, (u32)gs + 0x80);
 }
 
 //--------------------------------------------------------
@@ -80,7 +80,7 @@ void gameSetClientTeam(int pid, char team)
         return;
     
     gs->PlayerTeams[pid] = team;
-    internal_netUpdatetNWGameSettings(*(void**)(CLIENT_UPDATE_A0), pid, gs->PlayerNames[pid], gs->PlayerSkins[pid], team, gs->PlayerStates[pid], (void*)((u32)gs + 0x80));
+    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, gs->PlayerNames[pid], gs->PlayerSkins[pid], team, gs->PlayerStates[pid], (u32)gs + 0x80);
 }
 
 //--------------------------------------------------------
@@ -91,7 +91,7 @@ void gameSetClientSkin(int pid, char skin)
         return;
     
     gs->PlayerSkins[pid] = skin;
-    internal_netUpdatetNWGameSettings(*(void**)(CLIENT_UPDATE_A0), pid, gs->PlayerNames[pid], skin, gs->PlayerTeams[pid], gs->PlayerStates[pid], (void*)((u32)gs + 0x80));
+    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, gs->PlayerNames[pid], skin, gs->PlayerTeams[pid], gs->PlayerStates[pid], (u32)gs + 0x80);
 }
 
 //--------------------------------------------------------
@@ -102,5 +102,5 @@ void gameSetClientName(int pid, char* name)
         return;
     
     strncpy(gs->PlayerNames[pid], name, 0x16);
-    internal_netUpdatetNWGameSettings(*(void**)(CLIENT_UPDATE_A0), pid, name, gs->PlayerSkins[pid], gs->PlayerTeams[pid], gs->PlayerStates[pid], (void*)((u32)gs + 0x80));
+    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, name, gs->PlayerSkins[pid], gs->PlayerTeams[pid], gs->PlayerStates[pid], (u32)gs + 0x80);
 }
