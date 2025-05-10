@@ -558,7 +558,27 @@ void openTeamsOptions(GameSettings * gs, int isTeams)
         setTeams(select);
 }
 
-int patchStaging(void * ui, int pad)
+void patchHeadsetSprite(UiMenu_t* ui)
+{
+    int i;
+    GameSettings* gs = gameGetSettings();
+    // check clients states for mapErrorState
+    UiStagingElements_t* child = &ui->pChildren;
+    // set host sprite color to 0
+    child->voiceSprite[0]->spriteColor = 0;
+    // loop through all clients but host
+    for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
+        child->voiceSprite[i]->sprite = SPRITE_HUD_X;
+        // if mapErrorState = 1, no map :(
+        if (gs->PlayerStates[i] == 1) {
+            child->voiceSprite[i]->spriteColor = 0x800000ff;
+        } else {
+            child->voiceSprite[i]->spriteColor = 0x000000ff;
+        }
+    }
+}
+
+int patchStaging(UiMenu_t* ui, int pad)
 {
     static int init_staging = 0;
     static int allPlayersReady = -1;
@@ -569,10 +589,9 @@ int patchStaging(void * ui, int pad)
     GameSettings* gs = gameGetSettings();
     int clientId = gameGetMyClientId();
     int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
-    u32 * uiElements = (u32*)((u32)ui + 0x110);
-    int itemSelected = *(int*)(ui + 0x290);
-    int isLoading = *(u8*)(ui + 0x2b6);
-    int isRequstingTeamChange = *(u8*)(ui + 0x2c8);
+    int itemSelected = *(int*)((u32)ui + 0x290);
+    int isLoading = *(u8*)((u32)ui + 0x2b6);
+    int isRequstingTeamChange = *(u8*)((u32)ui + 0x2c8);
 
     // check for connetion
     if (!netGetLobbyServerConnection())
@@ -617,8 +636,8 @@ int patchStaging(void * ui, int pad)
     // if host
     if (gameAmIHost()) {
         // Opem Teams Options Menu
-        // if teams and config menu is closed
-        if (isTeams && !isConfigMenuActive) {
+        // if teams and config menu is closed and host hasn't started game
+        if (isTeams && !isConfigMenuActive && gs->PlayerStates[0] != 7) {
             // if L1 isn't pressed and no other menu is open
             if (!padGetButton(0, PAD_L1)) {
                 // reset pressed l1 if nothing is pressed.
@@ -635,11 +654,20 @@ int patchStaging(void * ui, int pad)
                 openTeamsOptions(gs, isTeams);
             }
         }
-        for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-            // Set host to always ready
-            if (gs->PlayerStates[0] != 7)
-                gs->PlayerStates[0] = 6;
 
+        // Set host to always ready
+        if (gs->PlayerStates[0] != 7)
+            gs->PlayerStates[0] = 6;    
+        
+        // Replace "\x11 UNREADY" with "\x11 STSART"
+        int str = uiMsgString(0x16d9);
+        if (allPlayersReady)
+	        strncpy((char*)str, "\x11 START", 9);
+        else
+	        strncpy((char*)str, "         ", 9);
+        
+        // check if all players are ready
+        for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
             // if not all players are ready
             if (gs->PlayerClients[i] > -1 && gs->PlayerStates[i] < 6) {
                 allPlayersReady = 0;
@@ -649,16 +677,13 @@ int patchStaging(void * ui, int pad)
                 allPlayersReady = -1;
             }
         }
-        
-        // Replace "\x11 UNREADY" with "\x11 STSART"
-        int str = uiMsgString(0x16d9);
-        if (allPlayersReady)
-	        strncpy((char*)str, "\x11 START", 9);
-        else
-	        strncpy((char*)str, "         ", 9);
-        
     } else {
         // Nont Host Stuff
+        // Make it so all clients can scroll over users names
+        if (*(u32*)OPTIONS_SCROLL_CHECK == 0x24050001)
+            *(u32*)OPTIONS_SCROLL_CHECK = 0x24050003;
+
+        // Unkick (never worked)
         // for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
         //     // if server client id matches local client id.
         //     if (gs->PlayerClients[i] == clientId) {
@@ -672,10 +697,10 @@ int patchStaging(void * ui, int pad)
         //         }
         //     }
         // }
-        // Make it so all clients can scroll over users names
-        if (*(u32*)OPTIONS_SCROLL_CHECK == 0x24050001)
-            *(u32*)OPTIONS_SCROLL_CHECK = 0x24050003;
     }
+
+    patchHeadsetSprite(ui);
+
 	return result;
 }
 
@@ -825,25 +850,4 @@ int patchKeyboard(UiMenu_t * ui, int pad)
     }
 
     return result;  
-}
-
-void patchHeadsetSprite(UiElementSprite_t* ui, u32 color)
-{
-    GameSettings* gs = gameGetSettings();
-    // find index
-    UiMenu_t* stagingUi = uiGetActiveMenu(UI_MENU_STAGING, 0);
-    UiStagingElements_t* child = &stagingUi->pChildren;
-    int firstChild = child->voiceSprite[0];
-    int index = ((int)ui - (int)firstChild) / (int)sizeof(UiElementSprite_t);
-    // remove headphones header sprite
-    if (child->voiceHeadingSprite->sprite != 0)
-        child->voiceHeadingSprite->sprite = 0;
-
-    ui->sprite = SPRITE_HUD_X;
-    color = 0x80ffffff;
-    // if (mapOverrideResponse < 1 && index > 0)
-    if (index > 0 && gs->PlayerStates[index] == 1)
-        color = 0x80ff0000;
-    
-    ui->spriteColor = color;
 }
