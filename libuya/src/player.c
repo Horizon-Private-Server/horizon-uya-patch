@@ -13,8 +13,10 @@
 
 #if UYA_PAL
 #define PLAYER_LOCAL_PLAYER_COUNT (*(int*)0x001a5cdc)
+#define TNW_PLAYER ((tNW_Player*)0x0022f3d0)
 #else
 #define PLAYER_LOCAL_PLAYER_COUNT (*(int*)0x001a5e5c)
+#define TNW_PLAYER ((tNW_Player*)0x0022f550)
 #endif
 
 void playerRespawn(Player * player);

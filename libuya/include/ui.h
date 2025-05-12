@@ -150,50 +150,50 @@ enum UiElementType {
     UI_ELEMENT_SPRITE = 12,
 };
 
-typedef struct UiElement { // 0x74
-/* 0x00 */ enum UiElementType type;
-/* 0x04 */ int state;
-/* 0x08 */ int lastState;
-/* 0x0c */ int unk_0c;
-/* 0x10 */ struct UiElement* pParent;
-/* 0x14 */ char text[56];
-/* 0x4c */ int pad;
-/* 0x50 */ float selectorBoxSize[4];
-/* 0x60 */ void * vTable;
-/* 0x64 */ int unk_64;
-/* 0x68 */ int sprite;
-/* 0x6c */ int spriteColor;
-/* 0x70 */ int unk_70;
-} UiElement_t;
+typedef struct UiVTable {
+/* 0x00 */ int *unk_00[0x14];
+/* 0x50 */ void (*setColor)(int ui, u32 color);
+} UiVTable_t;
 
-typedef struct UiElementGeneric {
+typedef struct UiElementText { // 0x6c
 /* 0x00 */ enum UiElementType type;
 /* 0x04 */ int state;
 /* 0x08 */ int lastState;
 /* 0x0c */ int unk_0c;
-/* 0x10 */ struct UiElement* pParent;
+/* 0x10 */ struct UiElementText* pParent;
 /* 0x14 */ char title[56];
 /* 0x4c */ int padding;
 /* 0x50 */ float selectorBoxSize[4];
-/* 0x60 */ void * vTable;
-} UiElementGeneric_t;
-
-typedef struct UiElementText { // 0x6c
-/* 0x00 */ UiElementGeneric_t header;
+/* 0x60 */ UiVTable_t* vTable;
 /* 0x64 */ int unk_64;
 /* 0x68 */ int unk_68;
 } UiElementText_t;
 
 typedef struct UiElementBoolSelect { // 0x74
-/* 0x00 */ UiElementGeneric_t header;
-/* 0x64 */ int selectedIndex;
+/* 0x00 */ enum UiElementType type;
+/* 0x04 */ int state;
+/* 0x08 */ int lastState;
+/* 0x0c */ int unk_0c;
+/* 0x10 */ struct UiElementBoolSelect* pParent;
+/* 0x14 */ char title[56];
+/* 0x4c */ int padding;
+/* 0x50 */ float selectorBoxSize[4];
+/* 0x60 */ UiVTable_t* vTable;/* 0x64 */ int selectedIndex;
 /* 0x68 */ int unk_68;
 /* 0x6c */ int unk_6c;
 /* 0x70 */ int unk_70;
 } UiElementBoolSelect_t;
 
 typedef struct UiElementStringSelect { // 0x1494
-/* 0x0000 */ UiElementGeneric_t header;
+/* 0x0000 */ enum UiElementType type;
+/* 0x0004 */ int state;
+/* 0x0008 */ int lastState;
+/* 0x000c */ int unk_0c;
+/* 0x0010 */ struct UiElementStringSelect* pParent;
+/* 0x0014 */ char text[56];
+/* 0x004c */ int padding;
+/* 0x0050 */ float selectorBoxSize[4];
+/* 0x0060 */ UiVTable_t* vTable;
 /* 0x0064 */ int itemCount;
 /* 0x0068 */ char items[64][80];
 /* 0x1468 */ int selectedIndex;
@@ -202,20 +202,43 @@ typedef struct UiElementStringSelect { // 0x1494
 } UiElementStringSelect_t;
 
 typedef struct UiElementImage { // 0x84
-/* 0x00 */ UiElementGeneric_t header;
+/* 0x00 */ enum UiElementType type;
+/* 0x04 */ int state;
+/* 0x08 */ int lastState;
+/* 0x0c */ int unk_0c;
+/* 0x10 */ struct UiElementImage* pParent;
+/* 0x14 */ char title[56];
+/* 0x4c */ int padding;
+/* 0x50 */ float selectorBoxSize[4];
+/* 0x60 */ UiVTable_t* vTable;
 /* 0x64 */ char unk_64[0x18];
 /* 0x7c */ int imageId;
 /* 0x80 */ int unk_80;
 } UiElementImage_t;
 
 typedef struct UiElementList { // 105a4
-/* 0x00000 */ UiElementGeneric_t header;
-/* 0x00064 */ int itemCount;
+/* 0x00000 */ enum UiElementType type;
+/* 0x00004 */ int state;
+/* 0x00008 */ int lastState;
+/* 0x0000c */ int unk_0c;
+/* 0x00010 */ struct UiElementList* pParent;
+/* 0x00014 */ char text[56];
+/* 0x0004c */ int padding;
+/* 0x00050 */ float selectorBoxSize[4];
+/* 0x00060 */ UiVTable_t* vTable;/* 0x00064 */ int itemCount;
 /* 0x00068 */ char unk_00064[0x1053c];
 } UiElementList_t;
 
 typedef struct UiElementRangeSelect { // 0xb8
-/* 0x00 */ UiElementGeneric_t header;
+/* 0x00 */ enum UiElementType type;
+/* 0x04 */ int state;
+/* 0x08 */ int lastState;
+/* 0x0c */ int unk_0c;
+/* 0x10 */ struct UiElementRangeSelect* pParent;
+/* 0x14 */ char title[56];
+/* 0x4c */ int padding;
+/* 0x50 */ float selectorBoxSize[4];
+/* 0x60 */ UiVTable_t* vTable;
 /* 0x64 */ int selectedIndex;
 /* 0x68 */ int selectedIndex2;
 /* 0x6c */ int rangeMin;
@@ -226,7 +249,15 @@ typedef struct UiElementRangeSelect { // 0xb8
 } UiElementRangeSelect_t;
 
 typedef struct UiElementTextInfo { // 0xd0
-/* 0x00 */ UiElementGeneric_t header;
+/* 0x00 */ enum UiElementType type;
+/* 0x04 */ int state;
+/* 0x08 */ int lastState;
+/* 0x0c */ int unk_0c;
+/* 0x10 */ struct UiElementTextInfo* pParent;
+/* 0x14 */ char title[56];
+/* 0x4c */ int padding;
+/* 0x50 */ float selectorBoxSize[4];
+/* 0x60 */ UiVTable_t* vTable;
 /* 0x64 */ char text[80];
 /* 0xb4 */ int unk_b4;
 /* 0xb8 */ int unk_b8;
@@ -238,13 +269,29 @@ typedef struct UiElementTextInfo { // 0xd0
 } UiElementTextInfo_t;
 
 typedef struct UiElementTextInput { // 0x4a8
-/* 0x000 */ UiElementGeneric_t header;
+/* 0x00 */ enum UiElementType type;
+/* 0x04 */ int state;
+/* 0x08 */ int lastState;
+/* 0x0c */ int unk_0c;
+/* 0x10 */ struct UiElementTextInput* pParent;
+/* 0x14 */ char title[56];
+/* 0x4c */ int padding;
+/* 0x50 */ float selectorBoxSize[4];
+/* 0x60 */ UiVTable_t* vTable;
 /* 0x064 */ char textInput[16];
 /* 0x074*/ char unk_74[0x434];
 } UiElementTextInput_t;
 
 typedef struct UiElementSprite { // 0x84
-/* 0x00 */ UiElementGeneric_t header;
+/* 0x00 */ enum UiElementType type;
+/* 0x04 */ int state;
+/* 0x08 */ int lastState;
+/* 0x0c */ int unk_0c;
+/* 0x10 */ struct UiElementSprite* pParent;
+/* 0x14 */ char title[56];
+/* 0x4c */ int padding;
+/* 0x50 */ float selectorBoxSize[4];
+/* 0x60 */ UiVTable_t* vTable;
 /* 0x64 */ int unk_64;
 /* 0x68 */ int sprite;
 /* 0x6c */ u32 spriteColor;
@@ -254,17 +301,17 @@ typedef struct UiElementSprite { // 0x84
 typedef struct UiMenu {
 /* 0x000 */ char unk_000[0x58];
 /* 0x058 */ float shadow[2];
-/* 0x060 */ void* vTable;
+/* 0x060 */ UiVTable_t* vTable;
 /* 0x064 */ char unk_064[0xa4];
 /* 0x108 */ int returnToMenuId;
 /* 0x10c */ int childCount;
-/* 0x110 */ UiElement_t* pChildren[96];
+/* 0x110 */ UiElementText_t* pChildren[96];
 /* 0x290 */ int selectedIndex;
-/* 0x294 */ UiElement_t* pLastChild;
+/* 0x294 */ void* pLastChild;
 /* 0x298 */ int menuSize; // Fromst pFirstChild to pLastChild
 /* 0x29c */ int startItem;
 /* 0x2a0 */ float unk_2a0;
-/* 0x2a4 */ UiElement_t* pFirstChild;
+/* 0x2a4 */ void* pFirstChild;
 /* 0x2a8 */ int unk_2a8;
 /* 0x2ac */ int unk_2ac;
 /* 0x2b0 */ char itemValues;
