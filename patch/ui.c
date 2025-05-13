@@ -561,20 +561,27 @@ void openTeamsOptions(GameSettings * gs, int isTeams)
 void patchHeadsetSprite(UiMenu_t* ui)
 {
     int i;
+    u32 colorNoMapError = 0x80ffff00;
+    u32 colorMapVersionError = 0x8000ffff;
     GameSettings* gs = gameGetSettings();
     // check clients states for mapErrorState
     UiStagingElements_t* child = &ui->pChildren;
-    // set host sprite color to 0
-    child->voiceSprite[0]->spriteColor = 0;
+    // hide voice header
+    child->voiceHeadingSprite->state = 0;
+    // hide host sprite
+    child->voiceSprite[0]->state = 0;
     // loop through all clients but host
-    for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
+    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
         child->voiceSprite[i]->sprite = SPRITE_HUD_X;
         // if mapErrorState = 1, no map :(
+        u32 color = 0x00ff00ff;
         if (gs->PlayerStates[i] == 1) {
-            child->voiceSprite[i]->spriteColor = 0x800000ff;
-        } else {
-            child->voiceSprite[i]->spriteColor = 0x000000ff;
+            color = colorNoMapError;
+        } else if (gs->PlayerStates[i] == 8) {
+            color = colorMapVersionError;
         }
+        child->voiceSprite[i]->vTable->setColor(child->voiceSprite[i], color);
+        // child->voiceSprite[i]->spriteColor = color;
     }
 }
 
@@ -722,13 +729,13 @@ int patchCreateGame(UiMenu_t* ui, long pad)
         *(u32*)((u32)CREATE_GAME_BASE_FUNC + 0x3f8) = 0x24040000 | time_limit;
     }
     // Let password field always be active.
-    if (createGame->usePassword->header.state == 2) {
-        createGame->usePassword->header.state = 3;
-        createGame->password->header.state = 3;
+    if (createGame->usePassword->state == 2) {
+        createGame->usePassword->state = 3;
+        createGame->password->state = 3;
     }
     // Lock local players to 1
-    if (createGame->localPlayers->header.state == 3) {
-        createGame->localPlayers->header.state = 2;
+    if (createGame->localPlayers->state == 3) {
+        createGame->localPlayers->state = 2;
         createGame->localPlayers->rangeMax = 1;
     }
 
@@ -826,6 +833,7 @@ int patchKeyboard(UiMenu_t * ui, int pad)
 
     // if on clan details or cities menu, then update keyboard.
     if (uiGetActiveMenu(UI_MENU_CLAN_DETAILS, 0) > 0 || uiGetActiveMenu(UI_MENU_CITY, 0) > 0) {
+        // get children
         // Update number of pages.  We have to account for different number of pages per language.
         if (setPages !=  *(int*)pages) {
             *(int*)pages += 1;
@@ -833,9 +841,9 @@ int patchKeyboard(UiMenu_t * ui, int pad)
         }
         // Change SHIFT to COLOR if on page 2
         if (*(int*)currentPage ==  *(int*)pages - 2) {
-            strncpy(ui->pChildren[KEY_SHIFT]->text, "\x14MISC", 6);
+            strncpy(ui->pChildren[KEY_SHIFT]->title, "\x14MISC", 6);
         } else {
-            strncpy(ui->pChildren[KEY_SHIFT]->text, "\x14SHIFT", 6); 
+            strncpy(ui->pChildren[KEY_SHIFT]->title, "\x14SHIFT", 6); 
         }
         // Update keyboard
         if (*(int*)currentPage ==  *(int*)pages - 1) {
@@ -844,7 +852,7 @@ int patchKeyboard(UiMenu_t * ui, int pad)
                 if (uiGetActiveMenu(UI_MENU_CLAN_DETAILS, 0) > 0 && keys[i].index < KEY_1)
                     break;
 
-                strncpy(ui->pChildren[keys[i].index]->text, keys[i].text, 3);
+                strncpy(ui->pChildren[keys[i].index]->title, keys[i].text, 3);
             }
         }
     }

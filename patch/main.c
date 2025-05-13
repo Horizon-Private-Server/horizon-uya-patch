@@ -49,8 +49,9 @@
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
 // #define UI_PTR_FUNC_STATS									(0x0047eab4)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dbac)
-// Player Headset UI (sprite, color, eect.)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006c234c)
+#define gMultiDecMap 										(0x00240660)
+#define nwVoiceUpdateFunc										(0x0019c2c0)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
 #define RANK_TABLE                              			((u32)0x001a6Be4)
@@ -61,8 +62,9 @@
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
 // #define UI_PTR_FUNC_STATS									(0x0047eb74)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dc6c)
-// Player Headset UI (sprite, color, eect.)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006bf834)
+#define gMultiDecMap										(0x002407e0)
+#define nwVoiceUpdateFunc										(0x0019c400)
 #endif
 
 void onConfigOnlineMenu(void);
@@ -2282,28 +2284,35 @@ void runCheckGameMapInstalled(void)
 		}
 	}
 	
-	int mapErrorState = 1;
 	UiMenu_t* stagingUi = uiGetActiveMenu(UI_MENU_STAGING, 0);
 	int clientId = gameGetMyClientId();
+	int bMapOveride = mapOverrideResponse < 0;
 	for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
 		int isMe = gs->PlayerClients[i] == clientId;
-		if (isMe && gs->PlayerStates[i] != 5 && gs->PlayerStates[i] != 7) {
-			if (mapOverrideResponse < 0) {
-				#if UYA_PAL
-				((void (*)(u32, u32, u32))0x006c4308)((UiMenu_t*)stagingUi, 5, 0);
-				#else
-				((void (*)(u32, u32, u32))0x006c17f0)((UiMenu_t*)stagingUi, 5, 0);
-				#endif
-				gameSetClientState(i, mapErrorState);
-				if (gs->PlayerStates[i] == 6)
-					showNoMapPopup = 1;
-
-				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
-			} else if (mapOverrideResponse && gs->PlayerStates[i] == mapErrorState) {
+		if (isMe) {
+			if (bMapOveride) {
+				switch (gs->PlayerStates[i]) {
+					case 5: showNoMapPopup = 0; break;
+					case 6: {
+						#if UYA_PAL
+						((void (*)(u32, u32, u32))0x006c4308)((UiMenu_t*)stagingUi, 5, 0);
+						#else
+						((void (*)(u32, u32, u32))0x006c17f0)((UiMenu_t*)stagingUi, 5, 0);
+						#endif
+						gameSetClientState(i, 1);
+						showNoMapPopup = 1;
+						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
+						break;
+					}
+					default: {
+						gameSetClientState(i, 1);
+						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
+						break;
+					}
+				}
+			} else if (!bMapOveride && gs->PlayerStates[i] == 1) {
 				gameSetClientState(i, 0);
 			}
-		} else if (isMe && gs->PlayerStates[i] == 5) {
-			showNoMapPopup = 0;
 		}
 	}
 }
