@@ -192,6 +192,20 @@ typedef struct GameLocalSettings { // 0xc4
 	/* 0xbb */ char AutoSaveOn;
 } GameLocalSettings;
 
+typedef struct tNW_PlayerInfoStats { // 0x34
+	/* 0x00 */ unsigned int crc;
+	/* 0x04 */ int rank[6];
+	/* 0x1c */ int padding;
+	/* 0x20 */ char headsetAttached;
+	/* 0x21 */ char isClanLeader;
+	/* 0x22 */ char hasLocalPlayer;
+	/* 0x23 */ char pad;
+	/* 0x24 */ int clanID;
+	/* 0x28 */ int totalGamesWithCheaters;
+	/* 0x2c */ int consecutiveGamesWithCheaters;
+	/* 0x30 */ int lastGameHadCheater;
+} tNW_PlayerInfoStats_t;
+
 struct tNW_Info {
 /* 0x0000 */ char unk_0000[0x14];
 /* 0x0014 */ void* myConnectionIndex; // NetTypeConnectionInfo* myConnectionIndex
@@ -200,7 +214,7 @@ struct tNW_Info {
 /* 0x0020 */ char unk_0020[0x8];
 /* 0x0028 */ int myTeam;
 /* 0x002c */ int mySkin;
-/* 0x0030 */ char unk_0030[0x18];
+/* 0x0030 */ char mySessionKey[0x14];
 /* 0x0044 */ int myAccountId;
 /* 0x0048 */ int unk_00048;
 /* 0x004c */ char myClanName[0x21];
@@ -209,12 +223,21 @@ struct tNW_Info {
 /* 0x007d */ char pad[0x3];
 /* 0x0080 */ int myAccountCityId;
 /* 0x0084 */ char myLicenseAccepted;
-/* 0x0085 */ char unk_0085[0x49];
+/* 0x0085 */ char unk_0085[0x13];
+/* 0x0098 */ tNW_PlayerInfoStats_t myStats;
 /* 0x00ce */ char gameName[64];
 /* 0x0108 */ char gamePassword[24];
 /* 0x0130 */ enum eNW_STATE state;
 /* 0x0134 */ int unk_0134;
 /* 0x0138 */ int netFrameTime; // aka: gameTime
+/* 0x013c */ int unk_013c;
+/* 0x0140 */ int numPlayers;
+/* 0x0144 */ int maxPlayers;
+/* 0x0148 */ int maxBuddySlots;
+/* 0x014c */ int maxClanSlots;
+/* 0x0150 */ int maxBuddySlots_2;
+/* 0x0154 */ int maxClanSlots_2;
+/* 0x0158 */ char unk_0158[0x20];
 /* 0x0178 */ char isSessionMaster;
 /* 0x0179 */ char isNewSessionMaster;
 /* 0x017a */ char pad_017a[2];
@@ -224,8 +247,25 @@ struct tNW_Info {
 /* 0x0189 */ char unk_0189[0x9];
 /* 0x0192 */ char myIP[0x20];
 /* 0x01b2 */ char unk_01b2[0x132];
+/* 0x02dc */ void* m_GuiSetBusyCallback;
+/* 0x02e0 */ void* m_GuiSetRefreshCallback;
 /* 0x02e4 */ int m_LastMediusError;
-/* 0x02e8 */ char unk_2e8[0x3d5];
+/* 0x02e8 */ int m_LastMGCLError;
+/* 0x02ec */ int m_LastNetError;
+/* 0x02f0 */ int m_LastMediusNetError
+/* 0x02f4 */ char unk_02f4[0x198];
+/* 0x048c */ int m_bForcePlayerReport;
+/* 0x0490 */ int m_LastPlayerReportTime;
+/* 0x0494 */ int m_bForceWorldReport;
+/* 0x0498 */ int m_LastWorldReportTime;
+/* 0x049c */ char unk_049c[0x14];
+/* 0x04b0 */ int gameSequenceNumber;
+/* 0x04b4 */ char unk_04b4[0x148];
+/* 0x05fc */ int maxPlayers_2;
+/* 0x0630 */ int m_bUpdateClanStatsPending;
+/* 0x0634 */ int m_UpdateClanStatsStatus;
+/* 0x0638 */ int m_bAccountUpdateStatsPending;
+/* 0x063c */ int m_AccountUpdateStatsStatus;
 /* 0x06bd */ char clientIndex[8];
 /* 0x06c5 */ char unk_06c5[0xc14];
 /* 0x12d9 */ char m_bMGCL_Connected;
