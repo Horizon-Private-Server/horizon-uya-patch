@@ -189,7 +189,7 @@ void grGameStart(void)
 	if (gameConfig.grV2s)
 		v2_Setting(gameConfig.grV2s, FirstPass);
 
-	if (gameConfig.grAutoRespawn && gameSettings->GameType == GAMERULE_DM)
+	if (gameConfig.grAutoRespawn && gameSettings->GameType == GAMETYPE_DM)
 		AutoRespawn();
 
 	if (gameConfig.grSetGatlingTurretHealth && !HasSetGatlingTurretHealth)

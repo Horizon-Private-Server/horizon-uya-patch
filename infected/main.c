@@ -505,7 +505,7 @@ void setLobbyGameOptions(void)
 		return;
 		
 	// apply options
-	gameSettings->GameType = GAMERULE_DM;
+	gameSettings->GameType = GAMETYPE_DM;
 	gameOptions->GameFlags.MultiplayerGameFlags.Teams = 1;
 	gameOptions->GameFlags.MultiplayerGameFlags.Turboslider = 0;
 	gameOptions->GameFlags.MultiplayerGameFlags.Hovership = 0;

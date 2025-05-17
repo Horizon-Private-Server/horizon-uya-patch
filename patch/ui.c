@@ -67,8 +67,6 @@
 #define IGNORE_LIST_START (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x10)
 #define IGNORE_LIST_END (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x1c)
 
-
-
 typedef enum playerOptions {
     PLAYER_OPTION_CANCEL = -1,
     PLAYER_OPTION_TEAMSKIN = 0,
@@ -273,7 +271,7 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
     // Get correct player index
     int i =  getPlayerIndex(ui, selectedItem);
     // Get the needed number of teams dependent on gametype.
-    int numTeams = (gs->GameType == GAMERULE_DM) ? 8 : 2;
+    int numTeams = (gs->GameType == GAMETYPE_DM) ? 8 : 2;
 
     if (isBot) {
         // Open Team/Skin Menu
@@ -288,7 +286,7 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
         int gsTeam = gs->PlayerTeams[i];
         // Change Teams depending on game type.
         int team = 0;
-        if (gs->GameType == GAMERULE_DM) {
+        if (gs->GameType == GAMETYPE_DM) {
             if (gsTeam >= (numTeams - 1)) {
                 team = 0;
             } else {
@@ -552,39 +550,12 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
 void openTeamsOptions(GameSettings * gs, int isTeams)
 {
     int size = sizeof(randomTeamOptions)/sizeof(char*);
-    int optionsSize = (gs->GameType == GAMERULE_DM) ? size : (size - 1);
+    int optionsSize = (gs->GameType == GAMETYPE_DM) ? size : (size - 1);
     int select = uiShowSelectDialog("Team Options", randomTeamOptions, size, 0);
     if (select > TEAM_OPTION_CANCEL)
         setTeams(select);
 }
-
-void patchHeadsetSprite(UiMenu_t* ui)
-{
-    int i;
-    u32 colorNoMapError = 0x80ffff00;
-    u32 colorMapVersionError = 0x8000ffff;
-    GameSettings* gs = gameGetSettings();
-    // check clients states for mapErrorState
-    UiStagingElements_t* child = &ui->pChildren;
-    // hide voice header
-    child->voiceHeadingSprite->state = 0;
-    // hide host sprite
-    child->voiceSprite[0]->state = 0;
-    // loop through all clients but host
-    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-        child->voiceSprite[i]->sprite = SPRITE_HUD_X;
-        // if mapErrorState = 1, no map :(
-        u32 color = 0x00ff00ff;
-        if (gs->PlayerStates[i] == 1) {
-            color = colorNoMapError;
-        } else if (gs->PlayerStates[i] == 8) {
-            color = colorMapVersionError;
-        }
-        child->voiceSprite[i]->vTable->setColor(child->voiceSprite[i], color);
-        // child->voiceSprite[i]->spriteColor = color;
-    }
-}
-
+// extern forceMapOverride;
 int patchStaging(UiMenu_t* ui, int pad)
 {
     static int init_staging = 0;
@@ -612,7 +583,7 @@ int patchStaging(UiMenu_t* ui, int pad)
     if (gameAmIHost()) {
         if (pad == UI_PAD_CIRCLE && allPlayersReady == 1) {
             // Force "Start" to be selected
-            *(int*)((u32)ui + 0x290) = 4;
+            ui->selectedIndex = 4;
             allPlayersReady = 2;
             pad = UI_PAD_CROSS;
         } else if (pad == UI_PAD_R1) {
@@ -705,9 +676,6 @@ int patchStaging(UiMenu_t* ui, int pad)
         //     }
         // }
     }
-
-    patchHeadsetSprite(ui);
-
 	return result;
 }
 

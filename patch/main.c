@@ -50,8 +50,9 @@
 // #define UI_PTR_FUNC_STATS									(0x0047eab4)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dbac)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006c234c)
+#define STAGING_VOICE_ACTIVE_JAL							(0x006c2328)
 #define gMultiDecMap 										(0x00240660)
-#define nwVoiceUpdateFunc										(0x0019c2c0)
+#define nwVoiceUpdateFunc									(0x0019c2c0)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
 #define RANK_TABLE                              			((u32)0x001a6Be4)
@@ -63,9 +64,14 @@
 // #define UI_PTR_FUNC_STATS									(0x0047eb74)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dc6c)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006bf834)
+#define STAGING_VOICE_ACTIVE_JAL							(0x006bf810)
 #define gMultiDecMap										(0x002407e0)
-#define nwVoiceUpdateFunc										(0x0019c400)
+#define nwVoiceUpdateFunc									(0x0019c400)
 #endif
+
+#define STAGING_VOICE_COLOR_1 ((u32)STAGING_VOICE_ACTIVE_JAL + 0x18)
+#define STAGING_VOICE_COLOR_2 ((u32)STAGING_VOICE_ACTIVE_JAL + 0x14)
+#define STAGING_VOICE_COLOR_3 ((u32)STAGING_VOICE_ACTIVE_JAL + 0x28)
 
 void onConfigOnlineMenu(void);
 void onConfigGameMenu(void);
@@ -82,7 +88,6 @@ int patchStaging(void * ui, long pad);
 // int patchPlayerDetails(void * ui, long pad);
 // int patchStats(void * ui, int pad);
 int patchKeyboard(void * ui, int pad);
-void patchHeadsetSprite(UiElementSprite_t* ui, u32 color);
 
 void grGameStart(void);
 void grLobbyStart(void);
@@ -104,7 +109,7 @@ int sentGameStart = 0;
 int isInStaging = 0;
 int location = LOCATION_NULL;
 int hasInstalledExceptionHandler = 0;
-char mapOverrideResponse = 1;
+char mapOverrideResponse = 9001;
 char showNoMapPopup = 0;
 int isConfigMenuActive = 0;
 int redownloadCustomModeBinaries = 0;
@@ -319,9 +324,9 @@ char * checkGameType(void)
 		GameSettings * gs = gameGetSettings();
 		if (gs) {
 			switch(gs->GameType) {
-				case GAMERULE_SIEGE: return "Siege at ";
-				case GAMERULE_CTF:  return "CTF at ";
-				case GAMERULE_DM:  return "DM at ";
+				case GAMETYPE_SIEGE: return "Siege at ";
+				case GAMETYPE_CTF:  return "CTF at ";
+				case GAMETYPE_DM:  return "DM at ";
 			}
 		}
 	}
@@ -1226,7 +1231,7 @@ void patchMapAndScoreboardToggle(void)
 		// If Maps Button Toggle isn't set to "Default"
 		if (MapToggle != -1) {
 			// Run Map Main Logic only if gametype is deathmatch.
-			if (gameSettings->GameType == GAMERULE_DM)
+			if (gameSettings->GameType == GAMETYPE_DM)
 				((void (*)(int, int))GetAddress(&vaMapScore_SeigeCTFMap_AlwaysRun))(0, 10);
 
 			// if Maps chosen button is pressed
@@ -2257,6 +2262,35 @@ void runGameStartMessager(void)
 }
 
 /*
+ * NAME :		patchHeadsetSprite
+ * DESCRIPTION: Patches staging sprite for custom map detection
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchHeadsetSprite(GameSettings* gs, int clientId)
+{
+	UiMenu_t* ui = uiGetActiveMenu(UI_MENU_STAGING, 0);
+	if (!ui)
+		return;
+	
+    UiStagingElements_t* child = &ui->pChildren;
+    // hide voice header
+    child->voiceHeadingSprite->state = 0;
+	// set sprite
+	child->voiceSprite[clientId]->sprite = SPRITE_HUD_X;
+	// check state and set color
+	u32 color = 0;
+	if (clientId > 0) {
+		if (gs->PlayerStates[clientId] == GS_PLAYER_STATE_MAP_NONE) {
+			color = 0x8069cbf2;
+		}
+	}
+	child->voiceSprite[clientId]->vTable->setColor(child->voiceSprite[clientId], color);
+}
+
+/*
  * NAME :		runCheckGameMapInstalled
  * DESCRIPTION :
  * NOTES :
@@ -2273,6 +2307,7 @@ void runCheckGameMapInstalled(void)
 
 	// if start game button is enabled
 	// then disable it if maps are enabled
+	int noCustomMAp = patchStateContainer.CustomMapId == 0;
 	if (gameAmIHost()) {
 		if (mapOverrideResponse < 0) {
 			if (STAGING_START_BUTTON_STATE == 3) {
@@ -2283,37 +2318,38 @@ void runCheckGameMapInstalled(void)
 			STAGING_START_BUTTON_STATE = 3;
 		}
 	}
-	
-	UiMenu_t* stagingUi = uiGetActiveMenu(UI_MENU_STAGING, 0);
+
 	int clientId = gameGetMyClientId();
-	int bMapOveride = mapOverrideResponse < 0;
-	for (i = 1; i < GAME_MAX_PLAYERS; ++i) {
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		int isMe = gs->PlayerClients[i] == clientId;
-		if (isMe) {
-			if (bMapOveride) {
-				switch (gs->PlayerStates[i]) {
-					case 5: showNoMapPopup = 0; break;
-					case 6: {
-						#if UYA_PAL
-						((void (*)(u32, u32, u32))0x006c4308)((UiMenu_t*)stagingUi, 5, 0);
-						#else
-						((void (*)(u32, u32, u32))0x006c17f0)((UiMenu_t*)stagingUi, 5, 0);
-						#endif
-						gameSetClientState(i, 1);
+		if (isMe && i > 0) {
+			switch (gs->PlayerStates[i]) {
+				case GS_PLAYER_STATE_UNREADY: {
+					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
+						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
+						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
+					}
+					break;
+				}
+				case GS_PLAYER_STATE_MAP_NONE: {
+					if (!(mapOverrideResponse < 0) || mapOverrideResponse == -3) {
+						gameSetClientState(i, GS_PLAYER_STATE_UNREADY);
+						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
+					}
+					break;
+				}
+				case GS_PLAYER_STATE_KICK: showNoMapPopup = 0; break;
+				case GS_PLAYER_STATE_READY: {
+					if (mapOverrideResponse < 0) {
+						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
 						showNoMapPopup = 1;
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-						break;
 					}
-					default: {
-						gameSetClientState(i, 1);
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-						break;
-					}
+					break;
 				}
-			} else if (!bMapOveride && gs->PlayerStates[i] == 1) {
-				gameSetClientState(i, 0);
 			}
 		}
+		patchHeadsetSprite(gs, i);
 	}
 }
 
@@ -2403,7 +2439,7 @@ int runSendGameUpdate(void)
 		memset(patchStateContainer.GameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.GameStateUpdate.TeamScores));
 		// memset(patchStateContainer.GameStateUpdate.Nodes, 0, sizeof(patchStateContainer.GameStateUpdate.Nodes));
 
-		if (gameSettings->GameType == GAMERULE_SIEGE) {	
+		if (gameSettings->GameType == GAMETYPE_SIEGE) {	
 			for (i = 0; i < 8; ++i) {
 				if (gameData->allYourBaseGameData->nodeTeam[i] == 0)
 					++patchStateContainer.GameStateUpdate.Nodes[0];
@@ -2412,7 +2448,7 @@ int runSendGameUpdate(void)
 			}
 			patchStateContainer.GameStateUpdate.TeamScores[0] = gameData->allYourBaseGameData->hudHealth[0];
 			patchStateContainer.GameStateUpdate.TeamScores[1] = gameData->allYourBaseGameData->hudHealth[1];
-		} else if (gameSettings->GameType == GAMERULE_CTF) {
+		} else if (gameSettings->GameType == GAMETYPE_CTF) {
 			// Nodes are turned off
 			patchStateContainer.GameStateUpdate.Nodes[0] = -1;
 			patchStateContainer.GameStateUpdate.Nodes[1] = -1;
@@ -2427,7 +2463,7 @@ int runSendGameUpdate(void)
 			}
 			patchStateContainer.GameStateUpdate.TeamScores[0] = gameData->CTFGameData->blueTeamCaptures;
 			patchStateContainer.GameStateUpdate.TeamScores[1] = gameData->CTFGameData->redTeamCaptures;
-		} else if (gameSettings->GameType == GAMERULE_DM) {
+		} else if (gameSettings->GameType == GAMETYPE_DM) {
 			for (i = 0; i < gameSettings->PlayerCount; ++i) {
 				int team = gameSettings->PlayerTeams[i];
 				int kills = gameData->playerStats.frag[i].kills;
@@ -2755,6 +2791,9 @@ int main(void)
 			// POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
 			POKE_U32(UI_PTR_FUNC_KEYBOARD, &patchKeyboard);
 			POKE_U32(STAGING_JALR_HEADSET_SET_COLOR, 0);
+			// HOOK_JAL(STAGING_VOICE_ACTIVE_JAL, &patchHeadsetSprite);
+			// POKE_U32(STAGING_VOICE_COLOR_1, 0x3c05006e);
+			// POKE_U32(STAGING_VOICE_COLOR_2, 0x3c05806e);
 			patched.uiModifiers = 1;
 		}
 

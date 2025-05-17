@@ -100,7 +100,7 @@ void setLobbyGameOptions(PatchStateContainer_t *gameState)
 		return;
 	
 	// apply options
-	gameSettings->GameType = GAMERULE_CTF;
+	gameSettings->GameType = GAMETYPE_CTF;
 	gameOptions->GameFlags.MultiplayerGameFlags.Nodes = 0;
 	gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = 0;
 	gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth = 0;

@@ -144,7 +144,14 @@ typedef enum Locations {
   LOCATION_STAGING = 1,
   LOCATION_LOADING = 2,
   LOCATION_IN_GAME = 3
-} Locations_t;
+} Locations_e;
+
+enum eMapOverride {
+	MAP_OVERRIDE_MAP_ERROR = -2,
+	MAP_OVERRIDE_VERSION_ERROR = -1,
+	MAP_OVERRIDE_NO_BASE_MAP = 0,
+	MAP_OVERRIDE_SUCCESS = 1
+};
 
 extern struct MapLoaderState MapLoaderState;
 extern CustomMapDef_t CustomMapDefs[MAX_CUSTOM_MAP_DEFINITIONS];

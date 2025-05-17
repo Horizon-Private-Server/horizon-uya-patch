@@ -613,7 +613,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
       case CUSTOM_MODE_INFECTED:
       case CUSTOM_MODE_JUGGERNAUGHT: {
         // only allow deathmatch
-        if (gs->GameType == GAMERULE_DM)
+        if (gs->GameType == GAMETYPE_DM)
           return 1;
         
         // otherwise reject custom mode
@@ -622,7 +622,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
       }
       #endif
       CUSTOM_MODE_MIDFLAG: {
-        if (gs->GameType == GAMERULE_CTF) return 1;
+        if (gs->GameType == GAMETYPE_CTF) return 1;
         *value = CUSTOM_MODE_NONE;
         return 0; 
       }
@@ -658,7 +658,7 @@ void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
 
-  if (!gs || gs->GameType != GAMERULE_SIEGE)
+  if (!gs || gs->GameType != GAMETYPE_SIEGE)
     *state = ELEMENT_HIDDEN;
   else if (preset)
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
@@ -670,7 +670,7 @@ void menuStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
 
-  if (!gs || gs->GameType != GAMERULE_CTF)
+  if (!gs || gs->GameType != GAMETYPE_CTF)
     *state = ELEMENT_HIDDEN;
   else if (preset)
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
@@ -682,7 +682,7 @@ void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
 
-  if (!gs || gs->GameType != GAMERULE_DM)
+  if (!gs || gs->GameType != GAMETYPE_DM)
     *state = ELEMENT_HIDDEN;
   else if (preset)
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
@@ -694,7 +694,7 @@ void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* stat
 {
   GameSettings * gs = gameGetSettings();
 
-  if (!gs || gs->GameType == GAMERULE_DM)
+  if (!gs || gs->GameType == GAMETYPE_DM)
     *state = ELEMENT_HIDDEN;
   else if (preset)
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
@@ -706,7 +706,7 @@ void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int*
 {
   GameSettings * gs = gameGetSettings();
 
-  if (!gs || gs->GameType == GAMERULE_DM)
+  if (!gs || gs->GameType == GAMETYPE_DM)
     *state = ELEMENT_HIDDEN;
   else
     *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
@@ -716,7 +716,7 @@ void menuLabelStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
 
-  if (!gs || gs->GameType == GAMERULE_DM)
+  if (!gs || gs->GameType == GAMETYPE_DM)
     *state = ELEMENT_HIDDEN;
   else
     *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
@@ -727,7 +727,7 @@ void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state)
   GameSettings * gs = gameGetSettings();
   GameOptions * go = gameGetOptions();
 
-  if (!gs || (gs->GameType != GAMERULE_DM) || go->GameFlags.MultiplayerGameFlags.Teams)
+  if (!gs || (gs->GameType != GAMETYPE_DM) || go->GameFlags.MultiplayerGameFlags.Teams)
     *state = ELEMENT_HIDDEN;
   else if (preset)
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
