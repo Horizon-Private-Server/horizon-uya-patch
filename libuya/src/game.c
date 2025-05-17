@@ -268,9 +268,9 @@ int gameGetCurrentMapId(void)
 char* gameGetGameModeName(int gameModeId)
 {
     switch (gameModeId) {
-        case GAMERULE_SIEGE: return uiMsgString(0x1024);
-        case GAMERULE_CTF: return uiMsgString(0x10e2);
-        case GAMERULE_DM: return uiMsgString(0x1026);
+        case GAMETYPE_SIEGE: return uiMsgString(0x1024);
+        case GAMETYPE_CTF: return uiMsgString(0x10e2);
+        case GAMETYPE_DM: return uiMsgString(0x1026);
         default: return NULL;
     }
 }
@@ -309,10 +309,4 @@ int gameGetGSFrame(void)
 int gameGetWorldId(void)
 {
     return GAME_WORLD_ID;
-}
-
-void gameModeChange(gameMode_t newMode, rmc_t switchType, int arg0, int arg1, char *callback_flag)
-{
-    internal_mode_requestChange(newMode, switchType, arg0, arg1, callback_flag);
-    internal_mode_doChange();
 }

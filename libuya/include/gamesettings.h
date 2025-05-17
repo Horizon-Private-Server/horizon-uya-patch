@@ -19,11 +19,33 @@
  */
 #define GAME_MAX_PLAYERS                (8)
 
-enum GameRuleIds
-{
-    GAMERULE_SIEGE,
-    GAMERULE_CTF,
-    GAMERULE_DM
+enum eGS_GameTypes {
+    GAMETYPE_SIEGE,
+    GAMETYPE_CTF,
+    GAMETYPE_DM
+};
+
+enum eGS_PlayerTypes {
+    GS_PLAYER_TYPE_NOBDY = 0,
+    GS_PLAYER_TYPE_BUDDY = 1,
+    GS_PLAYER_TYPE_CLAN_MEMBER = 2,
+    GS_PLAYER_TYPE_BOTH = 3,
+    GS_PLAYER_TYPE_BUDDY_USING_UNRESERVED = 4,
+    GS_PLAYER_TYPE_CLAN_USING_UNRESERVED = 5,
+    GS_PLAYER_TYPE_BOTH_USING_UNRESERVED = 6,
+    GS_PLAYER_TYPE_BOTH_USING_BUDDY = 7,
+    GS_PLAYER_TYPE_BOTH_USING_CLAN = 8,
+};
+
+enum eGS_PlayerStates {
+    GS_PLAYER_STATE_UNREADY = 0,
+    GS_PLAYER_STATE_SETUP = 1,
+    GS_PLAYER_STATE_MAP_NONE = 2,
+    GS_PLAYER_STATE_MAP_VERSION_ERROR = 3,
+    GS_PLAYER_STATE_UNUSED = 4,
+    GS_PLAYER_STATE_KICK = 5,
+    GS_PLAYER_STATE_READY = 6,
+    GS_PLAYER_STATE_GAME_START = 7
 };
 
 /*
@@ -33,15 +55,14 @@ enum GameRuleIds
  * NOTES :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-typedef struct GameSettings
-{
+typedef struct GameSettings {
  /* 0x000 */ char PlayerNames[GAME_MAX_PLAYERS][16];
  /* 0x080 */ char PlayerClanTags[GAME_MAX_PLAYERS][8];
  /* 0x0c0 */ short PlayerSkins[GAME_MAX_PLAYERS];
  /* 0x0d0 */ short PlayerTeams[GAME_MAX_PLAYERS];
  /* 0x0e0 */ short PlayerClients[GAME_MAX_PLAYERS];
  /* 0x0f0 */ short PlayerStates[GAME_MAX_PLAYERS];
- /* 0x100 */ char UNK_OFFSET_100[16];
+ /* 0x100 */ short PlayerTypes[GAME_MAX_PLAYERS];
  /* 0x110 */ float PlayerRanks[GAME_MAX_PLAYERS];
  /* 0x130 */ float PlayerRankDeviations[GAME_MAX_PLAYERS];
  /* 0x150 */ int PlayerAccountIds[GAME_MAX_PLAYERS];
@@ -60,8 +81,7 @@ typedef struct GameSettings
 
 } GameSettings;
 
-typedef struct GameOptions
-{
+typedef struct GameOptions {
     union {
         struct {
 /* 0x00 */  char Turboslider : 8;
@@ -106,9 +126,9 @@ GameSettings * gameGetSettings(void);
 
 GameOptions * gameGetOptions(void);
 
-void gameSetClientState(int pid, char state);
-void gameSetClientTeam(int pid, char team);
-void gameSetClientSkin(int pid, char skin);
-void gameSetClientName(int pid, char* name);
+void gameSetClientState(int cliendId, int state);
+void gameSetClientTeam(int cliendId, int team);
+void gameSetClientSkin(int cliendId, int skin);
+void gameSetClientName(int cliendId, char* name);
 
 #endif // _LIBUYA_GAMESETTINGS_H_

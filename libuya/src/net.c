@@ -9,14 +9,16 @@
 
 #define NET_LOBBY_CONNECTION                ((void*)(*(u32*)0x001cd4cc))
 #define NET_DME_CONNECTION                  ((void*)(*(u32*)0x001cd4d0))
-
+#define NET_HEARTBEAT_1 (0x001a1bb0)
+#define NET_HEARTBEAT_2 (0x001a1bb4)
 #else
 
 #define DME_CALLBACK_TABLE                  ((u32*)0x00240768)
 
 #define NET_LOBBY_CONNECTION                ((void*)(*(u32*)0x001CD64C))
 #define NET_DME_CONNECTION                  ((void*)(*(u32*)0x001CD650))
-
+#define NET_HEARTBEAT_1 (0x001a1d30)
+#define NET_HEARTBEAT_2 (0x001a1d34)
 #endif
 
 #define GET_MEDIUS_APP_HANDLER_HOOK         (*(u32*)0x00153248)

@@ -28,6 +28,30 @@
 #define GAME_FPS                            (60.0)
 #endif
 
+typedef enum {
+	GAME_MODE_NONE = -2,
+	GAME_MODE_DEBUG = -1,
+	GAME_MODE_NORMAL = 0,
+	GAME_MODE_MOVIE = 1,
+	GAME_MODE_SCENE = 2,
+	GAME_MODE_PAUSE = 3,
+	GAME_MODE_FREEZE = 4,
+	GAME_MODE_VENDOR = 5,
+	GAME_MODE_SPACE = 6,
+	GAME_MODE_PUZZLE = 7,
+	GAME_MODE_WEAPON_UPGRADE = 8,
+	GAME_MODE_CREDITS = 9,
+	GAME_MODE_LOBBY = 10,
+	GAME_MODE_FLYBY = 11,
+	GAME_MODE_THERMAL = 12,
+	GAME_MODE_PRE_LOBBY_MEMCARD_LOAD = 13,
+	GAME_MODE_PRE_LOBBY = 14,
+	GAME_MODE_WAIT_FOR_MPSTART = 15,
+	GAME_MODE_EXEC_MP_MEMCARD_COMMAND = 16,
+	GAME_MODE_IOP_DEBUG = 17,
+	GAME_MODE_MAX = 18
+} gameMode_t;
+
 typedef struct FragCount {
 /* 0x0 */ short kills;
 /* 0x2 */ short deaths;
@@ -208,9 +232,10 @@ typedef struct tNW_PlayerInfoStats { // 0x34
 
 struct tNW_Info {
 /* 0x0000 */ char unk_0000[0x14];
+/* 0x0010 */ int numLocalPlayers;
 /* 0x0014 */ void* myConnectionIndex; // NetTypeConnectionInfo* myConnectionIndex
 /* 0x0018 */ int myClientIndex;
-/* 0x001c */ int numLocalPlayers;
+/* 0x001c */ unsigned int uniqueIdCnt;
 /* 0x0020 */ char unk_0020[0x8];
 /* 0x0028 */ int myTeam;
 /* 0x002c */ int mySkin;
@@ -230,21 +255,27 @@ struct tNW_Info {
 /* 0x0130 */ enum eNW_STATE state;
 /* 0x0134 */ int unk_0134;
 /* 0x0138 */ int netFrameTime; // aka: gameTime
-/* 0x013c */ int unk_013c;
+/* 0x013c */ int numClients;
 /* 0x0140 */ int numPlayers;
 /* 0x0144 */ int maxPlayers;
 /* 0x0148 */ int maxBuddySlots;
 /* 0x014c */ int maxClanSlots;
 /* 0x0150 */ int maxBuddySlots_2;
 /* 0x0154 */ int maxClanSlots_2;
-/* 0x0158 */ char unk_0158[0x20];
+/* 0x0158 */ char clientIndex[8];
+/* 0x0160 */ char unk_0160[0x18];
 /* 0x0178 */ char isSessionMaster;
 /* 0x0179 */ char isNewSessionMaster;
 /* 0x017a */ char pad_017a[2];
 /* 0x017c */ int sessionMasterClientIndex;
-/* 0x0180 */ char unk_0180[0x8];
+/* 0x0180 */ int onlyLocalPlayers;
+/* 0x0184 */ int originalyOnlyLocalPlayers;
 /* 0x0188 */ char INukedTheMicroCode;
-/* 0x0189 */ char unk_0189[0x9];
+/* 0x0189 */ char unk_0189[0x2];
+/* 0x018c */ char m_bPeer2PeerGame;
+/* 0x018d */ char unk_018d[0x3];
+/* 0x0190 */ char m_bUseEncryption;
+/* 0x0191 */ char m_bZeroAggregation;
 /* 0x0192 */ char myIP[0x20];
 /* 0x01b2 */ char unk_01b2[0x132];
 /* 0x02dc */ void* m_GuiSetBusyCallback;
@@ -252,7 +283,7 @@ struct tNW_Info {
 /* 0x02e4 */ int m_LastMediusError;
 /* 0x02e8 */ int m_LastMGCLError;
 /* 0x02ec */ int m_LastNetError;
-/* 0x02f0 */ int m_LastMediusNetError
+/* 0x02f0 */ int m_LastMediusNetError;
 /* 0x02f4 */ char unk_02f4[0x198];
 /* 0x048c */ int m_bForcePlayerReport;
 /* 0x0490 */ int m_LastPlayerReportTime;
@@ -266,42 +297,38 @@ struct tNW_Info {
 /* 0x0634 */ int m_UpdateClanStatsStatus;
 /* 0x0638 */ int m_bAccountUpdateStatsPending;
 /* 0x063c */ int m_AccountUpdateStatsStatus;
-/* 0x06bd */ char clientIndex[8];
-/* 0x06c5 */ char unk_06c5[0xc14];
+/* 0x0640 */ int unk_0640;
+/* 0x0644 */ int m_JoinResponse;
+/* 0x0648 */ int superCheat;
+/* 0x064c */ int unk_064c;
+/* 0x0650 */ int sendMessageToPlayerClient[8];
+/* 0x0670 */ int sendMessageData[8];
+/* 0x0690 */ int Unk___ClientSettings_1; // gets modified when redy/unready happens
+/* 0x0694 */ int unk___ClientSettings_2;
+/* 0x0698 */ int receivedMessagePlayerIdx;
+/* 0x069c */ char unk_069c[0x20];
+/* 0x06bc */ char m_bSessionMasterLagging;
+/* 0x06bd */ char clientIndexRemapper[8];
+/* 0x06c5 */ char unk_06c5[0x11b];
+/* 0x07c0 */ int m_LastUdpPacketReceived[8];
+/* 0x07e0 */ int m_LastUdpPacketReceivedFromAnyone;
+/* 0x07e4 */ char m_RussiaHouseTransportFlagHack;
+/* 0x07e5 */ char unk_07e5[0x8];
+/* 0x07ed */ char bNewSessionMaster;
+/* 0x07ee */ char unk_07ee[0x90];
+/* 0x0870 */ int unk_0870[2]; // found in FUN_00197688
+/* 0x0878 */ int unk_0878[2]; // found in FUN_00197688
+/* 0x0880 */ int unk_0880[2]; // found in FUN_00197688
+/* 0x0888 */ int unk_0888[2]; // found in FUN_00197688
+/* 0x088c */ char unk_088c[0x3ff];
+/* 0x0c8b */ char unk_0c8b; // found in FUN_00197688
+/* 0x0c8c */ char unk_0c8c;
+/* 0x0c8d */ char unk_0c8d; // found in FUN_00197688
+/* 0x0c8e */ char unk_0c8e[0x64b];
 /* 0x12d9 */ char m_bMGCL_Connected;
 /* 0x12da */ char unk_12da[0x9b];
 /* 0x1374 */ int gameWorldId;
 } tNW_Info_t;
-
-typedef enum {
-	GAME_MODE_NONE = -2,
-	GAME_MODE_DEBUG = -1,
-	GAME_MODE_NORMAL = 0,
-	GAME_MODE_MOVIE = 1,
-	GAME_MODE_SCENE = 2,
-	GAME_MODE_PAUSE = 3,
-	GAME_MODE_FREEZE = 4,
-	GAME_MODE_VENDOR = 5,
-	GAME_MODE_SPACE = 6,
-	GAME_MODE_PUZZLE = 7,
-	GAME_MODE_WEAPON_UPGRADE = 8,
-	GAME_MODE_CREDITS = 9,
-	GAME_MODE_LOBBY = 10,
-	GAME_MODE_FLYBY = 11,
-	GAME_MODE_THERMAL = 12,
-	GAME_MODE_PRE_LOBBY_MEMCARD_LOAD = 13,
-	GAME_MODE_PRE_LOBBY = 14,
-	GAME_MODE_WAIT_FOR_MPSTART = 15,
-	GAME_MODE_EXEC_MP_MEMCARD_COMMAND = 16,
-	GAME_MODE_IOP_DEBUG = 17,
-	GAME_MODE_MAX = 18
-} gameMode_t;
-
-typedef enum {
-	RMC_UNDEFINED = 0,
-	RMC_NEST = 1,
-	RMC_SWITCH = 2
-} rmc_t;
 
 /*
  * NAME :		isInGame
@@ -504,8 +531,5 @@ int gameGetWorldId(void);
 
 // Gets local (PS2) settings
 GameLocalSettings *gameGetLocalSettings(void);
-
-
-void gameModeChange(gameMode_t newMode, rmc_t switchType, int arg0, int arg1, char *callback_flag);
 
 #endif // _LIBUYA_GAME_H_

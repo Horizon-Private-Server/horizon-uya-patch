@@ -3,9 +3,11 @@
 #include "interop.h"
 
 #if UYA_PAL
-#define SOUND_GLOBALS                       ((SoundGlobals*)0x001fe020)
+#define SOUND_GLOBALS ((SoundGlobals*)0x001fe020)
+#define AUDIO_INTO_DATA ((stAudioInfoData*)0)
 #else
-#define SOUND_GLOBALS                       ((SoundGlobals*)0x001fe1a0)
+#define SOUND_GLOBALS ((SoundGlobals*)0x001fe1a0)
+#define AUDIO_INTO_DATA ((stAudioInfoData*)0x00240700)
 #endif
 
 VariableAddress_t vaSoundHeroPlayFunc = {

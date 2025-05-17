@@ -51,4 +51,6 @@ void* netGetDmeServerConnection(void);
 
 int netInterfaceControl(void* cd, void* net_buf, int interface_id, int code, void* ptr, int len);
 
+int netSetHeartbeatInterval(unsigned int msecs1, unsigned int msecs2);
+
 #endif // _LIBUYA_NET_H_

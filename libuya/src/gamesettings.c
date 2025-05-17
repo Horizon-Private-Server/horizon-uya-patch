@@ -2,6 +2,7 @@
 #include "gamesettings.h"
 #include "math.h"
 #include "help.h"
+#include "team.h"
 
 #if UYA_PAL
 
@@ -62,45 +63,45 @@ GameOptions * gameGetOptions(void)
 }
 
 //--------------------------------------------------------
-void gameSetClientState(int pid, char state)
+void gameSetClientState(int cliendId, int state)
 {
     GameSettings* gs = gameGetSettings();
     if (!gs)
         return;
     
-    gs->PlayerStates[pid] = state;
-    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, gs->PlayerNames[pid], gs->PlayerSkins[pid], gs->PlayerTeams[pid], state, (u32)gs + 0x80);
+    gs->PlayerStates[cliendId] = state;
+    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, gs->PlayerNames[cliendId], gs->PlayerSkins[cliendId], gs->PlayerTeams[cliendId], state, (u32)gs + 0x80);
 }
 
 //--------------------------------------------------------
-void gameSetClientTeam(int pid, char team)
+void gameSetClientTeam(int cliendId, int team)
 {
     GameSettings* gs = gameGetSettings();
     if (!gs)
         return;
     
-    gs->PlayerTeams[pid] = team;
-    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, gs->PlayerNames[pid], gs->PlayerSkins[pid], team, gs->PlayerStates[pid], (u32)gs + 0x80);
+    gs->PlayerTeams[cliendId] = team;
+    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, gs->PlayerNames[cliendId], gs->PlayerSkins[cliendId], team, gs->PlayerStates[cliendId], (u32)gs + 0x80);
 }
 
 //--------------------------------------------------------
-void gameSetClientSkin(int pid, char skin)
+void gameSetClientSkin(int cliendId, int skin)
 {
     GameSettings* gs = gameGetSettings();
     if (!gs)
         return;
     
-    gs->PlayerSkins[pid] = skin;
-    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, gs->PlayerNames[pid], skin, gs->PlayerTeams[pid], gs->PlayerStates[pid], (u32)gs + 0x80);
+    gs->PlayerSkins[cliendId] = skin;
+    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, gs->PlayerNames[cliendId], skin, gs->PlayerTeams[cliendId], gs->PlayerStates[cliendId], (u32)gs + 0x80);
 }
 
 //--------------------------------------------------------
-void gameSetClientName(int pid, char* name)
+void gameSetClientName(int cliendId, char* name)
 {
     GameSettings* gs = gameGetSettings();
     if (!gs)
         return;
     
-    strncpy(gs->PlayerNames[pid], name, 0x16);
-    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, name, gs->PlayerSkins[pid], gs->PlayerTeams[pid], gs->PlayerStates[pid], (u32)gs + 0x80);
+    strncpy(gs->PlayerNames[cliendId], name, 0x16);
+    internal_netUpdatetNWGameSettings(CLIENT_UPDATE_A0, 0, name, gs->PlayerSkins[cliendId], gs->PlayerTeams[cliendId], gs->PlayerStates[cliendId], (u32)gs + 0x80);
 }
