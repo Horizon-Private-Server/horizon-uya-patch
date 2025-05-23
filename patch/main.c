@@ -2340,7 +2340,7 @@ void runCheckGameMapInstalled(void)
 				}
 				case GS_PLAYER_STATE_KICK: showNoMapPopup = 0; break;
 				case GS_PLAYER_STATE_READY: {
-					if (mapOverrideResponse < 0) {
+					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
 						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
 						showNoMapPopup = 1;
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
