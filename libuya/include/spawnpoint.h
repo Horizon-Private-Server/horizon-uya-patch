@@ -12,6 +12,13 @@ typedef struct Cuboid { // 0x80
 /* 0x70 */ VECTOR rot;
 } Cuboid;
 
+typedef struct Path {
+/* 0x00 */ int nNodes;
+/* 0x04 */ int bPathNormalized;
+/* 0x08 */ char pad[8];
+/* 0x10 */ vec4 nodes[0];
+} Path;
+
 /*
  * NAME :		spawnPointGetCount
  * DESCRIPTION :

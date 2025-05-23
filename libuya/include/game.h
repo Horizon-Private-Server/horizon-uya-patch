@@ -231,12 +231,13 @@ typedef struct tNW_PlayerInfoStats { // 0x34
 } tNW_PlayerInfoStats_t;
 
 struct tNW_Info {
-/* 0x0000 */ char unk_0000[0x14];
+/* 0x0000 */ char unk_0000[0x10];
 /* 0x0010 */ int numLocalPlayers;
 /* 0x0014 */ void* myConnectionIndex; // NetTypeConnectionInfo* myConnectionIndex
 /* 0x0018 */ int myClientIndex;
 /* 0x001c */ unsigned int uniqueIdCnt;
-/* 0x0020 */ char unk_0020[0x8];
+/* 0x0020 */ int unk_0020;
+/* 0x0024 */ int gameLevel;
 /* 0x0028 */ int myTeam;
 /* 0x002c */ int mySkin;
 /* 0x0030 */ char mySessionKey[0x14];
@@ -324,7 +325,10 @@ struct tNW_Info {
 /* 0x0c8b */ char unk_0c8b; // found in FUN_00197688
 /* 0x0c8c */ char unk_0c8c;
 /* 0x0c8d */ char unk_0c8d; // found in FUN_00197688
-/* 0x0c8e */ char unk_0c8e[0x64b];
+/* 0x0c8e */ char unk_0c8e[0x116];
+/* 0x0da4 */ float deviation[3];
+/* 0x0db0 */ float rank[3];
+/* 0x0dbc */ char unk_0dbc[0x51d];
 /* 0x12d9 */ char m_bMGCL_Connected;
 /* 0x12da */ char unk_12da[0x9b];
 /* 0x1374 */ int gameWorldId;

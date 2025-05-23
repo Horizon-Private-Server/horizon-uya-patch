@@ -6,7 +6,7 @@
 
 #define SPAWNPOINTS             ((Cuboid*)(*(u32*)GetAddress(&vaSpawnPointsPtr)))
 #define SPAWNPOINTS_COUNT       ((Cuboid*)(*(u32*)((u32)GetAddress(&vaSpawnPointsPtr) + 0x4)))
-
+#define SPLINES                 ((Paths*)*(*(u32*)((u32)GetAddress(&vaSpawnPointsPtr) + 0x38)))
 
 VariableAddress_t vaSpawnPointsPtr = {
 #if UYA_PAL

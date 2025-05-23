@@ -20,6 +20,8 @@
 #include "math3d.h"
 #include "player.h"
 
+#define TURBOSLIDER_TURN_RADIUS (*(float*)0x003a124c)
+
 struct tDR_Profile {
 	/*   0 */ float LinearPredictionCutoff;
 	/*   4 */ float LinearConvergenceThreshold;
