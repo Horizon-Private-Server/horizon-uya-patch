@@ -649,8 +649,9 @@ VariableAddress_t vaDrawScreenOverlay = {
 };
 
 //--------------------------------------------------------
-int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment)
+int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, int font)
 {
+    gfxSetFont(font);
     // float x, float y, float scaleX, float scaleY, float shadowX, float shadowY, u32 color, const char* string, u64 length, u64 alignment, int bold, u32 shadowColor
     internal_drawFunc(x, y, scaleX, scaleY, 0, 0, color, string, length, alignment, 1, 0x80000000);
     return x + gfxGetFontWidth(string, length, scaleX);

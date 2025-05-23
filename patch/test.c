@@ -360,7 +360,7 @@ void Test()
 
 		// float x = SCREEN_WIDTH * 0.3;
 		// float y = SCREEN_HEIGHT * 0.85;
-		// gfxScreenSpaceText(x, y, 1, 1, 0x80FFFFFF, "TEST YOUR MOM FOR HUGS", -1, 4);
+		// gfxScreenSpaceText(x, y, 1, 1, 0x80FFFFFF, "TEST YOUR MOM FOR HUGS", -1, 4, FONT_BOLD);
 		
 		// printf("Collision: %d\n", CollHotspot());
         

@@ -137,7 +137,7 @@ void onOnlineMenu(void)
 	{
     gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
     gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
-    gfxScreenSpaceText(SCREEN_WIDTH * 0.35, SCREEN_HEIGHT * 0.4, 1, 1, textColor, "Downloading patch...", 17 + (gameGetTime()/240 % 4), 3);
+    gfxScreenSpaceText(SCREEN_WIDTH * 0.35, SCREEN_HEIGHT * 0.4, 1, 1, textColor, "Downloading patch...", 17 + (gameGetTime()/240 % 4), 3, FONT_BOLD);
 
     if (totalBytes > 0)
     {

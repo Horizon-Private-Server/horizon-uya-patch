@@ -428,7 +428,7 @@ void runCameraSpeedPatch(void)
 				// draw %
 				if (uiGetActiveMenu(UI_MENU_CONTROLS, 1)) {
 					sprintf(buf, "%d%%", *(u32*)(cameraRotationUIPtr + 0x80));
-					gfxScreenSpaceText(340, 310, 1, 1, 0x8069cbf2, buf, -1, 2);
+					gfxScreenSpaceText(340, 310, 1, 1, 0x8069cbf2, buf, -1, 2, FONT_BOLD);
 				}
 			}
 		}
@@ -467,7 +467,7 @@ void runCameraSpeedPatch(void)
 				int PLAYER_ROTATION = 0x001a5a14;
 			#endif
 			sprintf(buf, "%d%%", *(int*)PLAYER_ROTATION);
-			gfxScreenSpaceText(273, 0.504 * SCREEN_WIDTH, 1, 1, 0x8069cbf2, buf, -1, 2);
+			gfxScreenSpaceText(273, 0.504 * SCREEN_WIDTH, 1, 1, 0x8069cbf2, buf, -1, 2, FONT_BOLD);
 		}
 	}
 }
@@ -993,7 +993,7 @@ void runFpsCounter_Logic(void)
 			snprintf(buf, 64, "FPS: %.2f", lastFps);
 		}
 
-		gfxScreenSpaceText(SCREEN_WIDTH - 5, 5, 0.75, 0.75, 0x80FFFFFF, buf, -1, 2);
+		gfxScreenSpaceText(SCREEN_WIDTH - 5, 5, 0.75, 0.75, 0x80FFFFFF, buf, -1, 2, FONT_BOLD);
 	}
 }
 
@@ -1888,8 +1888,8 @@ void runVoteToEndLogic(void)
 		int secondsLeft = (voteToEndState.TimeoutTime - gameTime) / TIME_SECOND;
 		char* buttonCombo = "(\x18+\x19) ";
 		snprintf(buf, sizeof(buf), "%sVote to End (%d/%d)    %d...", haveVoted ? "" : buttonCombo, voteToEndState.Count, votesNeeded, secondsLeft);
-		gfxScreenSpaceText(12, SCREEN_HEIGHT - 18, 1, 1, 0x80000000, buf, -1, 0);
-		gfxScreenSpaceText(10, SCREEN_HEIGHT - 20, 1, 1, 0x80FFFFFF, buf, -1, 0);
+		gfxScreenSpaceText(12, SCREEN_HEIGHT - 18, 1, 1, 0x80000000, buf, -1, 0, FONT_BOLD);
+		gfxScreenSpaceText(10, SCREEN_HEIGHT - 20, 1, 1, 0x80FFFFFF, buf, -1, 0, FONT_BOLD);
 			
 		// vote to end
 		if (!haveVoted && padGetButtonDown(0, PAD_L3 | PAD_R3) > 0)
@@ -2584,7 +2584,7 @@ void onOnlineMenu(void)
   #if DSCRPRINT
   float y = 10;
   for (i = 0; i < MAX_DEBUG_SCR_PRINT_LINES; ++i) {
-    gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0);
+    gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0, FONT_BOLD);
     y += 20;
   }
   #endif
@@ -2624,7 +2624,7 @@ int main(void)
   int i;
   float y = 10;
   for (i = 0; i < MAX_DEBUG_SCR_PRINT_LINES; ++i) {
-    gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0);
+    gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0, FONT_BOLD);
     y += 20;
   }
   #endif
