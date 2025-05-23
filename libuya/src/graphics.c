@@ -85,6 +85,36 @@ VariableAddress_t vaFontPrintCenterFunc = {
 #endif
 };
 
+VariableAddress_t vaFontSet = {
+#if UYA_PAL
+    .Lobby = 0x00591ba0,
+    .Bakisi = 0x0045ee10,
+    .Hoven = 0x004609c0,
+    .OutpostX12 = 0x004577c0,
+    .KorgonOutpost = 0x00455350,
+    .Metropolis = 0x00454690,
+    .BlackwaterCity = 0x00451ec0,
+    .CommandCenter = 0x004527b8,
+    .BlackwaterDocks = 0x00455038,
+    .AquatosSewers = 0x00454338,
+    .MarcadiaPalace = 0x00453cb8,
+#else
+    .Lobby = 0x005908f8,
+    .Bakisi = 0x0045dc68,
+    .Hoven = 0x0045f758,
+    .OutpostX12 = 0x00456598,
+    .KorgonOutpost = 0x004541a8,
+    .Metropolis = 0x004534e8,
+    .BlackwaterCity = 0x00450c98,
+    .CommandCenter = 0x00451750,
+    .BlackwaterDocks = 0x00453f90,
+    .AquatosSewers = 0x004532d0,
+    .MarcadiaPalace = 0x00452c10,
+#endif
+};
+    
+    
+
 VariableAddress_t vaGetTextWidthFunc = {
 #if UYA_PAL
 	.Lobby = 0x00591f98,

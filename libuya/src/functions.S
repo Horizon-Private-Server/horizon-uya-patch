@@ -376,6 +376,7 @@ VARIABLE_FUNCTION(internal_colorLerp, vaColorLerpFunc)
 VARIABLE_FUNCTION(internal_uiShowPopup, vaUIShowPopup)
 FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported (For in game)
 VARIABLE_FUNCTION(uiMsgString, vaUiMsgStringFunc)
+VARIABLE_FUNCTION(gfxSetFont, vaFontSet)
 
 #--------------------------------------------------------
 #-------------------------- NET -------------------------
