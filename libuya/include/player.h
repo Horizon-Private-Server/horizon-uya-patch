@@ -347,7 +347,7 @@ typedef struct HeroTimers { // 0x80
 	/*       */ short int unkTimer_326;
 	/* 0x328 */ float gadgetRefire;
 	/*       */ short int unkTimer_32c;
-	/*       */ short int unkTimer_32e;
+	/* 0x32e */ short int noShockAbort;
 	/*       */ short int UnkTimer_330;
 	/*       */ short int unkTimer_332; // Not Used
 	/* 0x334 */ short int unk_Wrench;
@@ -596,13 +596,13 @@ typedef struct HeroTweaker { // 0xb0
 	/* 0xac */ float scale;
 } HeroTweaker;
 
-typedef struct HeroShadow { // 0x28
+typedef struct HeroShadow { // 0x20
 	/* 0x00 */ float slope;
 	/* 0x04 */ float plane;
 	/* 0x08 */ float range;
 	/* 0x0c */ int sample_id;
-	/* 0x10 */ int pad[1];
-	/* 0x18 */ float sample_pos[4];
+	// /* 0x10 */ int pad[1]; // commented due to misalignment for HeroTurn struct
+	/* 0x10 */ float sample_pos[4];
 } HeroShadow;
 
 typedef struct HeroAttack { // 0xb0
@@ -898,6 +898,14 @@ typedef struct MotionBlur { // 0x150
 	/* 0x14c */ int active;
 } MotionBlur;
 
+typedef struct HeroTurn { // 0x20
+	/* 0x00 */ vec4 idealVec;
+	/* 0x10 */ float ideal;
+	/* 0x14 */ float speed;
+	/* 0x18 */ float diff;
+	/* 0x1c */ int pad;
+} HeroTurn;
+
 struct tNW_PlayerWarpMessage { // 0x20
 	/* 0x00 */ char netPlayerIndex;
 	/* 0x01 */ char dontKillMeInBaseHack;
@@ -1091,7 +1099,7 @@ typedef struct Player { // 0x4500
 	/* 0x0740 */ HeroAnimLayers animLayers;
 	/* 0x0760 */ HeroTweaker tweaker[12];
 	/* 0x0fa0 */ HeroShadow shadow;
-	/*        */ char unk_fc8[0x18];
+	/* 0x0fc0 */ HeroTurn turn;
 	/* 0x0fe0 */ HeroAttack attack;
 	/* 0x1090 */ HeroHeadIdle head;
 	/* 0x10b0 */ HeroTailIdle tailIdle;
@@ -1127,8 +1135,12 @@ typedef struct Player { // 0x4500
 	/* 0x19ea */ char prePreviousType;
 	/* 0x19eb */ char stateHistory[8];
 	/* 0x19f3 */ char stateTypeHistory[8];
-	/*        */ char unk_19fb[0xc];
-	/* 0x1a07 */ char gadgetActive;
+	/* 0x19fb */ char stateTimerHistory[8];
+	/* 0x1a03 */ char stateHistoryLen;
+	/* 0x1a04 */ char unk_1a04;
+	/* 0x1a05 */ char cycleFiring;
+	/* 0x1a06 */ char gravityType;
+	/* 0x1a07 */ char firing;
 	/* 0x1a08 */ char raisedGunArm;
 	/* 0x1a09 */ char inShallowWater;
 	/* 0x1a0a */ char invisible;

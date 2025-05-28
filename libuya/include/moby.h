@@ -316,6 +316,38 @@ struct MobyAnimLayer { // 0x20
 	/* 0x1c */ float blendFade;
 };
 
+struct MobyClass { // 0x50
+	/* 0x00 */ void *packets;
+	/* 0x04 */ char packet_cnt_0;
+	/* 0x05 */ char packet_cnt_1;
+	/* 0x06 */ char metal_cnt;
+	/* 0x07 */ char metal_ofs;
+	/* 0x08 */ char joint_cnt;
+	/* 0x09 */ char pad;
+	/* 0x0a */ char packet_cnt_2;
+	/* 0x0b */ char team_texs;
+	/* 0x0c */ char seq_cnt;
+	/* 0x0d */ char sound_cnt;
+	/* 0x0e */ char lod_trans;
+	/* 0x0f */ char shadow;
+	/* 0x10 */ short int *collision;
+	/* 0x14 */ void *skeleton;
+	/* 0x18 */ void *common_trans;
+	/* 0x1c */ void *anim_joints;
+	/* 0x20 */ void *gif_usage;
+	/* 0x24 */ float gScale;
+	/* 0x28 */ struct SoundDef *sound_defs;
+	/* 0x2c */ char bangles;
+	/* 0x2d */ char mip_dist;
+	/* 0x2e */ short int corncob;
+	/* 0x30 */ VECTOR bSphere;
+	/* 0x40 */ int glow_rgba;
+	/* 0x44 */ short int mode_bits;
+	/* 0x46 */ char type;
+	/* 0x47 */ char mode_bits2;
+	/* 0x48 */ struct MobySeq *seqs[0];
+};
+
 typedef struct Moby {
 	/* 0x00 */ VECTOR bSphere;
 	/* 0x10 */ VECTOR position;
@@ -323,7 +355,7 @@ typedef struct Moby {
 	/* 0x21 */ u8 group;
 	/* 0x22 */ char mClass;
 	/* 0x23 */ u8 opacity;
-	/* 0x24 */ void * pClass;
+	/* 0x24 */ struct MobyClass* pClass;
 	/* 0x28 */ struct Moby * pChain;
 	/* 0x2c */ float scale;
 	/* 0x30 */ char updateDist;
@@ -333,12 +365,17 @@ typedef struct Moby {
 	/* 0x36 */ u16 modeBits2;
 	/* 0x38 */ u32 lights;
 	/* 0x3c */ u32 primaryColor;
-	/*		*/ char unk_40[0x8];
+	/* 0x40	*/ char unk_40;
+	/* 0x41 */ char animSeqT;
+	/* 0x42 */ char unk_42;
+	/* 0x43 */ char animSeqId;
+	/* 0x44 */ struct MobyAnimLayer *animLayers;
 	/* 0x48 */ float unk_float_48;
 	/*      */ char unk_4c[0x18];
 	/* 0x64 */ void * pUpdate;
 	/* 0x68 */ void * pVar;
-	/*      */ char unk_6c[0x2];
+	/* 0x6c */ char soundDesired;
+	/* 0x6d */ char soundTrigger;
 	/* 0x6e */ char shadow;
     /* 0x6f */ char shadowIndex;
     /* 0x70 */ float shadowPlane;
