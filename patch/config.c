@@ -929,11 +929,11 @@ void drawToggleMenuElement(TabElem_t* tab, MenuElem_t* element, RECT* rect)
   // draw name
   x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
   y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0);
+  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
 
   // draw value
   x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, *(char*)element->userdata ? "On" : "Off", -1, 2);
+  gfxScreenSpaceText(x, y, 1, 1, color, *(char*)element->userdata ? "On" : "Off", -1, 2, FONT_BOLD);
 }
 
 //------------------------------------------------------------------------------
@@ -949,11 +949,11 @@ void drawToggleInvertedMenuElement(TabElem_t* tab, MenuElem_t* element, RECT* re
   // draw name
   x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
   y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0);
+  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
 
   // draw value
   x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, *(char*)element->userdata ? "Off" : "On", -1, 2);
+  gfxScreenSpaceText(x, y, 1, 1, color, *(char*)element->userdata ? "Off" : "On", -1, 2, FONT_BOLD);
 }
 
 //------------------------------------------------------------------------------
@@ -971,7 +971,7 @@ void drawRangeMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_RangeDat
   // draw name
   x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
   y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0);
+  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
 
   // draw box
   u32 barColor = colorLerp(RangeBar_IsSelected, 0, lerp);
@@ -984,7 +984,7 @@ void drawRangeMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_RangeDat
   // draw name
   sprintf(buf, "%d", *rangeData->value);
   x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, buf, -1, 2);
+  gfxScreenSpaceText(x, y, 1, 1, color, buf, -1, 2, FONT_BOLD);
 }
 
 //------------------------------------------------------------------------------
@@ -1000,11 +1000,11 @@ void drawListMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_ListData_
   // draw name
   x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
   y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0);
+  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
 
   // draw value
   x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, listData->items[(int)*listData->value], -1, 2);
+  gfxScreenSpaceText(x, y, 1, 1, color, listData->items[(int)*listData->value], -1, 2, FONT_BOLD);
 }
 
 //------------------------------------------------------------------------------
@@ -1026,13 +1026,13 @@ void drawListVerticalMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_L
   if (drawIdx == 0) {
     x = (r.TopLeft[0] * SCREEN_WIDTH) + 5;
     y = ((r.TopLeft[1] + r.BottomLeft[1]) * 0.5 * SCREEN_HEIGHT) + 5;
-    gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0);
+    gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
   }
 
   // draw value
   x = (r.TopRight[0] * SCREEN_WIDTH) - 5;
   y = ((r.TopLeft[1] + yOff) * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, listData->items[itemIdx], -1, TEXT_ALIGN_TOPRIGHT);
+  gfxScreenSpaceText(x, y, 1, 1, color, listData->items[itemIdx], -1, TEXT_ALIGN_TOPRIGHT, FONT_BOLD);
 }
 
 void drawOrderedListMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_OrderedListData_t * listData, RECT* rect)
@@ -1051,7 +1051,7 @@ void drawOrderedListMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_Or
   // draw name
   x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
   y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0);
+  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
 
   // find name
   int i;
@@ -1064,7 +1064,7 @@ void drawOrderedListMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_Or
 
   // draw value
   x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, listData->items[i].name, -1, 2);
+  gfxScreenSpaceText(x, y, 1, 1, color, listData->items[i].name, -1, 2, FONT_BOLD);
 }
 
 //------------------------------------------------------------------------------
@@ -1100,7 +1100,7 @@ void drawButtonMenuElement(TabElem_t* tab, MenuElem_t* element, RECT* rect)
   // draw name
   x = 0.5 * SCREEN_WIDTH;
   y = ((rFg.TopLeft[1] + rFg.BottomLeft[1]) * SCREEN_HEIGHT * 0.5);
-  gfxScreenSpaceText(x, y, 1, 1, colorLerp(colorText, 0, lerp), element->name, -1, 4);
+  gfxScreenSpaceText(x, y, 1, 1, colorLerp(colorText, 0, lerp), element->name, -1, 4, FONT_BOLD);
 
   // add some padding
   rect->TopLeft[1] += 0.01;
@@ -1119,7 +1119,7 @@ void drawLabelMenuElement(TabElem_t* tab, MenuElem_t* element, RECT* rect)
   // draw label
   x = 0.5 * SCREEN_WIDTH;
   y = ((rect->TopLeft[1] + rect->BottomLeft[1]) * SCREEN_HEIGHT * 0.5);
-  gfxScreenSpaceText(x, y, 1, 1, colorLerp(colorText, 0, lerp), element->name, -1, 4);
+  gfxScreenSpaceText(x, y, 1, 1, colorLerp(colorText, 0, lerp), element->name, -1, 4, FONT_BOLD);
 }
 
 void listVerticalInput(TabElem_t* tab)
@@ -1763,13 +1763,13 @@ void drawFrame(void)
   gfxScreenSpaceBox(frameX, frameY, frameW, frameTitleH, colorRed);
 
   // title
-  gfxScreenSpaceText(0.5 * SCREEN_WIDTH, (frameY + frameTitleH * 0.5) * SCREEN_HEIGHT, 1, 1, colorText, "Patch Config Menu", -1, 4);
+  gfxScreenSpaceText(0.5 * SCREEN_WIDTH, (frameY + frameTitleH * 0.5) * SCREEN_HEIGHT, 1, 1, colorText, "Patch Config Menu", -1, 4, FONT_BOLD);
 
   // footer bg
   gfxScreenSpaceBox(frameX, frameY + frameH - frameFooterH, frameW, frameFooterH, colorRed);
 
   // footer
-  gfxScreenSpaceText(((frameX + frameW) * SCREEN_WIDTH) - 5, (frameY + frameH) * SCREEN_HEIGHT - 5, 1, 1, colorText, footerText, -1, 8);
+  gfxScreenSpaceText(((frameX + frameW) * SCREEN_WIDTH) - 5, (frameY + frameH) * SCREEN_HEIGHT - 5, 1, 1, colorText, footerText, -1, 8, FONT_BOLD);
 
   // content bg
   gfxScreenSpaceBox(frameX + contentPaddingX, frameY + frameTitleH + tabBarH + contentPaddingY, frameW - (contentPaddingX*2), frameH - frameTitleH - tabBarH - frameFooterH - (contentPaddingY * 2), colorContentBg);
@@ -1799,7 +1799,7 @@ void drawFrame(void)
       gfxScreenSpaceBox(tabX + tabBarPaddingX, tabY, pWidth - (2 * tabBarPaddingX), tabBarH, barColor);
 
       // draw text
-      gfxScreenSpaceText((tabX + 2*tabBarPaddingX) * SCREEN_WIDTH, (tabY + (0.5 * tabBarH)) * SCREEN_HEIGHT, 1, 1, color, tab->name, -1, 3);
+      gfxScreenSpaceText((tabX + 2*tabBarPaddingX) * SCREEN_WIDTH, (tabY + (0.5 * tabBarH)) * SCREEN_HEIGHT, 1, 1, color, tab->name, -1, 3, FONT_BOLD);
 
       // increment X
       tabX += pWidth - tabBarPaddingX;
@@ -1940,7 +1940,7 @@ void drawTab(TabElem_t* tab)
           else if ((helpLastXOffset + w + contentPaddingX*2) >= frameW) helpLastXOffset -= 0.002;
           else if (helpItemCooldown2) --helpItemCooldown2;
           else { helpItemCooldown1 = 60 * 3; helpItemCooldown2 = 60 * 6; helpLastXOffset = 0; }
-          gfxScreenSpaceText((frameX + contentPaddingX + helpLastXOffset) * SCREEN_WIDTH, (frameY + frameH) * SCREEN_HEIGHT, 1, 1, 0x80FFFFFF, currentElement->help, -1, 0);
+          gfxScreenSpaceText((frameX + contentPaddingX + helpLastXOffset) * SCREEN_WIDTH, (frameY + frameH) * SCREEN_HEIGHT, 1, 1, 0x80FFFFFF, currentElement->help, -1, 0, FONT_BOLD);
 
           // reset scissor
           gfxSetScissor(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT);
@@ -2034,13 +2034,13 @@ void onMenuUpdate(int inGame)
 			// render message
 			// gfxScreenSpaceBox(SCREEN_WIDTH * 0.2, SCREEN_HEIGHT * 0.81, 0.4, 0.3, colorOpenBg);
       float scale = .85;
-	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.77, scale, scale, 0x80FFFFFF, "Press START to", -1, 4);
-			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4);
+	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.77, scale, scale, 0x80FFFFFF, "Press START to", -1, 4, FONT_BOLD);
+			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4, FONT_BOLD);
     }
     if (uiGetActiveMenu(UI_MENU_STAGING, 0) > 0 && *(u32*)0x01C5C114 == 0) {
       int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
       if (gameAmIHost() && isTeams)
-        gfxScreenSpaceText(SCREEN_WIDTH * 0.205, SCREEN_HEIGHT * 0.07, 0.7, .85, 0x8069cbf2, "\x14 RANDOM TEAMS", -1, 4);
+        gfxScreenSpaceText(SCREEN_WIDTH * 0.205, SCREEN_HEIGHT * 0.07, 0.7, .85, 0x8069cbf2, "\x14 RANDOM TEAMS", -1, 4, FONT_BOLD);
     }
 		// check for pad input
 		if (padGetButtonUp(0, PAD_START) > 0)
@@ -2245,7 +2245,7 @@ void onConfigOnlineMenu(void)
 	{
     gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, colorBlack);
     gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, colorContentBg);
-    gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, colorText, "Downloading...", 11 + (gameGetTime()/240 % 4), 3);
+    gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, colorText, "Downloading...", 11 + (gameGetTime()/240 % 4), 3, FONT_BOLD);
 
 		float w = (float)dlBytesReceived / (float)dlTotalBytes;
 		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, colorRed);

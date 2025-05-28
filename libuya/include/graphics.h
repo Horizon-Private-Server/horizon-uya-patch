@@ -454,6 +454,14 @@ enum TextAlign {
   TEXT_ALIGN_BOTTOMRIGHT,
 };
 
+typedef enum FontNames {
+	FONT_DEFAULT = 0,
+	FONT_BOLD = 0,
+	FONT_DEMI = 1,
+	FONT_BOOT = 2,
+	FONT_NAMES_COUNT = 3
+} FontNames;
+
 typedef float POINT[2] __attribute__((__aligned__(8)));
 
 typedef struct RECT
@@ -659,7 +667,7 @@ void drawFunction(void);
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment);
+int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, int font);
 int gfxScreenSpaceTextCenter(float x, float y, u32 color, const char * string, int length);
 
 /*

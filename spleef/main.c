@@ -240,7 +240,7 @@ void drawRoundMessage(const char * message, float scale)
 	// draw message
 	y *= SCREEN_HEIGHT;
 	x *= SCREEN_WIDTH;
-	gfxScreenSpaceText(x, y + 5, scale, scale * 1.5, 0x80FFFFFF, message, -1, 1);
+	gfxScreenSpaceText(x, y + 5, scale, scale * 1.5, 0x80FFFFFF, message, -1, 1, FONT_BOLD);
 
 	// draw ranks
 	y += 24.0 * scale;
@@ -252,8 +252,8 @@ void drawRoundMessage(const char * message, float scale)
 		if (pId >= 0)
 		{
 			y += 18.0 * scale;
-			gfxScreenSpaceText(x-(w/2), y, scale, scale, 0x80FFFFFF, rankStrings[i-1], -1, 3);
-			gfxScreenSpaceText(x+(w/2), y, scale, scale, 0x80FFFFFF, gameSettings->PlayerNames[pId], -1, 5);
+			gfxScreenSpaceText(x-(w/2), y, scale, scale, 0x80FFFFFF, rankStrings[i-1], -1, 3, FONT_BOLD);
+			gfxScreenSpaceText(x+(w/2), y, scale, scale, 0x80FFFFFF, gameSettings->PlayerNames[pId], -1, 5, FONT_BOLD);
 		}
 	}
 }
