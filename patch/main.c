@@ -870,7 +870,7 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 		// restore backup if they match (regardless of order) newly assigned weapons
 		for (i = 0; i < 3; ++i) {
 			// if respawned weapons match backup weapons
-			u8 backedUpSlotValue = weaponOrderBackup[index][i];
+			u8 backedUpSlotValue = weaponOrderBackup[0][i];
 			for(j = 0; j < 3; ++j) {
 				if (backedUpSlotValue == playerDeobfuscate(&player->quickSelect.Slot[j], 1, 1)) {
 					++matchCount;
@@ -881,7 +881,7 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 		// if weaponOrderBackup matches respawnd weapons, then check for cycle weapons (regardless of order)
 		if (matchCount == 3) {
 			for (i = 0; i < 3; ++i) {
-				u8 backedUpSlotValue = weaponOrderBackup[index][i];
+				u8 backedUpSlotValue = weaponOrderBackup[0][i];
 				for(j = 0; j < 3; ++j) {
 					if (backedUpSlotValue == cycle[j]) {
 						++cycleWeaponCount;
@@ -896,17 +896,17 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 	// or if Party Rule LoadWeapons Only is on, force set to needed weapons.
 	if (cycleWeaponCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
 		for (i = 0; i < 3; ++i)
-			weaponOrderBackup[index][i] = cycle[i];
+			weaponOrderBackup[0][i] = cycle[i];
 	}
 	// we found a match, or loadout weapons only is on.
 	if (matchCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
 		// set equipped weapon in order
 		for (i = 0; i < 3; ++i)
-			playerGiveWeapon(player, weaponOrderBackup[index][i], 1);
+			playerGiveWeapon(player, weaponOrderBackup[0][i], 1);
 
 		// equip each weapon from last slot to first slot to keep correct order.
 		for (i = 2; i >= 0; --i)
-			playerEquipWeapon(player, weaponOrderBackup[index][i]);
+			playerEquipWeapon(player, weaponOrderBackup[0][i]);
 	}
 }
 /*
@@ -950,7 +950,7 @@ void patchResurrectWeaponOrdering(void)
 	HOOK_JAL(hook_StripMe, &patchResurrectWeaponOrdering_HookWeaponStripMe);
 	HOOK_JAL(hook_RandomWeapons, &patchResurrectWeaponOrdering_HookGiveMeRandomWeapons);
 	// set weapons at start of game.
-	// spawnWithLoadoutWeapons();
+	spawnWithLoadoutWeapons();
 
 	patched.resurrectWeaponOrdering = 1;
 }
