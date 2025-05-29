@@ -183,3 +183,25 @@ float clampAngle(float theta)
 // 	else
 // 		return( angle );
 // }
+
+float fastSubRots(float input0, float input1)
+{
+    input0 = input0 - input1;
+    int i = input0 < -MATH_PI;
+    if (MATH_PI <= input0)
+        input0 = (input0 - MATH_PI) - MATH_PI;
+
+    if (i)
+        input0 = input0 + MATH_PI + MATH_PI;
+    
+    return input0;
+}
+
+float fastDiffRots(float input0, float input1)
+{
+    float diff = fabsf(input0 - input1);
+    if (MATH_PI <= diff) 
+        diff = MATH_TAU - diff;
+
+    return diff;
+}

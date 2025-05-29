@@ -12,7 +12,7 @@
 #include "common.h"
 
 //--------------------------------------------------------
-#define MATH_PI                         ((float)3.141596)
+#define MATH_PI                         ((float)3.141593)
 #define MATH_TAU                        (MATH_PI * (float)2.0)
 #define MATH_E                          ((float)2.7182818)
 #define MATH_DT                         ((float)0.166666666)
@@ -36,5 +36,7 @@ __LIBUYA_INLINE__ float clamp(float v, float min, float max);
 __LIBUYA_INLINE__ float clampAngle(float theta);
 __LIBUYA_INLINE__ double fmod(double x, double y);
 __LIBUYA_INLINE__ float atan2f(float y, float x);
+__LIBUYA_INLINE__ float fastSubRots(float input0, float input1);
+__LIBUYA_INLINE__ float fastDiffRots(float input0, float input1);
 
 #endif // _LIBUYA_MATH_H_
