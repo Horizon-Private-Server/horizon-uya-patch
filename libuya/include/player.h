@@ -1057,8 +1057,8 @@ typedef struct HeroSpecialIdleDef { // 0x10
 typedef struct Player { // 0x4500
 	/* 0x0000 */ struct Guber guber;
 	/* 0x0018 */ int padding[1];
-	/* 0x0020 */ MATRIX water;
-	/* 0x0060 */ MATRIX terrain;
+	/* 0x0020 */ MATRIX mtx;
+	/* 0x0060 */ MATRIX invMtx;
 	/* 0x00a0 */ VECTOR playerPosition;
 			union {
 	/* 0x00b0 */ VECTOR playerRotation;
