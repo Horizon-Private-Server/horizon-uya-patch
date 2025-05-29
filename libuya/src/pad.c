@@ -1,7 +1,10 @@
+#include "interop.h"
 #include "string.h"
 #include "pad.h"
 #include "game.h"
 #include "player.h"
+
+int padRingBitsOn(int bits, int frames, int pFrames, Player* playerPadPtr);
 
 // Default value for pad history
 const PadHistory DefaultPadHistory = {
@@ -20,6 +23,35 @@ PadHistory LocalPadHistory[PAD_PORT_MAX * 2] = {
   {0xFFFF,0x7F,0x7F,0x7F,0x7F,0},
   {0xFFFF,0x7F,0x7F,0x7F,0x7F,1},
 };
+
+VariableAddress_t vaPadRingBitsOn = {
+#if UYA_PAL
+    .Lobby = 0x005c3120,
+    .Bakisi = 0x004958d8,
+    .Hoven = 0x004979f0,
+    .OutpostX12 = 0x0048d2c8,
+    .KorgonOutpost = 0x0048a998,
+    .Metropolis = 0x00489db0,
+    .BlackwaterCity = 0x00487648,
+    .CommandCenter = 0x00487640,
+    .BlackwaterDocks = 0x00489ec0,
+    .AquatosSewers = 0x004891c0,
+    .MarcadiaPalace = 0x00488b40,
+#else
+    .Lobby = 0x005c10d8,
+    .Bakisi = 0x004938e8,
+    .Hoven = 0x00495940,
+    .OutpostX12 = 0x0048b258,
+    .KorgonOutpost = 0x004889a8,
+    .Metropolis = 0x00487dc0,
+    .BlackwaterCity = 0x004855d8,
+    .CommandCenter = 0x00485790,
+    .BlackwaterDocks = 0x00487fd0,
+    .AquatosSewers = 0x00487310,
+    .MarcadiaPalace = 0x00486c50,
+#endif
+};
+    
 
 /*
  * NAME :		padUpdate

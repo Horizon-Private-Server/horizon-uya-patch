@@ -503,3 +503,8 @@ VARIABLE_FUNCTION(weaponIsEnabled, vaGB_IsWeaponEnabled)
 #------------------------ CAMERA ------------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(cameraSetFov, vaCameraSetFOV)
+
+#--------------------------------------------------------
+#------------------------ PAD ---------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(padRingBitsOn, vaPadRingBitsOn)
