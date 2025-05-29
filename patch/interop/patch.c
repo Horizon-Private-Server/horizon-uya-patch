@@ -1,4 +1,8 @@
 #include <libuya/interop.h>
+#include <libuya/player.h>
+
+#define ZRotDiffSpherical ((void (*)(Player* player, VECTOR* agnleVec, int turnDir))GetAddress(&vaZRotDiffSpherical))
+#define GetIdealThrustFromPad ((void (*)(float topSpeed,Player* player,int filter))GetAddress(&vaGetIdealThrustFromPad))
 
 //================================================
 //=============   runCameraSpeedPatch
@@ -862,3 +866,123 @@ VariableAddress_t vaHypershotEquipButton_bits = {
 	.MarcadiaPalace = 0x00501a74,
 #endif
 };
+
+//================================================
+//=============  patchSnapJumpDir
+//================================================
+VariableAddress_t vaGetSnapJumpWindow_SnapJumpDir_Hook = {
+#if UYA_PAL
+    .Lobby = 0x00629db4,
+    .Bakisi = 0x004fbcac,
+    .Hoven = 0x004fddc4,
+    .OutpostX12 = 0x004f369c,
+    .KorgonOutpost = 0x004f0e34,
+    .Metropolis = 0x004f0184,
+    .BlackwaterCity = 0x004eda1c,
+    .CommandCenter = 0x004ed9e4,
+    .BlackwaterDocks = 0x004f0264,
+    .AquatosSewers = 0x004ef564,
+    .MarcadiaPalace = 0x004eeee4,
+#else
+    .Lobby = 0x006275dc,
+    .Bakisi = 0x004f952c,
+    .Hoven = 0x004fb584,
+    .OutpostX12 = 0x004f0e9c,
+    .KorgonOutpost = 0x004ee6b4,
+    .Metropolis = 0x004eda04,
+    .BlackwaterCity = 0x004eb21c,
+    .CommandCenter = 0x004eb3a4,
+    .BlackwaterDocks = 0x004edbe4,
+    .AquatosSewers = 0x004ecf24,
+    .MarcadiaPalace = 0x004ec864,
+#endif
+};
+    
+VariableAddress_t vaGetSnapJumpDir_Func = {
+#if UYA_PAL
+    .Lobby = 0x00629de0,
+    .Bakisi = 0x004fbcd8,
+    .Hoven = 0x004fddf0,
+    .OutpostX12 = 0x004f36c8,
+    .KorgonOutpost = 0x004f0e60,
+    .Metropolis = 0x004f01b0,
+    .BlackwaterCity = 0x004eda48,
+    .CommandCenter = 0x004eda10,
+    .BlackwaterDocks = 0x004f0290,
+    .AquatosSewers = 0x004ef590,
+    .MarcadiaPalace = 0x004eef10,
+#else
+    .Lobby = 0x00627608,
+    .Bakisi = 0x004f9558,
+    .Hoven = 0x004fb5b0,
+    .OutpostX12 = 0x004f0ec8,
+    .KorgonOutpost = 0x004ee6e0,
+    .Metropolis = 0x004eda30,
+    .BlackwaterCity = 0x004eb248,
+    .CommandCenter = 0x017f0804,
+    .BlackwaterDocks = 0x004edc10,
+    .AquatosSewers = 0x004ecf50,
+    .MarcadiaPalace = 0x004ec890,
+#endif
+};    
+
+VariableAddress_t vaZRotDiffSpherical = {
+#if UYA_PAL
+    .Lobby = 0x00633c78,
+    .Bakisi = 0x00505b70,
+    .Hoven = 0x00507c88,
+    .OutpostX12 = 0x004fd560,
+    .KorgonOutpost = 0x004facf8,
+    .Metropolis = 0x004fa048,
+    .BlackwaterCity = 0x004f78e0,
+    .CommandCenter = 0x004f78a8,
+    .BlackwaterDocks = 0x004fa128,
+    .AquatosSewers = 0x004f9428,
+    .MarcadiaPalace = 0x004f8da8,
+#else
+    .Lobby = 0x00631430,
+    .Bakisi = 0x00503380,
+    .Hoven = 0x005053d8,
+    .OutpostX12 = 0x004facf0,
+    .KorgonOutpost = 0x004f8508,
+    .Metropolis = 0x004f7858,
+    .BlackwaterCity = 0x004f5070,
+    .CommandCenter = 0x004f51f8,
+    .BlackwaterDocks = 0x004f7a38,
+    .AquatosSewers = 0x004f6d78,
+    .MarcadiaPalace = 0x004f66b8,
+#endif
+};
+
+VariableAddress_t vaGetIdealThrustFromPad = {
+#if UYA_PAL
+    .Lobby = 0x00632d78,
+    .Bakisi = 0x00504c70,
+    .Hoven = 0x00506d88,
+    .OutpostX12 = 0x004fc660,
+    .KorgonOutpost = 0x004f9df8,
+    .Metropolis = 0x004f9148,
+    .BlackwaterCity = 0x004f69e0,
+    .CommandCenter = 0x004f69a8,
+    .BlackwaterDocks = 0x004f9228,
+    .AquatosSewers = 0x004f8528,
+    .MarcadiaPalace = 0x004f7ea8,
+#else
+    .Lobby = 0x00630530,
+    .Bakisi = 0x00502480,
+    .Hoven = 0x005044d8,
+    .OutpostX12 = 0x004f9df0,
+    .KorgonOutpost = 0x004f7608,
+    .Metropolis = 0x004f6958,
+    .BlackwaterCity = 0x004f4170,
+    .CommandCenter = 0x004f42f8,
+    .BlackwaterDocks = 0x004f6b38,
+    .AquatosSewers = 0x004f5e78,
+    .MarcadiaPalace = 0x004f57b8,
+#endif
+};
+    
+    
+
+// typedef void (*ZRotDiffSpherical_Func)(Player* player, VECTOR *angleVec, int turnDir);
+// ZRotDiffSpherical_Func ZRotDiffSpherical = (ZRotDiffSpherical_Func)GetAddress(&vaZRotDiffSpherical);

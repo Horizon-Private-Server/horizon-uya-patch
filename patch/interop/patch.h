@@ -1,4 +1,5 @@
 #include <libuya/interop.h>
+#include <libuya/player.h>
 
 VariableAddress_t vaUpdateCameraSpeedIGFunc;
 VariableAddress_t vaDrawCameraSpeedInputIGFunc;
@@ -30,3 +31,7 @@ VariableAddress_t vaMapScore_ScoreboardToggle;
 VariableAddress_t vaQuickSelectCheck_Hook;
 VariableAddress_t vaQuickSelectCheck_Func;
 VariableAddress_t vaHypershotEquipButton_bits;
+VariableAddress_t vaGetSnapJumpWindow_SnapJumpDir_Hook;
+VariableAddress_t vaGetSnapJumpDir_Func;
+VariableAddress_t vaZRotDiffSpherical;
+VariableAddress_t vaGetIdealThrustFromPad;
