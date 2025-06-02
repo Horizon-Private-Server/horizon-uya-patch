@@ -1,9 +1,6 @@
 #include <libuya/interop.h>
 #include <libuya/player.h>
 
-#define ZRotDiffSpherical ((void (*)(Player* player, VECTOR* agnleVec, int turnDir))GetAddress(&vaZRotDiffSpherical))
-#define GetIdealThrustFromPad ((void (*)(float topSpeed,Player* player,int filter))GetAddress(&vaGetIdealThrustFromPad))
-
 //================================================
 //=============   runCameraSpeedPatch
 //================================================
@@ -981,8 +978,6 @@ VariableAddress_t vaGetIdealThrustFromPad = {
     .MarcadiaPalace = 0x004f57b8,
 #endif
 };
-    
-    
 
 // typedef void (*ZRotDiffSpherical_Func)(Player* player, VECTOR *angleVec, int turnDir);
 // ZRotDiffSpherical_Func ZRotDiffSpherical = (ZRotDiffSpherical_Func)GetAddress(&vaZRotDiffSpherical);

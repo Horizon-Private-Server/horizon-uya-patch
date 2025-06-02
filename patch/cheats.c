@@ -254,7 +254,7 @@ void chargebootForever(void)
 		if (!player)
 			continue;
 		// if Is Chargebooting and player is holding R2 and player's state timer is greater than 55
-		if (player->timers.IsChargebooting == 1 && playerPadGetButton(player, PAD_R2) > 0 && player->timers.state > 55)
+		if (player->timers.noFpsCamTimer == 1 && playerPadGetButton(player, PAD_R2) > 0 && player->timers.state > 55)
 			player->timers.state = 55;
 	}
 }

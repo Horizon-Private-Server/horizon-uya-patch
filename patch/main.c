@@ -167,6 +167,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.hypershotEquipButton = 0,
 	.disableDpadMovement = 0,
 	.hideFluxReticle = 0,
+	.dlStyleFlips = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1162,7 +1163,7 @@ void patchDeathBarrierBug(void)
 void patchAlwaysShowHealth(void)
 {
 	u32 healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);;
-	Player *player = (Player *)PLAYER_STRUCT;
+	Player *player = playerGetFromSlot(0);
 	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
 	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
 		*(u32*)healthbar_timer = 0;
@@ -2155,6 +2156,51 @@ void patchHideFluxReticle(void)
 		++mobyStart;
 	}
 }
+#define ZRotDiffSpherical ((float (*)(Player* player, VECTOR* agnleVec, int turnDir))GetAddress(&vaZRotDiffSpherical))
+#define GetIdealThrustFromPad ((void (*)(float topSpeed,Player* player,int filter))GetAddress(&vaGetIdealThrustFromPad))
+
+int patchSetSnapDir_Logic(Player *this)
+{
+	float i, f1, f2;
+	float leftRightOffs = 1.570796;
+	int padring = padRingBitsOn(0x28, 2, 0, &this->pPad);
+	int currentWeapon = this->weapon.state == 2 && this->weapon.id == WEAPON_ID_WRENCH;
+	int stateCheck = playerDeobfuscate(&this->state, DEOBFUSCATE_ADDRESS_STATE, DEOBFUSCATE_MODE_STATE) == PLAYER_STATE_CHARGE_JUMP;
+	if ((this->lockOn.strafing == 0 && (this->fps.active != 1 || padring == 0)) || stateCheck) {
+		GetIdealThrustFromPad(1, this, 0);
+		if (this->gravityType == 0) {
+			i = fastSubRots(this->turn.ideal, this->playerRotation[1]);
+		} else {
+			i = ZRotDiffSpherical(this, &this->turn.idealVec, 0);
+		}
+		f1 = 0.7853982;
+		f2 = fastDiffRots(i, MATH_PI);
+		if (f1 <= f2) {
+			if (fastDiffRots(i,-leftRightOffs) < f1)
+				return 1;
+
+			if (fastDiffRots(i, leftRightOffs) < f1)
+				return 0;
+			
+			return 2;
+		}
+	} else {
+		int strafeDir = this->lockOn.strafingDir;
+		if (strafeDir != 3) {
+		  return strafeDir;
+		}
+	}
+	return -1;
+}
+
+void patchSetSnapDir(void)
+{
+	if (patched.config.dlStyleFlips)
+		return;
+
+	HOOK_JAL(GetAddress(&vaGetSnapJumpWindow_SnapJumpDir_Hook), &patchSetSnapDir_Logic);
+	patched.config.dlStyleFlips = 1;
+}
 
 /*
  * NAME :		runHolidyas
@@ -2677,9 +2723,9 @@ int main(void)
 	// 
 	sendMACAddress();
 
-		// Adds Single Player Music to Multiplayer
-		if (config.enableSingleplayerMusic)
-			runCampaignMusic();
+	// Adds Single Player Music to Multiplayer
+	if (config.enableSingleplayerMusic)
+		runCampaignMusic();
 
 	// 
 	runVoteToEndLogic();
@@ -2766,6 +2812,8 @@ int main(void)
 		if (lastGameState != 1)
 			configMenuDisable();
 
+		// patchSetSnapDir();
+		
 		// Updates Start Menu to have "Patch Config" option.
 		// Logic for opening menu as well.
 		setupPatchConfigInGame();
