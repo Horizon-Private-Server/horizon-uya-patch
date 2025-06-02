@@ -25,6 +25,7 @@ typedef struct PatchConfig {
   char disableDpadMovement;
   char enablePlayerSync;
   char hideFluxReticle;
+  char dlStyleFlips;
 } PatchConfig_t;
 
 // Game Rules Tab

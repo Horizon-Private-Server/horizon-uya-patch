@@ -6,17 +6,13 @@
 #include "team.h"
 
 #define PLAYER_STRUCT_ARRAY                         ((Player**)GetAddress(&vaPlayerStructArray))
-//Local player 1 dme player index.
-#define PLAYER_1_ID                                 (*(u32*)0x0017218C)
-// Local player 2 dme player index.
-#define PLAYER_2_ID                                 (*(u32*)0x001B6ED8)
 
 #if UYA_PAL
-#define PLAYER_LOCAL_PLAYER_COUNT (*(int*)0x001a5cdc)
 #define TNW_PLAYER ((tNW_Player*)0x0022f3d0)
+#define PLAYER_WALK_SPEED_TABLE ((PlayerWalkSpeedTable)0x00245ff8)
 #else
-#define PLAYER_LOCAL_PLAYER_COUNT (*(int*)0x001a5e5c)
 #define TNW_PLAYER ((tNW_Player*)0x0022f550)
+#define PLAYER_WALK_SPEED_TABLE ((PlayerWalkSpeedTable)0x00246178)
 #endif
 
 void playerRespawn(Player * player);
@@ -185,7 +181,6 @@ void playerSetTeam(Player * player, int teamId)
     player->mpTeam = teamId;
     // player->pMoby->primaryColor = TEAM_COLORS[teamId];
     player->pMoby->color = player->pMoby->color & 0x8f | 0x80 | (teamId << 4); // 0x80 + (0x10 * teamId);
-    player->pMoby->triggers = 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -279,7 +274,7 @@ int playerPadGetButtonUp(Player * player, u16 buttonMask)
 }
 
 //--------------------------------------------------------------------------------
-// Other Obfuscate Address (Health, State)
+// Other Obfuscate Address (Health, State, some Timers)
 // Another Area (Pointer): 0x002429A0 and 0x002429A4
 VariableAddress_t vaPlayerObfuscateAddr = {
 #if UYA_PAL
@@ -760,9 +755,4 @@ int playerHasShield(Player * player)
         ++shield;
     }
     return 0;
-}
-
-int playerGetLocalCount(void)
-{
-    return PLAYER_LOCAL_PLAYER_COUNT;
 }

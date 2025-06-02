@@ -24,13 +24,7 @@
 */
 #define PLAYER_MAX_HEALTH                   (15)
 
-#ifdef UYA_PAL
-#define PLAYER_STRUCT_POINTER               (*(u32*)0x00225cf0)
-#else
-#define PLAYER_STRUCT_POINTER               (*(u32*)0x00225e70)
-#endif
-
-#define PLAYER_STRUCT                       (PLAYER_STRUCT_POINTER - 0x430C)
+typedef float PlayeWalkSpeedTable[2][4];
 
 /*
 * NAME :		PlayerCameraType
@@ -322,55 +316,78 @@ typedef struct DL_HeroTimers {
 } DL_HeroTimers;
 
 typedef struct HeroTimers { // 0x80
-	/* 0x2f0 */ int state;
-	/* 0x2f4 */ int stateType;
-	/* 0x2f8 */ int subState;
-	/* 0x2fc */ int animState;
-	/* 0x300 */ int stickOn;
-	/* 0x304 */ int stickOff;
-	/* 0x308 */ short int noLedge;
-	/* 0x30a */ short int allowQuickSelect;
-	/* 0x30c */ int firing;
-	/*       */ char unk_310; // Freezes if I change it.
-	/*       */ char unk_311; // Freezes if I change it.
-	/*       */ char unk_312; // Freezes if I change it.
-	/* 0x313 */ char postHitInvinc; // Freezes if I change it.
-	/*       */ char unk_314[0x2];
-	/* 0x316 */ char shield;
-	/* 0x317 */ char unk_317[0x5];
-	/* 0x31c */ char resurrectWait;
-	/* 0x31d */ char NotUsed;
-	/* 0x31e */ short int unkTimer_31e;
-	/* 0x320 */ short int noInput;
-	/*       */ short int unkTimer_322; // Not Used
-	/*       */ short int unkTimer_324;
-	/*       */ short int unkTimer_326;
-	/* 0x328 */ float gadgetRefire;
-	/*       */ short int unkTimer_32c;
-	/* 0x32e */ short int noShockAbort;
-	/*       */ short int UnkTimer_330;
-	/*       */ short int unkTimer_332; // Not Used
-	/* 0x334 */ short int unk_Wrench;
-	/* 0x336 */ short int unkTimer_336;
-	/* 0x338 */ short int unkTimer_338;
-	/*       */ short int unkTimer_33a;	// Not Used
-	/*       */ short int unktimer_33c; // Not Used
-	/* 0x33e */ short int magnetic;
-	/*       */ short int unkTimer_340;
-	/*       */ short int unkTimer_342;
-	/* 0x344 */ short int noDeathTimer;
-	/*       */ short int unkTimer_346; // Not Used
-	/*       */ short int unkTimer_348;
-	/*       */ short int unktimer_34a;
-	/*       */ short int unktimer_34c; // Not Used
-	/*       */ short int unktimer_34e; // Not Used
-	/* 0x350 */ int timeAlive;
-	/*       */ int unk_354;
-	/*       */ int unk_358;
-	/* 0x35c */ int IsChargebooting;
-	/*       */ int unkTimer_360;
-	/*       */ char unk_364[0xc];
+	/* 0x00 */ int state;
+	/* 0x04 */ int stateType;
+	/* 0x08 */ int subState;
+	/* 0x0c */ int animState;
+	/* 0x10 */ int stickOn;
+	/* 0x14 */ int stickOff;
+	/* 0x18 */ short int noLedge;
+	/* 0x1a */ short int allowQuickSelect;
+	/* 0x1c */ int firing;
+	/*      */ char unk_310; // Obfuscated
+	/*      */ char unk_311; // Obfuscated
+	/*      */ char unk_312; // Obfuscated
+	/* 0x23 */ char collOff; // Obfuscated
+	/* 0x24 */ char unk_314;
+	/* 0x25 */ char unk_315;
+	/* 0x26 */ char shield;
+	/* 0x27 */ char unk_317[0x5];
+	/* 0x2c */ char resurrectWait;
+	/* 0x2d */ char NotUsed;
+	/* 0x2e */ short int unkTimer_31e;
+	/* 0x30 */ short int noInput;
+	/*      */ short int unkTimer_322; // Not Used
+	/*      */ short int unkTimer_324;
+	/*      */ short int unkTimer_326;
+	/* 0x38 */ float gadgetRefire;
+	/*      */ short int unkTimer_32c;
+	/* 0x3e */ short int noShockAbort;
+	/*      */ short int UnkTimer_330;
+	/*      */ short int unkTimer_332; // Not Used
+	/* 0x44 */ int wake_timer;
+	/* 0x48 */ int drop_timer;
+	/*      */ short int unktimer_33c; // Not Used
+	/* 0x4e */ short int magnetic;
+	/*      */ short int unkTimer_340;
+	/*      */ short int unkTimer_342;
+	/* 0x54 */ short int noDeathTimer;
+	/*      */ short int unkTimer_346; // Not Used
+	/*      */ short int unkTimer_348;
+	/*      */ short int unktimer_34a;
+	/*      */ short int unktimer_34c; // Not Used
+	/*      */ short int unktimer_34e; // Not Used
+	/* 0x60 */ int timeAlive;
+	/*      */ int unk_354;
+	/*      */ int unk_358;
+	/* 0x6c */ int noFpsCamTimer;
+	/*      */ int unkTimer_360;
+	/*      */ char unk_364[0xc];
 } HeroTimers;
+
+typedef struct HeroSwim { // 0x50
+	/* 0x00 */ vec4 padWindUp;
+	/* 0x10 */ int diveTime;
+	/* 0x14 */ float bankSpeed;
+	/* 0x18 */ float pitchSpeed;
+	/* 0x1c */ float yawSpeed;
+	/* 0x20 */ int bubbleTimer;
+	/* 0x24 */ int minSwimTimer;
+	/* 0x28 */ short int chargeBubbleTimer;
+	/* 0x2a */ short int soundTimer;
+	/* 0x2c */ float buoyancySpeed;
+	/* 0x30 */ short int padUpTime;
+	/* 0x32 */ short int padDownTime;
+	/* 0x34 */ short int ring_timer;
+	/* 0x36 */ short int drop_timer;
+	/* 0x38 */ short int wake_timer;
+	/* 0x3a */ short int plunge_bubbles;
+	/* 0x3c */ short int solidRiseTimer;
+	/* 0x3e */ short int riseTimer;
+	/* 0x40 */ int riseTapCnt;
+	/* 0x44 */ int timeRiseLastPressed;
+	/* 0x48 */ int pad[2];
+} HeroSwim;
 
 typedef struct HeroHotspots { // 0x10
 	/* 0x0 */ short int index; // 02: magnetic, 0b: water
@@ -436,7 +453,7 @@ typedef struct HeroMove { // 0xa0
 	/* 0x8c */ float ascent;
 	/* 0x90 */ float zSpeed;
 	/* 0x94 */ float externalSpeed;
-	/* 0x98 */ int pad[1];
+	/* 0x98 */ int pad[2];
 } HeroMove;
 
 typedef struct HeroColl { // 0x70
@@ -548,6 +565,7 @@ typedef struct Gadget { // 0x50
 	/* 0x3b */ char unequipTime;
 	/* 0x3c */ char unEquipStatus;
 	/* 0x3d */ char unEquipDelay;
+	/* 0x3e */ short pad;
 	/* 0x40 */ int equippedTime;
 	/* 0x44 */ int state;
 	/* 0x48 */ int id;
@@ -604,6 +622,12 @@ typedef struct HeroShadow { // 0x20
 	// /* 0x10 */ int pad[1]; // commented due to misalignment for HeroTurn struct
 	/* 0x10 */ float sample_pos[4];
 } HeroShadow;
+
+typedef struct HeroThrust { // 0x10
+	/* 0x0 */ float ideal;
+	/* 0x4 */ float actual;
+	/* 0x8 */ int pad[2];
+} HeroThrust;
 
 typedef struct HeroAttack { // 0xb0
 	/* 0x00 */ VECTOR near;
@@ -1053,7 +1077,7 @@ typedef struct HeroSpecialIdleDef { // 0x10
 	/* 0x8 */ float minRepeatTime;
 	/* 0xc */ int repeatTimer;
 } HeroSpecialIdleDef;
- 
+
 typedef struct Player { // 0x4500
 	/* 0x0000 */ struct Guber guber;
 	/* 0x0018 */ int padding[1];
@@ -1083,14 +1107,11 @@ typedef struct Player { // 0x4500
 	/* 0x0380 */ HeroFireDir fireDir;
 	/* 0x03d0 */ HeroLockOn lockOn;
 	/* 0x0420 */ HeroMobys mobys;
-	/* 0x0430 */ VECTOR wrenchThrownPos;
-	/* 0x0440 */ VECTOR wrenchThrownRot;
-	/* 0x0450 */ Gadget Weapon;
-	/* 0x04a0 */ Gadget Boots;
-	/* 0x04f0 */ Gadget gadget2;
-	/* 0x0540 */ Gadget gadget3;
-	/* 0x0590 */ Gadget gadget4;
-	/*        */ char unk_5e0[0x30];
+	/* 0x0430 */ Gadget weapon;
+	/* 0x04d0 */ Gadget boots;
+	/* 0x0520 */ Gadget gadget2;
+	/* 0x0570 */ Gadget gadget3;
+	/* 0x05c0 */ Gadget gadget4;
 	/* 0x0610 */ HeroAnim anim;
 	/*        */ int unk_630; // Always gets written -1
 	/* 0x0634 */ int animTimerToRestartWalkingAnim;
@@ -1098,7 +1119,8 @@ typedef struct Player { // 0x4500
 	/* 0x0640 */ HeroJoints joints;
 	/* 0x0740 */ HeroAnimLayers animLayers;
 	/* 0x0760 */ HeroTweaker tweaker[12];
-	/* 0x0fa0 */ HeroShadow shadow;
+	/* 0x0fa0 */ char unk_0fa0[0x10];
+	/* 0x0fb0 */ HeroThrust thrust;
 	/* 0x0fc0 */ HeroTurn turn;
 	/* 0x0fe0 */ HeroAttack attack;
 	/* 0x1090 */ HeroHeadIdle head;
@@ -1124,8 +1146,10 @@ typedef struct Player { // 0x4500
 	/*        */ char unk_18f0[0xd0];
 	/*        */ void * pUnk_19c0;
 	/*        */ char unk_19c4[0x1c];
-	/* 0x19e0 */ short unk_19e0;
-	/* 0x19e2 */ short unk_19e2;
+	/* 0x19e0 */ char playerFontDrawRegistered;
+	/* 0x19e1 */ char gadgetGlowCnt;
+	/* 0x19e2 */ char playerPostDrawFxRegistered;
+	/* 0x19e3 */ char playerPostPreDrawFxRegistered;
 	/* 0x19e4 */ char state;
 	/* 0x19e5 */ char subState;
 	/* 0x19e6 */ char stateType;
@@ -1193,9 +1217,7 @@ typedef struct Player { // 0x4500
 	/* 0x23c0 */ VECTOR camUMtx[3];
 	/* 0x23f0 */ HeroQueuedSound queuedSounds[2];
 	/* 0x2400 */ int loopingSounds[9];
-	/* 0x2424 */ HeroSpecialIdleDef specialIdles;
-	/* 0x2434 */ Moby *skinMoby3;
-	/*        */ char unk_2438[0x10];
+	/* 0x2424 */ Moby *loopingSoundMobys[9];
 	/* 0x2448 */ int firingAnim;
 	/* 0x244c */ int firingGadget;
 	/* 0x2450 */ int desiredCam;
@@ -1326,7 +1348,7 @@ typedef struct Player { // 0x4500
 } Player;
 
 typedef void (*PlayerUpdate_Func)(Player *player);
-typedef int (*GetTeam_Func)(Player *player);
+typedef int (*ReNewMe_Func)(Player *player);
 typedef void (*HandleEvent_Func)(Player *player, GuberEvent *event);
 typedef int (*FriendlyToTeam_Func)(Player *player, int team);
 typedef void (*ResetHero_Func)(Moby *pHeroMoby, VECTOR *pos, VECTOR *rot, int mpIndex);
@@ -1345,7 +1367,7 @@ typedef struct PlayerVTable
 /* 0x04 */ void * FUNC_04; // no pointer
 /* 0x08 */ void * FUNC_08; // just a return;
 /* 0x0c */ PlayerUpdate_Func Update;
-/* 0x10 */ GetTeam_Func GetTeam; // returns (player->pMoby)
+/* 0x10 */ ReNewMe_Func ReNewMe; // returns (player->pMoby)
 /* 0x14 */ HandleEvent_Func HandleEvent;
 /* 0x18 */ void * FUNC_18; // just a return;
 /* 0x1c */ FriendlyToTeam_Func FriendlyToTeam; // Retunrs True if friendly.
@@ -1654,7 +1676,5 @@ void playerGiveShield(Player * player);
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
 Player * playerGetFromSlot(int index);
-
-int playerGetLocalCount(void);
 
 #endif // _LIBUYA_PLAYER_H_
