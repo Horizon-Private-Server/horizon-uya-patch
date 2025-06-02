@@ -105,7 +105,7 @@ struct stAudioInfo { // 0x28
 	/* 0x0c */ int iClientIndexPlaying;
 	/* 0x10 */ int iTickRecord;
 	/* 0x14 */ int iJoinedChannel;
-	/* 0x18 */ stAudioControlDmeObject *pstSharedAudioControlObject;
+	/* 0x18 */ struct stAudioControlDmeObject *pstSharedAudioControlObject;
 	/* 0x1c */ int bAudioObjectCreated;
 	/* 0x20 */ int iAudioObjectIndex;
 	/* 0x24 */ int iMyClientIndex;

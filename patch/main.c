@@ -2164,7 +2164,7 @@ int patchSetSnapDir_Logic(Player *this)
 	float i, f1, f2;
 	float leftRightOffs = 1.570796;
 	int padring = padRingBitsOn(0x28, 2, 0, &this->pPad);
-	int currentWeapon = this->weapon.state == 2 && this->weapon.id == WEAPON_ID_WRENCH;
+	int currentWeapon = this->gadget.weapon.state == 2 && this->gadget.weapon.id == WEAPON_ID_WRENCH;
 	int stateCheck = playerDeobfuscate(&this->state, DEOBFUSCATE_ADDRESS_STATE, DEOBFUSCATE_MODE_STATE) == PLAYER_STATE_CHARGE_JUMP;
 	if ((this->lockOn.strafing == 0 && (this->fps.active != 1 || padring == 0)) || stateCheck) {
 		GetIdealThrustFromPad(1, this, 0);

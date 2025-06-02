@@ -572,6 +572,15 @@ typedef struct Gadget { // 0x50
 	/* 0x4c */ float lightAng;
 } Gadget;
 
+typedef struct HeroGadgets { // 0x1e0
+	/* 0x000 */ Gadget weapon;
+	/* 0x050 */ Gadget boots;
+	/* 0x0a0 */ Gadget gadget3;
+	/* 0x0f0 */ Gadget gadget4;
+	/* 0x140 */ Gadget gadget5;
+	/* 0x190 */ Gadget gadget6;
+} HeroGadgets;
+
 typedef struct HeroAnim { // 0x20
 	/* 0x00 */ float speed;
 	/* 0x04 */ int iscale;
@@ -1080,7 +1089,6 @@ typedef struct HeroSpecialIdleDef { // 0x10
 
 typedef struct Player { // 0x4500
 	/* 0x0000 */ struct Guber guber;
-	/* 0x0018 */ int padding[1];
 	/* 0x0020 */ MATRIX mtx;
 	/* 0x0060 */ MATRIX invMtx;
 	/* 0x00a0 */ VECTOR playerPosition;
@@ -1107,11 +1115,7 @@ typedef struct Player { // 0x4500
 	/* 0x0380 */ HeroFireDir fireDir;
 	/* 0x03d0 */ HeroLockOn lockOn;
 	/* 0x0420 */ HeroMobys mobys;
-	/* 0x0430 */ Gadget weapon;
-	/* 0x04d0 */ Gadget boots;
-	/* 0x0520 */ Gadget gadget2;
-	/* 0x0570 */ Gadget gadget3;
-	/* 0x05c0 */ Gadget gadget4;
+	/* 0x0430 */ HeroGadgets gadget;
 	/* 0x0610 */ HeroAnim anim;
 	/*        */ int unk_630; // Always gets written -1
 	/* 0x0634 */ int animTimerToRestartWalkingAnim;
