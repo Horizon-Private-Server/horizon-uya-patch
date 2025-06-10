@@ -147,7 +147,7 @@ VariableAddress_t vaDrawBoxFunc = {
 #if UYA_PAL
 	.Lobby = 0x00617790,
 	.Bakisi = 0x004e96b8,
-	.Hoven = 0x004eb828,
+	.Hoven = 0x004eb7d0,
 	.OutpostX12 = 0x004e10a8,
     .KorgonOutpost = 0x004de840,
 	.Metropolis = 0x004ddb90,
