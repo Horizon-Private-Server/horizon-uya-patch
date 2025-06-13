@@ -405,10 +405,10 @@ MenuElem_t menuElementsGeneral[] = {
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
-  #if SCAVENGER_HUNT
+#if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
 #endif
-  #if DEBUG
+#if DEBUG
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
@@ -416,6 +416,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist, "Toggles code that pulls the camera towards nearby targets when aiming." },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake, "Toggles the camera shake caused by nearby explosions." },
   { "Disable D-Pad Movement", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.disableDpadMovement, "Disables the d-pad moving your character in game." },
+  { "Disable Strafing Side-Flips", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.dlStyleFlips, "Disables Strafing Side-Flips." },
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter, "Toggles the in game FPS counter." },
   { "Hide Flux Reticle", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.hideFluxReticle, "Hide the Flux's reticle to show how tough you really are!" },

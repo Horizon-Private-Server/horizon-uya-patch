@@ -31,7 +31,5 @@ VariableAddress_t vaMapScore_ScoreboardToggle;
 VariableAddress_t vaQuickSelectCheck_Hook;
 VariableAddress_t vaQuickSelectCheck_Func;
 VariableAddress_t vaHypershotEquipButton_bits;
-VariableAddress_t vaGetSnapJumpWindow_SnapJumpDir_Hook;
-VariableAddress_t vaGetSnapJumpDir_Func;
+VariableAddress_t vaSideFlipJoystickVal;
 VariableAddress_t vaZRotDiffSpherical;
-VariableAddress_t vaGetIdealThrustFromPad;

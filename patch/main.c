@@ -2156,50 +2156,23 @@ void patchHideFluxReticle(void)
 		++mobyStart;
 	}
 }
-#define ZRotDiffSpherical ((float (*)(Player* player, VECTOR* agnleVec, int turnDir))GetAddress(&vaZRotDiffSpherical))
-#define GetIdealThrustFromPad ((void (*)(float topSpeed,Player* player,int filter))GetAddress(&vaGetIdealThrustFromPad))
 
-int patchSetSnapDir_Logic(Player *this)
+/*
+ * NAME :		patchSideFlipJoystickVal
+ * DESCRIPTION :Patches joystick offset value for checking if to side flip or not.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchSideFlipJoystickVal(void)
 {
-	float i, f1, f2;
-	float leftRightOffs = 1.570796;
-	int padring = padRingBitsOn(0x28, 2, 0, &this->pPad);
-	int currentWeapon = this->gadget.weapon.state == 2 && this->gadget.weapon.id == WEAPON_ID_WRENCH;
-	int stateCheck = playerDeobfuscate(&this->state, DEOBFUSCATE_ADDRESS_STATE, DEOBFUSCATE_MODE_STATE) == PLAYER_STATE_CHARGE_JUMP;
-	if ((this->lockOn.strafing == 0 && (this->fps.active != 1 || padring == 0)) || stateCheck) {
-		GetIdealThrustFromPad(1, this, 0);
-		if (this->gravityType == 0) {
-			i = fastSubRots(this->turn.ideal, this->playerRotation[1]);
-		} else {
-			i = ZRotDiffSpherical(this, &this->turn.idealVec, 0);
-		}
-		f1 = 0.7853982;
-		f2 = fastDiffRots(i, MATH_PI);
-		if (f1 <= f2) {
-			if (fastDiffRots(i,-leftRightOffs) < f1)
-				return 1;
-
-			if (fastDiffRots(i, leftRightOffs) < f1)
-				return 0;
-			
-			return 2;
-		}
-	} else {
-		int strafeDir = this->lockOn.strafingDir;
-		if (strafeDir != 3) {
-		  return strafeDir;
-		}
-	}
-	return -1;
-}
-
-void patchSetSnapDir(void)
-{
-	if (patched.config.dlStyleFlips)
+	if (patched.config.dlStyleFlips == config.dlStyleFlips)
 		return;
 
-	HOOK_JAL(GetAddress(&vaGetSnapJumpWindow_SnapJumpDir_Hook), &patchSetSnapDir_Logic);
-	patched.config.dlStyleFlips = 1;
+	u16 val = config.dlStyleFlips ? 0x3f80 : 0x3f66;
+	POKE_U16(GetAddress(&vaSideFlipJoystickVal), val);
+	patched.config.dlStyleFlips = config.dlStyleFlips;
 }
 
 /*
@@ -2808,12 +2781,13 @@ int main(void)
 		if (config.hypershotEquipButton)
 			hypershotEquipButton();
 
+		// Patch Side Flipping joystick offset value
+		patchSideFlipJoystickVal();
+		
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
 			configMenuDisable();
 
-		// patchSetSnapDir();
-		
 		// Updates Start Menu to have "Patch Config" option.
 		// Logic for opening menu as well.
 		setupPatchConfigInGame();
