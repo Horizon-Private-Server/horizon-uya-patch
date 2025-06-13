@@ -23,7 +23,6 @@ typedef struct PatchConfig {
   char cycleWeapon3;
   char hypershotEquipButton;
   char disableDpadMovement;
-  char enablePlayerSync;
   char hideFluxReticle;
   char dlStyleFlips;
 } PatchConfig_t;
