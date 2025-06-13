@@ -2123,9 +2123,6 @@ void runPlayerPositionSmooth(void)
  */
 void runPlayerSync(void)
 {
-	if (!config.enablePlayerSync)
-		return;
-	
 	runPlayerPositionSmooth();
 }
 
