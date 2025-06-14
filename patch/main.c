@@ -2164,7 +2164,7 @@ void patchHideFluxReticle(void)
  */
 void patchSideFlipJoystickVal(void)
 {
-	if (patched.config.dlStyleFlips == config.dlStyleFlips)
+	if (!gameConfig.prDisableDlStyleFlips && patched.config.dlStyleFlips == config.dlStyleFlips)
 		return;
 
 	u16 val = config.dlStyleFlips ? 0x3f80 : 0x3f66;
@@ -2780,7 +2780,7 @@ int main(void)
 
 		// Patch Side Flipping joystick offset value
 		patchSideFlipJoystickVal();
-		
+
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
 			configMenuDisable();
