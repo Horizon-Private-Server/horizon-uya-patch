@@ -543,6 +543,29 @@ int playerGetHealth(Player * player)
     return *(float*)&fHealth;
 }
 //--------------------------------------------------------------------------------
+int playerGetRespawnTimer(Player * player)
+{
+    // asm(".set noreorder;");
+    int stack[1];
+    u32 addr = &player->timers.resurrectWait;
+    u32 val = *(u8*)addr;
+    int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
+    int n = 0;
+    int m = 0;
+    do {
+        u32 Offset = (u32)((int)addr - (u32)val & 7) + n;
+        n = n + 3;
+        *(u8*)((u32)stack + m) = *(u8*)((u32)RandDataAddr + (val + (Offset & 7) * 0xff));
+        ++m;
+    } while (n < 0x18);
+    return (int)((u32)stack[1] ^ (u32)stack[0] ^ (u32)addr) >> 0x10;
+}
+//--------------------------------------------------------------------------------
+int playerGetState(Player *player)
+{
+    return playerDeobfuscate(&player->state, DEOBFUSCATE_ADDRESS_STATE, DEOBFUSCATE_MODE_STATE);
+}
+//--------------------------------------------------------------------------------
 int playerIsDead(Player * player)
 {
     // return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;

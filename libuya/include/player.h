@@ -1528,6 +1528,18 @@ void playerSetHealth(Player * player, int health);
 */
 int playerGetHealth(Player * player);
 
+int playerGetRespawnTimer(Player * player);
+
+/*
+* NAME :		playerGetState
+* DESCRIPTION :	Returns Players State
+* NOTES :		Needed for obfuscated state values
+* ARGS : 
+* RETURN :
+* AUTHOR :			Troy "Metroynome" Pruitt
+*/
+playerGetState(Player *player);
+
 /*
 * NAME :		playerRespawn
 * DESCRIPTION :
@@ -1562,7 +1574,6 @@ __LIBUYA_SETTER__ void playerSetPosRot(Player *player, VECTOR position, VECTOR r
 * 			Returns non-zero if the given player is dead.
 * NOTES :
 * ARGS : 
-*      player      :           Target player.
 * RETURN :
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
@@ -1570,9 +1581,8 @@ int playerIsDead(Player * player);
 
 /*
 * NAME :		playerGiveWeaponUpgade
-* DESCRIPTION :
-* 			Upgrades the target players weapon.
-* NOTES :  Only Upgrades if the player has the given weapon.
+* DESCRIPTION :	Upgrades the target players weapon.
+* NOTES : 		Only Upgrades if the player has the given weapon.
 * ARGS : 
 *      player      :           Target player.
 * 		weaponId	:			Weapon
@@ -1583,8 +1593,7 @@ void playerGiveWeaponUpgrade(Player * player, int weaponId);
 
 /*
 * NAME :		playerGiveWeapon
-* DESCRIPTION :
-* 			Give the target player the given weapon ID.
+* DESCRIPTION :	Give the target player the given weapon ID.
 * NOTES :
 * ARGS : 
 *      player      :           Target player.
@@ -1597,8 +1606,7 @@ void playerGiveWeapon(Player * player, int weaponId, int type);
 
 /*
 * NAME :		playerEquipWeapon
-* DESCRIPTION :
-* 			Equips the given weapon ID.
+* DESCRIPTION :	Equips the given weapon ID.
 * NOTES :
 * ARGS : 
 *      player      :           Target player.
@@ -1610,11 +1618,9 @@ void playerEquipWeapon(Player * player, int weaponId);
 
 /*
 * NAME :		playerStripWeapons
-* DESCRIPTION :
-* 			Removes all weapons from player.
+* DESCRIPTION :	Removes all weapons from player.
 * NOTES :
 * ARGS : 
-*      player      :           Target player.
 * RETURN :
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
@@ -1622,8 +1628,7 @@ void playerStripWeapons(Player * player);
 
 /*
 * NAME :		playerGiveRandomWeapons
-* DESCRIPTION :
-* 			Gives Target player random weapons
+* DESCRIPTION :	Gives Target player random weapons
 * NOTES :
 * ARGS : 
 *      player      :           Target player.
@@ -1635,8 +1640,7 @@ void playerGiveRandomWeapons(Player * player, int amount);
 
 /*
 * NAME :		playerDeobfuscate
-* DESCRIPTION :
-* 			Deobfuscates given player struct item.
+* DESCRIPTION : Deobfuscates given player struct item.
 * NOTES :
 * ARGS : 
 *      src     :           Source pointer from player struct of the data needed to deorbuscate.
@@ -1652,8 +1656,7 @@ void playerGiveRandomWeapons(Player * player, int amount);
 u32 playerDeobfuscate(u32 src, DeobfuscateAddress_e addr, DeobfuscateMode_e mode);
 /*
 * NAME :		playerHasShield
-* DESCRIPTION :
-* 				Checks to see if player has shield
+* DESCRIPTION : Checks to see if player has shield
 * NOTES :
 * ARGS : 		player: player
 * RETURN :
@@ -1662,8 +1665,7 @@ u32 playerDeobfuscate(u32 src, DeobfuscateAddress_e addr, DeobfuscateMode_e mode
 int playerHasShield(Player * player);
 /*
 * NAME :		playerGiveShield
-* DESCRIPTION :
-* 				Gives the player a shield
+* DESCRIPTION : Gives the player a shield
 * NOTES :
 * ARGS : 		player: player
 * RETURN :
@@ -1672,12 +1674,11 @@ int playerHasShield(Player * player);
 void playerGiveShield(Player * player);
 /*
 * NAME :		playerGetFromSlot
-* DESCRIPTION :
-* 				Gets the needed players struct pointer
+* DESCRIPTION : Gets the needed players struct pointer
 * NOTES :
 * ARGS : 		index: index
 * RETURN :
-* AUTHOR :			Troy "Metroynome" Pruitt
+* AUTHOR :		Troy "Metroynome" Pruitt
 */
 Player * playerGetFromSlot(int index);
 
