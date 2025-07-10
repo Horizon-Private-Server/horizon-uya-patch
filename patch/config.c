@@ -257,9 +257,11 @@ MenuElem_ListData_t dataCustomMaps = {
 
 // maps with their own exclusive gamemode
 char dataCustomMapsWithExclusiveGameMode[] = {
+/*
 #if DEBUG
   CUSTOM_MAP_SPLEEF,
 #endif
+*/
 };
 const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithExclusiveGameMode)/sizeof(char);
 
@@ -408,10 +410,12 @@ MenuElem_t menuElementsGeneral[] = {
 #if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
 #endif
+/*
 #if DEBUG
   { "16:9 Widescreen", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_WIDESCREEN },
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
+*/
   { "Always Show Health", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.alwaysShowHealth, "Let that health bar hide no longer!  This will make it so the health bar is always visible." },
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist, "Toggles code that pulls the camera towards nearby targets when aiming." },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake, "Toggles the camera shake caused by nearby explosions." },
@@ -611,6 +615,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
 
   if (gs) {
     switch (v) {
+/*
       #ifdef DEBUG
       case CUSTOM_MODE_INFECTED:
       case CUSTOM_MODE_JUGGERNAUGHT: {
@@ -623,6 +628,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
         return 0;
       }
       #endif
+*/
       CUSTOM_MODE_MIDFLAG: {
         if (gs->GameType == GAMETYPE_CTF) return 1;
         *value = CUSTOM_MODE_NONE;
