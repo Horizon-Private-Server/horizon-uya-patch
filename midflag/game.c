@@ -222,7 +222,7 @@ void gameTick(int isCustomMap)
 	// find and store flag moby address
 	if (midFlag.setup == 0)
 		midFlagGetFlags();
-
+	Player ** Players = playerGetAll();
 	Moby *redFlag = midFlag.pRedFlag;
 	Moby *blueFlag = midFlag.pBlueFlag;
 	if ((Moby *)redFlag == 0)
@@ -243,7 +243,7 @@ void gameTick(int isCustomMap)
 	}
 	// if carried, set red flag team to opposite of player team.
 	else if (red->carrierIdx > -1) {
-		Player *player = playerGetFromSlot(red->carrierIdx);
+		Player *player = Players[red->carrierIdx];
 		// blue team captures: 1, red team captures: 0
 		int mpTeam = !player->mpTeam;
 		red->team = mpTeam;
@@ -266,7 +266,7 @@ void gameTick(int isCustomMap)
 		}
 		// if carried, set sprite to player position.
 		else if (i > -1) {
-			Player *p = playerGetFromSlot(i);
+			Player *p = Players[i];
 			vector_copy(t, p->playerPosition);
 			t[2] += 2;
 			t[0] += .07;	
