@@ -1947,8 +1947,8 @@ void hypershotEquipButton(void)
 	}
 	// get Player 1 struct
 	Player *p = playerGetFromSlot(0);
-	// if player is found, and not holding flag, and prsses needed button.
-	if (p && !p->flagMoby && playerPadGetButtonDown(p, hypershotGetButton()) > 0)
+	// if player is found and presses needed button, equip hypershot.
+	if (p && playerPadGetButtonDown(p, hypershotGetButton()) > 0)
 		playerEquipWeapon(p, WEAPON_ID_SWINGSHOT);
 }
 
