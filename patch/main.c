@@ -2779,7 +2779,7 @@ int main(void)
 			hypershotEquipButton();
 
 		// Patch Side Flipping joystick offset value
-		patchSideFlipJoystickVal();
+		// patchSideFlipJoystickVal();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)

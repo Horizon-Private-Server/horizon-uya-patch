@@ -420,7 +420,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist, "Toggles code that pulls the camera towards nearby targets when aiming." },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake, "Toggles the camera shake caused by nearby explosions." },
   { "Disable D-Pad Movement", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.disableDpadMovement, "Disables the d-pad moving your character in game." },
-  { "Disable Strafing Side-Flips", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.dlStyleFlips, "Disables Strafing Side-Flips." },
+  // { "Disable Strafing Side-Flips", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.dlStyleFlips, "Disables Strafing Side-Flips." },
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter, "Toggles the in game FPS counter." },
   { "Hide Flux Reticle", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.hideFluxReticle, "Hide the Flux's reticle to show how tough you really are!" },
@@ -480,7 +480,7 @@ MenuElem_t menuElementsGameSettings[] = {
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever, "Double tap and hold R2 to chargeboot forever." },
-  { "Force Strafing Side-Flips", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.prDisableDlStyleFlips, "Forces 'Disable Strafing Side-Flips' to be off, no matter the players setting." },
+  // { "Force Strafing Side-Flips", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.prDisableDlStyleFlips, "Forces 'Disable Strafing Side-Flips' to be off, no matter the players setting." },
   { "Gravity Bomb->B6 Obliterator", toggleActionHandler, menuStateHandler_Default, &gameConfig.prGravityBombTweakers, "Changes the Gravity Bomb Physics to that of the B6 Obliterator from Ratchet: Deadlocked!" },
   { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly, "Only allow the use of each players Loadout weapons, regardless of what weapons are enabled." },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor, "You only have one life!  Once you die, you can't respawn!" },
