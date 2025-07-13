@@ -28,29 +28,10 @@
 #define GAME_FPS                            (60.0)
 #endif
 
-typedef enum {
-	GAME_MODE_NONE = -2,
-	GAME_MODE_DEBUG = -1,
-	GAME_MODE_NORMAL = 0,
-	GAME_MODE_MOVIE = 1,
-	GAME_MODE_SCENE = 2,
-	GAME_MODE_PAUSE = 3,
-	GAME_MODE_FREEZE = 4,
-	GAME_MODE_VENDOR = 5,
-	GAME_MODE_SPACE = 6,
-	GAME_MODE_PUZZLE = 7,
-	GAME_MODE_WEAPON_UPGRADE = 8,
-	GAME_MODE_CREDITS = 9,
-	GAME_MODE_LOBBY = 10,
-	GAME_MODE_FLYBY = 11,
-	GAME_MODE_THERMAL = 12,
-	GAME_MODE_PRE_LOBBY_MEMCARD_LOAD = 13,
-	GAME_MODE_PRE_LOBBY = 14,
-	GAME_MODE_WAIT_FOR_MPSTART = 15,
-	GAME_MODE_EXEC_MP_MEMCARD_COMMAND = 16,
-	GAME_MODE_IOP_DEBUG = 17,
-	GAME_MODE_MAX = 18
-} gameMode_t;
+typedef enum GameEndReason {
+	GAME_END_TIME_UP = 1,
+	GAME_END_TEAM_WIN = 4,
+} eGameEndReason;
 
 typedef struct FragCount {
 /* 0x0 */ short kills;
@@ -65,40 +46,6 @@ typedef struct PlayerStats { // 0x60
 /* 0x38 */ char flagsSaved[GAME_MAX_PLAYERS];
 /* 0x40 */ float baseDamage[GAME_MAX_PLAYERS];
 } PlayerStats;
-
-//=================   =For DL:
-// typedef struct PlayerGameStats
-// {
-//     short WeaponKills[GAME_MAX_PLAYERS][7];
-//     short WeaponDeaths[GAME_MAX_PLAYERS][7];
-//     short WeaponShots[GAME_MAX_PLAYERS][7];
-//     short WeaponShotsHitBy[GAME_MAX_PLAYERS][7];
-//     float VehicleTime[GAME_MAX_PLAYERS];
-//     short VehicleWeaponKills[GAME_MAX_PLAYERS];
-//     short VehicleWeaponDeaths[GAME_MAX_PLAYERS];
-//     short VehicleRoadKills[GAME_MAX_PLAYERS];
-//     short VehicleRoadDeaths[GAME_MAX_PLAYERS];
-//     short VehicleShotsFired[GAME_MAX_PLAYERS];
-//     short VehicleShotsHit[GAME_MAX_PLAYERS];
-//     short Kills[GAME_MAX_PLAYERS];
-//     short Deaths[GAME_MAX_PLAYERS];
-//     short Suicides[GAME_MAX_PLAYERS];
-//     short MultiKills[GAME_MAX_PLAYERS];
-//     short SniperKills[GAME_MAX_PLAYERS];
-//     short WrenchKills[GAME_MAX_PLAYERS];
-//     char ConquestNodesCaptured[GAME_MAX_PLAYERS];
-//     char ConquestNodeSaves[GAME_MAX_PLAYERS];
-//     char ConquestDefensiveKills[GAME_MAX_PLAYERS];
-//     char ConquestPoints[GAME_MAX_PLAYERS];
-//     char CtfFlagsCaptures[GAME_MAX_PLAYERS];
-//     char CtfFlagsSaved[GAME_MAX_PLAYERS];
-//     float KingHillHoldTime[GAME_MAX_PLAYERS];
-//     float InternalKingHillHoldTime[GAME_MAX_PLAYERS];
-//     float JuggernautTime[GAME_MAX_PLAYERS];
-//     short Squats[GAME_MAX_PLAYERS];
-//     short VehicleSquats[GAME_MAX_PLAYERS];
-//     short TicketScore[GAME_MAX_PLAYERS];
-// } PlayerGameStats;
 
 //--------------------------------------------------------
 typedef struct TeamStats {
@@ -160,7 +107,10 @@ typedef struct GameData {
 /* 0x010 */ int winningTeam;
 /* 0x014 */ int winningPlayer;
 /* 0x018 */ PlayerStats playerStats;
-/* 0x078 */ char unk_078[0x194];
+/* 0x078 */ char unk_078[0x174];
+/* 0x1ec */ int gameEndReason;
+/* 0x1f0 */ int gameIsOver;
+/* 0x1f4 */ char unk_1f4[0x18];
 /* 0x20c */ LocalPlayerYourBaseGameData *allYourBaseGameData;
 /* 0x210 */ CTFGameData *CTFGameData;
 /* 0x214 */ DeathMatchGameData *DeathMatchGameData;
@@ -252,7 +202,7 @@ struct tNW_Info {
 /* 0x0085 */ char unk_0085[0x13];
 /* 0x0098 */ tNW_PlayerInfoStats_t myStats;
 /* 0x00ce */ char gameName[64];
-/* 0x0108 */ char gamePassword[24];
+/* 0x0108 */ char gamePassword[36];
 /* 0x0130 */ enum eNW_STATE state;
 /* 0x0134 */ int unk_0134;
 /* 0x0138 */ int netFrameTime; // aka: gameTime
@@ -272,7 +222,7 @@ struct tNW_Info {
 /* 0x0180 */ int onlyLocalPlayers;
 /* 0x0184 */ int originalyOnlyLocalPlayers;
 /* 0x0188 */ char INukedTheMicroCode;
-/* 0x0189 */ char unk_0189[0x2];
+/* 0x0189 */ char unk_0189[0x3];
 /* 0x018c */ char m_bPeer2PeerGame;
 /* 0x018d */ char unk_018d[0x3];
 /* 0x0190 */ char m_bUseEncryption;
