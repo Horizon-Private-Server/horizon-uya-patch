@@ -652,8 +652,25 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 				Moby* hitMoby = mobyGetByGuberUid(hitGuberId);
 				if (hitMoby) {
 					DPRINTF("sniper hit %08X\n", (u32)hitMoby);
-					vector_subtract(out, hitMoby->position, (float*)event);
-					out[2] += 0.5;
+					if (hitMoby->unk_bc[1] != 0xffffffff )
+					{
+						vector_subtract(out, hitMoby->position, (float*)event); // hitmoby position - event converted to float? what is event?
+						out[2] += 0.5; // correction math, add bump to coordinate perpendicular to player model's feet
+					}
+					else 
+					{
+						// TODO nicking still happens on grav walls sometimes, we need a way to correct the "out" vector so it 
+						// doesn't nick the player. The problem is that its a little complicated to come up with the correction math
+						// since being on the grav wall fucks up the xyz orientation (player can be sideways, upside down, in between, etc.)
+						// when completely upside down in grav wall, this should be -.5
+						// when standing completely straight up (non-grav) this should be +.5
+						// when standing completely sideways, out[0] and out[1] will both need to be corrected depending where "sideways" is facing
+						// how should we calculate out[0-2] when the player is somewhere in between the previous 3 cases?
+						// vector_subtract(out, hitMoby->position, (float*)event); // hitmoby position - event converted to float? what is event?
+
+						// out[2] -= 0.5; only works when player is completely upside down, figure out transformation math
+						DPRINTF("The moby is on a grav wall!");
+					}
 					return;
 				}
 			}
@@ -2307,6 +2324,36 @@ void patchHeadsetSprite(GameSettings* gs, int clientId)
 }
 
 /*
+ * NAME :		playerDebugPad
+ * DESCRIPTION: Prints player debug information in game for R&D purposes, feel free to add on
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			JelloGiant
+ */
+
+void playerDebugPad()
+{
+	int i = 0;
+	Player *player = playerGetFromSlot(0);
+	Moby *playerMoby = player->pMoby;
+	if (playerPadGetButtonDown(player, PAD_CIRCLE | PAD_CROSS) > 0) {
+		DPRINTF("My moby has oClass:%d with address %08x and unk_bc address is %08x and unk_bc is: ", playerMoby->oClass, playerMoby, playerMoby->unk_bc);
+		DPRINTF("My player struct is at %08x\n", player);
+		for (i=0; i < 4; i++) {
+			DPRINTF("byte %d is %x, ", i, playerMoby->unk_bc[i]);
+		}
+ 		DPRINTF("\n");
+		if (playerMoby->unk_bc[1] == 0xffffffff) {DPRINTF("on grav wall");}
+		else {DPRINTF("not on grav wall");}
+		DPRINTF("\n");
+		DPRINTF("playerMoby's Position coordinates: "); 
+		vector_print(playerMoby->position);
+		DPRINTF("\n");
+	}
+}
+
+/*
  * NAME :		runCheckGameMapInstalled
  * DESCRIPTION :
  * NOTES :
@@ -2774,6 +2821,10 @@ int main(void)
 
 		// Patch hiding of Flux Reticle
 		patchHideFluxReticle();
+
+		#ifdef DEBUG
+		playerDebugPad();
+		#endif
 
 		if (config.hypershotEquipButton)
 			hypershotEquipButton();
