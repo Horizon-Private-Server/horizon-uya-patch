@@ -652,25 +652,13 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 				Moby* hitMoby = mobyGetByGuberUid(hitGuberId);
 				if (hitMoby) {
 					DPRINTF("sniper hit %08X\n", (u32)hitMoby);
-					if (hitMoby->unk_bc[1] != 0xffffffff )
-					{
-						vector_subtract(out, hitMoby->position, (float*)event); // hitmoby position - event converted to float? what is event?
-						out[2] += 0.5; // correction math, add bump to coordinate perpendicular to player model's feet
-					}
-					else 
-					{
-						// TODO nicking still happens on grav walls sometimes, we need a way to correct the "out" vector so it 
-						// doesn't nick the player. The problem is that its a little complicated to come up with the correction math
-						// since being on the grav wall fucks up the xyz orientation (player can be sideways, upside down, in between, etc.)
-						// when completely upside down in grav wall, this should be -.5
-						// when standing completely straight up (non-grav) this should be +.5
-						// when standing completely sideways, out[0] and out[1] will both need to be corrected depending where "sideways" is facing
-						// how should we calculate out[0-2] when the player is somewhere in between the previous 3 cases?
-						// vector_subtract(out, hitMoby->position, (float*)event); // hitmoby position - event converted to float? what is event?
+					VECTOR temp = {0,0,0,0};
+					VECTOR correction = {0.0,0.0,0.5,0.0};
+					vector_subtract(out, hitMoby->position, (float*)event); // hitmoby position - event converted to float? what is event?
+					//out[2] += 0.5; // old correction math, only worked when player not on grav wall
+					vector_multiply(temp, hitMoby->rMtx.v2, correction);
+					vector_add(out, out, temp);
 
-						// out[2] -= 0.5; only works when player is completely upside down, figure out transformation math
-						DPRINTF("The moby is on a grav wall!");
-					}
 					return;
 				}
 			}
