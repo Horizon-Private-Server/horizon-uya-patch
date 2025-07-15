@@ -653,7 +653,7 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 				if (hitMoby) {
 					DPRINTF("sniper hit %08X\n", (u32)hitMoby);
 					VECTOR temp = {0,0,0,0};
-					VECTOR correction = {0.0,0.0,0.5,0.0};
+					VECTOR correction = {0.5,0.5,0.5,1.0};
 					vector_subtract(out, hitMoby->position, (float*)event); // hitmoby position - event converted to float? what is event?
 					//out[2] += 0.5; // old correction math, only worked when player not on grav wall
 					vector_multiply(temp, hitMoby->rMtx.v2, correction);
