@@ -654,8 +654,7 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 					DPRINTF("sniper hit %08X\n", (u32)hitMoby);
 					VECTOR temp = {0,0,0,0};
 					VECTOR correction = {0.5,0.5,0.5,1.0};
-					vector_subtract(out, hitMoby->position, (float*)event); // hitmoby position - event converted to float? what is event?
-					//out[2] += 0.5; // old correction math, only worked when player not on grav wall
+					vector_subtract(out, hitMoby->position, (float*)event);
 					vector_multiply(temp, hitMoby->rMtx.v2, correction);
 					vector_add(out, out, temp);
 
@@ -2312,36 +2311,6 @@ void patchHeadsetSprite(GameSettings* gs, int clientId)
 }
 
 /*
- * NAME :		playerDebugPad
- * DESCRIPTION: Prints player debug information in game for R&D purposes, feel free to add on
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			JelloGiant
- */
-
-void playerDebugPad()
-{
-	int i = 0;
-	Player *player = playerGetFromSlot(0);
-	Moby *playerMoby = player->pMoby;
-	if (playerPadGetButtonDown(player, PAD_CIRCLE | PAD_CROSS) > 0) {
-		DPRINTF("My moby has oClass:%d with address %08x and unk_bc address is %08x and unk_bc is: ", playerMoby->oClass, playerMoby, playerMoby->unk_bc);
-		DPRINTF("My player struct is at %08x\n", player);
-		for (i=0; i < 4; i++) {
-			DPRINTF("byte %d is %x, ", i, playerMoby->unk_bc[i]);
-		}
- 		DPRINTF("\n");
-		if (playerMoby->unk_bc[1] == 0xffffffff) {DPRINTF("on grav wall");}
-		else {DPRINTF("not on grav wall");}
-		DPRINTF("\n");
-		DPRINTF("playerMoby's Position coordinates: "); 
-		vector_print(playerMoby->position);
-		DPRINTF("\n");
-	}
-}
-
-/*
  * NAME :		runCheckGameMapInstalled
  * DESCRIPTION :
  * NOTES :
@@ -2652,21 +2621,6 @@ void onOnlineMenu(void)
  */
 int main(void)
 {
-	#if DEBUG
-	Player * p = playerGetFromSlot(0);
-	// 82: Test Server,  85: Prod Server
-	if (p->pNetPlayer->pNetPlayerData->accountId == 82) {
-		static int num = 0;
-		if (padGetButtonDown(0, PAD_L3 | PAD_R3) > 0) {
-			gameEnd(num);
-			num = 0;
-		}
-		if (padGetButtonDown(0, PAD_L1 | PAD_UP) > 0) num = 1;
-		if (padGetButtonDown(0, PAD_L1 | PAD_DOWN) > 0) num = 2;
-		if (padGetButtonDown(0, PAD_L1 | PAD_LEFT) > 0) num = 3;
-		if (padGetButtonDown(0, PAD_L1 | PAD_RIGHT) > 0) num = 4;
-	}
-	#endif
 	// Call this first
 	uyaPreUpdate();
 
@@ -2809,10 +2763,6 @@ int main(void)
 
 		// Patch hiding of Flux Reticle
 		patchHideFluxReticle();
-
-		#ifdef DEBUG
-		playerDebugPad();
-		#endif
 
 		if (config.hypershotEquipButton)
 			hypershotEquipButton();
