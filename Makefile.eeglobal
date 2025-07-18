@@ -32,6 +32,10 @@ EE_LINKFILE := $(if $(EE_LINKFILE),$(EE_LINKFILE),linkfile)
 EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS) $(EE_INCS)
 EE_CXX_COMPILE = $(EE_CXX) $(EE_CXXFLAGS) $(EE_INCS)
 
+
+utils.o : /src/common/utils.c
+	$(EE_CC) $(EE_CFLAGS) $(EE_DEFS) $(EE_INCS) $(EE_LDFLAGS) -c $< -o $@
+
 %.o : %.c
 	$(EE_CC) $(EE_CFLAGS) $(EE_DEFS) $(EE_INCS) $(EE_LDFLAGS) -c $< -o $@
 
