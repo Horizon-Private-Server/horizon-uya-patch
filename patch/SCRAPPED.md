@@ -514,3 +514,40 @@ void onGameplayLoad_playerSize(GameplayHeaderDef_t * gameplay)
 	}
 }
 ```
+
+# AFK Patch
+path: `horizon-uya-patch/patch/main.c`
+```c
+void patchAFK(void)
+{
+	int AFK_Wait_Time = 15; // in Minutes
+
+	int isAFK = -1;
+	int gameTime = gameGetTime();
+	static int afk_time = 0;
+	if (afk_time == 0)
+		afk_time = gameTime + (AFK_Wait_Time * TIME_SECOND);
+
+	PAD * src = (PAD*)((u32)P1_PAD - 0x80);
+	// if no buttons/analogs are pressed
+	if (src->handsOff && src->handsOffStick) {
+		// if is already AFK, return.
+		if (isAFK == 1)
+			return;
+
+		// if time left to go afk is greater than the game time, then not afk yet, return.
+		if (afk_time > gameTime)
+			return;
+
+		isAFK = 1;
+		patchAFK_SendResponse(isAFK);
+	} else {
+		afk_time = gameTime + (TIME_SECOND * AFK_Wait_Time);
+		if (isAFK == 0)
+			return;
+
+		isAFK = 0;
+		patchAFK_SendResponse(isAFK);
+	}
+}
+```
