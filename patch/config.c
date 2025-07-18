@@ -109,6 +109,7 @@ void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_Nodes(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_VoteToEndStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
@@ -369,6 +370,29 @@ MenuElem_ListData_t dataHealthBoxes = {
     .items = { "On", "No Glass Container", "Off" }
 };
 
+MenuElem_RangeData_t dataNodeSelectTimer = {
+    .value = &gameConfig.grNodeSelectTimer,
+    .stateHandler = NULL,
+    .minValue = 0,
+    .maxValue = 10,
+    .appendText = " Seconds",
+};
+
+MenuElem_RangeData_t dataSuicidePenaltyTimer = {
+    .value = &gameConfig.grSuicidePenaltyTimer,
+    .stateHandler = NULL,
+    .minValue = 0,
+    .maxValue = 10,
+    .appendText = " Seconds"
+};
+
+MenuElem_ListData_t dataAllNodesTimer = {
+    .value = &gameConfig.grAllNodesTimer,
+    .stateHandler = NULL,
+    .count = 9,
+    .items = { "Off", "30 Seconds", "1 Minute", "1.5 Minutes", "2 Minutes", "2.5 Minutes", "3 Minutes", "3.5 Minutes", "4 Minutes" }
+};
+
 // Bot options
 MenuElem_ListData_t botNumToInvite = {
     .value = &botConfig.numToInvite,
@@ -471,6 +495,12 @@ MenuElem_t menuElementsGameSettings[] = {
 #if DEBUG
   { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Returns a dropped flag if it lands on water, lava, or other non-walkable areas." },
 #endif
+
+  { "Siege/CTF Rules", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
+  { "Suicide Penalty", rangeActionHandler, menuStateHandler_CTFandSiege, &dataSuicidePenaltyTimer, "Amount of time a player has to wait to respawn if they suicided." },
+  { "Node Select Timer", rangeActionHandler, menuStateHandler_Nodes, &dataNodeSelectTimer, "Amount of time a player has for choosing a node.  If timer runs out, player is spawned on current selected node." },
+  { "All Nodes Countdown", listActionHandler, menuStateHandler_Nodes, &dataAllNodesTimer, "If one team owns all nodes, a countdown stsarts.  Team with all nodes win if countdown reaches zero." },
+  { "No Ties in Timed Games", toggleActionHandler, menuStateHandler_Siege, &gameConfig.grSiegeNoTies, "Team with most base damage dealt wins!" },
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
   { "Gatling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGatlingTurretHealth, "Increase or decrease the amount of health each teams base turrets have." },
@@ -640,28 +670,6 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
   return 1;
 }
 
-void menuStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state)
-{
-  GameSettings * gs = gameGetSettings();
-  GameOptions * go = gameGetOptions();
-  if (!gs || (!go->GameFlags.MultiplayerGameFlags.BaseDefense_GatlinTurrets))
-    *state = ELEMENT_HIDDEN;
-  else if (preset)
-    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
-  else
-    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
-}
-
-void menuLabelStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state)
-{
-  GameSettings * gs = gameGetSettings();
-  GameOptions * go = gameGetOptions();
-  if (!gs || (!go->GameFlags.MultiplayerGameFlags.BaseDefense_GatlinTurrets))
-    *state = ELEMENT_HIDDEN;
-  else
-    *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
-}
-
 void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
@@ -710,24 +718,28 @@ void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* stat
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
-void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state)
+void menuStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
-
-  if (!gs || gs->GameType == GAMETYPE_DM)
+  GameOptions * go = gameGetOptions();
+  if (!gs || (!go->GameFlags.MultiplayerGameFlags.BaseDefense_GatlinTurrets))
     *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
   else
-    *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
-void menuLabelStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state)
+void menuStateHandler_Nodes(TabElem_t* tab, MenuElem_t* element, int* state)
 {
   GameSettings * gs = gameGetSettings();
-
-  if (!gs || gs->GameType == GAMETYPE_DM)
+  GameOptions * go = gameGetOptions();
+  if (!gs || (!go->GameFlags.MultiplayerGameFlags.Nodes))
     *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
   else
-    *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state)
@@ -749,6 +761,37 @@ void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state)
       *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
     else
       *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+// ---------------------------------------
+// -------- LABEL STATE HANDLERS ---------
+// ---------------------------------------
+void menuLabelStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+
+  if (!gs || gs->GameType == GAMETYPE_DM)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+void menuLabelStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+
+  if (!gs || gs->GameType == GAMETYPE_DM)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuLabelStateHandler_BaseDefenses(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings * gs = gameGetSettings();
+  GameOptions * go = gameGetOptions();
+  if (!gs || (!go->GameFlags.MultiplayerGameFlags.BaseDefense_GatlinTurrets))
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 // 
@@ -967,7 +1010,7 @@ void drawToggleInvertedMenuElement(TabElem_t* tab, MenuElem_t* element, RECT* re
 //------------------------------------------------------------------------------
 void drawRangeMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_RangeData_t * rangeData, RECT* rect)
 {
-  char buf[32];
+  char buf[64];
 
   // get element state
   int state = getMenuElementState(tab, element);
@@ -982,6 +1025,9 @@ void drawRangeMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_RangeDat
   gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
 
   // draw box
+  // stepValue doesn't work yet.
+  // int trueValue = (*rangeData->value * rangeData->stepValue);
+  // printf("\nv: %d, s: %d, vs: %d", *rangeData->value, rangeData->stepValue, trueValue);
   u32 barColor = colorLerp(RangeBar_IsSelected, 0, lerp);
   v = (float)(*rangeData->value - rangeData->minValue) / (float)(rangeData->maxValue - rangeData->minValue);
   w = (rect->TopRight[0] - rect->TopLeft[0]) * 0.5 * SCREEN_WIDTH;
@@ -990,8 +1036,12 @@ void drawRangeMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_RangeDat
   gfxPixelSpaceBox(x, y - 4, w * v, h - 2, barColor);
 
   // draw name
-  sprintf(buf, "%d", *rangeData->value);
-  x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
+  if (strlen(rangeData->appendText) > 0)
+    sprintf(buf, "%d%s", *rangeData->value, rangeData->appendText);
+  else
+    sprintf(buf, "%d", *rangeData->value);
+
+    x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
   gfxScreenSpaceText(x, y, 1, 1, color, buf, -1, 2, FONT_BOLD);
 }
 

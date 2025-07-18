@@ -60,6 +60,10 @@ typedef struct PatchGameConfig {
   char grFluxNikingDisabled;
   char grFlagHotspots;
   char grDestructableBridges;
+  char grSuicidePenaltyTimer;
+  char grAllNodesTimer;
+  char grNodeSelectTimer;
+  char grSiegeNoTies;
 
   // Party
   char prSurvivor;

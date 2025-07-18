@@ -13,3 +13,4 @@ VariableAddress_t vaHealthbars_Hook;
 VariableAddress_t vaRadarBlips_FloatVal;
 VariableAddress_t vaPlayerInvincibleTimer_Hook;
 VariableAddress_t vaPlayerInvincibleTimer_Func;
+VariableAddress_t vaGB_UpdateGameController_MasterEndGame_Hook;

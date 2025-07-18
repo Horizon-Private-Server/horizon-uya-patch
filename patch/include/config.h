@@ -85,6 +85,7 @@ typedef struct MenuElem_RangeData
   char minValue;
   char maxValue;
   char stepValue;
+  char appendText[16];
 } MenuElem_RangeData_t;
 
 typedef struct TabElem

@@ -27,18 +27,65 @@
 #include <libuya/gameplay.h>
 #include <libuya/weapon.h>
 #include <libuya/map.h>
+#include <libuya/sound.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
 #include "include/config.h"
 #include "include/cheats.h"
 #include "interop/cheats.h"
+#include "utils.h"
 
 Tweaker_GravityBomb_t gBombTweaker[] = {
 	{12, 0.00001, 12, 15}, // UYA Default
 	{16, 0.00001, 16, 24} // DL Default
 };
 
+SoundDef TimerTickSoundDef = {1000, 1000, 2000, 2000, 0, 0, 0, 0x10, 133, 0};
+TimerVars_t allNodesTimer = {
+    .timer_x = SCREEN_WIDTH / 2,
+    .timer_y = SCREEN_HEIGHT * 0.8,
+    .timerScale = 3,
+    .title = 0,
+    .title_x = SCREEN_WIDTH / 2,
+    .title_y = SCREEN_HEIGHT * 0.73,
+    .titleScale = 1,
+    .colorBase = 0x80ff0000,
+    .colorHigh = 0x80ffffff,
+    .font = FONT_DEFAULT,
+    .timeValue = 60,
+    .timeStartTicking = 10,
+    .tickSound = &TimerTickSoundDef,
+    .startTime = -1,
+    .lastPlayedTickSound = -1,
+    .bDynamicScaleTime = 1,
+    .status = -1
+};
+
+TimerVars_t selectNodesTimer = {
+    .timer_x = SCREEN_WIDTH / 2,
+    .timer_y = SCREEN_HEIGHT * 0.17,
+    .timerScale = 1,
+    .title = 0,
+    .title_x = SCREEN_WIDTH / 2,
+    .title_y = SCREEN_HEIGHT * 0.1,
+    .titleScale = 1,
+    .colorBase = 0x8060bfee,
+    .colorHigh = 0,
+    .font = FONT_DEFAULT,
+    .timeValue = 10,
+    .timeStartTicking = -1,
+    .tickSound = 0,
+    .startTime = -1,
+    .lastPlayedTickSound = -1,
+    .bDynamicScaleTime = 0,
+    .status = -1
+};
+
+int selectedNode = 1;
+
+extern maxNodeCount;
+extern siegeGameOver;
 extern PlayerKills[GAME_MAX_PLAYERS];
 extern PlayerDeaths[GAME_MAX_PLAYERS];
 extern PlayerTeams[GAME_MAX_PLAYERS];
@@ -410,19 +457,22 @@ void survivor(void)
  */
 void setRespawnTimer_Player(void)
 {
-	if (patched.gameConfig.grRespawnTimer_Player)
-		return;
-
+	Player *player = playerGetFromSlot(0);
     int RespawnAddr = GetAddress(&vaRespawnTimerFunc_Player);
-	if (gameConfig.grRespawnTimer_Player) {
-	    int Seconds;
-		switch (gameConfig.grRespawnTimer_Player) {
-			case 1: Seconds = 2; break;
-			case 2: Seconds = 2.5; break;
-			case 11: Seconds = 0; break;
-			case 12: Seconds = 1; break;
-			default:
-				Seconds = gameConfig.grRespawnTimer_Player; break;
+	if (gameConfig.grRespawnTimer_Player || gameConfig.grSuicidePenaltyTimer) {
+	    int Seconds = 0;
+		if (gameConfig.grRespawnTimer_Player) {
+			switch (gameConfig.grRespawnTimer_Player) {
+				case 1: Seconds = 2; break;
+				case 2: Seconds = 2.5; break;
+				case 11: Seconds = 0; break;
+				case 12: Seconds = 1; break;
+				default:
+					Seconds += gameConfig.grRespawnTimer_Player; break;
+			}
+		}
+		if (gameConfig.grSuicidePenaltyTimer && playerIsDead(player) && player->lastDeathWasSuicide) {
+			Seconds += gameConfig.grSuicidePenaltyTimer;
 		}
         int RespawnTime = Seconds * GAME_FPS;
         
@@ -434,7 +484,7 @@ void setRespawnTimer_Player(void)
 		if (!gameConfig.grDisablePenaltyTimers)
 			*(u16*)(RespawnAddr + 0x78) = (Seconds + 1.5) * GAME_FPS;
 	}
-	if (gameConfig.grDisablePenaltyTimers) {
+	if (gameConfig.grDisablePenaltyTimers && !patched.gameConfig.grDisablePenaltyTimers) {
 		// Jump to end of function after respawn timer is set.
 		if (*(u32*)(RespawnAddr + 0x28) == 0x14440003)
 			*(u32*)(RespawnAddr + 0x28) = 0x1000001A;
@@ -443,8 +493,8 @@ void setRespawnTimer_Player(void)
 		// *(u16*)(RespawnAddr + 0x80) = RespawnTime;
 		// Anti-Air Turret Destroyed (RespawnTime + This)
 		// *(u16*)(RespawnAddr + 0x8c) = RespawnTime;
+		patched.gameConfig.grDisablePenaltyTimers = 1;
 	}
-	patched.gameConfig.grRespawnTimer_Player = 1;
 }
 
 /*
@@ -982,4 +1032,152 @@ void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay)
 			*(int*)(data + 0xa0) = 1;
 		}
 	}
+}
+
+/*
+ * NAME :		runCheckAllNodes
+ * DESCRIPTION :
+ *             Checks to see if all nodes are owned by one team, if so, start countdown timer.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void runCheckAllNodes(void) {
+    int i;
+    GameOptions *gameOptions = gameGetOptions();
+    GameSettings *gameSettings = gameGetSettings();
+    GameData *gameData = gameGetData();
+    short nodes[2] = {0, 0};
+    char title[32];
+    // get number of nodes and set timer value
+    if (maxNodeCount == -1) {
+        maxNodeCount = 0;
+        Moby* mobyStart = mobyListGetStart();
+        Moby* mobyEnd = mobyListGetEnd();
+        while (mobyStart < mobyEnd) {
+            if (mobyStart->oClass == MOBY_ID_SIEGE_NODE) {
+                ++maxNodeCount;
+            }
+            ++mobyStart;
+        }
+    }
+    // check which team each node is, and save it into nodes
+    for (i = 0; i < maxNodeCount; ++i) {
+        int nodesTeam = gameData->allYourBaseGameData->nodeTeam[i];
+        if (nodesTeam == 0 || nodesTeam == 1)
+            ++nodes[nodesTeam];
+    }
+    // check if team has all nodes and set timer title and color
+    int blue = nodes[0];
+    int red = nodes[1];
+    int blueTeamAll = blue == maxNodeCount && red == 0;
+    int redTeamAll = red == maxNodeCount && blue == 0;
+    int teamWithAllNodes = (blueTeamAll && !redTeamAll) ? 0 : (redTeamAll && !blueTeamAll) ? 1 : -1;
+    if (teamWithAllNodes > -1 && allNodesTimer.status == -1) {
+		allNodesTimer.timeValue = (gameConfig.grAllNodesTimer * .5) * 60;
+        char *whichTeam = !teamWithAllNodes ? "Blue" : "Red";
+        sprintf(title, "%s Team Wins In", whichTeam);
+        strncpy(allNodesTimer.title, title, 32);
+        allNodesTimer.colorBase = 0x80000000 | TEAM_COLORS[teamWithAllNodes];
+        allNodesTimer.status = 0;
+    } else if (teamWithAllNodes == -1 && allNodesTimer.status > -1){
+        strncpy(allNodesTimer.title, "", 32);
+        allNodesTimer.status = -1;
+    }
+    // check status of timer.  if finished, end game.
+    if (allNodesTimer.status == 2) {
+        if (siegeGameOver == 1)
+            return;
+
+        gameData->winningTeam = teamWithAllNodes;
+        gameEnd(2);
+        siegeGameOver = 1;
+    } else {
+        runTimer(&allNodesTimer);
+    }
+
+    // left/right: select node; up/down: set node to blue/red team
+    Player *player = playerGetFromSlot(0);
+    if (playerPadGetButtonDown(player, PAD_LEFT | PAD_R2 | PAD_L2) > 0) {
+        if (selectedNode > 1)
+            --selectedNode;
+        else
+            selectedNode = maxNodeCount;
+    }
+    if (playerPadGetButtonDown(player, PAD_RIGHT | PAD_R2 | PAD_L2) > 0) {
+        if (selectedNode < maxNodeCount)
+            ++selectedNode;
+        else
+            selectedNode = 1;
+    }
+    if (playerPadGetButtonDown(player, PAD_UP | PAD_R2 | PAD_L2) > 0) {
+        gameData->allYourBaseGameData->nodeTeam[selectedNode - 1] = 0;
+    }
+    if (playerPadGetButtonDown(player, PAD_DOWN | PAD_R2 | PAD_L2) > 0) {
+        gameData->allYourBaseGameData->nodeTeam[selectedNode - 1] = 1;
+    }
+    // printf("\nm: %d, n: %d, t: %d, b: %d, r: %d, a: %d", maxNodeCount, selectedNode, gameData->allYourBaseGameData->nodeTeam[selectedNode - 1], nodes[0], nodes[1], teamWithAllNodes);
+}
+
+/*
+ * NAME :		runSelectNodeTimer
+ * DESCRIPTION :
+ *             if Nodes are active and player dies, this starts a timer for how long they have to choose a node.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void runSelectNodeTimer(void)
+{
+    Player *player = playerGetFromSlot(0);
+    int isDead = playerIsDead(player);
+    int status = selectNodesTimer.status;
+    int resTimer = playerGetRespawnTimer(player);
+    int state = playerGetState(player);
+    if (state == PLAYER_STATE_WAIT_FOR_RESURRECT && status == -1) {
+        selectNodesTimer.timeValue = gameConfig.grNodeSelectTimer;
+        selectNodesTimer.status = 0;
+    }
+    // printf("\n%02i.%02i", (resTimer / 60) % 60, ((resTimer % 60) * 100) / 60);
+    if (status > -1 && !isDead) {
+        selectNodesTimer.status = -1;
+	} else if (status == 2 && resTimer <= 0) {
+        playerRespawn(player);
+    } else {
+        runTimer(&selectNodesTimer);
+    }
+}
+
+/*
+ * NAME :		patchSiegeTimeUp
+ * DESCRIPTION :
+ *             If time runs out in siege, winning team is deteremined by most base damange dealt.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchSiegeTimeUp_Logic(int reason)
+{
+    GameData *gameData = gameGetData();
+    // get base health
+    float blueHealth = gameData->allYourBaseGameData->hudHealth[0];
+    float redHealth = gameData->allYourBaseGameData->hudHealth[1];
+    // check who wins.  If both bases are same health, it's a tie, like normal.
+    if (blueHealth < redHealth || blueHealth > redHealth) {
+        gameData->winningTeam = blueHealth < redHealth;
+        reason = 2;
+    }
+    // if both teams have equal health, it's a tie.  reason = 1.
+    gameEnd(reason);
+}
+
+void patchSiegeTimeUp(void)
+{
+    if (!patched.gameConfig.grSiegeNoTies)
+        HOOK_JAL(GetAddress(&vaGB_UpdateGameController_MasterEndGame_Hook), &patchSiegeTimeUp_Logic);
+
+    patched.gameConfig.grSiegeNoTies = 1;
 }

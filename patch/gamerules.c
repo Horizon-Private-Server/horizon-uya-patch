@@ -44,6 +44,8 @@ int FirstPass = 1;
 int HasSetGatlingTurretHealth = 0;
 int HasDisableSiegeNodeTurrets = 0;
 int HasKeepBaseHealthPadActive = 0;
+int siegeGameOver = 0;
+int maxNodeCount = -1;
 short PlayerKills[GAME_MAX_PLAYERS];
 short PlayerDeaths[GAME_MAX_PLAYERS];
 short PlayerTeams[GAME_MAX_PLAYERS];
@@ -157,6 +159,8 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 	HasDisableSiegeNodeTurrets = 0;
 	HasKeepBaseHealthPadActive = 0;
 	healRate = 0;
+	siegeGameOver = 0;
+	maxNodeCount = -1;
 	GameRulesInitialized = 1;
 }
 
@@ -214,7 +218,7 @@ void grGameStart(void)
 	if (gameConfig.prSurvivor)
 		survivor();
 	
-	if (gameConfig.grRespawnTimer_Player || gameConfig.grDisablePenaltyTimers)
+	if (gameConfig.grRespawnTimer_Player || gameConfig.grDisablePenaltyTimers || gameConfig.grSuicidePenaltyTimer)
 		setRespawnTimer_Player();
 
 	if (gameConfig.grBaseHealthPadActive && !HasKeepBaseHealthPadActive && gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth)
@@ -237,6 +241,15 @@ void grGameStart(void)
 	
 	// Always run.  If statements inside to check if values need to change.
 	modifyWeaponTweakers();
+
+	if (gameConfig.grAllNodesTimer)
+		runCheckAllNodes();
+
+	if (gameConfig.grNodeSelectTimer)
+		runSelectNodeTimer();
+
+	if (gameConfig.grSiegeNoTies)
+		patchSiegeTimeUp();
 
 	FirstPass = 0;
 }

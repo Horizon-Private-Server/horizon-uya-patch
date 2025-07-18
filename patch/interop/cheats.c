@@ -395,3 +395,34 @@ VariableAddress_t vaPlayerInvincibleTimer_Func = {
     .MarcadiaPalace = 0x004e97e8,
 #endif
 };
+
+//================================================
+//=============  patchSiegeTimeUp
+//================================================
+VariableAddress_t vaGB_UpdateGameController_MasterEndGame_Hook = {
+#if UYA_PAL
+	.Lobby = 0x0067063c,
+	.Bakisi = 0x00543fe4,
+	.Hoven = 0x005461ac,
+	.OutpostX12 = 0x0053ba84,
+	.KorgonOutpost = 0x0053916c,
+	.Metropolis = 0x0053856c,
+	.BlackwaterCity = 0x00535d54,
+	.CommandCenter = 0x005355ac,
+	.BlackwaterDocks = 0x00537e2c,
+	.AquatosSewers = 0x0053712c,
+	.MarcadiaPalace = 0x00536aac,
+#else
+	.Lobby = 0x0066dcec,
+	.Bakisi = 0x005416d4,
+	.Hoven = 0x005437dc,
+	.OutpostX12 = 0x005390f4,
+    .KorgonOutpost = 0x0053685c,
+	.Metropolis = 0x00535c5c,
+	.BlackwaterCity = 0x005333c4,
+	.CommandCenter = 0x00532df4,
+	.BlackwaterDocks = 0x00535634,
+	.AquatosSewers = 0x00534974,
+	.MarcadiaPalace = 0x005342b4,
+#endif
+};
