@@ -86,24 +86,6 @@ VariableAddress_t vaFastArcTan = {
 };
 
 //--------------------------------------------------------
-// -- https://stackoverflow.com/a/28050328
-// float cosf(float x)
-// {
-//     const float tp = 1./(2.*MATH_PI);
-//     x *= tp;
-//     x -= .25 + floorf(x + .25);
-//     x *= 16. * (fabsf(x) - .5);
-//     x += .225 * x * (fabsf(x) - 1.);
-//     return x;
-// }
-
-//--------------------------------------------------------
-// float sinf(float theta)
-// {
-//     return cosf(clampAngle(theta - (MATH_PI / 2)));
-// }
-
-//--------------------------------------------------------
 float acosf(float v)
 {
     return (MATH_PI / 2) - asinf(v);
@@ -113,6 +95,14 @@ float acosf(float v)
 float lerpf(float a, float b, float t)
 {
     return (b-a)*t + a;
+}
+
+//--------------------------------------------------------
+float fabsf(float f)
+{
+    union { float x; unsigned int i; } u = { f };
+    u.i &= 0x7fffffff;
+    return u.x;
 }
 
 //--------------------------------------------------------
@@ -157,33 +147,6 @@ float clampAngle(float theta)
 }
 
 //--------------------------------------------------------
-// https://gist.github.com/volkansalma/2972237
-// float atan2f(float y, float x)
-// {
-//     //http://pubs.opengroup.org/onlinepubs/009695399/functions/atan2.html
-//     //Volkan SALMA
-
-//     const float ONEQTR_PI = MATH_PI / 4.0;
-// 	const float THRQTR_PI = 3.0 * MATH_PI / 4.0;
-// 	float r, angle;
-// 	float abs_y = fabsf(y) + 1e-10f;      // kludge to prevent 0/0 condition
-// 	if ( x < 0.0f )
-// 	{
-// 		r = (x + abs_y) / (abs_y - x);
-// 		angle = THRQTR_PI;
-// 	}
-// 	else
-// 	{
-// 		r = (x - abs_y) / (x + abs_y);
-// 		angle = ONEQTR_PI;
-// 	}
-// 	angle += (0.1963f * r * r - 0.9817f) * r;
-// 	if ( y < 0.0f )
-// 		return( -angle );     // negate if in quad III or IV
-// 	else
-// 		return( angle );
-// }
-
 float fastSubRots(float input0, float input1)
 {
     input0 = input0 - input1;
