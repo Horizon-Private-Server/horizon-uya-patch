@@ -66,7 +66,7 @@ typedef struct LocalPlayerYourBaseGameData { // 0x1b0
 /* 0x004 */ int team2_StartBase;
 /* 0x008 */ int unk_08[6];
 /* 0x020 */ int nodeResurrectionPts[8];
-/* 0x040 */ int unk_SpawnPts[8];
+/* 0x040 */ int baseLightIndex[8]; // aka: moby instance index
 /* 0x060 */ int unk_BaseMobySpawnPts[8];
 /* 0x080 */ int unk_team1;
 /* 0x084 */ int unk_team2;
