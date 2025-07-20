@@ -455,46 +455,46 @@ void survivor(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
+int setRespawnTimer_Player_Logic(Player *player)
+{
+	int time = 1.5; // default respawn time
+	if (gameConfig.grRespawnTimer_Player) {
+		switch (gameConfig.grRespawnTimer_Player) {
+			case 1: time = 2; break;
+			case 2: time = 2.5; break;
+			case 11: time = 0; break;
+			case 12: time = 1; break;
+			default: time = gameConfig.grRespawnTimer_Player; break;
+		}
+	}
+	if (!gameConfig.grDisablePenaltyTimers) {
+		GameData *gameData = gameGetData();
+		Moby *mobyInstance = mobyListGetStart();
+		int baseIndex = gameData->allYourBaseGameData->baseLightIndex[player->mpTeam];
+		int destroyedGatlin = 0;
+		int destroyedAirDef = 0;
+		Moby *base = mobyInstance + baseIndex;
+		if (base->oClass == MOBY_ID_BASE_LIGHT) {
+			destroyedGatlin = *(int*)((int)base->pVar + 0xb8) > 2;
+			destroyedAirDef = *(int*)((int)base->pVar + 0x40) != 0;
+		}
+		if (destroyedGatlin && destroyedAirDef) {
+			time += 6;
+		} else if (destroyedGatlin || destroyedAirDef) {
+			time += 2;
+		}
+	}
+	if (player->lastDeathWasSuicide)
+		time += gameConfig.grSuicidePenaltyTimer;
+	
+	return time * GAME_FPS;
+}
 void setRespawnTimer_Player(void)
 {
-	Player *player = playerGetFromSlot(0);
-    int RespawnAddr = GetAddress(&vaRespawnTimerFunc_Player);
-	if (gameConfig.grRespawnTimer_Player || gameConfig.grSuicidePenaltyTimer) {
-	    int Seconds = 0;
-		if (gameConfig.grRespawnTimer_Player) {
-			switch (gameConfig.grRespawnTimer_Player) {
-				case 1: Seconds = 2; break;
-				case 2: Seconds = 2.5; break;
-				case 11: Seconds = 0; break;
-				case 12: Seconds = 1; break;
-				default:
-					Seconds += gameConfig.grRespawnTimer_Player; break;
-			}
-		}
-		if (gameConfig.grSuicidePenaltyTimer && playerIsDead(player) && player->lastDeathWasSuicide) {
-			Seconds += gameConfig.grSuicidePenaltyTimer;
-		}
-        int RespawnTime = Seconds * GAME_FPS;
-        
-		// Set Default Respawn Timer
-        if (*(u16*)(RespawnAddr + 0x10) != RespawnTime)
-		    *(u16*)(RespawnAddr + 0x10) = RespawnTime;
+	if (!patched.gameConfig.grRespawnTimer_Player)
+		HOOK_JAL(GetAddress(&vaRespawnTimerFunc_Player), &setRespawnTimer_Player_Logic);
 
-		// Set Penalty Timer #1 based off of current respawn timer.
-		if (!gameConfig.grDisablePenaltyTimers)
-			*(u16*)(RespawnAddr + 0x78) = (Seconds + 1.5) * GAME_FPS;
-	}
-	if (gameConfig.grDisablePenaltyTimers && !patched.gameConfig.grDisablePenaltyTimers) {
-		// Jump to end of function after respawn timer is set.
-		if (*(u32*)(RespawnAddr + 0x28) == 0x14440003)
-			*(u32*)(RespawnAddr + 0x28) = 0x1000001A;
-
-		// Gatlin Turret Destroyed (RespawnTime + This)
-		// *(u16*)(RespawnAddr + 0x80) = RespawnTime;
-		// Anti-Air Turret Destroyed (RespawnTime + This)
-		// *(u16*)(RespawnAddr + 0x8c) = RespawnTime;
-		patched.gameConfig.grDisablePenaltyTimers = 1;
-	}
+	patched.gameConfig.grRespawnTimer_Player = 1;
 }
 
 /*

@@ -217,31 +217,30 @@ VariableAddress_t vaDM_RespawnUpdater = {
 //=============  setRespawnTimer_Player
 //================================================
 VariableAddress_t vaRespawnTimerFunc_Player = {
-// Uses the start of the Respawn Timer Function
 #if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x003f6098,
-    .Hoven = 0x003f4f20,
-    .OutpostX12 = 0x003ece18,
-    .KorgonOutpost = 0x003eccd8,
-    .Metropolis = 0x003eadb8,
-    .BlackwaterCity = 0x003e7ba0,
-    .CommandCenter = 0x003f6a88,
-    .BlackwaterDocks = 0x003f89e8,
-    .AquatosSewers = 0x003f85f0,
-    .MarcadiaPalace = 0x003f6b88,
+	.Lobby = 0x006282fc,
+	.Bakisi = 0x004fa1f4,
+	.Hoven = 0x004fc30c,
+	.OutpostX12 = 0x004f1be4,
+	.KorgonOutpost = 0x004ef37c,
+	.Metropolis = 0x004ee6cc,
+	.BlackwaterCity = 0x004ebf64,
+	.CommandCenter = 0x004ebf2c,
+	.BlackwaterDocks = 0x004ee7ac,
+	.AquatosSewers = 0x01795ffc,
+	.MarcadiaPalace = 0x004ed42c,
 #else
-    .Lobby = 0,
-    .Bakisi = 0x003f5ba8,
-    .Hoven = 0x003f49b0,
-    .OutpostX12 = 0x003ec8a8,
-    .KorgonOutpost = 0x003ec7c8,
-    .Metropolis = 0x003ea8c8,
-    .BlackwaterCity = 0x003e7650,
-    .CommandCenter = 0x003f6580,
-    .BlackwaterDocks = 0x003f84e0,
-    .AquatosSewers = 0x003f80e8,
-    .MarcadiaPalace = 0x003f6680,
+	.Lobby = 0x00625b24,
+	.Bakisi = 0x004f7a74,
+	.Hoven = 0x004f9acc,
+	.OutpostX12 = 0x004ef3e4,
+	.KorgonOutpost = 0x004ecbfc,
+	.Metropolis = 0x004ebf4c,
+	.BlackwaterCity = 0x004e9764,
+	.CommandCenter = 0x004e98ec,
+	.BlackwaterDocks = 0x004ec12c,
+	.AquatosSewers = 0x004eb46c,
+	.MarcadiaPalace = 0x004eadac,
 #endif
 };
 
