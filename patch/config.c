@@ -497,7 +497,7 @@ MenuElem_t menuElementsGameSettings[] = {
 #endif
 
   { "Siege/CTF Rules", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
-  { "Suicide Penalty", rangeActionHandler, menuStateHandler_CTFandSiege, &dataSuicidePenaltyTimer, "Amount of time a player has to wait to respawn if they suicided." },
+  { "Suicide Penalty", rangeActionHandler, menuStateHandler_CTFandSiege, &dataSuicidePenaltyTimer, "Amount of time added to the respawn time if a player suicided." },
   { "Node Select Timer", rangeActionHandler, menuStateHandler_Nodes, &dataNodeSelectTimer, "Amount of time a player has for choosing a node.  If timer runs out, player is spawned on current selected node." },
   { "All Nodes Countdown", listActionHandler, menuStateHandler_Nodes, &dataAllNodesTimer, "If one team owns all nodes, a countdown stsarts.  Team with all nodes win if countdown reaches zero." },
   { "No Ties in Timed Games", toggleActionHandler, menuStateHandler_Siege, &gameConfig.grSiegeNoTies, "Team with most base damage dealt wins!" },
