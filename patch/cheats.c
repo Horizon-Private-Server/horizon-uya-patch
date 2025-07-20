@@ -1097,6 +1097,7 @@ void runCheckAllNodes(void) {
         runTimer(&allNodesTimer);
     }
 
+	#ifdef DEBUG
     // left/right: select node; up/down: set node to blue/red team
     Player *player = playerGetFromSlot(0);
     if (playerPadGetButtonDown(player, PAD_LEFT | PAD_R2 | PAD_L2) > 0) {
@@ -1118,6 +1119,7 @@ void runCheckAllNodes(void) {
         gameData->allYourBaseGameData->nodeTeam[selectedNode - 1] = 1;
     }
     // printf("\nm: %d, n: %d, t: %d, b: %d, r: %d, a: %d", maxNodeCount, selectedNode, gameData->allYourBaseGameData->nodeTeam[selectedNode - 1], nodes[0], nodes[1], teamWithAllNodes);
+	#endif
 }
 
 /*
