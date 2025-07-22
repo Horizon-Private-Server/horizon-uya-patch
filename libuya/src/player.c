@@ -338,7 +338,7 @@ int playerDeobfuscate(int src, DeobfuscateMode_e mode)
 	if (!*i && mode == 0)
         return 0;
 
-	Deobfuscate_t stack;
+	Obfuscate_t stack;
 	switch (mode) {
 		case 0: {
 			stack.max = 0x28;

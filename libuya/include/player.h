@@ -203,6 +203,13 @@ typedef enum PlayerType {
 	PLAYER_TYPE_CNT = 38
 } PlayerType;
 
+typedef enum ObfuscateMode {
+	OBFUSCATE_MODE_STATE = 0,
+	OBFUSCATE_MODE_HEALTH = 1,
+	OBFUSCATE_MODE_GADGET = 2,
+	OBFUSCATE_MODE_TIMER = 3,
+} ObfuscateMode_e;
+
 typedef enum DeobfuscateMode {
 	DEOBFUSCATE_MODE_HEALTH = 0,
 	DEOBFUSCATE_MODE_STATE = 0,
@@ -210,7 +217,7 @@ typedef enum DeobfuscateMode {
 	DEOBFUSCATE_MODE_TIMER = 2,
 } DeobfuscateMode_e;
 
-typedef struct Deobfuscate {
+typedef struct Obfuscate {
 	char *randData;
 	int max;
 	int step;
@@ -222,7 +229,7 @@ typedef struct Deobfuscate {
 			int val;
 		}
 	}
-} Deobfuscate_t;
+} Obfuscate_t;
 
 typedef struct CameraAngleZ { // 0x20
 	/* 0x11e0 */ float rotation;
