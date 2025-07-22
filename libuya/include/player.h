@@ -203,19 +203,26 @@ typedef enum PlayerType {
 	PLAYER_TYPE_CNT = 38
 } PlayerType;
 
-typedef enum DeobfuscateAddress {
-	DEOBFUSCATE_ADDRESS_HEALTH = 0,
-	DEOBFUSCATE_ADDRESS_STATE = 0,
-	DEOBFUSCATE_ADDRESS_TIMER = 0,
-	DEOBFUSCATE_ADDRESS_WEAPON = 1,
-} DeobfuscateAddress_e;
-
 typedef enum DeobfuscateMode {
 	DEOBFUSCATE_MODE_HEALTH = 0,
 	DEOBFUSCATE_MODE_STATE = 0,
-	DEOBFUSCATE_MODE_WEAPON = 1,
-	DEOBFUSCATE_MODE_TIMER = 1,
+	DEOBFUSCATE_MODE_GADGET = 1,
+	DEOBFUSCATE_MODE_TIMER = 2,
 } DeobfuscateMode_e;
+
+typedef struct Deobfuscate {
+	char *randData;
+	int max;
+	int step;
+	int multiplyVal;
+	union {
+		int data[2];
+		struct {
+			int addr;
+			int val;
+		}
+	}
+} Deobfuscate_t;
 
 typedef struct CameraAngleZ { // 0x20
 	/* 0x11e0 */ float rotation;
@@ -1538,7 +1545,7 @@ int playerGetRespawnTimer(Player * player);
 * RETURN :
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
-playerGetState(Player *player);
+int playerGetState(Player *player);
 
 /*
 * NAME :		playerRespawn
@@ -1644,16 +1651,18 @@ void playerGiveRandomWeapons(Player * player, int amount);
 * NOTES :
 * ARGS : 
 *      src     :           Source pointer from player struct of the data needed to deorbuscate.
-* 							Ex: &player->Health, &player->State
-* 		addr	:			0: vaPlayerObfuscateAddr
-* 							1: vaPlayerObfuscateWeaponAddr
+* 							Ex: &player->hitPoints, &player->state
 * 		mode	:			0: Used for: Health, Player State, other.
 * 							1: Used for: Weapon IDs, other.
-* 							1: Used for: Respawn Timer, other.
+* 							2: Used for: Player Timers.
 * RETURN :
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
-u32 playerDeobfuscate(u32 src, DeobfuscateAddress_e addr, DeobfuscateMode_e mode);
+int playerDeobfuscate(int src, DeobfuscateMode_e mode);
+int playerGetRespawnTimer(Player *player);
+int playerGetGadetId(Player *player, int slot);
+int playerGetGadgetLevel(Player *player, int slot);
+int playerGetGadgetAmmo(Player *player, int slot);
 /*
 * NAME :		playerHasShield
 * DESCRIPTION : Checks to see if player has shield

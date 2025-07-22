@@ -529,7 +529,7 @@ void patchDeadJumping(void)
 		Player * player = players[i];
 		if (player->isLocal && (playerIsDead(player) || playerGetHealth(player) <= 0)) {
 			// get current player state
-			int PlayerState = playerDeobfuscate(&player->state, 0, 0);
+			int PlayerState = playerDeobfuscate(&player->state, 0);
 			// if player is on bolt crank, set player state to idle.
 			if (PlayerState == PLAYER_STATE_BOLT_CRANK)
 				playerSetPlayerState(player, PLAYER_STATE_IDLE);
@@ -821,7 +821,7 @@ void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
 	// backup currently equipped weapons
 	if (player->isLocal) {
 		for (i = 0; i < 3; ++i)
-			weaponOrderBackup[0][i] = playerDeobfuscate(&player->quickSelect.Slot[i], 1, 1);
+			weaponOrderBackup[0][i] = playerDeobfuscate(&player->quickSelect.Slot[i], 1);
 	}
 
 	// call hooked WeaponStripMe function after backup
@@ -877,9 +877,9 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 			// if respawned weapons match backup weapons
 			u8 backedUpSlotValue = weaponOrderBackup[0][i];
 			for(j = 0; j < 3; ++j) {
-				if (backedUpSlotValue == playerDeobfuscate(&player->quickSelect.Slot[j], 1, 1)) {
+				if (backedUpSlotValue == playerDeobfuscate(&player->quickSelect.Slot[j], 1)) {
 					++matchCount;
-					DPRINTF("\ni: %d, j: %d, Matched: %d", i, j, playerDeobfuscate(&player->quickSelect.Slot[j], 1, 1));
+					DPRINTF("\ni: %d, j: %d, Matched: %d", i, j, playerDeobfuscate(&player->quickSelect.Slot[j], 1));
 				}
 			}
 		}
@@ -1383,7 +1383,7 @@ void customFlagLogic(Moby* flagMoby)
             continue;
 
         // Don't allow input from players whom are dead
-        if (playerDeobfuscate(&player->stateType, 0, 0) == PLAYER_TYPE_DEATH)
+        if (playerDeobfuscate(&player->stateType, 0) == PLAYER_TYPE_DEATH)
             return;
 
         // skip player if they've only been alive for < 180ms
@@ -1395,7 +1395,7 @@ void customFlagLogic(Moby* flagMoby)
 			continue;
 
     	// skip player if in vehicle
-		if (player->vehicle && playerDeobfuscate(&player->state, 0, 0) == PLAYER_STATE_VEHICLE)
+		if (player->vehicle && playerDeobfuscate(&player->state, 0) == PLAYER_STATE_VEHICLE)
 			continue;
 
         // skip if player is on teleport pad

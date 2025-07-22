@@ -138,7 +138,7 @@ void v2_logic(void)
 			// Check to see if the weapon slow has a weapon.
 			// If so, deofuscate the weapon id and give the player the upgrade.
 			if (slot[j] > 0)
-				playerGiveWeaponUpgrade(player, playerDeobfuscate(&slot[j], 1, 1));
+				playerGiveWeaponUpgrade(player, playerDeobfuscate(&slot[j], 1));
 		}
 	}
 }
@@ -874,7 +874,7 @@ int runInvincibilityTimer(Player* player, int a1)
 #else
 	short timer = 120;
 #endif
-	if (playerDeobfuscate(&player->previousState, 0, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
+	if (playerDeobfuscate(&player->previousState, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
 		player->timers.unkTimer_346 = timer;
 
 	// run base function with our a1

@@ -331,49 +331,55 @@ VariableAddress_t vaPlayerObfuscateWeaponAddr = {
     .MarcadiaPalace = 0x003b1ac1,
 #endif
 };
-u32 playerDeobfuscate(u32 src, DeobfuscateAddress_e addr, DeobfuscateMode_e mode)
+int playerDeobfuscate(int src, DeobfuscateMode_e mode)
 {
-    static int StackAddr[2];
-    u32 Player_Addr = src;
-    u32 Player_Value = *(u8*)Player_Addr;
-    if (Player_Value == 0)
+	char *i = src;
+	// i = address, *i = data
+	if (!*i && mode == 0)
         return 0;
 
-    int RandDataAddr = !addr ? GetAddress(&vaPlayerObfuscateAddr) : GetAddress(&vaPlayerObfuscateWeaponAddr);
-    int n = 0;
-    int rawr = 0;
-    int Converted;
-    // Mode 0: For Health and Player State (Possibly more)
-    if (mode == DEOBFUSCATE_MODE_HEALTH) {
-        do {
-            u32 Offset = (u32)((int)Player_Addr - (u32)Player_Value & 7) + n;
-            n = n + 5;
-            *(u8*)((int)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff));
-            ++rawr;
-        } while (n < 0x28);
-        // XORAddr (first 4 bytes of StackAddr)
-        StackAddr[0] = (u32)(StackAddr[0]) ^ (u32)Player_Addr;
-        // XORValue (second 4 bytes of StackAddr)
-        StackAddr[1] = (u32)((u32)StackAddr[1] ^ StackAddr[0]);
-        Converted = StackAddr[1];
-    // Mode 1: Meant for Weapons (and other items)
-    } else if (mode == DEOBFUSCATE_MODE_WEAPON) {
-        do {
-            u32 Offset = (u32)((u32)Player_Addr - (u8)Player_Value & 7) + n;
-            n = n + 3;
-            *(u8*)((u32)StackAddr + rawr) = *(u8*)((u32)RandDataAddr + (Offset & 7) * 0xd1 + (u8)Player_Value);
-            ++rawr;
-        } while (n < 0x18);
-        StackAddr[0] = (u32)StackAddr[0] ^ (u32)Player_Addr;
-        StackAddr[2] = ((u32)StackAddr[1] ^ (u32)StackAddr[0]) >> 0x10;
-        n = (u32)((u32)StackAddr[1] ^ (u32)StackAddr[0] ^ (u32)StackAddr[2]) * 0x10000 + 1;
-        StackAddr[1] = (u32)StackAddr[2] / n;
-        // u64 hi is used later on in the UYA code, keeping just in case
-        // u64 hi = (u64)((u32)StackAddr[2] % n);
-        StackAddr[2] = (u32)StackAddr[2] & 0xff;
-        Converted = StackAddr[2];
-    }
-    return Converted;
+	Deobfuscate_t stack;
+	switch (mode) {
+		case 0: {
+			stack.max = 0x28;
+			stack.step = 5;
+			stack.multiplyVal = 0xff;
+			stack.randData = GetAddress(&vaPlayerObfuscateAddr);
+			break;
+		}
+		case 1: {
+			stack.max = 0x18;
+			stack.step = 3;
+			stack.multiplyVal = 0xd1;
+    		stack.randData = GetAddress(&vaPlayerObfuscateWeaponAddr);
+			break;
+		}
+		case 2: {
+			stack.max = 0x18;
+			stack.step = 3;
+			stack.multiplyVal = 0xff;
+    		stack.randData = GetAddress(&vaPlayerObfuscateAddr);
+			break;
+		}
+	}
+	u8 *data = &stack.data;
+	int n = 0;
+	for (n; n < stack.max; n += stack.step) {
+		u32 offset = (u32)((int)i - (u32)*i & 7) + n;
+		*data = stack.randData[(*i + (offset & 7) * stack.multiplyVal)];
+        ++data;
+	}
+	stack.addr = (u32)((u32)stack.val ^ ((u32)(stack.addr) ^ (u32)i));
+	stack.val = (u32)stack.addr >> 0x10;
+	if (mode == 0) {
+		return stack.addr;
+	} else if (mode == 1) {
+        return stack.val & 0xff;
+	} else if (mode == 2) {
+		return stack.val;
+	}
+	// all other modes, return -1
+	return -1;
 }
 
 VariableAddress_t vaSetPlayerStateFunc = {
@@ -526,51 +532,25 @@ void playerSetHealth(Player * player, int health)
 
 int playerGetHealth(Player * player)
 {
-    // asm(".set noreorder;");
-    int PlayerGetHealthStack[1];
-    u32 Health_Addr = &player->hitPoints;
-    u32 Health_Value = *(u8*)Health_Addr;
-    int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
-    int n = 0;
-    int m = 0;
-    do {
-        u32 Offset = (u32)((int)Health_Addr - (u32)Health_Value & 7) + n;
-        n = n + 5;
-        *(u8*)((u32)PlayerGetHealthStack + m) = *(u8*)((u32)RandDataAddr + (Health_Value + (Offset & 7) * 0xff));
-        ++m;
-    } while (n < 0x28);
-    u32 fHealth = ((u32)PlayerGetHealthStack[1] ^ (u32)PlayerGetHealthStack[0] ^ (u32)Health_Addr);
+    u32 fHealth = playerDeobfuscate(&player->hitPoints, 0);
     return *(float*)&fHealth;
 }
 //--------------------------------------------------------------------------------
 int playerGetRespawnTimer(Player * player)
 {
-    // asm(".set noreorder;");
-    int stack[1];
-    u32 addr = &player->timers.resurrectWait;
-    u32 val = *(u8*)addr;
-    int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
-    int n = 0;
-    int m = 0;
-    do {
-        u32 Offset = (u32)((int)addr - (u32)val & 7) + n;
-        n = n + 3;
-        *(u8*)((u32)stack + m) = *(u8*)((u32)RandDataAddr + (val + (Offset & 7) * 0xff));
-        ++m;
-    } while (n < 0x18);
-    return (int)((u32)stack[1] ^ (u32)stack[0] ^ (u32)addr) >> 0x10;
+    return playerDeobfuscate(&player->timers.resurrectWait, 2);
 }
 //--------------------------------------------------------------------------------
 int playerGetState(Player *player)
 {
-    return playerDeobfuscate(&player->state, DEOBFUSCATE_ADDRESS_STATE, DEOBFUSCATE_MODE_STATE);
+    return playerDeobfuscate(&player->state, DEOBFUSCATE_MODE_STATE);
 }
 //--------------------------------------------------------------------------------
 int playerIsDead(Player * player)
 {
     // return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
     // int Health = (int)playerGetHealth(player) <= 0;
-    int State = playerDeobfuscate(&player->state, 0, 0);
+    int State = playerDeobfuscate(&player->state, 0);
     int CurrentState = State == PLAYER_STATE_DEATH
         || State == PLAYER_STATE_DROWN
         || State == PLAYER_STATE_DEATH_FALL
@@ -764,6 +744,21 @@ VariableAddress_t vaGiveMeRandomWeaponsFunc = {
 void playerGiveRandomWeapons(Player * player, int amount)
 {
     internal_GiveMeRandomWeapons(player, amount);
+}
+
+int playerGetGadgetId(Player *player, int slot)
+{
+    return playerDeobfuscate(&player->quickSelect.Slot[slot], DEOBFUSCATE_MODE_GADGET);
+}
+
+int playerGetGadgetLevel(Player *player, int slot)
+{
+    return playerDeobfuscate(&player->weaponMeter.Slot[slot], DEOBFUSCATE_MODE_GADGET);
+}
+
+int playerGetGadgetAmmo(Player *player, int slot)
+{
+    return playerDeobfuscate(&player->weaponAmmo.Slot[slot], DEOBFUSCATE_MODE_GADGET);
 }
 
 int playerHasShield(Player * player)
