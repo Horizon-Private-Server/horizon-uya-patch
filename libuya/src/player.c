@@ -601,6 +601,22 @@ int playerIsDead(Player * player)
         ;
     return CurrentState;
 }
+//--------------------------------------------------------------------------------
+int playerStateIsDead(int state)
+{
+    // return player->pNetPlayer->pNetPlayerData->hitPoints <= 0;
+    // int Health = (int)playerGetHealth(player) <= 0;
+    int CurrentState = state == PLAYER_STATE_DEATH
+        || state == PLAYER_STATE_DROWN
+        || state == PLAYER_STATE_DEATH_FALL
+        || state == PLAYER_STATE_DEATHSAND_SINK
+        || state == PLAYER_STATE_LAVA_DEATH
+        || state == PLAYER_STATE_DEATH_NO_FALL
+        || state == PLAYER_STATE_WAIT_FOR_RESURRECT
+        || state == PLAYER_STATE_ICEWATER_FREEZE
+        ;
+    return CurrentState;
+}
 
 //--------------------------------------------------------------------------------
 VariableAddress_t vaPlayerSetPosRotFunc = {

@@ -1276,12 +1276,12 @@ typedef struct Player { // 0x4500
 	/* 0x4d50 */ VECTOR posAtSyncFrame;
 	/* 0x4d60 */ VECTOR syncPosDifference;
 	/* 0x4d70 */ VECTOR receivedSyncRot;
-	/*        */ VECTOR rotAtSyncFrame;
-	/*        */ float interpVel;
-	/*        */ float syncRotDifference;
-	/*        */ int flags;
-	/*        */ int sequenceIdOfSyncData;
-	/*        */ enum PlayerState receivedState;
+	/* 0x4d80 */ VECTOR rotAtSyncFrame;
+	/* 0x4d90 */ float interpVel;
+	/* 0x4d94 */ float syncRotDifference; // TODO fix this struct
+	/*        */ // short int flags;
+	/* 0x4d98 */ int sequenceIdOfSyncData;
+	/* 0x4d9C */ enum PlayerState receivedState;
 	/*        */ VECTOR remoteCorrectionVel;
 	/*        */ float remoteCorrectionRotVel;
 	/*        */ char syncFrameOffset;
@@ -1516,6 +1516,17 @@ __LIBUYA_SETTER__ void playerSetPosRot(Player *player, VECTOR position, VECTOR r
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
 int playerIsDead(Player * player);
+
+/*
+* NAME :		playerStateIsDead
+* DESCRIPTION :
+* 			Returns non-zero if the given state is equivalent to a dead state.
+* NOTES :
+* ARGS : 
+* RETURN :
+* AUTHOR :			JelloGiant
+*/
+int playerStateIsDead(int state);
 
 /*
 * NAME :		playerGiveWeaponUpgade

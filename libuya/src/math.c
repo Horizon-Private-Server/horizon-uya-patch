@@ -118,6 +118,12 @@ float maxf(float a, float b)
 }
 
 //--------------------------------------------------------
+float minf(float a, float b)
+{
+    return (a > b) ? b : a;
+}
+
+//--------------------------------------------------------
 float lerpfAngle(float a, float b, float t)
 {
     if (fabsf(a-b) < MATH_PI)
