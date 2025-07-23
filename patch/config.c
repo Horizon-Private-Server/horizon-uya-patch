@@ -490,6 +490,7 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "Weapon Crates Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_WeaponCrates, "Time in seconds for the Weapon Crates to respawn." },
   // { "Ammo Pickups Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_AmmoPickups, "Time in seconds for the Ammo Pickups to respawn." },
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn, "Automatically respawn players once the in game respawn timer hits zero." },
+  { "New Player Sync", toggleActionHandler, menuStateHandler_Default, &gameConfig.grNewPlayerSync, "Enable new player sync." },  
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire, "Earn a percentage of health for each kill."},
   // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars, "Draws a healthbar above each player's nametag." },
 #if DEBUG

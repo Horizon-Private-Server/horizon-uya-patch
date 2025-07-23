@@ -30,6 +30,7 @@ __LIBUYA_INLINE__ float fabsf(float f);
 __LIBUYA_INLINE__ float lerpf(float a, float b, float t);
 __LIBUYA_INLINE__ float signf(float a);
 __LIBUYA_INLINE__ float maxf(float a, float b);
+__LIBUYA_INLINE__ float minf(float a, float b);
 __LIBUYA_INLINE__ float floorf(float a);
 __LIBUYA_INLINE__ float lerpfAngle(float a, float b, float t);
 __LIBUYA_INLINE__ float clamp(float v, float min, float max);
