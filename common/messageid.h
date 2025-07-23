@@ -146,6 +146,11 @@ enum CustomMessageId
     CUSTOM_MSG_ID_CLIENT_SET_GAME_STATE = 25,
 
     /*
+     * Sent to server for game details/state
+     */
+    CUSTOM_MSG_PLAYER_SYNC_STATE_UPDATE = 27,
+
+    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,

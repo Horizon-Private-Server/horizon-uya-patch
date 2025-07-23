@@ -2610,6 +2610,35 @@ void onOnlineMenu(void)
   #endif
 }
 
+/* NAME :		playerDebugPad
+ * DESCRIPTION: Prints player debug information in game for R&D purposes, feel free to add on
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			JelloGiant
+ */
+
+void playerDebugPad()
+{
+	int i = 0;
+	Player *player = playerGetFromSlot(0);
+	Moby *playerMoby = player->pMoby;
+	if (playerPadGetButtonDown(player, PAD_CIRCLE | PAD_CROSS) > 0) {
+		DPRINTF("My moby has oClass:%d with address %08x and unk_bc address is %08x and unk_bc is: ", playerMoby->oClass, playerMoby, playerMoby->unk_bc);
+		DPRINTF("My player struct is at %08x\n", player);
+		for (i=0; i < 4; i++) {
+			DPRINTF("byte %d is %x, ", i, playerMoby->unk_bc[i]);
+		}
+ 		DPRINTF("\n");
+		if (playerMoby->unk_bc[1] == 0xffffffff) {DPRINTF("on grav wall");}
+		else {DPRINTF("not on grav wall");}
+		DPRINTF("\n");
+		DPRINTF("playerMoby's Position coordinates: "); 
+		vector_print(playerMoby->position);
+		DPRINTF("\n");
+	}
+}
+
 /*
  * NAME :		main
  * DESCRIPTION :
@@ -2741,6 +2770,37 @@ int main(void)
 
 		// Patch Weapon Ordering when Respawning
 		patchResurrectWeaponOrdering();
+
+		// TODO - Dan places playerSyncTick inside of a MobyUpdate function that gets called
+		// when a MP moby-pUpdate gets called
+/*
+		void onMobyUpdate(Moby* moby)
+		{
+			playerSyncTick();
+			processGameModulesUpdate();
+
+			((void (*)(Moby*))0x003BD5A8)(moby); // still dont know what this address is in DL symbols
+
+			playerSyncPostTick();
+		}		
+
+    if (!isInGame()) {
+      mpMoby = NULL;
+    } else if (!mpMoby) {
+      mpMoby = mobyFindNextByOClass(mobyListGetStart(), 0x106A);
+      if (mpMoby) {
+        mpMoby->PUpdate = &onMobyUpdate;
+      }
+    } else if (isUnloading && mpMoby) {
+      mpMoby->PUpdate = NULL;
+    }
+*/
+		if (gameConfig.grNewPlayerSync)
+			playerSyncTick();
+
+		#ifdef DEBUG
+		playerDebugPad();
+		#endif
 
 		// Runs FPS Counter
 		runFpsCounter();
