@@ -340,21 +340,21 @@ int playerDeobfuscate(int src, DeobfuscateMode_e mode)
 
 	Obfuscate_t stack;
 	switch (mode) {
-		case 0: {
+		case 0: { // state
 			stack.max = 0x28;
 			stack.step = 5;
 			stack.multiplyVal = 0xff;
 			stack.randData = GetAddress(&vaPlayerObfuscateAddr);
 			break;
 		}
-		case 1: {
+		case 1: { // gadgets
 			stack.max = 0x18;
 			stack.step = 3;
 			stack.multiplyVal = 0xd1;
     		stack.randData = GetAddress(&vaPlayerObfuscateWeaponAddr);
 			break;
 		}
-		case 2: {
+		case 2: { // timers
 			stack.max = 0x18;
 			stack.step = 3;
 			stack.multiplyVal = 0xff;
@@ -380,6 +380,66 @@ int playerDeobfuscate(int src, DeobfuscateMode_e mode)
 	}
 	// all other modes, return -1
 	return -1;
+}
+
+void playerObfuscate(int src, int value, ObfuscateMode_e mode)
+{
+	union {
+		float f;
+		u32 i;
+		u8 b;
+		union {
+			u16 s[2];
+			struct {
+				u16 low;
+				u16 high;
+			}
+		}
+	} v = {value};
+	Obfuscate_t stack;
+	char *i = src; // i: address, *i: value
+	char *data = &stack.data;
+	switch (mode) {
+		case 0: { // states
+			stack.step = 5;
+			stack.max = 0x28;
+			stack.multiplyVal = 0xff;
+			stack.randData = GetAddress(&vaPlayerObfuscateAddr);
+			break;		}
+		case 1: { // health/hitPoints
+			value = *(u32*)&v.f;
+			stack.step = 5;
+			stack.max = 0x28;
+			stack.multiplyVal = 0xff;
+			stack.randData = GetAddress(&vaPlayerObfuscateAddr);
+			break;
+		};
+		case 2: { // gadgets
+			value = (value & 0xffff | value << 0x10);
+			stack.max = 0x18;
+			stack.step = 3;
+			stack.multiplyVal = 0xd1;
+    		stack.randData = GetAddress(&vaPlayerObfuscateWeaponAddr);
+			break;
+		}
+		case 3: { // timers
+			value = (value << 0x10);
+			stack.step = 3;
+			stack.max = 0x18;
+			stack.multiplyVal = 0xff;
+			stack.randData = GetAddress(&vaPlayerObfuscateAddr);
+			break;
+		};
+	}
+	u32 algo = *(u32*)(((u32)stack.randData - 0x1) + (((int)i * gameGetGSFrame()) % 0x1fe) * 4);
+	stack.addr = algo ^ (u32)i;
+	stack.val = algo ^ (u32)value;
+	int n = 0;
+	for (n; n < stack.max; n += stack.step) {
+		u32 offset = (u32)(((int)i - (u32)*i & 7) + n);
+		stack.randData[(*i + (offset & 7) * stack.multiplyVal)] = *data;
+		++data;
+	}
 }
 
 VariableAddress_t vaSetPlayerStateFunc = {
@@ -411,7 +471,7 @@ VariableAddress_t vaSetPlayerStateFunc = {
 };
 void playerSetPlayerState(Player * player, u8 state)
 {
-    
+    // aka: InitBodyState
     internal_SetPlayerState(player, state, 1, 0, 1);
 }
 
@@ -494,40 +554,7 @@ void playerSetHealth(Player * player, int health)
     if (!player)
         return;
 
-    // asm(".set noreorder;");
-    int PlayerSetHealthStack[1];
-    float f = health;
-    u32 Player_Addr = &player->hitPoints;
-    u32 Player_Value = *(u8*)Player_Addr;
-    int gsFrame = gameGetGSFrame();
-    int RandDataAddr = GetAddress(&vaPlayerObfuscateAddr);
-    u32 xord = *(u32*)(((u32)RandDataAddr - 0x1) + (((int)Player_Addr * gsFrame) % 0x1fe) * 4);
-    PlayerSetHealthStack[0] = (u32)Player_Addr ^ xord;
-    PlayerSetHealthStack[1] = xord ^ *(u32*)(&f);
-    int n = 0;
-    int m = 0;
-    do {
-        u32 Offset = (u32)(((int)Player_Addr - (u32)Player_Value & 7) + n);
-        n = n + 5;
-        *(u8*)((u32)RandDataAddr + (Player_Value + (Offset & 7) * 0xff)) = *(u8*)((int)PlayerSetHealthStack + m);
-        ++m;
-    } while (n < 0x28);
-
-    // =======OLD, BUT KEEPING
-    // Grab address where math is done
-    // int math = ((u32)GetAddress(&vaHurtPlayerFunc) + 0xb0);
-    // // Instead of subtracting, move f01 to f00.
-    // *(u32*)math = 0x46000806; // mov.s $f0, $f1
-    // // Run normal function
-    // internal_HurtPlayer(player, (health > PLAYER_MAX_HEALTH) ? PLAYER_MAX_HEALTH : health);
-    // // Revert back to subtraction
-    // *(u32*)math = 0x46010001; // sub.s $f0, $f0, $f1
-
-    // set tNW_Player Health
-    // if (player->pNetPlayer && player->pNetPlayer->pNetPlayerData){
-    //     float fHealth = health;
-    //     player->pNetPlayer->pNetPlayerData->hitPoints = fHealth;
-    // }
+    playerObfuscate(&player->hitPoints, health, OBFUSCATE_MODE_HEALTH);
 }
 
 int playerGetHealth(Player * player)
