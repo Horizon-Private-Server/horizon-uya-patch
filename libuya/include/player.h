@@ -1670,6 +1670,24 @@ int playerGetRespawnTimer(Player *player);
 int playerGetGadetId(Player *player, int slot);
 int playerGetGadgetLevel(Player *player, int slot);
 int playerGetGadgetAmmo(Player *player, int slot);
+
+/*
+* NAME :		playerDeobfuscate
+* DESCRIPTION : Deobfuscates given player struct item.
+* NOTES :
+* ARGS : 
+*      src    	:            Destination source of needed obfuscated data.
+*	   value	:			Value/Data to be obfuscated
+* 							Ex: &player->hitPoints, &player->state
+* 		mode	:			0: Used for: Player State, other.
+*							1: Used For: Health/hitPoints
+* 							2: Used for: Weapon IDs, other.
+* 							3: Used for: Player Timers.
+* RETURN :
+* AUTHOR :			Troy "Metroynome" Pruitt
+*/
+void playerObfuscate(int src, int value, ObfuscateMode_e mode);
+
 /*
 * NAME :		playerHasShield
 * DESCRIPTION : Checks to see if player has shield
