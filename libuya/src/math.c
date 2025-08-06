@@ -168,3 +168,13 @@ float fastDiffRots(float input0, float input1)
 
     return diff;
 }
+
+float sqrtf(float number) {
+    float x = number * 0.5f;
+    float y = number;
+    long i = *(long*)&y;           // evil float bit hack
+    i = 0x5f3759df - (i >> 1);     // what the hell?
+    y = *(float*)&i;
+    y = y * (1.5f - (x * y * y));  // 1st iteration
+    return number * y;
+}
