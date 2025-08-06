@@ -19,8 +19,9 @@
 #define SCREEN_INSERT_EFFECT                ((ScreenInsertEffect*)0x002426A0)
 #define SHELL_CIRCLE_COS                    (0x00242920) // part of struct FXUtilsInterface
 #define SHELL_CIRCLE_SIN                    (0x00242950) // part of struct FXUtilsInterface
-
 #define VIEW_CONTEXT                        ((ViewContext*)GetAddress(&vaViewContext))
+#define REGISTERED_DRAW_MOBIES              ((Moby*)GetAddress(&vaRegisteredDrawRoutine_MobyList))
+#define REGISTERED_DRAW_FUNCTIONS           ((void*)GetAddress(&vaRegisteredDrawRoutine_FuncList))
 
 int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
 void internal_drawBox(void *, void *);
@@ -338,10 +339,8 @@ VariableAddress_t vaDrawEffect = {
     .MarcadiaPalace = 0x0044d360,
 #endif
 };
-    
-    
 
-VariableAddress_t vaSticky_FX = {
+VariableAddress_t vaRegisterDrawRoutine = {
 #if UYA_PAL
     .Lobby = 0,
     .Bakisi = 0x00457240,
@@ -648,6 +647,90 @@ VariableAddress_t vaDrawScreenOverlay = {
 #endif
 };
 
+VariableAddress_t vaRegisteredDrawCount = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0,
+    .Hoven = 0,
+    .OutpostX12 = 0,
+    .KorgonOutpost = 0,
+    .Metropolis = 0,
+    .BlackwaterCity = 0,
+    .CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0024808c,
+    .Hoven = 0,
+    .OutpostX12 = 0,
+    .KorgonOutpost = 0,
+    .Metropolis = 0,
+    .BlackwaterCity = 0,
+    .CommandCenter = 0,
+    .BlackwaterDocks = 0,
+    .AquatosSewers = 0,
+    .MarcadiaPalace = 0,
+#endif
+};
+
+VariableAddress_t vaRegisteredDrawRoutine_FuncList = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0025aa00,
+    .Hoven = 0x0025ab40,
+    .OutpostX12 = 0x0025ac40,
+    .KorgonOutpost = 0x0025a8c0,
+    .Metropolis = 0x0025a900,
+    .BlackwaterCity = 0x0025a8c0,
+    .CommandCenter = 0,
+    .BlackwaterDocks = 0x0025a7c0,
+    .AquatosSewers = 0x0025a600,
+    .MarcadiaPalace = 0x0025a580,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0025ab80,
+    .Hoven = 0x0025acc0,
+    .OutpostX12 = 0x0025abc0,
+    .KorgonOutpost = 0x0025aa40,
+    .Metropolis = 0x0025aa80,
+    .BlackwaterCity = 0x0025aa40,
+    .CommandCenter = 0,
+    .BlackwaterDocks = 0x0025a740,
+    .AquatosSewers = 0x0025a780,
+    .MarcadiaPalace = 0x0025a700,
+#endif
+};
+
+VariableAddress_t vaRegisteredDrawRoutine_MobyList = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x0025ab00,
+    .Hoven = 0x0025ac40,
+    .OutpostX12 = 0x0025ab40,
+    .KorgonOutpost = 0x0025a9c0,
+    .Metropolis = 0x0025aa00,
+    .BlackwaterCity = 0x0025a9c0,
+    .CommandCenter = 0,
+    .BlackwaterDocks = 0x0025a6c0,
+    .AquatosSewers = 0x0025a700,
+    .MarcadiaPalace = 0x0025a680,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x0025ac80,
+    .Hoven = 0x0025adc0,
+    .OutpostX12 = 0x0025acc0,
+    .KorgonOutpost = 0x0025ab40,
+    .Metropolis = 0x0025ab80,
+    .BlackwaterCity = 0x0025ab40,
+    .CommandCenter = 0,
+    .BlackwaterDocks = 0x0025a840,
+    .AquatosSewers = 0x0025a880,
+    .MarcadiaPalace = 0x0025a800,
+#endif
+};
+
 //--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, int font)
 {
@@ -930,4 +1013,14 @@ void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u
         // gfxDrawEffect(fx, fy, w , h, 63, 63, gfxGetEffectTex(0x20), 0xfffff3, color, 1, 0);
         gfxDoGifPaging();
 	}
+}
+
+Moby *gfxGetRegisteredDrawnMobyList(void)
+{
+    return REGISTERED_DRAW_MOBIES;
+}
+
+void *gfxGetRegisteredDrawnFunctionList(void)
+{
+    return REGISTERED_DRAW_FUNCTIONS;
 }
