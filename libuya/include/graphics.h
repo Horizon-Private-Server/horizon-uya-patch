@@ -722,7 +722,7 @@ u64 gfxGetFrameTex(int id);
 u64 gfxGetEffectTex(int id);
 void gfxDrawSprite(float x, float y, float w, float h, int tex_x, int tex_y, int tex_w, int tex_h, u64 color, u64 texture);
 void gfxDrawEffect(float x, float y, float w, float h, int r, int tex_x, int tex_y, int tex_w, int tex_h, u64 texture, u64 color1, u64 color2, char bSetting1, char bSetting2);
-void gfxRegistserDrawRoutine(void* callback, Moby* moby);
+void gfxRegistserDrawFunction(void* callback, Moby* moby);
 void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
 void gfxDrawQuad(QuadDef *quadDef, MATRIX worldMatrix);
 void gfxSetScissor(int xmin, int xmax, int ymin, int ymax);

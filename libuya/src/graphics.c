@@ -340,7 +340,7 @@ VariableAddress_t vaDrawEffect = {
 #endif
 };
 
-VariableAddress_t vaRegisterDrawRoutine = {
+VariableAddress_t vaRegisterDrawFunction = {
 #if UYA_PAL
     .Lobby = 0,
     .Bakisi = 0x00457240,
