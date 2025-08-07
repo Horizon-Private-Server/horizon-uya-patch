@@ -22,6 +22,7 @@
 #define VIEW_CONTEXT                        ((ViewContext*)GetAddress(&vaViewContext))
 #define REGISTERED_DRAW_MOBIES              ((Moby*)GetAddress(&vaRegisteredDrawRoutine_MobyList))
 #define REGISTERED_DRAW_FUNCTIONS           ((void*)GetAddress(&vaRegisteredDrawRoutine_FuncList))
+#define REGISTERED_DRAW_COUNT               (GetAddress(&vaRegisteredDrawCount))
 
 int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
 void internal_drawBox(void *, void *);
@@ -994,8 +995,8 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 	internal_WorldSpaceToScreenSpace(&screenPos, position);
     *x = (int)((screenPos[0] - screen->ofs_x) * scale);
     *y = (int)((screenPos[1] - screen->ofs_y) * scale);
-    if (*x < -64 || *x > screen->size_x + 64) return 0;
-    if (*y < -64 || *y > screen->size_y + 64) return 0;
+    if (*x < -64 || *x > screen->lim_x + 64) return 0;
+    if (*y < -64 || *y > screen->lim_y + 64) return 0;
     return 1;
 }
 
@@ -1015,12 +1016,17 @@ void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u
 	}
 }
 
-Moby *gfxGetRegisteredDrawnMobyList(void)
+Moby *gfxGetRegisteredDrawMobyList(void)
 {
     return REGISTERED_DRAW_MOBIES;
 }
 
-void *gfxGetRegisteredDrawnFunctionList(void)
+void *gfxGetRegisteredDrawCalbackList(void)
 {
     return REGISTERED_DRAW_FUNCTIONS;
+}
+
+int gfxGetRegisteredDrawCount(void)
+{
+    return REGISTERED_DRAW_COUNT;
 }

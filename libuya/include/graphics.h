@@ -724,11 +724,14 @@ void gfxDrawSprite(float x, float y, float w, float h, int tex_x, int tex_y, int
 void gfxDrawEffect(float x, float y, float w, float h, int r, int tex_x, int tex_y, int tex_w, int tex_h, u64 texture, u64 color1, u64 color2, char bSetting1, char bSetting2);
 void gfxRegistserDrawFunction(void* callback, Moby* moby);
 void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
-void gfxDrawQuad(QuadDef *quadDef, MATRIX worldMatrix);
+void gfxDrawQuad(QuadDef quad, MATRIX worldMatrix);
 void gfxSetScissor(int xmin, int xmax, int ymin, int ymax);
 PartInstance_t * gfxSpawnParticle(VECTOR position, u32 texId, u32 color, char opacity, float rotation);
 void gfxHelperAlign(float* pX, float* pY, float w, float h, enum TextAlign alignment);
 void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u32 color, enum TextAlign alignment);
+Moby *gfxGetRegisteredDrawMobyList(void);
+void *gfxGetRegisteredDrawCalbackList(void);
+int gfxGetRegisteredDrawCount(void);
 
 //
 ScreenVBEffect* gfxScreenVBEffect(void);
