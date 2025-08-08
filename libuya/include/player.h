@@ -654,7 +654,7 @@ typedef struct FpsCamVars {
 	/* 0x130c */ float gunInterpSpeed;
 } FpsCamVars;
 
-typedef struct HeroFps { // 0x30
+typedef struct HeroFps { // 0x1c0
 	/* 0x1180 */ VECTOR cameraPos;
 	/* 0x1190 */ VECTOR cameraDir;
 	/* 0x11a0 */ FpsCamVars vars;

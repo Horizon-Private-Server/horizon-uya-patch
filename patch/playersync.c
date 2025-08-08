@@ -9,13 +9,11 @@
 #include <libuya/stdio.h>
 #include <libuya/game.h>
 #include <libuya/stdlib.h>
+#include <libuya/utils.h>
 #include "messageid.h"
 #include "config.h"
 #include <libuya/net.h>
 
-/*
-TODO - confirm free memory to use for player sync data ptr
-*/
 #define PLAYER_SYNC_DATAS_PTR     (*(PlayerSyncPlayerData_t**)0x000CFFB0)
 #define CMD_BUFFER_SIZE           (8)
 
@@ -25,16 +23,16 @@ typedef struct PlayerSyncStateUpdatePacked
   float Rotation[3];
   int GameTime;
   int GroundMobyUID;
-//  short CameraDistance;
-//  short CameraYaw;
-//  short CameraPitch;
+  short CameraDistance;
+  short CameraYaw;
+  short CameraPitch;
   short NoInput;
-//  short Health;
+  short Health;
   u8 PadBits0;
   u8 PadBits1;
   u8 MoveX;
   u8 MoveY;
-//  u8 GadgetId;
+  u8 GadgetId;
 //  char GadgetLevel;
   char State;
   char StateId;
@@ -51,16 +49,16 @@ typedef struct PlayerSyncStateUpdateUnpacked
   VECTOR Rotation;
   Moby* GroundMoby;
   int GameTime;
-//  float CameraDistance; // don't care about remote camera for now
-//  float CameraHeight;
-//  float CameraYaw;
-//  float CameraPitch;
-//  float Health; // TODO need to understand how obfuscation affects syncing health over net
+  float CameraDistance;
+  float CameraHeight;
+  float CameraYaw;
+  float CameraPitch;
+  float Health;
   short NoInput;
   u16 PadBits;  // left 8 bits == padbits1 right 8 bits == padbits0
   u8 MoveX;  // left stick intensity Y axis
   u8 MoveY;  // left stick intensity X axis
-  // u8 GadgetId; // TODO maybe later
+  u8 GadgetId;
   //char GadgetLevel; // TODO maybe later
   u8 State;
   char StateId;
@@ -93,6 +91,8 @@ extern PatchGameConfig_t gameConfig;
 
 // ping
 extern int ClientLatency[GAME_MAX_PLAYERS];
+
+const int netHealth[16] = {0,6,13,20,26,33,40,46,53,60,66,73,80,86,93,100};
 
 /*
 TODO - what is this? transition animation? idk uya equivalent
@@ -169,12 +169,12 @@ void playerSyncOnPlayerUpdateSetState(Player* player, int toState, int a2, int a
 }
 
 /*
-TODO - transfer addresses to UYA pad addresses, idk if uya has a gadget transitions...
+Fully updated
 */
 //--------------------------------------------------------------------------
 int playerSyncHandlePlayerPadHook(Player* player)
 {
-  int padIdx = 0;
+  int padIdx = 2;
   
   // enable pad
   if (!player->isLocal && PLAYER_SYNC_DATAS_PTR) {
@@ -184,15 +184,15 @@ int playerSyncHandlePlayerPadHook(Player* player)
   
     // process input
     // IN DL DECOMPILED WITH SYMBOLS V6: 00491050 - UpdatePad
-    ((void (*)(struct PAD*))0x00527e08)(player->pPad);
+    ((void (*)(struct PAD*))0x00494460)(player->pPad);
 
     // update pad
     // IN DL DECOMPILED WITH SYMBOLS V6: 004907c0 - ProcessPadInput
-    ((void (*)(struct PAD*, void*, int))0x00527510)(player->pPad, data->Pad, 0x14);
+    ((void (*)(struct PAD*, void*, int))0x493a68)(player->pPad, data->Pad, 0x14);
   }
 
-  // IN DL DECOMPILED WITH SYMBOLS V6: 00512608 - GadgetTransitions
-  int result = ((int (*)(Player*))0x0060cec0)(player); //idk what this is
+  // IN DL DECOMPILED WITH SYMBOLS V6: 00512608 - GadgetTransitions, maybe UpdateGadgetEvents from vtable in uya?
+  int result = ((int (*)(Player*))0x0052c920)(player); //idk what this is 
 
   return result;
 }
@@ -231,18 +231,18 @@ void playerStateUpdateLerp(PlayerSyncStateUpdateUnpacked_t* out, PlayerSyncState
   // interpolate states
   vector_lerp(out->Position, a->Position, b->Position, t);
   playerRotationLerp(out->Rotation, a->Rotation, b->Rotation, t);
-//  out->CameraDistance = lerpf(a->CameraDistance, b->CameraDistance, t);
-//  out->CameraHeight = lerpf(a->CameraHeight, b->CameraHeight, t);
-//  out->CameraPitch = lerpfAngle(a->CameraPitch, b->CameraPitch, t);
-//  out->CameraYaw = lerpfAngle(a->CameraYaw, b->CameraYaw, t);
+  out->CameraDistance = lerpf(a->CameraDistance, b->CameraDistance, t);
+  out->CameraHeight = lerpf(a->CameraHeight, b->CameraHeight, t);
+  out->CameraPitch = lerpfAngle(a->CameraPitch, b->CameraPitch, t);
+  out->CameraYaw = lerpfAngle(a->CameraYaw, b->CameraYaw, t);
   out->NoInput = (short)lerpf(a->NoInput, b->NoInput, t);
   out->MoveX = (u8)lerpf(a->MoveX, b->MoveX, t);
   out->MoveY = (u8)lerpf(a->MoveY, b->MoveY, t);
   out->GameTime = (int)lerpf(a->GameTime, b->GameTime, t);
   out->GroundMoby = isHalfway ? b->GroundMoby : a->GroundMoby;
-//  out->Health = isHalfway ? b->Health : a->Health;
+  out->Health = isHalfway ? b->Health : a->Health;
   out->PadBits = isHalfway ? b->PadBits : a->PadBits;
-  //out->GadgetId = isHalfway ? b->GadgetId : a->GadgetId;
+  out->GadgetId = isHalfway ? b->GadgetId : a->GadgetId;
   //out->GadgetLevel = isHalfway ? b->GadgetLevel : a->GadgetLevel;
   out->State = isHalfway ? b->State : a->State;
   out->StateId = isHalfway ? b->StateId : a->StateId;
@@ -263,7 +263,7 @@ void playerStateUpdateLerp(PlayerSyncStateUpdateUnpacked_t* out, PlayerSyncState
 //--------------------------------------------------------------------------
 void playerSyncHandlePlayerState(Player* player)
 {
-//  MATRIX m, mInv;
+  MATRIX m, mInv;
   VECTOR dt;
   int i;
   int rate = playerSyncGetSendRate();
@@ -279,9 +279,6 @@ void playerSyncHandlePlayerState(Player* player)
     data->CurrentSubStateId = 0;
   }
 
-  /*
-  TODO - what is difference between CurrentStateUpdateCmdId and StateUpdateCmdId
-  */
   // we're running behind ()
   int stateIdDelta = playerSyncCmdDelta(data->CurrentStateUpdateCmdId, data->StateUpdateCmdId);
   if (stateIdDelta > 1) {
@@ -315,7 +312,7 @@ void playerSyncHandlePlayerState(Player* player)
   float tPos = 0.15;
   float tRot = 0.15;
   float tCam = 0.5;
-  int padIdx = 0;
+  int padIdx = 2;
 
   if (!stateNext->Valid) {
     tSub = 0; 
@@ -339,12 +336,11 @@ void playerSyncHandlePlayerState(Player* player)
   TODO - verify playerRespawn function is correct here. Also verify warp message works the same in UYA... i dont think the warpmessage holds any info... or the address is wrong
   */
   // resurrecting
-  if (playerIsDead(player) && player->pNetPlayer && player->pNetPlayer->warpMessage.isResurrecting) {
+  if (playerIsDead(player) && player->pNetPlayer && player->pNetPlayer->padMessageElems[padIdx].msg.pad_data[36]) {
     // ((void (*)(Player*))0x005e2940)(player);
     playerRespawn(player);
-    player->pNetPlayer->warpMessage.isResurrecting = 0;
+    player->pNetPlayer->padMessageElems[padIdx].msg.pad_data[36] = 0;
   }
-  
   // extrapolate
   #if NPS_INSTANTSYNC
   GameSettings* gs = gameGetSettings();
@@ -366,7 +362,7 @@ void playerSyncHandlePlayerState(Player* player)
     vector_copy(stateInterpolated.Rotation, stateCurrent->Rotation);
   }
   #endif
-
+  
   // compute absolute position
   VECTOR stateCurrentPosition;
   vector_copy(stateCurrentPosition, stateInterpolated.Position);
@@ -385,8 +381,8 @@ void playerSyncHandlePlayerState(Player* player)
     VECTOR dif;
     vector_subtract(dif, stateCurrentPosition, player->playerPosition);
     vector_copy(player->playerPosition, stateCurrentPosition);
-    // vector_add(player->CameraPos, player->CameraPos, dif);
-    //vector_copy(stateInterpolated.Position, data->LastReceivedPosition);
+    vector_add(player->fps.cameraPos, player->fps.cameraPos, dif);
+    //vector_copy(stateInterpolated.Position, data->LastReceivedPosition); //commented out in dl prod
     DPRINTF("tp player %d (dist %f)\n", player->fps.vars.camSettingsIndex, vector_length(dt));
   }
 
@@ -396,7 +392,7 @@ void playerSyncHandlePlayerState(Player* player)
     vector_subtract(dif, stateCurrentPosition, player->playerPosition);
     vector_scale(dif, dif, tPos);
     vector_add(player->playerPosition, player->playerPosition, dif);
-    // vector_add(player->CameraPos, player->CameraPos, dif);
+    vector_add(player->fps.cameraPos, player->fps.cameraPos, dif);
   }
 
   vector_copy(playerMoby->position, player->playerPosition);
@@ -409,65 +405,54 @@ void playerSyncHandlePlayerState(Player* player)
   player->playerRotation[2] = lerpfAngle(player->playerRotation[2], stateInterpolated.Rotation[2], tRot);
   vector_copy(player->RemoteHero.receivedSyncRot, player->playerRotation);
 
-  /*
-  TODO - I don't think we care about remote camera rotation unless we decide to implement spectate...
-  I could be wrong and remote camera shit is actually used somehow
-  */
- /*
   // lerp camera rotation
-  player->CamRot[0] = 0;
-  player->CamRot[1] = lerpfAngle(player->CamRot[1], stateInterpolated.CameraPitch, tCam);
-  player->CamRot[2] = lerpfAngle(player->CamRot[2], stateInterpolated.CameraYaw, tCam);
+  player->camRot[0] = 0;
+  player->camRot[1] = lerpfAngle(player->camRot[1], stateInterpolated.CameraPitch, tCam);
+  player->camRot[2] = lerpfAngle(player->camRot[2], stateInterpolated.CameraYaw, tCam);
 
   // lerp camera position
-  vector_write(player->CameraOffset, 0);
-  vector_write(player->CameraRotOffset, 0);
-  player->CameraOffset[0] = -stateInterpolated.CameraDistance;
-  vector_copy(&player->CameraMatrix[12], player->CameraPos);
-  vector_copy(player->CamPos, player->CameraPos);
+  vector_write(player->fps.vars.positionOffset, 0);
+  vector_write(player->fps.vars.rotationOffset, 0);
+  player->fps.vars.positionOffset[0] = -stateInterpolated.CameraDistance;
+  vector_copy(&player->fps.vars.cameraMatrix[12], player->fps.cameraPos);
+  vector_copy(player->camPos, player->fps.cameraPos);
 
   // lerp camera rotations
-  player->CameraYaw.Value = player->CamRot[2];
-  player->CameraPitch.Value = player->CamRot[1];
+  player->fps.vars.cameraZ.rotation = player->camRot[2];
+  player->fps.vars.cameraY.rotation = player->camRot[1];
 
   // compute matrix
   matrix_unit(m);
-  matrix_rotate_y(m, m, -player->CamRot[1]);
-  matrix_rotate_z(m, m, player->CamRot[2]);
-  vector_copy(player->CameraForward, &m[0]);
-  vector_copy(player->CameraDir, player->CameraForward);
+  matrix_rotate_y(m, m, -player->camRot[1]);
+  matrix_rotate_z(m, m, player->camRot[2]);
+  vector_copy(player->fps.vars.facing_dir, &m[0]);
+  vector_copy(player->fps.cameraDir, player->fps.vars.facing_dir);
 
   // copy to player camera
-  if (player->Camera) {
+  if (player->camera) {
     VECTOR off;
     matrix_unit(m);
-    matrix_rotate_y(m, m, player->CamRot[1]);
-    matrix_rotate_z(m, m, player->CamRot[2]);
-    vector_apply(off, player->CameraOffset, m);
-    vector_add(player->Camera->pos, player->CameraPos, off);
-    vector_copy(player->Camera->rot, player->CamRot);
+    matrix_rotate_y(m, m, player->camRot[1]);
+    matrix_rotate_z(m, m, player->camRot[2]);
+    vector_apply(off, player->fps.vars.positionOffset, m);
+    vector_add(player->camera->pos, player->fps.cameraPos, off);
+    vector_copy(player->camera->rot, player->camRot);
   }
 
   // compute inv matrix
   matrix_unit(mInv);
-  matrix_rotate_y(mInv, mInv, clampAngle(-player->CamRot[1] + MATH_PI));
-  matrix_rotate_z(mInv, mInv, clampAngle(player->CamRot[2] + MATH_PI));
-  memcpy(player->CamUMtx, mInv, sizeof(VECTOR)*3);
+  matrix_rotate_y(mInv, mInv, clampAngle(-player->camRot[1] + MATH_PI));
+  matrix_rotate_z(mInv, mInv, clampAngle(player->camRot[2] + MATH_PI));
+  memcpy(player->camUMtx, mInv, sizeof(VECTOR)*3);
 
   // set net camera rotation
   if (player->pNetPlayer) {
-    vector_pack(player->CamRot, player->pNetPlayer->padMessageElems[padIdx].msg.cameraRot);
+    vector_pack(player->camRot, player->pNetPlayer->padMessageElems[padIdx].msg.cameraRot);
   }
 
-*/
-
-  /*
-  TODO - how to deal with obfuscation? when it health obfuscated over the net?
-  breaking news - health data over the net is just how many shots you have left till you hit 0 (out of 15) from pNet_player->tNW_PlayerData->hitPoints
-  IDK how we're going to re-obfuscate the health though
-  */
   // set health
-//  player->hitPoints = stateInterpolated.Health;
+  // player->hitPoints = stateInterpolated.Health;
+  playerSetHealth(player, netHealth[(int)stateInterpolated.Health]);
 
 
   // set joystick
@@ -475,40 +460,27 @@ void playerSyncHandlePlayerState(Player* player)
   float moveY = (stateInterpolated.MoveY - 127) / 128.0;
   float mag = minf(1, sqrtf((moveX*moveX) + (moveY*moveY)));
   float ang = atan2f(moveY, moveX);
- 
-//  TODO - found these addresses in DL build with symbols, transfer correctly to UYA player struct 
-//  *(float*)((u32)player + 0x2e08) = mag; // stick strength
-//  *(float*)((u32)player + 0x2e0c) = ang; // stick angle
-//  *(float*)((u32)player + 0x2e38) = mag; // analog stick strength
-//  *(float*)((u32)player + 0x0120) = moveX; // part of stickInput
-//  *(float*)((u32)player + 0x0124) = -moveY; // part of stickInput
+
+  player->stickStrength = mag; // stickStrength
+  player->stickRawAngle = ang; // stickRawAngle
+  player->analogStickStrength = mag; // analog stick strength
+  player->stickInput[0] = moveX; //  *(float*)((u32)player + 0x0110) = moveX;
+  player->stickInput[1] = -moveY; //  *(float*)((u32)player + 0x0114) = -moveY; // part of stickInput
 
   data->Pad[4] = 0x7F;
   data->Pad[5] = 0x7F;
   data->Pad[6] = stateInterpolated.MoveX;
   data->Pad[7] = stateInterpolated.MoveY;
-/*
-TODO - I'm don't think the netPlayer pad works the same as DL, it isnt updated ever normally.
-either the addresses are wrong or remote pad data is not held in netPlayer->padMessageElems[0].msg.pad_data
-*/
+
   struct tNW_Player* netPlayer = player->pNetPlayer;
   if (netPlayer) {
-    netPlayer->padMessageElems[padIdx].msg.pad_data[2] = stateInterpolated.PadBits & 0xFF;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[3] = stateInterpolated.PadBits >> 8;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[4] = 0x7F;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[5] = 0x7F;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[6] = stateInterpolated.MoveX;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[7] = stateInterpolated.MoveY;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[82] = stateInterpolated.PadBits & 0xFF; // remote rdata[2]
+    netPlayer->padMessageElems[padIdx].msg.pad_data[83] = stateInterpolated.PadBits >> 8; // remote rdata[3]
+    netPlayer->padMessageElems[padIdx].msg.pad_data[84] = 0x7F;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[85] = 0x7F;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[86] = stateInterpolated.MoveX;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[87] = stateInterpolated.MoveY;
   }
-
-  // flail is not synced very well
-  // so we're gonna pass R1 pad through to try and sync it up better
-  // still not perfect
-  /*
-  if (!player->timers.noInput && (stateInterpolated.PadBits & PAD_R1) == 0 && player->WeaponHeldId == WEAPON_ID_FLAIL) {
-    data->Pad[3] &= ~0x08;
-  }
-  */
 
   // set remote received state
 
@@ -516,9 +488,7 @@ either the addresses are wrong or remote pad data is not held in netPlayer->padM
   player->RemoteHero.stateAtSyncFrame = player->state;
   player->RemoteHero.receivedState = stateInterpolated.State;
 
-  /*
-  Unobfuscated state is sent over the net ( I think)
-  */
+  // Unobfuscated state is sent over the net
   // update state
 
   if (stateInterpolated.StateId != data->LastStateId) {
@@ -638,10 +608,10 @@ either the addresses are wrong or remote pad data is not held in netPlayer->padM
 
   //
   if (player->pNetPlayer && player->pNetPlayer->pNetPlayerData) {
-    //player->pNetPlayer->pNetPlayerData->handGadget = stateInterpolated.GadgetId;
+    player->pNetPlayer->pNetPlayerData->handGadget = (int)stateInterpolated.GadgetId;
     player->pNetPlayer->pNetPlayerData->lastKeepAlive = data->LastNetTime;
     player->pNetPlayer->pNetPlayerData->timeStamp = data->LastNetTime;
-    //player->pNetPlayer->pNetPlayerData->hitPoints = stateInterpolated.Health;
+    player->pNetPlayer->pNetPlayerData->hitPoints = stateInterpolated.Health;
     vector_copy(player->pNetPlayer->pNetPlayerData->position, player->playerPosition);
   }
 
@@ -690,18 +660,18 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
   memcpy(unpacked.Rotation, msg.Rotation, sizeof(float) * 3);
   unpacked.GameTime = msg.GameTime;
   unpacked.GroundMoby = NULL;
-  //unpacked.CameraDistance = msg.CameraDistance / 1024.0;
-  //unpacked.CameraYaw = msg.CameraYaw / 10240.0;
-  //unpacked.CameraPitch = msg.CameraPitch / 10240.0;
+  unpacked.CameraDistance = msg.CameraDistance / 1024.0;
+  unpacked.CameraYaw = msg.CameraYaw / 10240.0;
+  unpacked.CameraPitch = msg.CameraPitch / 10240.0;
   unpacked.NoInput = msg.NoInput;
-  //unpacked.Health = msg.Health;
+  unpacked.Health = msg.Health;
   unpacked.MoveX = msg.MoveX;
   unpacked.MoveY = msg.MoveY;
-  unpacked.PadBits = (msg.PadBits1 << 8) | (msg.PadBits0); // TODO - map out what is in padBits0 and padBits1
-  //unpacked.GadgetId = msg.GadgetId;
+  unpacked.PadBits = (msg.PadBits1 << 8) | (msg.PadBits0);
+  unpacked.GadgetId = msg.GadgetId;
   //unpacked.GadgetLevel = msg.GadgetLevel;
-  //unpacked.State = msg.State;
-  //unpacked.StateId = msg.StateId;
+  unpacked.State = msg.State;
+  unpacked.StateId = msg.StateId;
   unpacked.PlayerIdx = msg.PlayerIdx;
   unpacked.CmdId = msg.CmdId;
   unpacked.Valid = 1;
@@ -745,29 +715,27 @@ void playerSyncBroadcastPlayerState(Player* player)
   data->LastStateTime = player->timers.state;
 
   // compute camera yaw and pitch
-//  float yaw = player->Camera->rot[2];
-//  float pitch = player->Camera->rot[1];
+  float yaw = player->camera->rot[2];
+  float pitch = player->camera->rot[1];
 
   // compute camera distance
-  //vector_subtract(dt, player->Camera->pos, player->CameraPos);
-  //float dist = vector_length(dt);
-
+  vector_subtract(dt, player->camera->pos, player->fps.cameraPos);
+  float dist = vector_length(dt);
   memcpy(msg.Position, player->playerPosition, sizeof(float) * 3);
   memcpy(msg.Rotation, player->playerRotation, sizeof(float) * 3);
   msg.GameTime = data->LastNetTime = gameGetTime();
   msg.GroundMobyUID = -1;
   msg.PlayerIdx = player->fps.vars.camSettingsIndex;
-  //msg.CameraDistance = (short)(dist * 1024.0);
-  //msg.CameraPitch = (short)(pitch * 10240.0);
-  //msg.CameraYaw = (short)(yaw * 10240.0);
-  //msg.CameraPitch = (short)(pitch * 10240.0);
+  msg.CameraDistance = (short)(dist * 1024.0);
+  msg.CameraPitch = (short)(pitch * 10240.0);
+  msg.CameraYaw = (short)(yaw * 10240.0);
   msg.NoInput = player->timers.noInput;
-  //msg.Health = (short)player->Health;
+  msg.Health = (short)playerGetHealth(player);
   msg.MoveX = ((struct PAD*)player->pPad)->rdata[6];
   msg.MoveY = ((struct PAD*)player->pPad)->rdata[7];
   msg.PadBits0 = ((struct PAD*)player->pPad)->rdata[2];
-  msg.PadBits1 = ((struct PAD*)player->pPad)->rdata[3];
-  //msg.GadgetId = player->Gadgets[0].id;
+  msg.PadBits1 = ((struct PAD*)player->pPad)->rdata[3]; // << 8
+  msg.GadgetId = (u8)player->weaponHeldId;
   //msg.GadgetLevel = -1;
   msg.State = playerGetState(player);
   msg.StateId = data->LastStateId;
@@ -871,22 +839,24 @@ void playerSyncTick(void)
   /*
   TODO - need to find these addresses out, at least start with disabling player state updates*/
   // hooks
-  //HOOK_JAL(0x0060eb80, &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
-  //HOOK_JAL(0x0060684c, &playerSyncHandlePlayerPadHook); //HERO::Transitions: symbolsv6: 00535080
+  HOOK_JAL(0x0052f5b4, &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
+  HOOK_JAL(0x00526b44, &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
   //HOOK_JAL(0x0060cd44, &playerSyncOnPlayerUpdateSetState); // is this Hero:JumpLandTransitions? commented out in DL prod playersync anyways
-  //HOOK_JAL(0x005f0900, &_playerSyncPatchHeroTransAnim); // HERO::TransAnim: symbolsv6: 00523320
+  // HOOK_JAL(0x004fac6c, &_playerSyncPatchHeroTransAnim); // HERO::TransAnim: symbolsv6: 00523320 - has the correct uya address, unsure if it is needed though
 
   // player link always healthy
-  // POKE_U32(0x005F7BDC, 0x24020001); // Hero::IsPlayerLinkHealthy - makes it so it always returns true
+  // in uya this isnt a fucking function, they do manual checks inside of an if statement every single time (15+ occurences).
+  // POKE_U32(0x005F7BDC, 0x24020001); // Hero::IsPlayerLinkHealthy - makes it so it always returns true - i.eline 99 in uya playerupdate_vtable
 
   // disable tnw_PlayerData update gadgetid
-  // POKE_U32(0x0060F010, 0); // idk
+  POKE_U32(0x0052fb94, 0);
 
   // disable tnw_PlayerData time update
-  // POKE_U32(0x0060FFAC, 0); // idk
+  POKE_U32(0x00531294, 0);
 
   // disable send GetHit
-  // POKE_U32(0x0060ff08, 0); // idk
+  // POKE_U32(0x0060ff08, 0); // used here in DL 0x005e1fec -- idk man it doesnt work the same in uya
+  // DL transitions 106 = uya transitions 249
 
   // player updates
   Player** players = playerGetAll();
