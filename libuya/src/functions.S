@@ -262,7 +262,7 @@ VARIABLE_FUNCTION(atan2f, vaFastArcTan)
 # NTSC and PAL addresses are the same for the following.
 FUNCTION(powf, 0x00136d28)
 FUNCTION(asinf, 0x001348b8)
-FUNCTION(sqrtf, 0x0011a808)
+#FUNCTION(sqrtf, 0x0011a808)
 #FUNCTION(fabsf, 0x0011a550)
 FUNCTION(fptodp, 0x001321c8)
 FUNCTION(__divdi3, 0x00130760)
@@ -277,6 +277,7 @@ FUNCTION(matrix_unit, 0x0013d5c0)
 FUNCTION(matrix_rotate_x, 0x0013d708)
 FUNCTION(matrix_rotate_y, 0x0013d7b0)
 FUNCTION(matrix_rotate_z, 0x0013d660)
+FUNCTION(internal_vector_pack, 0x004868B8)
 
 #--------------------------------------------------------
 #----------------------- GRAPHICS -----------------------
