@@ -49,6 +49,7 @@ typedef struct mtx4 { // 0x40
 //--------------------------------------------------------
 void vector_write(VECTOR output, u128 input0);
 u128 vector_read(VECTOR input0);
+void vector_pack(VECTOR input0, u32* dst);
 float vector_sqrmag(VECTOR input0);
 void vector_reflect(VECTOR output, VECTOR input0, VECTOR normal);
 void vector_fromyaw(VECTOR out, float radians);

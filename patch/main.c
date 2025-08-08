@@ -147,6 +147,7 @@ extern scavHuntEnabled;
 extern scavHuntShownPopup;
 #endif
 
+int isUnloading __attribute__((section(".config"))) = 0;
 PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableAutoMaps = 0,
 	.disableCameraShake = 0,
@@ -1551,6 +1552,16 @@ void patchQuickSelectTimer(void)
 	}
 }
 
+	void onMobyUpdate(Moby* moby)
+	{
+		playerSyncTick();
+		processGameModules();
+
+		((void (*)(Moby*))0x003DAEC0)(moby);
+
+		playerSyncPostTick();
+	}		
+
 /*
  * NAME :		runCampaignMusic
  * DESCRIPTION :	Adds Singple Player Tracks to Multiplayer
@@ -2650,6 +2661,7 @@ void playerDebugPad()
  */
 int main(void)
 {
+	static Moby* mpMoby = NULL;
 	// Call this first
 	uyaPreUpdate();
 
@@ -2730,6 +2742,13 @@ int main(void)
 		// Patch remap buttons configuration
 		HOOK_JAL(0x0013cae0, &patchSceReadPad_memcpy);
 
+		// fix weird overflow caused by player sync
+    // also randomly (rarely) triggered by other things too
+    //POKE_U32(0x004BAD64, 0x00412023); // CollMobysLine_Fix_maybe does not exist in uya maybe?
+    POKE_U32(0x0044C488, 0x00412023); // collline_fix 004b8078 in DL
+    POKE_U32(0x0044C494, 0x00612023); // collline_fix 004b8084 in DL
+    POKE_U32(0x44C4B0, 0x00622023);  //collline_fix  0x004b80a0 in DL
+
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
 
@@ -2773,30 +2792,21 @@ int main(void)
 
 		// TODO - Dan places playerSyncTick inside of a MobyUpdate function that gets called
 		// when a MP moby-pUpdate gets called
-/*
-		void onMobyUpdate(Moby* moby)
-		{
-			playerSyncTick();
-			processGameModulesUpdate();
 
-			((void (*)(Moby*))0x003BD5A8)(moby); // still dont know what this address is in DL symbols
-
-			playerSyncPostTick();
-		}		
-
+    // find and hook multiplayer moby
     if (!isInGame()) {
       mpMoby = NULL;
     } else if (!mpMoby) {
       mpMoby = mobyFindNextByOClass(mobyListGetStart(), 0x106A);
       if (mpMoby) {
-        mpMoby->PUpdate = &onMobyUpdate;
+        mpMoby->pUpdate = &onMobyUpdate;
       }
     } else if (isUnloading && mpMoby) {
-      mpMoby->PUpdate = NULL;
+      mpMoby->pUpdate = NULL;
     }
-*/
-		if (gameConfig.grNewPlayerSync)
-			playerSyncTick();
+
+//		if (gameConfig.grNewPlayerSync)
+//			playerSyncTick();
 
 		#ifdef DEBUG
 		playerDebugPad();
@@ -2843,11 +2853,14 @@ int main(void)
 
 		lastGameState = 1;
 	} else if (isInMenus()) {
+		mpMoby = NULL;
 		// If in Lobby, run these game rules.
 		grLobbyStart();
 
 		// Patches loading popup from not showing if patch menu is open.
 		patchLoadingPopup();
+
+		playerSyncTick();
 
 		// Patch Menus (Staging, create game, ect.)
 		if (patched.uiModifiers == 0) {
