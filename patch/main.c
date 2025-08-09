@@ -2804,10 +2804,10 @@ int main(void)
 				DPRINTF("mpmobyhooked!: %08x\n", mpMoby);
         mpMoby->pUpdate = &onMobyUpdate;
       }
-    } /*else if (isUnloading && mpMoby) {
+    } else if (isUnloading && mpMoby) {
 			DPRINTF("hooked from unloading\n!");
       mpMoby->pUpdate = NULL;
-    }*/
+    }
 
 //		if (gameConfig.grNewPlayerSync)
 //			playerSyncTick();
