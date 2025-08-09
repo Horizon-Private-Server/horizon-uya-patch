@@ -34,7 +34,7 @@ typedef struct PlayerSyncStateUpdatePacked
   u8 MoveY;
   u8 GadgetId;
 //  char GadgetLevel;
-  char State;
+  int State;
   char StateId;
   struct {
     char PlayerIdx : 5;
@@ -60,7 +60,7 @@ typedef struct PlayerSyncStateUpdateUnpacked
   u8 MoveY;  // left stick intensity X axis
   u8 GadgetId;
   //char GadgetLevel; // TODO maybe later
-  u8 State;
+  int State;
   char StateId;
   char PlayerIdx;
   char Valid;
@@ -93,11 +93,6 @@ extern PatchGameConfig_t gameConfig;
 extern int ClientLatency[GAME_MAX_PLAYERS];
 
 const int netHealth[16] = {0,6,13,20,26,33,40,46,53,60,66,73,80,86,93,100};
-
-/*
-TODO - what is this? transition animation? idk uya equivalent
-*/
-// extern void* _playerSyncPatchHeroTransAnim;
 
 //--------------------------------------------------------------------------
 void print_player_sync_state(const PlayerSyncStateUpdatePacked_t *p) {
@@ -333,8 +328,8 @@ void playerSyncHandlePlayerState(Player* player)
   // move forward subtick
   data->CurrentSubStateId++;
   if (data->CurrentSubStateId > rate && data->StateUpdateCmdId != data->CurrentStateUpdateCmdId) {
-    DPRINTF("Marking stateUpdates[%d] invalid because currentSubStateId %d is greater than rate and StateUpdateCmdId %d != CurrentStateUpdateCmdId %d\n",
-    playerSyncCmdGetBufIndex(data->CurrentStateUpdateCmdId), data->CurrentSubStateId, data->StateUpdateCmdId, data->CurrentStateUpdateCmdId);
+    //DPRINTF("Marking stateUpdates[%d] invalid because currentSubStateId %d is greater than rate and StateUpdateCmdId %d != CurrentStateUpdateCmdId %d\n",
+    //playerSyncCmdGetBufIndex(data->CurrentStateUpdateCmdId), data->CurrentSubStateId, data->StateUpdateCmdId, data->CurrentStateUpdateCmdId);
     data->StateUpdates[playerSyncCmdGetBufIndex(data->CurrentStateUpdateCmdId)].Valid = 0; // mark invalid/used
     data->CurrentStateUpdateCmdId = playerSyncGetCmdId(data->CurrentStateUpdateCmdId + 1);
     data->CurrentSubStateId = 0;
@@ -343,7 +338,7 @@ void playerSyncHandlePlayerState(Player* player)
   // we're running behind ()
   int stateIdDelta = playerSyncCmdDelta(data->CurrentStateUpdateCmdId, data->StateUpdateCmdId);
   if (stateIdDelta > 1) {
-    DPRINTF("%d running behind %d, %d=>%d\n", gameGetTime(), stateIdDelta, data->CurrentStateUpdateCmdId, data->StateUpdateCmdId);
+    //DPRINTF("%d running behind %d, %d=>%d\n", gameGetTime(), stateIdDelta, data->CurrentStateUpdateCmdId, data->StateUpdateCmdId);
     data->CurrentSubStateId = 0;
 
     int targetId = playerSyncGetCmdId(data->StateUpdateCmdId - 1);
@@ -385,6 +380,7 @@ void playerSyncHandlePlayerState(Player* player)
   //print_player_sync_state_unpacked(&stateCurrent);
   //DPRINTF("stateNext: \n");
   //print_player_sync_state_unpacked(&stateNext);
+  //DPRINTF("stateCurrent.state == %d, stateNext.state == %d\n", stateCurrent->State, stateNext->State);
   playerStateUpdateLerp(&stateInterpolated, stateCurrent, stateNext, tSub);
   //DPRINTF("after lerp\n");
   //print_player_sync_state_unpacked(&stateInterpolated);
@@ -404,6 +400,7 @@ void playerSyncHandlePlayerState(Player* player)
   */
   // resurrecting
   if (playerIsDead(player) && player->pNetPlayer && player->pNetPlayer->padMessageElems[padIdx].msg.pad_data[36]) {
+    DPRINTF("player %08x is spawning!\n");
     // ((void (*)(Player*))0x005e2940)(player);
     playerRespawn(player);
     player->pNetPlayer->padMessageElems[padIdx].msg.pad_data[36] = 0;
@@ -552,9 +549,10 @@ void playerSyncHandlePlayerState(Player* player)
   // set remote received state
 
   int playerState = playerGetState(player);
-  DPRINTF("remote state is %d\n", playerState);
-  player->RemoteHero.stateAtSyncFrame = player->state;
-  player->RemoteHero.receivedState = stateInterpolated.State;
+  //DPRINTF("remote state using playerGetState(player) is %d\n", playerState);
+  // TODO - unsure about the casting here
+  player->RemoteHero.stateAtSyncFrame = (u8)player->state;
+  player->RemoteHero.receivedState = (u8)stateInterpolated.State;
 
   // Unobfuscated state is sent over the net
   // update state
@@ -648,6 +646,7 @@ void playerSyncHandlePlayerState(Player* player)
       }
 
       int force = playerStateIsDead(playerState) && !playerStateIsDead(stateInterpolated.State);
+      DPRINTF("force is %d because playerStateIsDead(playerState) is %d and !playerStateIsDead(stateInterpolatedState) is %d. Player %08x will be updated to state %d.\n", force, playerStateIsDead(playerState), !playerStateIsDead(stateInterpolated.State), player, stateInterpolated.State);
       vtable->UpdateState(player, stateInterpolated.State, 1, force, 1);
       data->LastStateId = stateInterpolated.StateId;
       data->LastState = stateInterpolated.State;
@@ -744,16 +743,14 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
   unpacked.PlayerIdx = msg.PlayerIdx;
   unpacked.CmdId = msg.CmdId;
   unpacked.Valid = 1;
+  //DPRINTF("Recieved state %d!\n", unpacked.State);
 
-  /*
-  TODO - find out where in guber vtable GetMoby is
-  */
+
   if (msg.GroundMobyUID != -1 && (msg.Flags & 1)) {
     Guber* groundGuber = guberGetObjectByUID(msg.GroundMobyUID);
-    //if (groundGuber) {
-    //  unpacked.GroundMoby = groundGuber->Vtable->GetMoby(groundGuber); 
-    //}
-    unpacked.GroundMoby = mobyFindByUID(msg.GroundMobyUID);
+    if (groundGuber) {
+      unpacked.GroundMoby = groundGuber->Vtable->GetMoby(groundGuber); // 53ee60, or vtable+0x10
+    }
   } else if (msg.GroundMobyUID != -1 && (msg.Flags & 2)) {
     unpacked.GroundMoby = mobyFindByUID(msg.GroundMobyUID);
   }
@@ -858,12 +855,13 @@ void playerSyncBroadcastPlayerState(Player* player)
   // if so, sync relative position
   Moby* groundMoby = player->ground.pMoby;
   if (groundMoby) {
+    //DPRINTF("Moby found with UID %d and oClass %d\n", (u32))
     Guber* groundMobyGuber = guberGetObjectByMoby(groundMoby);
     if (groundMobyGuber) {
       msg.GroundMobyUID = groundMobyGuber->Id.UID;
       msg.Flags = 1;
-    } else if (groundMoby->oClass > 0) {
-      msg.GroundMobyUID = groundMoby->oClass;
+    } else if (groundMoby->UID > 0) {
+      msg.GroundMobyUID = groundMoby->UID;
       msg.Flags = 2;
     }
 
