@@ -212,6 +212,25 @@ int mobyIsDestroyed(Moby* moby)
 // }
 
 /*
+ * Returns a pointer to the moby with the given uid.
+ * Returns NULL if none found.
+ */
+Moby* mobyFindByUID(int uid)
+{
+  Moby* mStart = mobyListGetStart();
+  Moby* mEnd = mobyListGetEnd();
+  
+  while (mStart < mEnd)
+  {
+    if (mStart->UID == uid)
+      return mStart;
+    ++mStart;
+  }
+
+  return NULL;
+}
+
+/*
  * Returns a pointer to the next living moby of the given oclass.
  * Returns NULL if none found.
  */

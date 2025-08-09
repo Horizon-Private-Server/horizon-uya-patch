@@ -2417,6 +2417,7 @@ void configMenuDisable(void)
         gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
         gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
         gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
+        gameConfig.grNewPlayerSync = 1;
         // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
         gameConfig.grDisablePlayerTurrets = 1; // Disabled
         gameConfig.grDestructableBridges = 0; // Enabled

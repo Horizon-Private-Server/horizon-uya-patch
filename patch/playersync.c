@@ -100,6 +100,65 @@ TODO - what is this? transition animation? idk uya equivalent
 // extern void* _playerSyncPatchHeroTransAnim;
 
 //--------------------------------------------------------------------------
+void print_player_sync_state(const PlayerSyncStateUpdatePacked_t *p) {
+    DPRINTF("PlayerSyncStateUpdatePacked_t {\n");
+    DPRINTF("  Position:      [%.2f, %.2f, %.2f]\n", p->Position[0], p->Position[1], p->Position[2]);
+    DPRINTF("  Rotation:      [%.2f, %.2f, %.2f]\n", p->Rotation[0], p->Rotation[1], p->Rotation[2]);
+    DPRINTF("  GameTime:      %d\n", p->GameTime);
+    DPRINTF("  GroundMobyUID: %d\n", p->GroundMobyUID);
+    DPRINTF("  CameraDistance: %d\n", p->CameraDistance);
+    DPRINTF("  CameraYaw:     %d\n", p->CameraYaw);
+    DPRINTF("  CameraPitch:   %d\n", p->CameraPitch);
+    DPRINTF("  NoInput:       %d\n", p->NoInput);
+    DPRINTF("  Health:        %d\n", p->Health);
+    DPRINTF("  PadBits0:      0x%02X\n", p->PadBits0);
+    DPRINTF("  PadBits1:      0x%02X\n", p->PadBits1);
+    DPRINTF("  MoveX:         %u\n", p->MoveX);
+    DPRINTF("  MoveY:         %u\n", p->MoveY);
+    DPRINTF("  GadgetId:      %u\n", p->GadgetId);
+    DPRINTF("  State:         %d\n", p->State);
+    DPRINTF("  StateId:       %d\n", p->StateId);
+    DPRINTF("  PlayerIdx:     %d\n", p->PlayerIdx & 0x1F); // mask to 5 bits
+    DPRINTF("  Flags:         %d\n", (p->Flags >> 5) & 0x07); // mask to 3 bits if needed
+    DPRINTF("  CmdId:         %u\n", p->CmdId);
+    DPRINTF("}\n");
+}
+
+void print_player_sync_state_unpacked(const PlayerSyncStateUpdateUnpacked_t* p) {
+    DPRINTF("PlayerSyncStateUpdateUnpacked_t {\n");
+
+    DPRINTF("  Position:      [%.2f, %.2f, %.2f, %.2f]\n", 
+        p->Position[0], p->Position[1], p->Position[2], p->Position[3]);
+
+    DPRINTF("  Rotation:      [%.2f, %.2f, %.2f, %.2f]\n", 
+        p->Rotation[0], p->Rotation[1], p->Rotation[2], p->Rotation[3]);
+
+    DPRINTF("  GroundMoby:    %p\n", (void*)p->GroundMoby);
+    DPRINTF("  GameTime:      %d\n", p->GameTime);
+    DPRINTF("  CameraDistance: %.2f\n", p->CameraDistance);
+    DPRINTF("  CameraHeight:   %.2f\n", p->CameraHeight);
+    DPRINTF("  CameraYaw:      %.2f\n", p->CameraYaw);
+    DPRINTF("  CameraPitch:    %.2f\n", p->CameraPitch);
+    DPRINTF("  Health:         %.2f\n", p->Health);
+    DPRINTF("  NoInput:        %d\n", p->NoInput);
+
+    DPRINTF("  PadBits:        0x%04X\n", p->PadBits);
+    DPRINTF("    PadBits0:     0x%02X\n", p->PadBits & 0x00FF);
+    DPRINTF("    PadBits1:     0x%02X\n", (p->PadBits >> 8) & 0x00FF);
+
+    DPRINTF("  MoveX:          %u\n", p->MoveX);
+    DPRINTF("  MoveY:          %u\n", p->MoveY);
+    DPRINTF("  GadgetId:       %u\n", p->GadgetId);
+    DPRINTF("  State:          %u\n", p->State);
+    DPRINTF("  StateId:        %d\n", p->StateId);
+    DPRINTF("  PlayerIdx:      %d\n", p->PlayerIdx);
+    DPRINTF("  Valid:          %d\n", p->Valid);
+    DPRINTF("  CmdId:          %u\n", p->CmdId);
+
+    DPRINTF("}\n");
+}
+
+//--------------------------------------------------------------------------
 int playerSyncCmdDelta(int fromCmdId, int toCmdId)
 {
   int delta = toCmdId - fromCmdId;
@@ -274,6 +333,8 @@ void playerSyncHandlePlayerState(Player* player)
   // move forward subtick
   data->CurrentSubStateId++;
   if (data->CurrentSubStateId > rate && data->StateUpdateCmdId != data->CurrentStateUpdateCmdId) {
+    DPRINTF("Marking stateUpdates[%d] invalid because currentSubStateId %d is greater than rate and StateUpdateCmdId %d != CurrentStateUpdateCmdId %d\n",
+    playerSyncCmdGetBufIndex(data->CurrentStateUpdateCmdId), data->CurrentSubStateId, data->StateUpdateCmdId, data->CurrentStateUpdateCmdId);
     data->StateUpdates[playerSyncCmdGetBufIndex(data->CurrentStateUpdateCmdId)].Valid = 0; // mark invalid/used
     data->CurrentStateUpdateCmdId = playerSyncGetCmdId(data->CurrentStateUpdateCmdId + 1);
     data->CurrentSubStateId = 0;
@@ -320,7 +381,13 @@ void playerSyncHandlePlayerState(Player* player)
   //printf("%d %d/%f\n", data->CurrentStateUpdateCmdId, data->CurrentSubStateId, tSub);
 
   // interpolate states
+  //DPRINTF("stateCurrent: \n");
+  //print_player_sync_state_unpacked(&stateCurrent);
+  //DPRINTF("stateNext: \n");
+  //print_player_sync_state_unpacked(&stateNext);
   playerStateUpdateLerp(&stateInterpolated, stateCurrent, stateNext, tSub);
+  //DPRINTF("after lerp\n");
+  //print_player_sync_state_unpacked(&stateInterpolated);
 
   // reset pad
   data->Pad[2] = 0xFF;
@@ -485,6 +552,7 @@ void playerSyncHandlePlayerState(Player* player)
   // set remote received state
 
   int playerState = playerGetState(player);
+  DPRINTF("remote state is %d\n", playerState);
   player->RemoteHero.stateAtSyncFrame = player->state;
   player->RemoteHero.receivedState = stateInterpolated.State;
 
@@ -654,6 +722,7 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
   PlayerSyncStateUpdatePacked_t msg;
   PlayerSyncStateUpdateUnpacked_t unpacked;
   memcpy(&msg, data, sizeof(msg));
+  // print_player_sync_state(&msg);
 
   // unpack
   memcpy(unpacked.Position, msg.Position, sizeof(float) * 3);
@@ -676,7 +745,51 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
   unpacked.CmdId = msg.CmdId;
   unpacked.Valid = 1;
 
-  return 1;
+  /*
+  TODO - find out where in guber vtable GetMoby is
+  */
+  if (msg.GroundMobyUID != -1 && (msg.Flags & 1)) {
+    Guber* groundGuber = guberGetObjectByUID(msg.GroundMobyUID);
+    //if (groundGuber) {
+    //  unpacked.GroundMoby = groundGuber->Vtable->GetMoby(groundGuber); 
+    //}
+    unpacked.GroundMoby = mobyFindByUID(msg.GroundMobyUID);
+  } else if (msg.GroundMobyUID != -1 && (msg.Flags & 2)) {
+    unpacked.GroundMoby = mobyFindByUID(msg.GroundMobyUID);
+  }
+
+  // target sync player data
+  PlayerSyncPlayerData_t* pSyncData = &PLAYER_SYNC_DATAS_PTR[msg.PlayerIdx];
+
+  // move into buffer
+  int cmdDt = playerSyncCmdDelta(pSyncData->StateUpdateCmdId, unpacked.CmdId);
+  //DPRINTF("%d => %d (%d) %08X\n", data->StateUpdateCmdId, unpacked.CmdId, cmdDt, (u32)&data->StateUpdates[msg.CmdId]);
+  if (cmdDt > 0) {
+
+    int bufIdx = playerSyncCmdGetBufIndex(unpacked.CmdId);
+    memcpy(&pSyncData->StateUpdates[bufIdx], &unpacked, sizeof(unpacked));
+
+    // create sub items
+    int startBufIdx = playerSyncCmdGetBufIndex(pSyncData->StateUpdateCmdId);
+    int nextId = playerSyncGetCmdId(pSyncData->StateUpdateCmdId + 1);
+    while (nextId != unpacked.CmdId) {
+      int nextBufIdx = playerSyncCmdGetBufIndex(nextId);
+      if (!pSyncData->StateUpdates[nextBufIdx].Valid) {
+        float t = playerSyncCmdDelta(pSyncData->StateUpdateCmdId, nextId) / (float)cmdDt;
+        playerStateUpdateLerp(&pSyncData->StateUpdates[nextBufIdx], &pSyncData->StateUpdates[startBufIdx], &pSyncData->StateUpdates[bufIdx], t);
+      }
+      nextId = playerSyncGetCmdId(nextId + 1);
+    }
+
+    pSyncData->LastNetTime = unpacked.GameTime;
+    pSyncData->StateUpdateCmdId = unpacked.CmdId;
+    pSyncData->TicksSinceLastUpdate = 0;
+    vector_copy(pSyncData->LastReceivedPosition, unpacked.Position);
+  }
+
+  //DPRINTF("recv player sync state %d time:%d dt:%d\n", msg.PlayerIdx, msg.GameTime, msg.GameTime - gameGetTime());
+  return sizeof(PlayerSyncStateUpdatePacked_t);
+
 }
 
 //--------------------------------------------------------------------------
