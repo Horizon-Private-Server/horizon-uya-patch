@@ -2749,6 +2749,8 @@ int main(void)
     POKE_U32(0x0044C494, 0x00612023); // collline_fix 004b8084 in DL
     POKE_U32(0x44C4B0, 0x00622023);  //collline_fix  0x004b80a0 in DL
 
+		HOOK_JAL(0x0044226c, 0x00195ae8); // poll nwupdate instead of updatepad for consistent game time
+
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
 
@@ -2799,11 +2801,13 @@ int main(void)
     } else if (!mpMoby) {
       mpMoby = mobyFindNextByOClass(mobyListGetStart(), 0x106A);
       if (mpMoby) {
+				DPRINTF("mpmobyhooked!: %08x\n", mpMoby);
         mpMoby->pUpdate = &onMobyUpdate;
       }
-    } else if (isUnloading && mpMoby) {
+    } /*else if (isUnloading && mpMoby) {
+			DPRINTF("hooked from unloading\n!");
       mpMoby->pUpdate = NULL;
-    }
+    }*/
 
 //		if (gameConfig.grNewPlayerSync)
 //			playerSyncTick();
