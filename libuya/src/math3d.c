@@ -366,6 +366,14 @@ void vector_print(VECTOR input0)
 }
 
 //--------------------------------------------------------
+void vector_transform(VECTOR output, VECTOR input, MATRIX matrix) {
+    output[0] = matrix[0] * input[0] + matrix[1] * input[1] + matrix[2] * input[2] + matrix[12];
+	output[1] = matrix[4] * input[0] + matrix[5] * input[1] + matrix[6] * input[2] + matrix[13];
+    output[2] = matrix[8] * input[0] + matrix[9] * input[1] + matrix[10] * input[2] + matrix[14];
+	output[3] = 1;
+}
+
+//--------------------------------------------------------
 void matrix_toeuler(VECTOR output, MATRIX input0)
 {
     float m11 = input0[0],m12 = input0[1],m13 = input0[2];
@@ -484,14 +492,4 @@ float matrix_determinant(MATRIX input0)
 
     -   input0[12] *(input0[1]*input0[6]*input0[11] + input0[2]*input0[7]*input0[9] + input0[3]*input0[5]*input0[10]
                     -input0[3]*input0[6]*input0[9] - input0[2]*input0[5]*input0[11] - input0[1]*input0[7]*input0[10]);
-}
-
-void multiply_matrix_vector(VECTOR output, MATRIX m, VECTOR v) {
-    VECTOR i = {
-        m[0] * v[0] + m[1] * v[1] + m[2] * v[2] + m[3] * v[3],
-        m[4] * v[0] + m[5] * v[1] + m[6] * v[2] + m[7] * v[3],
-        m[8] * v[0] + m[9] * v[1] + m[10] * v[2] + m[11] * v[3],
-        m[12] * v[0] + m[13] * v[1] + m[14] * v[2] + m[15] * v[3]
-    };
-    vector_copy(&output, i);
 }

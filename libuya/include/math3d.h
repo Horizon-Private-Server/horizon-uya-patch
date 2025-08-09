@@ -24,7 +24,6 @@ typedef float VECTOR[4] __attribute__((__aligned__(16)));
 typedef float vec3[3] __attribute__((__aligned__(16)));
 typedef float vec4[4] __attribute__((__aligned__(16)));
 typedef float MATRIX[16] __attribute__((__aligned__(16)));
-// typedef float mtx3[12] __attribute__((__aligned__(16)));
 typedef struct vec4f { // 0x10
 /* 0x0 */ float x;
 /* 0x4 */ float y;
@@ -67,6 +66,7 @@ void vector_multiply(VECTOR output, VECTOR input0, VECTOR input1);
 void vector_projectonvertical(VECTOR output, VECTOR input0);
 void vector_projectonhorizontal(VECTOR output, VECTOR input0);
 void vector_print(VECTOR input0);
+void vector_transform(VECTOR output, VECTOR input, MATRIX matrix);
 
 void matrix_toeuler(VECTOR output, MATRIX input0);
 void matrix_fromrows(MATRIX output, VECTOR input0, VECTOR input1, VECTOR input2, VECTOR input3);
@@ -81,7 +81,5 @@ void matrix_translate(MATRIX output, MATRIX input0, VECTOR input1);
 void matrix_transpose(MATRIX output, MATRIX input0);
 void matrix_unit(MATRIX output);
 float matrix_determinant(MATRIX input0);
-
-void multiply_matrix_vector(VECTOR output, MATRIX m, VECTOR v);
 
 #endif // _LIBUYA_MATH3D_H_
