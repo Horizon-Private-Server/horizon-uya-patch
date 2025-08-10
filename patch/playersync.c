@@ -35,6 +35,7 @@ typedef struct PlayerSyncStateUpdatePacked
   u8 GadgetId;
 //  char GadgetLevel;
   int State;
+  int ObfState;
   char StateId;
   struct {
     char PlayerIdx : 5;
@@ -61,6 +62,7 @@ typedef struct PlayerSyncStateUpdateUnpacked
   u8 GadgetId;
   //char GadgetLevel; // TODO maybe later
   int State;
+  int ObfState;
   char StateId;
   char PlayerIdx;
   char Valid;
@@ -78,7 +80,7 @@ typedef struct PlayerSyncPlayerData
   int TicksSinceLastUpdate;
   int SendRateTicker;
   char LastStateId;
-  char Pad[32]; // TODO - understand the behaviour around pad input
+  char Pad[32];
   u8 CurrentStateUpdateCmdId;
   u8 CurrentSubStateId; // used to track where we're at in between ticks
   u8 StateUpdateCmdId;
@@ -298,6 +300,7 @@ void playerStateUpdateLerp(PlayerSyncStateUpdateUnpacked_t* out, PlayerSyncState
   out->PadBits = isHalfway ? b->PadBits : a->PadBits;
   out->GadgetId = isHalfway ? b->GadgetId : a->GadgetId;
   //out->GadgetLevel = isHalfway ? b->GadgetLevel : a->GadgetLevel;
+  out->ObfState = isHalfway ? b->ObfState : a->ObfState;
   out->State = isHalfway ? b->State : a->State;
   out->StateId = isHalfway ? b->StateId : a->StateId;
   out->PlayerIdx = isHalfway ? b->PlayerIdx : a->PlayerIdx;
@@ -380,7 +383,7 @@ void playerSyncHandlePlayerState(Player* player)
   //print_player_sync_state_unpacked(&stateCurrent);
   //DPRINTF("stateNext: \n");
   //print_player_sync_state_unpacked(&stateNext);
-  //DPRINTF("stateCurrent.state == %d, stateNext.state == %d\n", stateCurrent->State, stateNext->State);
+  DPRINTF("stateCurrent.state == %d, stateNext.state == %d\n", stateCurrent->State, stateNext->State);
   playerStateUpdateLerp(&stateInterpolated, stateCurrent, stateNext, tSub);
   //DPRINTF("after lerp\n");
   //print_player_sync_state_unpacked(&stateInterpolated);
@@ -396,7 +399,9 @@ void playerSyncHandlePlayerState(Player* player)
   }
 
   /*
-  TODO - verify playerRespawn function is correct here. Also verify warp message works the same in UYA... i dont think the warpmessage holds any info... or the address is wrong
+  TODO - verify this works, normally in DL player->pNetPlayer->warpMessage.isResurrecting is used instead of this pad_data value I have, the pad_data
+  value is probably incorrect, but the isRessurecting message in uya is either in the wrong place or something else is used.
+  The way I have it right now is probably causing resurrecting to get fucked up sometimes and never get the remote player out of a dying state once they die.
   */
   // resurrecting
   if (playerIsDead(player) && player->pNetPlayer && player->pNetPlayer->padMessageElems[padIdx].msg.pad_data[36]) {
@@ -434,6 +439,7 @@ void playerSyncHandlePlayerState(Player* player)
     vector_add(stateCurrentPosition, stateCurrentPosition, stateInterpolated.GroundMoby->position);
   }
 
+  // TODO - something about the logic with the ground moby causes remote players to have a weird snapping motion when jumping above the flag pad, and maybe other mobys too.
   /*
   basically if the distance between current position and interpolated position is small enough,
   just snap into the interpolated position. Otherwise lerp if its too large otherwise the snapping will look like a teleport.
@@ -514,12 +520,14 @@ void playerSyncHandlePlayerState(Player* player)
     vector_pack(player->camRot, player->pNetPlayer->padMessageElems[padIdx].msg.cameraRot);
   }
 
+  // TODO - this is just fucked, idk the correct way to set health for a remote player, can probably hold off figuring this out later
   // set health
   // player->hitPoints = stateInterpolated.Health;
-  playerSetHealth(player, netHealth[(int)stateInterpolated.Health]);
+  // playerSetHealth(player, netHealth[(int)stateInterpolated.Health]);
 
 
-  // set joystick
+  // set joystick // TODO IMPORTANT none of this stuff is working, remote players look like they're just dragged when they move. I think none of the pad stuff is working well, movex and movey
+  // aren't seen at all (remote players just hover around instead of walking/running/etc.) holding r2 only crouches for a second. lag jumps look like they're done with backflips instead of side flips.
   float moveX = (stateInterpolated.MoveX - 127) / 128.0;
   float moveY = (stateInterpolated.MoveY - 127) / 128.0;
   float mag = minf(1, sqrtf((moveX*moveX) + (moveY*moveY)));
@@ -531,11 +539,15 @@ void playerSyncHandlePlayerState(Player* player)
   player->stickInput[0] = moveX; //  *(float*)((u32)player + 0x0110) = moveX;
   player->stickInput[1] = -moveY; //  *(float*)((u32)player + 0x0114) = -moveY; // part of stickInput
 
+  //data->Pad[2] = stateInterpolated.PadBits & 0xFF; // TODO - dan doesn't do this with pad[2] and pad[3] but its the only way i've found to actually trigger pad on remote players, the pnet padMessageElems values don't work or I have the wrong addresses
+  //data->Pad[3] = stateInterpolated.PadBits >> 8;   // if you uncomment these 2 lines, the pad works a bit better but is still fucked
   data->Pad[4] = 0x7F;
   data->Pad[5] = 0x7F;
   data->Pad[6] = stateInterpolated.MoveX;
   data->Pad[7] = stateInterpolated.MoveY;
 
+  // TODO - idk why this isn't working at all. In a regular mp game without newPlayerSync enabled, you can cause remote players to do pad movements by messing with these
+  // values, but with playersync enabled nothing happens because of these inputs.
   struct tNW_Player* netPlayer = player->pNetPlayer;
   if (netPlayer) {
     netPlayer->padMessageElems[padIdx].msg.pad_data[82] = stateInterpolated.PadBits & 0xFF; // remote rdata[2]
@@ -544,18 +556,31 @@ void playerSyncHandlePlayerState(Player* player)
     netPlayer->padMessageElems[padIdx].msg.pad_data[85] = 0x7F;
     netPlayer->padMessageElems[padIdx].msg.pad_data[86] = stateInterpolated.MoveX;
     netPlayer->padMessageElems[padIdx].msg.pad_data[87] = stateInterpolated.MoveY;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[102] = stateInterpolated.PadBits & 0xFF; // remote rdata[2]
+    netPlayer->padMessageElems[padIdx].msg.pad_data[103] = stateInterpolated.PadBits >> 8; // remote rdata[3]
+    netPlayer->padMessageElems[padIdx].msg.pad_data[104] = 0x7F;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[105] = 0x7F;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[106] = stateInterpolated.MoveX;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[107] = stateInterpolated.MoveY;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[122] = stateInterpolated.PadBits & 0xFF; // remote rdata[2]
+    netPlayer->padMessageElems[padIdx].msg.pad_data[123] = stateInterpolated.PadBits >> 8; // remote rdata[3]
+    netPlayer->padMessageElems[padIdx].msg.pad_data[124] = 0x7F;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[125] = 0x7F;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[126] = stateInterpolated.MoveX;
+    netPlayer->padMessageElems[padIdx].msg.pad_data[127] = stateInterpolated.MoveY;
+    netPlayer->padMessageElems[padIdx].inUse = 1;
+    
   }
-
   // set remote received state
 
   int playerState = playerGetState(player);
-  //DPRINTF("remote state using playerGetState(player) is %d\n", playerState);
-  // TODO - unsure about the casting here
-  player->RemoteHero.stateAtSyncFrame = (u8)player->state;
-  player->RemoteHero.receivedState = (u8)stateInterpolated.State;
+  DPRINTF("remote state using playerGetState(player) is %d\n", playerState); // TODO IMPORTANT this becomes fucked pretty quickly, idk why. It works for a while and then spits out garbage, which is not good!
+  player->RemoteHero.stateAtSyncFrame = playerState; // TODO - because of TODO above, if this value actually does anything, it could wreak havoc since playerstate becomes a garbage value
+  player->RemoteHero.receivedState = stateInterpolated.State;
 
   // Unobfuscated state is sent over the net
   // update state
+  // TODO - wrench never comes out when swinging or hyperstriking
 
   if (stateInterpolated.StateId != data->LastStateId) {
     int skip = 0;
@@ -564,7 +589,7 @@ void playerSyncHandlePlayerState(Player* player)
     // from
     switch (playerState)
     {
-      case PLAYER_STATE_VEHICLE:
+      case PLAYER_STATE_VEHICLE: //TODO havent tested vehicles
       case PLAYER_STATE_TURRET_DRIVER:
       {
         if (data->LastState != playerState) break;
@@ -610,15 +635,16 @@ void playerSyncHandlePlayerState(Player* player)
       case PLAYER_STATE_JUMP_ATTACK:
       case PLAYER_STATE_COMBO_ATTACK:
       {
+        // TODO - Dan lets pad handle the wrench instead of processing the state, but pad doesn't handle wrench at all in uya, or ~0x80 is not correct for wrench
         //DPRINTF("wrench %d: pstate:%d pstatetime:%d lasttime:%d\n", gameGetTime(), playerState, player->timers.state, data->LastStateTime);
-        skip = 1;
-        if (stateInterpolated.State == playerState && player->timers.state < data->LastStateTime) {
-          data->LastStateId = stateInterpolated.StateId;
-          data->LastState = stateInterpolated.State;
-        } else if ((player->timers.state % 10) != 0) {
-          data->Pad[3] &= ~0x80; // This is equal to PAD_LEFT
-        }
-        break;
+//        skip = 1;
+//        if (stateInterpolated.State == playerState && player->timers.state < data->LastStateTime) {
+//          data->LastStateId = stateInterpolated.StateId;
+//          data->LastState = stateInterpolated.State;
+//        } else if ((player->timers.state % 10) != 0) {
+//          data->Pad[3] &= ~0x80; // This is equal to PAD_LEFT
+//        }
+//        break;
       }
 
       case PLAYER_STATE_GET_HIT:
@@ -646,11 +672,10 @@ void playerSyncHandlePlayerState(Player* player)
       }
 
       int force = playerStateIsDead(playerState) && !playerStateIsDead(stateInterpolated.State);
-      DPRINTF("force is %d because playerStateIsDead(playerState) is %d and !playerStateIsDead(stateInterpolatedState) is %d. Player %08x will be updated to state %d.\n", force, playerStateIsDead(playerState), !playerStateIsDead(stateInterpolated.State), player, stateInterpolated.State);
+      DPRINTF("force is %d. Player %08x will be updated to state %d.\n", force, player, stateInterpolated.State);
       vtable->UpdateState(player, stateInterpolated.State, 1, force, 1);
       data->LastStateId = stateInterpolated.StateId;
       data->LastState = stateInterpolated.State;
-
     } else {
       data->LastStateTime = player->timers.state;
     }
@@ -673,7 +698,7 @@ void playerSyncHandlePlayerState(Player* player)
 
 
 
-  //
+  // TODO - need to verify these are okay... idk if they're doing anything
   if (player->pNetPlayer && player->pNetPlayer->pNetPlayerData) {
     player->pNetPlayer->pNetPlayerData->handGadget = (int)stateInterpolated.GadgetId;
     player->pNetPlayer->pNetPlayerData->lastKeepAlive = data->LastNetTime;
@@ -682,7 +707,7 @@ void playerSyncHandlePlayerState(Player* player)
     vector_copy(player->pNetPlayer->pNetPlayerData->position, player->playerPosition);
   }
 
- // TODO find out equivalent for syncing weapon xp in UYA if necessary?
+ // TODO find out equivalent for syncing weapon xp in UYA if necessary? Not important for now
  /*   // force weapon level
     if (player->GadgetBox && stateInterpolated.GadgetId >= 0 && stateInterpolated.GadgetId < 32) {
       int level = player->GadgetBox->Gadgets[stateInterpolated.GadgetId].Level;
@@ -691,7 +716,7 @@ void playerSyncHandlePlayerState(Player* player)
 
         // update bangles if gadget equipped
         
-      // TODO- who is bojangles?
+      // TODO- who is bojangles? - not important
       // there is a char "bangles" in Moby->pClass
         
 
@@ -739,11 +764,13 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
   unpacked.GadgetId = msg.GadgetId;
   //unpacked.GadgetLevel = msg.GadgetLevel;
   unpacked.State = msg.State;
+  unpacked.ObfState = msg.ObfState;
   unpacked.StateId = msg.StateId;
   unpacked.PlayerIdx = msg.PlayerIdx;
   unpacked.CmdId = msg.CmdId;
   unpacked.Valid = 1;
-  //DPRINTF("Recieved state %d!\n", unpacked.State);
+  // DPRINTF("Recieved state %d!\n", unpacked.State);
+  //DPRINTF("unobfuscating the state, I should get the same thing %d!\n", playerDeobfuscate(&unpacked.ObfState, DEOBFUSCATE_MODE_STATE));
 
 
   if (msg.GroundMobyUID != -1 && (msg.Flags & 1)) {
@@ -848,9 +875,16 @@ void playerSyncBroadcastPlayerState(Player* player)
   msg.GadgetId = (u8)player->weaponHeldId;
   //msg.GadgetLevel = -1;
   msg.State = playerGetState(player);
+  msg.ObfState = player->state;
   msg.StateId = data->LastStateId;
   msg.CmdId = data->StateUpdateCmdId = playerSyncGetCmdId(data->StateUpdateCmdId + 1);
 
+
+  if (msg.State < 0 || msg.State > 156) {
+    msg.State = 0;
+    msg.ObfState = 0;
+  }
+  // DPRINTF("I am sending the state %d\n", msg.State, 3); //playerDeobfuscate(&msg.ObfState, DEOBFUSCATE_MODE_STATE));if (g)
   // check if we're on a ground moby
   // if so, sync relative position
   Moby* groundMoby = player->ground.pMoby;
@@ -872,7 +906,7 @@ void playerSyncBroadcastPlayerState(Player* player)
     }
   }
 
-  // TODO - find out the UYA behavior for weapon xp
+  // TODO - find out the UYA behavior for weapon xp - not important right now
   // sync gadget level
   /*
   if (msg.GadgetId >= 0 && msg.GadgetId < 32)
@@ -921,7 +955,7 @@ void playerSyncTick(void)
 
 #if DEBUG || RELOADPATCH
   // always on
-  gameConfig.grNewPlayerSync = 1;
+//  gameConfig.grNewPlayerSync = 1;
 #endif
 
   if (!gameConfig.grNewPlayerSync) return;
@@ -947,16 +981,15 @@ void playerSyncTick(void)
   // init
   initialized = 1;
 
-  /*
-  TODO - need to find these addresses out, at least start with disabling player state updates*/
   // hooks
   HOOK_JAL(0x0052f5b4, &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
   HOOK_JAL(0x00526b44, &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
   //HOOK_JAL(0x0060cd44, &playerSyncOnPlayerUpdateSetState); // is this Hero:JumpLandTransitions? commented out in DL prod playersync anyways
-  // HOOK_JAL(0x004fac6c, &_playerSyncPatchHeroTransAnim); // HERO::TransAnim: symbolsv6: 00523320 - has the correct uya address, unsure if it is needed though
+  // HOOK_JAL(0x004fac6c, &_playerSyncPatchHeroTransAnim); // HERO::TransAnim: symbolsv6: 00523320 - has the correct uya address, unsure if it is needed though, probably not because dan uses this for survival
 
   // player link always healthy
-  // in uya this isnt a fucking function, they do manual checks inside of an if statement every single time (15+ occurences).
+  // TODO - in uya this isnt a single function, uya does lots of manual scattered checks every single time (15+ occurences). i.e line 99 in uya playerupdate_vtable (0x0052ee18)
+  // I dont know if this is fucking with syncing and preventing updates because the game thinks the playerlink is unhealthy
   // POKE_U32(0x005F7BDC, 0x24020001); // Hero::IsPlayerLinkHealthy - makes it so it always returns true - i.eline 99 in uya playerupdate_vtable
 
   // disable tnw_PlayerData update gadgetid
@@ -966,7 +999,7 @@ void playerSyncTick(void)
   POKE_U32(0x00531294, 0);
 
   // disable send GetHit
-  // POKE_U32(0x0060ff08, 0); // used here in DL 0x005e1fec -- idk man it doesnt work the same in uya
+  // POKE_U32(0x0060ff08, 0); // used here in DL 0x005e1fec -- idk man it doesnt work the same in uya, might or might not be necessary, I haven't tested players damaging each other
   // DL transitions 106 = uya transitions 249
 
   // player updates

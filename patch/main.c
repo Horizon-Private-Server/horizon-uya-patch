@@ -1554,12 +1554,16 @@ void patchQuickSelectTimer(void)
 
 	void onMobyUpdate(Moby* moby)
 	{
-		playerSyncTick();
-		processGameModules();
+		if (gameConfig.grNewPlayerSync) {
+			playerSyncTick();
+			processGameModules();
 
-		((void (*)(Moby*))0x003DAEC0)(moby);
+			((void (*)(Moby*))0x003DAEC0)(moby);
 
-		playerSyncPostTick();
+			playerSyncPostTick();
+		} else {
+			((void (*)(Moby*))0x003DAEC0)(moby);	
+		}
 	}		
 
 /*
@@ -2647,7 +2651,16 @@ void playerDebugPad()
 		DPRINTF("playerMoby's Position coordinates: "); 
 		vector_print(playerMoby->position);
 		DPRINTF("\n");
+		
 	}
+	/*if (playerPadGetButtonDown(player, PAD_CIRCLE | PAD_CROSS) > 0) {
+		int obfuscated;
+		int toObfuscate = 3;
+		playerObfuscate(&obfuscated, toObfuscate, OBFUSCATE_MODE_STATE);
+		int unobfuscated = playerDeobfuscate(&obfuscated, DEOBFUSCATE_MODE_STATE);
+		DPRINTF("state is %d, so re-unobfuscated addr should be the same: %d!\n", toObfuscate, unobfuscated);
+	}
+		*/
 }
 
 /*
@@ -2864,8 +2877,9 @@ int main(void)
 		// Patches loading popup from not showing if patch menu is open.
 		patchLoadingPopup();
 
-		playerSyncTick();
-
+		if (gameConfig.grNewPlayerSync) {
+			playerSyncTick();
+		}
 		// Patch Menus (Staging, create game, ect.)
 		if (patched.uiModifiers == 0) {
 			// POKE_U32(UI_PTR_FUNC_CREATE_GAME, &patchCreateGame);
