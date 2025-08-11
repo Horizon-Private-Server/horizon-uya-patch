@@ -732,6 +732,34 @@ VariableAddress_t vaRegisteredDrawRoutine_MobyList = {
 #endif
 };
 
+VariableAddress_t vaSetupEffectTex = {
+#if UYA_PAL
+	.Lobby = 0x0058e3d8,
+	.Bakisi = 0x0045b2f0,
+	.Hoven = 0x0045ce70,
+	.OutpostX12 = 0x00453c70,
+	.KorgonOutpost = 0x00451830,
+    .Metropolis = 0x00450b70,
+	.BlackwaterCity = 0x0044e370,
+	.CommandCenter = 0x0044eff0,
+	.BlackwaterDocks = 0x00451870,
+	.AquatosSewers = 0x00450b70,
+	.MarcadiaPalace = 0x004504f0,
+#else
+	.Lobby = 0x0058d208,
+	.Bakisi = 0x0045a220,
+	.Hoven = 0x0045bce0,
+	.OutpostX12 = 0x00452b20,
+	.KorgonOutpost = 0x00450760,
+	.Metropolis = 0x0044faa0,
+	.BlackwaterCity = 0x0044d220,
+	.CommandCenter = 0x0044e060,
+	.BlackwaterDocks = 0x004508a0,
+	.AquatosSewers = 0x0044fbe0,
+	.MarcadiaPalace = 0x0044f520,
+#endif
+};
+
 //--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, int font)
 {

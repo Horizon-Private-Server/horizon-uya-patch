@@ -352,15 +352,15 @@ typedef struct CubicLineEndPoint {
 	/*  30 */ VECTOR vTangentOccQuat;
 } CubicLineEndPoint;
 
-struct UV {
+typedef struct UV {
 	float x; // U: horizontal position
 	float y; // V: vertical position
-};
+} UV_t;
 
 typedef struct QuadDef { // 0x90
-/* 0x00 */ vec4 xzyw[4];
+/* 0x00 */ vec4 point[4];
 /* 0x40 */ u32 rgba[4];
-/* 0x50 */ struct UV uv[4];
+/* 0x50 */ UV_t uv[4];
 /* 0x70 */ u64 clamp;
 /* 0x78 */ u64 tex0;
 /* 0x80 */ u64 tex1;
@@ -587,6 +587,16 @@ void gfxDoGifPaging(void);
 void gfxSetupGifPaging(int);
 u64 gfxGetFrameTex(int id);
 u64 gfxGetEffectTex(int id);
+
+/*
+ * NAME:			gfxSetupEffectTex
+ * DESCRIPTION:		Gets Effect Textures info.  (tex0, tex1, clamp, alpha)
+ * NOTES:
+ * ARGS:
+ * RETURN:
+ * AUTHOR:			Troy "Metroynome" Pruitt
+ */
+void gfxSetupEffectTex(QuadDef *quad, int texId, int drawType, int opacity);
 void gfxDrawSprite(float x, float y, float w, float h, int tex_x, int tex_y, int tex_w, int tex_h, u64 color, u64 texture);
 void gfxDrawEffect(float x, float y, float w, float h, int r, int tex_x, int tex_y, int tex_w, int tex_h, u64 texture, u64 color1, u64 color2, char bSetting1, char bSetting2);
 void gfxRegistserDrawFunction(void* callback, Moby* moby);
