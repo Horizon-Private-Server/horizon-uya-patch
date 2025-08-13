@@ -233,7 +233,7 @@ typedef enum eSpriteTex {
 	SPRITE_BOSS_UNK_0,
 	SPRITE_BOSS_QUEEN_THYRRANDOI,
 	SPRITE_BOSS_CHIMP_QWARK,
-} eSpriteTex;
+} SpriteTex_e;
 
 typedef enum eSpriteTex_Hud {
 	SPRITE_HUD_R = 0xed1b,
@@ -302,12 +302,131 @@ typedef enum eSpriteTex_Hud {
 	SPRITE_HUD_UNK_9 = 0xed5a,
 	SPRITE_HUD_FLAG = 0xed5b,
 	SPRITE_HUD_LOADING = 0xed5c,
-} eSpriteTex_Hud;
+} SpriteTex_Hud_e;
 
-typedef enum eEffectsTex {
-	EFFECT_GADGETRON = 3,
-	EFFECT_BASELIGHT = 23,
-} eEffectsTex;
+typedef enum EffectsTex {
+	FX_VIDEO_BUFFER_UNK_2 = -8,
+	FX_VIDEO_BUFFER_WITH_HUD = -7,
+	FX_VIDEO_BUFFER_16x9 = -6,
+	FX_VIDEO_BUFFER_UNK_1 = -5,
+	FX_VIDEO_BUFFER_4_LOW_RES = -1
+	FX_VIDEO_BUGGER_3_LOW_RES = -3,
+	FX_VIDEO_BUGGER_2 - -2,
+	FX_VIDEO_BUFFER_1 = -1,
+	FX_SMOKE_BLACK = 0,
+	FX_LENS_FLARE_1 = 1,
+	FX_LENS_FLARE_2 = 2,
+	FX_LENS_FLARE_3 = 3,
+	FX_GADGETRON = 4,
+	FX_CIRCLE_FADED_EDGE_1 = 5,
+	FX_LENS_FLARE_4 = 6,
+	FX_CIRLCE_NO_FADED_EDGE = 7,
+	FX_CIRCLE_OUTLINE_1 = 8,
+	FX_FOUR_BLACK_CIRCLES = 9,
+	FX_LAVA = 10,
+	FX_CIRCLE_FADED_EDGE_2 = 11,
+	FX_CIRCLE_ODD = 12,
+	FX_RETICLE_1 = 13,
+	FX_LINE_WIGGLY = 14,
+	FX_LINE_WIDE = 15,
+	FX_LINE_SKINNY = 16,
+	FX_RETICLE_2 = 17,
+	FX_RETICLE_3 = 18,
+	FX_STAR = 19,
+	FX_LIGHTNING_FADED = 20,
+	FX_UNK_1 = 21,
+	FX_SQUARE_FLAT_1 = 22,
+	FX_BASELIGHT = 23,
+	FX_SQUARE_OUTLINE_SMALL = 24,
+	FX_DOTS = 25,
+	FX_RETICLE_4 = 26,
+	FX_VISIBOMB_HORIZONTAL_LINES = 27,
+	FX_UNK_2 = 28,
+	FX_SQUARE_WHITE_WITH_TRANSPARENT_DOTS = 29,
+	FX_RETICLE_5 = 30,
+	FX_RETICLE_BLITZ_CANNON = 31,
+	FX_RETICLE_LAVA_GUN = 32,
+	FX_RETICLE_6 = 33,
+	FX_RETICLE_7 = 34,
+	FX_RETICLE_SWINGSHOT = 35,
+	FX_RETICLE_8 = 36,
+	FX_RETICLE_9 = 37,
+	FX_RETICLE_10 = 38,
+	FX_RETICLE_11 = 39,
+	FX_CIRCLE_FADED_INSIDE = 40,
+	FX_CIRCLE_SPIKY = 41,
+	FX_LINE_WIDE_NONTRANSPARENT = 42,
+	FX_CIRCLE_BURST_NONTRANSPARENT = 43,
+	FX_RETICLE_12_NONTRANSPARENT = 44,
+	FX_SMOKE_WHITE = 45,
+	FX_LIGHTNING_1 = 46,
+	FX_LIGHTNING_2 = 47,
+	FX_LENS_FLARE_5 = 48,
+	FX_UNK_3, 49,
+	FX_RETICLE_QUARTER_1 = 50,
+	FX_RETICLE_QUARTER_2 = 51,
+	FX_RETICLE_QUARTER_3 = 52,
+	FX_CIRCLE_OUTLINE_2, = 53,
+	FX_CIRCLE_BURST_1 = 54,
+	FX_CIRCLE_BURST_2 = 55,
+	FX_EXPLOSION_1 = 56,
+	FX_TRIANGLE_SMOKE = 57,
+	FX_CIRCLE_FADED_EDGE_3 = 58,
+	FX_LIGHTNING_3 = 59,
+	FX_CIRCLEOUTLINE_3 = 60,
+	FX_SHOT_1 = 61,
+	FX_SHOT_2 = 62,
+	FX_RETICLE_13 = 63,
+	FX_SNOW = 64,
+	FX_CIRCLE_QUARTER = 65,
+	FX_RIFT_INDUCER_SPIRAL = 66,
+	FX_RETICLE_14 = 67,
+	FX_TIRE_TRACKS = 68,
+	FX_RETICLE_QUARTER_4 = 69,
+	FX_CIRCLE_BURST_3 = 70,
+	FX_CIRCLE_BURST_FADED = 71,
+	FX_CIRCLE_OUTLINE_3 = 72,
+	FX_CIRCLE_OUTLINE_4 = 73,
+	FX_CIRCLE_SWIRLY = 74,
+	FX_CIRCLE_OUTLINE_5 = 75,
+	FX_SQUARE_FLAT_2 = 76,
+	FX_LEAF_1 = 77,
+	FX_LEAF_2 = 78,
+	FX_LEAF_3 = 79,
+	FX_LEAF_4 = 80,
+	FX_LEAF_5 = 81,
+	FX_LEAF_6 = 82,
+	FX_LEAF_7 = 83,
+	FX_CIRCLE_OUTLINE_6 = 84,
+	FX_RETICLE_15 = 85,
+	FX_RETICLE_16 = 86,
+	FX_RETICLE_GRAVITY_BOMB_1 = 87,
+	FX_HEALTH_ORB = 88,
+	FX_RETICLE_17 = 89,
+	FX_RETICLE_18 = 90,
+	FX_AL = 91,
+	FX_HELGA = 92,
+	FX_QWARK = 93,
+	FX_SKRUNCH = 94,
+	FX_SKID_MCMARX = 95,
+	FX_SLIM_COGNITO = 96,
+	FX_SASHA = 97,
+	FX_MAYOR = 98,
+
+	// Map Determined:
+	FX_MAP_99 = 99,
+	FX_MAP_100 = 100,
+	FX_MAP_101 = 101,
+	FX_MAP_102 = 102,
+	FX_MAP_103 = 103,
+	FX_MAP_104 = 104
+} EffectsTex_e;
+
+typedef enum DrawType {
+	DRAW_TYPE_NORMAL,
+	DRAW_TYPE_BRIGHT,
+	DRAW_TYPE_NONTRASPARENT,
+} DrawyType_e;
 
 enum TextAlign {
   TEXT_ALIGN_TOPLEFT,
@@ -596,11 +715,11 @@ u64 gfxGetEffectTex(int id);
  * RETURN:
  * AUTHOR:			Troy "Metroynome" Pruitt
  */
-void gfxSetupEffectTex(QuadDef *quad, int texId, int drawType, int opacity);
+void gfxSetupEffectTex(QuadDef *quad, EffectTex_e tex, DrawType_e drawType, int opacity);
 void gfxDrawSprite(float x, float y, float w, float h, int tex_x, int tex_y, int tex_w, int tex_h, u64 color, u64 texture);
 void gfxDrawEffect(float x, float y, float w, float h, int r, int tex_x, int tex_y, int tex_w, int tex_h, u64 texture, u64 color1, u64 color2, char bSetting1, char bSetting2);
 void gfxRegistserDrawFunction(void* callback, Moby* moby);
-void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
+void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, EffectsTex_e tex, int color, DrawType_e drawType);
 void gfxDrawQuad(QuadDef quad, MATRIX worldMatrix);
 void gfxSetScissor(int xmin, int xmax, int ymin, int ymax);
 PartInstance_t * gfxSpawnParticle(VECTOR position, u32 texId, u32 color, char opacity, float rotation);
