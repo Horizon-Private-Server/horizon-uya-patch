@@ -227,8 +227,8 @@ typedef struct Obfuscate {
 		struct {
 			int addr;
 			int val;
-		}
-	}
+		};
+	};
 } Obfuscate_t;
 
 typedef struct CameraAngleZ { // 0x20

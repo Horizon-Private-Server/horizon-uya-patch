@@ -309,9 +309,9 @@ typedef enum EffectsTex {
 	FX_VIDEO_BUFFER_WITH_HUD = -7,
 	FX_VIDEO_BUFFER_16x9 = -6,
 	FX_VIDEO_BUFFER_UNK_1 = -5,
-	FX_VIDEO_BUFFER_4_LOW_RES = -1
+	FX_VIDEO_BUFFER_4_LOW_RES = -4,
 	FX_VIDEO_BUGGER_3_LOW_RES = -3,
-	FX_VIDEO_BUGGER_2 - -2,
+	FX_VIDEO_BUGGER_2 = -2,
 	FX_VIDEO_BUFFER_1 = -1,
 	FX_SMOKE_BLACK = 0,
 	FX_LENS_FLARE_1 = 1,
@@ -362,11 +362,11 @@ typedef enum EffectsTex {
 	FX_LIGHTNING_1 = 46,
 	FX_LIGHTNING_2 = 47,
 	FX_LENS_FLARE_5 = 48,
-	FX_UNK_3, 49,
+	FX_UNK_3 = 49,
 	FX_RETICLE_QUARTER_1 = 50,
 	FX_RETICLE_QUARTER_2 = 51,
 	FX_RETICLE_QUARTER_3 = 52,
-	FX_CIRCLE_OUTLINE_2, = 53,
+	FX_CIRCLE_OUTLINE_2 = 53,
 	FX_CIRCLE_BURST_1 = 54,
 	FX_CIRCLE_BURST_2 = 55,
 	FX_EXPLOSION_1 = 56,
@@ -715,11 +715,11 @@ u64 gfxGetEffectTex(int id);
  * RETURN:
  * AUTHOR:			Troy "Metroynome" Pruitt
  */
-void gfxSetupEffectTex(QuadDef *quad, EffectTex_e tex, DrawType_e drawType, int opacity);
+void gfxSetupEffectTex(QuadDef *quad, int tex, int drawType, int opacity);
 void gfxDrawSprite(float x, float y, float w, float h, int tex_x, int tex_y, int tex_w, int tex_h, u64 color, u64 texture);
 void gfxDrawEffect(float x, float y, float w, float h, int r, int tex_x, int tex_y, int tex_w, int tex_h, u64 texture, u64 color1, u64 color2, char bSetting1, char bSetting2);
 void gfxRegistserDrawFunction(void* callback, Moby* moby);
-void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, EffectsTex_e tex, int color, DrawType_e drawType);
+void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
 void gfxDrawQuad(QuadDef quad, MATRIX worldMatrix);
 void gfxSetScissor(int xmin, int xmax, int ymin, int ymax);
 PartInstance_t * gfxSpawnParticle(VECTOR position, u32 texId, u32 color, char opacity, float rotation);
