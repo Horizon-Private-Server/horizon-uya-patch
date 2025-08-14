@@ -13,6 +13,7 @@
 #include "messageid.h"
 #include "config.h"
 #include <libuya/net.h>
+#include "interop/playersync.h"
 
 #define PLAYER_SYNC_DATAS_PTR     (*(PlayerSyncPlayerData_t**)0x000CFFB0)
 #define CMD_BUFFER_SIZE           (8)
@@ -707,26 +708,13 @@ void playerSyncHandlePlayerState(Player* player)
     vector_copy(player->pNetPlayer->pNetPlayerData->position, player->playerPosition);
   }
 
- // TODO find out equivalent for syncing weapon xp in UYA if necessary? Not important for now
- /*   // force weapon level
-    if (player->GadgetBox && stateInterpolated.GadgetId >= 0 && stateInterpolated.GadgetId < 32) {
-      int level = player->GadgetBox->Gadgets[stateInterpolated.GadgetId].Level;
-      if (level != stateInterpolated.GadgetLevel) {
-        player->GadgetBox->Gadgets[stateInterpolated.GadgetId].Level = stateInterpolated.GadgetLevel;
-
-        // update bangles if gadget equipped
-        
-      // TODO- who is bojangles? - not important
-      // there is a char "bangles" in Moby->pClass
-        
-
-        if (player->Gadgets[0].id == stateInterpolated.GadgetId && player->Gadgets[0].pMoby)
-          weaponMobyUpdateBangles(player->Gadgets[0].pMoby, stateInterpolated.GadgetId, stateInterpolated.GadgetLevel);
-      }
-
+  // force update gadget level
+  if (stateInterpolated.GadgetId >= 0 && stateInterpolated.GadgetId < 24) {
+    int level = player->weaponMeter.Slot[stateInterpolated.GadgetId];
+    if (level != stateInterpolated.GadgetLevel) {
+      playerObfuscate(&player->weaponMeter.Slot[stateInterpolated.GadgetId], stateInterpolated.GadgetLevel);
     }
   }
-*/
 
   vector_copy(data->LastLocalPosition, player->playerPosition);
   vector_copy(data->LastLocalRotation, player->playerRotation);
@@ -982,10 +970,10 @@ void playerSyncTick(void)
   initialized = 1;
 
   // hooks
-  HOOK_JAL(0x0052f5b4, &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
-  HOOK_JAL(0x00526b44, &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
+  HOOK_JAL(GetAddress(&vaPlayerStateUpdate_Hook), &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
+  HOOK_JAL(GetAddress(&vaHandlePlayerPad_Hook), &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
   //HOOK_JAL(0x0060cd44, &playerSyncOnPlayerUpdateSetState); // is this Hero:JumpLandTransitions? commented out in DL prod playersync anyways
-  // HOOK_JAL(0x004fac6c, &_playerSyncPatchHeroTransAnim); // HERO::TransAnim: symbolsv6: 00523320 - has the correct uya address, unsure if it is needed though, probably not because dan uses this for survival
+  // HOOK_JAL(GetAddress(&vaTransAnim_Hook), &_playerSyncPatchHeroTransAnim); // HERO::TransAnim: symbolsv6: 00523320 - has the correct uya address, unsure if it is needed though, probably not because dan uses this for survival
 
   // player link always healthy
   // TODO - in uya this isnt a single function, uya does lots of manual scattered checks every single time (15+ occurences). i.e line 99 in uya playerupdate_vtable (0x0052ee18)
@@ -993,10 +981,10 @@ void playerSyncTick(void)
   // POKE_U32(0x005F7BDC, 0x24020001); // Hero::IsPlayerLinkHealthy - makes it so it always returns true - i.eline 99 in uya playerupdate_vtable
 
   // disable tnw_PlayerData update gadgetid
-  POKE_U32(0x0052fb94, 0);
+  POKE_U32(GetAddress(&vaTNW_PlayerData_GadgetIdUpdate), 0);
 
   // disable tnw_PlayerData time update
-  POKE_U32(0x00531294, 0);
+  POKE_U32(GetAddress(&vaTNW_PlayerData_TimeUpdate), 0);
 
   // disable send GetHit
   // POKE_U32(0x0060ff08, 0); // used here in DL 0x005e1fec -- idk man it doesnt work the same in uya, might or might not be necessary, I haven't tested players damaging each other
