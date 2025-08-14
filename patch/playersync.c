@@ -710,7 +710,7 @@ void playerSyncHandlePlayerState(Player* player)
 
   // force update gadget level
   if (stateInterpolated.GadgetId >= 0 && stateInterpolated.GadgetId < 24) {
-    int level = player->weaponMeter.Slot[stateInterpolated.GadgetId];
+    int level = playerGetGadgetLevel(player, stateInterpolated.GadgetId);
     if (level != stateInterpolated.GadgetLevel) {
       playerObfuscate(&player->weaponMeter.Slot[stateInterpolated.GadgetId], stateInterpolated.GadgetLevel);
     }
