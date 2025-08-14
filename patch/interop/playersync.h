@@ -1,0 +1,7 @@
+#include <libuya/interop.h>
+
+VariableAddress_t vaPlayerStateUpdate_Hook;
+VariableAddress_t vaHandlePlayerPad_Hook;
+VariableAddress_t vaTransAnim_Hook;
+VariableAddress_t vaTNW_PlayerData_GadgetIdUpdate;
+VariableAddress_t vaTNW_PlayerData_TimeUpdate;
