@@ -399,7 +399,8 @@ void playerObfuscate(int src, int value, ObfuscateMode_e mode)
 	Obfuscate_t stack;
 	char *i = src; // i: address, *i: value
 	char *data = &stack.data;
-	switch (mode) {
+    char *rData = &stack.randData;
+    switch (mode) {
 		case 0: { // states
 			stack.step = 5;
 			stack.max = 0x28;
@@ -431,6 +432,14 @@ void playerObfuscate(int src, int value, ObfuscateMode_e mode)
 			break;
 		};
 	}
+    // if (*i == 0) {
+    //     *(rData - 1) += 1;
+    //     *i = *(rData - 1);
+    // } else {
+    //     char a = *i;
+    //     *i = *rData;
+    //     *rData = a;
+    // }
 	u32 algo = *(u32*)(((u32)stack.randData - 0x1) + (((int)i * gameGetGSFrame()) % 0x1fe) * 4);
 	stack.addr = algo ^ (u32)i;
 	stack.val = algo ^ (u32)value;
