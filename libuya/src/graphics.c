@@ -760,6 +760,61 @@ VariableAddress_t vaSetupEffectTex = {
 #endif
 };
 
+VariableAddress_t vaFastDrawStrip = {
+#if UYA_PAL
+	.Lobby = 0x0058ddc4,
+	.Bakisi = 0x0045acdc,
+	.Hoven = 0x0045c85c,
+	.OutpostX12 = 0x0045365c,
+	.KorgonOutpost = 0x0045121c,
+	.Metropolis = 0x0045055c,
+	.BlackwaterCity = 0x0044dd5c,
+	.CommandCenter = 0x0044e9dc,
+	.BlackwaterDocks = 0x0045125c,
+	.AquatosSewers = 0x0045055c,
+	.MarcadiaPalace = 0x0044fedc,
+#else
+	.Lobby = 0x0058cbf4,
+	.Bakisi = 0x00459c0c,
+	.Hoven = 0x0045b6cc,
+	.OutpostX12 = 0x0045250c,
+	.KorgonOutpost = 0x0045014c,
+	.Metropolis = 0x0044f48c,
+	.BlackwaterCity = 0x0044cc0c,
+	.CommandCenter = 0x0044da4c,
+	.BlackwaterDocks = 0x0045028c,
+	.AquatosSewers = 0x0044f5cc,
+	.MarcadiaPalace = 0x0044ef0c,
+#endif
+};
+
+VariableAddress_t vaDrawStripInit = {
+#if UYA_PAL
+	.Lobby = 0x0058c940,
+	.Bakisi = 0x00459858,
+	.Hoven = 0x0045b3d8,
+	.OutpostX12 = 0x004521d8,
+	.KorgonOutpost = 0x0044fd98,
+	.Metropolis = 0x0044f0d8,
+	.BlackwaterCity = 0x0044c8d8,
+	.CommandCenter = 0x0044d558,
+	.BlackwaterDocks = 0x0044fdd8,
+	.AquatosSewers = 0x0044f0d8,
+	.MarcadiaPalace = 0x0044ea58,
+#else
+	.Lobby = 0x0058b770,
+	.Bakisi = 0x00458788,
+	.Hoven = 0x0045a248,
+	.OutpostX12 = 0x00451088,
+	.KorgonOutpost = 0x0044ecc8,
+	.BlackwaterCity = 0x0044b788,
+	.CommandCenter = 0x0044c5c8,
+	.BlackwaterDocks = 0x0044ee08,
+	.AquatosSewers = 0x0044e148,
+	.MarcadiaPalace = 0x0044da88,
+#endif
+};
+
 //--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, int font)
 {

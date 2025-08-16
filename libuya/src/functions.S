@@ -301,6 +301,8 @@ VARIABLE_FUNCTION(internal_SpawnPart_059, vaSpawnPart_059)
 VARIABLE_FUNCTION(gfxDestroyParticle, vaDeletePart)
 VARIABLE_FUNCTION(internal_WorldSpaceToScreenSpace, vaWorldSpaceToScreenSpace)
 VARIABLE_FUNCTION(gfxDrawScreenOverlay, vaDrawScreenOverlay)
+VARIABLE_FUNCTION(gfxDrawStrip, vaFastDrawStrip);
+VARIABLE_FUNCTION(gfxDrawStripInit, vaDrawStripInit)
 
 #--------------------------------------------------------
 #------------------------- GAME -------------------------
