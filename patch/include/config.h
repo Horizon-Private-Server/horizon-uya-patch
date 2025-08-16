@@ -3,7 +3,7 @@
 
 #include "module.h"
 
-#define MAX_CUSTOM_MAP_DEFINITIONS              (40)
+#define MAX_CUSTOM_MAP_DEFINITIONS              (64)
 
 enum ActionType
 {
