@@ -138,3 +138,59 @@ VariableAddress_t vaTNW_PlayerData_TimeUpdate = {
 #endif
 };
 
+
+VariableAddress_t vaUpdatePadAddr = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00496658,
+	.Hoven = 0x00498770,
+	.OutpostX12 = 0x0048e048,
+    .KorgonOutpost = 0x0048b718,
+	.Metropolis = 0x0048ab30,
+	.BlackwaterCity = 0x004883c8,
+	.CommandCenter = 0x004883c0,
+    .BlackwaterDocks = 0x0048ac40,
+    .AquatosSewers = 0x00489f40,
+    .MarcadiaPalace = 0x004898c0,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00494460,
+	.Hoven = 0x004964b8,
+	.OutpostX12 = 0x0048bdd0,
+    .KorgonOutpost = 0x00489520,
+	.Metropolis = 0x00488938,
+	.BlackwaterCity = 0x00486150,
+	.CommandCenter = 0x00486308,
+    .BlackwaterDocks = 0x00488b48,
+    .AquatosSewers = 0x00487e88,
+    .MarcadiaPalace = 0x004877c8,
+#endif
+};
+
+VariableAddress_t vaProcessPadInputAddr = { // TODO fix and set to actual function address
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00496a78,
+	.Hoven = 0x00498b90,
+	.OutpostX12 = 0x0048e468,
+    .KorgonOutpost = 0x0048bb38,
+	.Metropolis = 0x0048af50,
+	.BlackwaterCity = 0x004887e8,
+	.CommandCenter = 0x004887e0,
+    .BlackwaterDocks = 0x0048b060,
+    .AquatosSewers = 0x0048a360,
+    .MarcadiaPalace = 0x00489ce0,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00493a68,
+	.Hoven = 0x004968d8,
+	.OutpostX12 = 0x0048c1f0,
+    .KorgonOutpost = 0x00489940,
+	.Metropolis = 0x00488d58,
+	.BlackwaterCity = 0x00486570,
+	.CommandCenter = 0x00486728,
+    .BlackwaterDocks = 0x00488f68,
+    .AquatosSewers = 0x004882a8,
+    .MarcadiaPalace = 0x00487be8,
+#endif
+};

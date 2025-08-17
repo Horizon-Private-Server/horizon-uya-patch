@@ -2758,9 +2758,10 @@ int main(void)
 		// fix weird overflow caused by player sync
     // also randomly (rarely) triggered by other things too
     //POKE_U32(0x004BAD64, 0x00412023); // CollMobysLine_Fix_maybe does not exist in uya maybe?
+		POKE_U32(0x004773b0, 0x00622023); // unique address only in uya, maybe similar to the one above? TODO not sure if this is needed
     POKE_U32(0x0044C488, 0x00412023); // collline_fix 004b8078 in DL
     POKE_U32(0x0044C494, 0x00612023); // collline_fix 004b8084 in DL
-    POKE_U32(0x44C4B0, 0x00622023);  //collline_fix  0x004b80a0 in DL
+    POKE_U32(0x0044C4B0, 0x00622023);  //collline_fix  0x004b80a0 in DL
 
 		HOOK_JAL(0x0044226c, 0x00195ae8); // poll nwupdate instead of updatepad for consistent game time
 

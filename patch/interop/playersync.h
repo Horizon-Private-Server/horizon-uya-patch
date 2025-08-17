@@ -5,3 +5,5 @@ VariableAddress_t vaHandlePlayerPad_Hook;
 VariableAddress_t vaTransAnim_Hook;
 VariableAddress_t vaTNW_PlayerData_GadgetIdUpdate;
 VariableAddress_t vaTNW_PlayerData_TimeUpdate;
+VariableAddress_t vaUpdatePadAddr;
+VariableAddress_t vaProcessPadInputAddr;
