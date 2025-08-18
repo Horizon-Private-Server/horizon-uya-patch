@@ -728,7 +728,7 @@ void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u
 Moby *gfxGetRegisteredDrawMobyList(void);
 void *gfxGetRegisteredDrawCalbackList(void);
 int gfxGetRegisteredDrawCount(void);
-void gfxDrawStrip(int texId, vec4 *pos, int *rbga, int *uv, int unk);
+void gfxDrawStrip(int texId, vec3 *pos, int *rbga, struct UV *uv, int unk);
 void gfxDrawStripInit(void);
 
 //
