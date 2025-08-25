@@ -1279,12 +1279,12 @@ typedef struct Player { // 0x4500
 	/* 0x4d50 */ VECTOR posAtSyncFrame;
 	/* 0x4d60 */ VECTOR syncPosDifference;
 	/* 0x4d70 */ VECTOR receivedSyncRot;
-	/* 0x4d80 */ VECTOR rotAtSyncFrame;
+	/* 0x4d80 */ char rotAtSyncFrame[0xc];
+	/* 0x4d8c */ enum PlayerState receivedState;
 	/* 0x4d90 */ float interpVel;
 	/* 0x4d94 */ float syncRotDifference; // TODO fix this struct
 	/*        */ // short int flags;
 	/* 0x4d98 */ int sequenceIdOfSyncData;
-	/* 0x4d9C */ enum PlayerState receivedState;
 	/*        */ VECTOR remoteCorrectionVel;
 	/*        */ float remoteCorrectionRotVel;
 	/*        */ char syncFrameOffset;

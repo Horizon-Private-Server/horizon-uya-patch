@@ -18,6 +18,12 @@
 #define PLAYER_SYNC_DATAS_PTR     (*(PlayerSyncPlayerData_t**)0x000CFFB0)
 #define CMD_BUFFER_SIZE           (8)
 
+// TODO - if players happen to desync for whatever reason, the game seems to never catch up again, might need tweaks to keepAlive or other networking values
+// TODO - idk if it just local testing but being afk for too long causes desync
+// TODO - fix base turrets not being visible when an enemy player is near them and activates them
+// TODO wrench throwing (PLAYER_STATE_THROW_ATTACK = 21) does not work from having your weapon out
+// TODO sometimes weapons don't fire or there is a lag to them, sometimes gets fixed with time... figure out why
+
 typedef struct PlayerSyncStateUpdatePacked
 {
   float Position[3];
@@ -28,7 +34,7 @@ typedef struct PlayerSyncStateUpdatePacked
   short CameraYaw;
   short CameraPitch;
   short NoInput;
-  short Health;
+  float Health;
   u8 PadBits0;
   u8 PadBits1;
   u8 MoveX;
@@ -61,7 +67,7 @@ typedef struct PlayerSyncStateUpdateUnpacked
   u8 MoveX;  // left stick intensity Y axis
   u8 MoveY;  // left stick intensity X axis
   u8 GadgetId;
-  //char GadgetLevel; // TODO maybe later
+  //char GadgetLevel; // WONT DO uya doesn't care
   int State;
   int ObfState;
   char StateId;
@@ -167,7 +173,7 @@ void playerSyncOnPlayerUpdateSetState(Player* player, int toState, int a2, int a
 }
 
 /*
-Fully updated
+This was more trouble than its worth, maybe DL handles pad different or dan knows something I don't
 */
 //--------------------------------------------------------------------------
 int playerSyncHandlePlayerPadHook(Player* player)
@@ -181,11 +187,11 @@ int playerSyncHandlePlayerPadHook(Player* player)
     PlayerSyncPlayerData_t* data = &PLAYER_SYNC_DATAS_PTR[player->fps.vars.camSettingsIndex];
     // process input
     // IN DL DECOMPILED WITH SYMBOLS V6: 00491050 - UpdatePad
-    ((void (*)(struct PAD*))GetAddress(&vaUpdatePadAddr))(player->pPad); // 0x00494460 kisi
+    // ((void (*)(struct PAD*))GetAddress(&vaUpdatePadAddr))(player->pPad); // 0x00494460 kisi
 
     // update pad
     // IN DL DECOMPILED WITH SYMBOLS V6: 004907c0 - ProcessPadInput
-    ((void (*)(struct PAD*, void*, int))GetAddress(&vaProcessPadInputAddr))(player->pPad, data->Pad, 0x14); // 0x493a68 kisi
+    // ((void (*)(struct PAD*, void*, int))GetAddress(&vaProcessPadInputAddr))(player->pPad, data->Pad, 0x14); // 0x493a68 kisi
   }
   // IN DL DECOMPILED WITH SYMBOLS V6: 00512608 - GadgetTransitions, maybe UpdateGadgetEvents from vtable in uya?
   int result = ((int (*)(Player*))0x0052c920)(player); // call parent function GadgetTransitions
@@ -322,8 +328,10 @@ void playerSyncHandlePlayerState(Player* player)
   playerStateUpdateLerp(&stateInterpolated, stateCurrent, stateNext, tSub);
 
   // reset pad
-  data->Pad[2] = 0xFF;
-  data->Pad[3] = 0xFF;
+  //data->Pad[2] = 0xFF;
+  //stateInterpolated.PadBits & 0xFF;
+  //data->Pad[3] = 0xFF;
+  //stateInterpolated.PadBits >> 8;
 
   // set no input
   //if (data->TicksSinceLastUpdate == 0) {
@@ -331,9 +339,6 @@ void playerSyncHandlePlayerState(Player* player)
     player->timers.noInput = stateInterpolated.NoInput;
   }
 
-  /*
-  TODO - verify this works, it works until the desync starts happening, might not need to be updated
-  */
   // resurrecting
   if (playerIsDead(player) && player->pNetPlayer && player->pNetPlayer->warpMessage.isResurrecting) {
     DPRINTF("player %08x is spawning!\n", player);
@@ -370,13 +375,9 @@ void playerSyncHandlePlayerState(Player* player)
     vector_add(stateCurrentPosition, stateCurrentPosition, stateInterpolated.GroundMoby->position);
   }
 
-  // TODO - something about the logic with the ground moby causes remote players to have a weird snapping motion when jumping above the flag pad, and maybe other mobys too.
-  /*
-  basically if the distance between current position and interpolated position is small enough,
-  just snap into the interpolated position. Otherwise lerp if its too large otherwise the snapping will look like a teleport.
-  */
-  // snap position
-  float snapRadius = (stateInterpolated.GroundMoby != player->ground.pMoby) ? 4 : 49;
+
+  // snap position if lerp distance is too much (i.e using teleport pads)
+  float snapRadius = (stateInterpolated.GroundMoby != player->ground.pMoby) ? 24 : 49;
   vector_subtract(dt, stateCurrentPosition, player->playerPosition);
   if (vector_sqrmag(dt) > snapRadius) {
     VECTOR dif;
@@ -384,7 +385,7 @@ void playerSyncHandlePlayerState(Player* player)
     vector_copy(player->playerPosition, stateCurrentPosition);
     vector_add(player->fps.cameraPos, player->fps.cameraPos, dif);
     //vector_copy(stateInterpolated.Position, data->LastReceivedPosition); //commented out in dl prod
-    DPRINTF("tp player %d (dist %f)\n", player->fps.vars.camSettingsIndex, vector_length(dt));
+    DPRINTF("tp player %d (dist %d) snap radius %d\n", player->fps.vars.camSettingsIndex, (int)(1000*vector_length(dt)), (int)(1000*snapRadius));
   }
 
   // lerp position if distance is greater than threshold
@@ -446,18 +447,9 @@ void playerSyncHandlePlayerState(Player* player)
   matrix_rotate_z(mInv, mInv, clampAngle(player->camRot[2] + MATH_PI));
   memcpy(player->camUMtx, mInv, sizeof(VECTOR)*3);
 
-  if (player->pNetPlayer) {
-    vector_pack(player->camRot, player->pNetPlayer->padMessageElems[padIdx].msg.cameraRot); // TODO test removing this, thought removing was breaking everything but it was something else
-  }
-
-  // TODO - this is just fucked, idk the correct way to set health for a remote player, can probably hold off figuring this out later
-  // set health
-  // player->hitPoints = stateInterpolated.Health;
-  // playerSetHealth(player, netHealth[(int)stateInterpolated.Health]);
-
   float moveX = (stateInterpolated.MoveX - 127) / 128.0;
   float moveY = (stateInterpolated.MoveY - 127) / 128.0;
-  float mag = minf(1, sqrtf((moveX*moveX) + (moveY*moveY))); // TODO mag is not be fucked
+  float mag = minf(1, sqrtf((moveX*moveX) + (moveY*moveY)));
   float ang = atan2f(moveY, moveX);
 
   player->stickStrength = mag; // stickStrength
@@ -466,15 +458,15 @@ void playerSyncHandlePlayerState(Player* player)
   player->pPad->analog[2] = moveX;
   player->pPad->analog[3] = moveY;
 
-  data->Pad[4] = 0x7F;
-  data->Pad[5] = 0x7F;
-  data->Pad[6] = stateInterpolated.MoveX;
-  data->Pad[7] = stateInterpolated.MoveY;
+  //data->Pad[4] = 0x7F;
+  //data->Pad[5] = 0x7F;
+  //data->Pad[6] = stateInterpolated.MoveX;
+  //data->Pad[7] = stateInterpolated.MoveY;
 
   struct tNW_Player* netPlayer = player->pNetPlayer;
   if (netPlayer) {
     netPlayer->padMessageElems[padIdx].msg.pad_data[2] = stateInterpolated.PadBits & 0xFF; // remote rdata[2]
-    netPlayer->padMessageElems[padIdx].msg.pad_data[3] = stateInterpolated.PadBits >> 8; // remote rdata[3]
+    netPlayer->padMessageElems[padIdx].msg.pad_data[3] = stateInterpolated.PadBits >> 8 | 0xc0; // 0x40 | 0x80; // don't let pad handle x or square, process as a state instead
     netPlayer->padMessageElems[padIdx].msg.pad_data[4] = 0x7F;
     netPlayer->padMessageElems[padIdx].msg.pad_data[5] = 0x7F;
     netPlayer->padMessageElems[padIdx].msg.pad_data[6] = stateInterpolated.MoveX;
@@ -485,9 +477,8 @@ void playerSyncHandlePlayerState(Player* player)
   }
   // set remote received state
 
-  // int playerState = playerGetState(player);
   int playerState = player->RemoteHero.remoteState;
-  player->RemoteHero.stateAtSyncFrame = playerState;
+  player->RemoteHero.remotePad.ipad[8] = playerState;
   player->RemoteHero.receivedState = stateInterpolated.State;
 
   // Unobfuscated state is sent over the net
@@ -499,7 +490,7 @@ void playerSyncHandlePlayerState(Player* player)
     // from
     switch (playerState)
     {
-      case PLAYER_STATE_VEHICLE: //TODO havent tested vehicles
+      case PLAYER_STATE_VEHICLE: //TODO players don't exit from vehicles for remote players
       case PLAYER_STATE_TURRET_DRIVER:
       {
         if (data->LastState != playerState) break;
@@ -542,8 +533,11 @@ void playerSyncHandlePlayerState(Player* player)
     // to
     switch (stateInterpolated.State)
     {
+      // pad does NOT handle square well, just let initbody handle wrench shit
+      /*
       case PLAYER_STATE_JUMP_ATTACK:
       case PLAYER_STATE_COMBO_ATTACK:
+      case PLAYER_STATE_THROW_ATTACK:
       {
         //DPRINTF("wrench %d: pstate:%d pstatetime:%d lasttime:%d\n", gameGetTime(), playerState, player->timers.state, data->LastStateTime);
         skip = 1;
@@ -551,32 +545,33 @@ void playerSyncHandlePlayerState(Player* player)
           data->LastStateId = stateInterpolated.StateId;
           data->LastState = stateInterpolated.State;
         } else if ((player->timers.state % 10) != 0) {
-          data->Pad[3] &= ~0x80;
+          // data->Pad[3] &= ~0x80;
+          // player->pNetPlayer->padMessageElems[padIdx].msg.pad_data[3] &= ~0x08;
+
         }
         break;
       }
+      */
 
       case PLAYER_STATE_GET_HIT:
       {
         // let game handle flinchings
-        //skip = 1;
+        skip = 1;
         break;
       }
       case PLAYER_STATE_SWING:
       {
         // force R1 when on swingshot
         // let game handle the rest
-         data->Pad[3] &= ~0x08;
+        //data->Pad[3] &= ~0x08;
+        // player->pNetPlayer->padMessageElems[padIdx].msg.pad_data[3] &= ~0x08;
         skip = 1;
         break;
       }
     }
 
-    if ((!skip) && stateInterpolated.State != playerState) { // TODO not convinced the 2nd check if necessary
+    if ((!skip) && stateInterpolated.State != playerState) {
       DPRINTF("player %d new state %d (from %d)\n", player->fps.vars.camSettingsIndex, stateInterpolated.State, playerState);
-      if (stateInterpolated.State == playerState) {
-        DPRINTF("the same state is being processed, %d\n", playerState);
-      }
 
       if (player->subState > 0) {
         DPRINTF("substate fix %d=>0\n", player->subState);
@@ -609,7 +604,6 @@ void playerSyncHandlePlayerState(Player* player)
 
 
 
-  // TODO - need to verify these are okay... idk if they're doing anything
   if (player->pNetPlayer && player->pNetPlayer->pNetPlayerData) {
     player->pNetPlayer->pNetPlayerData->handGadget = (int)stateInterpolated.GadgetId;
     player->pNetPlayer->pNetPlayerData->lastKeepAlive = data->LastNetTime;
@@ -670,7 +664,6 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
   unpacked.CmdId = msg.CmdId;
   unpacked.Valid = 1;
   // DPRINTF("Recieved state %d!\n", unpacked.State);
-  //DPRINTF("unobfuscating the state, I should get the same thing %d!\n", playerDeobfuscate(&unpacked.ObfState, DEOBFUSCATE_MODE_STATE));
 
 
   if (msg.GroundMobyUID != -1 && (msg.Flags & 1)) {
@@ -766,24 +759,18 @@ void playerSyncBroadcastPlayerState(Player* player)
   msg.CameraPitch = (short)(pitch * 10240.0);
   msg.CameraYaw = (short)(yaw * 10240.0);
   msg.NoInput = player->timers.noInput;
-  msg.Health = (short)playerGetHealth(player);
+  msg.Health = player->pNetPlayer->pNetPlayerData->hitPoints;
   msg.MoveX = ((struct PAD*)player->pPad)->rdata[6];
   msg.MoveY = ((struct PAD*)player->pPad)->rdata[7];
   msg.PadBits0 = ((struct PAD*)player->pPad)->rdata[2];
   msg.PadBits1 = ((struct PAD*)player->pPad)->rdata[3]; // << 8
   msg.GadgetId = (u8)player->gadget.weapon.id;
   //msg.GadgetLevel = -1;
-  msg.State = playerGetState(player);
+  msg.State = player->camera->camHeroData.state;// playerGetState(player);
   msg.ObfState = player->state;
   msg.StateId = data->LastStateId;
   msg.CmdId = data->StateUpdateCmdId = playerSyncGetCmdId(data->StateUpdateCmdId + 1);
 
-
-  if (msg.State < 0 || msg.State > 156) {
-    msg.State = 0;
-    msg.ObfState = 0;
-  }
-  // DPRINTF("I am sending the state %d\n", msg.State, 3); //playerDeobfuscate(&msg.ObfState, DEOBFUSCATE_MODE_STATE));if (g)
   // check if we're on a ground moby
   // if so, sync relative position
   Moby* groundMoby = player->ground.pMoby;
@@ -805,7 +792,7 @@ void playerSyncBroadcastPlayerState(Player* player)
     }
   }
 
-  // TODO - find out the UYA behavior for weapon xp - not important right now
+  // WONTDO - uya doesn't seem to care, wont do
   // sync gadget level
   /*
   if (msg.GadgetId >= 0 && msg.GadgetId < 32)
@@ -822,7 +809,7 @@ int playerSyncDisablePlayerStateUpdates(void)
 }
 
 //--------------------------------------------------------------------------
-int playerSyncDisablePlayerRotUpdates(void)
+int playerSyncDisablePlayerPnetUpdates(void)
 {
   return 0;
 }
@@ -889,16 +876,16 @@ void playerSyncTick(void)
   // hooks
   HOOK_JAL(GetAddress(&vaPlayerStateUpdate_Hook), &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
   HOOK_JAL(GetAddress(&vaHandlePlayerPad_Hook), &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
+  HOOK_JAL(0x00533928, &playerSyncDisablePlayerPnetUpdates); // disable function that keeps on overriding camRot, camumtx, camPos
   //HOOK_JAL(0x0060cd44, &playerSyncOnPlayerUpdateSetState); // is this Hero:JumpLandTransitions? commented out in DL prod playersync anyways
 
-  // player link always healthy
-  // TODO - in uya this isnt a single function, uya does lots of manual scattered checks every single time (15+ occurences). i.e line 99 in uya playerupdate_vtable (0x0052ee18)
-  // TODO - after a while, players eventually get desynced really hard, might be a player link check somewhere that is returning false and not allowing player sync updates
+  // player link always healthy WONTDO doesn't seem to affect anything negatively
+  // in uya this isnt a single function, uya does lots of manual scattered checks every single time (15+ occurences). i.e line 99 in uya playerupdate_vtable (0x0052ee18)
+  // after a while, players eventually get desynced really hard, might be a player link check somewhere that is returning false and not allowing player sync updates
   // I dont know if this is fucking with syncing and preventing updates because the game thinks the playerlink is unhealthy
   // POKE_U32(0x005F7BDC, 0x24020001); // Hero::IsPlayerLinkHealthy - makes it so it always returns true - i.eline 99 in uya playerupdate_vtable
 
-  // overwrite function that keeps on overriding camRot, camumtx, camPos, 
-  HOOK_JAL(0x00533928, &playerSyncDisablePlayerRotUpdates);
+
 
   // disable tnw_PlayerData update gadgetid
   POKE_U32(GetAddress(&vaTNW_PlayerData_GadgetIdUpdate), 0);
@@ -908,7 +895,8 @@ void playerSyncTick(void)
 
   // disable send GetHit
   // POKE_U32(0x0060ff08, 0); // used here in DL 0x005e1fec -- idk man it doesnt work the same in uya, might or might not be necessary, I haven't tested players damaging each other
-  // TODO players get hit twice  on client side, need to figure this out
+  // WONTDO - dan processes the get_hit state instead of letting the game handle it... I couldn't find the send get_hit functionality to disable it in uya so I did the reverse
+  // players get hit twice  on client side, need to figure this out
 
 
   // player updates

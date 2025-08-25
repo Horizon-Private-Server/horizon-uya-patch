@@ -277,7 +277,6 @@ FUNCTION(matrix_unit, 0x0013d5c0)
 FUNCTION(matrix_rotate_x, 0x0013d708)
 FUNCTION(matrix_rotate_y, 0x0013d7b0)
 FUNCTION(matrix_rotate_z, 0x0013d660)
-FUNCTION(internal_vector_pack, 0x00486BB8)
 
 #--------------------------------------------------------
 #----------------------- GRAPHICS -----------------------

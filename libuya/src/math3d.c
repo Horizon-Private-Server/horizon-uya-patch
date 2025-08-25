@@ -29,12 +29,6 @@ u128 vector_read(VECTOR input0)
 }
 
 //--------------------------------------------------------
-void vector_pack(VECTOR input0, u32* dst)
-{
-  internal_vector_pack(vector_read(input0), dst);
-}
-
-//--------------------------------------------------------
 void vector_reflect(VECTOR output, VECTOR input0, VECTOR normal)
 {
     vector_write(output, internal_vectorReflect(vector_read(input0), vector_read(normal)));
