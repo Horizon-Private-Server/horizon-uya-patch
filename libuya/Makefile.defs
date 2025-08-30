@@ -9,7 +9,7 @@ EE_LIB = $(EE_LIB_DIR)$(EE_LIB_NAME)
 EE_OBJS = functions.o string.o math.o math3d.o pad.o uya.o player.o ui.o graphics.o \
 		game.o gamesettings.o color.o net.o sifrpc.o map.o help.o interop.o \
 		utils.o moby.o weapon.o spawnpoint.o sound.o music.o guber.o \
-		collision.o camera.o random.o time.o team.o transition.o
+		collision.o camera.o random.o time.o team.o transition.o hud.o
 
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
