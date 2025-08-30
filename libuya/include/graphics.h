@@ -730,6 +730,7 @@ void *gfxGetRegisteredDrawCalbackList(void);
 int gfxGetRegisteredDrawCount(void);
 void gfxDrawStrip(int texId, vec3 *pos, int *rbga, struct UV *uv, int unk);
 void gfxDrawStripInit(void);
+void gfxAddRegister(int register, u64 value);
 
 //
 ScreenVBEffect* gfxScreenVBEffect(void);

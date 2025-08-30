@@ -303,6 +303,7 @@ VARIABLE_FUNCTION(internal_WorldSpaceToScreenSpace, vaWorldSpaceToScreenSpace)
 VARIABLE_FUNCTION(gfxDrawScreenOverlay, vaDrawScreenOverlay)
 VARIABLE_FUNCTION(gfxDrawStrip, vaFastDrawStrip);
 VARIABLE_FUNCTION(gfxDrawStripInit, vaDrawStripInit)
+VARIABLE_FUNCTION(gfxAddRegister, vaVU0_addGSRegister)
 
 #--------------------------------------------------------
 #------------------------- GAME -------------------------

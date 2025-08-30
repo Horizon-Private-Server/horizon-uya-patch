@@ -815,6 +815,34 @@ VariableAddress_t vaDrawStripInit = {
 #endif
 };
 
+VariableAddress_t vaVU0_addGSRegister = {
+#if UYA_PAL
+	.Lobby = 0x005fd068,
+	.Bakisi = 0x004cf7b0,
+	.Hoven = 0x004d18c8,
+	.OutpostX12 = 0x004c71a0,
+	.KorgonOutpost = 0x004c4938,
+	.Metropolis = 0x004c3c88,
+	.BlackwaterCity = 0x004c1520,
+	.CommandCenter = 0x004c1518,
+	.BlackwaterDocks = 0x004c3d98,
+	.AquatosSewers = 0x004c3098,
+	.MarcadiaPalace = 0x004c2a18,
+#else
+	.Lobby = 0x005fa8d0,
+	.Bakisi = 0x004cd070,
+	.Hoven = 0x004cf0c8,
+	.OutpostX12 = 0x004c49e0,
+	.KorgonOutpost = 0x004c21f8,
+	.Metropolis = 0x004c1548,
+	.BlackwaterCity = 0x004bed60,
+	.CommandCenter = 0x004bef18,
+	.BlackwaterDocks = 0x004c1758,
+	.AquatosSewers = 0x004c0a98,
+	.MarcadiaPalace = 0x004c03d8,
+#endif
+};
+
 //--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, int font)
 {
