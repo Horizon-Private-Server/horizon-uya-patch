@@ -605,7 +605,7 @@ struct MoveVars_V2 {
 };
 
 typedef void (*MobyGetInterface_func)(int mobyId, int arg2, int arg3);
-typedef void (*MobyGetGuberObject_func)(Moby * moby);
+typedef int  (*MobyGetGuberObject_func)(Moby * moby);
 typedef void (*MobyEventHandler_func)(Moby * moby, struct GuberEvent * event);
 typedef void (*MobyGetDamager_func)(Moby * moby);
 

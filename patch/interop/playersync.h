@@ -1,9 +1,10 @@
 #include <libuya/interop.h>
 
+VariableAddress_t vaProcessGadgetState_Func;
+VariableAddress_t vaProcessGadget_Func;
 VariableAddress_t vaPlayerStateUpdate_Hook;
-VariableAddress_t vaHandlePlayerPad_Hook;
-VariableAddress_t vaTransAnim_Hook;
+VariableAddress_t vaPlayerPnetUpdates_Hook;
+VariableAddress_t vaEnableTurretSync_Addr;
 VariableAddress_t vaTNW_PlayerData_GadgetIdUpdate;
 VariableAddress_t vaTNW_PlayerData_TimeUpdate;
-VariableAddress_t vaUpdatePadAddr;
-VariableAddress_t vaProcessPadInputAddr;
+VariableAddress_t vaForceGadgetMobyCreation_Addr;

@@ -118,6 +118,7 @@ Guber * guberGetObjectByUID(u32 uid);
 Guber * guberGetObjectByMoby(Moby* moby);
 u32 guberGetUID(Moby* moby);
 GuberEvent * guberEventCreate(Guber * guber, int eventId, int arg3, int arg4);
+GuberEvent * guberFindEvent(Guber * guber, int eventId, int pendingOnly);
 
 Master * masterGet(u32 uid);
 Master * masterCreate(void * object, int sendCreateMsg);

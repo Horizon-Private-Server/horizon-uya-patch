@@ -1558,11 +1558,11 @@ void patchQuickSelectTimer(void)
 			playerSyncTick();
 			processGameModules();
 
-			((void (*)(Moby*))0x003DAEC0)(moby);
+			((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);
 
 			playerSyncPostTick();
 		} else {
-			((void (*)(Moby*))0x003DAEC0)(moby);	
+			((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);	
 		}
 	}		
 
@@ -2625,44 +2625,6 @@ void onOnlineMenu(void)
   #endif
 }
 
-/* NAME :		playerDebugPad
- * DESCRIPTION: Prints player debug information in game for R&D purposes, feel free to add on
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			JelloGiant
- */
-
-void playerDebugPad()
-{
-	int i = 0;
-	Player *player = playerGetFromSlot(0);
-	Moby *playerMoby = player->pMoby;
-	if (playerPadGetButtonDown(player, PAD_CIRCLE | PAD_CROSS) > 0) {
-		DPRINTF("My moby has oClass:%d with address %08x and unk_bc address is %08x and unk_bc is: ", playerMoby->oClass, playerMoby, playerMoby->unk_bc);
-		DPRINTF("My player struct is at %08x\n", player);
-		for (i=0; i < 4; i++) {
-			DPRINTF("byte %d is %x, ", i, playerMoby->unk_bc[i]);
-		}
- 		DPRINTF("\n");
-		if (playerMoby->unk_bc[1] == 0xffffffff) {DPRINTF("on grav wall");}
-		else {DPRINTF("not on grav wall");}
-		DPRINTF("\n");
-		DPRINTF("playerMoby's Position coordinates: "); 
-		vector_print(playerMoby->position);
-		DPRINTF("\n");
-		
-	}
-	/*if (playerPadGetButtonDown(player, PAD_CIRCLE | PAD_CROSS) > 0) {
-		int obfuscated;
-		int toObfuscate = 3;
-		playerObfuscate(&obfuscated, toObfuscate, OBFUSCATE_MODE_STATE);
-		int unobfuscated = playerDeobfuscate(&obfuscated, DEOBFUSCATE_MODE_STATE);
-		DPRINTF("state is %d, so re-unobfuscated addr should be the same: %d!\n", toObfuscate, unobfuscated);
-	}
-		*/
-}
-
 /*
  * NAME :		main
  * DESCRIPTION :
@@ -2757,13 +2719,12 @@ int main(void)
 
 		// fix weird overflow caused by player sync
     // also randomly (rarely) triggered by other things too
-    //POKE_U32(0x004BAD64, 0x00412023); // CollMobysLine_Fix_maybe does not exist in uya maybe?
-		POKE_U32(0x004773b0, 0x00622023); // unique address only in uya, maybe similar to the one above? TODO not sure if this is needed
-    POKE_U32(0x0044C488, 0x00412023); // collline_fix 004b8078 in DL
-    POKE_U32(0x0044C494, 0x00612023); // collline_fix 004b8084 in DL
-    POKE_U32(0x0044C4B0, 0x00622023);  //collline_fix  0x004b80a0 in DL
+		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow1), 0x00622023); // unique address only in uya, maybe similar to the one above? TODO not sure if this is needed
+    POKE_U32(GetAddress(&vaPlayerSyncFixOverflow2), 0x00412023); // collline_fix 004b8078 in DL
+    POKE_U32(GetAddress(&vaPlayerSyncFixOverflow3), 0x00612023); // collline_fix 004b8084 in DL
+    POKE_U32(GetAddress(&vaPlayerSyncFixOverflow4), 0x00622023);  //collline_fix  0x004b80a0 in DL
 
-		HOOK_JAL(0x0044226c, 0x00195ae8); // poll nwupdate instead of updatepad for consistent game time
+		HOOK_JAL(GetAddress(&vaGameTimeUpdate_Hook), GetAddress(&vaNWUpdate_Func)); // poll nwupdate instead of updatepad for consistent game time
 
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
@@ -2815,20 +2776,13 @@ int main(void)
     } else if (!mpMoby) {
       mpMoby = mobyFindNextByOClass(mobyListGetStart(), 0x106A);
       if (mpMoby) {
-				DPRINTF("mpmobyhooked!: %08x\n", mpMoby);
+				DPRINTF("mpmoby hooked!: %08x\n", mpMoby);
         mpMoby->pUpdate = &onMobyUpdate;
       }
     } else if (isUnloading && mpMoby) {
-			DPRINTF("hooked from unloading\n!");
+			DPRINTF("mpmoby unhooked from unloading\n!");
       mpMoby->pUpdate = NULL;
     }
-
-//		if (gameConfig.grNewPlayerSync)
-//			playerSyncTick();
-
-		#ifdef DEBUG
-		playerDebugPad();
-		#endif
 
 		// Runs FPS Counter
 		runFpsCounter();
