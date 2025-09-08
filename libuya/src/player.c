@@ -331,12 +331,14 @@ VariableAddress_t vaPlayerObfuscateWeaponAddr = {
     .MarcadiaPalace = 0x003b1ac1,
 #endif
 };
-int playerDeobfuscate(int src, DeobfuscateMode_e mode)
+u32 playerDeobfuscate(u32 src, DeobfuscateMode_e mode)
 {
-	char *i = src;
+	u8 *i = src;
 	// i = address, *i = data
-	if (!*i && mode == 0)
-        return 0;
+    if (mode == 0) {
+        if (!*i)
+            return 0;
+    }
 
 	Obfuscate_t stack;
 	switch (mode) {
@@ -364,11 +366,12 @@ int playerDeobfuscate(int src, DeobfuscateMode_e mode)
 	}
 	u8 *data = &stack.data;
 	int n = 0;
-	for (n; n < stack.max; n += stack.step) {
+	do {
 		u32 offset = (u32)((int)i - (u32)*i & 7) + n;
-		*data = stack.randData[(*i + (offset & 7) * stack.multiplyVal)];
+		n += stack.step;
+        *data = stack.randData[(*i + (offset & 7) * stack.multiplyVal)];
         ++data;
-	}
+	} while (n < stack.max);
 	stack.addr = (u32)((u32)stack.val ^ ((u32)(stack.addr) ^ (u32)i));
 	stack.val = (u32)stack.addr >> 0x10;
 	if (mode == 0) {
@@ -377,12 +380,12 @@ int playerDeobfuscate(int src, DeobfuscateMode_e mode)
         return stack.val & 0xff;
 	} else if (mode == 2) {
 		return stack.val;
-	}
-	// all other modes, return -1
-	return -1;
+	} else {
+        return 0;
+    }
 }
 
-void playerObfuscate(int src, int value, ObfuscateMode_e mode)
+void playerObfuscate(u32 src, int value, ObfuscateMode_e mode)
 {
 	union {
 		float f;
@@ -397,9 +400,9 @@ void playerObfuscate(int src, int value, ObfuscateMode_e mode)
 		}
 	} v = {value};
 	Obfuscate_t stack;
-	char *i = src; // i: address, *i: value
-	char *data = &stack.data;
-    char *rData = &stack.randData;
+	u8 *i = src; // i: address, *i: value
+	u8 *data = &stack.data;
+    u8 *rData = &stack.randData;
     switch (mode) {
 		case 0: { // states
 			stack.step = 5;

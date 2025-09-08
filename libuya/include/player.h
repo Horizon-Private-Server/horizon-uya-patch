@@ -218,15 +218,15 @@ typedef enum DeobfuscateMode {
 } DeobfuscateMode_e;
 
 typedef struct Obfuscate {
-	char *randData;
+	u8 *randData;
 	int max;
 	int step;
 	int multiplyVal;
 	union {
-		int data[2];
+		u64 data;
 		struct {
-			int addr;
-			int val;
+			u32 addr;
+			u32 val;
 		};
 	};
 } Obfuscate_t;
@@ -1589,7 +1589,7 @@ void playerGiveRandomWeapons(Player * player, int amount);
 * RETURN :
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
-int playerDeobfuscate(int src, DeobfuscateMode_e mode);
+u32 playerDeobfuscate(u32 src, DeobfuscateMode_e mode);
 int playerGetRespawnTimer(Player *player);
 int playerGetGadetId(Player *player, int slot);
 int playerGetGadgetLevel(Player *player, int slot);
