@@ -1610,7 +1610,7 @@ int playerGetGadgetAmmo(Player *player, int slot);
 * RETURN :
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
-void playerObfuscate(int src, int value, ObfuscateMode_e mode);
+void playerObfuscate(u32 src, int value, ObfuscateMode_e mode);
 
 /*
 * NAME :		playerHasShield
