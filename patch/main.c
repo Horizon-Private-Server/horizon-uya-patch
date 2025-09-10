@@ -1385,7 +1385,7 @@ void customFlagLogic(Moby* flagMoby)
 
         // Don't allow input from players whom are dead
         if (playerDeobfuscate(&player->stateType, 0) == PLAYER_TYPE_DEATH)
-            return;
+            continue;
 
         // skip player if they've only been alive for < 180ms
         if (player->timers.timeAlive < 180)
