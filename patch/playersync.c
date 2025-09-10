@@ -92,11 +92,6 @@ typedef struct PlayerSyncPlayerData
 // config reference to check options such as if the playersync config is enabled
 extern PatchGameConfig_t gameConfig;
 
-// ping
-extern int ClientLatency[GAME_MAX_PLAYERS];
-
-const int netHealth[16] = {0,6,13,20,26,33,40,46,53,60,66,73,80,86,93,100};
-
 //--------------------------------------------------------------------------
 int playerSyncCmdDelta(int fromCmdId, int toCmdId)
 {
@@ -281,11 +276,6 @@ void playerSyncHandlePlayerState(Player* player)
     // DPRINTF("%d running ahead %d\n", gameGetTime(), data->CurrentSubStateId);
     data->CurrentSubStateId = (int)maxf(0, data->CurrentSubStateId - 1);
   }
-
-  #if NPS_INSTANTSYNC
-  data->CurrentSubStateId = 0;
-  data->CurrentStateUpdateCmdId = data->StateUpdateCmdId;
-  #endif
   
   PlayerSyncStateUpdateUnpacked_t stateInterpolated;
   PlayerSyncStateUpdateUnpacked_t* stateCurrent = &data->StateUpdates[playerSyncCmdGetBufIndex(data->CurrentStateUpdateCmdId)];
@@ -314,34 +304,14 @@ void playerSyncHandlePlayerState(Player* player)
   if (data->CurrentSubStateId == 0) {
     player->timers.noInput = stateInterpolated.NoInput;
   }
-
-  // resurrecting
-  if (playerIsDead(player) && player->pNetPlayer && player->pNetPlayer->warpMessage.isResurrecting) {
+      
+  // resurrecting 
+  // TODO player lerps towards spawn location if they died close to spawn
+  if (playerStateIsDead(player->RemoteHero.remoteState) && player->pNetPlayer && player->pNetPlayer->warpMessage.isResurrecting) {
     playerRespawn(player);
     player->pNetPlayer->warpMessage.isResurrecting = 0;
   }
-  // extrapolate
-  #if NPS_INSTANTSYNC
-  GameSettings* gs = gameGetSettings();
-  if (data->TicksSinceLastUpdate > 0 && data->TicksSinceLastUpdate <= rate && !playerIsDead(player)) {
-    //DPRINTF("extrapolate %d\n", data->TicksSinceLastUpdate);
-    
-    // extrapolate position
-    vector_subtract(dt, player->playerPosition, data->LastLocalPosition);
-    vector_add(stateCurrent->Position, stateCurrent->Position, dt);
 
-    // extrapolate rotation
-    vector_subtract(dt, player->playerRotation, data->LastLocalRotation);
-    stateCurrent->Rotation[0] = clampAngle(stateCurrent->Rotation[0] + clampAngle(dt[0]));
-    stateCurrent->Rotation[1] = clampAngle(stateCurrent->Rotation[1] + clampAngle(dt[1]));
-    stateCurrent->Rotation[2] = clampAngle(stateCurrent->Rotation[2] + clampAngle(dt[2]));
-    //stateCurrent->CameraYaw = clampAngle(stateCurrent->CameraYaw + clampAngle(dt[2]));
-
-    vector_copy(stateInterpolated.Position, stateCurrent->Position);
-    vector_copy(stateInterpolated.Rotation, stateCurrent->Rotation);
-  }
-  #endif
-  
   // compute absolute position
   VECTOR stateCurrentPosition;
   vector_copy(stateCurrentPosition, stateInterpolated.Position);
@@ -444,12 +414,14 @@ void playerSyncHandlePlayerState(Player* player)
     netPlayer->activePadFrame = 0;
     netPlayer->pActivePadMsg = &netPlayer->padMessageElems[padIdx];
   }
-  // set remote received state
 
+  // set health
+  playerSetHealth(player, stateInterpolated.Health);
+
+  // set remote received state
   int playerState = player->RemoteHero.remoteState;
   player->RemoteHero.remotePad.ipad[8] = playerState;
   player->RemoteHero.receivedState = stateInterpolated.State;
-  int force2 = 0;
 
   // update state
   if (stateInterpolated.StateId != data->LastStateId ) { //&& data->delayedState == 0) {
@@ -536,10 +508,10 @@ void playerSyncHandlePlayerState(Player* player)
     if ((!skip) && stateInterpolated.State != playerState) {
       DPRINTF("player %d new state %d (from %d)\n", player->fps.vars.camSettingsIndex, stateInterpolated.State, playerState);
 
-      if (player->subState > 0) {
-        DPRINTF("substate fix %d=>0\n", player->subState);
-        player->subState = 0;
-      }
+      //if (player->subState > 0) {
+        //DPRINTF("substate fix %d=>0\n", player->subState);
+        //player->subState = 0;
+      //}
 
       int force = playerStateIsDead(playerState) && !playerStateIsDead(stateInterpolated.State);
       DPRINTF("force is %d. Player %08x will be updated to state %d.\n", force, player, stateInterpolated.State);
@@ -575,16 +547,6 @@ void playerSyncHandlePlayerState(Player* player)
     vector_copy(player->pNetPlayer->pNetPlayerData->position, player->playerPosition);
   }
 
-  // force update gadget level
-/*
-  if (stateInterpolated.GadgetId >= 0 && stateInterpolated.GadgetId < 24) {
-    int level = playerGetGadgetLevel(player, stateInterpolated.GadgetId);
-    if (level != stateInterpolated.GadgetLevel) {
-      playerObfuscate(&player->weaponMeter.Slot[stateInterpolated.GadgetId], stateInterpolated.GadgetLevel, OBFUSCATE_MODE_GADGET);
-    }
-  }
-*/
-
   vector_copy(data->LastLocalPosition, player->playerPosition);
   vector_copy(data->LastLocalRotation, player->playerRotation);
 }
@@ -598,7 +560,7 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
 {
   if (!isInGame() || !PLAYER_SYNC_DATAS_PTR) return sizeof(PlayerSyncStateUpdatePacked_t);
   if (!gameConfig.grNewPlayerSync) return sizeof(PlayerSyncStateUpdatePacked_t);
-
+ 
   PlayerSyncStateUpdatePacked_t msg;
   PlayerSyncStateUpdateUnpacked_t unpacked;
   memcpy(&msg, data, sizeof(msg));
@@ -617,7 +579,6 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
   unpacked.MoveY = msg.MoveY;
   unpacked.PadBits = (msg.PadBits1 << 8) | (msg.PadBits0);
   unpacked.GadgetId = msg.GadgetId;
-  //unpacked.GadgetLevel = msg.GadgetLevel;
   unpacked.State = msg.State;
   unpacked.StateId = msg.StateId;
   unpacked.PlayerIdx = msg.PlayerIdx;
@@ -679,7 +640,7 @@ void playerSyncBroadcastPlayerState(Player* player)
   PlayerSyncPlayerData_t* data = &PLAYER_SYNC_DATAS_PTR[player->fps.vars.camSettingsIndex];
   int rate = playerSyncGetSendRate();
   int ticker = data->SendRateTicker--;
-  int playerState = playerGetState(player);
+  int playerState = player->camera->camHeroData.state;
 
   // stall until ticker is <= 0
   // or if there's a state change that must be sent right away
@@ -725,7 +686,7 @@ void playerSyncBroadcastPlayerState(Player* player)
   msg.PadBits1 = ((struct PAD*)player->pPad)->rdata[3]; // << 8
   msg.GadgetId = (u8)player->gadget.weapon.id;
   //msg.GadgetLevel = -1;
-  msg.State = player->camera->camHeroData.state;// playerGetState(player);
+  msg.State = playerState; // playerGetState(player);
   msg.StateId = data->LastStateId;
   msg.CmdId = data->StateUpdateCmdId = playerSyncGetCmdId(data->StateUpdateCmdId + 1);
 
@@ -807,15 +768,19 @@ void playerSyncTick(void)
     return;
   }
 
-#if DEBUG || RELOADPATCH
-  // always on
-//  gameConfig.grNewPlayerSync = 1;
-#endif
-
   if (!gameConfig.grNewPlayerSync) return;
+
+  
+  // reset buffer
+  if (!initialized && PLAYER_SYNC_DATAS_PTR) {
+    memset(PLAYER_SYNC_DATAS_PTR, 0, sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
+    DPRINTF("freed the player sync datas ptr\n");
+  }
 
   // allocate buffer
   if (PLAYER_SYNC_DATAS_PTR == 0) {
+    DPRINTF("allocated memory for the player sync datas ptr!\n");
+    DPRINTF("The address of the player sync datas pts is: %p and is of size %d", PLAYER_SYNC_DATAS_PTR, sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
     PLAYER_SYNC_DATAS_PTR = malloc(sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
     initialized = 0;
   }
@@ -827,31 +792,33 @@ void playerSyncTick(void)
     return;
   }
 
-  // reset buffer
-  if (!initialized && PLAYER_SYNC_DATAS_PTR) {
-    memset(PLAYER_SYNC_DATAS_PTR, 0, sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
+
+  // hooks
+  if (!initialized) {
+    DPRINTF("hooked main player sync addresses\n");
+    HOOK_JAL(GetAddress(&vaPlayerStateUpdate_Hook), &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
+    // HOOK_JAL(GetAddress(&vaHandlePlayerPad_Hook), &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
+    HOOK_JAL(GetAddress(&vaPlayerPnetUpdates_Hook), &playerSyncDisablePlayerPnetUpdates); // disable function that keeps on overriding camRot, camumtx, camPos
+    int EnableTurretSyncAddr = GetAddress(&vaEnableTurretSync_Addr);
+    if (EnableTurretSyncAddr != 0){
+      HOOK_JAL(EnableTurretSyncAddr, &playerSyncEnableTurretSync);
+    }
+
+    // POKE_U32(0x005F7BDC, 0x24020001); // Hero::IsPlayerLinkHealthy - makes it so it always returns true - i.eline 99 in uya playerupdate_vtable
+
+    // disable tnw_PlayerData update gadgetid
+    POKE_U32(GetAddress(&vaTNW_PlayerData_GadgetIdUpdate), 0);
+
+    // disable tnw_PlayerData time update
+    POKE_U32(GetAddress(&vaTNW_PlayerData_TimeUpdate), 0);
+
+    // force gadget moby to be created regardless of gsframe
+    POKE_U32(GetAddress(&vaForceGadgetMobyCreation_Addr),0);
+
   }
 
   // init
   initialized = 1;
-
-  // hooks
-  HOOK_JAL(GetAddress(&vaPlayerStateUpdate_Hook), &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
-  // HOOK_JAL(GetAddress(&vaHandlePlayerPad_Hook), &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
-  HOOK_JAL(GetAddress(&vaPlayerPnetUpdates_Hook), &playerSyncDisablePlayerPnetUpdates); // disable function that keeps on overriding camRot, camumtx, camPos
-  HOOK_JAL(GetAddress(&vaEnableTurretSync_Addr), &playerSyncEnableTurretSync);
-
-  // POKE_U32(0x005F7BDC, 0x24020001); // Hero::IsPlayerLinkHealthy - makes it so it always returns true - i.eline 99 in uya playerupdate_vtable
-
-  // disable tnw_PlayerData update gadgetid
-  POKE_U32(GetAddress(&vaTNW_PlayerData_GadgetIdUpdate), 0);
-
-  // disable tnw_PlayerData time update
-  POKE_U32(GetAddress(&vaTNW_PlayerData_TimeUpdate), 0);
-
-  // force gadget moby to be created regardless of gsframe
-  POKE_U32(GetAddress(&vaForceGadgetMobyCreation_Addr),0);
-
 
   // player updates
   Player** players = playerGetAll();

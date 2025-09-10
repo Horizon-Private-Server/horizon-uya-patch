@@ -40,3 +40,6 @@ VariableAddress_t vaPlayerSyncFixOverflow3;
 VariableAddress_t vaPlayerSyncFixOverflow4;
 VariableAddress_t vaNWUpdate_Func;
 VariableAddress_t vaGameTimeUpdate_Hook;
+VariableAddress_t vaGadgetEventFunc;
+VariableAddress_t vaGadgetEventHook;
+VariableAddress_t vaWaitingForResponse_Addr;

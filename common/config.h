@@ -80,6 +80,7 @@ typedef struct PatchPatches {
   char configStartOption;
   char loadingPopup;
   char killStealing;
+  char gadgetEvents;
   char deadShooting;
   char weaponShotLag;
   char resurrectWeaponOrdering;
