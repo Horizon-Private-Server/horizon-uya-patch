@@ -107,6 +107,7 @@ int lastMenuInvokedTime = 0;
 int lastGameState = 0;
 int sentGameStart = 0;
 int isInStaging = 0;
+int wasGameJustEnded = 0;
 int location = LOCATION_NULL;
 int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 9001;
@@ -115,6 +116,7 @@ int isConfigMenuActive = 0;
 int redownloadCustomModeBinaries = 0;
 char weaponOrderBackup[2][3] = { {0,0,0}, {0,0,0} };
 float lastFps = 0;
+int currentPingMs = -1;
 int renderTimeMs = 0;
 float averageRenderTimeMs = 0;
 int updateTimeMs = 0;
@@ -993,11 +995,19 @@ void runFpsCounter_Logic(void)
 	// render if enabled
 	if (config.enableFpsCounter)
 	{
-		if (averageRenderTimeMs > 0) {
-			snprintf(buf, 64, "EE: %.1fms GS: %.1fms FPS: %.2f", averageUpdateTimeMs, averageRenderTimeMs, lastFps);
-		} else {
-			snprintf(buf, 64, "FPS: %.2f", lastFps);
-		}
+        if (averageRenderTimeMs > 0) {
+            if (currentPingMs >= 0)
+                snprintf(buf, sizeof(buf), "EE: %.1fms GS: %.1fms FPS: %.2f PING: %dms",
+                         averageUpdateTimeMs, averageRenderTimeMs, lastFps, currentPingMs);
+            else
+                snprintf(buf, sizeof(buf), "EE: %.1fms GS: %.1fms FPS: %.2f",
+                         averageUpdateTimeMs, averageRenderTimeMs, lastFps);
+        } else {
+            if (currentPingMs >= 0)
+                snprintf(buf, sizeof(buf), "FPS: %.2f PING: %dms", lastFps, currentPingMs);
+            else
+                snprintf(buf, sizeof(buf), "FPS: %.2f", lastFps);
+        }
 
 		gfxScreenSpaceText(SCREEN_WIDTH - 5, 5, 0.75, 0.75, 0x80FFFFFF, buf, -1, 2, FONT_BOLD);
 	}
@@ -1818,6 +1828,28 @@ void onClientVoteToEnd(int playerId)
 	DPRINTF("End player:%d timeout:%d\n", playerId, voteToEndState.TimeoutTime - gameGetTime());
 }
 
+
+/*
+ * NAME :		onServerPing
+ * DESCRIPTION :
+ * 			Handles when a client receives a custom ping message from the server. Simply reply with the same payload.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			 fourbolt
+ */
+int onServerPing(void * connection, void * data)
+{
+	// First 8 bytes are the timestamp to relay back.
+	// Next 4 bytes are the clients ping in ms. E.g. 125ms integer 125
+    const unsigned char *b = (const unsigned char *)data;
+    currentPingMs = (int)((b[8] << 24) | (b[9] << 16) | (b[10] << 8) | b[11]);
+
+	netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_PING, 8, data);
+//	netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_PING, 8, data);
+	return;
+}
+
 /*
  * NAME :		sendClientVoteForEnd
  * DESCRIPTION :
@@ -2250,6 +2282,30 @@ void patchSideFlipJoystickVal(void)
 	POKE_U16(GetAddress(&vaSideFlipJoystickVal), val);
 	patched.config.dlStyleFlips = config.dlStyleFlips;
 }
+
+
+/*
+ * NAME : checkGameEndTrigger
+ * DESCRIPTION : Send a packet to the server IMMEDIATELY at end game "blue team wins" "times up" etc
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			fourbolt
+ */
+void checkGameEndTrigger(void)
+{
+	if (gameHasEnded()) {
+		if (wasGameJustEnded == 0) {
+			netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_GAME_AT_END_SCREEN, 0, NULL);
+		}
+		wasGameJustEnded = 1;
+	}
+	else {
+		wasGameJustEnded = 0;
+	}
+
+}
+
 
 /*
  * NAME :		runHolidyas
@@ -2723,6 +2779,7 @@ int main(void)
   	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, &onClientVoteToEndRemote);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, &onClientVoteToEndStateUpdateRemote);
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PING, &onServerPing);
 	
 	// Run map loader
 	runMapLoader();
@@ -2772,6 +2829,9 @@ int main(void)
 	#if TEST
 	void runTest(void);
 	#endif
+
+	// Check for end game
+	checkGameEndTrigger();
 
 	if(isInGame()) {
 		// Patch remap buttons configuration

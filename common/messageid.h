@@ -151,6 +151,16 @@ enum CustomMessageId
     CUSTOM_MSG_PLAYER_SYNC_STATE_UPDATE = 27,
 
     /*
+     * Sent to server for custom Ping packet
+     */
+    CUSTOM_MSG_ID_PING = 28,
+
+    /*
+     * Sent to server for when the client is at the end screen
+     */
+    CUSTOM_MSG_ID_GAME_AT_END_SCREEN = 29,
+
+    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,
