@@ -996,14 +996,14 @@ void runFpsCounter_Logic(void)
 	if (config.enableFpsCounter)
 	{
         if (averageRenderTimeMs > 0) {
-            if (currentPingMs >= 0)
+            if (currentPingMs >= -1)
                 snprintf(buf, sizeof(buf), "EE: %.1fms GS: %.1fms FPS: %.2f PING: %dms",
                          averageUpdateTimeMs, averageRenderTimeMs, lastFps, currentPingMs);
             else
                 snprintf(buf, sizeof(buf), "EE: %.1fms GS: %.1fms FPS: %.2f",
                          averageUpdateTimeMs, averageRenderTimeMs, lastFps);
         } else {
-            if (currentPingMs >= 0)
+            if (currentPingMs >= -1)
                 snprintf(buf, sizeof(buf), "FPS: %.2f PING: %dms", lastFps, currentPingMs);
             else
                 snprintf(buf, sizeof(buf), "FPS: %.2f", lastFps);
@@ -1846,7 +1846,6 @@ int onServerPing(void * connection, void * data)
     currentPingMs = (int)((b[8] << 24) | (b[9] << 16) | (b[10] << 8) | b[11]);
 
 	netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_PING, 8, data);
-//	netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_PING, 8, data);
 	return;
 }
 
