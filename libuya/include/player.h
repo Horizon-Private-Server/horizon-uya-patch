@@ -615,8 +615,8 @@ typedef struct HeroTailIdle { // 0x50
 
 typedef struct FpsCamVars {
 	/* 0x11a0 */ MATRIX cameraMatrix;
-	/* 0x11e0 */ struct CameraAngleZ cameraZ;
-	/* 0x1200 */ struct CameraAngleY cameraY;
+	/* 0x11e0 */ struct CameraAngleZ cameraZ; // 0x40
+	/* 0x1200 */ struct CameraAngleY cameraY; // 0x60
 	/* 0x1220 */ int state;
 	/* 0x1224 */ short int quick_turn_input_time;
 	/* 0x1226 */ short int snap_hold_time;
@@ -628,16 +628,16 @@ typedef struct FpsCamVars {
 	/* 0x1254 */ float min_y_rot; // aka: float mix_y_rot
 	/* 0x1258 */ float max_y_rot; // aka: float man_y_rot
 	/* 0x125c */ struct Moby *pExcludeMoby;
-	/* 0x1260 */ VECTOR positionOffset;
-	/* 0x1270 */ VECTOR rotationOffset;
-	/* 0x1280 */ short int flags;
+	/* 0x1260 */ VECTOR positionOffset; // 0xc0
+	/* 0x1270 */ VECTOR rotationOffset; // 0xd0
+	/* 0x1280 */ short int flags; // 0xe0
 	/* 0x1282 */ short int allegiance;
 	/* 0x1284 */ void *special_target_func;
 	/* 0x1288 */ MATRIX *pWorldMtx;
 	/* 0x128c */ MATRIX *pWorldInvMtx;
-	/* 0x1290 */ VECTOR facing_dir;
-	/* 0x12a0 */ VECTOR internal_facing_dir;
-	/* 0x12b0 */ VECTOR aim_pos;
+	/* 0x1290 */ VECTOR facing_dir; // 0xf0
+	/* 0x12a0 */ VECTOR internal_facing_dir; // 0x100
+	/* 0x12b0 */ VECTOR aim_pos; // 0x110
 	/* 0x12c0 */ float range;
 	/* 0x12c4 */ float ext_extension;
 	/* 0x12c8 */ float ext_extension_speed;
@@ -654,7 +654,7 @@ typedef struct FpsCamVars {
 	/* 0x130c */ float gunInterpSpeed;
 } FpsCamVars;
 
-typedef struct HeroFps { // 0x30
+typedef struct HeroFps { // 0x1c0
 	/* 0x1180 */ VECTOR cameraPos;
 	/* 0x1190 */ VECTOR cameraDir;
 	/* 0x11a0 */ FpsCamVars vars;
@@ -886,6 +886,7 @@ struct tNW_PlayerWarpMessage { // 0x20
 	/* 0x10 */ float playerRot[3];
 	/* 0x1c */ short int state;
 	/* 0x1e */ char isResurrecting;
+	/* 0x1f */ char unk_1f;
 };
 
 struct tNW_PlayerData { // 0xc0
@@ -932,43 +933,42 @@ struct tNW_PlayerPadInputMessageListElem { // 0xa4
 	/* 0x98 */ struct tNW_PlayerPadInputMessageListElem* pNext;
 	/* 0x9c */ struct tNW_PlayerPadInputMessageListElem* pPrev;
 	/* 0xa0 */ char inUse;
+	/* 0xa1 */ char unk_a1[3];
 };
 
 
-struct tNW_Player { // 0x31c
-	// Struct needs heavily updated
-	// currently new stuff is commented, but correct.
-	// /* 0x000 */ int netClientIndex;
-	// /* 0x068 */ char bLocal;
-	// /* 0x069 */ short int bGiveMeTheDasBoot;
-	// /* 0x1a2 */ short int bSpawned;
-	// /* 0x1a4 */ short int bUnk_1a4;
-	// /* 0x1a6 */ short int bCallbackCalled;
-
-	/* 0x000 */ int netClientIndex;
-	/* 0x004 */ struct tNW_PlayerData* pNetPlayerData;
-	/* 0x008 */ short int bLocal;
-	/* 0x00a */ short int bSpawned;
-	/* 0x00c */ short int bGiveMeTheDasBoot;
-	/* 0x00e */ short int bCallbackCalled;
-	/* 0x010 */ int latency;
-	/* 0x014 */ unsigned int flags;
-	/* 0x018 */ char accountName[32];
-	/* 0x038 */ struct tNW_PlayerWarpMessage warpMessage;
-	/* 0x058 */ struct tNW_PlayerPadInputMessageListElem padMessageElems[16];
-	/* 0xa98 */ char padMessageCurDecodePos;
-	/* 0xa99 */ char activePadFrame;
-	/* 0xa9c */ int lastActiveSeqNum;
-	/* 0xaa0 */ int numBufferedPadMessageElems;
-	/* 0xaa4 */ int receivedActivePadMsgFrame;
-	/* 0xaa8 */ char pullBack;
-	/* 0xaa9 */ signed char jitterThrottleFrames;
-	/* 0xaaa */ char numConseqSkips;
-	/* 0xaac */ struct tNW_PlayerPadInputMessageListElem* pActivePadMsg;
-	/* 0xab0 */ struct tNW_PlayerPadInputMessageListElem* pPadMsgListTail;
-	/* 0xab4 */ u8 padFrame[20];
-	/* 0xac8 */ int homeBaseIndex;
-	/* 0xacc */ int homeNodeIndex;
+struct tNW_Player { // 0xunk
+    /* 0x000 */ int netClientIndex;
+    /* 0x004 */ struct tNW_PlayerData* pNetPlayerData;
+    /* 0x008 */ char unk_008[8];
+    /* 0x010 */ int latency; // probably wrong
+    /* 0x014 */ unsigned int flags; // probably wrong
+    /* 0x018 */ char unk_018[0x50]; // replaces accountName[32]
+    /* 0x068 */ char bLocal;
+    /* 0x069 */ char bGiveMeTheDasBoot[4];
+    /* 0x06d */ char unk_06d[0x135]; // filler until 0x1a2
+    /* 0x1a2 */ short int bSpawned;
+    /* 0x1a4 */ short int bUnk_1a4;
+    /* 0x1a6 */ short int bCallbackCalled;
+    /* 0x1a8 */ char unk_1a8[0x28]; // padding to reach 0x1d0
+    /* 0x1d0 */ struct tNW_PlayerWarpMessage warpMessage;
+    /* 0x1f0 */ struct tNW_PlayerPadInputMessageListElem padMessageElems[16]; // size = 0xa40
+    /* 0xc30 */ char padMessageCurDecodePos; // unsure
+    /* 0xc31 */ char activePadFrame;
+    /* 0xc32 */ char unk_c32[2]; 
+    /* 0xc34 */ int lastActiveSeqNum;
+    /* 0xc38 */ int numBufferedPadMessageElems;
+    /* 0xc3c */ int receivedActivePadMsgFrame;
+    /* 0xc40 */ char unk_c40;
+    /* 0xc41 */ signed char jitterThrottleFrames;
+    /* 0xc42 */ char numConseqSkips;
+    /* 0xc43 */ char unk_c43;
+    /* 0xc44 */ struct tNW_PlayerPadInputMessageListElem* pActivePadMsg;
+    /* 0xc48 */ struct tNW_PlayerPadInputMessageListElem* pPadMsgListTail;
+    // Unknown
+    // /* 0xab4 */ u8 padFrame[20];
+    // /* 0xac8 */ int homeBaseIndex;
+    // /* 0xacc */ int homeNodeIndex;
 };
 
 typedef struct tNW_PlayerStateMessage { // 0x1c
@@ -1264,7 +1264,10 @@ typedef struct Player { // 0x4500
 	};
 	union {
 		struct {
-	/* 0x4500 */ char unk_4500[0x270];  //GameCamera dummyCamera;
+	// /* 0x4500 */ char unk_4500[0x270];  //GameCamera dummyCamera;
+	/* 0x4500 */ char unk_4500[0x50];
+	/* 0x4550 */ int remoteState;
+	/* 0x4554 */ char unk_4554[0x21C];  //GameCamera dummyCamera;
 	/* 0x4770 */ PAD remotePad;
 	/* 0x4d30 */ char completedEnoughUpdates;
 	/* 0x4d31 */ char rotOutOfSyncLastUpdate;
@@ -1276,12 +1279,12 @@ typedef struct Player { // 0x4500
 	/* 0x4d50 */ VECTOR posAtSyncFrame;
 	/* 0x4d60 */ VECTOR syncPosDifference;
 	/* 0x4d70 */ VECTOR receivedSyncRot;
-	/*        */ VECTOR rotAtSyncFrame;
-	/*        */ float interpVel;
-	/*        */ float syncRotDifference;
-	/*        */ int flags;
-	/*        */ int sequenceIdOfSyncData;
-	/*        */ enum PlayerState receivedState;
+	/* 0x4d80 */ char rotAtSyncFrame[0xc];
+	/* 0x4d8c */ enum PlayerState receivedState;
+	/* 0x4d90 */ float interpVel;
+	/* 0x4d94 */ float syncRotDifference; // TODO fix this struct
+	/*        */ // short int flags;
+	/* 0x4d98 */ int sequenceIdOfSyncData;
 	/*        */ VECTOR remoteCorrectionVel;
 	/*        */ float remoteCorrectionRotVel;
 	/*        */ char syncFrameOffset;
@@ -1294,6 +1297,7 @@ typedef int (*ReNewMe_Func)(Player *player);
 typedef void (*HandleEvent_Func)(Player *player, GuberEvent *event);
 typedef int (*FriendlyToTeam_Func)(Player *player, int team);
 typedef void (*ResetHero_Func)(Moby *pHeroMoby, VECTOR *pos, VECTOR *rot, int mpIndex);
+typedef void (*ProcessRemotePad_Func)(Player *player);
 typedef void (*DoBehavior_Func)(Player *player);
 typedef void (*ZeroMovement_Func)(Player *player);
 typedef void (*PlayerUpdateState_Func)(Player *player, PlayerState state, int anim_switch, int force, int playDeathSound);
@@ -1315,7 +1319,7 @@ typedef struct PlayerVTable
 /* 0x1c */ FriendlyToTeam_Func FriendlyToTeam; // Retunrs True if friendly.
 /* 0x20 */ void * FUNC_20; // Spawns Local?  memset 0x4500 bytes to zero.
 /* 0x24 */ ResetHero_Func PlayerReset;
-/* 0x28 */ void * FUNC_28; // Updates Left Stick Movement
+/* 0x28 */ ProcessRemotePad_Func ProcessRemotePad; // Updates Left Stick Movement
 /* 0x2c */ DoBehavior_Func DoBehavior;
 /* 0x30 */ ZeroMovement_Func ZeroMovement;
 /* 0x34 */ PlayerUpdateState_Func UpdateState; // aka: InitBodyState()
@@ -1516,6 +1520,17 @@ __LIBUYA_SETTER__ void playerSetPosRot(Player *player, VECTOR position, VECTOR r
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
 int playerIsDead(Player * player);
+
+/*
+* NAME :		playerStateIsDead
+* DESCRIPTION :
+* 			Returns non-zero if the given state is equivalent to a dead state.
+* NOTES :
+* ARGS : 
+* RETURN :
+* AUTHOR :			JelloGiant
+*/
+int playerStateIsDead(int state);
 
 /*
 * NAME :		playerGiveWeaponUpgade

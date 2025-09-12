@@ -15,6 +15,21 @@
 #include "gid.h"
 #include "moby.h"
 
+typedef Moby* (*GuberGetMoby_func)(struct Guber* guber);
+
+struct GuberVTable
+{
+    void * FUNC_00;
+    void * FUNC_04;
+    void * FUNC_08;
+    void * FUNC_0C;
+    GuberGetMoby_func GetMoby;
+    void * FUNC_14;
+    void * FUNC_18;
+    void * FUNC_1C;
+    void * FUNC_20;
+};
+
 /*
  * NAME :		GuberDef
  * DESCRIPTION :
@@ -39,7 +54,7 @@ typedef struct Guber
 /* 0x08 */ int State;
 /* 0x0c */ struct Guber * Prev;
 /* 0x10 */ struct Guber * Next;
-/* 0x14 */ void * Vtable;
+/* 0x14 */ struct GuberVTable * Vtable;
 } Guber;
 
 typedef struct GuberMoby { // 0x54
@@ -103,6 +118,7 @@ Guber * guberGetObjectByUID(u32 uid);
 Guber * guberGetObjectByMoby(Moby* moby);
 u32 guberGetUID(Moby* moby);
 GuberEvent * guberEventCreate(Guber * guber, int eventId, int arg3, int arg4);
+GuberEvent * guberFindEvent(Guber * guber, int eventId, int pendingOnly);
 
 Master * masterGet(u32 uid);
 Master * masterCreate(void * object, int sendCreateMsg);

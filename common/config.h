@@ -64,6 +64,7 @@ typedef struct PatchGameConfig {
   char grAllNodesTimer;
   char grNodeSelectTimer;
   char grSiegeNoTies;
+  char grNewPlayerSync;
 
   // Party
   char prSurvivor;
@@ -79,6 +80,7 @@ typedef struct PatchPatches {
   char configStartOption;
   char loadingPopup;
   char killStealing;
+  char gadgetEvents;
   char deadShooting;
   char weaponShotLag;
   char resurrectWeaponOrdering;

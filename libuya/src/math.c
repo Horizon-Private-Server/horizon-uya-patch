@@ -118,6 +118,12 @@ float maxf(float a, float b)
 }
 
 //--------------------------------------------------------
+float minf(float a, float b)
+{
+    return (a > b) ? b : a;
+}
+
+//--------------------------------------------------------
 float lerpfAngle(float a, float b, float t)
 {
     if (fabsf(a-b) < MATH_PI)
@@ -140,11 +146,26 @@ float clamp(float v, float min, float max)
 }
 
 //--------------------------------------------------------
+/*
 float clampAngle(float theta)
 {
   float f1 = (theta + MATH_PI) / MATH_TAU;
   return (f1 - (float)(int)f1) * MATH_TAU - MATH_PI;
 }
+*/
+
+//--------------------------------------------------------
+
+float clampAngle(float theta)
+{
+    if (theta > MATH_PI)
+        theta -= MATH_TAU;
+    else if (theta < -MATH_PI)
+        theta += MATH_TAU;
+
+    return theta;
+}
+
 
 //--------------------------------------------------------
 float fastSubRots(float input0, float input1)

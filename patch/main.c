@@ -147,6 +147,7 @@ extern scavHuntEnabled;
 extern scavHuntShownPopup;
 #endif
 
+// int isUnloading __attribute__((section(".config"))) = 0;
 PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableAutoMaps = 0,
 	.disableCameraShake = 0,
@@ -1384,11 +1385,11 @@ void customFlagLogic(Moby* flagMoby)
 
         // Don't allow input from players whom are dead
         if (playerDeobfuscate(&player->stateType, 0) == PLAYER_TYPE_DEATH)
-            return;
+            continue;
 
         // skip player if they've only been alive for < 180ms
         if (player->timers.timeAlive < 180)
-            return;
+            continue;
 
         // skip if player state is in vehicle and critterMode is on
 		if (player->camera && player->camera->camHeroData.critterMode)
@@ -1550,6 +1551,20 @@ void patchQuickSelectTimer(void)
 			QuickSelectTimeCurrent = 0;
 	}
 }
+
+	void onMobyUpdate(Moby* moby)
+	{
+		if (gameConfig.grNewPlayerSync) {
+			playerSyncTick();
+			processGameModules();
+
+			((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);
+
+			playerSyncPostTick();
+		} else {
+			((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);	
+		}
+	}		
 
 /*
  * NAME :		runCampaignMusic
@@ -1905,6 +1920,66 @@ void runVoteToEndLogic(void)
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, sizeof(voteToEndState), &voteToEndState);
 	}
+}
+
+/*
+ * NAME :		handleGadgetEvent
+ * DESCRIPTION :
+ * 			Reads gadget events and patches them if needed.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void handleGadgetEvents(int player, char gadgetEventType, int activeTime, short gadgetId, int gadgetType, struct tNW_GadgetEventMessage * message)
+{
+	// Force all incoming weapon shot events to happen immediately.
+	const int MAX_DELAY = TIME_SECOND * 0.2;
+	// put clamp on max delay
+	int delta = activeTime - gameGetTime();
+	if (delta > MAX_DELAY) {
+		activeTime = gameGetTime() + MAX_DELAY;
+	} else if (delta < 0) {
+		activeTime = gameGetTime() - 1;
+	}
+
+	//activeTime = -1;
+	/*
+	DPRINTF("handleGadgetEvents called with:\n");
+	DPRINTF("  player: %08x\n", player);
+	DPRINTF("  gadgetEventType: %d\n", (int)gadgetEventType);
+	DPRINTF("  activeTime: %d\n", activeTime);
+	DPRINTF("  gadgetId: %d\n", gadgetId);
+	DPRINTF("  gadgetType: %d\n", gadgetType);
+
+	if (message) {
+			DPRINTF("  message:\n");
+			DPRINTF("    GadgetId: %d\n", message->GadgetId);
+			DPRINTF("    PlayerIndex: %d\n", (int)message->PlayerIndex);
+			DPRINTF("    GadgetEventType: %d\n", (int)message->GadgetEventType);
+			DPRINTF("    ExtraData: %d\n", (int)message->ExtraData);
+			DPRINTF("    ActiveTime: %d\n", message->ActiveTime);
+			DPRINTF("    TargetUID: %u\n", message->TargetUID);
+			DPRINTF("    FiringLoc: [%.2f, %.2f, %.2f]\n",
+							message->FiringLoc[0], message->FiringLoc[1], message->FiringLoc[2]);
+			DPRINTF("    TargetDir: [%.2f, %.2f, %.2f]\n",
+							message->TargetDir[0], message->TargetDir[1], message->TargetDir[2]);
+	} else {
+			DPRINTF("  message: NULL\n");
+	}
+	// DPRINTF("that one timer: %d]n", player->timers);
+	*/
+	// run base command
+	((void (*)(int, char, int, short, int, struct tNW_GadgetEventMessage*))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, activeTime, gadgetId, gadgetType, message);
+}
+
+void patchGadgetEvents(void)
+{
+	if (patched.gadgetEvents)
+		return;
+
+	HOOK_JAL(GetAddress(&vaGadgetEventHook), &handleGadgetEvents);
+	patched.gadgetEvents = 1;
 }
 
 /*
@@ -2621,6 +2696,7 @@ void onOnlineMenu(void)
  */
 int main(void)
 {
+	static Moby* mpMoby = NULL;
 	// Call this first
 	uyaPreUpdate();
 
@@ -2701,8 +2777,19 @@ int main(void)
 		// Patch remap buttons configuration
 		HOOK_JAL(0x0013cae0, &patchSceReadPad_memcpy);
 
+		// fix weird overflow caused by player sync
+    // also randomly (rarely) triggered by other things too
+		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow1), 0x00622023); // unique address only in uya
+    POKE_U32(GetAddress(&vaPlayerSyncFixOverflow2), 0x00412023); // collline_fix 004b8078 in DL
+    POKE_U32(GetAddress(&vaPlayerSyncFixOverflow3), 0x00612023); // collline_fix 004b8084 in DL
+    POKE_U32(GetAddress(&vaPlayerSyncFixOverflow4), 0x00622023);  //collline_fix  0x004b80a0 in DL
+
+		HOOK_JAL(GetAddress(&vaGameTimeUpdate_Hook), GetAddress(&vaNWUpdate_Func)); // poll nwupdate instead of updatepad for consistent game time
+
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
+
+		patchGadgetEvents();
 
 		// Patch Dead Shooting
 		patchDeadShooting();
@@ -2733,14 +2820,27 @@ int main(void)
 		patchDeathBarrierBug();
 
 		// Patch CTF Flag Logic with our own.
-		if (gameConfig.grFlagHotspots)
-			patchCTFFlag();
+		patchCTFFlag();
 
 		// Patch Level of Detail
 		patchLevelOfDetail();
 
 		// Patch Weapon Ordering when Respawning
 		patchResurrectWeaponOrdering();
+
+    // find and hook multiplayer moby
+    if (!isInGame()) {
+      mpMoby = NULL;
+    } else if (!mpMoby) {
+      mpMoby = mobyFindNextByOClass(mobyListGetStart(), 0x106A);
+      if (mpMoby) {
+				DPRINTF("mpmoby hooked!: %08x\n", mpMoby);
+        mpMoby->pUpdate = &onMobyUpdate;
+      }
+    } /*else if (isUnloading && mpMoby) {
+			DPRINTF("mpmoby unhooked from unloading\n!");
+      mpMoby->pUpdate = NULL;
+    } */ // dont understand this well enough to keep
 
 		// Runs FPS Counter
 		runFpsCounter();
@@ -2783,12 +2883,15 @@ int main(void)
 
 		lastGameState = 1;
 	} else if (isInMenus()) {
+		mpMoby = NULL;
 		// If in Lobby, run these game rules.
 		grLobbyStart();
 
 		// Patches loading popup from not showing if patch menu is open.
 		patchLoadingPopup();
 
+		playerSyncTick();
+		
 		// Patch Menus (Staging, create game, ect.)
 		if (patched.uiModifiers == 0) {
 			// POKE_U32(UI_PTR_FUNC_CREATE_GAME, &patchCreateGame);

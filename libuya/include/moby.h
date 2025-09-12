@@ -392,7 +392,10 @@ typedef struct Moby {
 	/* 0xa8 */ char collDamage;
     /* 0xa9 */ char standardDeathCalled;
 	/* 0xaa */ short oClass;
-	/*      */ char unk_ac[0xc];
+	/*      */ char unk_ac[0x6];
+	/* 0xb2	*/ short UID;
+	/* 0xb4 */ short bolts;
+	/* 0xb6	*/ u16 xp;
 	/* 0xb8 */ struct Moby * pParent;
 	/* 0xbc */ char unk_bc[0x4];
     /* 0xc0 */ mtx3 rMtx;
@@ -602,7 +605,7 @@ struct MoveVars_V2 {
 };
 
 typedef void (*MobyGetInterface_func)(int mobyId, int arg2, int arg3);
-typedef void (*MobyGetGuberObject_func)(Moby * moby);
+typedef int  (*MobyGetGuberObject_func)(Moby * moby);
 typedef void (*MobyEventHandler_func)(Moby * moby, struct GuberEvent * event);
 typedef void (*MobyGetDamager_func)(Moby * moby);
 
@@ -709,6 +712,12 @@ __LIBUYA_GETTER__ u16 * mobyGetLoadedMobyClassList(void);
  * Returns non-zero if the given moby is destroyed.
  */
 __LIBUYA_GETTER__ int mobyIsDestroyed(Moby * moby);
+
+/*
+ * Returns a pointer to the moby with the given uid.
+ * Returns NULL if none found.
+ */
+Moby* mobyFindByUID(int uid);
 
 /*
  * Returns a pointer to the next living moby of the given oclass.
