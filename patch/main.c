@@ -1552,20 +1552,6 @@ void patchQuickSelectTimer(void)
 	}
 }
 
-	void onMobyUpdate(Moby* moby)
-	{
-		if (gameConfig.grNewPlayerSync) {
-			playerSyncTick();
-			processGameModules();
-
-			((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);
-
-			playerSyncPostTick();
-		} else {
-			((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);	
-		}
-	}		
-
 /*
  * NAME :		runCampaignMusic
  * DESCRIPTION :	Adds Singple Player Tracks to Multiplayer
@@ -1942,8 +1928,6 @@ void handleGadgetEvents(int player, char gadgetEventType, int activeTime, short 
 	} else if (delta < 0) {
 		activeTime = gameGetTime() - 1;
 	}
-
-	//activeTime = -1;
 	/*
 	DPRINTF("handleGadgetEvents called with:\n");
 	DPRINTF("  player: %08x\n", player);
@@ -2250,6 +2234,29 @@ void patchSideFlipJoystickVal(void)
 	POKE_U16(GetAddress(&vaSideFlipJoystickVal), val);
 	patched.config.dlStyleFlips = config.dlStyleFlips;
 }
+
+/*
+ * NAME :		onMobyUpdate
+ * DESCRIPTION :Patches the player packets for smoother movement.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			json
+ */
+void onMobyUpdate(Moby* moby)
+{
+	if (gameConfig.grNewPlayerSync) {
+		playerSyncTick();
+		processGameModules();
+
+		((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);
+
+		playerSyncPostTick();
+	} else {
+		((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);	
+	}
+}		
+
 
 /*
  * NAME :		runHolidyas
@@ -2696,7 +2703,6 @@ void onOnlineMenu(void)
  */
 int main(void)
 {
-	static Moby* mpMoby = NULL;
 	// Call this first
 	uyaPreUpdate();
 
@@ -2758,6 +2764,22 @@ int main(void)
 	// 
 	sendMACAddress();
 
+	// find and hook multiplayer moby to hook
+	static Moby* mpMoby = NULL;
+	if (!isInGame()) {
+		mpMoby = NULL;
+	} else if (!mpMoby) {
+		mpMoby = mobyFindNextByOClass(mobyListGetStart(), 0x106A);
+		if (mpMoby) {
+			DPRINTF("mpmoby hooked!: %08x\n", mpMoby);
+			mpMoby->pUpdate = &onMobyUpdate;
+		}
+	}
+	// else if (isUnloading && mpMoby) {
+	// 	DPRINTF("mpmoby unhooked from unloading\n!");
+	// 	mpMoby->pUpdate = NULL;
+	// } // dont understand this well enough to keep
+
 	// Adds Single Player Music to Multiplayer
 	if (config.enableSingleplayerMusic)
 		runCampaignMusic();
@@ -2778,17 +2800,18 @@ int main(void)
 		HOOK_JAL(0x0013cae0, &patchSceReadPad_memcpy);
 
 		// fix weird overflow caused by player sync
-    // also randomly (rarely) triggered by other things too
+		// also randomly (rarely) triggered by other things too
 		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow1), 0x00622023); // unique address only in uya
-    POKE_U32(GetAddress(&vaPlayerSyncFixOverflow2), 0x00412023); // collline_fix 004b8078 in DL
-    POKE_U32(GetAddress(&vaPlayerSyncFixOverflow3), 0x00612023); // collline_fix 004b8084 in DL
-    POKE_U32(GetAddress(&vaPlayerSyncFixOverflow4), 0x00622023);  //collline_fix  0x004b80a0 in DL
+		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow2), 0x00412023); // collline_fix 004b8078 in DL
+		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow3), 0x00612023); // collline_fix 004b8084 in DL
+		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow4), 0x00622023);  //collline_fix  0x004b80a0 in DL
 
 		HOOK_JAL(GetAddress(&vaGameTimeUpdate_Hook), GetAddress(&vaNWUpdate_Func)); // poll nwupdate instead of updatepad for consistent game time
 
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
 
+		// Patch Emulator Lag
 		patchGadgetEvents();
 
 		// Patch Dead Shooting
@@ -2828,25 +2851,8 @@ int main(void)
 		// Patch Weapon Ordering when Respawning
 		patchResurrectWeaponOrdering();
 
-    // find and hook multiplayer moby
-    if (!isInGame()) {
-      mpMoby = NULL;
-    } else if (!mpMoby) {
-      mpMoby = mobyFindNextByOClass(mobyListGetStart(), 0x106A);
-      if (mpMoby) {
-				DPRINTF("mpmoby hooked!: %08x\n", mpMoby);
-        mpMoby->pUpdate = &onMobyUpdate;
-      }
-    } /*else if (isUnloading && mpMoby) {
-			DPRINTF("mpmoby unhooked from unloading\n!");
-      mpMoby->pUpdate = NULL;
-    } */ // dont understand this well enough to keep
-
 		// Runs FPS Counter
 		runFpsCounter();
-
-		// Run Playersynv v1
-		// runPlayerSync();
 
 		// Run Spectate
 		// if (config.enableSpectate)
@@ -2883,7 +2889,6 @@ int main(void)
 
 		lastGameState = 1;
 	} else if (isInMenus()) {
-		mpMoby = NULL;
 		// If in Lobby, run these game rules.
 		grLobbyStart();
 
