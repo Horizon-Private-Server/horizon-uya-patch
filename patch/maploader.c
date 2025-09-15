@@ -257,21 +257,38 @@ int onSetMapOverride(void * connection, void * data)
 		MapLoaderState.MapName[0] = 0;
 		mapOverrideResponse = gameAmIHost() ? 9001 : -3;
 	} else {
-		// check for version
+		// check for version - first check already loaded maps
 		int version = -1;
 		if (LOAD_MODULES_STATE != 100)
 			version = -1;
 
 		int i = 0;
+		int foundInLoadedMaps = 0;
 		for (i = 0; i < CustomMapDefCount; ++i) {
     		if (strcmp(CustomMapDefs[i].Filename, payload->CustomMap.Filename) == 0) {
 				patchStateContainer.CustomMapId = i + 1;
 				version = CustomMapDefs[i].Version;
+				foundInLoadedMaps = 1;
 				break;
 			}
 		}
 
-		if (!patchStateContainer.CustomMapId)
+		// If not found in already loaded maps, search USB directly
+		if (!foundInLoadedMaps && LOAD_MODULES_STATE == 100) {
+			extern int searchUSBForSpecificMap(const char* mapFilename, CustomMapDef_t* outMapDef);
+			CustomMapDef_t mapDef;
+			version = searchUSBForSpecificMap(payload->CustomMap.Filename, &mapDef);
+			
+			if (version >= 0) {
+				// Map found on USB, but not loaded in pagination
+				// We don't set patchStateContainer.CustomMapId since it's not in our loaded list
+				// but we return the correct version to indicate we have the map
+				DPRINTF("Found map %s on USB with version %d (not currently loaded in pagination)\n", 
+					payload->CustomMap.Filename, version);
+			}
+		}
+
+		if (!foundInLoadedMaps && version < 0)
 			version = -2;
 
 		DPRINTF("MapId:%d MapName:%s MapFileName:%s Version:%d\n", payload->CustomMap.BaseMapId, payload->CustomMap.Name, payload->CustomMap.Filename, version);
