@@ -184,6 +184,7 @@ extern u32 colorContentBg;
 extern u32 colorText;
 
 extern char mapOverrideResponse;
+extern int expectedMapVersion;
 
 enum MenuActionId
 {
@@ -255,6 +256,7 @@ int onSetMapOverride(void * connection, void * data)
 		MapLoaderState.CheckState = 0;
 		MapLoaderState.MapFileName[0] = 0;
 		MapLoaderState.MapName[0] = 0;
+		expectedMapVersion = -1;  // Reset expected version
 		mapOverrideResponse = gameAmIHost() ? 9001 : -3;
 	} else {
 		// check for version - first check already loaded maps
@@ -291,7 +293,10 @@ int onSetMapOverride(void * connection, void * data)
 		if (!foundInLoadedMaps && version < 0)
 			version = -2;
 
-		DPRINTF("MapId:%d MapName:%s MapFileName:%s Version:%d\n", payload->CustomMap.BaseMapId, payload->CustomMap.Name, payload->CustomMap.Filename, version);
+		// Store the host's expected version for comparison
+		expectedMapVersion = payload->CustomMap.Version;
+		
+		DPRINTF("MapId:%d MapName:%s MapFileName:%s Host Version:%d Our Version:%d\n", payload->CustomMap.BaseMapId, payload->CustomMap.Name, payload->CustomMap.Filename, expectedMapVersion, version);
 		// send response
 		msg.Version = version;
 		strncpy(msg.Filename, payload->CustomMap.Filename, sizeof(msg.Filename));
