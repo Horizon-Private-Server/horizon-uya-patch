@@ -2650,7 +2650,7 @@ void onOnlineMenu(void)
 	if (!hasInitialized) {
 		padEnableInput();
 		onConfigInitialize();
-		refreshCustomMapList();
+		// Custom maps will be initialized when first accessed
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		hasInitialized = 1;
 	}
