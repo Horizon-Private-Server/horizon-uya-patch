@@ -249,15 +249,15 @@ MenuElem_ListData_t dataCycleWeapon3 = {
     }
 };
 
-// map select list
+// map select list  
 MenuElem_ListData_t dataCustomMaps = {
   .value = &patchStateContainer.CustomMapId,
   .stateHandler = menuStateHandler_SelectedMapOverride,
   .count = 1,
   .rows = 10,
   .items = {
-    "None",
-    [MAX_CUSTOM_MAP_DEFINITIONS+1] NULL
+    "None- dpad->paginate",
+    [MAX_CUSTOM_MAP_DEFINITIONS+1] NULL  // Now only 11 items instead of 65
   }
 };
 
@@ -844,7 +844,7 @@ void loadCustomMapsPage(int page)
   for (i = 1; i < MAX_CUSTOM_MAP_DEFINITIONS + 1; i++) {
     dataCustomMaps.items[i] = NULL;
   }
-  dataCustomMaps.items[0] = "None";
+  dataCustomMaps.items[0] = "None- dpad->paginate";
   
   // Check if USB modules are loaded first
   #define LOAD_MODULES_STATE                      (*(u8*)0x000CFFF0)
