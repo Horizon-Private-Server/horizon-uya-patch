@@ -345,8 +345,8 @@ MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
 MenuElem_ListData_t dataGameConfigPreset = {
     .value = &preset,
     .stateHandler = NULL,
-    .count = 5,
-    .items = { "None", "Meta", "Competitive", "1v1", "Bot"}
+    .count = 6,
+    .items = { "None", "Meta", "Competitive", "1v1", "Bot", "Siege"}
 };
 
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
@@ -2805,6 +2805,7 @@ void configMenuDisable(void)
         gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
         gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
         gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
+        gameConfig.grNewPlayerSync = 1;
         // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
         gameConfig.grDisablePlayerTurrets = 1; // Disabled
         gameConfig.grDestructableBridges = 0; // Enabled
@@ -2825,6 +2826,7 @@ void configMenuDisable(void)
         gameConfig.grHealthBoxes = 2; // Disabled
         gameConfig.grDisableWeaponCrates = 1;
         gameConfig.grDisableAmmoPickups = 1;
+        gameConfig.grNewPlayerSync = 1;
         // gameConfig.grDisableDrones = 1;
         gameConfig.grDisablePlayerTurrets = 1;
         gameConfig.grDestructableBridges = 0; // Enabled
@@ -2856,11 +2858,51 @@ void configMenuDisable(void)
         gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
         gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
         gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
+        gameConfig.grNewPlayerSync = 0;
         // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
         gameConfig.grDisablePlayerTurrets = 1; // Disabled
         gameConfig.grDestructableBridges = 1; // Disabled
         // Base / Node mods
         gameConfig.grSetGatlingTurretHealth = 1; // .5x
+        gameConfig.grBaseHealthPadActive = 0; // Off
+        gameConfig.grNoBaseDefense_Bots = 1; // Off
+        // Party Rules
+        gameConfig.prChargebootForever = 0; // Off 
+        gameConfig.prLoadoutWeaponsOnly = 0; // Off
+        gameConfig.prSurvivor = 0; // Off
+        break;
+      }
+      case 5: // Siege
+      {
+        // Game Rules
+        gameConfig.grRadarBlipsDistance = 0; // Short
+        gameConfig.grRespawnTimer_Player = 2; // 2.5 Seconds
+        gameConfig.grRespawnInvincibility = 0; // Off
+        gameConfig.grDisablePenaltyTimers = 0; // On
+        gameConfig.grDisableWeaponPacks = 1; // Off
+        gameConfig.grV2s = 0; // On
+        gameConfig.grNoCooldown = 1; // Cooldown disabled
+        gameConfig.grFluxShotsAlwaysHit = 1; // Flux always hits
+        gameConfig.grFluxNikingDisabled = 1; // Niking disabled
+        gameConfig.grAutoRespawn = 0; // Off
+        gameConfig.grVampire = 0; // Off
+        gameConfig.grHealthBoxes = 1; // No glass container
+        gameConfig.grDisableWeaponCrates = 1; // Disabled
+        gameConfig.grDisableAmmoPickups = 1; // Disabled
+        gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
+        gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
+        gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
+        gameConfig.grNewPlayerSync = 0; // Off in case of vehicles
+        // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
+        gameConfig.grDisablePlayerTurrets = 1; // Disabled
+        gameConfig.grDestructableBridges = 0; // Enabled
+        // Siege-specific settings
+        gameConfig.grNodeSelectTimer = 7; // 5 seconds to select a node
+        gameConfig.grAllNodesTimer = 2; // 1 minutes countdown when all nodes owned
+        gameConfig.grSiegeNoTies = 1; // No ties - team with most base damage wins
+        gameConfig.grSuicidePenaltyTimer = 3; // 0 seconds suicide penalty
+        // Base / Node mods
+        gameConfig.grSetGatlingTurretHealth = 4; // 3x
         gameConfig.grBaseHealthPadActive = 0; // Off
         gameConfig.grNoBaseDefense_Bots = 1; // Off
         // Party Rules
