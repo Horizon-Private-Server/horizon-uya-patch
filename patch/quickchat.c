@@ -66,24 +66,24 @@ extern int isConfigMenuActive;
 
 char* CHAT_GROUPS[4] = {
   "Post Game",
-  "Reactions",
   "Status",
+  "Enemy",
   "Commands"
 };
 
 char* CHAT_SHORTNAMES[QUICK_CHAT_COUNT] = {
   "desync",
   "stuck",
-  "placeholder",
-  "placeholder",
-  "placeholder",
-  "placeholder",
-  "placeholder",
-  "placeholder",
+  "lag",
+  "gg",
+  "health",
+  "v2",
+  "in position",
+  "defend",
   "sneak",
   "v2",
   "flag",
-  "in position",
+  "low health",
   "middle",
   "help",
   "defend",
@@ -93,16 +93,16 @@ char* CHAT_SHORTNAMES[QUICK_CHAT_COUNT] = {
 char* CHAT_MESSAGES[QUICK_CHAT_COUNT] = {
   "desync",
   "im stuck",
-  "placeholder",
-  "placeholder",
-  "placeholder",
-  "placeholder",
-  "placeholder",
-  "placeholder",
+  "lag",
+  "gg",
+  "i need health!",
+  "i have v2!",
+  "in position!",
+  "defending!",
   "enemy sneak!",
   "enemy has v2!",
   "enemy has flag!",
-  "in position!",
+  "enemy low health!",
   "go middle!",
   "help me!",
   "defend base!",
@@ -143,7 +143,7 @@ char * quickChatGetMsgString(int fragMsgId)
   {
     case QUICK_CHAT_GG: return "desync";
     case QUICK_CHAT_FF: return "im stuck";
-    case QUICK_CHAT_REMATCH: return "placeholder";
+    case QUICK_CHAT_REMATCH: return "lag";
     case QUICK_CHAT_ONE_MORE_GAME: return "placeholder";
     case QUICK_CHAT_WHAT_A_SAVE: return "placeholder";
     case QUICK_CHAT_WOW: return "placeholder";
