@@ -72,41 +72,41 @@ char* CHAT_GROUPS[4] = {
 };
 
 char* CHAT_SHORTNAMES[QUICK_CHAT_COUNT] = {
-  "desync",
-  "stuck",
-  "lag",
-  "gg",
-  "health",
-  "v2",
-  "in position",
-  "defend",
-  "sneak",
-  "v2",
-  "flag",
-  "low health",
-  "middle",
-  "help",
-  "defend",
-  "push"
+  "Desync",
+  "Stuck",
+  "Lag",
+  "GG",
+  "In position",
+  "V2",
+  "Health",
+  "Defend",
+  "Sneak",
+  "V2",
+  "Low health",
+  "Flag",
+  "Middle",
+  "Push",
+  "Help",
+  "Defend"
 };
 
 char* CHAT_MESSAGES[QUICK_CHAT_COUNT] = {
-  "desync",
-  "im stuck",
-  "lag",
-  "gg",
-  "i need health!",
-  "i have v2!",
-  "in position!",
-  "defending!",
-  "enemy sneak!",
-  "enemy has v2!",
-  "enemy has flag!",
-  "enemy low health!",
-  "go middle!",
-  "help me!",
-  "defend base!",
-  "push up!"
+  "Desync",
+  "Im stuck",
+  "Lag",
+  "GG",
+  "In position!",
+  "I have V2!",
+  "I need health!",
+  "Defending!",
+  "Enemy sneak!",
+  "Enemy has V2!",
+  "Enemy low health!",
+  "Enemy has flag!",
+  "Go middle!",
+  "Push up!",
+  "Help me!",
+  "Defend base!"
 };
 
 int CHAT_GRID_X_OFF[4] = {
@@ -141,22 +141,22 @@ char * quickChatGetMsgString(int fragMsgId)
 
   switch (fragMsgId - QUICK_CHAT_MSG_ID_START)
   {
-    case QUICK_CHAT_GG: return "desync";
-    case QUICK_CHAT_FF: return "im stuck";
-    case QUICK_CHAT_REMATCH: return "lag";
-    case QUICK_CHAT_ONE_MORE_GAME: return "placeholder";
-    case QUICK_CHAT_WHAT_A_SAVE: return "placeholder";
-    case QUICK_CHAT_WOW: return "placeholder";
-    case QUICK_CHAT_CLOSE_ONE: return "placeholder";
-    case QUICK_CHAT_NICE_SHOT: return "placeholder";
-    case QUICK_CHAT_PUSHING: return "enemy sneak!";
-    case QUICK_CHAT_DEFENDING: return "enemy has v2!";
-    case QUICK_CHAT_IN_POSITION: return "enemy has flag!";
-    case QUICK_CHAT_NEED_HEALTH: return "in position!";
-    case QUICK_CHAT_GET_THE_FLAG: return "go middle!";
-    case QUICK_CHAT_PUSH_UP: return "help me!";
-    case QUICK_CHAT_STAY_BACK: return "defend base!";
-    case QUICK_CHAT_HELP_ME: return "push up!";
+    case QUICK_CHAT_GG: return "Desync";
+    case QUICK_CHAT_FF: return "Im stuck";
+    case QUICK_CHAT_REMATCH: return "Lag";
+    case QUICK_CHAT_ONE_MORE_GAME: return "GG";
+    case QUICK_CHAT_CLOSE_ONE: return "In position!";
+    case QUICK_CHAT_WOW: return "I have V2!";
+    case QUICK_CHAT_WHAT_A_SAVE: return "I need health!";
+    case QUICK_CHAT_NICE_SHOT: return "Defending!";
+    case QUICK_CHAT_PUSHING: return "Enemy sneak!";
+    case QUICK_CHAT_DEFENDING: return "Enemy has V2!";
+    case QUICK_CHAT_NEED_HEALTH: return "Enemy low health!";
+    case QUICK_CHAT_IN_POSITION: return "Enemy has flag!";
+    case QUICK_CHAT_GET_THE_FLAG: return "Go middle!";
+    case QUICK_CHAT_HELP_ME: return "Push up!";
+    case QUICK_CHAT_PUSH_UP: return "Help me!";
+    case QUICK_CHAT_STAY_BACK: return "Defend base!";
   }
   return NULL;
 }
@@ -187,14 +187,14 @@ void quickChatDraw(void)
 
     // draw team *
     int width = gfxScreenSpaceText(490, yOff + (i * 14), 0.8, 0.8, 0x80FFFFFF, buf, -1, 2, FONT_BOLD);
-    if (chatid > 7) {
+    if (chatid > 3) {
       int team = gs->PlayerTeams[pid];
       Player* player = players[pid];
       if (player) team = player->mpTeam;
       // Use team colors - adapted for UYA
       u32 teamColor = 0x80FFFFFF;
-      if (team == 0) teamColor = 0x800000FF; // Blue
-      else if (team == 1) teamColor = 0x80FF0000; // Red
+      if (team == 0) teamColor = 0x80FF0000; // Red
+      else if (team == 1) teamColor = 0x800000FF; // Blue
       gfxScreenSpaceText(490 + (490 - width) - 4, yOff + (i * 14), 1, 1, teamColor, "*", -1, 2, FONT_BOLD);
     }
   }
@@ -229,11 +229,11 @@ int quickChatOnReceiveRemoteQuickChat(void* connection, void* data)
 
   // Check personal settings first (using inverted logic: 0 = enabled, 1 = disabled)
   if (currentConfig) {
-    if (msg.ChatId < 8) {
-      // Global messages (Post Game & Reactions) - check global setting
+    if (msg.ChatId < 4) {
+      // Global messages (first 4 only: desync, stuck, lag, gg) - check global setting
       if (currentConfig->quickChatGlobal) return sizeof(struct QuickChatMsg);
     } else {
-      // Team messages (Status & Teamwork) - check team setting
+      // Team messages (everything else) - check team setting
       if (currentConfig->quickChatTeam) return sizeof(struct QuickChatMsg);
       
       // For team messages, also check if sender is on same team
@@ -291,6 +291,16 @@ void quickChatRun(PatchConfig_t* config)
     }
     return;
   }
+  
+  // Clear chat history when entering a new game
+  if (!init) {
+    quickChatMenu = 0;
+    ticksMenuOpen = 0;
+    memset(QuickChats, 0, sizeof(QuickChats));
+    QuickChatCount = 0;
+    lastGlobalChatTime = 0; // Reset cooldown for new game
+    init = 1; // Mark as initialized
+  }
   if (!gameConfig.grQuickChat) return;
   if (isConfigMenuActive) return;
   
@@ -337,18 +347,29 @@ void quickChatRun(PatchConfig_t* config)
       int chatId = (menuId - 1)*4 + pad;
       
       // Check personal settings before sending (using inverted logic: 0 = enabled, 1 = disabled)
-      if (chatId < 8) {
-        // Global messages (Post Game & Reactions) - check global setting and cooldown
+      if (chatId < 4) {
+        // Global messages (first 4 only: desync, stuck, lag, gg) - check global setting and cooldown
         if (!config->quickChatGlobal) {
           int currentTime = gameGetTime();
           if (currentTime - lastGlobalChatTime >= GLOBAL_CHAT_COOLDOWN_TICKS) {
-            quickChatBroadcast(player->mpIndex, chatId);
+            // Show locally AND send to network
+            quickChatPush(player->mpIndex, chatId);
+            
+            // Send to network
+            void* connection = netGetDmeServerConnection();
+            if (connection) {
+              struct QuickChatMsg msg;
+              msg.FromPlayerId = player->mpIndex;
+              msg.ChatId = chatId;
+              netBroadcastCustomAppMessage(connection, CUSTOM_MSG_PLAYER_QUICK_CHAT, sizeof(msg), &msg);
+            }
+            
             lastGlobalChatTime = currentTime;
           }
-          // If on cooldown, just ignore the input (no feedback to prevent spam)
+          // If on cooldown, completely ignore - no local display, no network send
         }
       } else {
-        // Team messages (Status & Teamwork) - check team setting (no cooldown)
+        // Team messages (Status & Commands) - check team setting (no cooldown)
         if (!config->quickChatTeam) {
           quickChatBroadcast(player->mpIndex, chatId);
         }
@@ -368,6 +389,5 @@ void quickChatRun(PatchConfig_t* config)
   }
 
   if (QuickChatShowTicks) --QuickChatShowTicks;
-  init = 1;
 }
 
