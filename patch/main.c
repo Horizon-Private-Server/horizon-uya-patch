@@ -2820,7 +2820,7 @@ int main(void)
 		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow3), 0x00612023); // collline_fix 004b8084 in DL
 		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow4), 0x00622023);  //collline_fix  0x004b80a0 in DL
 
-		POKE_U32(GetAddress(&vaWaitingForResponse_Addr), 24020001); // patch out artificial "waiting for response" lag out
+		POKE_U32(GetAddress(&vaWaitingForResponse_Addr), 0x24020001); // patch out artificial "waiting for response" lag out
 
 		HOOK_JAL(GetAddress(&vaGameTimeUpdate_Hook), GetAddress(&vaNWUpdate_Func)); // poll nwupdate instead of updatepad for consistent game time
 
