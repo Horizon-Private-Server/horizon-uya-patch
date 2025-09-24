@@ -25,8 +25,6 @@ typedef struct PatchConfig {
   char disableDpadMovement;
   char hideFluxReticle;
   char dlStyleFlips;
-  char quickChatGlobal;
-  char quickChatTeam;
 } PatchConfig_t;
 
 // Game Rules Tab
@@ -67,7 +65,6 @@ typedef struct PatchGameConfig {
   char grNodeSelectTimer;
   char grSiegeNoTies;
   char grNewPlayerSync;
-  char grQuickChat;
 
   // Party
   char prSurvivor;

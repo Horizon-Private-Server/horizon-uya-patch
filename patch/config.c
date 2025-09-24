@@ -464,8 +464,6 @@ MenuElem_t menuElementsGeneral[] = {
   { "Single Player Music", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSingleplayerMusic, "Tired of the same BORING songs in game?!  Spice it up by adding the music tracks from Single Player!" },
   { "Toggle Map Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_MapAccess, "The button that you will need to press to show the Map." },
   { "Toggle Scoreboard Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_ScoreboardAccess, "The button that you will need to press to show the Scoreboard." },
-  { "Global Quick Chat", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.quickChatGlobal, "Enable/disable receiving and sending global quick chat messages (reactions and post-game)." },
-  { "Team Quick Chat", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.quickChatTeam, "Enable/disable receiving and sending team quick chat messages (status and teamwork)." },
 };
 
 // Game Settings
@@ -489,7 +487,6 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled, "Forces sniper shots to always deal the correct amount of damage." },
   { "Weapon Packs", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponPacks, "Toggle if weapon packs should spawn when a player dies." },
   { "Health Boxes", listActionHandler, menuStateHandler_Default, &dataHealthBoxes, "Whether health pickups are enabled, or if there is a box enclosure that must be broken first before picking up." },
-  { "Quick Chat", toggleActionHandler, menuStateHandler_Default, &gameConfig.grQuickChat, "Enables in game quick chat with the D-Pad." },
   // { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones, "Toggle Drones on or off." },
   { "Player Turrets", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisablePlayerTurrets, "Toggle Player Turrets on or off." },
   { "Weapon Crates", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponCrates, "Toggle Weapon Crates on or off." },
@@ -500,7 +497,6 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn, "Automatically respawn players once the in game respawn timer hits zero." },
   { "New Player Sync", toggleActionHandler, menuStateHandler_Default, &gameConfig.grNewPlayerSync, "Enable new player sync." },  
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire, "Earn a percentage of health for each kill."},
-
   // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars, "Draws a healthbar above each player's nametag." },
 #if DEBUG
   { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Returns a dropped flag if it lands on water, lava, or other non-walkable areas." },
@@ -2776,7 +2772,6 @@ void configMenuDisable(void)
         gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
         gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
         gameConfig.grNewPlayerSync = 1;
-        gameConfig.grQuickChat = 1; // Enable quick chat
         // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
         gameConfig.grDisablePlayerTurrets = 1; // Disabled
         gameConfig.grDestructableBridges = 0; // Enabled
@@ -2811,7 +2806,6 @@ void configMenuDisable(void)
         gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
         gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
         gameConfig.grNewPlayerSync = 1;
-        gameConfig.grQuickChat = 1; // Enable quick chat
         // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
         gameConfig.grDisablePlayerTurrets = 1; // Disabled
         gameConfig.grDestructableBridges = 0; // Enabled
