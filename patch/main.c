@@ -95,7 +95,6 @@ void grLoadStart(void);
 
 // void runPing(void);
 // void runSpectate(void);
-void quickChatRun(PatchConfig_t* config);
 #ifdef SCAVENGER_HUNT
 void scavHuntRun(void);
 #endif
@@ -2868,9 +2867,6 @@ int main(void)
 
 		// Runs FPS Counter
 		runFpsCounter();
-
-		// Run Quick Chat
-		quickChatRun(&config);
 
 		// Run Spectate
 		// if (config.enableSpectate)

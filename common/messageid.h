@@ -151,11 +151,6 @@ enum CustomMessageId
     CUSTOM_MSG_PLAYER_SYNC_STATE_UPDATE = 27,
 
     /*
-     * Sent when a player sends a quick chat message.
-     */
-    CUSTOM_MSG_PLAYER_QUICK_CHAT = 28,
-
-    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,
