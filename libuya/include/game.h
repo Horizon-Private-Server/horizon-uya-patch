@@ -201,9 +201,10 @@ struct tNW_Info {
 /* 0x0084 */ char myLicenseAccepted;
 /* 0x0085 */ char unk_0085[0x13];
 /* 0x0098 */ tNW_PlayerInfoStats_t myStats;
-/* 0x00ce */ char gameName[64];
-/* 0x0108 */ char gamePassword[36];
-/* 0x0130 */ enum eNW_STATE state;
+/* 0x00cc */ char gameName[64];
+/* 0x0108 */ char gamePassword[24];
+/* 0x0124 */ enum eNW_STATE state;
+/* 0x0125 */ char unk_0125[0xf];
 /* 0x0134 */ int unk_0134;
 /* 0x0138 */ int netFrameTime; // aka: gameTime
 /* 0x013c */ int numClients;
@@ -244,6 +245,7 @@ struct tNW_Info {
 /* 0x04b0 */ int gameSequenceNumber;
 /* 0x04b4 */ char unk_04b4[0x148];
 /* 0x05fc */ int maxPlayers_2;
+/* 0x0600 */ char unk_0600[0x30];
 /* 0x0630 */ int m_bUpdateClanStatsPending;
 /* 0x0634 */ int m_UpdateClanStatsStatus;
 /* 0x0638 */ int m_bAccountUpdateStatsPending;
