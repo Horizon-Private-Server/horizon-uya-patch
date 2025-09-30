@@ -17,7 +17,7 @@
 #define GAME_HOST_ID                        (*(int*)0x001a5e3c)
 #define GAME_WORLD_ID                       (*(int*)0x001a7034)
 #define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5810)
-#define GAME_NET_INFO                       ((tNw_Info*)0x0)
+#define GAME_NET_INFO                       ((tNw_Info*)0x01a5cc0)
 
 #else
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
@@ -40,13 +40,6 @@
 #define GAME_IS_HOST                        (*(int*)0x001a5fb8)
 #define GAME_HOST_ID                        (*(int*)0x001a5fbc)
 #define GAME_WORLD_ID                       (*(int*)0x001a71b4)
-
-// UNK Not Ported to PAL
-#define GAME_UNK_001a5e54                   (*(int*)0x001a5e54)
-#define GAME_UNK_001a5f80                   (*(int*)0x001a5f80)
-#define GAME_UNK_001a5f88                   (*(int*)0x001a5f88)
-#define GAME_UNK_001a5f8c                   (*(int*)0x001a5f8c)
-#define GAME_UNK_001a6444                   (*(int*)0x001a6444)
 
 #endif
 
