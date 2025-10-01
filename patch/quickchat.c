@@ -20,13 +20,14 @@
 #define QUICK_CHAT_SHOW_TICKS       (60 * 5)
 #define MENU_OPEN_TICKS             (60 * 3)
 #define NAME_MAX_WIDTH              (60)
-#define GLOBAL_CHAT_COOLDOWN_TICKS  (60 * 3)  // 3 second cooldown for global messages
 
 // Static variable to store current config
 static PatchConfig_t* currentConfig = NULL;
 
-// Global chat cooldown tracking
-static int lastGlobalChatTime = 0;
+// Global caches for performance optimization
+static GameSettings* cachedGameSettings = NULL;
+static Player** cachedAllPlayers = NULL;
+static Player* cachedLocalPlayer = NULL;
 
 struct QuickChatMsg
 {
@@ -134,6 +135,9 @@ int QuickChatCount = 0;
 int QuickChatShowTicks = 0;
 struct QuickChatMsg QuickChats[QUICK_CHAT_MAX_MSGS];
 
+// Forward declare static cache reset function
+void quickChatResetCaches(void);
+
 //--------------------------------------------------------------------------
 char * quickChatGetMsgString(int fragMsgId)
 {
@@ -165,36 +169,37 @@ char * quickChatGetMsgString(int fragMsgId)
 //--------------------------------------------------------------------------
 void quickChatDraw(void)
 {
-  GameSettings* gs = gameGetSettings();
-  Player** players = playerGetAll();
-  if (!gs) return;
+  // Use global caches
+  if (!cachedGameSettings) cachedGameSettings = gameGetSettings();
+  if (!cachedAllPlayers) cachedAllPlayers = playerGetAll();
+  
+  if (!cachedGameSettings) return;
 
   int yOff = 100;
-
   char buf[64];
   int i;
+  
   for (i = 0; i < QuickChatCount; ++i) {
-
     int pid = QuickChats[i].FromPlayerId;
     int chatid = QuickChats[i].ChatId;
 
-    // draw full or truncated name
-    int nameWidth = gfxGetFontWidth(gs->PlayerNames[pid], -1, 0.8);
-    if (nameWidth > NAME_MAX_WIDTH)
-      snprintf(buf, sizeof(buf), "%.6s. %s", gs->PlayerNames[pid], CHAT_MESSAGES[chatid]);
+    // Simple name truncation without expensive gfxGetFontWidth call
+    if (strlen(cachedGameSettings->PlayerNames[pid]) > 8)
+      snprintf(buf, sizeof(buf), "%.6s. %s", cachedGameSettings->PlayerNames[pid], CHAT_MESSAGES[chatid]);
     else
-      snprintf(buf, sizeof(buf), "%s %s", gs->PlayerNames[pid], CHAT_MESSAGES[chatid]);
+      snprintf(buf, sizeof(buf), "%s %s", cachedGameSettings->PlayerNames[pid], CHAT_MESSAGES[chatid]);
 
-    // draw team *
+    // draw text
     int width = gfxScreenSpaceText(490, yOff + (i * 14), 0.8, 0.8, 0x80FFFFFF, buf, -1, 2, FONT_BOLD);
+    
+    // draw team asterisk for team messages only
     if (chatid > 3) {
-      int team = gs->PlayerTeams[pid];
-      Player* player = players[pid];
-      if (player) team = player->mpTeam;
-      // Use team colors - adapted for UYA
-      u32 teamColor = 0x80FFFFFF;
-      if (team == 0) teamColor = 0x80FF0000; // Red
-      else if (team == 1) teamColor = 0x800000FF; // Blue
+      int team = cachedGameSettings->PlayerTeams[pid];
+      if (cachedAllPlayers && cachedAllPlayers[pid]) {
+        team = cachedAllPlayers[pid]->mpTeam;
+      }
+      // Use team colors
+      u32 teamColor = (team == 0) ? 0x80FF0000 : 0x800000FF; // Red : Blue
       gfxScreenSpaceText(490 + (490 - width) - 4, yOff + (i * 14), 1, 1, teamColor, "*", -1, 2, FONT_BOLD);
     }
   }
@@ -271,11 +276,21 @@ void quickChatBroadcast(int playerId, int chatId)
 }
 
 //--------------------------------------------------------------------------
+void quickChatResetCaches(void)
+{
+  // Reset all caches when game state changes
+  cachedGameSettings = NULL;
+  cachedAllPlayers = NULL;
+  cachedLocalPlayer = NULL;
+}
+
+//--------------------------------------------------------------------------
 void quickChatRun(PatchConfig_t* config)
 {
   static int ticksMenuOpen;
   static int quickChatMenu;
   static int init = 0;
+  static int msgHandlerInstalled = 0;
 
   // Store current config for use by receive handler
   currentConfig = config;
@@ -286,7 +301,8 @@ void quickChatRun(PatchConfig_t* config)
       ticksMenuOpen = 0;
       memset(QuickChats, 0, sizeof(QuickChats));
       QuickChatCount = 0;
-      lastGlobalChatTime = 0; // Reset cooldown when leaving game
+      msgHandlerInstalled = 0; // Reset handler flag when leaving game
+      quickChatResetCaches(); // Clear all caches when leaving game
       init = 0;
     }
     return;
@@ -298,14 +314,18 @@ void quickChatRun(PatchConfig_t* config)
     ticksMenuOpen = 0;
     memset(QuickChats, 0, sizeof(QuickChats));
     QuickChatCount = 0;
-    lastGlobalChatTime = 0; // Reset cooldown for new game
+    msgHandlerInstalled = 0; // Reset handler flag for new game
+    quickChatResetCaches(); // Clear all caches for new game
     init = 1; // Mark as initialized
   }
   if (!gameConfig.grQuickChat) return;
   if (isConfigMenuActive) return;
   
-  //
-  netInstallCustomMsgHandler(CUSTOM_MSG_PLAYER_QUICK_CHAT, &quickChatOnReceiveRemoteQuickChat);
+  // Only install message handler once per game session
+  if (!msgHandlerInstalled) {
+    netInstallCustomMsgHandler(CUSTOM_MSG_PLAYER_QUICK_CHAT, &quickChatOnReceiveRemoteQuickChat);
+    msgHandlerInstalled = 1;
+  }
 
   // draw quick chats
   if (QuickChatShowTicks) {
@@ -313,8 +333,12 @@ void quickChatRun(PatchConfig_t* config)
   }
 
   int menuId = quickChatMenu;
-  Player* player = playerGetFromSlot(0);
-  if (!player || !player->pMoby) return;
+  
+  // Use global cache for local player
+  if (!cachedLocalPlayer) {
+    cachedLocalPlayer = playerGetFromSlot(0);
+    if (!cachedLocalPlayer || !cachedLocalPlayer->pMoby) return;
+  }
 
   // draw
   if (menuId) {
@@ -348,30 +372,14 @@ void quickChatRun(PatchConfig_t* config)
       
       // Check personal settings before sending (using inverted logic: 0 = enabled, 1 = disabled)
       if (chatId < 4) {
-        // Global messages (first 4 only: desync, stuck, lag, gg) - check global setting and cooldown
+        // Global messages (first 4 only: desync, stuck, lag, gg) - check global setting
         if (!config->quickChatGlobal) {
-          int currentTime = gameGetTime();
-          if (currentTime - lastGlobalChatTime >= GLOBAL_CHAT_COOLDOWN_TICKS) {
-            // Show locally AND send to network
-            quickChatPush(player->mpIndex, chatId);
-            
-            // Send to network
-            void* connection = netGetDmeServerConnection();
-            if (connection) {
-              struct QuickChatMsg msg;
-              msg.FromPlayerId = player->mpIndex;
-              msg.ChatId = chatId;
-              netBroadcastCustomAppMessage(connection, CUSTOM_MSG_PLAYER_QUICK_CHAT, sizeof(msg), &msg);
-            }
-            
-            lastGlobalChatTime = currentTime;
-          }
-          // If on cooldown, completely ignore - no local display, no network send
+          quickChatBroadcast(cachedLocalPlayer->mpIndex, chatId);
         }
       } else {
-        // Team messages (Status & Commands) - check team setting (no cooldown)
+        // Team messages (Status & Commands) - check team setting
         if (!config->quickChatTeam) {
-          quickChatBroadcast(player->mpIndex, chatId);
+          quickChatBroadcast(cachedLocalPlayer->mpIndex, chatId);
         }
       }
       
