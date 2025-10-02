@@ -157,7 +157,7 @@ struct CameraWidget { // 0x20
 	/* 0x08 */ float closest;
 	/* 0x0c */ float interp;
 	/* 0x10 */ void *preFunc;
-	/* 0x14 */ int pad[3];
+	/* 0x14 */ int pad_14[3];
 };
 
 struct CameraShake {
