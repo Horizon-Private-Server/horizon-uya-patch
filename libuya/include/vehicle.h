@@ -22,62 +22,61 @@
 
 #define TURBOSLIDER_TURN_RADIUS (*(float*)0x003a124c)
 
-struct tDR_Profile {
-	/*   0 */ float LinearPredictionCutoff;
-	/*   4 */ float LinearConvergenceThreshold;
-	/*   8 */ float MaxLinearConvergenceDelta;
-	/*   c */ float MinLinearConvergenceDelta;
-	/*  10 */ float MinSmoothConvergenceDelta;
-	/*  14 */ float PositionErrorThreshold;
-	/*  18 */ float MaxTrackSpeed;
-	/*  1c */ float MaxConvergeSpeed;
-	/*  20 */ float Accel;
-	/*  24 */ float Decel;
+struct tDR_Profile { // 0x28
+	/* 0x00 */ float LinearPredictionCutoff;
+	/* 0x04 */ float LinearConvergenceThreshold;
+	/* 0x08 */ float MaxLinearConvergenceDelta;
+	/* 0x0c */ float MinLinearConvergenceDelta;
+	/* 0x10 */ float MinSmoothConvergenceDelta;
+	/* 0x14 */ float PositionErrorThreshold;
+	/* 0x18 */ float MaxTrackSpeed;
+	/* 0x1c */ float MaxConvergeSpeed;
+	/* 0x20 */ float Accel;
+	/* 0x24 */ float Decel;
 };
 
-struct tDR_PositionHistory {
-	/*   0 */ VECTOR Pos[1];
-	/*  20 */ int Time[1];
-	/*  28 */ int Oldest;
-	/*  2c */ int pad;
+struct tDR_PositionHistory { // 0x30
+	/* 0x00 */ VECTOR Pos[2];
+	/* 0x20 */ int Time[2];
+	/* 0x28 */ int Oldest;
+	/* 0x2c */ int pad[1];
 };
 
-struct tDR_Vars {
-	/*   0 */ struct tDR_PositionHistory Pos_History;
-	/*  30 */ VECTOR Velocity_Tracking;
-	/*  40 */ VECTOR Accel_Tracking;
-	/*  50 */ VECTOR Velocity_Converge;
-	/*  60 */ VECTOR Accel_Converge;
-	/*  70 */ VECTOR Pos_Start;
-	/*  80 */ VECTOR Pos_Converge;
-	/*  90 */ VECTOR Pos_Current;
-	/*  a0 */ VECTOR Velocity_Current;
-	/*  b0 */ VECTOR Accel_Current;
-	/*  c0 */ VECTOR Pos_Start_Minus_One;
-	/*  d0 */ VECTOR Pos_Converge_Plus_One;
-	/*  e0 */ int Time_Start_Minus_One;
-	/*  e4 */ int Time_Converge_Plus_One;
-	/*  e8 */ int Time_StartStopping;
-	/*  ec */ float Dist_Converge;
-	/*  f0 */ struct tDR_Profile* pProfile;
-	/*  f4 */ int Time_Start;
-	/*  f8 */ int Time_Converge;
-	/*  fc */ int Time_Current;
-	/* 100 */ VECTOR Pos_Actual;
-	/* 110 */ struct tDR_PositionHistory Pos_PendingUpdates;
-	/* 140 */ int Time_ProcessPendingUpdate;
-	/* 144 */ int Interval_Latency_Offset;
-	/* 148 */ unsigned int flags;
-	/* 14c */ int pad;
-	/* 150 */ int prevKnownSyncedTime;
-	/* 154 */ int KnownSyncedTime;
-	/* 158 */ int PreviousUpdateTime;
-	/* 15c */ int PendingSyncTime;
-	/* 160 */ VECTOR PendingSyncedPos;
-	/* 170 */ VECTOR KnownSyncedPos;
-	/* 180 */ VECTOR prevKnownSyncedPos;
+struct tDR_Vars { // 0x190
+	/* 0x000 */ tDR_PositionHistory Pos_History;
+	/* 0x030 */ VECTOR Velocity_Tracking;
+	/* 0x040 */ VECTOR Accel_Tracking;
+	/* 0x050 */ VECTOR Velocity_Converge;
+	/* 0x060 */ VECTOR Accel_Converge;
+	/* 0x070 */ VECTOR Pos_Start;
+	/* 0x080 */ VECTOR Pos_Converge;
+	/* 0x090 */ VECTOR Pos_Current;
+	/* 0x0a0 */ VECTOR Velocity_Current;
+	/* 0x0b0 */ VECTOR Accel_Current;
+	/* 0x0c0 */ VECTOR Pos_Start_Minus_One;
+	/* 0x0d0 */ VECTOR Pos_Converge_Plus_One;
+	/* 0x0e0 */ int Time_Start_Minus_One;
+	/* 0x0e4 */ int Time_Converge_Plus_One;
+	/* 0x0e8 */ int Time_StartStopping;
+	/* 0x0ec */ float Dist_Converge;
+	/* 0x0f0 */ tDR_Profile *pProfile;
+	/* 0x0f4 */ int Time_Start;
+	/* 0x0f8 */ int Time_Converge;
+	/* 0x0fc */ int Time_Current;
+	/* 0x100 */ VECTOR Pos_Actual;
+	/* 0x110 */ tDR_PositionHistory Pos_PendingUpdates;
+	/* 0x140 */ int Time_ProcessPendingUpdate;
+	/* 0x144 */ int Interval_Latency_Offset;
+	/* 0x148 */ unsigned int flags;
+	/* 0x14c */ int pad;
+	/* 0x150 */ int prevKnownSyncedTime;
+	/* 0x154 */ int KnownSyncedTime;
+	/* 0x158 */ int PreviousUpdateTime;
+	/* 0x15c */ int PendingSyncTime;
+	/* 0x160 */ VECTOR PendingSyncedPos;
+	/* 0x170 */ VECTOR KnownSyncedPos;
+	/* 0x180 */ VECTOR prevKnownSyncedPos;
 };
-
 
 
 struct VehicleInterface {
