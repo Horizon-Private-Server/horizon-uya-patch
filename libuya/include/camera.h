@@ -10,17 +10,8 @@
 #include "moby.h"
 #include "math3d.h"
 
-struct Path { // 0x10
-	/* 0x0 */ int nNodes;
-	/* 0x4 */ int bPathNormalized;
-	/* 0x8 */ char pad[8];
-	/* 0x10 */ vec4 nodes[0];
-};
-
-struct PolarSm { // 0xc
-	/* 0x0 */ float azimuth;
-	/* 0x4 */ float elevation;
-	/* 0x8 */ float radius;
+struct quat { // 0x10
+	/* 0x0 */ s128 q;
 };
 
 struct CameraFov { // 0x30
@@ -64,12 +55,12 @@ struct Polar {
 
 struct UpdateCam { // 0xb0
 	/* 0x00 */ mtx3 mtx;
-	/* 0x30 */ vec4 pos;
-	/* 0x40 */ vec4f rot;
-	/* 0x50 */ polar pol;
+	/* 0x30 */ VECTOR pos;
+	/* 0x40 */ VECTOR rot;
+	/* 0x50 */ struct Polar pol;
 	/* 0x64 */ vec3 lPos;
 	/* 0x70 */ void *control;
-	/* 0x74 */ CameraControlActivation activation;
+	/* 0x74 */ struct CameraControlActivation activation;
 	/* 0x84 */ short int importCameraIdx;
 	/* 0x86 */ short int type;
 	/* 0x88 */ char subType;
@@ -84,23 +75,23 @@ struct UpdateCam { // 0xb0
 };
 
 struct CameraStatics { // 0xf0
-	/* 0x00 */ vec3 heroNoJump;
+	/* 0x00 */ float heroNoJump[3];
 	/* 0x0c */ float heroLastZ;
 	/* 0x10 */ float heroLastZSpeed;
-	/* 0x20 */ vec4 heroUp;
-	/* 0x30 */ vec4 heroUpActual;
-	/* 0x40 */ vec4 heroUpLast;
-	/* 0x50 */ vec4 heroUpSpeed;
-	/* 0x60 */ vec4 heroLastPos;
-	/* 0x70 */ vec4 heroMoveVec;
-	/* 0x80 */ vec4 heroMoveVec2D;
-	/* 0x90 */ vec4 heroMoveVecUp;
+	/* 0x20 */ VECTOR heroUp;
+	/* 0x30 */ VECTOR heroUpActual;
+	/* 0x40 */ VECTOR heroUpLast;
+	/* 0x50 */ VECTOR heroUpSpeed;
+	/* 0x60 */ VECTOR heroLastPos;
+	/* 0x70 */ VECTOR heroMoveVec;
+	/* 0x80 */ VECTOR heroMoveVec2D;
+	/* 0x90 */ VECTOR heroMoveVecUp;
 	/* 0xa0 */ float heroSpeed;
 	/* 0xa4 */ float heroSpeed2D;
 	/* 0xa8 */ float heroSpeedUp;
 	/* 0xac */ float heroLastRotZ[5];
 	/* 0xc0 */ int hotspot;
-	/* 0xc4 */ moby *pCamColl;
+	/* 0xc4 */ Moby *pCamColl;
 	/* 0xc8 */ float fadeSpeed;
 	/* 0xcc */ float fadeIdeal;
 	/* 0xd0 */ int fadeTimer;
@@ -108,7 +99,7 @@ struct CameraStatics { // 0xf0
 	/* 0xd8 */ float flashOutSpeed;
 	/* 0xdc */ float flashIdeal;
 	/* 0xe0 */ int flashTimer;
-	/* 0xe4 */ moby *boss;
+	/* 0xe4 */ struct Moby *boss;
 	/* 0xe8 */ int bossTimer;
 };
 
@@ -121,39 +112,39 @@ struct CamBlenderPosQuat { // 0x60
 	/* 0x14 */ float posInterpAdd;
 	/* 0x18 */ float reqPosInterpAdd;
 	/* 0x1c */ float reqPosInterpInit;
-	/* 0x20 */ quat orgQuat;
-	/* 0x30 */ vec4 orgPos;
-	/* 0x40 */ vec4 pos;
-	/* 0x50 */ quat q;
+	/* 0x20 */ struct quat orgQuat;
+	/* 0x30 */ VECTOR orgPos;
+	/* 0x40 */ VECTOR pos;
+	/* 0x50 */ struct quat q;
 };
 
 struct CamBlenderPolarQuat { // 0x70
-	/* 0x00 */ PolarSm orgPol;
+	/* 0x00 */ struct PolarSm orgPol;
 	/* 0x0c */ int interpFrames;
 	/* 0x10 */ float interpMaxInv;
 	/* 0x14 */ int reqInterpFrames;
-	/* 0x20 */ vec4 fwd;
-	/* 0x30 */ vec4 up;
+	/* 0x20 */ VECTOR fwd;
+	/* 0x30 */ VECTOR up;
 	/* 0x40 */ VECTOR orgQuat;
-	/* 0x50 */ vec4 pos;
+	/* 0x50 */ VECTOR pos;
 	/* 0x60 */ VECTOR q;
 };
 
 struct CamBlenderData { // 0xd0
-	/* 0x00 */ CamBlenderPosQuat posData;
-	/* 0x60 */ CamBlenderPolarQuat polarData;
+	/* 0x00 */ struct CamBlenderPosQuat posData;
+	/* 0x60 */ struct CamBlenderPolarQuat polarData;
 };
 
 struct CamBlender { // 0xe0
 	/* 0x00 */ short int state;
 	/* 0x02 */ char type;
 	/* 0x03 */ char reqType;
-	/* 0x10 */ CamBlenderData blendData;
+	/* 0x10 */ struct CamBlenderData blendData;
 };
 
 struct CameraWidget { // 0x20
-	/* 0x00 */ UpdateCam *pCam;
-	/* 0x04 */ moby *semaphore;
+	/* 0x00 */ struct UpdateCam *pCam;
+	/* 0x04 */ Moby *semaphore;
 	/* 0x08 */ float closest;
 	/* 0x0c */ float interp;
 	/* 0x10 */ void *preFunc;
@@ -167,21 +158,21 @@ struct CameraShake {
 	/*   c */ int div;
 };
 
-struct CameraExternal {
-	/*   0 */ VECTOR move;
+struct CameraExternal { // 0x10
+	/* 0x00 */ VECTOR move;
 };
 
 struct CameraHeroData { // 0x150
 	/* 0x000 */ mtx4 mtx;
-	/* 0x040 */ vec4 pos;
-	/* 0x050 */ vec4f rot;
-	/* 0x060 */ vec4 cg;
-	/* 0x070 */ vec4 moveActualFromExternal;
-	/* 0x080 */ vec4 groundGravity;
-	/* 0x090 */ vec4 jumpGravity;
-	/* 0x0a0 */ vec4 sphereCenter;
+	/* 0x040 */ VECTOR pos;
+	/* 0x050 */ VECTOR rot;
+	/* 0x060 */ VECTOR cg;
+	/* 0x070 */ VECTOR moveActualFromExternal;
+	/* 0x080 */ VECTOR groundGravity;
+	/* 0x090 */ VECTOR jumpGravity;
+	/* 0x0a0 */ VECTOR sphereCenter;
 	/* 0x0b0 */ mtx3 fpsCamMtx;
-	/* 0x0e0 */ vec4 fpsCamPos;
+	/* 0x0e0 */ VECTOR fpsCamPos;
 	/* 0x0f0 */ Moby *pMoby;
 	/* 0x0f4 */ Moby *vehicleMoby;
 	/* 0x0f8 */ Moby *groundMoby;
@@ -224,8 +215,8 @@ typedef struct CAMERA { // 0x1d0
 /* 0x080 */ mtx4 nfMtx;
 /* 0x0c0 */ mtx4 hMtx;
 /* 0x100 */ mtx4 hsMtx;
-/* 0x140 */ vec4 pos;
-/* 0x150 */ vec4f rot;
+/* 0x140 */ VECTOR pos;
+/* 0x150 */ VECTOR rot;
 /* 0x160 */ mtx3 uMtx;
 /* 0x190 */ mtx4 uvMtx;
 } Camera_t;

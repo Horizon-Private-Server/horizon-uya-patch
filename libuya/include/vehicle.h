@@ -43,7 +43,7 @@ struct tDR_PositionHistory { // 0x30
 };
 
 struct tDR_Vars { // 0x190
-	/* 0x000 */ tDR_PositionHistory Pos_History;
+	/* 0x000 */ struct tDR_PositionHistory Pos_History;
 	/* 0x030 */ VECTOR Velocity_Tracking;
 	/* 0x040 */ VECTOR Accel_Tracking;
 	/* 0x050 */ VECTOR Velocity_Converge;
@@ -59,12 +59,12 @@ struct tDR_Vars { // 0x190
 	/* 0x0e4 */ int Time_Converge_Plus_One;
 	/* 0x0e8 */ int Time_StartStopping;
 	/* 0x0ec */ float Dist_Converge;
-	/* 0x0f0 */ tDR_Profile *pProfile;
+	/* 0x0f0 */ struct tDR_Profile *pProfile;
 	/* 0x0f4 */ int Time_Start;
 	/* 0x0f8 */ int Time_Converge;
 	/* 0x0fc */ int Time_Current;
 	/* 0x100 */ VECTOR Pos_Actual;
-	/* 0x110 */ tDR_PositionHistory Pos_PendingUpdates;
+	/* 0x110 */ struct tDR_PositionHistory Pos_PendingUpdates;
 	/* 0x140 */ int Time_ProcessPendingUpdate;
 	/* 0x144 */ int Interval_Latency_Offset;
 	/* 0x148 */ unsigned int flags;
@@ -121,7 +121,7 @@ struct VehicleInterface {
 
 typedef struct VehicleBase {
 	/* 0x000 */ struct Guber guber;
-	/* 0x018 */ char unk_018[0x2b8]; 
+	/* 0x020 */ char unk_020[0x2b0]; 
 	/* 0x2d0 */ struct Moby* pMoby;
 	/* 0x2d4 */ struct Moby* pTarget;
 	/* 0x2d8 */ struct Player* pDriver;
