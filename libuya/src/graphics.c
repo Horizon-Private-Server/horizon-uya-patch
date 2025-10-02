@@ -1063,7 +1063,7 @@ int gfxIsInView(Player *player, VECTOR position)
         "lq         $s1, 0x20($sp)      \n"
         "lwc1       $f20, 0x30($sp)     \n"
         "addiu      $sp, $sp, 0x40      \n"
-        : : "r" (&player->camera->uMtx[0]), "r" (&player->camera->pos), "r" (position), "r" (output)
+        : : "r" (&player->camera->uMtx.v0), "r" (&player->camera->pos), "r" (position), "r" (output)
     );
     return output;
 }
@@ -1077,7 +1077,7 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
 	Screen *screen = gfxGetScreen();
 	VECTOR screenPos;
     VECTOR toMoby;
-    VECTOR cameraDir = {player->camera->uMtx[0][1], player->camera->uMtx[1][1], player->camera->uMtx[2][1], 0};
+    VECTOR cameraDir = {player->camera->uMtx.v0[1], player->camera->uMtx.v1[1], player->camera->uMtx.v2[1], 0};
     VECTOR offsetCamDir = {0, 0, 4, 0};
     float scale = 0.0625;
 
