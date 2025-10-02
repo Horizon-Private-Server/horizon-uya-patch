@@ -146,7 +146,7 @@ typedef struct VehicleBase {
 	/* 0x310 */ float speed;
 	/* 0x314 */ int comeToRestTime;
 	/* 0x318 */ int waitDriverTime;
-	/* 0x0x31c */ char bDriverInValidState;
+	/* 0x31c */ char bDriverInValidState;
 	/* 0x31d */ char bPassengerInValidState;
 	/* 0x31e */ char bDoPostSinkingCameraRaise;
 	/* 0x31f */ char cPad[1];

@@ -397,7 +397,9 @@ typedef struct Moby {
 	/* 0xb4 */ short bolts;
 	/* 0xb6	*/ u16 xp;
 	/* 0xb8 */ struct Moby * pParent;
-	/* 0xbc */ char unk_bc[0x4];
+	/* 0xbc */ char subState;
+	/* 0xbd */ char unk_bd;
+	/* 0xbe */ short triggers;
     /* 0xc0 */ mtx3 rMtx;
     /* 0xf0 */ VECTOR rotation;
 } Moby;

@@ -299,7 +299,7 @@ typedef struct HeroTimers { // 0x80
 	/*      */ int unk_354;
 	/*      */ int unk_358;
 	/* 0x6c */ int noFpsCamTimer;
-	/*      */ int unkTimer_360;
+	/* 0x70 */ int lastVehicleTimer;
 	/*      */ char unk_364[0xc];
 } HeroTimers;
 
@@ -1194,7 +1194,7 @@ typedef struct Player { // 0x4500
 	/* 0x24aa */ char unk_24aa; // gets set when flag is captured.
 	/*        */ char unk_24ab[0x1d];
 	/* 0x24c8 */ char unk_24c8;
-	/* 0x24c9 */ char unk_24c9; // hides reticle/hud, does something with CTF Flag and setting to 0x32 shows save filed popup.
+	/* 0x24c9 */ char isLocal2; // hides reticle/hud, does something with CTF Flag and setting to 0x32 shows save filed popup.
 	/*        */ char unk_24ca;
 	/*        */ char unk_24cb;
 	/* 0x24cc */ u32 lastDamagedMeOwnerUID;
