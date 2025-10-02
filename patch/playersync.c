@@ -451,7 +451,7 @@ void playerSyncHandlePlayerState(Player* player)
             vehicle->pPassenger = 0;
           }
 
-          vehicle->justExited = player->fps.vars.camSettingsIndex + 1;
+          vehicle->justExited = player->mpIndex;
           player->vehicleState = 0;
           player->vehicle = NULL;
         }
