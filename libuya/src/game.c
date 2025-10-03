@@ -7,60 +7,21 @@
 #if UYA_PAL
 #define GAME_ACTIVE                         (*(int*)0x00241a50)
 #define SCENE_LOADED                        (*(int*)0x00245848)
-/*
- * Game time (ms).
- */
-#define GAME_TIME                           (*(int*)0x001a5df8)
 #define GAME_MAP_ID                         (*(int*)0x001f83a8)
-#define GAME_CLIENT_ID                      (*(int*)0x001a5cd8)
-#define GAME_IS_HOST                        (*(int*)0x001a5e38)
-#define GAME_HOST_ID                        (*(int*)0x001a5e3c)
-#define GAME_WORLD_ID                       (*(int*)0x001a7034)
-#define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5810)
-#define GAME_NET_INFO                       ((tNw_Info*)0x01a5cc0)
-
 #else
 #define GAME_ACTIVE                         (*(int*)0x00241BD0)
 #define SCENE_LOADED                        (*(int*)0x002459C8)
-
-#define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5990)
-#define GAME_NET_INFO                       ((tNw_Info_t*)0x001a5e40)
-
-#define GAME_MY_SKIN                        (*(int*0x001a5e6c)
-#define GAME_MY_ACCOUNT_ID                  (*(int*)0x201a5e84)
-#define GAME_MY_CLAN_ID                     (*(int*)0x001a5e88)
-#define GAME_MY_CLAN_NAME                   (0x001a5e8c)
-#define GAME_IS_CLAN_LEADER                 (*(u8*)0x001a5ead)
-#define GAME_MY_USERNAME                    (0x001a5eae)
-#define GAME_CREATE_GAME_NAME               (0x001a5f0e)
-#define GAME_CREATE_GAME_PASSWORD           (0x001a5f4e)
-#define GAME_TIME                           (*(int*)0x001a5f78)
-#define GAME_MAP_ID                         (*(int*)0x001F8528)
-#define GAME_CLIENT_ID                      (*(int*)0x001a5e58)
-#define GAME_IS_HOST                        (*(int*)0x001a5fb8)
-#define GAME_HOST_ID                        (*(int*)0x001a5fbc)
-#define GAME_WORLD_ID                       (*(int*)0x001a71b4)
-
+#define GAME_MAP_ID                         (*(int*)0x001f8528)
 #endif
-
-#define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))
 
 #define GAME_DATA                           ((GameData*)GetAddress(&vaGAME_DATA))
 #define GAME_TIME_ENDGAME                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x1f0))
 #define GAME_HAS_ENDED                      (GAME_TIME_ENDGAME > 0)
-// Set to Team ID that won.
 #define GAME_WINNER_TEAM_ID                 (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x10))
-// Player id of the winner. Set to -1 for team win.
 #define GAME_WINNER_PLAYER_ID               (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x14))
 
+#define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))
 #define GAME_GS_FRAME                       (*(int*)GetAddress(&vaGSFrame))
-
-#define SPAWNPOINTS_SIEGE                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x20c))
-#define SPAWNPOINTS_CTF                     (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x210))
-#define SPAWNPOINTS_DM                      (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x214))
-
-int internal_mode_requestChange(int, int, int, int, char *);
-void internal_mode_doChange(void);
 
 VariableAddress_t vaGSFrame = {
 #if UYA_PAL
@@ -285,8 +246,8 @@ void gameSetDeathHeight(float height)
 
 void gameSetWinner(int teamOrPlayerId, int isTeam)
 {
-    GAME_WINNER_TEAM_ID = teamOrPlayerId;
-    GAME_WINNER_PLAYER_ID = isTeam ? -1 : teamOrPlayerId;
+    GAME_DATA->winningTeam = teamOrPlayerId;
+    GAME_DATA->winningPlayer = isTeam ? -1 : teamOrPlayerId;
 }
 
 GameData* gameGetData(void)

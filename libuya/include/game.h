@@ -14,19 +14,23 @@
 #include "common.h"
 #include "net.h"
 
-/*
- * Maximum number of players in a game.
- */
-#define GAME_MAX_PLAYERS                    (8)
-#define GAME_MAX_LOCALS                     (2)
-/*
- * Games FPS
-*/
 #if UYA_PAL
 #define GAME_FPS                            (50.0)
+#define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5810)
+#define GAME_NET_INFO                       ((tNW_Info_t*)0x01a5cc0)
 #else
 #define GAME_FPS                            (60.0)
+#define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5990)
+#define GAME_NET_INFO                       ((tNW_Info_t*)0x001a5e40)
 #endif
+
+#define GAME_MAX_PLAYERS                    (8)
+#define GAME_MAX_LOCALS                     (2)
+
+#define GAME_TIME                           (GAME_NET_INFO->netFrameTime)
+#define GAME_CLIENT_ID						(GAME_NET_INFO->myClientIndex)
+#define GAME_HOST_ID						(GAME_NET_INFO->sessionMasterClientIndex)
+#define GAME_WORLD_ID						(GAME_NET_INFO->gameWorldId)
 
 typedef enum GameEndReason {
 	GAME_END_TIME_UP = 1,
@@ -180,7 +184,7 @@ typedef struct tNW_PlayerInfoStats { // 0x34
 	/* 0x30 */ int lastGameHadCheater;
 } tNW_PlayerInfoStats_t;
 
-struct tNW_Info {
+typedef struct tNW_Info {
 /* 0x0000 */ char unk_0000[0x10];
 /* 0x0010 */ int numLocalPlayers;
 /* 0x0014 */ void* myConnectionIndex; // NetTypeConnectionInfo* myConnectionIndex
