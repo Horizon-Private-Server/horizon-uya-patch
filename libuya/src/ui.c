@@ -109,7 +109,7 @@ int uiShowInputDialog(const char * title, char * value, int maxLength)
 
 void uiShowPopup(Player * player, const char * message, int seconds)
 {
-	internal_uiShowPopup(message, seconds * 100, (!player ? 0 : player->unk_24c9));
+	internal_uiShowPopup(message, seconds * 100, player->isLocal2);
 }
 
 int uiShowSelectDialog(const char * title, const char * items[], int itemCount, int selectedIndex)
