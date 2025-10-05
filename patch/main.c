@@ -421,7 +421,7 @@ void runCameraSpeedPatch(void)
 	if (isInMenus()) {
 		// overwrite menu camera controls max cam speed
 		// also display speed text next to input
-		u32 ui = uiGetMenu(UI_MENU_CONTROLS);
+		u32 ui = uiGetMenu(UI_MENU_EDIT_PROFILE_CONTROLS);
 		if (ui && uiGetActiveMenu(UI_MENU_EDIT_PROFILE, 0)) {
 			u32 cameraRotationUIPtr = *(u32*)(ui + 0x11C);
 			if (cameraRotationUIPtr) {
@@ -429,7 +429,7 @@ void runCameraSpeedPatch(void)
 				*(u32*)(cameraRotationUIPtr + 0x7C) = MAX_CAMERA_SPEED;
 
 				// draw %
-				if (uiGetActiveMenu(UI_MENU_CONTROLS, 1)) {
+				if (uiGetActiveMenu(UI_MENU_EDIT_PROFILE_CONTROLS, 1)) {
 					sprintf(buf, "%d%%", *(u32*)(cameraRotationUIPtr + 0x80));
 					gfxScreenSpaceText(340, 310, 1, 1, 0x8069cbf2, buf, -1, 2, FONT_BOLD);
 				}
