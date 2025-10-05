@@ -493,3 +493,96 @@ float matrix_determinant(MATRIX input0)
     -   input0[12] *(input0[1]*input0[6]*input0[11] + input0[2]*input0[7]*input0[9] + input0[3]*input0[5]*input0[10]
                     -input0[3]*input0[6]*input0[9] - input0[2]*input0[5]*input0[11] - input0[1]*input0[7]*input0[10]);
 }
+
+void matrix_inverse(MATRIX output, MATRIX input)
+{
+    float det;
+    MATRIX temp;
+    
+    // Calculate cofactor matrix (adjugate before transpose)
+    // Row 0
+    temp[0]  =  input[5] * input[10] * input[15] - input[5] * input[11] * input[14] - 
+                input[9] * input[6] * input[15] + input[9] * input[7] * input[14] + 
+                input[13] * input[6] * input[11] - input[13] * input[7] * input[10];
+    
+    temp[1]  = -input[1] * input[10] * input[15] + input[1] * input[11] * input[14] + 
+                input[9] * input[2] * input[15] - input[9] * input[3] * input[14] - 
+                input[13] * input[2] * input[11] + input[13] * input[3] * input[10];
+    
+    temp[2]  =  input[1] * input[6] * input[15] - input[1] * input[7] * input[14] - 
+                input[5] * input[2] * input[15] + input[5] * input[3] * input[14] + 
+                input[13] * input[2] * input[7] - input[13] * input[3] * input[6];
+    
+    temp[3]  = -input[1] * input[6] * input[11] + input[1] * input[7] * input[10] + 
+                input[5] * input[2] * input[11] - input[5] * input[3] * input[10] - 
+                input[9] * input[2] * input[7] + input[9] * input[3] * input[6];
+    
+    // Row 1
+    temp[4]  = -input[4] * input[10] * input[15] + input[4] * input[11] * input[14] + 
+                input[8] * input[6] * input[15] - input[8] * input[7] * input[14] - 
+                input[12] * input[6] * input[11] + input[12] * input[7] * input[10];
+    
+    temp[5]  =  input[0] * input[10] * input[15] - input[0] * input[11] * input[14] - 
+                input[8] * input[2] * input[15] + input[8] * input[3] * input[14] + 
+                input[12] * input[2] * input[11] - input[12] * input[3] * input[10];
+    
+    temp[6]  = -input[0] * input[6] * input[15] + input[0] * input[7] * input[14] + 
+                input[4] * input[2] * input[15] - input[4] * input[3] * input[14] - 
+                input[12] * input[2] * input[7] + input[12] * input[3] * input[6];
+    
+    temp[7]  =  input[0] * input[6] * input[11] - input[0] * input[7] * input[10] - 
+                input[4] * input[2] * input[11] + input[4] * input[3] * input[10] + 
+                input[8] * input[2] * input[7] - input[8] * input[3] * input[6];
+    
+    // Row 2
+    temp[8]  =  input[4] * input[9] * input[15] - input[4] * input[11] * input[13] - 
+                input[8] * input[5] * input[15] + input[8] * input[7] * input[13] + 
+                input[12] * input[5] * input[11] - input[12] * input[7] * input[9];
+    
+    temp[9]  = -input[0] * input[9] * input[15] + input[0] * input[11] * input[13] + 
+                input[8] * input[1] * input[15] - input[8] * input[3] * input[13] - 
+                input[12] * input[1] * input[11] + input[12] * input[3] * input[9];
+    
+    temp[10] =  input[0] * input[5] * input[15] - input[0] * input[7] * input[13] - 
+                input[4] * input[1] * input[15] + input[4] * input[3] * input[13] + 
+                input[12] * input[1] * input[7] - input[12] * input[3] * input[5];
+    
+    temp[11] = -input[0] * input[5] * input[11] + input[0] * input[7] * input[9] + 
+                input[4] * input[1] * input[11] - input[4] * input[3] * input[9] - 
+                input[8] * input[1] * input[7] + input[8] * input[3] * input[5];
+    
+    // Row 3
+    temp[12] = -input[4] * input[9] * input[14] + input[4] * input[10] * input[13] + 
+                input[8] * input[5] * input[14] - input[8] * input[6] * input[13] - 
+                input[12] * input[5] * input[10] + input[12] * input[6] * input[9];
+    
+    temp[13] =  input[0] * input[9] * input[14] - input[0] * input[10] * input[13] - 
+                input[8] * input[1] * input[14] + input[8] * input[2] * input[13] + 
+                input[12] * input[1] * input[10] - input[12] * input[2] * input[9];
+    
+    temp[14] = -input[0] * input[5] * input[14] + input[0] * input[6] * input[13] + 
+                input[4] * input[1] * input[14] - input[4] * input[2] * input[13] - 
+                input[12] * input[1] * input[6] + input[12] * input[2] * input[5];
+    
+    temp[15] =  input[0] * input[5] * input[10] - input[0] * input[6] * input[9] - 
+                input[4] * input[1] * input[10] + input[4] * input[2] * input[9] + 
+                input[8] * input[1] * input[6] - input[8] * input[2] * input[5];
+    
+    // Calculate determinant
+    det = input[0] * temp[0] + input[1] * temp[4] + input[2] * temp[8] + input[3] * temp[12];
+    
+    // Check for zero determinant
+    if (det == 0.0f) {
+        // Return identity matrix if not invertible
+        matrix_unit(output);
+        return;
+    }
+    
+    det = 1.0f / det;
+    
+    // Multiply adjugate by 1/determinant to get inverse
+    int i;
+    for (i = 0; i < 16; i++) {
+        output[i] = temp[i] * det;
+    }
+}
