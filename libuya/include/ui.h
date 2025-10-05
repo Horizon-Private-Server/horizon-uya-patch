@@ -54,9 +54,8 @@ enum UiMenuIds {
     UI_MENU_IN_GAME_DETAILS = 39,
     UI_MENU_WEAPON_SELECT = 40,
     UI_MENU_UNK_4 = 41,
-    UI_MENU_CONTROLS = 42,
-    UI_MENU_TIPS_2 = 43,
-    UI_MENU_NULL = 44,
+    UI_MENU_EDIT_PROFILE_CONTROLS = 42,
+    UI_MENU_TOTAL = UI_MENU_EDIT_PROFILE_CONTROLS
 };
 
 typedef enum uiPadButtons {
@@ -412,6 +411,11 @@ UiElementText_t* challengeRoom;
 UiElementText_t* clanTag;
 UiElementText_t* leaveClan
 } UiClanDetailsElements_t;
+
+typedef struct UiTipsElements {
+UiElementImage_t *image;
+UiElementList_t* tips;
+} UiTipsElements_t;
 
 typedef struct FontWindow { // 0x1c
 /* 0x00 */ short int win_top;
