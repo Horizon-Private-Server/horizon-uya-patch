@@ -134,6 +134,7 @@ void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
 // tab state handlers
 void tabDefaultStateHandler(TabElem_t* tab, int * state);
 void tabGameSettingsStateHandler(TabElem_t* tab, int * state);
+void tabCustomMapsStateHandler(TabElem_t* tab, int * state);
 void tabGameSettingsHelpStateHandler(TabElem_t* tab, int * state);
 
 // navigation functions
@@ -429,7 +430,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
-  { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
+  { "Refresh Maps", buttonActionHandler, menuStateHandler_DisabledInGame, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
@@ -553,7 +554,7 @@ TabElem_t tabElements[] = {
   { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
   { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
   { "Game Settings", tabGameSettingsHelpStateHandler, menuElementsGameSettingsHelp, sizeof(menuElementsGameSettingsHelp)/sizeof(MenuElem_t) },
-  { "Custom Maps", tabGameSettingsStateHandler, menuElementsGameSettingsCustomMaps, sizeof(menuElementsGameSettingsCustomMaps)/sizeof(MenuElem_t) },
+  { "Custom Maps", tabCustomMapsStateHandler, menuElementsGameSettingsCustomMaps, sizeof(menuElementsGameSettingsCustomMaps)/sizeof(MenuElem_t) },
   { "Bots", tabGameSettingsStateHandler, menuElementsBotSettings, sizeof(menuElementsBotSettings)/sizeof(MenuElem_t) },
   { "Bots", tabGameSettingsHelpStateHandler, menuElementsBotSettingsHelp, sizeof(menuElementsBotSettingsHelp)/sizeof(MenuElem_t) },
 };
@@ -824,10 +825,9 @@ void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element)
 void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   refreshCustomMapList();
-  
+
   // popup
-  if (isInMenus())
-  {
+  if (isInMenus()) {
     char buf[32];
     snprintf(buf, sizeof(buf), "Found %d maps", CustomMapDefCount);
     uiShowOkDialog("Custom Maps", buf);
@@ -875,6 +875,22 @@ void tabGameSettingsStateHandler(TabElem_t* tab, int * state)
   }
   else
   {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+  }
+}
+
+void tabCustomMapsStateHandler(TabElem_t* tab, int * state)
+{
+  GameSettings * gameSettings = gameGetSettings();
+  // if no game settings, or in game, hide tab.
+  if (!gameSettings || gameSettings->GameLoadStartTime > 0) {
+    *state = ELEMENT_HIDDEN;
+  }
+  // if not host, only view.
+  else if (!gameAmIHost()) {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
+  } else {
+    // if host, do all.
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
   }
 }
@@ -1589,6 +1605,12 @@ void listVerticalActionHandler(TabElem_t* tab, MenuElem_t* element, int actionTy
   MenuElem_ListData_t* listData = (MenuElem_ListData_t*)element->userdata;
   int itemCount = listData->count;
   int itemsToDraw = (&tab->elements[tab->selectedMenuItemIdx] == element) ? (listData->rows ? listData->rows : 5) : 1;
+
+  // Initialize custom maps on first access (safe mode)
+  if (listData == &dataCustomMaps && isInMenus()) {
+    if (CustomMapDefs == NULL)
+      refreshCustomMapList();
+  }
 
   // get element state
   int state = getMenuElementState(tab, element);

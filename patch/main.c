@@ -2975,10 +2975,6 @@ int main(void)
 				// Reset patchStateContainer.CustomMapId to none
 				patchStateContainer.CustomMapId = 0;
 
-				// get custom maps if needed
-				if (CustomMapDefs == NULL)
-					refreshCustomMapList();
-
 				// send
 				configTrySendGameConfig();
 			}
