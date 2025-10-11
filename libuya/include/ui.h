@@ -517,4 +517,26 @@ char * uiMsgString(int textId);
 UiMenu_t* uiGetMenu(int UI);
 UiMenu_t* uiGetActiveMenu(int UI, int whichMenu);
 
+/*
+ * NAME :		uiRefresh
+ * DESCRIPTION :
+ * 			Let's the UI Refresh
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void uiRefresh(void);
+
+/*
+ * NAME :		uiSetBusy
+ * DESCRIPTION :
+ * 			Sets UI to Busy, showing Loading icon.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void uiSetBusy(void);
+
 #endif // _LIBUYA_UI_H_
