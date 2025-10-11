@@ -110,7 +110,7 @@ int isInStaging = 0;
 int location = LOCATION_NULL;
 int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 9001;
-int expectedMapVersion = -1;  // Host's expected map version
+int expectedMapVersion = -1;
 char showNoMapPopup = 0;
 int isConfigMenuActive = 0;
 int redownloadCustomModeBinaries = 0;
@@ -2664,7 +2664,7 @@ void onOnlineMenu(void)
 	if (!hasInitialized) {
 		padEnableInput();
 		onConfigInitialize();
-		// Custom maps will be initialized when first accessed
+		refreshCustomMapList();
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		hasInitialized = 1;
 	}
@@ -2720,15 +2720,15 @@ int main(void)
 	// Call this first
 	uyaPreUpdate();
 
-  //
-  #if DSCRPRINT
-  int i;
-  float y = 10;
-  for (i = 0; i < MAX_DEBUG_SCR_PRINT_LINES; ++i) {
-    gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0, FONT_BOLD);
-    y += 20;
-  }
-  #endif
+	//
+	#if DSCRPRINT
+	int i;
+	float y = 10;
+	for (i = 0; i < MAX_DEBUG_SCR_PRINT_LINES; ++i) {
+		gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0, FONT_BOLD);
+		y += 20;
+	}
+	#endif
 
 	// update patch pointers
 	PATCH_POINTERS = &patchPointers;
@@ -2804,10 +2804,6 @@ int main(void)
 	runHolidays();
 
 	patchColors();
-
-	#if TEST
-	void runTest(void);
-	#endif
 
 	if(isInGame()) {
 		// Patch remap buttons configuration
@@ -2978,6 +2974,10 @@ int main(void)
 				memcpy(&gameConfig, &gameConfigHostBackup, sizeof(PatchGameConfig_t));
 				// Reset patchStateContainer.CustomMapId to none
 				patchStateContainer.CustomMapId = 0;
+
+				// get custom maps if needed
+				if (CustomMapDefs == NULL)
+					refreshCustomMapList();
 
 				// send
 				configTrySendGameConfig();
