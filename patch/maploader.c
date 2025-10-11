@@ -192,8 +192,10 @@ enum MenuActionId
 
 	ACTION_MODULES_NOT_INSTALLED = 0,
 	ACTION_DOWNLOADING_MODULES = 1,
-	ACTION_MODULES_INSTALLED = 2,
-	ACTION_NEW_MAPS_UPDATE = 3,
+	ACTION_MODULES_WAIT_FOR_INSTALL = 2,
+	ACTION_MODULES_INSTALLED = 3,
+	ACTION_NEW_MAPS_UPDATE = 4,
+	ACTION_REFRESHING_MAPLIST = 5,
 
 	ACTION_NONE = 100
 };
@@ -308,8 +310,11 @@ int onSetMapOverride(void * connection, void * data)
 int onServerSentMapIrxModules(void * connection, void * data)
 {
 	DPRINTF("server sent map irx modules\n");
-
 	MapServerSentModulesMessage * msg = (MapServerSentModulesMessage*)data;
+
+	// we've already initialized the usb interface
+	if (rpcInit > 0)
+		return sizeof(MapServerSentModulesMessage);
 
 	// initiate loading
 	if (LOAD_MODULES_STATE == 0)
@@ -324,21 +329,16 @@ int onServerSentMapIrxModules(void * connection, void * data)
 
 	//
 	int init = rpcInit = rpcUSBInit();
-
 	DPRINTF("rpcUSBInit: %d, %08X:%d, %08X:%d\n", init, (u32)usbFsModuleStart, usbFsModuleSize, (u32)usbSrvModuleStart, usbSrvModuleSize);
-	
-	//
-	if (init < 0)
-	{
-		actionState = ACTION_ERROR_LOADING_MODULES;
-	}
-	else
-	{
-    actionState = ACTION_MODULES_INSTALLED;
 
-    // refresh map list
-    refreshCustomMapList();
-		
+	//
+	if (init < 0) {
+		actionState = ACTION_ERROR_LOADING_MODULES;
+	} else {
+		actionState = ACTION_MODULES_INSTALLED;
+		// refresh map list
+		refreshCustomMapList();
+
 		// if in game, ask server to resend map override to use
 		if (gameGetSettings())
 			netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
@@ -354,8 +354,7 @@ void loadModules(void)
 	if (LOAD_MODULES_STATE < 7)
 		return;
 
-	if (LOAD_MODULES_STATE != 100)
-	{
+	if (LOAD_MODULES_STATE != 100) {
 		//
 		SifInitRpc(0);
 
@@ -608,47 +607,48 @@ void checkForHostFs(void)
 //------------------------------------------------------------------------------
 void refreshCustomMapList(void)
 {
-  int fd, r, i;
-  const char* versionExt = ".version";
-  char dirpath[64];
-  char fullpath[256];
-  char filename[256];
-  char buf[64];
-  char filenameWithoutExtension[64];
-  int versionExtLen = strlen(versionExt);
-  iox_dirent_t dirent;
-  io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
+	int fd, r, i;
+	const char* versionExt = ".version";
+	char dirpath[16];
+	char filename[64];
+	char filenameWithoutExtension[64];
+	char fullpath[256];
+	char buffer[256] __attribute__((aligned(16)));
+	int versionExtLen = strlen(versionExt);
+	int actionStateAtStart = actionState;
+	long timeLastUI = timerGetSystemTime();
+	iox_dirent_t dirent;
+	io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
   
-  // reset
-  dataCustomMaps.count = 1;
-  CustomMapDefCount = 0;
+	// reset
+	dataCustomMaps.count = 1;
+	CustomMapDefCount = 0;
 
-  // need usb modules
-  if (!HAS_LOADED_MODULES) return;
+	// need usb modules
+	if (!HAS_LOADED_MODULES) return;
 
-#if DSCRPRINT
-  clearScrPrintLine();
-#endif
+	#if DSCRPRINT
+	clearScrPrintLine();
+	#endif
 
-  // check if host fs exists
-  checkForHostFs();
+	// check if host fs exists
+	checkForHostFs();
 
-  //
-  snprintf(dirpath, sizeof(dirpath), "%suya", getMapPathPrefix());
-  DPRINTF("dir path %s\n", dirpath);
+	//
+	snprintf(dirpath, sizeof(dirpath), "%suya", getMapPathPrefix());
+	DPRINTF("dir path %s\n", dirpath);
 
 	// Open
 	rpcUSBdopen(dirpath);
 	rpcUSBSync(0, NULL, &fd);
 
 	// Ensure the dir was opened successfully
-	if (fd < 0)
-	{
+	if (fd < 0) {
 		DPRINTF("error opening dir (%s): %d\n", dirpath, fd);
 		return;
 	}
 	
-  DPRINTF("opening dir (%s): returned %d\n", dirpath, fd);
+	DPRINTF("opening dir (%s): returned %d\n", dirpath, fd);
 
 	// set CustomMapDef location to "Tips" UI.
 	if (CustomMapDefs == NULL) {
@@ -659,11 +659,28 @@ void refreshCustomMapList(void)
 	}
 
 	// read
+	actionState = ACTION_REFRESHING_MAPLIST;
 	do {
+		// update UI every 100 ms (speedup)
+		int time = timerGetSystemTime();
+		int timeDtMs = (time - timeLastUI) / SYSTEM_TIME_TICKS_PER_MS;
+		if (timeDtMs > 100) {
+			timeLastUI = time;
+			uiRefresh();
+		}
+
+		// handle case where irx modules 
+		if (actionState != ACTION_REFRESHING_MAPLIST) {
+			actionStateAtStart = actionState;
+			actionState = ACTION_REFRESHING_MAPLIST;
+		}
+
 		// read next entry
 		// stop if we've reached the end
 		if (rpcUSBdread(fd, &dirent) != 0) break;
+		
 		rpcUSBSync(0, NULL, &r);
+		
 		if (r <= 0) break;
 
 		// extract filename
@@ -671,6 +688,10 @@ void refreshCustomMapList(void)
 		// PS2s use iomanX but the emu HLE hostfs thinks we're using ioman
 		if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
 		else strncpy(filename, dirent.name, sizeof(filename));
+
+		// OSX creates index files starting with a '.'
+		// filter those out
+		if (filename[0] == '.') continue;
 
 		// we want to parse the .version files
 		// check if filename ends with ".version"
@@ -747,6 +768,8 @@ void refreshCustomMapList(void)
   	// clamp
 	if (patchStateContainer.CustomMapId >= dataCustomMaps.count)
 		patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
+
+	actionState = actionStateAtStart;
 }
 
 //------------------------------------------------------------------------------
@@ -1284,8 +1307,7 @@ void runMapLoader(void)
 	hook();
 
 	// 
-	if (!initialized)
-	{
+	if (!initialized) {
 		initialized = 1;
 
 		// set map loader defaults
@@ -1293,10 +1315,32 @@ void runMapLoader(void)
 		MapLoaderState.CheckState = 0;
 
 		// install on login
-		if (LOAD_MODULES_RESULT == 0)
-		{
+		if (LOAD_MODULES_RESULT == 0) {
 			initialized = 2;
 		}
+	}
+
+	// if maps are refreshing, show popup.
+	if (actionState == ACTION_REFRESHING_MAPLIST) {
+		u32 bgColorDownload = 0x8004223f;
+		u32 textColor = 0x8069cbf2;
+		u32 barBgColor = 0x80123251;
+		u32 barFgColor = 0x8018608f;
+		gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
+		gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
+		sprintf(membuffer, "Scanning USB drive for custom maps...");
+		gfxScreenSpaceText(SCREEN_WIDTH * 0.22, SCREEN_HEIGHT * 0.4, 1, 1, colorText, membuffer, -1, 3, FONT_BOLD);
+		float w = (float)CustomMapDefCount / (float)MAX_CUSTOM_MAP_DEFINITIONS;
+		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
+	}
+
+	if (isInMenus() && CustomMapDefs == NULL) {
+		int menu = uiGetActiveMenu(UI_MENU_STAGING, 0);
+		if (menu)
+			refreshCustomMapList();
+	} else if (isInGame() && CustomMapDefs != NULL) {
+		CustomMapDefs = NULL;
+		CustomMapDefCount = 0;
 	}
 
 	// force map id to current map override if in staging
@@ -1306,12 +1350,6 @@ void runMapLoader(void)
 			if (settings && settings->GameLoadStartTime > 0) {
 				settings->GameLevel = MapLoaderState.MapId;
 				gameConfig.isCustomMap = 1;
-			}
-		} else {
-			// if not in menus, null CustomMapDef pointer and map number.
-			if (CustomMapDefs != NULL) {
-				CustomMapDefs = NULL;
-				CustomMapDefCount = 0;
 			}
 		}
 	}

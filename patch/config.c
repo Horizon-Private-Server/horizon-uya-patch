@@ -1607,10 +1607,10 @@ void listVerticalActionHandler(TabElem_t* tab, MenuElem_t* element, int actionTy
   int itemsToDraw = (&tab->elements[tab->selectedMenuItemIdx] == element) ? (listData->rows ? listData->rows : 5) : 1;
 
   // Initialize custom maps on first access (safe mode)
-  if (listData == &dataCustomMaps && isInMenus()) {
-    if (CustomMapDefs == NULL)
-      refreshCustomMapList();
-  }
+  // if (listData == &dataCustomMaps && isInMenus()) {
+  //   if (CustomMapDefs == NULL)
+  //     refreshCustomMapList();
+  // }
 
   // get element state
   int state = getMenuElementState(tab, element);
