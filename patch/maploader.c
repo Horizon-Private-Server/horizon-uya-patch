@@ -622,7 +622,6 @@ void refreshCustomMapList(void)
   // reset
   dataCustomMaps.count = 1;
   CustomMapDefCount = 0;
-  memset(CustomMapDefs, 0, sizeof(CustomMapDef_t) * MAX_CUSTOM_MAP_DEFINITIONS);
 
   // need usb modules
   if (!HAS_LOADED_MODULES) return;
@@ -651,79 +650,80 @@ void refreshCustomMapList(void)
 	
   DPRINTF("opening dir (%s): returned %d\n", dirpath, fd);
 
-  // read
-  do 
-  {
-    // read next entry
-    // stop if we've reached the end
-    if (rpcUSBdread(fd, &dirent) != 0) break;
-    rpcUSBSync(0, NULL, &r);
-    if (r <= 0) break;
-
-    // extract filename
-    // for some reason there's a mixup between if we're using ioman or iomanX
-    // PS2s use iomanX but the emu HLE hostfs thinks we're using ioman
-    if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
-    else strncpy(filename, dirent.name, sizeof(filename));
-
-    // we want to parse the .version files
-    // check if filename ends with ".version"
-    int len = strlen(filename);
-    if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
-
-    #if DSCRPRINT
-    snprintf(buf, sizeof(buf), "y %s", filename);
-    pushScrPrintLine(buf);
-    #endif
-
-    DPRINTF("found version %s\n", filename);
-
-    // parse version file
-    CustomMapVersionFileDef_t versionFileDef;
-    snprintf(fullpath, sizeof(fullpath), "%s/%s", dirpath, filename);
-    int read = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
-
-    // ensure version file is valid
-    if (read != sizeof(CustomMapVersionFileDef_t))
-    {
-      DPRINTF("%s (%d) does not match expected file size %d. Skipping.\n", filename, read, sizeof(CustomMapVersionFileDef_t));
-      continue;
-    }
-    
-    // compute filename without extension
-    strncpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
-    len = strlen(filenameWithoutExtension);
-    filenameWithoutExtension[len - versionExtLen] = 0;
-
-    // ensure version file has matching .world OR .wad
-    snprintf(fullpath, sizeof(fullpath), fWad, getMapPathPrefix(), filenameWithoutExtension);
-    int fWadLen = readFileLength(fullpath);
-    snprintf(fullpath, sizeof(fullpath), fWorld, getMapPathPrefix(), filenameWithoutExtension);
-    int fWorldLen = readFileLength(fullpath);
-    if (fWadLen <= 0 && fWorldLen <= 0) continue;
-
-    DPRINTF("(%d) \"%s\" f:\"%s\" v:%d bmap:%d mode:%d\n", CustomMapDefCount, versionFileDef.Name, filenameWithoutExtension, versionFileDef.Version, versionFileDef.BaseMapId, versionFileDef.ForcedCustomModeId);
-
 	// set CustomMapDef location to "Tips" UI.
 	if (CustomMapDefs == NULL) {
 		CustomMapDefs = (CustomMapDef_t *)uiGetMenu(UI_MENU_TIPS)->pFirstChild;
+	} else if (CustomMapDefCount) {
+		// zero data if already loaded maps.
+		memset(CustomMapDefs, 0, sizeof(CustomMapDef_t) * CustomMapDefCount);
 	}
 
-    // bring to custom map defs
-    CustomMapDefs[CustomMapDefCount].Version = versionFileDef.Version;
-    CustomMapDefs[CustomMapDefCount].BaseMapId = versionFileDef.BaseMapId;
-    CustomMapDefs[CustomMapDefCount].ForcedCustomModeId = versionFileDef.ForcedCustomModeId;
-    strncpy(CustomMapDefs[CustomMapDefCount].Filename, filenameWithoutExtension, sizeof(CustomMapDefs[CustomMapDefCount].Filename));
-    strncpy(CustomMapDefs[CustomMapDefCount].Name, versionFileDef.Name, sizeof(CustomMapDefs[CustomMapDefCount].Name));
-    CustomMapDefCount++;
+	// read
+	do {
+		// read next entry
+		// stop if we've reached the end
+		if (rpcUSBdread(fd, &dirent) != 0) break;
+		rpcUSBSync(0, NULL, &r);
+		if (r <= 0) break;
 
-    // reached max maps
-    if (CustomMapDefCount >= MAX_CUSTOM_MAP_DEFINITIONS) break;
-    
-  } while (1);
+		// extract filename
+		// for some reason there's a mixup between if we're using ioman or iomanX
+		// PS2s use iomanX but the emu HLE hostfs thinks we're using ioman
+		if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
+		else strncpy(filename, dirent.name, sizeof(filename));
 
-  // close
-  rpcUSBdclose(fd);
+		// we want to parse the .version files
+		// check if filename ends with ".version"
+		int len = strlen(filename);
+		if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
+
+		#if DSCRPRINT
+		snprintf(buf, sizeof(buf), "y %s", filename);
+		pushScrPrintLine(buf);
+		#endif
+
+		DPRINTF("found version %s\n", filename);
+
+		// parse version file
+		CustomMapVersionFileDef_t versionFileDef;
+		snprintf(fullpath, sizeof(fullpath), "%s/%s", dirpath, filename);
+		int read = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
+
+		// ensure version file is valid
+		if (read != sizeof(CustomMapVersionFileDef_t)) {
+			DPRINTF("%s (%d) does not match expected file size %d. Skipping.\n", filename, read, sizeof(CustomMapVersionFileDef_t));
+			continue;
+		}
+		
+		// compute filename without extension
+		strncpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
+		len = strlen(filenameWithoutExtension);
+		filenameWithoutExtension[len - versionExtLen] = 0;
+
+		// ensure version file has matching .world OR .wad
+		snprintf(fullpath, sizeof(fullpath), fWad, getMapPathPrefix(), filenameWithoutExtension);
+		int fWadLen = readFileLength(fullpath);
+		snprintf(fullpath, sizeof(fullpath), fWorld, getMapPathPrefix(), filenameWithoutExtension);
+		int fWorldLen = readFileLength(fullpath);
+		if (fWadLen <= 0 && fWorldLen <= 0) continue;
+
+		DPRINTF("(%d) \"%s\" f:\"%s\" v:%d bmap:%d mode:%d\n", CustomMapDefCount, versionFileDef.Name, filenameWithoutExtension, versionFileDef.Version, versionFileDef.BaseMapId, versionFileDef.ForcedCustomModeId);
+
+		// bring to custom map defs
+		CustomMapDefs[CustomMapDefCount].Version = versionFileDef.Version;
+		CustomMapDefs[CustomMapDefCount].BaseMapId = versionFileDef.BaseMapId;
+		CustomMapDefs[CustomMapDefCount].ForcedCustomModeId = versionFileDef.ForcedCustomModeId;
+		strncpy(CustomMapDefs[CustomMapDefCount].Filename, filenameWithoutExtension, sizeof(CustomMapDefs[CustomMapDefCount].Filename));
+		strncpy(CustomMapDefs[CustomMapDefCount].Name, versionFileDef.Name, sizeof(CustomMapDefs[CustomMapDefCount].Name));
+		CustomMapDefCount++;
+
+		// reached max maps
+		if (CustomMapDefCount >= MAX_CUSTOM_MAP_DEFINITIONS) break;
+		
+	} while (1);
+
+	// close
+	rpcUSBdclose(fd);
 	rpcUSBSync(0, NULL, NULL);
   
     // sort names alphabetically
@@ -738,15 +738,15 @@ void refreshCustomMapList(void)
             }
         }
     }
-  // populate config
-  for (i = 0; i < CustomMapDefCount; ++i) {
-    dataCustomMaps.items[i+1] = (char*)CustomMapDefs[i].Name;
-    dataCustomMaps.count += 1;
-  }
+	// populate config
+	for (i = 0; i < CustomMapDefCount; ++i) {
+		dataCustomMaps.items[i+1] = (char*)CustomMapDefs[i].Name;
+		dataCustomMaps.count += 1;
+	}
 
-  // clamp
-  if (patchStateContainer.CustomMapId >= dataCustomMaps.count)
-    patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
+  	// clamp
+	if (patchStateContainer.CustomMapId >= dataCustomMaps.count)
+		patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
 }
 
 //------------------------------------------------------------------------------
