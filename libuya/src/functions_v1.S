@@ -8,12 +8,6 @@
 	#define GAME_MAP_ID                         (0x001F8528)
 #endif
 
-// Map ID constants for clarity
-#define MAP_ID_LOBBY                        39
-#define MAP_ID_MIN                          40
-#define MAP_ID_MAX                          50
-#define MAP_ID_LOCAL_OFFSET                 10
-
 // fixed address function
 #define FUNCTION(name, address) \
 	.set	push;		        \
@@ -29,7 +23,7 @@ name:	j address;              \
 	.size	name,.-name;	    \
 	.set	pop;
 
-// variable address function - optimized register usage
+// variable address function
 #define VARIABLE_FUNCTION(name, variable_address_struct) \
 	.set	push;		        				\
 	.set	noreorder;	        		\
@@ -40,10 +34,11 @@ name:	j address;              \
 	.ent	name,0;		        			\
 	.extern variable_address_struct; \
 name:														\
-		addiu $sp, $sp, -0x30;			\
+		addiu $sp, $sp, -0x40;			\
 		sq $ra, 0x00($sp);					\
 		sq $a0, 0x10($sp);					\
 		sq $a1, 0x20($sp);					\
+		sq $s0, 0x30($sp);					\
 		la $a0, variable_address_struct; \
 		la $a1, ##name##_return;				\
 		j __LocalGetAddress;        \
@@ -56,62 +51,63 @@ name:														\
 		lq $a0, 0x10($sp);					\
 ##name##_exit:											\
 		lq $ra, 0x00($sp);					\
+		lq $s0, 0x30($sp);					\
 		jr $ra;											\
-		addiu $sp, $sp, 0x30;				\
+		addiu $sp, $sp, 0x40;				\
 	.end	name;		        				\
 	.size	name,.-name;	   			 	\
 	.set	pop;
 
-// Helper function for VARIABLE_FUNCTION macro
-// Returns address based on current game state and map
+// 
 	.set	push;
 	.set	noreorder;
-	.section	.text.__LocalGetAddress,"ax",@progbits;
+	.section	.text.##__LocalGetAddress,"ax",@progbits;
 	.align 2;
 	.globl	__LocalGetAddress;
 	.type	__LocalGetAddress,@function;
 	.ent	__LocalGetAddress,0;
 __LocalGetAddress:
-	// Check if scene is loaded
+	// if scene is loading, then we have no address
 	li $v1, 1;
 	lw $v0, SCENE_LOADED;
 	bne $v0, $v1, __LocalGetAddress_exit;
 	li $v0, 0;
 
-	// Check if in lobby (map ID 39) - return lobby address
+	// if in menus then return lobby address
 	lw $v0, GAME_MAP_ID;
-	li $v1, MAP_ID_LOBBY;
+  li $v1, 39;
 	beq $v0, $v1, __LocalGetAddress_exit;
-	lw $v0, 0($a0);
+	lw $v0, 0($a0)
 
-	// Check if game is active
+	// if not in game then no address
 	lw $v0, GAME_ACTIVE;
 	beq $v0, $zero, __LocalGetAddress_exit;
 	nop;
 
-	// Get current map ID
+	// otherwise in game
+	// return address by map
 	lw $v0, GAME_MAP_ID;
 	
-	// Map local map IDs (50+) to real map IDs (40+)
-	addiu $v1, $v0, -MAP_ID_LOCAL_OFFSET;
-	slti $t0, $v0, MAP_ID_MAX;
-	movz $v0, $v1, $t0;
+	// map local map ids (50+) to real map ids (40+)
+	addiu $v1, $v0, -10;
+	slti $s0, $v0, 50;
+	movz $v0, $v1, $s0;
 
-	// Validate map is in range [40, 50)
-	addiu $v1, $v0, -MAP_ID_MIN;
-	sltiu $v0, $v1, 10;
+	// return 0 if map is not between 40 and 50
+	addiu $v1, $v0, -40
+	sltiu $v0, $v1, 10
 	beqzl $v0, __LocalGetAddress_exit;
 	move $v0, $zero;
 
-	// Calculate offset into VariableAddress struct
-	// offset = (map_id - 40) * 4 + 4
-	sll $v1, $v1, 2;          // multiply by 4 (word size)
-	addiu $v0, $v1, 4;        // skip lobby address at offset 0
+	// load offset into VariableAddress struct by map id
+	sll $v1, $v1, 2; // multiply map id [0,9] by 4
+	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
 
-	// Load address from struct
+	// load address from struct
 	addu $a0, $v0;
 	lw $v0, 0($a0);
 
+	// return to calling function
 __LocalGetAddress_exit:
 	jr $a1;
 	nop;
@@ -119,55 +115,56 @@ __LocalGetAddress_exit:
 	.size	__LocalGetAddress,.-__LocalGetAddress;
 	.set	pop;
 
-// Public GetAddress function - can be called directly
-// Returns address based on game state, uses $ra for return
+// 
 	.set	push;
 	.set	noreorder;
-	.section	.text.GetAddress,"ax",@progbits;
+	.section	.text.##GetAddress,"ax",@progbits;
 	.align 2;
 	.globl	GetAddress;
 	.type	GetAddress,@function;
 	.ent	GetAddress,0;
 GetAddress:
-	// Check if scene is loaded
+	// if scene is loading, then we have no address
 	li $v1, 1;
 	lw $v0, SCENE_LOADED;
 	bne $v0, $v1, GetAddress_exit;
 	li $v0, 0;
 
-	// Check if in lobby (map ID 39) - return lobby address
+	// if in menus then return lobby address
 	lw $v0, GAME_MAP_ID;
-	li $v1, MAP_ID_LOBBY;
+  li $v1, 39;
 	beq $v0, $v1, GetAddress_exit;
-	lw $v0, 0($a0);
+	lw $v0, 0($a0)
 
-	// Check if game is active
+	// if not in game then no address
 	lw $v0, GAME_ACTIVE;
 	beq $v0, $zero, GetAddress_exit;
 	nop;
 
-	// Get current map ID
+	// otherwise in game
+	// return address by map
 	lw $v0, GAME_MAP_ID;
 	
-	// Map local map IDs (50+) to real map IDs (40+)
-	addiu $v1, $v0, -MAP_ID_LOCAL_OFFSET;
-	slti $t0, $v0, MAP_ID_MAX;
+	// map local map ids (50+) to real map ids (40+)
+	addiu $v1, $v0, -10;
+	slti $t0, $v0, 50;
 	movz $v0, $v1, $t0;
 
-	// Validate map is in range [40, 50)
-	addiu $v1, $v0, -MAP_ID_MIN;
-	sltiu $v0, $v1, 10;
+	// return 0 if map is not between 40 and 50
+	addiu $v1, $v0, -40
+	sltiu $v0, $v1, 10
 	beqzl $v0, GetAddress_exit;
 	move $v0, $zero;
 
-	// Calculate offset into VariableAddress struct
-	sll $v1, $v1, 2;          // multiply by 4
-	addiu $v0, $v1, 4;        // skip lobby address
+	// load offset into VariableAddress struct by map id
+	sll $v1, $v1, 2; // multiply map id [0,9] by 4
+	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
 
-	// Load address from struct
+	// load address from struct
 	addu $a0, $v0;
 	lw $v0, 0($a0);
 
+	// return to calling function
 GetAddress_exit:
 	jr $ra;
 	nop;
@@ -175,44 +172,56 @@ GetAddress_exit:
 	.size	GetAddress,.-GetAddress;
 	.set	pop;
 
-// GetAddressImmediate - skips scene/game checks for performance
-// Use only when you know the game state is valid
+// 
 	.set	push;
 	.set	noreorder;
-	.section	.text.GetAddressImmediate,"ax",@progbits;
+	.section	.text.##GetAddress,"ax",@progbits;
 	.align 2;
 	.globl	GetAddressImmediate;
 	.type	GetAddressImmediate,@function;
 	.ent	GetAddressImmediate,0;
 GetAddressImmediate:
-	// Check if in lobby (map ID 39) - return lobby address
-	lw $v0, GAME_MAP_ID;
-	li $v1, MAP_ID_LOBBY;
-	beq $v0, $v1, GetAddressImmediate_exit;
-	lw $v0, 0($a0);
+	// if scene is loading, then we have no address
+	//li $v1, 1;
+	//lw $v0, SCENE_LOADED;
+	//bne $v0, $v1, GetAddressImmediate_exit;
+	//li $v0, 0;
 
-	// Get current map ID
+	// if in menus then return lobby address
+	lw $v0, GAME_MAP_ID;
+  li $v1, 39;
+	beq $v0, $v1, GetAddressImmediate_exit;
+	lw $v0, 0($a0)
+
+	// if not in game then no address
+	//lw $v0, GAME_ACTIVE;
+	//beq $v0, $zero, GetAddressImmediate_exit;
+	//nop;
+
+	// otherwise in game
+	// return address by map
 	lw $v0, GAME_MAP_ID;
 	
-	// Map local map IDs (50+) to real map IDs (40+)
-	addiu $v1, $v0, -MAP_ID_LOCAL_OFFSET;
-	slti $t0, $v0, MAP_ID_MAX;
+	// map local map ids (50+) to real map ids (40+)
+	addiu $v1, $v0, -10;
+	slti $t0, $v0, 50;
 	movz $v0, $v1, $t0;
 
-	// Validate map is in range [40, 50)
-	addiu $v1, $v0, -MAP_ID_MIN;
-	sltiu $v0, $v1, 10;
+	// return 0 if map is not between 40 and 50
+	addiu $v1, $v0, -40
+	sltiu $v0, $v1, 10
 	beqzl $v0, GetAddressImmediate_exit;
 	move $v0, $zero;
 
-	// Calculate offset into VariableAddress struct
-	sll $v1, $v1, 2;
-	addiu $v0, $v1, 4;
+	// load offset into VariableAddress struct by map id
+	sll $v1, $v1, 2; // multiply map id [0,9] by 4
+	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
 
-	// Load address from struct
+	// load address from struct
 	addu $a0, $v0;
 	lw $v0, 0($a0);
 
+	// return to calling function
 GetAddressImmediate_exit:
 	jr $ra;
 	nop;
@@ -229,6 +238,7 @@ GetAddressImmediate_exit:
 #
 FUNCTION(printf, 0x00128c70)
 FUNCTION(sce_snprintf, 0x00128ba8)
+# FUNCTION(printf, 0x0011e718) <-- OLD :D
 FUNCTION(sprintf, 0x00120048)
 FUNCTION(snprintf, 0x0011ffa8)
 FUNCTION(memset, 0x0011d534)
@@ -239,6 +249,7 @@ FUNCTION(strcat, 0x001202f4)
 FUNCTION(strncat, 0x001209c0)
 FUNCTION(strcmp, 0x001205b0)
 FUNCTION(strncmp, 0x00120b70)
+#FUNCTION(strlen, 0x00120884)
 FUNCTION(malloc, 0x0011c7b8)
 FUNCTION(free, 0x0011c810)
 
@@ -251,8 +262,12 @@ VARIABLE_FUNCTION(atan2f, vaFastArcTan)
 # NTSC and PAL addresses are the same for the following.
 FUNCTION(powf, 0x00136d28)
 FUNCTION(asinf, 0x001348b8)
+#FUNCTION(sqrtf, 0x0011a808)
+#FUNCTION(fabsf, 0x0011a550)
 FUNCTION(fptodp, 0x001321c8)
 FUNCTION(__divdi3, 0x00130760)
+#FUNCTION(dptoli, 0x00131d70)
+#FUNCTION(litodp, 0x00131cb8)
 FUNCTION(floorf, 0x00136ba8)
 
 #--------------------------------------------------------
@@ -267,7 +282,7 @@ FUNCTION(matrix_rotate_z, 0x0013d660)
 #----------------------- GRAPHICS -----------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(internal_drawFunc, vaFontPrintFunc)
-VARIABLE_FUNCTION(gfxScreenSpaceTextCenter, vaFontPrintCenterFunc)
+VARIABLE_FUNCTION(gfxScreenSpaceTextCenter, vaFontPrintCenterFunc);
 VARIABLE_FUNCTION(gfxGetFontWidth, vaGetTextWidthFunc)
 VARIABLE_FUNCTION(internal_drawBox, vaDrawBoxFunc)
 VARIABLE_FUNCTION(gfxSetupGifPaging, vaSetupGifPaging)
@@ -286,7 +301,7 @@ VARIABLE_FUNCTION(internal_SpawnPart_059, vaSpawnPart_059)
 VARIABLE_FUNCTION(gfxDestroyParticle, vaDeletePart)
 VARIABLE_FUNCTION(internal_WorldSpaceToScreenSpace, vaWorldSpaceToScreenSpace)
 VARIABLE_FUNCTION(gfxDrawScreenOverlay, vaDrawScreenOverlay)
-VARIABLE_FUNCTION(gfxDrawStrip, vaFastDrawStrip)
+VARIABLE_FUNCTION(gfxDrawStrip, vaFastDrawStrip);
 VARIABLE_FUNCTION(gfxDrawStripInit, vaDrawStripInit)
 VARIABLE_FUNCTION(gfxAddRegister, vaVU0_addGSRegister)
 
@@ -363,7 +378,7 @@ VARIABLE_FUNCTION(internal_colorLerp, vaColorLerpFunc)
 	FUNCTION(internal_uiInvitePlayersDialog, 0x006848d0)
 #endif
 VARIABLE_FUNCTION(internal_uiShowPopup, vaUIShowPopup)
-FUNCTION(uiShowHelpPopup, 0x00540140)
+FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported (For in game)
 VARIABLE_FUNCTION(uiMsgString, vaUiMsgStringFunc)
 VARIABLE_FUNCTION(gfxSetFont, vaFontSet)
 
@@ -479,6 +494,9 @@ VARIABLE_FUNCTION(randRange, vaMB_randRange)
 VARIABLE_FUNCTION(randRangeInt, vaMB_randRangeInt)
 VARIABLE_FUNCTION(randRangeNeg, vaMB_randRange2)
 VARIABLE_FUNCTION(randRadian, vaMB_randRot)
+#VARIABLE_FUNCTION(randVector, 0x004b7e50)
+#VARIABLE_FUNCTION(randVectorRangeNeg, 0x005083c8)
+#VARIABLE_FUNCTION(randVectorRange, 0x00508448)
 
 #--------------------------------------------------------
 #------------------------ WEAPON ------------------------
