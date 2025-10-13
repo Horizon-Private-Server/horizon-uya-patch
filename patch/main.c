@@ -2372,23 +2372,30 @@ void patchHeadsetSprite(GameSettings* gs, int clientId)
     UiStagingElements_t* child = &ui->pChildren;
     // hide voice header
     child->voiceHeadingSprite->state = 0;
-	// set sprite
-	child->voiceSprite[clientId]->sprite = SPRITE_HUD_X;
 	// check state and set color
 	u32 color = 0;
+	u32 sprite = SPRITE_HUD_X;
 	if (clientId > 0) {
-		if (gs->PlayerStates[clientId] == GS_PLAYER_STATE_MAP_NONE) {
-			// Player doesn't have the map - check if it's wrong version or missing completely
-			if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
-				// Has map but wrong version - Purple
-				color = 0x80C02080;  // Purple from TEAM_COLORS[5]
-			} else {
-				// Missing map completely - Original blue color
+		switch (gs->PlayerStates[clientId]) {
+			case GS_PLAYER_STATE_MAP_NONE: {
+				sprite = SPRITE_HUD_X;
 				color = 0x8069cbf2;
+				break;
+			}
+			case GS_PLAYER_STATE_MAP_VERSION_OLDER: {
+				sprite = SPRITE_HUD_BASE;
+				color = 0x80000000 | TEAM_COLORS[TEAM_RED];
+				break;
+			}
+			case GS_PLAYER_STATE_MAP_VERSION_NEWER: {
+				sprite = SPRITE_HUD_BASE;
+				color = 0x80000000 | TEAM_COLORS[TEAM_GREEN];
+				break;
 			}
 		}
 		// If state is not MAP_NONE, color remains 0 (transparent) - has correct version
 	}
+	child->voiceSprite[clientId]->sprite = sprite;
 	child->voiceSprite[clientId]->vTable->setColor(child->voiceSprite[clientId], color);
 }
 
@@ -2427,18 +2434,26 @@ void runCheckGameMapInstalled(void)
 		if (isMe && i > 0) {
 			switch (gs->PlayerStates[i]) {
 				case GS_PLAYER_STATE_UNREADY: {
+					// Player doesn't have map.
 					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
 						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					} else if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
-						// Has map but wrong version - still set to MAP_NONE but we'll color it differently
-						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
+					}
+					// Player has map, but wrong version.
+					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
+						if (mapOverrideResponse > expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
+						} else if (mapOverrideResponse < expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
+						}
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
 					break;
 				}
-				case GS_PLAYER_STATE_MAP_NONE: {
-					if ((mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse == expectedMapVersion) || mapOverrideResponse == -3) {
+				case GS_PLAYER_STATE_MAP_NONE:
+				case GS_PLAYER_STATE_MAP_VERSION_OLDER:
+				case GS_PLAYER_STATE_MAP_VERSION_NEWER: {
+					if (mapOverrideResponse >= 0 || mapOverrideResponse == -3 || mapOverrideResponse == expectedMapVersion) {
 						gameSetClientState(i, GS_PLAYER_STATE_UNREADY);
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
@@ -2446,10 +2461,19 @@ void runCheckGameMapInstalled(void)
 				}
 				case GS_PLAYER_STATE_KICK: showNoMapPopup = 0; break;
 				case GS_PLAYER_STATE_READY: {
-					if ((mapOverrideResponse < 0 && mapOverrideResponse != -3) || 
-						(mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion)) {
+					// Player doesn't have map.
+					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
 						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
 						showNoMapPopup = 1;
+						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
+					}
+					// Player has map, but wrong version.
+					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
+						if (mapOverrideResponse > expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
+						} else if (mapOverrideResponse < expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
+						}
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
 					break;
