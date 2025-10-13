@@ -35,8 +35,11 @@
 #include "include/config.h"
 #include "include/cheats.h"
 
-#define GLOBAL_GAME_MODULES_START							((GameModule*)0x000CF000)
-#define EXCEPTION_DISPLAY_ADDR								(0x000C8000)
+extern int _SECTION_EXCEPTION_HANDLER;
+extern int _SECTION_MODULE_DEFINITIONS;
+
+#define GLOBAL_GAME_MODULES_START							((GameModule*)_SECTION_MODULE_DEFINITIONS)
+#define EXCEPTION_HANDLER									(_SECTION_EXCEPTION_HANDLER)
 #define GAME_UPDATE_SENDRATE								(5 * TIME_SECOND)
 
 #if UYA_PAL
@@ -50,8 +53,6 @@
 // #define UI_PTR_FUNC_STATS									(0x0047eab4)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dbac)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006c234c)
-#define STAGING_VOICE_ACTIVE_JAL							(0x006c2328)
-#define gMultiDecMap 										(0x00240660)
 #define nwVoiceUpdateFunc									(0x0019c2c0)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
@@ -64,14 +65,8 @@
 // #define UI_PTR_FUNC_STATS									(0x0047eb74)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dc6c)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006bf834)
-#define STAGING_VOICE_ACTIVE_JAL							(0x006bf810)
-#define gMultiDecMap										(0x002407e0)
 #define nwVoiceUpdateFunc									(0x0019c400)
 #endif
-
-#define STAGING_VOICE_COLOR_1 ((u32)STAGING_VOICE_ACTIVE_JAL + 0x18)
-#define STAGING_VOICE_COLOR_2 ((u32)STAGING_VOICE_ACTIVE_JAL + 0x14)
-#define STAGING_VOICE_COLOR_3 ((u32)STAGING_VOICE_ACTIVE_JAL + 0x28)
 
 void onConfigOnlineMenu(void);
 void onConfigGameMenu(void);
@@ -97,9 +92,6 @@ void grLoadStart(void);
 // void runSpectate(void);
 #ifdef SCAVENGER_HUNT
 void scavHuntRun(void);
-#endif
-#if TEST
-void runTest(void);
 #endif
 
 int hasInitialized = 0;
@@ -186,8 +178,7 @@ PatchPointers_t patchPointers = {
   .ServerTimeSecond = 0,
 };
 
-struct FlagPVars
-{
+struct FlagPVars {
 	VECTOR BasePosition;
 	short CarrierIdx;
 	short LastCarrierIdx;
@@ -360,23 +351,23 @@ char * checkMap(void)
 void runExceptionHandler(void)
 {
 	// invoke exception display installer
-	if (*(u32*)EXCEPTION_DISPLAY_ADDR != 0) {
+	if (*(u32*)EXCEPTION_HANDLER != 0) {
 		if (!hasInstalledExceptionHandler) {
-			((void (*)(void))EXCEPTION_DISPLAY_ADDR)();
+			((void (*)(void))EXCEPTION_HANDLER)();
 			hasInstalledExceptionHandler = 1;
 		}
 
 		char * mapStr = checkMap();		// change "a fatal error as occured." to region and map.
-		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x794), regionStr, 6);
-		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x79a), mapStr, 20);
+		strncpy((char*)(EXCEPTION_HANDLER + 0x794), regionStr, 6);
+		strncpy((char*)(EXCEPTION_HANDLER + 0x79a), mapStr, 20);
 		
 		// change display to match progressive scan resolution
 		if (gfxGetIsProgressiveScan()) {
-			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F4) = 0x0083;
-			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F8) = 0x210E;
+			*(u16*)(EXCEPTION_HANDLER + 0x9F4) = 0x0083;
+			*(u16*)(EXCEPTION_HANDLER + 0x9F8) = 0x210E;
 		} else {
-			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F4) = 0x0183;
-			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F8) = 0x2278;
+			*(u16*)(EXCEPTION_HANDLER + 0x9F4) = 0x0183;
+			*(u16*)(EXCEPTION_HANDLER + 0x9F8) = 0x2278;
 		}
 	}
 }
@@ -2919,9 +2910,6 @@ int main(void)
 			// POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
 			POKE_U32(UI_PTR_FUNC_KEYBOARD, &patchKeyboard);
 			POKE_U32(STAGING_JALR_HEADSET_SET_COLOR, 0);
-			// HOOK_JAL(STAGING_VOICE_ACTIVE_JAL, &patchHeadsetSprite);
-			// POKE_U32(STAGING_VOICE_COLOR_1, 0x3c05006e);
-			// POKE_U32(STAGING_VOICE_COLOR_2, 0x3c05806e);
 			patched.uiModifiers = 1;
 		}
 
