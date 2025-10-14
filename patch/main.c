@@ -2383,12 +2383,12 @@ void patchHeadsetSprite(GameSettings* gs, int clientId)
 				break;
 			}
 			case GS_PLAYER_STATE_MAP_VERSION_OLDER: {
-				sprite = SPRITE_HUD_BASE;
+				sprite = SPRITE_HUD_X; //SPRITE_HUD_BASE;
 				color = 0x80000000 | TEAM_COLORS[TEAM_RED];
 				break;
 			}
 			case GS_PLAYER_STATE_MAP_VERSION_NEWER: {
-				sprite = SPRITE_HUD_BASE;
+				sprite = SPRITE_HUD_X; // SPRITE_HUD_BASE;
 				color = 0x80000000 | TEAM_COLORS[TEAM_GREEN];
 				break;
 			}
