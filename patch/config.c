@@ -12,7 +12,6 @@
 #include "messageid.h"
 #include "include/config.h"
 #include "module.h"
-#include "rpc.h"
 
 #define LINE_HEIGHT         (0.05)
 #define LINE_HEIGHT_3_2     (0.075)
@@ -21,10 +20,6 @@
 int selectedTabItem = 0;
 u32 padPointer = 0;
 int preset = 0;
-
-// pagination for custom maps (10 maps per page max)
-int currentMapPage = 0;
-int mapsInitialized = 0;
 
 int dlBytesReceived = 0;
 int dlTotalBytes = 0;
@@ -139,6 +134,7 @@ void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
 // tab state handlers
 void tabDefaultStateHandler(TabElem_t* tab, int * state);
 void tabGameSettingsStateHandler(TabElem_t* tab, int * state);
+void tabCustomMapsStateHandler(TabElem_t* tab, int * state);
 void tabGameSettingsHelpStateHandler(TabElem_t* tab, int * state);
 
 // navigation functions
@@ -249,15 +245,15 @@ MenuElem_ListData_t dataCycleWeapon3 = {
     }
 };
 
-// map select list  
+// map select list
 MenuElem_ListData_t dataCustomMaps = {
   .value = &patchStateContainer.CustomMapId,
   .stateHandler = menuStateHandler_SelectedMapOverride,
   .count = 1,
   .rows = 10,
   .items = {
-    "None- dpad->paginate",
-    [MAX_CUSTOM_MAP_DEFINITIONS+1] NULL  // Now only 11 items instead of 65
+    "None",
+    [MAX_CUSTOM_MAP_DEFINITIONS+1] NULL
   }
 };
 
@@ -434,7 +430,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
-  { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
+  { "Refresh Maps", buttonActionHandler, menuStateHandler_DisabledInGame, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
@@ -558,7 +554,7 @@ TabElem_t tabElements[] = {
   { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
   { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
   { "Game Settings", tabGameSettingsHelpStateHandler, menuElementsGameSettingsHelp, sizeof(menuElementsGameSettingsHelp)/sizeof(MenuElem_t) },
-  { "Custom Maps", tabGameSettingsStateHandler, menuElementsGameSettingsCustomMaps, sizeof(menuElementsGameSettingsCustomMaps)/sizeof(MenuElem_t) },
+  { "Custom Maps", tabCustomMapsStateHandler, menuElementsGameSettingsCustomMaps, sizeof(menuElementsGameSettingsCustomMaps)/sizeof(MenuElem_t) },
   { "Bots", tabGameSettingsStateHandler, menuElementsBotSettings, sizeof(menuElementsBotSettings)/sizeof(MenuElem_t) },
   { "Bots", tabGameSettingsHelpStateHandler, menuElementsBotSettingsHelp, sizeof(menuElementsBotSettingsHelp)/sizeof(MenuElem_t) },
 };
@@ -665,7 +661,7 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
       }
       #endif
 */
-      case CUSTOM_MODE_MIDFLAG: {
+      CUSTOM_MODE_MIDFLAG: {
         if (gs->GameType == GAMETYPE_CTF) return 1;
         *value = CUSTOM_MODE_NONE;
         return 0; 
@@ -825,318 +821,17 @@ void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element)
   }
 }
 
-// Load maps for current page (max 10 maps)
-void loadCustomMapsPage(int page)
-{
-  
-  int fd, r, i;
-  char dirpath[64];
-  iox_dirent_t dirent;
-  int mapCount = 0;
-  int skipCount = page * 10; // Skip maps for previous pages
-  int currentSkip = 0;
-  
-  // reset current page data
-  dataCustomMaps.count = 1; // Always start with "None"
-  memset(CustomMapDefs, 0, sizeof(CustomMapDefs));
-  
-  // clear all items except first "None"
-  for (i = 1; i < MAX_CUSTOM_MAP_DEFINITIONS + 1; i++) {
-    dataCustomMaps.items[i] = NULL;
-  }
-  dataCustomMaps.items[0] = "None- dpad->paginate";
-  
-  // Check if USB modules are loaded first
-  #define LOAD_MODULES_STATE                      (*(u8*)0x000CFFF0)
-  #define HAS_LOADED_MODULES                      (LOAD_MODULES_STATE == 100)
-  if (!HAS_LOADED_MODULES) {
-    CustomMapDefCount = 0;
-    return;
-  }
-  
-  // Check for host filesystem first (like original code)
-  extern void checkForHostFs(void);
-  checkForHostFs();
-  
-  // build directory path
-  sprintf(dirpath, "%suya", getMapPathPrefix());
-  
-  // Reset mapCount
-  mapCount = 0;
-  
-  // Sync RPC before USB operations to prevent SIF conflicts
-  rpcUSBSync(0, NULL, NULL);
-  
-  // open directory with proper RPC pattern (like original code)
-  rpcUSBdopen(dirpath);
-  rpcUSBSync(0, NULL, &fd);
-  
-  if (fd < 0) {
-    // USB failed - set safe defaults and exit
-    CustomMapDefCount = 0;
-    dataCustomMaps.count = 1; // Just "None"
-    return;
-  }
-  
-  // read directory entries
-  int totalFilesFound = 0;
-  while (mapCount < 10) { // Max 10 maps per page
-    rpcUSBdread(fd, &dirent);
-    rpcUSBSync(0, NULL, &r);
-    if (r <= 0) break;
-    
-    totalFilesFound++;
-    
-    // Look for .version files (use original logic)
-    extern int useHost;
-    const char* versionExt = ".version";
-    int versionExtLen = strlen(versionExt);
-    io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
-    
-    // extract filename using original logic
-    // for some reason there's a mixup between if we're using ioman or iomanX
-    // PS2s use iomanX but the emu HLE hostfs thinks we're using ioman
-    char filename[256];
-    if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
-    else strncpy(filename, dirent.name, sizeof(filename));
-
-    // we want to parse the .version files (like original)
-    // check if filename ends with ".version"
-    int len = strlen(filename);
-    if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
-    
-    // skip maps for previous pages
-    if (currentSkip < skipCount) {
-      currentSkip++;
-      continue;
-    }
-    
-    // add map to current page
-    if (mapCount < MAX_CUSTOM_MAP_DEFINITIONS) {
-      // compute filename without extension (like original)
-      char filenameWithoutExtension[64];
-      strncpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
-      int nameLen = strlen(filenameWithoutExtension);
-      filenameWithoutExtension[nameLen - versionExtLen] = 0;
-
-      // parse version file to get real display name (like original)
-      char fullpath[256];
-      sprintf(fullpath, "%s/%s", dirpath, filename);
-      
-      CustomMapVersionFileDef_t versionFileDef;
-      int readBytes = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
-      
-      if (readBytes == sizeof(CustomMapVersionFileDef_t)) {
-        // Use the name from the version file (like original)
-        strncpy(CustomMapDefs[mapCount].Name, versionFileDef.Name, sizeof(CustomMapDefs[mapCount].Name));
-        strncpy(CustomMapDefs[mapCount].Filename, filenameWithoutExtension, sizeof(CustomMapDefs[mapCount].Filename));
-        CustomMapDefs[mapCount].Version = versionFileDef.Version;
-        CustomMapDefs[mapCount].BaseMapId = versionFileDef.BaseMapId;
-        CustomMapDefs[mapCount].ForcedCustomModeId = versionFileDef.ForcedCustomModeId;
-      } else {
-        // Fallback to filename if version file can't be read
-        strncpy(CustomMapDefs[mapCount].Name, filenameWithoutExtension, sizeof(CustomMapDefs[mapCount].Name));
-      }
-      
-      dataCustomMaps.items[mapCount + 1] = CustomMapDefs[mapCount].Name;
-      mapCount++;
-      dataCustomMaps.count++;
-    }
-    
-    // Sync every few operations to prevent SIF overload
-    if (mapCount % 3 == 0) {
-      rpcUSBSync(0, NULL, NULL);
-    }
-  }
-  
-  // No debug mode needed - we confirmed USB works
-  
-  // Final sync before closing to ensure clean state
-  rpcUSBSync(0, NULL, NULL);
-  rpcUSBdclose(fd);
-  rpcUSBSync(0, NULL, NULL);
-  
-  // Set global count to current page's map count
-  CustomMapDefCount = mapCount;
-}
-
-// Search USB for a specific map by filename and return version if found
-int searchUSBForSpecificMap(const char* mapFilename, CustomMapDef_t* outMapDef)
-{
-  int fd, r;
-  char dirpath[64];
-  iox_dirent_t dirent;
-  int found = 0;
-  
-  // Clear output map definition
-  if (outMapDef) {
-    memset(outMapDef, 0, sizeof(CustomMapDef_t));
-  }
-  
-  // Check if USB modules are loaded first
-  #define LOAD_MODULES_STATE                      (*(u8*)0x000CFFF0)
-  #define HAS_LOADED_MODULES                      (LOAD_MODULES_STATE == 100)
-  if (!HAS_LOADED_MODULES) {
-    return -1; // USB not available
-  }
-  
-  // Check for host filesystem first (like original code)
-  extern void checkForHostFs(void);
-  checkForHostFs();
-  
-  sprintf(dirpath, "%suya", getMapPathPrefix());
-  
-  // Sync before operations to prevent SIF conflicts
-  rpcUSBSync(0, NULL, NULL);
-  
-  // Use proper RPC pattern like the working code
-  rpcUSBdopen(dirpath);
-  rpcUSBSync(0, NULL, &fd);
-  if (fd < 0) return -1; // USB error
-  
-  while (1) {
-    rpcUSBdread(fd, &dirent);
-    rpcUSBSync(0, NULL, &r);
-    if (r <= 0) break;
-    
-    // Use same logic as main function for filename extraction
-    extern int useHost;
-    const char* versionExt = ".version";
-    int versionExtLen = strlen(versionExt);
-    io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
-    
-    char filename[256];
-    if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
-    else strncpy(filename, dirent.name, sizeof(filename));
-
-    int len = strlen(filename);
-    if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
-    
-    // Extract filename without extension
-    char filenameWithoutExtension[64];
-    strncpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
-    int nameLen = strlen(filenameWithoutExtension);
-    filenameWithoutExtension[nameLen - versionExtLen] = 0;
-    
-    // Check if this matches the map we're looking for
-    if (strcmp(filenameWithoutExtension, mapFilename) == 0) {
-      found = 1;
-      
-      if (outMapDef) {
-        // Try to read the version file to get full map details
-        char fullpath[256];
-        sprintf(fullpath, "%s/%s", dirpath, filename);
-        
-        CustomMapVersionFileDef_t versionFileDef;
-        int readBytes = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
-        
-        if (readBytes == sizeof(CustomMapVersionFileDef_t)) {
-          // Use the data from the version file
-          strncpy(outMapDef->Name, versionFileDef.Name, sizeof(outMapDef->Name));
-          strncpy(outMapDef->Filename, filenameWithoutExtension, sizeof(outMapDef->Filename));
-          outMapDef->Version = versionFileDef.Version;
-          outMapDef->BaseMapId = versionFileDef.BaseMapId;
-          outMapDef->ForcedCustomModeId = versionFileDef.ForcedCustomModeId;
-        } else {
-          // Fallback to filename if version file can't be read
-          strncpy(outMapDef->Name, filenameWithoutExtension, sizeof(outMapDef->Name));
-          strncpy(outMapDef->Filename, filenameWithoutExtension, sizeof(outMapDef->Filename));
-          outMapDef->Version = 1; // Default version
-        }
-      }
-      break;
-    }
-  }
-  
-  rpcUSBSync(0, NULL, NULL);
-  rpcUSBdclose(fd);
-  rpcUSBSync(0, NULL, NULL);
-  
-  return found ? (outMapDef ? outMapDef->Version : 1) : -2; // -2 = map not found
-}
-
-// Check if a given page has any maps
-int pageHasAnyMaps(int page)
-{
-  
-  int fd, r;
-  char dirpath[64];
-  iox_dirent_t dirent;
-  int mapCount = 0;
-  int skipCount = page * 10;
-  int currentSkip = 0;
-  
-  // Check if USB modules are loaded first
-  #define LOAD_MODULES_STATE                      (*(u8*)0x000CFFF0)
-  #define HAS_LOADED_MODULES                      (LOAD_MODULES_STATE == 100)
-  if (!HAS_LOADED_MODULES) {
-    return 0;
-  }
-  
-  sprintf(dirpath, "%suya", getMapPathPrefix());
-  
-  // Sync before operations to prevent SIF conflicts
-  rpcUSBSync(0, NULL, NULL);
-  
-  // Use proper RPC pattern like the working code
-  rpcUSBdopen(dirpath);
-  rpcUSBSync(0, NULL, &fd);
-  if (fd < 0) return 0;
-  
-  while (1) {
-    rpcUSBdread(fd, &dirent);
-    rpcUSBSync(0, NULL, &r);
-    if (r <= 0) break;
-    
-    // Use same logic as main function
-    extern int useHost;
-    const char* versionExt = ".version";
-    int versionExtLen = strlen(versionExt);
-    io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
-    
-    char filename[256];
-    if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
-    else strncpy(filename, dirent.name, sizeof(filename));
-
-    int len = strlen(filename);
-    if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
-    
-    if (currentSkip < skipCount) {
-      currentSkip++;
-      continue;
-    }
-    
-    // Found at least one map on this page
-    rpcUSBSync(0, NULL, NULL);
-    rpcUSBdclose(fd);
-    rpcUSBSync(0, NULL, NULL);
-    return 1;
-  }
-  
-  rpcUSBSync(0, NULL, NULL);
-  rpcUSBdclose(fd);
-  rpcUSBSync(0, NULL, NULL);
-  return 0;
-}
-
 // 
 void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
-  // Don't refresh if we're not in menus to avoid crashes
-  if (!isInMenus()) return;
-  
-  // Reset to safe state first
-  currentMapPage = 0;
-  mapsInitialized = 0;
-  
-  // Load first page
-  loadCustomMapsPage(currentMapPage);
-  mapsInitialized = 1;
-  
+  refreshCustomMapList();
+
   // popup
-  char buf[64];
-  sprintf(buf, "Found %d maps on page %d", CustomMapDefCount, currentMapPage + 1);
-  uiShowOkDialog("Custom Maps", buf);
+  if (isInMenus()) {
+    char buf[32];
+    snprintf(buf, sizeof(buf), "Found %d maps", CustomMapDefCount);
+    uiShowOkDialog("Custom Maps", buf);
+  }
 }
 
 //
@@ -1180,6 +875,22 @@ void tabGameSettingsStateHandler(TabElem_t* tab, int * state)
   }
   else
   {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+  }
+}
+
+void tabCustomMapsStateHandler(TabElem_t* tab, int * state)
+{
+  GameSettings * gameSettings = gameGetSettings();
+  // if no game settings, or in game, hide tab.
+  if (!gameSettings || gameSettings->GameLoadStartTime > 0) {
+    *state = ELEMENT_HIDDEN;
+  }
+  // if not host, only view.
+  else if (!gameAmIHost()) {
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
+  } else {
+    // if host, do all.
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
   }
 }
@@ -1495,28 +1206,6 @@ void listVerticalInput(TabElem_t* tab)
   MenuElem_t *currentElement = &tab->elements[tab->selectedMenuItemIdx];
   int state = getMenuElementState(tab, currentElement);
 
-  // For custom maps, LEFT/RIGHT D-pad handles pagination (not list scrolling)
-  if (currentElement->userdata == &dataCustomMaps) {
-    if (padGetButtonUp(0, PAD_RIGHT) > 0) {
-      // Check if next page has maps
-      if (pageHasAnyMaps(currentMapPage + 1)) {
-        currentMapPage++;
-        loadCustomMapsPage(currentMapPage);
-      }
-      return; // Handled pagination, don't do normal navigation
-    }
-    else if (padGetButtonUp(0, PAD_LEFT) > 0) {
-      // Go to previous page if not on first page
-      if (currentMapPage > 0) {
-        currentMapPage--;
-        loadCustomMapsPage(currentMapPage);
-      }
-      return; // Handled pagination, don't do normal navigation
-    }
-    // For UP/DOWN and other inputs, allow normal list navigation to continue
-  }
-
-  // Normal list navigation for other elements
   // nav page down
   if (padGetButtonUp(0, PAD_RIGHT) > 0)
   {
@@ -1918,11 +1607,10 @@ void listVerticalActionHandler(TabElem_t* tab, MenuElem_t* element, int actionTy
   int itemsToDraw = (&tab->elements[tab->selectedMenuItemIdx] == element) ? (listData->rows ? listData->rows : 5) : 1;
 
   // Initialize custom maps on first access (safe mode)
-  if (listData == &dataCustomMaps && !mapsInitialized && isInMenus()) {
-    currentMapPage = 0;
-    mapsInitialized = 1; // Set this first to prevent recursive calls
-    loadCustomMapsPage(currentMapPage);
-  }
+  // if (listData == &dataCustomMaps && isInMenus()) {
+  //   if (CustomMapDefs == NULL)
+  //     refreshCustomMapList();
+  // }
 
   // get element state
   int state = getMenuElementState(tab, element);
@@ -2246,34 +1934,14 @@ void tabInput(TabElem_t* tab)
   // nav inc
   else if (padGetButtonUp(0, PAD_RIGHT) > 0)
   {
-    if (state & ELEMENT_EDITABLE) {
-      // Handle custom maps pagination
-      if (currentElement->userdata == &dataCustomMaps) {
-        // Check if next page has maps
-        if (pageHasAnyMaps(currentMapPage + 1)) {
-          currentMapPage++;
-          loadCustomMapsPage(currentMapPage);
-        }
-      } else {
-        currentElement->handler(tab, currentElement, ACTIONTYPE_INCREMENT, NULL);
-      }
-    }
+    if (state & ELEMENT_EDITABLE)
+      currentElement->handler(tab, currentElement, ACTIONTYPE_INCREMENT, NULL);
   }
   // nav dec
   else if (padGetButtonUp(0, PAD_LEFT) > 0)
   {
-    if (state & ELEMENT_EDITABLE) {
-      // Handle custom maps pagination
-      if (currentElement->userdata == &dataCustomMaps) {
-        // Go to previous page if not on first page
-        if (currentMapPage > 0) {
-          currentMapPage--;
-          loadCustomMapsPage(currentMapPage);
-        }
-      } else {
-        currentElement->handler(tab, currentElement, ACTIONTYPE_DECREMENT, NULL);
-      }
-    }
+    if (state & ELEMENT_EDITABLE)
+      currentElement->handler(tab, currentElement, ACTIONTYPE_DECREMENT, NULL);
   }
 }
 
@@ -2749,7 +2417,7 @@ void configMenuDisable(void)
   if (gameAmIHost())
   {
     // force game config to preset
-    switch (preset)
+        switch (preset)
     {
       case 1: // Meta
       {
@@ -2913,11 +2581,11 @@ void configMenuDisable(void)
       }
     }
 
-    if (gameConfig.prLoadoutWeaponsOnly) {
-      gameConfig.grDisableWeaponPacks = 1;
-      gameConfig.grDisableWeaponCrates = 1;
-      gameConfig.grDisableAmmoPickups = 1;
-    }
+    // if (gameConfig.prLoadoutWeaponsOnly) {
+    //   gameConfig.grDisableWeaponPacks = 1;
+    //   gameConfig.grDisableWeaponCrates = 1;
+    //   gameConfig.grDisableAmmoPickups = 1;
+    // }
 
     // send
     configTrySendGameConfig();

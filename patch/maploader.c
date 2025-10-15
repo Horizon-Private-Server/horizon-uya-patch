@@ -166,7 +166,7 @@ extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 
 // custom map defs
-CustomMapDef_t CustomMapDefs[MAX_CUSTOM_MAP_DEFINITIONS];
+CustomMapDef_t *CustomMapDefs = NULL;
 int CustomMapDefCount = 0;
 
 extern MenuElem_ListData_t dataCustomMaps;
@@ -184,7 +184,7 @@ extern u32 colorContentBg;
 extern u32 colorText;
 
 extern char mapOverrideResponse;
-extern int expectedMapVersion;
+extern char expectedMapVersion;
 
 enum MenuActionId
 {
@@ -192,8 +192,10 @@ enum MenuActionId
 
 	ACTION_MODULES_NOT_INSTALLED = 0,
 	ACTION_DOWNLOADING_MODULES = 1,
-	ACTION_MODULES_INSTALLED = 2,
-	ACTION_NEW_MAPS_UPDATE = 3,
+	ACTION_MODULES_WAIT_FOR_INSTALL = 2,
+	ACTION_MODULES_INSTALLED = 3,
+	ACTION_NEW_MAPS_UPDATE = 4,
+	ACTION_REFRESHING_MAPLIST = 5,
 
 	ACTION_NONE = 100
 };
@@ -256,47 +258,30 @@ int onSetMapOverride(void * connection, void * data)
 		MapLoaderState.CheckState = 0;
 		MapLoaderState.MapFileName[0] = 0;
 		MapLoaderState.MapName[0] = 0;
-		expectedMapVersion = -1;  // Reset expected version
+		expectedMapVersion = -1;
 		mapOverrideResponse = gameAmIHost() ? 9001 : -3;
 	} else {
-		// check for version - first check already loaded maps
+		// check for version
 		int version = -1;
 		if (LOAD_MODULES_STATE != 100)
 			version = -1;
 
 		int i = 0;
-		int foundInLoadedMaps = 0;
 		for (i = 0; i < CustomMapDefCount; ++i) {
     		if (strcmp(CustomMapDefs[i].Filename, payload->CustomMap.Filename) == 0) {
 				patchStateContainer.CustomMapId = i + 1;
 				version = CustomMapDefs[i].Version;
-				foundInLoadedMaps = 1;
 				break;
 			}
 		}
 
-		// If not found in already loaded maps, search USB directly
-		if (!foundInLoadedMaps && LOAD_MODULES_STATE == 100) {
-			extern int searchUSBForSpecificMap(const char* mapFilename, CustomMapDef_t* outMapDef);
-			CustomMapDef_t mapDef;
-			version = searchUSBForSpecificMap(payload->CustomMap.Filename, &mapDef);
-			
-			if (version >= 0) {
-				// Map found on USB, but not loaded in pagination
-				// We don't set patchStateContainer.CustomMapId since it's not in our loaded list
-				// but we return the correct version to indicate we have the map
-				DPRINTF("Found map %s on USB with version %d (not currently loaded in pagination)\n", 
-					payload->CustomMap.Filename, version);
-			}
-		}
-
-		if (!foundInLoadedMaps && version < 0)
+		if (!patchStateContainer.CustomMapId)
 			version = -2;
 
 		// Store the host's expected version for comparison
 		expectedMapVersion = payload->CustomMap.Version;
-		
-		DPRINTF("MapId:%d MapName:%s MapFileName:%s Host Version:%d Our Version:%d\n", payload->CustomMap.BaseMapId, payload->CustomMap.Name, payload->CustomMap.Filename, expectedMapVersion, version);
+
+		DPRINTF("MapId:%d MapName:%s MapFileName:%s Version:%d\n", payload->CustomMap.BaseMapId, payload->CustomMap.Name, payload->CustomMap.Filename, version);
 		// send response
 		msg.Version = version;
 		strncpy(msg.Filename, payload->CustomMap.Filename, sizeof(msg.Filename));
@@ -325,8 +310,11 @@ int onSetMapOverride(void * connection, void * data)
 int onServerSentMapIrxModules(void * connection, void * data)
 {
 	DPRINTF("server sent map irx modules\n");
-
 	MapServerSentModulesMessage * msg = (MapServerSentModulesMessage*)data;
+
+	// we've already initialized the usb interface
+	if (rpcInit > 0)
+		return sizeof(MapServerSentModulesMessage);
 
 	// initiate loading
 	if (LOAD_MODULES_STATE == 0)
@@ -341,21 +329,16 @@ int onServerSentMapIrxModules(void * connection, void * data)
 
 	//
 	int init = rpcInit = rpcUSBInit();
-
 	DPRINTF("rpcUSBInit: %d, %08X:%d, %08X:%d\n", init, (u32)usbFsModuleStart, usbFsModuleSize, (u32)usbSrvModuleStart, usbSrvModuleSize);
-	
-	//
-	if (init < 0)
-	{
-		actionState = ACTION_ERROR_LOADING_MODULES;
-	}
-	else
-	{
-    actionState = ACTION_MODULES_INSTALLED;
 
-    // refresh map list
-    refreshCustomMapList();
-		
+	//
+	if (init < 0) {
+		actionState = ACTION_ERROR_LOADING_MODULES;
+	} else {
+		actionState = ACTION_MODULES_INSTALLED;
+		// refresh map list
+		refreshCustomMapList();
+
 		// if in game, ask server to resend map override to use
 		if (gameGetSettings())
 			netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
@@ -371,8 +354,7 @@ void loadModules(void)
 	if (LOAD_MODULES_STATE < 7)
 		return;
 
-	if (LOAD_MODULES_STATE != 100)
-	{
+	if (LOAD_MODULES_STATE != 100) {
 		//
 		SifInitRpc(0);
 
@@ -625,17 +607,169 @@ void checkForHostFs(void)
 //------------------------------------------------------------------------------
 void refreshCustomMapList(void)
 {
-  // Use pagination system instead of loading all maps
-  extern void loadCustomMapsPage(int page);
-  extern int currentMapPage;
-  extern int mapsInitialized;
+	int fd, r, i;
+	const char* versionExt = ".version";
+	char dirpath[16];
+	char filename[64];
+	char filenameWithoutExtension[64];
+	char fullpath[256];
+	char buffer[256] __attribute__((aligned(16)));
+	int versionExtLen = strlen(versionExt);
+	int actionStateAtStart = actionState;
+	long timeLastUI = timerGetSystemTime();
+	iox_dirent_t dirent;
+	io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
   
-  // Reset to first page and load using pagination
-  currentMapPage = 0;
-  loadCustomMapsPage(currentMapPage);
-  mapsInitialized = 1;
+	// reset
+	dataCustomMaps.count = 1;
+	CustomMapDefCount = 0;
+
+	// need usb modules
+	if (!HAS_LOADED_MODULES) return;
+
+	#if DSCRPRINT
+	clearScrPrintLine();
+	#endif
+
+	// check if host fs exists
+	checkForHostFs();
+
+	//
+	snprintf(dirpath, sizeof(dirpath), "%suya", getMapPathPrefix());
+	DPRINTF("dir path %s\n", dirpath);
+
+	// Open
+	rpcUSBdopen(dirpath);
+	rpcUSBSync(0, NULL, &fd);
+
+	// Ensure the dir was opened successfully
+	if (fd < 0) {
+		DPRINTF("error opening dir (%s): %d\n", dirpath, fd);
+		return;
+	}
+	
+	DPRINTF("opening dir (%s): returned %d\n", dirpath, fd);
+
+	// set CustomMapDef location to "Tips" UI.
+	if (CustomMapDefs == NULL) {
+		CustomMapDefs = (CustomMapDef_t *)uiGetMenu(UI_MENU_TIPS)->pFirstChild;
+	} else if (CustomMapDefCount) {
+		// zero data if already loaded maps.
+		memset(CustomMapDefs, 0, sizeof(CustomMapDef_t) * CustomMapDefCount);
+	}
+
+	// read
+	actionState = ACTION_REFRESHING_MAPLIST;
+	do {
+		// update UI every 100 ms (speedup)
+		int time = timerGetSystemTime();
+		int timeDtMs = (time - timeLastUI) / SYSTEM_TIME_TICKS_PER_MS;
+		if (timeDtMs > 100) {
+			timeLastUI = time;
+			uiRefresh();
+		}
+
+		// handle case where irx modules 
+		if (actionState != ACTION_REFRESHING_MAPLIST) {
+			actionStateAtStart = actionState;
+			actionState = ACTION_REFRESHING_MAPLIST;
+		}
+
+		// read next entry
+		// stop if we've reached the end
+		if (rpcUSBdread(fd, &dirent) != 0) break;
+		
+		rpcUSBSync(0, NULL, &r);
+		
+		if (r <= 0) break;
+
+		// extract filename
+		// for some reason there's a mixup between if we're using ioman or iomanX
+		// PS2s use iomanX but the emu HLE hostfs thinks we're using ioman
+		if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
+		else strncpy(filename, dirent.name, sizeof(filename));
+
+		// OSX creates index files starting with a '.'
+		// filter those out
+		if (filename[0] == '.') continue;
+
+		// we want to parse the .version files
+		// check if filename ends with ".version"
+		int len = strlen(filename);
+		if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
+
+		#if DSCRPRINT
+		snprintf(buf, sizeof(buf), "y %s", filename);
+		pushScrPrintLine(buf);
+		#endif
+
+		DPRINTF("found version %s\n", filename);
+
+		// parse version file
+		CustomMapVersionFileDef_t versionFileDef;
+		snprintf(fullpath, sizeof(fullpath), "%s/%s", dirpath, filename);
+		int read = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
+
+		// ensure version file is valid
+		if (read != sizeof(CustomMapVersionFileDef_t)) {
+			DPRINTF("%s (%d) does not match expected file size %d. Skipping.\n", filename, read, sizeof(CustomMapVersionFileDef_t));
+			continue;
+		}
+		
+		// compute filename without extension
+		strncpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
+		len = strlen(filenameWithoutExtension);
+		filenameWithoutExtension[len - versionExtLen] = 0;
+
+		// ensure version file has matching .world OR .wad
+		snprintf(fullpath, sizeof(fullpath), fWad, getMapPathPrefix(), filenameWithoutExtension);
+		int fWadLen = readFileLength(fullpath);
+		snprintf(fullpath, sizeof(fullpath), fWorld, getMapPathPrefix(), filenameWithoutExtension);
+		int fWorldLen = readFileLength(fullpath);
+		if (fWadLen <= 0 && fWorldLen <= 0) continue;
+
+		DPRINTF("(%d) \"%s\" f:\"%s\" v:%d bmap:%d mode:%d\n", CustomMapDefCount, versionFileDef.Name, filenameWithoutExtension, versionFileDef.Version, versionFileDef.BaseMapId, versionFileDef.ForcedCustomModeId);
+
+		// bring to custom map defs
+		CustomMapDefs[CustomMapDefCount].Version = versionFileDef.Version;
+		CustomMapDefs[CustomMapDefCount].BaseMapId = versionFileDef.BaseMapId;
+		CustomMapDefs[CustomMapDefCount].ForcedCustomModeId = versionFileDef.ForcedCustomModeId;
+		strncpy(CustomMapDefs[CustomMapDefCount].Filename, filenameWithoutExtension, sizeof(CustomMapDefs[CustomMapDefCount].Filename));
+		strncpy(CustomMapDefs[CustomMapDefCount].Name, versionFileDef.Name, sizeof(CustomMapDefs[CustomMapDefCount].Name));
+		CustomMapDefCount++;
+
+		// reached max maps
+		if (CustomMapDefCount >= MAX_CUSTOM_MAP_DEFINITIONS) break;
+		
+	} while (1);
+
+	// close
+	rpcUSBdclose(fd);
+	rpcUSBSync(0, NULL, NULL);
   
-  // That's it! No more original loading code - pagination handles everything
+    // sort names alphabetically
+	CustomMapDef_t temp[MAX_CUSTOM_MAP_DEFINITIONS];
+	int k = 0, j;
+    for(k; k < CustomMapDefCount; ++k) {
+        for(j = 0; j < CustomMapDefCount; ++j) {
+            if(strcmp(CustomMapDefs[k].Name, CustomMapDefs[j].Name) < 0) {
+                temp[k] = CustomMapDefs[k];
+                CustomMapDefs[k] = CustomMapDefs[j];
+                CustomMapDefs[j] = temp[k];
+            }
+        }
+    }
+	// populate config
+	for (i = 0; i < CustomMapDefCount; ++i) {
+		dataCustomMaps.items[i+1] = (char*)CustomMapDefs[i].Name;
+		dataCustomMaps.count += 1;
+	}
+
+  	// clamp
+	if (patchStateContainer.CustomMapId >= dataCustomMaps.count)
+		patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
+
+	actionState = actionStateAtStart;
 }
 
 //------------------------------------------------------------------------------
@@ -1172,18 +1306,8 @@ void runMapLoader(void)
 	// hook irx module loading 
 	hook();
 
-	/*if (padGetButtonDown(0, PAD_L1 | PAD_R1) > 0) {
-		MapOverrideMessage data = {
-			.MapId = 40,
-			.MapFileName = "maraxus",
-			.MapName = "Test"
-		};
-		onSetMapOverride(netGetLobbyServerConnection(), &data);
-	}*/
-
 	// 
-	if (!initialized)
-	{
+	if (!initialized) {
 		initialized = 1;
 
 		// set map loader defaults
@@ -1191,20 +1315,42 @@ void runMapLoader(void)
 		MapLoaderState.CheckState = 0;
 
 		// install on login
-		if (LOAD_MODULES_RESULT == 0)
-		{
+		if (LOAD_MODULES_RESULT == 0) {
 			initialized = 2;
 		}
 	}
 
+	// if maps are refreshing, show popup.
+	if (actionState == ACTION_REFRESHING_MAPLIST) {
+		u32 bgColorDownload = 0x8004223f;
+		u32 textColor = 0x8069cbf2;
+		u32 barBgColor = 0x80123251;
+		u32 barFgColor = 0x8018608f;
+		gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
+		gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
+		sprintf(membuffer, "Scanning USB drive for custom maps...");
+		gfxScreenSpaceText(SCREEN_WIDTH * 0.22, SCREEN_HEIGHT * 0.4, 1, 1, colorText, membuffer, -1, 3, FONT_BOLD);
+		float w = (float)CustomMapDefCount / (float)MAX_CUSTOM_MAP_DEFINITIONS;
+		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
+	}
+
+	if (isInMenus() && CustomMapDefs == NULL) {
+		int menu = uiGetActiveMenu(UI_MENU_STAGING, 0);
+		if (menu)
+			refreshCustomMapList();
+	} else if (isInGame() && CustomMapDefs != NULL) {
+		CustomMapDefs = NULL;
+		CustomMapDefCount = 0;
+	}
+
 	// force map id to current map override if in staging
-	if (MapLoaderState.Enabled == 1 && isInMenus())
-	{
-		GameSettings * settings = gameGetSettings();
-		if (settings && settings->GameLoadStartTime > 0)
-		{
-			settings->GameLevel = MapLoaderState.MapId;
-			gameConfig.isCustomMap = 1;
+	if (MapLoaderState.Enabled == 1) {
+		if (isInMenus()) {
+			GameSettings * settings = gameGetSettings();
+			if (settings && settings->GameLoadStartTime > 0) {
+				settings->GameLevel = MapLoaderState.MapId;
+				gameConfig.isCustomMap = 1;
+			}
 		}
 	}
 }

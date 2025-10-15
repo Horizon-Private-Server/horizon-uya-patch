@@ -2,6 +2,7 @@
 #include "player.h"
 #include "time.h"
 #include "interop.h"
+#include "game.h"
 
 #define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
 #define UI_POINTERS								((u32)0x01c5C064)
@@ -126,4 +127,16 @@ int uiShowChangeTeamSkinDialog(void * team, void * skin, int numTeams, int bChan
 int uiShowInvitePlayersDialog(void)
 {
 	internal_uiInvitePlayersDialog(UI_DIALOG_A0, 0x002496a0, 3, 0);
+}
+
+void uiRefresh(void)
+{
+	if (GAME_NET_INFO->m_GuiSetRefreshCallback != 0)
+		((void (*)(void))GAME_NET_INFO->m_GuiSetRefreshCallback)();
+}
+
+void uiSetBusy(void)
+{
+	if (GAME_NET_INFO->m_GuiSetBusyCallback != 0)
+		((void (*)(void))GAME_NET_INFO->m_GuiSetBusyCallback)();
 }

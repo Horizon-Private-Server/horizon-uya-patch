@@ -10,12 +10,22 @@
 # $Id: linkfile 798 2005-02-07 06:21:37Z herben $
 # Linkfile script for ee-ld
 */
+INCLUDE ../sections.ld
 
 ENTRY(_start);
 
 SECTIONS {
-	.text 0x000e0000: {
-		_ftext = . ;
+	_SECTION_EXCEPTION_HANDLER = EXCEPTION_HANDLER;
+	_SECTION_UNPATCH = UNPATCH;
+	_SECTION_MODULE_DEFINITIONS = MODULE_DEFINITIONS;
+	_SECTION_PATCH_POINTERS = PATCH_POINTERS;
+	_SECTION_PATCH_HASH = PATCH_HASH;
+	_SECTION_USB_MODULES = USB_MODULES;
+	_SECTION_PATCH = PATCH;
+	_SECTION_CUSTOM_GAME_MODE = CUSTOM_GAME_MODE;
+
+	.text PATCH : {
+		_SECTION_PATCH_START = . ;
 		*(.text)
 		KEEP(*(.config))
 		*(.text.*)
@@ -52,6 +62,6 @@ SECTIONS {
 		*(.scommon.*)
 	}
 
-	_end = . ;
-	PROVIDE(end = .);
+	_SECTION_PATCH_END = . ;
+	PROVIDE(SECTION_PATCH_END = .);
 }

@@ -24,6 +24,19 @@
 #include <libuya/player.h>
 #include <libuya/gamesettings.h>
 
+extern char _SECTION_MODULE_DEFINITIONS[];
+extern char _SECTION_MODULE_DEFINITIONS_SIZE[];
+extern char _SECTION_PATCH_POINTERS[];
+extern char _SECTION_PATCH_POINTERS_SIZE[];
+extern char _SECTION_PATCH_HASH[];
+extern char _SECTION_PATCH_HASH_SIZE[];
+extern char _SECTION_USB_MODULES[];
+extern char _SECTION_USB_MODULES_SIZE[];
+extern char _SECTION_PATCH[];
+extern char _SECTION_PATCH_SIZE[];
+extern char _SECTION_CUSTOM_GAME_MODE[];
+extern char _SECTION_CUSTOM_GAME_MODE_SIZE[];
+
 /*
 	-1 = Both
 	0 = Not In Game
@@ -75,12 +88,12 @@ const int patches[][3] = {
 };
 
 const int clears[][2] = {
-	{ 0x000d0000, 0x00010000 }, // usb modules
-	{ 0x000e0000, 0x0001a000 }, // patch
-	{ 0x000fa000, 0x00006000 }, // game mode
-	{ 0x000cf000, 0x00000800 }, // module definitions
-	{ 0x000cffd0, 0x00000020 }, // patch hash
-	{ 0x000cffc0, 0x00000010 }, // patch pointers
+	{ (int)_SECTION_MODULE_DEFINITIONS, (int)_SECTION_MODULE_DEFINITIONS_SIZE },
+	{ (int)_SECTION_PATCH_POINTERS, (int)_SECTION_PATCH_POINTERS_SIZE },
+	{ (int)_SECTION_PATCH_HASH, (int)_SECTION_PATCH_HASH_SIZE },
+	{ (int)_SECTION_USB_MODULES, (int)_SECTION_USB_MODULES_SIZE },
+	{ (int)_SECTION_PATCH, (int)_SECTION_PATCH_SIZE },
+	{ (int)_SECTION_CUSTOM_GAME_MODE, (int)_SECTION_CUSTOM_GAME_MODE_SIZE },
 };
 
 int hasClearedMemory = 0;

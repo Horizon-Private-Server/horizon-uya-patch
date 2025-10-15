@@ -35,8 +35,11 @@
 #include "include/config.h"
 #include "include/cheats.h"
 
-#define GLOBAL_GAME_MODULES_START							((GameModule*)0x000CF000)
-#define EXCEPTION_DISPLAY_ADDR								(0x000C8000)
+extern int _SECTION_EXCEPTION_HANDLER;
+extern int _SECTION_MODULE_DEFINITIONS;
+
+#define GLOBAL_GAME_MODULES_START							((GameModule*)_SECTION_MODULE_DEFINITIONS)
+#define EXCEPTION_HANDLER									(_SECTION_EXCEPTION_HANDLER)
 #define GAME_UPDATE_SENDRATE								(5 * TIME_SECOND)
 
 #if UYA_PAL
@@ -50,8 +53,6 @@
 // #define UI_PTR_FUNC_STATS									(0x0047eab4)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dbac)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006c234c)
-#define STAGING_VOICE_ACTIVE_JAL							(0x006c2328)
-#define gMultiDecMap 										(0x00240660)
 #define nwVoiceUpdateFunc									(0x0019c2c0)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
@@ -64,14 +65,8 @@
 // #define UI_PTR_FUNC_STATS									(0x0047eb74)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dc6c)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006bf834)
-#define STAGING_VOICE_ACTIVE_JAL							(0x006bf810)
-#define gMultiDecMap										(0x002407e0)
 #define nwVoiceUpdateFunc									(0x0019c400)
 #endif
-
-#define STAGING_VOICE_COLOR_1 ((u32)STAGING_VOICE_ACTIVE_JAL + 0x18)
-#define STAGING_VOICE_COLOR_2 ((u32)STAGING_VOICE_ACTIVE_JAL + 0x14)
-#define STAGING_VOICE_COLOR_3 ((u32)STAGING_VOICE_ACTIVE_JAL + 0x28)
 
 void onConfigOnlineMenu(void);
 void onConfigGameMenu(void);
@@ -98,9 +93,6 @@ void grLoadStart(void);
 #ifdef SCAVENGER_HUNT
 void scavHuntRun(void);
 #endif
-#if TEST
-void runTest(void);
-#endif
 
 int hasInitialized = 0;
 int lastMenuInvokedTime = 0;
@@ -110,7 +102,7 @@ int isInStaging = 0;
 int location = LOCATION_NULL;
 int hasInstalledExceptionHandler = 0;
 char mapOverrideResponse = 9001;
-int expectedMapVersion = -1;  // Host's expected map version
+int expectedMapVersion = -1;
 char showNoMapPopup = 0;
 int isConfigMenuActive = 0;
 int redownloadCustomModeBinaries = 0;
@@ -186,8 +178,7 @@ PatchPointers_t patchPointers = {
   .ServerTimeSecond = 0,
 };
 
-struct FlagPVars
-{
+struct FlagPVars {
 	VECTOR BasePosition;
 	short CarrierIdx;
 	short LastCarrierIdx;
@@ -360,23 +351,23 @@ char * checkMap(void)
 void runExceptionHandler(void)
 {
 	// invoke exception display installer
-	if (*(u32*)EXCEPTION_DISPLAY_ADDR != 0) {
+	if (*(u32*)EXCEPTION_HANDLER != 0) {
 		if (!hasInstalledExceptionHandler) {
-			((void (*)(void))EXCEPTION_DISPLAY_ADDR)();
+			((void (*)(void))EXCEPTION_HANDLER)();
 			hasInstalledExceptionHandler = 1;
 		}
 
 		char * mapStr = checkMap();		// change "a fatal error as occured." to region and map.
-		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x794), regionStr, 6);
-		strncpy((char*)(EXCEPTION_DISPLAY_ADDR + 0x79a), mapStr, 20);
+		strncpy((char*)(EXCEPTION_HANDLER + 0x794), regionStr, 6);
+		strncpy((char*)(EXCEPTION_HANDLER + 0x79a), mapStr, 20);
 		
 		// change display to match progressive scan resolution
 		if (gfxGetIsProgressiveScan()) {
-			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F4) = 0x0083;
-			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F8) = 0x210E;
+			*(u16*)(EXCEPTION_HANDLER + 0x9F4) = 0x0083;
+			*(u16*)(EXCEPTION_HANDLER + 0x9F8) = 0x210E;
 		} else {
-			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F4) = 0x0183;
-			*(u16*)(EXCEPTION_DISPLAY_ADDR + 0x9F8) = 0x2278;
+			*(u16*)(EXCEPTION_HANDLER + 0x9F4) = 0x0183;
+			*(u16*)(EXCEPTION_HANDLER + 0x9F8) = 0x2278;
 		}
 	}
 }
@@ -2381,23 +2372,30 @@ void patchHeadsetSprite(GameSettings* gs, int clientId)
     UiStagingElements_t* child = &ui->pChildren;
     // hide voice header
     child->voiceHeadingSprite->state = 0;
-	// set sprite
-	child->voiceSprite[clientId]->sprite = SPRITE_HUD_X;
 	// check state and set color
 	u32 color = 0;
+	u32 sprite = SPRITE_HUD_X;
 	if (clientId > 0) {
-		if (gs->PlayerStates[clientId] == GS_PLAYER_STATE_MAP_NONE) {
-			// Player doesn't have the map - check if it's wrong version or missing completely
-			if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
-				// Has map but wrong version - Purple
-				color = 0x80C02080;  // Purple from TEAM_COLORS[5]
-			} else {
-				// Missing map completely - Original blue color
+		switch (gs->PlayerStates[clientId]) {
+			case GS_PLAYER_STATE_MAP_NONE: {
+				sprite = SPRITE_HUD_X;
 				color = 0x8069cbf2;
+				break;
+			}
+			case GS_PLAYER_STATE_MAP_VERSION_OLDER: {
+				sprite = SPRITE_HUD_X; //SPRITE_HUD_BASE;
+				color = 0x80000000 | TEAM_COLORS[TEAM_RED];
+				break;
+			}
+			case GS_PLAYER_STATE_MAP_VERSION_NEWER: {
+				sprite = SPRITE_HUD_X; // SPRITE_HUD_BASE;
+				color = 0x80000000 | TEAM_COLORS[TEAM_GREEN];
+				break;
 			}
 		}
 		// If state is not MAP_NONE, color remains 0 (transparent) - has correct version
 	}
+	child->voiceSprite[clientId]->sprite = sprite;
 	child->voiceSprite[clientId]->vTable->setColor(child->voiceSprite[clientId], color);
 }
 
@@ -2436,18 +2434,26 @@ void runCheckGameMapInstalled(void)
 		if (isMe && i > 0) {
 			switch (gs->PlayerStates[i]) {
 				case GS_PLAYER_STATE_UNREADY: {
+					// Player doesn't have map.
 					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
 						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					} else if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
-						// Has map but wrong version - still set to MAP_NONE but we'll color it differently
-						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
+					}
+					// Player has map, but wrong version.
+					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
+						if (mapOverrideResponse > expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
+						} else if (mapOverrideResponse < expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
+						}
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
 					break;
 				}
-				case GS_PLAYER_STATE_MAP_NONE: {
-					if ((mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse == expectedMapVersion) || mapOverrideResponse == -3) {
+				case GS_PLAYER_STATE_MAP_NONE:
+				case GS_PLAYER_STATE_MAP_VERSION_OLDER:
+				case GS_PLAYER_STATE_MAP_VERSION_NEWER: {
+					if (mapOverrideResponse >= 0 || mapOverrideResponse == -3 || mapOverrideResponse == expectedMapVersion) {
 						gameSetClientState(i, GS_PLAYER_STATE_UNREADY);
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
@@ -2455,10 +2461,19 @@ void runCheckGameMapInstalled(void)
 				}
 				case GS_PLAYER_STATE_KICK: showNoMapPopup = 0; break;
 				case GS_PLAYER_STATE_READY: {
-					if ((mapOverrideResponse < 0 && mapOverrideResponse != -3) || 
-						(mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion)) {
+					// Player doesn't have map.
+					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
 						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
 						showNoMapPopup = 1;
+						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
+					}
+					// Player has map, but wrong version.
+					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
+						if (mapOverrideResponse > expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
+						} else if (mapOverrideResponse < expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
+						}
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
 					break;
@@ -2664,7 +2679,7 @@ void onOnlineMenu(void)
 	if (!hasInitialized) {
 		padEnableInput();
 		onConfigInitialize();
-		// Custom maps will be initialized when first accessed
+		refreshCustomMapList();
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		hasInitialized = 1;
 	}
@@ -2720,15 +2735,15 @@ int main(void)
 	// Call this first
 	uyaPreUpdate();
 
-  //
-  #if DSCRPRINT
-  int i;
-  float y = 10;
-  for (i = 0; i < MAX_DEBUG_SCR_PRINT_LINES; ++i) {
-    gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0, FONT_BOLD);
-    y += 20;
-  }
-  #endif
+	//
+	#if DSCRPRINT
+	int i;
+	float y = 10;
+	for (i = 0; i < MAX_DEBUG_SCR_PRINT_LINES; ++i) {
+		gfxScreenSpaceText(10, y, 1, 1, 0x80FFFFFF, dscrprintlines[i], -1, 0, FONT_BOLD);
+		y += 20;
+	}
+	#endif
 
 	// update patch pointers
 	PATCH_POINTERS = &patchPointers;
@@ -2804,10 +2819,6 @@ int main(void)
 	runHolidays();
 
 	patchColors();
-
-	#if TEST
-	void runTest(void);
-	#endif
 
 	if(isInGame()) {
 		// Patch remap buttons configuration
@@ -2923,9 +2934,6 @@ int main(void)
 			// POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
 			POKE_U32(UI_PTR_FUNC_KEYBOARD, &patchKeyboard);
 			POKE_U32(STAGING_JALR_HEADSET_SET_COLOR, 0);
-			// HOOK_JAL(STAGING_VOICE_ACTIVE_JAL, &patchHeadsetSprite);
-			// POKE_U32(STAGING_VOICE_COLOR_1, 0x3c05006e);
-			// POKE_U32(STAGING_VOICE_COLOR_2, 0x3c05806e);
 			patched.uiModifiers = 1;
 		}
 

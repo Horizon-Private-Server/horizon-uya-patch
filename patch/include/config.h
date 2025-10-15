@@ -3,7 +3,7 @@
 
 #include "module.h"
 
-#define MAX_CUSTOM_MAP_DEFINITIONS              (10)  // Only need 10 for pagination
+#define MAX_CUSTOM_MAP_DEFINITIONS              (100) // max: 600
 
 enum ActionType
 {
@@ -155,8 +155,8 @@ enum eMapOverride {
 };
 
 extern struct MapLoaderState MapLoaderState;
-extern CustomMapDef_t CustomMapDefs[MAX_CUSTOM_MAP_DEFINITIONS];  // Current page only (10 maps)
-extern int CustomMapDefCount;  // Count for current page only
+extern CustomMapDef_t *CustomMapDefs;
+extern int CustomMapDefCount;
 extern PatchStateContainer_t patchStateContainer;
 
 #endif // __PATCH_CONFIG_H__
