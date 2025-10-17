@@ -35,11 +35,8 @@
 #include "include/config.h"
 #include "include/cheats.h"
 
-extern int _SECTION_EXCEPTION_HANDLER;
-extern int _SECTION_MODULE_DEFINITIONS;
-
-#define GLOBAL_GAME_MODULES_START							((GameModule*)_SECTION_MODULE_DEFINITIONS)
-#define EXCEPTION_HANDLER									(_SECTION_EXCEPTION_HANDLER)
+#define GLOBAL_GAME_MODULES_START							((GameModule*)0x000cf000)
+#define EXCEPTION_HANDLER									(0x000c8000)
 #define GAME_UPDATE_SENDRATE								(5 * TIME_SECOND)
 
 #if UYA_PAL
@@ -2379,7 +2376,7 @@ void patchHeadsetSprite(GameSettings* gs, int clientId)
 		switch (gs->PlayerStates[clientId]) {
 			case GS_PLAYER_STATE_MAP_NONE: {
 				sprite = SPRITE_HUD_X;
-				color = 0x8069cbf2;
+				color = 0x80000000 | TEAM_COLORS[TEAM_AQUA];
 				break;
 			}
 			case GS_PLAYER_STATE_MAP_VERSION_OLDER: {
@@ -2432,15 +2429,22 @@ void runCheckGameMapInstalled(void)
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		int isMe = gs->PlayerClients[i] == clientId;
 		if (isMe && i > 0) {
+			int mapsEnabled = (mapOverrideResponse != -3); // if response isn't -3, maps enabled.
+			int mapError = (mapOverrideResponse < 0); // if response is less than 0, but not -3, there's a map error.
+			int noMap = (mapsEnabled && mapError); // maps enabled, but there was an error, client doesn't have needed map.
+			int versionError = (!mapError && expectedMapVersion < 0); // No Map error, but has version error.
+			int versionMatch = (mapOverrideResponse == expectedMapVersion); // check if client version matches host version.
+			int wrongVersion = (!versionError && !versionMatch); // no version error, but map version doesn't match needed version.
+			int correctVersion = (!versionError && versionMatch); // no version error, but map version does match needed version.
 			switch (gs->PlayerStates[i]) {
 				case GS_PLAYER_STATE_UNREADY: {
 					// Player doesn't have map.
-					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
+					if (noMap) {
 						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
 					// Player has map, but wrong version.
-					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
+					else if (wrongVersion) {
 						if (mapOverrideResponse > expectedMapVersion) {
 							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
 						} else if (mapOverrideResponse < expectedMapVersion) {
@@ -2453,7 +2457,8 @@ void runCheckGameMapInstalled(void)
 				case GS_PLAYER_STATE_MAP_NONE:
 				case GS_PLAYER_STATE_MAP_VERSION_OLDER:
 				case GS_PLAYER_STATE_MAP_VERSION_NEWER: {
-					if (mapOverrideResponse >= 0 || mapOverrideResponse == -3 || mapOverrideResponse == expectedMapVersion) {
+					// if correct map or maps not enabled, let player read up.
+					if (correctVersion || !mapsEnabled) {
 						gameSetClientState(i, GS_PLAYER_STATE_UNREADY);
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
@@ -2462,13 +2467,13 @@ void runCheckGameMapInstalled(void)
 				case GS_PLAYER_STATE_KICK: showNoMapPopup = 0; break;
 				case GS_PLAYER_STATE_READY: {
 					// Player doesn't have map.
-					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
+					if (noMap) {
 						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
 						showNoMapPopup = 1;
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
 					// Player has map, but wrong version.
-					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
+					else if (wrongVersion) {
 						if (mapOverrideResponse > expectedMapVersion) {
 							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
 						} else if (mapOverrideResponse < expectedMapVersion) {
