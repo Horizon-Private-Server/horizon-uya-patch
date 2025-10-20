@@ -430,7 +430,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Redownload patch", buttonActionHandler, menuStateAlwaysEnabledHandler, downloadPatchSelectHandler },
 #endif
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
-  { "Refresh Maps", buttonActionHandler, menuStateHandler_DisabledInGame, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
+  { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
