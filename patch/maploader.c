@@ -267,15 +267,23 @@ int onSetMapOverride(void * connection, void * data)
 			version = -1;
 
 		int i = 0;
-		for (i = 0; i < CustomMapDefCount; ++i) {
-    		if (strcmp(CustomMapDefs[i].Filename, payload->CustomMap.Filename) == 0) {
-				patchStateContainer.CustomMapId = i + 1;
-				version = CustomMapDefs[i].Version;
-				break;
+		if (CustomMapDefs != NULL) {
+			for (i = 0; i < CustomMapDefCount; ++i) {
+				if (strcmp(CustomMapDefs[i].Filename, payload->CustomMap.Filename) == 0) {
+					patchStateContainer.CustomMapId = i + 1;
+					version = CustomMapDefs[i].Version;
+					break;
+				}
 			}
+		} else if (CustomMapDefs == NULL){
+			// If not found in already loaded maps, search USB directly
+			CustomMapDef_t mapDef;
+			version = searchUSBForSpecificMap(payload->CustomMap.Filename, &mapDef);
 		}
 
-		if (!patchStateContainer.CustomMapId)
+
+		// if (patchStateContainer.CustomMapId <= 0) version = -2;
+		if (version < 0)
 			version = -2;
 
 		// Store the host's expected version for comparison
@@ -770,6 +778,98 @@ void refreshCustomMapList(void)
 		patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
 
 	actionState = actionStateAtStart;
+}
+
+//------------------------------------------------------------------------------
+// Search USB for a specific map by filename and return version if found
+int searchUSBForSpecificMap(const char* mapFilename, CustomMapDef_t* outMapDef)
+{
+	int fd, r;
+	char dirpath[64];
+	iox_dirent_t dirent;
+	int found = 0;
+
+	// Clear output map definition
+	if (outMapDef) {
+		memset(outMapDef, 0, sizeof(CustomMapDef_t));
+	}
+
+	// Check if USB modules are loaded first
+	if (!HAS_LOADED_MODULES) {
+		return -1; // USB not available
+	}
+
+	// Check for host filesystem first (like original code)
+	checkForHostFs();
+
+	sprintf(dirpath, "%suya", getMapPathPrefix());
+
+	// Sync before operations to prevent SIF conflicts
+	rpcUSBSync(0, NULL, NULL);
+
+	// Use proper RPC pattern like the working code
+	rpcUSBdopen(dirpath);
+	rpcUSBSync(0, NULL, &fd);
+	if (fd < 0) return -1; // USB error
+
+	do {
+		rpcUSBdread(fd, &dirent);
+		rpcUSBSync(0, NULL, &r);
+		if (r <= 0) break;
+
+		// Use same logic as main function for filename extraction
+		const char* versionExt = ".version";
+		int versionExtLen = strlen(versionExt);
+		io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
+
+		char filename[256];
+		if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
+		else strncpy(filename, dirent.name, sizeof(filename));
+
+		int len = strlen(filename);
+		if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
+
+		// Extract filename without extension
+		char filenameWithoutExtension[64];
+		strncpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
+		int nameLen = strlen(filenameWithoutExtension);
+		filenameWithoutExtension[nameLen - versionExtLen] = 0;
+
+		// Check if this matches the map we're looking for
+		if (strcmp(filenameWithoutExtension, mapFilename) == 0) {
+			found = 1;
+
+			if (outMapDef) {
+				// Try to read the version file to get full map details
+				char fullpath[256];
+				sprintf(fullpath, "%s/%s", dirpath, filename);
+
+				CustomMapVersionFileDef_t versionFileDef;
+				int readBytes = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
+
+				if (readBytes == sizeof(CustomMapVersionFileDef_t)) {
+					// Use the data from the version file
+					strncpy(outMapDef->Name, versionFileDef.Name, sizeof(outMapDef->Name));
+					strncpy(outMapDef->Filename, filenameWithoutExtension, sizeof(outMapDef->Filename));
+					outMapDef->Version = versionFileDef.Version;
+					outMapDef->BaseMapId = versionFileDef.BaseMapId;
+					outMapDef->ForcedCustomModeId = versionFileDef.ForcedCustomModeId;
+				} else {
+					// Fallback to filename if version file can't be read
+					strncpy(outMapDef->Name, filenameWithoutExtension, sizeof(outMapDef->Name));
+					strncpy(outMapDef->Filename, filenameWithoutExtension, sizeof(outMapDef->Filename));
+					outMapDef->Version = 1; // Default version
+				}
+			}
+			break;
+		}
+	} while(1);
+
+	rpcUSBSync(0, NULL, NULL);
+	rpcUSBdclose(fd);
+	rpcUSBSync(0, NULL, NULL);
+
+	return found ? (outMapDef ? outMapDef->Version : 1) : -2; // -2 = map not found
 }
 
 //------------------------------------------------------------------------------
@@ -1334,9 +1434,14 @@ void runMapLoader(void)
 		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
 	}
 
+	if (padGetButtonDown(0, PAD_L2 | PAD_R2) > 0)
+		CustomMapDefs = NULL;
+
 	if (isInMenus() && CustomMapDefs == NULL) {
 		int menu = uiGetActiveMenu(UI_MENU_STAGING, 0);
-		if (menu)
+		// full map list only needs to reload if host.
+		// clients use `searchUSBforCertainMap()` function.
+		if (menu && gameAmIHost())
 			refreshCustomMapList();
 	} else if (isInGame() && CustomMapDefs != NULL) {
 		CustomMapDefs = NULL;
