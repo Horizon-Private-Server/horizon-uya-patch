@@ -1434,8 +1434,11 @@ void runMapLoader(void)
 		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
 	}
 
+	#ifdef DEBUG
+	// set custommapdef pointer to null for quick testing of map detectiojn logic.
 	if (padGetButtonDown(0, PAD_L2 | PAD_R2) > 0)
 		CustomMapDefs = NULL;
+	#endif
 
 	if (isInMenus() && CustomMapDefs == NULL) {
 		int menu = uiGetActiveMenu(UI_MENU_STAGING, 0);
