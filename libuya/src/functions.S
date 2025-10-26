@@ -283,6 +283,7 @@ FUNCTION(matrix_rotate_z, 0x0013d660)
 #--------------------------------------------------------
 VARIABLE_FUNCTION(internal_drawFunc, vaFontPrintFunc)
 VARIABLE_FUNCTION(gfxScreenSpaceTextCenter, vaFontPrintCenterFunc);
+VARIABLE_FUNCTION(gfxScreenSpaceTextWindow, vaFontPrintWindowFunc);
 VARIABLE_FUNCTION(gfxGetFontWidth, vaGetTextWidthFunc)
 VARIABLE_FUNCTION(internal_drawBox, vaDrawBoxFunc)
 VARIABLE_FUNCTION(gfxSetupGifPaging, vaSetupGifPaging)
@@ -297,6 +298,9 @@ VARIABLE_FUNCTION(gfxDrawBillboardQuad, vaDrawBillboardQuad)
 VARIABLE_FUNCTION(gfxDrawQuad, vaFastDrawQuadReal)
 VARIABLE_FUNCTION(gfxGetPreLoadedImageBufferSource, vaGetPreLoadedImageBufferSource)
 VARIABLE_FUNCTION(gfxSetScissor, vaSetScissor)
+VARIABLE_FUNCTION(gfxLoadPalToGs, vaLoadPalToGs)
+VARIABLE_FUNCTION(gfxLoadTexToGs, vaLoadTexToGs)
+VARIABLE_FUNCTION(gfxConstructEffectTex, vaConstructEffectTex)
 VARIABLE_FUNCTION(internal_SpawnPart_059, vaSpawnPart_059)
 VARIABLE_FUNCTION(gfxDestroyParticle, vaDeletePart)
 VARIABLE_FUNCTION(internal_WorldSpaceToScreenSpace, vaWorldSpaceToScreenSpace)

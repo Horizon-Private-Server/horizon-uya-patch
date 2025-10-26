@@ -3,6 +3,7 @@
 #include "interop.h"
 #include "player.h"
 #include "gamesettings.h"
+#include "gamesettings.h"
 #include "map.h"
 
 #if UYA_PAL
@@ -84,6 +85,34 @@ VariableAddress_t vaFontPrintCenterFunc = {
     .BlackwaterDocks = 0x00456D98,
     .AquatosSewers = 0x004560D8,
     .MarcadiaPalace = 0x00455A18,
+#endif
+};
+
+VariableAddress_t vaFontPrintWindowFunc = {
+#if UYA_PAL
+	.Lobby = 0x0,
+	.Bakisi = 0x0,
+	.Hoven = 0x0,
+	.OutpostX12 = 0x0,
+    .KorgonOutpost = 0x0,
+	.Metropolis = 0x0,
+	.BlackwaterCity = 0x0,
+	.CommandCenter = 0x0,
+    .BlackwaterDocks = 0x0,
+    .AquatosSewers = 0x0,
+    .MarcadiaPalace = 0x0,
+#else
+	.Lobby = 0x005921c0,
+	.Bakisi = 0x0,
+	.Hoven = 0x0,
+	.OutpostX12 = 0x0,
+    .KorgonOutpost = 0x0,
+	.Metropolis = 0x0,
+	.BlackwaterCity = 0x0,
+	.CommandCenter = 0x0,
+    .BlackwaterDocks = 0x0,
+    .AquatosSewers = 0x0,
+    .MarcadiaPalace = 0x0,
 #endif
 };
 
@@ -506,6 +535,90 @@ VariableAddress_t vaSetScissor = {
     .BlackwaterDocks = 0x004c1818,
     .AquatosSewers = 0x004c0b58,
     .MarcadiaPalace = 0x004c0498,
+#endif
+};
+
+VariableAddress_t vaLoadPalToGs = {
+#if UYA_PAL
+    .Lobby = 0x0,
+    .Bakisi = 0x0,
+    .Hoven = 0x0,
+    .OutpostX12 = 0x0,
+    .KorgonOutpost = 0x0,
+    .Metropolis = 0x0,
+    .BlackwaterCity = 0x0,
+    .CommandCenter = 0x0,
+    .BlackwaterDocks = 0x0,
+    .AquatosSewers = 0x0,
+    .MarcadiaPalace = 0x0,
+#else
+    .Lobby = 0x00588dd0,
+    .Bakisi = 0x0,
+    .Hoven = 0x0,
+    .OutpostX12 = 0x0,
+    .KorgonOutpost = 0x0,
+    .Metropolis = 0x0,
+    .BlackwaterCity = 0x0,
+    .CommandCenter = 0x0,
+    .BlackwaterDocks = 0x0,
+    .AquatosSewers = 0x0,
+    .MarcadiaPalace = 0x0,
+#endif
+};
+
+VariableAddress_t vaLoadTexToGs = {
+#if UYA_PAL
+    .Lobby = 0x0,
+    .Bakisi = 0x0,
+    .Hoven = 0x0,
+    .OutpostX12 = 0x0,
+    .KorgonOutpost = 0x0,
+    .Metropolis = 0x0,
+    .BlackwaterCity = 0x0,
+    .CommandCenter = 0x0,
+    .BlackwaterDocks = 0x0,
+    .AquatosSewers = 0x0,
+    .MarcadiaPalace = 0x0,
+#else
+    .Lobby = 0x00588c98,
+    .Bakisi = 0x0,
+    .Hoven = 0x0,
+    .OutpostX12 = 0x0,
+    .KorgonOutpost = 0x0,
+    .Metropolis = 0x0,
+    .BlackwaterCity = 0x0,
+    .CommandCenter = 0x0,
+    .BlackwaterDocks = 0x0,
+    .AquatosSewers = 0x0,
+    .MarcadiaPalace = 0x0,
+#endif
+};
+
+VariableAddress_t vaConstructEffectTex = {
+#if UYA_PAL
+    .Lobby = 0x0,
+    .Bakisi = 0x0,
+    .Hoven = 0x0,
+    .OutpostX12 = 0x0,
+    .KorgonOutpost = 0x0,
+    .Metropolis = 0x0,
+    .BlackwaterCity = 0x0,
+    .CommandCenter = 0x0,
+    .BlackwaterDocks = 0x0,
+    .AquatosSewers = 0x0,
+    .MarcadiaPalace = 0x0,
+#else
+    .Lobby = 0x00588e88,
+    .Bakisi = 0x0,
+    .Hoven = 0x0,
+    .OutpostX12 = 0x0,
+    .KorgonOutpost = 0x0,
+    .Metropolis = 0x0,
+    .BlackwaterCity = 0x0,
+    .CommandCenter = 0x0,
+    .BlackwaterDocks = 0x0,
+    .AquatosSewers = 0x0,
+    .MarcadiaPalace = 0x0,
 #endif
 };
 
@@ -1125,6 +1238,45 @@ void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u
         // gfxDrawEffect(fx, fy, w , h, 63, 63, gfxGetEffectTex(0x20), 0xfffff3, color, 1, 0);
         gfxDoGifPaging();
 	}
+}
+
+//------------------------------------------------------------------------------
+void gfxHelperDrawTextWindow(float x, float y, float width, float height, float textOffsetX, float textOffsetY, float scale, u32 color, char* str, int length, enum TextAlign alignment, enum FontWindowFlags flags)
+{
+  if (alignment >= TEXT_ALIGN_MIDDLELEFT && alignment <= TEXT_ALIGN_MIDDLERIGHT)
+    flags |= FONT_WINDOW_FLAGS_V_ALIGN_CENTER;
+  if ((alignment % 3) == 1)
+    flags |= FONT_WINDOW_FLAGS_H_ALIGN_CENTER;
+
+  struct FontWindow fontWindow = {
+    .windowLeft = x,
+    .windowRight = x + width,
+    .windowTop = y,
+    .windowBottom = y + height,
+    .textX = x + textOffsetX,
+    .textY = y + textOffsetY,
+    .maxWidth = 0,
+    .maxHeight = 0,
+    .lineSpacing = 16 * scale,
+    .flags = flags,
+    //.subPixelX = (short)((x + textOffsetX)*2) % 2,
+    //.subPixelY = (short)((y + textOffsetY)*2) % 2,
+    .shadowOffsetX = 1,
+    .shadowOffsetY = 1
+  };
+
+  if ((flags & FONT_WINDOW_FLAGS_V_ALIGN_CENTER)) {
+    fontWindow.windowTop = y - height*0.5;
+    fontWindow.windowBottom = y + height*0.5;
+  }
+
+  if ((flags & FONT_WINDOW_FLAGS_H_ALIGN_CENTER)) {
+    fontWindow.windowLeft = x - width*0.5;
+    fontWindow.windowRight = x + width*0.5;
+  }
+
+  // draw
+  gfxScreenSpaceTextWindow(&fontWindow, scale, scale, color, str, length, 0x80000000);
 }
 
 Moby *gfxGetRegisteredDrawMobyList(void)
