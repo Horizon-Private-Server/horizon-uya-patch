@@ -85,6 +85,7 @@ char * fWorld = "%suya/%s.pal.world";
 char * fSound = "%suya/%s.pal.sound";
 char * fBg = "%suya/%s.pal.bg";
 char * fMap = "%suya/%s.pal.map";
+char * fThumb = "%suya/%s.pal.thumb";
 char * fVersion = "%suya/%s.version";
 
 #else
@@ -138,6 +139,7 @@ char * fWorld = "%suya/%s.world";
 char * fSound = "%suya/%s.sound";
 char * fBg = "%suya/%s.bg";
 char * fMap = "%suya/%s.map";
+char * fThumb = "%suya/%s.thumb";
 char * fVersion = "%suya/%s.version";
 
 #endif
@@ -719,7 +721,7 @@ void refreshCustomMapList(void)
 		int read = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
 
 		// ensure version file is valid
-		if (read != sizeof(CustomMapVersionFileDef_t)) {
+		if (read < sizeof(CustomMapVersionFileDef_t)) {
 			DPRINTF("%s (%d) does not match expected file size %d. Skipping.\n", filename, read, sizeof(CustomMapVersionFileDef_t));
 			continue;
 		}
@@ -1461,4 +1463,41 @@ void runMapLoader(void)
 			}
 		}
 	}
+}
+
+//------------------------------------------------------------------------------
+int mapReadCustomMapAuthorDescription(char* mapFilename, char dstAuthor[32], char dstDescription[256])
+{
+  //
+  if (mapFilename && mapFilename[0]) {
+    char buffer[sizeof(CustomMapVersionFileDef_t) + 32 + 256];
+    char filepath[256];
+    snprintf(filepath, sizeof(filepath), fVersion, getMapPathPrefix(), mapFilename);
+
+    int read = readFile(filepath, buffer, sizeof(buffer));
+    if (read < sizeof(buffer)) {
+      return 0;
+    }
+
+    CustomMapVersionFileDef_t customMapVersion;
+    memcpy(dstAuthor, buffer + sizeof(CustomMapVersionFileDef_t), 32);
+    memcpy(dstDescription, buffer + sizeof(CustomMapVersionFileDef_t) + 32, 256);
+    return 1;
+  }
+
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+int mapReadCustomMapThumbnail(char* mapFilename, char *buf, int bufSize)
+{
+  //
+  if (mapFilename && mapFilename[0]) {
+    char filepath[256];
+    snprintf(filepath, sizeof(filepath), fThumb, getMapPathPrefix(), mapFilename);
+
+    return readFile(filepath, buf, bufSize);
+  }
+
+  return 0;
 }
