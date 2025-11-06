@@ -957,7 +957,7 @@ VariableAddress_t vaVU0_addGSRegister = {
 };
 
 //--------------------------------------------------------
-int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, int font)
+int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, enum FontNames font)
 {
     gfxSetFont(font);
     // float x, float y, float scaleX, float scaleY, float shadowX, float shadowY, u32 color, const char* string, u64 length, u64 alignment, int bold, u32 shadowColor
@@ -1200,7 +1200,10 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
     vector_normalize(offsetCamDir, offsetCamDir);
     float dot = vector_innerproduct_unscaled(offsetCamDir, toMoby);
     // dot needs to be negated when online.
-    if (-dot > 0)
+    if (GAME_NET_INFO->myLicenseAccepted)
+        dot = -dot;
+
+    if (dot > 0)
         return 0;
 
     // if(dot > 0) {
