@@ -303,7 +303,6 @@ int onServerSentMapIrxModules(void * connection, void * data)
 	DPRINTF("server sent map irx modules\n");
 
 	MapServerSentModulesMessage * msg = (MapServerSentModulesMessage*)data;
-	mapsRemoteGlobalVersion = msg->Version;
 
   // we've already initialized the usb interface
   if (rpcInit > 0)
@@ -371,28 +370,13 @@ void initModules(void)
 	if (init < 0) {
 		actionState = ACTION_ERROR_LOADING_MODULES;
 	} else {
-    	// check if host fs exists
-    	useHost = 1;
-    	if (!readGlobalVersion(NULL)) useHost = 0;
+		actionState = ACTION_MODULES_INSTALLED;
+		// refresh map list
+		refreshCustomMapList();
 
-    	// read local global version
-    	readLocalGlobalVersion();
-		if (mapsLocalGlobalVersion != mapsRemoteGlobalVersion) {
-			// Indicate new version
-			actionState = ACTION_NEW_MAPS_UPDATE;
-		} else {
-			// Indicate maps installed
-			actionState = ACTION_MODULES_INSTALLED;
-		}
-		
-		DPRINTF("local maps version %d || remote maps version %d\n", mapsLocalGlobalVersion, mapsRemoteGlobalVersion);
-
-   		// refresh map list
-    	refreshCustomMapList();
-		
 		// if in game, ask server to resend map override to use
 		if (gameGetSettings())
-			netSendCustomAppMessage(NET_DELIVERY_CRITICAL, netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
+			netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
 	}
 }
 
@@ -1351,7 +1335,7 @@ int mapsPromptEnableCustomMaps(void)
 		// request irx modules from server
 		request.Module1Start = (u32)USB_FS_MODULE_PTR;
 		request.Module2Start = (u32)USB_SRV_MODULE_PTR;
-		netSendCustomAppMessage(NET_DELIVERY_CRITICAL, netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
+		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
 		actionState = ACTION_DOWNLOADING_MODULES;
 		return 1;
 	}
@@ -1411,7 +1395,7 @@ void onMapLoaderOnlineMenu(void)
 		MapClientRequestModulesMessage request = { 0, 0 };
 		request.Module1Start = (u32)USB_FS_MODULE_PTR;
 		request.Module2Start = (u32)USB_SRV_MODULE_PTR;
-		netSendCustomAppMessage(NET_DELIVERY_CRITICAL, netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
+		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
 		actionState = ACTION_DOWNLOADING_MODULES;
 		initialized = 1;
 	}
