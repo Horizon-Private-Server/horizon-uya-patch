@@ -23,24 +23,12 @@
 #define NEWLIB_PORT_AWARE
 #include <io_common.h>
 
-#define MASS_PATH_PREFIX      "mass:"
-#define HOST_PATH_PREFIX      "host:"
-
-#define MAP_FRAG_PAYLOAD_MAX_SIZE               (1024)
-#define LOAD_MODULES_STATE                      (*(u8*)0x000CFFF0)
-#define LOAD_MODULES_RESULT                     (*(u8*)0x000CFFF1)
-#define HAS_LOADED_MODULES                      (LOAD_MODULES_STATE == 100)
-
-#define USB_FS_ID                               (*(u8*)0x000CFFF4)
-#define USB_SRV_ID                              (*(u8*)0x000CFFF8)
-
 #if UYA_PAL
-
+#define REGION_SUFFIX ".pal"
 #define CDVD_LOAD_ASYNC_FUNC					(0x00194970)
 #define LEVEL_CDVD_LOAD_ASYNC_FUNC				(0x005c2a40)
 #define CDVD_IS_LOADING_FUNC					(0x00194a38)
 #define READ_WAD_GETSECTORS_FUNC				(0x00194ed8)
-
 #define LOAD_LEVEL_MAP_ID						(*(int*)0x002412dc)
 #define LOAD_LEVEL_PART_ID						(*(int*)0x00240288)
 #define LOAD_LEVEL_READ_WAD_HOOK				((u32*)0x005a41c8)
@@ -49,52 +37,25 @@
 #define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x00194f8c)
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x006787a8)
 #define LOAD_LEVEL_TRANSITION_MAPNAME			(0x00352D20)
-
-#define SOUND_FLUSH_SOUND_COMMANDS_FUNC (0x00193590)
-#define LOAD_SOUND_LOADBUSY ((int*)0x00240BC8)
-#define LOAD_SOUND_LOCALLOADERROR ((int*)0x00240B88)
-#define LOAD_SOUND_LOADRETURNVALUE ((int*)0x00240140)
-#define LOAD_SOUND_LOADPARAMS ((int*)0x00240180)
-#define LOAD_SOUND_RPC_CLIENTDATA (0x00240100)
-#define LOAD_LEVEL_SOUND_BANK_HOOK        ((u32*)0x005c1354)
-#define LOAD_LEVEL_SOUND_INIT_FUNC        ((u32*)0x005f16f0)
-#define LOAD_LEVEL_SOUND_LOAD_BANK_FUNC   ((u32*)0x005c1310)
-#define LOAD_LEVEL_SOUND_BY_LOC_FUNC      ((u32*)0x00193888)
-#define LOAD_LEVEL_SOUND_NOP_ADDR         ((u32)0x005a41f4)
-
-#define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193340)
-#define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00192F68)
-
-VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
-	.Lobby = 0,
-	.Bakisi = 0x004951A4,
-	.Hoven = 0x004972BC,
-	.OutpostX12 = 0x0048CB94,
-	.KorgonOutpost = 0x0048A264,
-	.Metropolis = 0x0048967C,
-	.BlackwaterCity = 0x00486F14,
-	.CommandCenter = 0x00486F0C,
-	.BlackwaterDocks = 0x0048978C,
-	.AquatosSewers = 0x00488A8C,
-	.MarcadiaPalace = 0x0048840C,
-};
-
-// paths for level specific files
-char * fWad = "%suya/%s.pal.wad";
-char * fWorld = "%suya/%s.pal.world";
-char * fSound = "%suya/%s.pal.sound";
-char * fBg = "%suya/%s.pal.bg";
-char * fMap = "%suya/%s.pal.map";
-char * fThumb = "%suya/%s.pal.thumb";
-char * fVersion = "%suya/%s.version";
-
+#define SOUND_FLUSH_SOUND_COMMANDS_FUNC 		(0x00193590)
+#define LOAD_SOUND_LOADBUSY 					((int*)0x00240BC8)
+#define LOAD_SOUND_LOCALLOADERROR 				((int*)0x00240B88)
+#define LOAD_SOUND_LOADRETURNVALUE 				((int*)0x00240140)
+#define LOAD_SOUND_LOADPARAMS 					((int*)0x00240180)
+#define LOAD_SOUND_RPC_CLIENTDATA 				(0x00240100)
+#define LOAD_LEVEL_SOUND_BANK_HOOK        		((u32*)0x005c1354)
+#define LOAD_LEVEL_SOUND_INIT_FUNC        		((u32*)0x005f16f0)
+#define LOAD_LEVEL_SOUND_LOAD_BANK_FUNC   		((u32*)0x005c1310)
+#define LOAD_LEVEL_SOUND_BY_LOC_FUNC      		((u32*)0x00193888)
+#define LOAD_LEVEL_SOUND_NOP_ADDR         		((u32)0x005a41f4)
+#define LEVEL_EXIT_FUNCTION_HOOK     			((u32*)0x00193340)
+#define LEVEL_EXIT_FUNCTION_FUNC     			((u32*)0x00192F68)
 #else
-
+#define REGION_SUFFIX ""
 #define CDVD_LOAD_ASYNC_FUNC					(0x00194A60)
 #define LEVEL_CDVD_LOAD_ASYNC_FUNC				(0x005c09f8)
 #define CDVD_IS_LOADING_FUNC					(0x00194b28)
 #define READ_WAD_GETSECTORS_FUNC				(0x00194fc8)
-
 #define LOAD_LEVEL_MAP_ID						(*(int*)0x0024145C)
 #define LOAD_LEVEL_PART_ID						(*(int*)0x00240408)
 #define LOAD_LEVEL_READ_WAD_HOOK				((u32*)0x005a2560)
@@ -103,46 +64,48 @@ char * fVersion = "%suya/%s.version";
 #define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x0019507c)
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x00675dc0)
 #define LOAD_LEVEL_TRANSITION_MAPNAME			(0x00352e20)
+#define SOUND_FLUSH_SOUND_COMMANDS_FUNC			(0x00193680)
+#define LOAD_SOUND_LOADBUSY 					((int*)0x00240D48)
+#define LOAD_SOUND_LOCALLOADERROR 				((int*)0x00240D08)
+#define LOAD_SOUND_LOADRETURNVALUE 				((int*)0x002402c0)
+#define LOAD_SOUND_LOADPARAMS 					((int*)0x00240300)
+#define LOAD_SOUND_RPC_CLIENTDATA 				(0x00240280)
+#define LOAD_LEVEL_SOUND_BANK_HOOK        		((u32*)0x005bf36c)
+#define LOAD_LEVEL_SOUND_INIT_FUNC        		((u32*)0x005eeff0)
+#define LOAD_LEVEL_SOUND_LOAD_BANK_FUNC   		((u32*)0x005bf328)
+#define LOAD_LEVEL_SOUND_BY_LOC_FUNC      		((u32*)0x00193978)
+#define LOAD_LEVEL_SOUND_NOP_ADDR         		((u32)0x005a258c)
+#define LEVEL_EXIT_FUNCTION_HOOK     			((u32*)0x00193430)
+#define LEVEL_EXIT_FUNCTION_FUNC     			((u32*)0x00193058)
+#endif
 
-#define SOUND_FLUSH_SOUND_COMMANDS_FUNC (0x00193680)
-#define LOAD_SOUND_LOADBUSY ((int*)0x00240D48)
-#define LOAD_SOUND_LOCALLOADERROR ((int*)0x00240D08)
-#define LOAD_SOUND_LOADRETURNVALUE ((int*)0x002402c0)
-#define LOAD_SOUND_LOADPARAMS ((int*)0x00240300)
-#define LOAD_SOUND_RPC_CLIENTDATA (0x00240280)
-#define LOAD_LEVEL_SOUND_BANK_HOOK        ((u32*)0x005bf36c)
-#define LOAD_LEVEL_SOUND_INIT_FUNC        ((u32*)0x005eeff0)
-#define LOAD_LEVEL_SOUND_LOAD_BANK_FUNC   ((u32*)0x005bf328)
-#define LOAD_LEVEL_SOUND_BY_LOC_FUNC      ((u32*)0x00193978)
-#define LOAD_LEVEL_SOUND_NOP_ADDR         ((u32)0x005a258c)
 
-#define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193430)
-#define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00193058)
+#define MASS_PATH_PREFIX      					"mass:"
+#define HOST_PATH_PREFIX      					"host:"
 
-VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
-	.Lobby = 0,
-	.Bakisi = 0x004931B4,
-	.Hoven = 0x0049520C,
-	.OutpostX12 = 0x0048AB24,
-	.KorgonOutpost = 0x00488274,
-	.Metropolis = 0x0048768C,
-	.BlackwaterCity = 0x00484EA4,
-	.CommandCenter = 0x0048505C,
-	.BlackwaterDocks = 0x0048789C,
-	.AquatosSewers = 0x00486BDC,
-	.MarcadiaPalace = 0x0048651C,
-};
+#define MAP_FRAG_PAYLOAD_MAX_SIZE               (1024)
+#define LOAD_MODULES_STATE                      (*(u8*)0x000cfff0)
+#define LOAD_MODULES_RESULT                     (*(u8*)0x000cfff1)
+#define HAS_LOADED_MODULES                      (LOAD_MODULES_STATE == 100)
+
+#define USB_FS_ID                               (*(u8*)0x000cfff2)
+#define USB_SRV_ID                              (*(u8*)0x000cfff3)
+#define USB_FS_MODULE_PTR						(*(void**)0x000cfff8)
+#define USB_SRV_MODULE_PTR						(*(void**)0x000cfffc)
+
+#define READ_CUSTOM_MAP_EXDATA_LEN              (2048)
+#define READ_CUSTOM_MAP_EXDATA_OFF              (0x150)
+#define READ_CUSTOM_MAP_FILENAME_LEN            (sizeof(MapLoaderState.MapFileName))
+
 
 // paths for level specific files
-char * fWad = "%suya/%s.wad";
-char * fWorld = "%suya/%s.world";
-char * fSound = "%suya/%s.sound";
-char * fBg = "%suya/%s.bg";
-char * fMap = "%suya/%s.map";
-char * fThumb = "%suya/%s.thumb";
+char * fWad = "%suya/%s" REGION_SUFFIX ".wad";
+char * fWorld = "%suya/%s" REGION_SUFFIX ".world";
+char * fSound = "%suya/%s" REGION_SUFFIX ".sound";
+char * fBg = "%suya/%s" REGION_SUFFIX ".bg";
+char * fMap = "%suya/%s" REGION_SUFFIX ".map";
+char * fThumb = "%suya/%s" REGION_SUFFIX ".thumb";
 char * fVersion = "%suya/%s.version";
-
-#endif
 
 #if DSCRPRINT
 void pushScrPrintLine(char* str);
@@ -150,10 +113,8 @@ void clearScrPrintLine(void);
 #endif
 
 void grLoadStart();
-
 void hook(void);
 void loadModules(void);
-
 int readLevelVersion(char * name, int * version);
 
 void * usbFsModuleStart = (void*)0x000D0000;
@@ -188,17 +149,14 @@ extern u32 colorText;
 extern char mapOverrideResponse;
 extern char expectedMapVersion;
 
-enum MenuActionId
-{
+enum MenuActionId {
 	ACTION_ERROR_LOADING_MODULES = -1,
-
 	ACTION_MODULES_NOT_INSTALLED = 0,
 	ACTION_DOWNLOADING_MODULES = 1,
 	ACTION_MODULES_WAIT_FOR_INSTALL = 2,
 	ACTION_MODULES_INSTALLED = 3,
 	ACTION_NEW_MAPS_UPDATE = 4,
 	ACTION_REFRESHING_MAPLIST = 5,
-
 	ACTION_NONE = 100
 };
 
@@ -211,32 +169,55 @@ int rpcInit = 0;
 char membuffer[256];
 int useHost = 0;
 
-
-typedef struct MapOverrideMessage
-{
+typedef struct MapOverrideMessage {
   CustomMapDef_t CustomMap;
 } MapOverrideMessage;
 
-typedef struct MapOverrideResponseMessage
-{
+typedef struct MapOverrideResponseMessage {
   char Filename[64];
 	int Version;
 } MapOverrideResponseMessage;
 
-typedef struct MapClientRequestModulesMessage
-{
+typedef struct MapClientRequestModulesMessage {
 	u32 Module1Start;
 	u32 Module2Start;
 } MapClientRequestModulesMessage;
 
-typedef struct MapServerSentModulesMessage
-{
+typedef struct MapServerSentModulesMessage {
 	int Version;
 	int Module1Size;
 	int Module2Size;
 } MapServerSentModulesMessage;
-
 struct MapLoaderState MapLoaderState;
+
+//------------------------------------------------------------------------------
+VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
+#ifdef UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x004931B4,
+	.Hoven = 0x0049520C,
+	.OutpostX12 = 0x0048AB24,
+	.KorgonOutpost = 0x00488274,
+	.Metropolis = 0x0048768C,
+	.BlackwaterCity = 0x00484EA4,
+	.CommandCenter = 0x0048505C,
+	.BlackwaterDocks = 0x0048789C,
+	.AquatosSewers = 0x00486BDC,
+	.MarcadiaPalace = 0x0048651C,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004951A4,
+	.Hoven = 0x004972BC,
+	.OutpostX12 = 0x0048CB94,
+	.KorgonOutpost = 0x0048A264,
+	.Metropolis = 0x0048967C,
+	.BlackwaterCity = 0x00486F14,
+	.CommandCenter = 0x00486F0C,
+	.BlackwaterDocks = 0x0048978C,
+	.AquatosSewers = 0x00488A8C,
+	.MarcadiaPalace = 0x0048840C,
+#endif
+};
 
 //------------------------------------------------------------------------------
 char * getMapPathPrefix(void)
@@ -320,11 +301,13 @@ int onSetMapOverride(void * connection, void * data)
 int onServerSentMapIrxModules(void * connection, void * data)
 {
 	DPRINTF("server sent map irx modules\n");
-	MapServerSentModulesMessage * msg = (MapServerSentModulesMessage*)data;
 
-	// we've already initialized the usb interface
-	if (rpcInit > 0)
-		return sizeof(MapServerSentModulesMessage);
+	MapServerSentModulesMessage * msg = (MapServerSentModulesMessage*)data;
+	mapsRemoteGlobalVersion = msg->Version;
+
+  // we've already initialized the usb interface
+  if (rpcInit > 0)
+	  return sizeof(MapServerSentModulesMessage);
 
 	// initiate loading
 	if (LOAD_MODULES_STATE == 0)
@@ -334,51 +317,83 @@ int onServerSentMapIrxModules(void * connection, void * data)
 	usbFsModuleSize = msg->Module1Size;
 	usbSrvModuleSize = msg->Module2Size;
 
-	// 
-	loadModules();
-
-	//
-	int init = rpcInit = rpcUSBInit();
-	DPRINTF("rpcUSBInit: %d, %08X:%d, %08X:%d\n", init, (u32)usbFsModuleStart, usbFsModuleSize, (u32)usbSrvModuleStart, usbSrvModuleSize);
-
-	//
-	if (init < 0) {
-		actionState = ACTION_ERROR_LOADING_MODULES;
+	// if not OPL load modules
+	if (loadModulesImmediately()) {
+		loadModules();
+		initModules();
 	} else {
-		actionState = ACTION_MODULES_INSTALLED;
-		// refresh map list
-		refreshCustomMapList();
-
-		// if in game, ask server to resend map override to use
-		if (gameGetSettings())
-			netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
+		actionState = ACTION_MODULES_WAIT_FOR_INSTALL;
 	}
-
 	return sizeof(MapServerSentModulesMessage);
 }
 
 //------------------------------------------------------------------------------
 void loadModules(void)
 {
-	int usbFsRes = 0, usbServRes = 0;
+	int mod_res = 0;
 	if (LOAD_MODULES_STATE < 7)
 		return;
 
 	if (LOAD_MODULES_STATE != 100) {
-		//
 		SifInitRpc(0);
 
 		// Load modules
-		//int usbd_id = SifExecModuleBuffer((void*)0x000AA000, 34993, 0, NULL, &mod_res);
-		USB_FS_ID = SifExecModuleBuffer(usbFsModuleStart, usbFsModuleSize, 0, NULL, &usbFsRes);
-		USB_SRV_ID = SifExecModuleBuffer(usbSrvModuleStart, usbSrvModuleSize, 0, NULL, &usbServRes);
+		USB_FS_ID = SifExecModuleBuffer(USB_FS_MODULE_PTR, usbFsModuleSize, 0, NULL, &mod_res);
+		USB_SRV_ID = SifExecModuleBuffer(USB_SRV_MODULE_PTR, usbSrvModuleSize, 0, NULL, &mod_res);
 
-		//DPRINTF("Loading USBD: %d\n", usbd_id);
-		DPRINTF("Loading MASS: %d %d\n", USB_FS_ID, usbFsRes);
-		DPRINTF("Loading USBSERV: %d %d\n", USB_SRV_ID, usbServRes);
+		DPRINTF("Loading MASS: %d\n", USB_FS_ID);
+		DPRINTF("Loading USBSERV: %d\n", USB_SRV_ID);
 	}
-
 	LOAD_MODULES_STATE = 100;
+}
+
+//------------------------------------------------------------------------------
+int loadModulesImmediately(void)
+{
+	// dzo always load immediately
+	// if (PATCH_INTEROP->Client == CLIENT_TYPE_DZO) return 1;
+
+	// if on OPL USB wait for loadHookFunc
+	// if (config.altModuleLoad) return 0;
+
+	return 1;
+}
+
+
+
+//------------------------------------------------------------------------------
+void initModules(void)
+{
+	int init = rpcInit = rpcUSBInit();
+	DPRINTF("rpcUSBInit: %d, %08X:%d, %08X:%d\n", init, (u32)USB_FS_MODULE_PTR, usbFsModuleSize, (u32)USB_SRV_MODULE_PTR, usbSrvModuleSize);
+	
+	//
+	if (init < 0) {
+		actionState = ACTION_ERROR_LOADING_MODULES;
+	} else {
+    	// check if host fs exists
+    	useHost = 1;
+    	if (!readGlobalVersion(NULL)) useHost = 0;
+
+    	// read local global version
+    	readLocalGlobalVersion();
+		if (mapsLocalGlobalVersion != mapsRemoteGlobalVersion) {
+			// Indicate new version
+			actionState = ACTION_NEW_MAPS_UPDATE;
+		} else {
+			// Indicate maps installed
+			actionState = ACTION_MODULES_INSTALLED;
+		}
+		
+		DPRINTF("local maps version %d || remote maps version %d\n", mapsLocalGlobalVersion, mapsRemoteGlobalVersion);
+
+   		// refresh map list
+    	refreshCustomMapList();
+		
+		// if in game, ask server to resend map override to use
+		if (gameGetSettings())
+			netSendCustomAppMessage(NET_DELIVERY_CRITICAL, netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -1288,30 +1303,68 @@ int mapsDownloadingModules(void)
 	return actionState == ACTION_DOWNLOADING_MODULES;
 }
 
+//--------------------------------------------------------------------------
+int align(int addr, int align)
+{
+	if (addr % align)
+		return addr + (align - (addr % align));
+	
+	return addr;
+}
+
+//------------------------------------------------------------------------------
+int mapsAllocateModuleBuffer(void)
+{
+	if (!USB_FS_MODULE_PTR) {
+		USB_FS_MODULE_PTR = malloc(41216);
+		if (USB_FS_MODULE_PTR) {
+			memset(USB_FS_MODULE_PTR, 0, 41216);
+			USB_FS_MODULE_PTR = (void*)align((int)USB_FS_MODULE_PTR, 0x10);
+		}
+	}
+	if (!USB_SRV_MODULE_PTR) {
+		USB_SRV_MODULE_PTR = malloc(12288);
+		if (USB_SRV_MODULE_PTR) {
+			memset(USB_SRV_MODULE_PTR, 0, 12288);
+			USB_SRV_MODULE_PTR = (void*)align((int)USB_SRV_MODULE_PTR, 0x10);
+		}
+	}
+
+	DPRINTF("fs:%08X srv:%08x\n", (u32)USB_FS_MODULE_PTR, (u32)USB_SRV_MODULE_PTR);
+
+	if (!USB_FS_MODULE_PTR)
+		return 0;
+	if (!USB_SRV_MODULE_PTR)
+		return 0;
+
+	return 1;
+}
+
 //------------------------------------------------------------------------------
 int mapsPromptEnableCustomMaps(void)
 {
 	MapClientRequestModulesMessage request = { 0, 0 };
-	if (uiShowYesNoDialog("Enable Custom Maps", "Are you sure?") == 1)
-	{
+	if (uiShowYesNoDialog("Enable Custom Maps", "Are you sure?") == 1){
+		if (!mapsAllocateModuleBuffer())
+			return -1;
+
 		// request irx modules from server
-		request.Module1Start = (u32)usbFsModuleStart;
-		request.Module2Start = (u32)usbSrvModuleStart;
-		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
+		request.Module1Start = (u32)USB_FS_MODULE_PTR;
+		request.Module2Start = (u32)USB_SRV_MODULE_PTR;
+		netSendCustomAppMessage(NET_DELIVERY_CRITICAL, netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
 		actionState = ACTION_DOWNLOADING_MODULES;
 		return 1;
 	}
-
 	return 0;
 }
+
 
 //------------------------------------------------------------------------------
 void onMapLoaderOnlineMenu(void)
 {
 	u32 bgColorDownload = 0x70000000;
 
-	if (actionState == ACTION_DOWNLOADING_MODULES)
-	{
+	if (actionState == ACTION_DOWNLOADING_MODULES) {
 		// disable input
 		padDisableInput();
 
@@ -1327,40 +1380,38 @@ void onMapLoaderOnlineMenu(void)
 
 		// render text
 		//gfxScreenSpaceText(SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5, 1, 1, downloadColor, "Downloading modules, please wait...", -1, 4);
-	}
-	else if (actionState == ACTION_MODULES_INSTALLED)
-	{
+	} else if (actionState == ACTION_MODULES_INSTALLED) {
 		// enable input
 		padEnableInput();
 
 		actionState = ACTION_NONE;
 		LOAD_MODULES_RESULT = 1;
-	}
-	else if (actionState == ACTION_NEW_MAPS_UPDATE)
-	{
+	} else if (actionState == ACTION_NEW_MAPS_UPDATE) {
 		// enable input
 		padEnableInput();
 		
 		uiShowOkDialog("Custom Maps", "New updates are available. Please download them at https://rac-horizon.com");
 		actionState = ACTION_MODULES_INSTALLED;
 		LOAD_MODULES_RESULT = 2;
-	}
-	else if (actionState == ACTION_ERROR_LOADING_MODULES)
-	{
+	} else if (actionState == ACTION_ERROR_LOADING_MODULES) {
 		// enable input
 		padEnableInput();
 		
 		uiShowOkDialog("Custom Maps", "There was an error loading the custom map modules.");
 		actionState = ACTION_NONE;
 		LOAD_MODULES_RESULT = -1;
-	}
-	else if (initialized == 2)
-	{
+	} else if (initialized == 2) {
+		if (!mapsAllocateModuleBuffer())
+		{
+			DPRINTF("failed to allocation module buffers\n");
+			initialized = 1;
+		}
+
 		// request irx modules from server
 		MapClientRequestModulesMessage request = { 0, 0 };
-		request.Module1Start = (u32)usbFsModuleStart;
-		request.Module2Start = (u32)usbSrvModuleStart;
-		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
+		request.Module1Start = (u32)USB_FS_MODULE_PTR;
+		request.Module2Start = (u32)USB_SRV_MODULE_PTR;
+		netSendCustomAppMessage(NET_DELIVERY_CRITICAL, netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
 		actionState = ACTION_DOWNLOADING_MODULES;
 		initialized = 1;
 	}
