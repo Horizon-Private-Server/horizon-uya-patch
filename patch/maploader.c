@@ -269,20 +269,13 @@ int onSetMapOverride(void * connection, void * data)
 			version = -1;
 
 		int i = 0;
-		if (CustomMapDefs != NULL) {
 			for (i = 0; i < CustomMapDefCount; ++i) {
-				if (strcmp(CustomMapDefs[i].Filename, payload->CustomMap.Filename) == 0) {
-					patchStateContainer.CustomMapId = i + 1;
-					version = CustomMapDefs[i].Version;
-					break;
-				}
+			if (strcmp(CustomMapDefs[i].Filename, payload->CustomMap.Filename) == 0) {
+				patchStateContainer.CustomMapId = i + 1;
+				version = CustomMapDefs[i].Version;
+				break;
 			}
-		} else if (CustomMapDefs == NULL){
-			// If not found in already loaded maps, search USB directly
-			CustomMapDef_t mapDef;
-			version = searchUSBForSpecificMap(payload->CustomMap.Filename, &mapDef);
 		}
-
 
 		// if (patchStateContainer.CustomMapId <= 0) version = -2;
 		if (version < 0)
@@ -633,6 +626,7 @@ void refreshCustomMapList(void)
 	// reset
 	dataCustomMaps.count = 1;
 	CustomMapDefCount = 0;
+	memset(customMapDefs, 0, sizeof(customMapDefs));
 
 	// need usb modules
 	if (!HAS_LOADED_MODULES) return;
@@ -659,14 +653,6 @@ void refreshCustomMapList(void)
 	}
 	
 	DPRINTF("opening dir (%s): returned %d\n", dirpath, fd);
-
-	// set CustomMapDef location to "Tips" UI.
-	if (CustomMapDefs == NULL) {
-		CustomMapDefs = (CustomMapDef_t *)uiGetMenu(UI_MENU_TIPS)->pFirstChild;
-	} else if (CustomMapDefCount) {
-		// zero data if already loaded maps.
-		memset(CustomMapDefs, 0, sizeof(CustomMapDef_t) * CustomMapDefCount);
-	}
 
 	// read
 	actionState = ACTION_REFRESHING_MAPLIST;
@@ -780,105 +766,6 @@ void refreshCustomMapList(void)
 		patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
 
 	actionState = actionStateAtStart;
-}
-
-//------------------------------------------------------------------------------
-// Search USB for a specific map by filename and return version if found
-int searchUSBForSpecificMap(const char* mapFilename, CustomMapDef_t* outMapDef)
-{
-	int fd, r;
-	char dirpath[64];
-	iox_dirent_t dirent;
-	int found = 0;
-
-	// Clear output map definition
-	if (outMapDef) {
-		memset(outMapDef, 0, sizeof(CustomMapDef_t));
-	}
-
-	// Check if USB modules are loaded first
-	if (!HAS_LOADED_MODULES) {
-		return -1; // USB not available
-	}
-
-	// Check for host filesystem first (like original code)
-	checkForHostFs();
-
-	sprintf(dirpath, "%suya", getMapPathPrefix());
-
-	// Sync before operations to prevent SIF conflicts
-	rpcUSBSync(0, NULL, NULL);
-
-	// Use proper RPC pattern like the working code
-	rpcUSBdopen(dirpath);
-	rpcUSBSync(0, NULL, &fd);
-	if (fd < 0) return -1; // USB error
-
-	do {
-		rpcUSBdread(fd, &dirent);
-		rpcUSBSync(0, NULL, &r);
-		if (r <= 0) break;
-
-		// Use same logic as main function for filename extraction
-		const char* versionExt = ".version";
-		int versionExtLen = strlen(versionExt);
-		io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
-
-		char filename[256];
-		if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
-		else strncpy(filename, dirent.name, sizeof(filename));
-
-		int len = strlen(filename);
-		if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
-
-		// Extract filename without extension
-		char filenameWithoutExtension[64];
-		strncpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
-		int nameLen = strlen(filenameWithoutExtension);
-		filenameWithoutExtension[nameLen - versionExtLen] = 0;
-
-		// Check if this matches the map we're looking for
-		if (strcmp(filenameWithoutExtension, mapFilename) == 0) {
-			found = 1;
-
-			if (outMapDef) {
-				// Try to read the version file to get full map details
-				char fullpath[256];
-				sprintf(fullpath, "%s/%s", dirpath, filename);
-
-				CustomMapVersionFileDef_t versionFileDef;
-				int readBytes = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
-
-				if (readBytes == sizeof(CustomMapVersionFileDef_t)) {
-					// Use the data from the version file
-					strncpy(outMapDef->Name, versionFileDef.Name, sizeof(outMapDef->Name));
-					strncpy(outMapDef->Filename, filenameWithoutExtension, sizeof(outMapDef->Filename));
-					outMapDef->Version = versionFileDef.Version;
-					outMapDef->BaseMapId = versionFileDef.BaseMapId;
-					outMapDef->ForcedCustomModeId = versionFileDef.ForcedCustomModeId;
-				} else {
-					// Fallback to filename if version file can't be read
-					strncpy(outMapDef->Name, filenameWithoutExtension, sizeof(outMapDef->Name));
-					strncpy(outMapDef->Filename, filenameWithoutExtension, sizeof(outMapDef->Filename));
-					outMapDef->Version = 1; // Default version
-				}
-			}
-			break;
-		}
-	} while(1);
-
-	rpcUSBSync(0, NULL, NULL);
-	rpcUSBdclose(fd);
-	rpcUSBSync(0, NULL, NULL);
-
-	return found ? (outMapDef ? outMapDef->Version : 1) : -2; // -2 = map not found
-}
-
-//------------------------------------------------------------------------------
-int cdvdLoad(u32 sectorStart, u32 sectorSize, void * dest, void * a3)
-{
-	int (*_cdvdLoad)(u32, u32, void*, void*) = (int (*)(u32, u32, void*, void*))CDVD_LOAD_ASYNC_FUNC;
-	return _cdvdLoad(sectorStart, sectorSize, dest, a3);
 }
 
 //------------------------------------------------------------------------------
@@ -1288,12 +1175,50 @@ int mapsDownloadingModules(void)
 	return actionState == ACTION_DOWNLOADING_MODULES;
 }
 
+int align(int addr, int align)
+{
+	if (addr % align)
+		return addr + (align - (addr % align));
+	
+	return addr;
+}
+
+//------------------------------------------------------------------------------
+int mapsAllocateModuleBuffer(void)
+{
+	if (!USB_FS_MODULE_PTR) {
+		USB_FS_MODULE_PTR = malloc(41216);
+		if (USB_FS_MODULE_PTR) {
+			memset(USB_FS_MODULE_PTR, 0, 41216);
+			USB_FS_MODULE_PTR = (void*)align((int)USB_FS_MODULE_PTR, 0x10);
+		}
+	}
+	if (!USB_SRV_MODULE_PTR) {
+		USB_SRV_MODULE_PTR = malloc(12288);
+		if (USB_SRV_MODULE_PTR) {
+			memset(USB_SRV_MODULE_PTR, 0, 12288);
+			USB_SRV_MODULE_PTR = (void*)align((int)USB_SRV_MODULE_PTR, 0x10);
+		}
+	}
+
+	DPRINTF("fs:%08X srv:%08x\n", (u32)USB_FS_MODULE_PTR, (u32)USB_SRV_MODULE_PTR);
+
+	if (!USB_FS_MODULE_PTR)
+		return 0;
+	if (!USB_SRV_MODULE_PTR)
+		return 0;
+
+	return 1;
+}
+
 //------------------------------------------------------------------------------
 int mapsPromptEnableCustomMaps(void)
 {
 	MapClientRequestModulesMessage request = { 0, 0 };
-	if (uiShowYesNoDialog("Enable Custom Maps", "Are you sure?") == 1)
-	{
+	if (uiShowYesNoDialog("Enable Custom Maps", "Are you sure?") == 1) {
+		if (!mapsAllocateModuleBuffer())
+			return -1;
+
 		// request irx modules from server
 		request.Module1Start = (u32)usbFsModuleStart;
 		request.Module2Start = (u32)usbSrvModuleStart;
@@ -1327,35 +1252,31 @@ void onMapLoaderOnlineMenu(void)
 
 		// render text
 		//gfxScreenSpaceText(SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5, 1, 1, downloadColor, "Downloading modules, please wait...", -1, 4);
-	}
-	else if (actionState == ACTION_MODULES_INSTALLED)
-	{
+	} else if (actionState == ACTION_MODULES_INSTALLED) {
 		// enable input
 		padEnableInput();
 
 		actionState = ACTION_NONE;
 		LOAD_MODULES_RESULT = 1;
-	}
-	else if (actionState == ACTION_NEW_MAPS_UPDATE)
-	{
+	} else if (actionState == ACTION_NEW_MAPS_UPDATE) {
 		// enable input
 		padEnableInput();
 		
 		uiShowOkDialog("Custom Maps", "New updates are available. Please download them at https://rac-horizon.com");
 		actionState = ACTION_MODULES_INSTALLED;
 		LOAD_MODULES_RESULT = 2;
-	}
-	else if (actionState == ACTION_ERROR_LOADING_MODULES)
-	{
+	} else if (actionState == ACTION_ERROR_LOADING_MODULES) {
 		// enable input
 		padEnableInput();
 		
 		uiShowOkDialog("Custom Maps", "There was an error loading the custom map modules.");
 		actionState = ACTION_NONE;
 		LOAD_MODULES_RESULT = -1;
-	}
-	else if (initialized == 2)
-	{
+	} else if (initialized == 2) {
+		if (!mapsAllocateModuleBuffer()) {
+			DPRINTF("failed to allocation module buffers\n");
+			initialized = 1;
+		}
 		// request irx modules from server
 		MapClientRequestModulesMessage request = { 0, 0 };
 		request.Module1Start = (u32)usbFsModuleStart;
@@ -1408,6 +1329,13 @@ void runMapLoader(void)
 	// hook irx module loading 
 	hook();
 
+	// if (isUnloading) {
+	// 	if (customMapDefs) {
+	// 		free(customMapDefs);
+	// 		customMapDefs = NULL;
+	// 	}
+	// }
+
 	// 
 	if (!initialized) {
 		initialized = 1;
@@ -1416,9 +1344,16 @@ void runMapLoader(void)
 		MapLoaderState.Enabled = 0;
 		MapLoaderState.CheckState = 0;
 
+		if (!customMapDefs) {
+			customMapDefs = malloc(sizeof(CustomMapDef_t) * MAX_CUSTOM_MAP_DEFINITIONS);
+			DPRINTF("alloc custom maps defs %08X\n", customMapDefs);
+		}
+
 		// install on login
 		if (LOAD_MODULES_RESULT == 0) {
 			initialized = 2;
+		} else if (HAS_LOADED_MODULES) {
+			refreshCustomMapList();
 		}
 	}
 
@@ -1434,23 +1369,6 @@ void runMapLoader(void)
 		gfxScreenSpaceText(SCREEN_WIDTH * 0.22, SCREEN_HEIGHT * 0.4, 1, 1, colorText, membuffer, -1, 3, FONT_BOLD);
 		float w = (float)CustomMapDefCount / (float)MAX_CUSTOM_MAP_DEFINITIONS;
 		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
-	}
-
-	#ifdef DEBUG
-	// set custommapdef pointer to null for quick testing of map detectiojn logic.
-	if (padGetButtonDown(0, PAD_L2 | PAD_R2) > 0)
-		CustomMapDefs = NULL;
-	#endif
-
-	if (isInMenus() && CustomMapDefs == NULL) {
-		int menu = uiGetActiveMenu(UI_MENU_STAGING, 0);
-		// full map list only needs to reload if host.
-		// clients use `searchUSBforCertainMap()` function.
-		if (menu && gameAmIHost())
-			refreshCustomMapList();
-	} else if (isInGame() && CustomMapDefs != NULL) {
-		CustomMapDefs = NULL;
-		CustomMapDefCount = 0;
 	}
 
 	// force map id to current map override if in staging
