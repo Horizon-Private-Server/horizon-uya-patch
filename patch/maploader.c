@@ -37,6 +37,44 @@
 #define LOAD_LEVEL_READ_LEVEL_TOC_HOOK			((u32*)0x00194f8c)
 #define LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK	((u32*)0x006787a8)
 #define LOAD_LEVEL_TRANSITION_MAPNAME			(0x00352D20)
+
+#define SOUND_FLUSH_SOUND_COMMANDS_FUNC (0x00193590)
+#define LOAD_SOUND_LOADBUSY ((int*)0x00240BC8)
+#define LOAD_SOUND_LOCALLOADERROR ((int*)0x00240B88)
+#define LOAD_SOUND_LOADRETURNVALUE ((int*)0x00240140)
+#define LOAD_SOUND_LOADPARAMS ((int*)0x00240180)
+#define LOAD_SOUND_RPC_CLIENTDATA (0x00240100)
+#define LOAD_LEVEL_SOUND_BANK_HOOK        ((u32*)0x005c1354)
+#define LOAD_LEVEL_SOUND_INIT_FUNC        ((u32*)0x005f16f0)
+#define LOAD_LEVEL_SOUND_LOAD_BANK_FUNC   ((u32*)0x005c1310)
+#define LOAD_LEVEL_SOUND_BY_LOC_FUNC      ((u32*)0x00193888)
+#define LOAD_LEVEL_SOUND_NOP_ADDR         ((u32)0x005a41f4)
+
+#define LEVEL_EXIT_FUNCTION_HOOK     ((u32*)0x00193340)
+#define LEVEL_EXIT_FUNCTION_FUNC     ((u32*)0x00192F68)
+
+VariableAddress_t LOAD_LEVEL_RADAR_MAP_HOOK = {
+	.Lobby = 0,
+	.Bakisi = 0x004951A4,
+	.Hoven = 0x004972BC,
+	.OutpostX12 = 0x0048CB94,
+	.KorgonOutpost = 0x0048A264,
+	.Metropolis = 0x0048967C,
+	.BlackwaterCity = 0x00486F14,
+	.CommandCenter = 0x00486F0C,
+	.BlackwaterDocks = 0x0048978C,
+	.AquatosSewers = 0x00488A8C,
+	.MarcadiaPalace = 0x0048840C,
+};
+
+// paths for level specific files
+char * fWad = "%suya/%s.pal.wad";
+char * fWorld = "%suya/%s.pal.world";
+char * fSound = "%suya/%s.pal.sound";
+char * fBg = "%suya/%s.pal.bg";
+char * fMap = "%suya/%s.pal.map";
+char * fVersion = "%suya/%s.version";
+
 #define SOUND_FLUSH_SOUND_COMMANDS_FUNC 		(0x00193590)
 #define LOAD_SOUND_LOADBUSY 					((int*)0x00240BC8)
 #define LOAD_SOUND_LOCALLOADERROR 				((int*)0x00240B88)
@@ -706,7 +744,7 @@ void refreshCustomMapList(void)
 		int read = readFile(fullpath, &versionFileDef, sizeof(CustomMapVersionFileDef_t));
 
 		// ensure version file is valid
-		if (read < sizeof(CustomMapVersionFileDef_t)) {
+		if (read != sizeof(CustomMapVersionFileDef_t)) {
 			DPRINTF("%s (%d) does not match expected file size %d. Skipping.\n", filename, read, sizeof(CustomMapVersionFileDef_t));
 			continue;
 		}
