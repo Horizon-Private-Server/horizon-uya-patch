@@ -440,6 +440,16 @@ enum TextAlign {
   TEXT_ALIGN_BOTTOMRIGHT,
 };
 
+enum FontWindowFlags
+{
+  FONT_WINDOW_FLAGS_NONE = 0,
+  FONT_WINDOW_FLAGS_H_ALIGN_CENTER = 1 << 0,
+  FONT_WINDOW_FLAGS_V_ALIGN_CENTER = 1 << 1,
+  FONT_WINDOW_FLAGS_NO_DRAW = 1 << 2,
+  FONT_WINDOW_FLAGS_SUBPIXEL = 1 << 3,
+  FONT_WINDOW_FLAGS_NO_SCISSOR = 1 << 4
+};
+
 typedef enum FontNames {
 	FONT_DEFAULT = 0,
 	FONT_BOLD = 0,
@@ -457,6 +467,24 @@ typedef struct RECT
     POINT BottomLeft;
     POINT BottomRight;
 } RECT;
+
+struct FontWindow
+{
+  short windowTop;
+  short windowBottom;
+  short windowLeft;
+  short windowRight;
+  short textX;
+  short textY;
+  short maxWidth;
+  short maxHeight;
+  short lineSpacing;
+  short flags;
+  short subPixelX;
+  short subPixelY;
+  short shadowOffsetX;
+  short shadowOffsetY;
+};
 
 typedef struct CubicLineEndPoint {
 	/*   0 */ int iCoreRGBA;
@@ -653,8 +681,9 @@ void drawFunction(void);
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
-int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, enum FontNames font);
+int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, int font);
 int gfxScreenSpaceTextCenter(float x, float y, u32 color, const char * string, int length);
+void gfxScreenSpaceTextWindow(struct FontWindow* fontWindow, float scaleX, float scaleY, u32 color, const char * string, int length, u32 shadowColor);
 
 /*
  * NAME :		gfxScreenSpaceBox
@@ -722,9 +751,13 @@ void gfxRegistserDrawFunction(void* callback, Moby* moby);
 void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
 void gfxDrawQuad(QuadDef quad, MATRIX worldMatrix);
 void gfxSetScissor(int xmin, int xmax, int ymin, int ymax);
+int gfxConstructEffectTex(int texGsAddr, int palGsAddr, int ulog, int vlog, int format);
+int gfxLoadPalToGs(void* ptr, int format);
+int gfxLoadTexToGs(void* ptr, int ulog, int vlog, int format);
 PartInstance_t * gfxSpawnParticle(VECTOR position, u32 texId, u32 color, char opacity, float rotation);
 void gfxHelperAlign(float* pX, float* pY, float w, float h, enum TextAlign alignment);
 void gfxHelperDrawSprite_WS(VECTOR worldPosition, float w, float h, int texId, u32 color, enum TextAlign alignment);
+void gfxHelperDrawTextWindow(float x, float y, float width, float height, float textOffsetX, float textOffsetY, float scale, u32 color, char* str, int length, enum TextAlign alignment, enum FontWindowFlags flags);
 Moby *gfxGetRegisteredDrawMobyList(void);
 void *gfxGetRegisteredDrawCalbackList(void);
 int gfxGetRegisteredDrawCount(void);
