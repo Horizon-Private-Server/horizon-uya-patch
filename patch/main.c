@@ -2875,6 +2875,8 @@ int main(void)
 		// Patch Weapon Ordering when Respawning
 		patchResurrectWeaponOrdering();
 
+		domination();
+
 		// Runs FPS Counter
 		runFpsCounter();
 
@@ -2915,6 +2917,8 @@ int main(void)
 	} else if (isInMenus()) {
 		// If in Lobby, run these game rules.
 		grLobbyStart();
+
+		domination();
 
 		// Patches loading popup from not showing if patch menu is open.
 		patchLoadingPopup();
