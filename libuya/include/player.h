@@ -1655,4 +1655,24 @@ void playerGiveShield(Player * player);
 */
 Player * playerGetFromSlot(int index);
 
+/*
+* NAME :		playerGetLatency
+* DESCRIPTION : Returns Last UDP Packet time
+* NOTES :
+* ARGS : 		
+* RETURN :		0: Not Connected, 1: Is Local Player, Other: Latency
+* AUTHOR :		Troy "Metroynome" Pruitt
+*/
+int playerGetLatency(Player *player);
+
+/*
+* NAME :		playerIsLinkHealthy
+* DESCRIPTION : Checks to see if last UDP Packet time is less than or equal to 150ms (or seconds?  unsure.)
+* NOTES :
+* ARGS : 		
+* RETURN :		0: Not Connected, 1: Is Connected.
+* AUTHOR :		Troy "Metroynome" Pruitt
+*/
+int playerIsLinkHealthy(Player *player);
+
 #endif // _LIBUYA_PLAYER_H_
