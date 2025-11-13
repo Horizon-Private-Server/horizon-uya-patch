@@ -23,7 +23,7 @@
 
 #define MAX_SEGMENTS (64)
 #define MIN_SEGMENTS (8)
-#define BASE_RADIUS (20.0f)
+#define BASE_RADIUS (10.0f)
 #define CAPTURE_STEP (0.001f)
 
 static inline int playerIsLocal(Player *player)
