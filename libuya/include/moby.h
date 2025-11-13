@@ -691,6 +691,25 @@ typedef struct MupltiplayerConfig { // 0x3a0
 /* 0x200 */ int spawnpoint[104];
 } MultiplayerConfig_t;
 
+typedef struct M6695_BoltCrank { // 0x60
+/* 0x00 */ float bias;
+/* 0x04 */ float biasBackup;
+/* 0x08 */ char unk_04[0xc]; 
+/* 0x14 */ int timeSinceLastLastInteraction;
+/* 0x20 */ int cameraCuboid;
+/* 0x24 */ char unk_24[0x4];
+/* 0x28 */ float crankCameraAdjustment;
+/* 0x2c */ char unk_2c[0x4];
+/* 0x30 */ float captureResistance;
+/* 0x34 */ char reset; // bool
+/* 0x35 */ char unk_35[3];
+/* 0x38 */ int resetTimer_seconds;
+/* 0x40 */ char unk_40[0x10];
+/* 0x50 */ int playerIndexInControl;
+/* 0x58 */ float biasBackup_2;
+/* 0x5c */ int pad; 
+} M6695_BoltCrank_t;
+
 /*
  * Spawns a moby with the given id and properties size.
  */
