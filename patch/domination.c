@@ -75,9 +75,9 @@ static u32 lerpColor(u32 a, u32 b, float t)
 // if local player is blue, invert
 static u32 getBoltCrankTextColor(float percent01, int invert)
 {
-    const u32 redColor = 0x80FF5050;
-    const u32 whiteColor = 0x80FFFFFF;
-    const u32 blueColor = 0x803060FF;
+    const u32 redColor = 0x00FF5050;
+    const u32 whiteColor = 0x00FFFFFF;
+    const u32 blueColor = 0x003060FF;
 
     if (invert) {
         percent01 = clamp01(percent01);
@@ -102,7 +102,7 @@ static u32 getBoltCrankTextColor(float percent01, int invert)
 
 typedef struct DominationBase {
 	int state;
-    int owner;
+    float bias;
     Moby *node;
 	Moby *boltCrank;
     Player *players[8];
@@ -178,7 +178,7 @@ void drawBase(Moby *base)
 {
     DominationBase_t *pvar = base->pVar;
 	float scrollQuad = pvar->scrolling;
-    u32 baseColor = pvar->color;
+    u32 baseColor = getBoltCrankTextColor(clamp01(pvar->boltCrankPercent * 0.01f), pvar->localPlayerColor);
     
     int i, k, j, s;
     QuadDef quad[3];
@@ -207,9 +207,9 @@ void drawBase(Moby *base)
 
     // set seperate rgbas
     quad[0].rgba[0] = quad[0].rgba[1] = (0x00 << 24) | baseColor;
-    quad[0].rgba[2] = quad[0].rgba[3] = (0x30 << 24) | baseColor;
-    quad[1].rgba[0] = quad[1].rgba[1] = (0x50 << 24) | baseColor;
-    quad[1].rgba[2] = quad[1].rgba[3] = (0x20 << 24) | baseColor;
+    quad[0].rgba[2] = quad[0].rgba[3] = (0x20 << 24) | baseColor;
+    quad[1].rgba[0] = quad[1].rgba[1] = (0x30 << 24) | baseColor;
+    quad[1].rgba[2] = quad[1].rgba[3] = (0x10 << 24) | baseColor;
     quad[2].rgba[0] = quad[2].rgba[1] = quad[2].rgba[2] = quad[2].rgba[3] = (0x30 << 24) | baseColor;
 
     VECTOR center, tempCenter, tempRight, tempUp, halfX, halfZ, vRadius;
@@ -296,7 +296,7 @@ void drawBase(Moby *base)
 
         snprintf(text, sizeof(text), "Node capture progress: %d%%", percentRounded);
         float percent01 = pvar->boltCrankPercent * 0.01f;
-        u32 textColor = getBoltCrankTextColor(percent01, pvar->localPlayerColor);
+        u32 textColor = (0x80 << 24) | getBoltCrankTextColor(percent01, pvar->localPlayerColor);
         gfxScreenSpaceText(SCREEN_WIDTH * 0.5f, SCREEN_HEIGHT * 0.85f, 1, 1, textColor, text, -1, TEXT_ALIGN_MIDDLECENTER, FONT_BOLD);
     }
 }
@@ -380,9 +380,9 @@ void basePlayerUpdate(Moby *this)
     // }
 
     // set color based on base owner team
-    pvar->color = 0x00ffffff;
-    if (pvar->owner > -1)
-        pvar->color = TEAM_COLORS[pvar->owner];
+    // pvar->color = 0x00ffffff;
+    // if (pvar->owner > -1)
+    //     pvar->color = TEAM_COLORS[pvar->owner];
 
     // cache capture percentage for HUD drawing
     pvar->boltCrankPercent = 0;
@@ -443,8 +443,6 @@ void baseHandleCapture(Moby* this)
     float targetBias = 0.5f;
     float step = CAPTURE_STEP;
     if (!isContested && capturingTeam != -1) {
-        pvars->owner = capturingTeam;
-
         if (capturingCount > 1) {
             step *= capturingCount;
             if (step > 0.05f)
@@ -459,8 +457,7 @@ void baseHandleCapture(Moby* this)
             targetBias = 0.5f;
         }
         approachFloat(&boltVars->bias, targetBias, step);
-        boltVars->bias = clamp01(boltVars->bias);
-        *(float*)(pvars->boltCrank->pVar) = boltVars->bias;
+        pvars->bias = clamp01(boltVars->bias);
     } else {
         pvars->state = 5;
         step = 0.005f;
@@ -508,7 +505,8 @@ Moby *spawnBaseMobies(Moby *node, Moby *boltCrank)
     base->node = (Moby*)node;
     base->boltCrank = (Moby*)boltCrank;
     base->color = 0x00ffffff;
-    base->owner = -1;
+    base->bias = 0.5f;
+    base->boltCrankPercent = 50.0f;
 
 
     return moby;
