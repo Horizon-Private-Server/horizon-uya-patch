@@ -6,8 +6,8 @@
  * AUTHOR :      Daniel "Dnawrkshp" Gerendasy
  */
 
-#ifndef _LIBDL_STDLIB_H_
-#define _LIBDL_STDLIB_H_
+#ifndef _LIBUYA_STDLIB_H_
+#define _LIBUYA_STDLIB_H_
 
 #include "common.h"
 

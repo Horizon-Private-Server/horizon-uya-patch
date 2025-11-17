@@ -11,4 +11,8 @@
 #define __LIBUYA_SETTER__    inline
 #define __LIBUYA_INLINE__    inline
 
+#define true 1
+#define false 0
+typedef _Bool bool;
+
 #endif // _LIBUYA_COMMON_H_
