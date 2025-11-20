@@ -21,14 +21,14 @@
 #include <libuya/guber.h>
 #include <libuya/sound.h>
 
-#define MAX_SEGMENTS (64)
-#define MIN_SEGMENTS (8)
-#define BASE_RADIUS (10.0f)
-#define CAPTURE_STEP (0.001f)
-#define DOMINATION_RING_ALPHA_SCALE               (0.6f) // 1 for default 
-#define DOMINATION_RING_HEIGHT                    (1.0f) // 2 for defualt
-#define DOMINATION_RING_ALPHA_SCALE_NEUTRAL       (0.6f)
-#define DOMINATION_RING_HEIGHT_NEUTRAL            (1.0f)
+#define MAX_SEGMENTS                        (64)
+#define MIN_SEGMENTS                        (8)
+#define BASE_RADIUS                         (10.0f)
+#define CAPTURE_STEP                        (0.001f)
+#define DOMINATION_RING_ALPHA_SCALE         (1.0f) // 1 for default 
+#define DOMINATION_RING_HEIGHT              (1.0f) // 2 for defualt
+#define DOMINATION_RING_ALPHA_SCALE_NEUTRAL (1.0f)
+#define DOMINATION_RING_HEIGHT_NEUTRAL      (1.0f)
 
 static inline int playerIsLocal(Player *player)
 {
@@ -115,7 +115,6 @@ typedef struct DominationBase {
     float boltCrankPercent;
     int localPlayerInside;
     int localPlayerColor;
-    int nodeAdjusted;
 } DominationBase_t;
 
 typedef struct DominationInfo {
@@ -177,6 +176,35 @@ void getBases(void)
 		}
 		++moby;
 	}
+}
+
+static void drawDominationHud(void)
+{
+    int i;
+    for (i = 0; i < domInfo.baseCount; ++i) {
+        Moby *base = domInfo.bases[i];
+        if (!base || !base->pVar)
+            continue;
+
+        DominationBase_t *pvar = (DominationBase_t*)base->pVar;
+        if (!pvar->localPlayerInside)
+            continue;
+
+        char text[32];
+        int percentRounded = (int)(pvar->boltCrankPercent);
+        if (percentRounded < 0)
+            percentRounded = 0;
+        if (percentRounded > 100)
+            percentRounded = 100;
+
+        snprintf(text, sizeof(text), "Node capture progress: %d%%", percentRounded);
+        float percent01 = pvar->boltCrankPercent * 0.01f;
+        u32 textColor = (0x80 << 24) | getBoltCrankTextColor(percent01, pvar->localPlayerColor);
+        gfxScreenSpaceText(SCREEN_WIDTH * 0.5f, SCREEN_HEIGHT * 0.85f, 1, 1, textColor, text, -1, TEXT_ALIGN_MIDDLECENTER, FONT_BOLD);
+
+        // Only draw once per frame (assume player is in at most one base)
+        break;
+    }
 }
 
 void drawBase(Moby *base)
@@ -301,21 +329,6 @@ void drawBase(Moby *base)
     vector_copy(quad[2].point[3], corners[3]);
 
     gfxDrawQuad(quad[2], NULL);
-
-    // show capture progress when a local player is inside the base radius
-    if (pvar->localPlayerInside) {
-        char text[32];
-        int percentRounded = (int)(pvar->boltCrankPercent);
-        if (percentRounded < 0)
-            percentRounded = 0;
-        if (percentRounded > 100)
-            percentRounded = 100;
-
-        snprintf(text, sizeof(text), "Node capture progress: %d%%", percentRounded);
-        float percent01 = pvar->boltCrankPercent * 0.01f;
-        u32 textColor = (0x80 << 24) | getBoltCrankTextColor(percent01, pvar->localPlayerColor);
-        gfxScreenSpaceText(SCREEN_WIDTH * 0.5f, SCREEN_HEIGHT * 0.85f, 1, 1, textColor, text, -1, TEXT_ALIGN_MIDDLECENTER, FONT_BOLD);
-    }
 }
 
 int baseCheckIfInside(VECTOR basePos, VECTOR playerPos)
@@ -537,4 +550,6 @@ void domination(void)
 		domInfo.gameState = 1;
 		domInfo.baseRaddius = BASE_RADIUS;
 	}
+
+    drawDominationHud();
 }

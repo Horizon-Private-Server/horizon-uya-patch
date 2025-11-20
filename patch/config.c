@@ -507,6 +507,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Node Select Timer", rangeActionHandler, menuStateHandler_Nodes, &dataNodeSelectTimer, "Amount of time a player has for choosing a node.  If timer runs out, player is spawned on current selected node." },
   { "All Nodes Countdown", listActionHandler, menuStateHandler_Nodes, &dataAllNodesTimer, "If one team owns all nodes, a countdown stsarts.  Team with all nodes win if countdown reaches zero." },
   { "No Ties in Timed Games", toggleActionHandler, menuStateHandler_Siege, &gameConfig.grSiegeNoTies, "Team with most base damage dealt wins!" },
+  { "Domination style nodes", toggleActionHandler, menuStateHandler_Siege, &gameConfig.grSiegeDominationNodes, "Capture Nodes by standing in their radius instead of cranking a bolt!" },
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
   { "Gatling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGatlingTurretHealth, "Increase or decrease the amount of health each teams base turrets have." },
@@ -2682,6 +2683,7 @@ void configMenuDisable(void)
         gameConfig.grAllNodesTimer = 2; // 1 minutes countdown when all nodes owned
         gameConfig.grSiegeNoTies = 1; // No ties - team with most base damage wins
         gameConfig.grSuicidePenaltyTimer = 3; // 0 seconds suicide penalty
+        gameConfig.grSiegeDominationNodes = 1; // on
         // Base / Node mods
         gameConfig.grSetGatlingTurretHealth = 4; // 3x
         gameConfig.grBaseHealthPadActive = 0; // Off

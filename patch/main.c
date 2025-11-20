@@ -2875,8 +2875,6 @@ int main(void)
 		// Patch Weapon Ordering when Respawning
 		patchResurrectWeaponOrdering();
 
-		domination();
-
 		// Runs FPS Counter
 		runFpsCounter();
 

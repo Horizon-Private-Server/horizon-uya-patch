@@ -64,6 +64,7 @@ typedef struct PatchGameConfig {
   char grAllNodesTimer;
   char grNodeSelectTimer;
   char grSiegeNoTies;
+  char grSiegeDominationNodes;
   char grNewPlayerSync;
 
   // Party

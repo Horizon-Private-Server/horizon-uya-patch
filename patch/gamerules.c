@@ -131,7 +131,8 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grDestructableBridges)
 		onGameplayLoad_destructableBridges(gameplay);
 
-	onGameplayLoad_adjustSiegePadTies(gameplay, SIEGE_PAD_TIE_Z);
+	if (gameConfig.grSiegeDominationNodes)
+		onGameplayLoad_adjustSiegePadTies(gameplay, SIEGE_PAD_TIE_Z);
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
 }
@@ -253,6 +254,9 @@ void grGameStart(void)
 
 	if (gameConfig.grSiegeNoTies)
 		patchSiegeTimeUp();
+
+	if (gameConfig.grSiegeDominationNodes)
+		domination();
 
 	FirstPass = 0;
 }
