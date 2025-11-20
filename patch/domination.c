@@ -25,6 +25,10 @@
 #define MIN_SEGMENTS (8)
 #define BASE_RADIUS (10.0f)
 #define CAPTURE_STEP (0.001f)
+#define DOMINATION_RING_ALPHA_SCALE               (0.6f) // 1 for default 
+#define DOMINATION_RING_HEIGHT                    (1.0f) // 2 for defualt
+#define DOMINATION_RING_ALPHA_SCALE_NEUTRAL       (0.6f)
+#define DOMINATION_RING_HEIGHT_NEUTRAL            (1.0f)
 
 static inline int playerIsLocal(Player *player)
 {
@@ -111,6 +115,7 @@ typedef struct DominationBase {
     float boltCrankPercent;
     int localPlayerInside;
     int localPlayerColor;
+    int nodeAdjusted;
 } DominationBase_t;
 
 typedef struct DominationInfo {
@@ -184,7 +189,7 @@ void drawBase(Moby *base)
     QuadDef quad[3];
     // get texture info (tex0, tex1, clamp, alpha)
     //gfxSetupEffectTex(&quad[0], FX_TIRE_TRACKS + 1, 0, 0x80);
-    gfxSetupEffectTex(&quad[0], FX_RETICLE_5, 0, 0x80);
+    gfxSetupEffectTex(&quad[0], FX_UNK_2, 0, 0x80);
     gfxSetupEffectTex(&quad[2], FX_CIRLCE_NO_FADED_EDGE, 0, 0x80);
 
     quad[0].uv[0] = (UV_t){0, 0}; // bottom left (-, -)
@@ -206,17 +211,29 @@ void drawBase(Moby *base)
     quad[1] = quad[0];
 
     // set seperate rgbas
-    quad[0].rgba[0] = quad[0].rgba[1] = (0x00 << 24) | baseColor;
-    quad[0].rgba[2] = quad[0].rgba[3] = (0x20 << 24) | baseColor;
-    quad[1].rgba[0] = quad[1].rgba[1] = (0x30 << 24) | baseColor;
-    quad[1].rgba[2] = quad[1].rgba[3] = (0x10 << 24) | baseColor;
-    quad[2].rgba[0] = quad[2].rgba[1] = quad[2].rgba[2] = quad[2].rgba[3] = (0x30 << 24) | baseColor;
+    int alphaOuterNear = (int)(0x00 * DOMINATION_RING_ALPHA_SCALE) & 0xFF;
+    int alphaOuterFar = (int)(0x30 * DOMINATION_RING_ALPHA_SCALE);
+    if (alphaOuterFar > 0xFF) alphaOuterFar = 0xFF;
+    int alphaMidNear = (int)(0x50 * DOMINATION_RING_ALPHA_SCALE);
+    if (alphaMidNear > 0xFF) alphaMidNear = 0xFF;
+    int alphaMidFar = (int)(0x20 * DOMINATION_RING_ALPHA_SCALE);
+    if (alphaMidFar > 0xFF) alphaMidFar = 0xFF;
+    int alphaCenter = (int)(0x30 * DOMINATION_RING_ALPHA_SCALE);
+    if (alphaCenter > 0xFF) alphaCenter = 0xFF;
+
+    u32 baseRgb = baseColor & 0x00FFFFFF;
+
+    quad[0].rgba[0] = quad[0].rgba[1] = (alphaOuterNear << 24) | baseRgb;
+    quad[0].rgba[2] = quad[0].rgba[3] = (alphaOuterFar << 24) | baseRgb;
+    quad[1].rgba[0] = quad[1].rgba[1] = (alphaMidNear << 24) | baseRgb;
+    quad[1].rgba[2] = quad[1].rgba[3] = (alphaMidFar << 24) | baseRgb;
+    quad[2].rgba[0] = quad[2].rgba[1] = quad[2].rgba[2] = quad[2].rgba[3] = (alphaCenter << 24) | baseRgb;
 
     VECTOR center, tempCenter, tempRight, tempUp, halfX, halfZ, vRadius;
     vector_copy(center, base->position);
     VECTOR xAxis = {domInfo.baseRaddius, 0, 0, 0};
     VECTOR zAxis = {0, domInfo.baseRaddius, 0, 0};
-    VECTOR yAxis = {0, 0, 2, 0};
+    VECTOR yAxis = {0, 0, DOMINATION_RING_HEIGHT, 0};
     
     vector_scale(halfX, xAxis, .5);
     vector_scale(halfZ, zAxis, .5);
@@ -230,7 +247,7 @@ void drawBase(Moby *base)
 
     // scale x, y of texture
     vector_scale(tempRight, tempRight, 1);
-    vector_scale(tempUp, yAxis, 1);
+    vector_scale(tempUp, yAxis, DOMINATION_RING_HEIGHT * 0.5f);
 
     float segmentSize = 1;
     int segments = (int)((2 * MATH_PI * fRadius) / segmentSize);
@@ -242,8 +259,8 @@ void drawBase(Moby *base)
 		vector_copy(vRadius, halfX);
 		for (i = 0; i < segments; ++i) {
 			vector_add(tempCenter, center, vRadius);
-			// offset quad[1] by 3
-			tempCenter[2] += k * 2;
+			// offset quad[1] by configured height
+			tempCenter[2] += k * DOMINATION_RING_HEIGHT;
 			// create vector for each point.
 			for (j = 0; j < 4; ++j) {
 				quad[k].point[j][0] = tempCenter[0] + signs[j][0] * tempRight[0] + signs[j][1] * tempUp[0];
@@ -307,7 +324,7 @@ int baseCheckIfInside(VECTOR basePos, VECTOR playerPos)
     vector_subtract(delta, playerPos, basePos);
 
     // check Y axis
-    if (delta[2] < -1.25 || delta[2] > basePos[2] + 6) {
+    if (delta[2] < -1.25 || delta[2] > 8) {
         return 0;
     }
     // check radius
@@ -328,7 +345,7 @@ void basePlayerUpdate(Moby *this)
     
     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
         Player *player = players[i];
-        if (!player || playerIsDead(player))
+        if (!player || playerIsDead(player) || player->vehicle)
             continue;
 
         int in = baseCheckIfInside(this->position, player->playerPosition);
@@ -462,10 +479,6 @@ void baseHandleCapture(Moby* this)
         pvars->state = 5;
         step = 0.005f;
     }
-
-    //approachFloat(&boltVars->bias, targetBias, step);
-    //boltVars->bias = clamp01(boltVars->bias);
-    //*(float*)(pvars->boltCrank->pVar) = boltVars->bias;
 }
 
 void updateBase(Moby* this)
@@ -473,9 +486,9 @@ void updateBase(Moby* this)
     DominationBase_t *pvars = (DominationBase_t*)this->pVar;
     if (!pvars) return;
 
-    // turn collision off and move bolt crank to y: 0
 	pvars->boltCrank->collData = 0;
 	pvars->boltCrank->position[2] = 0;
+	pvars->node->collData = 0;
 
     // draw base
     gfxRegistserDrawFunction(&drawBase, (Moby*)this);

@@ -128,6 +128,22 @@ typedef struct GameplayMobyHeaderDef
   struct GameplayMobyDef MobyInstances[0];
 } GameplayMobyHeaderDef_t;
 
+
+typedef struct TieInstanceEntry {
+	s32 OClass;
+	s32 DrawDistance;
+	s32 Pad8;
+	s32 OcclusionIndex;
+	float Matrix[4][4];
+	s32 Pad[4];
+	// u8 Reserved[TIE_INSTANCE_ENTRY_SIZE - 0x50];
+} TieInstanceEntry_t;
+
+typedef struct TieInstanceTableHeaderDef {
+	s32 Count;
+	s32 Pad[3];
+} TieInstanceTableHeader_t;
+
 /*
  */
 typedef struct GameplayCuboidDef

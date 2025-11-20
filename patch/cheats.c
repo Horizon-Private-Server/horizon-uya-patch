@@ -521,6 +521,24 @@ void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int 
 	}
 }
 
+void onGameplayLoad_adjustSiegePadTies(GameplayHeaderDef_t * gameplay, float targetZ)
+{
+	if (!gameplay || !gameplay->TieInstancesOffset)
+		return;
+
+	TieInstanceTableHeader_t * header = (TieInstanceTableHeader_t*)((u8*)gameplay + gameplay->TieInstancesOffset);
+	int count = header->Count;
+	if (count <= 0 || count > 4096)
+		return;
+
+	TieInstanceEntry_t * entries = (TieInstanceEntry_t*)((u8*)header + sizeof(TieInstanceTableHeader_t));
+	int i;
+	for (i = 0; i < count; ++i) {
+		if (entries[i].OClass == MOBY_ID_SIEGE_PAD_TIE)
+			entries[i].Matrix[3][2] = targetZ;
+	}
+}
+
 /*
  * NAME :		keepBaseHealthPadActive
  * DESCRIPTION :

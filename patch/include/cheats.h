@@ -25,6 +25,7 @@ void onGameplayLoad_disableHealthContainer(GameplayHeaderDef_t * gameplay);
 void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay);
 void destructableBridges(void);
 void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay);
+void onGameplayLoad_adjustSiegePadTies(GameplayHeaderDef_t * gameplay, float targetZ);
 void runCheckAllNodes(void);
 void runSelectNodeTimer(void);
 void patchSiegeTimeUp(void);

@@ -30,6 +30,8 @@
 #include "include/cheats.h"
 #include "interop/gamerules.h"
 
+#define SIEGE_PAD_TIE_Z (10.0f)
+
 extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 extern PatchPatches_t patched;
@@ -129,6 +131,7 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grDestructableBridges)
 		onGameplayLoad_destructableBridges(gameplay);
 
+	onGameplayLoad_adjustSiegePadTies(gameplay, SIEGE_PAD_TIE_Z);
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
 }
