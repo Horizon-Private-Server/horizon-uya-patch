@@ -116,6 +116,7 @@ typedef struct DominationBase {
     float boltCrankPercent;
     int localPlayerInside;
     int localPlayerColor;
+    int nodeAdjusted;
 } DominationBase_t;
 
 typedef struct DominationInfo {
