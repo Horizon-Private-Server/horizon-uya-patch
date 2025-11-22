@@ -1,14 +1,7 @@
 #include "math3d.h"
 #include "common.h"
+#include "sound.h"
 #include "interop.h"
-
-#if UYA_PAL
-#define SOUND_GLOBALS ((SoundGlobals*)0x001fe020)
-#define AUDIO_INTO_DATA ((stAudioInfoData*)0)
-#else
-#define SOUND_GLOBALS ((SoundGlobals*)0x001fe1a0)
-#define AUDIO_INTO_DATA ((stAudioInfoData*)0x00240700)
-#endif
 
 VariableAddress_t vaSoundHeroPlayFunc = {
 #if UYA_PAL
@@ -121,8 +114,3 @@ VariableAddress_t vaSoundPlayFunc = {
     .MarcadiaPalace = 0x004b6498,
 #endif
 };
-
-// SoundGlobals* soundGetSound(void)
-// {
-//     return SOUND_GLOBALS;
-// }
