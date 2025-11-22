@@ -18,8 +18,8 @@
 # Review ps2sdk README & LICENSE files for further details.
 */
 
-#ifndef _LIBDL_COLOR_H_
-#define _LIBDL_COLOR_H_
+#ifndef _LIBUYA_COLOR_H_
+#define _LIBUYA_COLOR_H_
 
 /*
  * NAME :		colorLerp
@@ -35,5 +35,5 @@
  */
 u32 colorLerp(u32 a, u32 b, float t);
 
-#endif // _LIBDL_COLOR_H_
+#endif // _LIBUYA_COLOR_H_
 
