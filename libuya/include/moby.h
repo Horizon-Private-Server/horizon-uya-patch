@@ -388,9 +388,12 @@ typedef struct Moby {
 	/* 0x90 */ struct GuberMoby * guberMoby;
 	/* 0x94 */ int unk_94;
 	/* 0x98 */ int *collData;
-	/* 0x9c */ char unk_9c[0x4];
+	/* 0x9c */ int collActive;
 	/* 0xa0 */ int collCnt;
-	/* 0x04 */ char unk_a4[0x4];
+	/* 0xa4 */ char grid_min_x;
+	/* 0xa5 */ char grid_min_y;
+	/* 0xa6 */ char grid_max_x;
+	/* 0xa7 */ char grid_max_y;
 	/* 0xa8 */ char collDamage;
     /* 0xa9 */ char standardDeathCalled;
 	/* 0xaa */ short oClass;
