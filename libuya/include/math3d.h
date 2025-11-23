@@ -19,6 +19,9 @@
 #ifndef _LIBUYA_MATH3D_H_
 #define _LIBUYA_MATH3D_H_
 
+#include <tamtypes.h>
+#include "common.h"
+
 //--------------------------------------------------------
 typedef float VECTOR[4] __attribute__((__aligned__(16)));
 typedef float vec2[2] __attribute__((__aligned__(16)));
