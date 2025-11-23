@@ -546,6 +546,7 @@ void domination(void)
     }
 
 	if (domInfo.gameState == 0) {
+        memset(&domInfo, 0, sizeof(DominationInfo_t));
 		getBases();
 		domInfo.gameState = 1;
 		domInfo.baseRaddius = BASE_RADIUS;
