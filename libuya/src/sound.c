@@ -1,5 +1,3 @@
-#include "math3d.h"
-#include "common.h"
 #include "sound.h"
 #include "interop.h"
 
