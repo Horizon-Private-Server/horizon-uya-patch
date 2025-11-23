@@ -21,6 +21,8 @@
 #ifndef _LIBUYA_COLOR_H_
 #define _LIBUYA_COLOR_H_
 
+#include <tamtypes.h>
+
 /*
  * NAME :		colorLerp
  * DESCRIPTION :
