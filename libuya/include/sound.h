@@ -15,10 +15,8 @@
 
 #if UYA_PAL
 #define SOUND_GLOBALS ((SoundGlobals*)0x001fe020)
-#define AUDIO_INFO_DATA ((stAudioInfoData*)0)
 #else
 #define SOUND_GLOBALS ((SoundGlobals*)0x001fe1a0)
-#define AUDIO_INFO_DATA ((stAudioInfoData*)0x00240700)
 #endif
 
 // All sounds were played in Bank 0
@@ -125,23 +123,6 @@ typedef struct SoundDef { // 0x20
 	/* 0x1a */ short int index;
 	/* 0x1c */ int bank_index;
 } SoundDef;
-
-struct stAudioControlDmeObject { // 0x4
-	/* 0x0 */ int bGlobalChatEnabled;
-};
-
-struct stAudioInfo { // 0x28
-	/* 0x00 */ int eAudioRecordingState;
-	/* 0x04 */ int bAudioPlaying;
-	/* 0x08 */ int iAudioType;
-	/* 0x0c */ int iClientIndexPlaying;
-	/* 0x10 */ int iTickRecord;
-	/* 0x14 */ int iJoinedChannel;
-	/* 0x18 */ struct stAudioControlDmeObject *pstSharedAudioControlObject;
-	/* 0x1c */ int bAudioObjectCreated;
-	/* 0x20 */ int iAudioObjectIndex;
-	/* 0x24 */ int iMyClientIndex;
-};
 
 void soundHeroPlay(Player* player, short sound, int flags);
 
