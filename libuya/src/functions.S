@@ -493,14 +493,11 @@ VARIABLE_FUNCTION(masterDelete, vaDeleteMaster)
 #--------------------------------------------------------
 #------------------------ RANDOM ------------------------
 #--------------------------------------------------------
-VARIABLE_FUNCTION(rand, vaMB_rand)
-VARIABLE_FUNCTION(randRange, vaMB_randRange)
-VARIABLE_FUNCTION(randRangeInt, vaMB_randRangeInt)
-VARIABLE_FUNCTION(randRangeNeg, vaMB_randRange2)
-VARIABLE_FUNCTION(randRadian, vaMB_randRot)
-#VARIABLE_FUNCTION(randVector, 0x004b7e50)
-#VARIABLE_FUNCTION(randVectorRangeNeg, 0x005083c8)
-#VARIABLE_FUNCTION(randVectorRange, 0x00508448)
+#ifdef UYA_PAL
+FUNCTION(randSeed, 0x0019d510)
+#else
+FUNCTION(randSeed, 0x0019d650)
+#endif
 
 #--------------------------------------------------------
 #------------------------ WEAPON ------------------------

@@ -8,83 +8,102 @@
 #define _LIBUYA_RANDOM_H_
 
 #include <tamtypes.h>
+#include "math.h"
+#include "math3d.h"
+
+#ifdef UYA_PAL
+#define RANDOM_SEED ((int*)0x00240b60)
+#else
+#define RANDOM_SEED ((int*)0x00240ce0)
+#endif
+
+/*
+ * NAME :		randSeed
+ * DESCRIPTION :
+ *              Returns a random seed.
+ * NOTES :
+ * ARGS : 
+ * RETURN :     Troy "Metroynome" Pruitt
+ */
+u32 randSeed(void);
 
 /*
  * NAME :		rand
  * DESCRIPTION :
  * NOTES :
  * ARGS : 
- * RETURN :
+ * RETURN :     Troy "Metroynome" Pruitt
  */
-int rand(int mod);
+int rand(int max);
 
 /*
  * NAME :		randVector
  * DESCRIPTION :
- * 			Returns a vector where the first three components are between +- unitLen.
+ * 			    Returns a vector where the first three components are between +- unitLen.
  * NOTES :
  * ARGS : 
- * RETURN :
+ * RETURN :     Troy "Metroynome" Pruitt
  */
 // u128 randVector(float unitLen);
 
 /*
  * NAME :		randVectorRangeNeg
  * DESCRIPTION :
- * 			Returns a vector where the first three components are between [min, max] or [-min, -max]
+ * 			    Returns a vector where the first three components are between [min, max] or [-min, -max]
  * NOTES :
  * ARGS : 
- * RETURN :
+ * RETURN :     Troy "Metroynome" Pruitt
  */
 // u128 randVectorRangeNeg(float min, float max);
 
 /*
  * NAME :		randVectorRange
  * DESCRIPTION :
- * 			Returns a vector where the first three components are between [min, max]
+ * 			    Returns a vector where the first three components are between [min, max]
  * NOTES :
  * ARGS : 
- * RETURN :
+ * RETURN :     Troy "Metroynome" Pruitt
  */
-// u128 randVectorRange(float min, float max);
+void randVectorRange(VECTOR output, float min, float max);
 
 /*
- * NAME :		randRange
+ * NAME :		randRangeFloat
  * DESCRIPTION :
  * NOTES :
  * ARGS : 
- * RETURN :
+ * RETURN :     Troy "Metroynome" Pruitt
  */
-float randRange(float min, float max);
+float randRangeFloat(float min, float max);
 
 /*
- * NAME :		randRangeNeg
+ * NAME :		randRangeFloatNeg
  * DESCRIPTION :
  * 			Returns a value between [min, max] or [-min, -max]
  * NOTES :
  * ARGS : 
- * RETURN :
+ * RETURN :     Troy "Metroynome" Pruitt
  */
-float randRangeNeg(float min, float max);
+float randRangeFloatNeg(float min, float max);
 
 /*
  * NAME :		randRangeInt
  * DESCRIPTION :
- * 			Returns a value between [min, max]
+ * 			    Returns a value between [min, max]
  * NOTES :
  * ARGS : 
- * RETURN :
+ * RETURN :     Troy "Metroynome" Pruitt
  */
 int randRangeInt(int min, int max);
 
 /*
- * NAME :		randRangeInt
+ * NAME :		randRot
  * DESCRIPTION :
- * 			Returns a value between [min, max]
  * NOTES :
  * ARGS : 
- * RETURN :
+ * RETURN :     Troy "Metroynome" Pruitt
  */
-float randRadian(void);
+float randRot(void);
+
+void randSphere(VECTOR output, float min, float max);
 
 #endif // _LIBUYA_RANDOM_H_
