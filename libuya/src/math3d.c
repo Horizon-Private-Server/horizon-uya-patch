@@ -373,6 +373,18 @@ void vector_transform(VECTOR output, VECTOR input, MATRIX matrix) {
 	output[3] = 1;
 }
 
+void vector_sphere(VECTOR output, float radius, float angle, float elevation)
+{
+    float sin_elv = sinf(elevation);
+    float cos_elv = cosf(elevation);
+    float sin_ang = sinf(angle);
+    float cos_ang = cosf(angle);
+    output[0] = radius * cos_elv * sin_ang;
+    output[1] = radius * sin_elv;
+    output[2] = radius * cos_elv * cos_ang;
+    output[3] = 0.0f;
+}
+
 //--------------------------------------------------------
 void matrix_toeuler(VECTOR output, MATRIX input0)
 {
