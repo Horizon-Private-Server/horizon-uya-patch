@@ -762,7 +762,7 @@ void gfxHelperDrawTextWindow(float x, float y, float width, float height, float 
 Moby *gfxGetRegisteredDrawMobyList(void);
 void *gfxGetRegisteredDrawCalbackList(void);
 int gfxGetRegisteredDrawCount(void);
-void gfxDrawStrip(int texId, vec3 *pos, int *rbga, struct UV *uv, int unk);
+void gfxDrawStrip(int numVerts, vec3 *pos, int *rbga, struct UV *uv, int clipped);
 void gfxDrawStripInit(void);
 void gfxAddRegister(int register, u64 value);
 
