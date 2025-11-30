@@ -829,3 +829,25 @@ int playerHasShield(Player * player)
     }
     return 0;
 }
+
+int playerGetLatency(Player *player)
+{
+    if (!player)
+        return 0;
+
+    // if only locals, or if player is a local, return true.
+    if (GAME_NET_INFO->onlyLocalPlayers || player->isLocal)
+        return 1;
+
+    // if last packet time is less than or equal to 150, return true.
+    int clientId = player->pNetPlayer->netClientIndex;
+    int netClientMap = GAME_NET_INFO->clientIndexRemapper[clientId];
+    int lastPackettime = GAME_NET_INFO->m_LastUdpPacketReceived[netClientMap];
+    int deltaTime = GAME_TIME - lastPackettime;
+    return deltaTime;
+}
+
+int playerIsLinkHealthy(Player *player)
+{
+    return playerGetLatency(player) <= 150;
+}
