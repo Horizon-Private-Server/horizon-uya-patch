@@ -679,7 +679,7 @@ void playerSyncBroadcastPlayerState(Player* player)
   msg.CameraPitch = (short)(pitch * 10240.0);
   msg.CameraYaw = (short)(yaw * 10240.0);
   msg.NoInput = player->timers.noInput;
-  msg.Health = player->pNetPlayer->pNetPlayerData->hitPoints;
+  msg.Health = (float)playerGetHealth(player);// player->pNetPlayer->pNetPlayerData->hitPoints;
   msg.MoveX = ((struct PAD*)player->pPad)->rdata[6];
   msg.MoveY = ((struct PAD*)player->pPad)->rdata[7];
   msg.PadBits0 = ((struct PAD*)player->pPad)->rdata[2];

@@ -829,3 +829,15 @@ int playerHasShield(Player * player)
     }
     return 0;
 }
+
+int playerMapHealth(int health) {
+    static const int diff[3] = {6, 7, 7};
+    int result = 0;
+		int i = 0;
+
+    for (i = 0; i < health; i++) {
+        result += diff[i % 3];
+    }
+
+    return result;
+}

@@ -1279,6 +1279,14 @@ void gfxHelperDrawTextWindow(float x, float y, float width, float height, float 
   gfxScreenSpaceTextWindow(&fontWindow, scale, scale, color, str, length, 0x80000000);
 }
 
+void gfxDrawHUDIcon(int spriteId, float x, float y, float scale, u64 color)
+{
+    gfxSetupGifPaging(0);
+    u64 getSprite = gfxGetFrameTex(spriteId);
+    gfxDrawSprite(x,   y,   scale, scale, 0, 0, 32, 32, color, getSprite);
+    gfxDoGifPaging();
+}
+
 Moby *gfxGetRegisteredDrawMobyList(void)
 {
     return REGISTERED_DRAW_MOBIES;

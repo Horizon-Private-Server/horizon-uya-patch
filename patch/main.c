@@ -144,6 +144,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.levelOfDetail = 2,
 	.enableFpsCounter = 0,
 	.playerFov = 0,
+	.enableTeamInfo = 0,
 	.enableSpectate = 0,
 	.alwaysShowHealth = 0,
 	.mapScoreToggle_MapBtn = 0,
@@ -1729,6 +1730,49 @@ void patchAimAssist(void)
 }
 
 /*
+ * NAME :		teamInfo
+ * DESCRIPTION :	Displays teamate health and cycle weapon upgrade status
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			JelloGiant
+ */
+void teamInfo(void)
+{
+	float height_start = SCREEN_HEIGHT;
+	float height_step = SCREEN_HEIGHT / 18;
+	float width_start = SCREEN_WIDTH / 20;
+	int misc_pad = 3; // misc aligning and spacing
+	u32 icon_colors[2] = {0x80C0C0C0, 0x50d04040}; //v1, v2
+	Player* localPlayer = playerGetFromSlot(0);
+	GameSettings * gameSettings = gameGetSettings();
+	if (!localPlayer || !localPlayer->isLocal || !localPlayer->pMoby)
+		return;
+	int teamColor = localPlayer->mpTeam;
+	Player ** players = playerGetAll();
+	int i;
+	float height_spacing = 1; // teamates listed vertically
+	char name [4]; // first 4 chars of name will be displayed
+	char buf[8]; // 4 chars + space + 1-3 digits of health
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		Player* p = players[i];
+		if (p && !p->isLocal && p->mpTeam == teamColor && p->pNetPlayer) {
+			int raw_upgrades = p->pNetPlayer->pNetPlayerData->rank[1];
+			int flux_color  = icon_colors[(raw_upgrades & 0x080000 ? 1 : 0)];
+			int blitz_color = icon_colors[(raw_upgrades & 0x040000 ? 1 : 0)];
+			int gbomb_color = icon_colors[(raw_upgrades & 0x200000 ? 1 : 0)];
+			strncpy(name, gameSettings->PlayerNames[p->mpIndex], 4);
+			sprintf(buf, "%s %d", name, playerMapHealth(p->pNetPlayer->pNetPlayerData->hitPoints));
+			gfxScreenSpaceText(misc_pad,height_start - (height_step * height_spacing) + misc_pad, .8, .8, 0x8069cbf2, buf, -1, 0, FONT_BOLD);
+			gfxDrawHUDIcon(SPRITE_WEAPON_GRAVITY_BOMB, width_start * 3, height_start - (height_step * height_spacing), 16, gbomb_color);
+			gfxDrawHUDIcon(SPRITE_WEAPON_GLITZ_GUN, width_start * 4 , height_start - (height_step * height_spacing), 16, blitz_color);
+			gfxDrawHUDIcon(SPRITE_WEAPON_FLUX_RIFLE_4, width_start * 5, height_start - (height_step * height_spacing), 16, flux_color);
+			height_spacing +=1;
+		}
+	}
+}
+
+/*
  * NAME :		onClientVoteToEndStateUpdateRemote
  * DESCRIPTION :
  * 			Receives when the host updates the vote to end state.
@@ -2828,6 +2872,10 @@ int main(void)
 		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow3), 0x00612023); // collline_fix 004b8084 in DL
 		POKE_U32(GetAddress(&vaPlayerSyncFixOverflow4), 0x00622023);  //collline_fix  0x004b80a0 in DL
 
+		POKE_U32(GetAddress(&vaPlayerSyncFixLagout1), 0x24020000); // fix lagout when pnetPlayer lastRecievedPacket becomes too old
+
+		POKE_U32(GetAddress(&vaPlayerSyncFixTurretDelay), 0); // fix turret delays when net time is out fo sync
+
 		POKE_U32(GetAddress(&vaWaitingForResponse_Addr), 0x24020001); // patch out artificial "waiting for response" lag out
 
 		HOOK_JAL(GetAddress(&vaGameTimeUpdate_Hook), GetAddress(&vaNWUpdate_Func)); // poll nwupdate instead of updatepad for consistent game time
@@ -2884,6 +2932,9 @@ int main(void)
 
 		if (config.alwaysShowHealth)
 			patchAlwaysShowHealth();
+
+		if (config.enableTeamInfo)
+			teamInfo();
 
 		// Patches the Map and Scoreboard for player toggalability!
 		patchMapAndScoreboardToggle();

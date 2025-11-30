@@ -1655,4 +1655,14 @@ void playerGiveShield(Player * player);
 */
 Player * playerGetFromSlot(int index);
 
+/*
+* NAME :		playerGetFromSlot
+* DESCRIPTION : convenience function that maps the 0-15 health value to its 0-100 health value
+* NOTES :
+* ARGS : 		health: 0-15 health value
+* RETURN :  health: 0-100 health value
+* AUTHOR :	Jellogiant
+*/
+int playerMapHealth(int health);
+
 #endif // _LIBUYA_PLAYER_H_
