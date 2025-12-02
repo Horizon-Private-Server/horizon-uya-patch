@@ -1752,8 +1752,8 @@ void teamInfo(void)
 	Player ** players = playerGetAll();
 	int i;
 	float height_spacing = 1; // teamates listed vertically
-	char name [4]; // first 4 chars of name will be displayed
-	char buf[8]; // 4 chars + space + 1-3 digits of health
+	char name [5]; // first 4 chars of name will be displayed
+	char buf[9]; // 4 chars + space + 1-3 digits of health + null terminator
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		Player* p = players[i];
 		if (p && !p->isLocal && p->mpTeam == teamColor && p->pNetPlayer) {
@@ -1762,6 +1762,7 @@ void teamInfo(void)
 			int blitz_color = icon_colors[(raw_upgrades & 0x040000 ? 1 : 0)];
 			int gbomb_color = icon_colors[(raw_upgrades & 0x200000 ? 1 : 0)];
 			strncpy(name, gameSettings->PlayerNames[p->mpIndex], 4);
+			name[4] = '\0';
 			sprintf(buf, "%s %d", name, playerMapHealth(p->pNetPlayer->pNetPlayerData->hitPoints));
 			gfxScreenSpaceText(misc_pad,height_start - (height_step * height_spacing) + misc_pad, .8, .8, 0x8069cbf2, buf, -1, 0, FONT_BOLD);
 			gfxDrawHUDIcon(SPRITE_WEAPON_GRAVITY_BOMB, width_start * 3, height_start - (height_step * height_spacing), 16, gbomb_color);
@@ -1950,22 +1951,36 @@ void runVoteToEndLogic(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void handleGadgetEvents(int player, char gadgetEventType, int activeTime, short gadgetId, int gadgetType, struct tNW_GadgetEventMessage * message)
+void handleGadgetEvents(int player, char gadgetEventType, int dispatchTime, short gadgetId, int gadgetType, struct tNW_GadgetEventMessage * message)
 {
 	// Force all incoming weapon shot events to happen immediately.
-	const int MAX_DELAY = TIME_SECOND * 0.2;
-	// put clamp on max delay
-	int delta = activeTime - gameGetTime();
-	if (delta > MAX_DELAY) {
-		activeTime = gameGetTime() + MAX_DELAY;
-	} else if (delta < 0) {
-		activeTime = gameGetTime() - 1;
-	}
+	const int MAX_DELAY = TIME_SECOND * 0;
+
+	int original_activeTime = -1;
+	if (message) {
+
+		original_activeTime = message->ActiveTime;
+		// put clamp on max delay
+		int delta = dispatchTime - gameGetTime();
+		if (delta > MAX_DELAY) {
+			dispatchTime = gameGetTime() + MAX_DELAY;
+			if (message) message->ActiveTime = dispatchTime;
+		} else if (delta < 0) {
+			dispatchTime = gameGetTime() - 1;
+			if (message) message->ActiveTime = dispatchTime;
+		}
+  } else if (dispatchTime < 0) {
+    dispatchTime = gameGetTime() - TIME_SECOND;
+  }
+	if (original_activeTime == 0x1 || original_activeTime > 0x10000000) // weird bug with flux rifle
+		if (message)
+			message->ActiveTime = original_activeTime;
+
 	/*
 	DPRINTF("handleGadgetEvents called with:\n");
 	DPRINTF("  player: %08x\n", player);
 	DPRINTF("  gadgetEventType: %d\n", (int)gadgetEventType);
-	DPRINTF("  activeTime: %d\n", activeTime);
+	DPRINTF("  dispatchTime: %d\n", dispatchTime);
 	DPRINTF("  gadgetId: %d\n", gadgetId);
 	DPRINTF("  gadgetType: %d\n", gadgetType);
 
@@ -1975,19 +1990,20 @@ void handleGadgetEvents(int player, char gadgetEventType, int activeTime, short 
 			DPRINTF("    PlayerIndex: %d\n", (int)message->PlayerIndex);
 			DPRINTF("    GadgetEventType: %d\n", (int)message->GadgetEventType);
 			DPRINTF("    ExtraData: %d\n", (int)message->ExtraData);
+			DPRINTF("		 Original ActiveTime: %d\n", original_activeTime);
 			DPRINTF("    ActiveTime: %d\n", message->ActiveTime);
 			DPRINTF("    TargetUID: %u\n", message->TargetUID);
 			DPRINTF("    FiringLoc: [%.2f, %.2f, %.2f]\n",
 							message->FiringLoc[0], message->FiringLoc[1], message->FiringLoc[2]);
 			DPRINTF("    TargetDir: [%.2f, %.2f, %.2f]\n",
 							message->TargetDir[0], message->TargetDir[1], message->TargetDir[2]);
+			DPRINTF("Broadcasting message from: %p\n", (void*)handleGadgetEvents);
 	} else {
 			DPRINTF("  message: NULL\n");
 	}
-	// DPRINTF("that one timer: %d]n", player->timers);
 	*/
 	// run base command
-	((void (*)(int, char, int, short, int, struct tNW_GadgetEventMessage*))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, activeTime, gadgetId, gadgetType, message);
+	((void (*)(int, char, int, short, int, struct tNW_GadgetEventMessage*))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, dispatchTime, gadgetId, gadgetType, message);
 }
 
 void patchGadgetEvents(void)
