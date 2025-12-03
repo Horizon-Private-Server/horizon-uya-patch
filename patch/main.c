@@ -1756,7 +1756,7 @@ void teamInfo(void)
 	char buf[9]; // 4 chars + space + 1-3 digits of health + null terminator
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		Player* p = players[i];
-		if (p && !p->isLocal && p->mpTeam == teamColor && p->pNetPlayer) {
+		if (p && !p->isLocal && p->mpTeam == teamColor && p->pNetPlayer && p->pNetPlayer->pNetPlayerData) {
 			int raw_upgrades = p->pNetPlayer->pNetPlayerData->rank[1];
 			int flux_color  = icon_colors[(raw_upgrades & 0x080000 ? 1 : 0)];
 			int blitz_color = icon_colors[(raw_upgrades & 0x040000 ? 1 : 0)];
@@ -1972,11 +1972,14 @@ void handleGadgetEvents(int player, char gadgetEventType, int dispatchTime, shor
   } else if (dispatchTime < 0) {
     dispatchTime = gameGetTime() - TIME_SECOND;
   }
-	if (original_activeTime == 0x1 || original_activeTime > 0x10000000) // weird bug with flux rifle
+	// if (original_activeTime == 0x1 || original_activeTime > 0x10000000 || original_activeTime == 13) // weird bug with flux rifle
+	// the flux's (gadgetId == 3) activeTime is -1 if it doesn't hit and a GuberId if it does hit. Don't override the guberId.
+	if (gadgetId == 3)
 		if (message)
-			message->ActiveTime = original_activeTime;
+			if (original_activeTime != -1)
+				message->ActiveTime = original_activeTime; // set it back to the guber ID
 
-	/*
+/*
 	DPRINTF("handleGadgetEvents called with:\n");
 	DPRINTF("  player: %08x\n", player);
 	DPRINTF("  gadgetEventType: %d\n", (int)gadgetEventType);
@@ -2001,7 +2004,7 @@ void handleGadgetEvents(int player, char gadgetEventType, int dispatchTime, shor
 	} else {
 			DPRINTF("  message: NULL\n");
 	}
-	*/
+*/
 	// run base command
 	((void (*)(int, char, int, short, int, struct tNW_GadgetEventMessage*))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, dispatchTime, gadgetId, gadgetType, message);
 }
