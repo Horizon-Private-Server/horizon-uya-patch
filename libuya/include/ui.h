@@ -392,29 +392,41 @@ typedef struct UiStagingElements { // 0x180
 /* 0x15c */ UiElementSprite_t* readySprite[8];
 } UiStagingElements_t;
 
-typedef struct UiClanDetailsElements {
-UiElementText_t* clanMembersText;
-UiElementList_t* clanMembersList;
-UiElementText_t* clanStatsText;
-UiElementTextInfo_t* status;
-UiElementTextInfo_t* overallRank;
-UiElementTextInfo_t* winsLosses;
-UiElementTextInfo_t* killsDeaths;
-UiElementTextInfo_t* clanTagPreview;
-UiElementTextInfo_t* challenges;
-UiElementText_t* clanRoom;
-UiElementText_t* invites;
-UiElementText_t* clanMessage;
-UiElementText_t* challengeClan;
-UiElementText_t* challengeCancel;
-UiElementText_t* challengeRoom;
-UiElementText_t* clanTag;
-UiElementText_t* leaveClan
+typedef struct UiGameResultsElements { // 0x108
+/* 0x000 */ UiElementTextInfo_t* gameName;
+/* 0x004 */ UiElementText_t* winner;
+/* 0x008 */ UiElementTextInfo_t* playTime;
+/* 0x00c */ UiElementImage_t* mapBanner;
+/* 0x010 */ UiElementText_t* playAgain;
+/* 0x014 */ UiElementSprite_t* teamSprite[8];
+/* 0x034 */ UiElementSprite_t* voiceSprite[8];
+/* 0x054 */ UiElementTextInfo_t* columnHeader[5];
+/* 0x068 */ UiElementTextInfo_t* column[5][8];
+} UiGameResultsElements_t;
+
+typedef struct UiClanDetailsElements { // 0x44
+/* 0x00 */ UiElementText_t* clanMembersText;
+/* 0x04 */ UiElementList_t* clanMembersList;
+/* 0x08 */ UiElementText_t* clanStatsText;
+/* 0x0c */ UiElementTextInfo_t* status;
+/* 0x10 */ UiElementTextInfo_t* overallRank;
+/* 0x14 */ UiElementTextInfo_t* winsLosses;
+/* 0x18 */ UiElementTextInfo_t* killsDeaths;
+/* 0x1c */ UiElementTextInfo_t* clanTagPreview;
+/* 0x20 */ UiElementTextInfo_t* challenges;
+/* 0x24 */ UiElementText_t* clanRoom;
+/* 0x28 */ UiElementText_t* invites;
+/* 0x2c */ UiElementText_t* clanMessage;
+/* 0x30 */ UiElementText_t* challengeClan;
+/* 0x34 */ UiElementText_t* challengeCancel;
+/* 0x38 */ UiElementText_t* challengeRoom;
+/* 0x3c */ UiElementText_t* clanTag;
+/* 0x40 */ UiElementText_t* leaveClan;
 } UiClanDetailsElements_t;
 
-typedef struct UiTipsElements {
-UiElementImage_t *image;
-UiElementList_t* tips;
+typedef struct UiTipsElements { // 0x8
+/* 0x0 */ UiElementImage_t* image;
+/* 0x4 */ UiElementList_t* tips;
 } UiTipsElements_t;
 
 /*
