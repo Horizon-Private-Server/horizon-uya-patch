@@ -79,7 +79,8 @@ static u32 lerpColor(u32 a, u32 b, float t)
 // if local player is blue, invert
 static u32 getBoltCrankTextColor(float percent01, int invert)
 {
-    const u32 redColor = 0x00FF5050;
+    // Match the pure red used elsewhere (e.g. uya-cheats) instead of the lighter tint
+    const u32 redColor = 0x00FF0000;
     const u32 whiteColor = 0x00FFFFFF;
     const u32 blueColor = 0x003060FF;
 
@@ -217,7 +218,7 @@ void drawBase(Moby *base)
     QuadDef quad[3];
     // get texture info (tex0, tex1, clamp, alpha)
     //gfxSetupEffectTex(&quad[0], FX_TIRE_TRACKS + 1, 0, 0x80);
-    gfxSetupEffectTex(&quad[0], FX_UNK_2, 0, 0x80);
+    gfxSetupEffectTex(&quad[0], FX_VISIBOMB_HORIZONTAL_LINES, 0, 0x80);
     gfxSetupEffectTex(&quad[2], FX_CIRLCE_NO_FADED_EDGE, 0, 0x80);
 
     quad[0].uv[0] = (UV_t){0, 0}; // bottom left (-, -)
