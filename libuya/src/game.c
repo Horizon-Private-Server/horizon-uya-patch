@@ -15,13 +15,12 @@
 #endif
 
 #define GAME_DATA                           ((GameData*)GetAddress(&vaGAME_DATA))
-#define GAME_TIME_ENDGAME                   (*(u32*)((u32)GetAddress(&vaGAME_DATA) + 0x1f0))
-#define GAME_HAS_ENDED                      (GAME_TIME_ENDGAME > 0)
-#define GAME_WINNER_TEAM_ID                 (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x10))
-#define GAME_WINNER_PLAYER_ID               (*(int*)((u32)GetAddress(&vaGAME_DATA) + 0x14))
 
 #define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))
 #define GAME_GS_FRAME                       (*(int*)GetAddress(&vaGSFrame))
+#define GAME_GAMEMODE_TIME                  (*(int*)((u32)GetAddress(&vaGSFrame) + 0x7c))
+#define GAME_GS_USAGE                       (*(float*)((u32)GetAddress(&vaGSFrame) + 0x80))
+#define GAME_CPU_USAGE                      (*(float*)((u32)GetAddress(&vaGSFrame) + 0x84))
 
 VariableAddress_t vaGSFrame = {
 #if UYA_PAL
@@ -181,12 +180,12 @@ __LIBUYA_GETTER__ int isSceneLoading(void)
 
 int gameHasEnded(void)
 {
-    return GAME_HAS_ENDED;
+    return GAME_DATA->gameIsOver > 0;
 }
 
 int gameGetFinishedExitTime(void)
 {
-    return GAME_TIME_ENDGAME;
+    return GAME_DATA->gameIsOver;
 }
 
 int gameGetTime(void)
@@ -229,11 +228,6 @@ char* gameGetGameModeName(int gameModeId)
     }
 }
 
-void gameEnd(int reason)
-{
-    internal_gameEnd(reason);
-}
-
 float gameGetDeathHeight(void)
 {
     return GAME_DEATH_BARRIER;
@@ -263,4 +257,19 @@ int gameGetGSFrame(void)
 int gameGetWorldId(void)
 {
     return GAME_WORLD_ID;
+}
+
+int gameGetGameModeTime(void)
+{
+    return GAME_GAMEMODE_TIME;
+}
+
+float gameGetGsUsage(void)
+{
+    return GAME_GS_USAGE;
+}
+
+float gameGetCpuUsage(void)
+{
+    return GAME_CPU_USAGE;
 }
