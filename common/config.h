@@ -10,7 +10,6 @@ typedef struct PatchConfig {
   char levelOfDetail;
   char enableFpsCounter;
   char playerFov;
-  char enableTeamInfo;
   char enableSpectate;
   char alwaysShowHealth;
   char mapScoreToggle_MapBtn;
@@ -26,6 +25,7 @@ typedef struct PatchConfig {
   char disableDpadMovement;
   char hideFluxReticle;
   char dlStyleFlips;
+  char enableTeamInfo;
 } PatchConfig_t;
 
 // Game Rules Tab

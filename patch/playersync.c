@@ -126,9 +126,8 @@ int playerSyncGetSendRate(void)
 
   // in larger lobbies we want to reduce network bandwidth by reducing send rate
   GameSettings* gs = gameGetSettings();
-  if (gs && gs->PlayerCount > 8) return 4;
-  if (gs && gs->PlayerCount > 6) return 3;
-  if (gs && gs->PlayerCount > 4) return 1;
+  if (gs && gs->PlayerCount > 6) return 2;
+  //if (gs && gs->PlayerCount > 4) return 1;
 
   return 0;
 }

@@ -144,7 +144,6 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.levelOfDetail = 2,
 	.enableFpsCounter = 0,
 	.playerFov = 0,
-	.enableTeamInfo = 0,
 	.enableSpectate = 0,
 	.alwaysShowHealth = 0,
 	.mapScoreToggle_MapBtn = 0,
@@ -160,6 +159,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.disableDpadMovement = 0,
 	.hideFluxReticle = 0,
 	.dlStyleFlips = 0,
+	.enableTeamInfo = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1746,6 +1746,8 @@ void teamInfo(void)
 	u32 icon_colors[2] = {0x80C0C0C0, 0x50d04040}; //v1, v2
 	Player* localPlayer = playerGetFromSlot(0);
 	GameSettings * gameSettings = gameGetSettings();
+	if (gs->GameLevel == MAP_ID_BLACKWATER_DOCKS)
+		return;
 	if (!localPlayer || !localPlayer->isLocal || !localPlayer->pMoby)
 		return;
 	int teamColor = localPlayer->mpTeam;
