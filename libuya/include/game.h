@@ -32,6 +32,30 @@
 #define GAME_HOST_ID						(GAME_NET_INFO->sessionMasterClientIndex)
 #define GAME_WORLD_ID						(GAME_NET_INFO->gameWorldId)
 
+typedef enum  gameMode {
+	GAMEMODE_NONE = -2,
+	GAMEMODE_DEBUG = -1,
+	GAMEMODE_NORMAL = 0,
+	GAMEMODE_MOVIE = 1,
+	GAMEMODE_SCENE = 2,
+	GAMEMODE_PAUSE = 3,
+	GAMEMODE_FREEZE = 4,
+	GAMEMODE_VENDOR = 5,
+	GAMEMODE_SPACE = 6,
+	GAMEMODE_PUZZLE = 7,
+	GAMEMODE_WEAPON_UPGRADE = 8,
+	GAMEMODE_CREDITS = 9,
+	GAMEMODE_LOBBY = 10,
+	GAMEMODE_FLYBY = 11,
+	GAMEMODE_THERMAL = 12,
+	GAMEMODE_PRE_LOBBY_MEMCARD_LOAD = 13,
+	GAMEMODE_PRE_LOBBY = 14,
+	GAMEMODE_WAIT_FOR_MPSTART = 15,
+	GAMEMODE_EXEC_MP_MEMCARD_COMMAND = 16,
+	GAMEMODE_IOP_DEBUG = 17,
+	GAMEMODE_MAX = 18
+} gameMode_t;
+
 typedef enum GameEndReason {
 	GAME_END_TIME_UP = 1,
 	GAME_END_TEAM_WIN = 4,
@@ -602,5 +626,40 @@ int gameGetWorldId(void);
 
 // Gets local (PS2) settings
 GameLocalSettings *gameGetLocalSettings(void);
+
+/*
+ * NAME :		gameGetGameModeTime
+ * DESCRIPTION :
+ *              Returns the current gamemode time in intager format.
+ *              Unlike GAME_TIME, this gets reset each new GameMode Instance.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int gameGetGameModeTime(void);
+
+/*
+ * NAME :		gameGetGsUsage
+ * DESCRIPTION :
+ *              Returns the Graphics Synthisizer Usage in float format.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+float gameGetGsUsage(void);
+
+/*
+ * NAME :		gameGetCpuUsage
+ * DESCRIPTION :
+ *              Returns the CPU Usage in float format.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+float gameGetCpuUsage(void);
+
 
 #endif // _LIBUYA_GAME_H_
