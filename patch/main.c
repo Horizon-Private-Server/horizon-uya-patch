@@ -1746,8 +1746,6 @@ void teamInfo(void)
 	u32 icon_colors[2] = {0x80C0C0C0, 0x50d04040}; //v1, v2
 	Player* localPlayer = playerGetFromSlot(0);
 	GameSettings * gameSettings = gameGetSettings();
-	if (gs->GameLevel == MAP_ID_BLACKWATER_DOCKS)
-		return;
 	if (!localPlayer || !localPlayer->isLocal || !localPlayer->pMoby)
 		return;
 	int teamColor = localPlayer->mpTeam;
