@@ -224,7 +224,7 @@ VariableAddress_t vaSetupGifPaging = {
 	.Metropolis = 0x0044ac60,
 	.BlackwaterCity = 0x004483e0,
 	.CommandCenter = 0x00449220,
-    .BlackwaterDocks = 0x0044bc60,
+    .BlackwaterDocks = 0x0044ba60,
     .AquatosSewers = 0x0044ada0,
     .MarcadiaPalace = 0x0044a6e0,
 #endif
@@ -1209,12 +1209,6 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
     //     printf("\nhaha you're blind. :(");
     //     return 0;
     // }
-
-    // Current a crash with internal_worldSpacetoScreenSpace
-    // on blackwater docks.  Look into later.
-    GameSettings *gs = gameGetSettings();
-    if (gs->GameLevel == MAP_ID_BLACKWATER_DOCKS)
-        return 0;
 
 	internal_WorldSpaceToScreenSpace(&screenPos, position);
     *x = (int)((screenPos[0] - screen->ofs_x) * scale);
