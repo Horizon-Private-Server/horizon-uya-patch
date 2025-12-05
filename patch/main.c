@@ -2915,8 +2915,6 @@ int main(void)
 		// If in Lobby, run these game rules.
 		grLobbyStart();
 
-		domination();
-
 		// Patches loading popup from not showing if patch menu is open.
 		patchLoadingPopup();
 
