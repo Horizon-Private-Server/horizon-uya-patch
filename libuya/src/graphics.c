@@ -7,17 +7,11 @@
 #include "map.h"
 
 #if UYA_PAL
-#define SCREEN ((Screen*)0x00240330)
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x002413a0)
-#define COLOR_EXT_TABLE                     ((ColorExtTable_t*)0x00242830)
 #else
-#define SCREEN ((Screen*)0x00240480)
 #define IS_PROGRESSIVE_SCAN					(*(int*)0x00241520)
-#define COLOR_EXT_TABLE                     ((ColorExtTable_t*)0x002429b0)
 #endif
 
-#define SCREEN_VISIBOMB_EFFECT              ((ScreenVBEffect*)0x00242624)
-#define SCREEN_INSERT_EFFECT                ((ScreenInsertEffect*)0x002426A0)
 #define SHELL_CIRCLE_COS                    (0x00242920) // part of struct FXUtilsInterface
 #define SHELL_CIRCLE_SIN                    (0x00242950) // part of struct FXUtilsInterface
 #define VIEW_CONTEXT                        ((ViewContext*)GetAddress(&vaViewContext))
@@ -27,7 +21,6 @@
 
 int internal_drawFunc(float, float, float, float, float, float, u32, const char*, u64, u64, int, u32);
 void internal_drawBox(void *, void *);
-// int internal_SpawnPart_059(VECTOR, u32, char, u32, u32, int, int, int, float);
 void internal_WorldSpaceToScreenSpace(VECTOR *, VECTOR);
 
 
@@ -1083,27 +1076,9 @@ void gfxOcclusion(int OnOff)
     *(u32*)GetAddress(&vaOcclusionAddr) = OnOff;
 }
 
-ScreenVBEffect* gfxScreenVBEffect(void)
-{
-    return SCREEN_VISIBOMB_EFFECT;
-}
-ScreenInsertEffect* gfxScreenInsertEffect(void)
-{
-    return SCREEN_INSERT_EFFECT;
-}
 ViewContext* gfxViewContext(void)
 {
     return VIEW_CONTEXT;
-}
-
-Screen *gfxGetScreen(void)
-{
-    return SCREEN;
-}
-
-ColorExtTable_t* gfxColorExtTable(void)
-{
-    return COLOR_EXT_TABLE;
 }
 
 PartInstance_t * gfxSpawnParticle(VECTOR position, u32 texId, u32 color, char opacity, float rotation)
@@ -1187,7 +1162,6 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
     if (!player)
         return 0;
 
-	Screen *screen = gfxGetScreen();
 	VECTOR screenPos;
     VECTOR toMoby;
     VECTOR cameraDir = {player->camera->uMtx.v0[1], player->camera->uMtx.v1[1], player->camera->uMtx.v2[1], 0};
@@ -1211,10 +1185,10 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
     // }
 
 	internal_WorldSpaceToScreenSpace(&screenPos, position);
-    *x = (int)((screenPos[0] - screen->ofs_x) * scale);
-    *y = (int)((screenPos[1] - screen->ofs_y) * scale);
-    if (*x < -64 || *x > screen->lim_x + 64) return 0;
-    if (*y < -64 || *y > screen->lim_y + 64) return 0;
+    *x = (int)((screenPos[0] - SCREEN->ofs_x) * scale);
+    *y = (int)((screenPos[1] - SCREEN->ofs_y) * scale);
+    if (*x < -64 || *x > SCREEN->lim_x + 64) return 0;
+    if (*y < -64 || *y > SCREEN->lim_y + 64) return 0;
     return 1;
 }
 
