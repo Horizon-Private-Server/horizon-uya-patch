@@ -14,14 +14,21 @@
 
 //--------------------------------------------------------
 #if UYA_PAL
+#define SCREEN					((Screen*)0x00240330)
 #define SCREEN_WIDTH			(512)
 #define SCREEN_HEIGHT			(448)
 #define fsAAbuff				(0x0)
+#define COLOR_EXT_TABLE         ((ColorExtTable_t*)0x00242830)
 #else
+#define SCREEN					((Screen*)0x00240480)
 #define SCREEN_WIDTH			(512)
 #define SCREEN_HEIGHT			(416)
 #define fsAAbuff				((fsAABuff)0x00228700)
+#define COLOR_EXT_TABLE         ((ColorExtTable_t*)0x002429b0)
 #endif
+
+#define SCREEN_VISIBOMB_EFFECT	((ScreenVBEffect*)0x00242624)
+#define SCREEN_INSERT_EFFECT	((ScreenInsertEffect*)0x002426A0)
 
 typedef enum eSpriteTex {
 	SPRITE_CHROME = -27,
@@ -961,10 +968,7 @@ void gfxDrawStripInit(void);
 void gfxAddRegister(int register, u64 value);
 
 //
-ScreenVBEffect* gfxScreenVBEffect(void);
-ScreenInsertEffect* gfxScreenInsertEffect(void);
 ViewContext* gfxViewContext(void);
 ConcretePreLoadedImageBuffer* gfxGetPreLoadedImageBufferSource(int which);
-ColorExtTable_t* gfxColorExtTable(void);
 void gfxDrawScreenOverlay(int r, int g, int b, int a);
 #endif // _LIBUYA_GRAPHICS_H_
