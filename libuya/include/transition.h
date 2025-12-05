@@ -1,6 +1,12 @@
 #ifndef _LIBUYA_TRANSITION_H_
 #define _LIBUYA_TRANSITION_H_
 
+#ifdef UYA_PAL
+#define TRANSITION_MULTIPLAYER ((TransitionData_Multiplayer_t *)0x00352ce0)
+#else
+#define TRANSITION_MULTIPLAYER ((TransitionData_Multiplayer_t *)0x00352de0)
+#endif
+
 typedef struct t_TransitionData_Lobby { // 0x18
 	/* 0x00 */ int m_State;
 	/* 0x04 */ int m_Timer;
