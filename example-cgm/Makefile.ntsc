@@ -1,6 +1,6 @@
 EE_ELF = example-10684.elf
 EE_BIN = example-10684.bin
 EE_LIBS = -luyantsc
-EE_DEFS = -DUYA_NTSC -DDEBUG
+EE_DEFS = -DUYA_NTSC
 
 include ${CURDIR}/Makefile.defs
