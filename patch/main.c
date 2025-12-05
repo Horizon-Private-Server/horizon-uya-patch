@@ -2307,10 +2307,9 @@ void patchColors(void)
 	if (patched.colorsExtTable)
 		return;
 
-	ColorExtTable_t* color = gfxColorExtTable();
-	color->white = 0x80ffffff;
-	color->gray = 0x80808080; // Patch Gray in game due to it being black in game.
-	color->black2 = 0x80e0e040; // Aqua
+	COLOR_EXT_TABLE->white = 0x80ffffff;
+	COLOR_EXT_TABLE->gray = 0x80808080; // Patch Gray in game due to it being black in game.
+	COLOR_EXT_TABLE->black2 = 0x80e0e040; // Aqua
 
 	patched.colorsExtTable = 1;
 }
