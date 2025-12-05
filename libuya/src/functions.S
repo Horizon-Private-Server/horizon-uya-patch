@@ -236,9 +236,9 @@ GetAddressImmediate_exit:
 #
 # NTSC and PAL address' are the same.
 #
+FUNCTION(kprintf, 0x00128bf0)
 FUNCTION(printf, 0x00128c70)
 FUNCTION(sce_snprintf, 0x00128ba8)
-# FUNCTION(printf, 0x0011e718) <-- OLD :D
 FUNCTION(sprintf, 0x00120048)
 FUNCTION(snprintf, 0x0011ffa8)
 FUNCTION(memset, 0x0011d534)
@@ -312,9 +312,7 @@ VARIABLE_FUNCTION(gfxAddRegister, vaVU0_addGSRegister)
 #--------------------------------------------------------
 #------------------------- GAME -------------------------
 #--------------------------------------------------------
-VARIABLE_FUNCTION(internal_gameEnd, vaGameEndFunc)
-VARIABLE_FUNCTION(internal_mode_requestChange, vaModeRequestChange)
-VARIABLE_FUNCTION(internal_mode_doChange, vaModeDoChange)
+VARIABLE_FUNCTION(gameEnd, vaGameEndFunc)
 
 #--------------------------------------------------------
 #------------------------- SHA1 -------------------------

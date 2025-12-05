@@ -14,12 +14,21 @@
 
 //--------------------------------------------------------
 #if UYA_PAL
-#define SCREEN_WIDTH           (512)
-#define SCREEN_HEIGHT          (448)
+#define SCREEN					((Screen*)0x00240330)
+#define SCREEN_WIDTH			(512)
+#define SCREEN_HEIGHT			(448)
+#define fsAAbuff				(0x0)
+#define COLOR_EXT_TABLE         ((ColorExtTable_t*)0x00242830)
 #else
-#define SCREEN_WIDTH           (512)
-#define SCREEN_HEIGHT          (416)
+#define SCREEN					((Screen*)0x00240480)
+#define SCREEN_WIDTH			(512)
+#define SCREEN_HEIGHT			(416)
+#define fsAAbuff				((fsAABuff)0x00228700)
+#define COLOR_EXT_TABLE         ((ColorExtTable_t*)0x002429b0)
 #endif
+
+#define SCREEN_VISIBOMB_EFFECT	((ScreenVBEffect*)0x00242624)
+#define SCREEN_INSERT_EFFECT	((ScreenInsertEffect*)0x002426A0)
 
 typedef enum eSpriteTex {
 	SPRITE_CHROME = -27,
@@ -639,28 +648,220 @@ typedef struct ColorExtTable {
 
 
 typedef struct SUB_RETICULE { // 0x40
-	/* 0x00 */ VECTOR targetPos;
-	/* 0x10 */ float scale;
-	/* 0x14 */ int rgba;
-	/* 0x18 */ int fxTex;
-	/* 0x1c */ float rotAmt;
-	/* 0x20 */ Moby *pMoby;
-	/* 0x24 */ char type;
-	/* 0x25 */ char cameraIndex;
-	/* 0x26 */ short int segments;
-	/* 0x28 */ float segment_rot;
-	/* 0x2c */ int draw_style;
-	/* 0x30 */ float retX;
-	/* 0x34 */ float retY;
-	/* 0x38 */ float retWidth;
-	/* 0x3c */ float retHeight;
+/* 0x00 */ VECTOR targetPos;
+/* 0x10 */ float scale;
+/* 0x14 */ int rgba;
+/* 0x18 */ int fxTex;
+/* 0x1c */ float rotAmt;
+/* 0x20 */ Moby *pMoby;
+/* 0x24 */ char type;
+/* 0x25 */ char cameraIndex;
+/* 0x26 */ short int segments;
+/* 0x28 */ float segment_rot;
+/* 0x2c */ int draw_style;
+/* 0x30 */ float retX;
+/* 0x34 */ float retY;
+/* 0x38 */ float retWidth;
+/* 0x3c */ float retHeight;
 } SUB_RETICULE;
 
 struct RETICULE { // 0x390
-	/* 0x000 */ SUB_RETICULE instance[14];
-	/* 0x380 */ int numActive;
-	/* 0x384 */ int pad[3];
+/* 0x000 */ SUB_RETICULE instance[14];
+/* 0x380 */ int numActive;
+/* 0x384 */ int pad[3];
 };
+
+typedef struct tGS_PMODE { // 0x8
+/* 0x0:0 */ unsigned int EN1 : 1;
+/* 0x0:1 */ unsigned int EN2 : 1;
+/* 0x0:2 */ unsigned int CRTMD : 3;
+/* 0x0:5 */ unsigned int MMOD : 1;
+/* 0x0:6 */ unsigned int AMOD : 1;
+/* 0x0:7 */ unsigned int SLBG : 1;
+/* 0x1:0 */ unsigned int ALP : 8;
+/* 0x2:0 */ unsigned int p0 : 16;
+/* 0x4 */ unsigned int p1;
+} tGS_PMODE;
+
+typedef struct tGS_SMODE2 { // 0x8
+/* 0x0:0 */ unsigned int INT : 1;
+/* 0x0:1 */ unsigned int FFMD : 1;
+/* 0x0:2 */ unsigned int DPMS : 2;
+/* 0x0:4 */ unsigned int p0 : 28;
+/* 0x4 */ unsigned int p1;
+} tGS_SMODE2;
+
+typedef struct tGS_DISPFB2 { // 0x8
+/* 0x0:0 */ unsigned int FBP : 9;
+/* 0x1:1 */ unsigned int FBW : 6;
+/* 0x1:7 */ unsigned int PSM : 5;
+/* 0x2:4 */ unsigned int p0 : 12;
+/* 0x4:0 */ unsigned int DBX : 11;
+/* 0x5:3 */ unsigned int DBY : 11;
+/* 0x6:6 */ unsigned int p1 : 10;
+} tGS_DISPFB2;
+
+typedef struct tGS_DISPLAY2 { // 0x8
+/* 0x0:0 */ unsigned int DX : 12;
+/* 0x1:4 */ unsigned int DY : 11;
+/* 0x2:7 */ unsigned int MAGH : 4;
+/* 0x3:3 */ unsigned int MAGV : 2;
+/* 0x3:5 */ unsigned int p0 : 3;
+/* 0x4:0 */ unsigned int DW : 12;
+/* 0x5:4 */ unsigned int DH : 11;
+/* 0x6:7 */ unsigned int p1 : 9;
+} tGS_DISPLAY2;
+
+typedef struct tGS_BGCOLOR { // 0x8
+/* 0x0:0 */ unsigned int R : 8;
+/* 0x1:0 */ unsigned int G : 8;
+/* 0x2:0 */ unsigned int B : 8;
+/* 0x3:0 */ unsigned int p0 : 8;
+/* 0x4 */ unsigned int p1;
+} tGS_BGCOLOR;
+
+typedef struct sceGsDispEnv{ // 0x28
+/* 0x00 */ tGS_PMODE pmode;
+/* 0x08 */ tGS_SMODE2 smode2;
+/* 0x10 */ tGS_DISPFB2 dispfb;
+/* 0x18 */ tGS_DISPLAY2 display;
+/* 0x20 */ tGS_BGCOLOR bgcolor;
+} sceGsDispEnv;
+
+typedef struct sceGifTag { // 0x10
+/* 0x0:0 */ long unsigned int NLOOP : 15;
+/* 0x1:7 */ long unsigned int EOP : 1;
+/* 0x2:0 */ long unsigned int pad16 : 16;
+/* 0x4:0 */ long unsigned int id : 14;
+/* 0x5:6 */ long unsigned int PRE : 1;
+/* 0x5:7 */ long unsigned int PRIM : 11;
+/* 0x7:2 */ long unsigned int FLG : 2;
+/* 0x7:4 */ long unsigned int NREG : 4;
+/* 0x8:0 */ long unsigned int REGS0 : 4;
+/* 0x8:4 */ long unsigned int REGS1 : 4;
+/* 0x9:0 */ long unsigned int REGS2 : 4;
+/* 0x9:4 */ long unsigned int REGS3 : 4;
+/* 0xa:0 */ long unsigned int REGS4 : 4;
+/* 0xa:4 */ long unsigned int REGS5 : 4;
+/* 0xb:0 */ long unsigned int REGS6 : 4;
+/* 0xb:4 */ long unsigned int REGS7 : 4;
+/* 0xc:0 */ long unsigned int REGS8 : 4;
+/* 0xc:4 */ long unsigned int REGS9 : 4;
+/* 0xd:0 */ long unsigned int REGS10 : 4;
+/* 0xd:4 */ long unsigned int REGS11 : 4;
+/* 0xe:0 */ long unsigned int REGS12 : 4;
+/* 0xe:4 */ long unsigned int REGS13 : 4;
+/* 0xf:0 */ long unsigned int REGS14 : 4;
+/* 0xf:4 */ long unsigned int REGS15 : 4;
+} sceGifTag;
+
+typedef struct sceGsFrame { // 0x8
+/* 0x0:0 */ long unsigned int FBP : 9;
+/* 0x1:1 */ long unsigned int pad09 : 7;
+/* 0x2:0 */ long unsigned int FBW : 6;
+/* 0x2:6 */ long unsigned int pad22 : 2;
+/* 0x3:0 */ long unsigned int PSM : 6;
+/* 0x3:6 */ long unsigned int pad30 : 2;
+/* 0x4:0 */ long unsigned int FBMSK : 32;
+} sceGsFrame;
+
+typedef struct sceGsZbuf { // 0x8
+/* 0x0:0 */ long unsigned int ZBP : 9;
+/* 0x1:1 */ long unsigned int pad09 : 15;
+/* 0x3:0 */ long unsigned int PSM : 4;
+/* 0x3:4 */ long unsigned int pad28 : 4;
+/* 0x4:0 */ long unsigned int ZMSK : 1;
+/* 0x4:1 */ long unsigned int pad33 : 31;
+} sceGsZbuf;
+
+typedef struct sceGsXyoffset { // 0x8
+/* 0x0:0 */ long unsigned int OFX : 16;
+/* 0x2:0 */ long unsigned int pad16 : 16;
+/* 0x4:0 */ long unsigned int OFY : 16;
+/* 0x6:0 */ long unsigned int pad48 : 16;
+} sceGsXyoffset;
+
+typedef struct sceGsScissor { // 0x8
+/* 0x0:0 */ long unsigned int SCAX0 : 11;
+/* 0x1:3 */ long unsigned int pad11 : 5;
+/* 0x2:0 */ long unsigned int SCAX1 : 11;
+/* 0x3:3 */ long unsigned int pad27 : 5;
+/* 0x4:0 */ long unsigned int SCAY0 : 11;
+/* 0x5:3 */ long unsigned int pad43 : 5;
+/* 0x6:0 */ long unsigned int SCAY1 : 11;
+/* 0x7:3 */ long unsigned int pad59 : 5;
+} sceGsScissor;
+
+typedef struct sceGsPrmodecont { // 0x8
+/* 0x0:0 */ long unsigned int AC : 1;
+/* 0x0:1 */ long unsigned int pad01 : 63;
+} sceGsPrmodecont;
+
+typedef struct sceGsColclamp { // 0x8
+/* 0x0:0 */ long unsigned int CLAMP : 1;
+/* 0x0:1 */ long unsigned int pad01 : 63;
+} sceGsColclamp;
+
+typedef struct sceGsDthe { // 0x8
+/* 0x0:0 */ long unsigned int DTHE : 1;
+/* 0x0:1 */ long unsigned int pad01 : 63;
+} sceGsDthe;
+
+typedef struct sceGsTest { // 0x8
+/* 0x0:0 */ long unsigned int ATE : 1;
+/* 0x0:1 */ long unsigned int ATST : 3;
+/* 0x0:4 */ long unsigned int AREF : 8;
+/* 0x1:4 */ long unsigned int AFAIL : 2;
+/* 0x1:6 */ long unsigned int DATE : 1;
+/* 0x1:7 */ long unsigned int DATM : 1;
+/* 0x2:0 */ long unsigned int ZTE : 1;
+/* 0x2:1 */ long unsigned int ZTST : 2;
+/* 0x2:3 */ long unsigned int pad19 : 45;
+} sceGsTest;
+
+typedef struct sceGsDrawEnv1 { // 0x80
+/* 0x00 */ sceGsFrame frame1;
+/* 0x08 */ u128 frame1addr;
+/* 0x10 */ sceGsZbuf zbuf1;
+/* 0x18 */ long int zbuf1addr;
+/* 0x20 */ sceGsXyoffset xyoffset1;
+/* 0x28 */ long int xyoffset1addr;
+/* 0x30 */ sceGsScissor scissor1;
+/* 0x38 */ long int scissor1addr;
+/* 0x40 */ sceGsPrmodecont prmodecont;
+/* 0x48 */ long int prmodecontaddr;
+/* 0x50 */ sceGsColclamp colclamp;
+/* 0x58 */ long int colclampaddr;
+/* 0x60 */ sceGsDthe dthe;
+/* 0x68 */ long int dtheaddr;
+/* 0x70 */ sceGsTest test1;
+/* 0x78 */ long int test1addr;
+} sceGsDrawEnv1;
+
+typedef struct fsAABuff { // 0x180
+/* 0x000 */ sceGsDispEnv disp;
+/* 0x030 */ sceGifTag giftagDrawLarge;
+/* 0x040 */ sceGsDrawEnv1 drawLarge;
+/* 0x0c0 */ sceGifTag giftagDrawSmall;
+/* 0x0d0 */ sceGsDrawEnv1 drawSmall;
+/* 0x150 */ short int drawW;
+/* 0x152 */ short int drawH;
+/* 0x154 */ short int drawPSM;
+/* 0x156 */ short int drawFBP;
+/* 0x158 */ short int dispW;
+/* 0x15a */ short int dispH;
+/* 0x15c */ short int dispPSM;
+/* 0x15e */ short int dispFBP;
+/* 0x160 */ short int auxW;
+/* 0x162 */ short int auxH;
+/* 0x164 */ short int auxPSM;
+/* 0x166 */ short int auxFBP;
+/* 0x168 */ short int dispOfsX;
+/* 0x16a */ short int dispOfsY;
+/* 0x16c */ short int zPSM;
+/* 0x16e */ short int zFBP;
+/* 0x170 */ int update_context;
+} fsAABuff;
 
 /*
  * NAME :		drawFunction
@@ -768,10 +969,7 @@ void gfxDrawStripInit(void);
 void gfxAddRegister(int register, u64 value);
 
 //
-ScreenVBEffect* gfxScreenVBEffect(void);
-ScreenInsertEffect* gfxScreenInsertEffect(void);
 ViewContext* gfxViewContext(void);
 ConcretePreLoadedImageBuffer* gfxGetPreLoadedImageBufferSource(int which);
-ColorExtTable_t* gfxColorExtTable(void);
 void gfxDrawScreenOverlay(int r, int g, int b, int a);
 #endif // _LIBUYA_GRAPHICS_H_

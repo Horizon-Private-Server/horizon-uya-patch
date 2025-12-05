@@ -274,11 +274,12 @@ const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithEx
 MenuElem_OrderedListData_t dataCustomModes = {
   .value = &gameConfig.customModeId,
   .stateHandler = menuStateHandler_SelectedGameModeOverride,
-  .count = 2,
+  .count = 3,
   .items = {
     {CUSTOM_MODE_NONE, "None"},
     // {CUSTOM_MODE_INFECTED, "Infected"},
     // {CUSTOM_MODE_JUGGERNAUGHT, "Juggernaut"},
+    {CUSTOM_MODE_DOMINATION, "Domination"},
     {CUSTOM_MODE_MIDFLAG, "MidFlag"},
   }
 };
@@ -289,8 +290,9 @@ MenuElem_OrderedListData_t dataCustomModes = {
 const char* CustomModeShortNames[] = {
   [CUSTOM_MODE_NONE] NULL,
   // [CUSTOM_MODE_INFECTED] "Infected",
-  // [CUSTOM_MODE_JUGGERNAUGHT] NULL,
-  [CUSTOM_MODE_MIDFLAG] NULL
+  // [CUSTOM_MODE_JUGGERNAUT] NULL,
+  [CUSTOM_MODE_MIDFLAG] NULL,
+  [CUSTOM_MODE_DOMINATION] "Domination"
 };
 
 MenuElem_ListData_t dataV2_Setting = {
@@ -672,8 +674,19 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
       }
       #endif
 */
-      CUSTOM_MODE_MIDFLAG: {
-        if (gs->GameType == GAMETYPE_CTF) return 1;
+      case CUSTOM_MODE_MIDFLAG: {
+        if (gs->GameType == GAMETYPE_CTF)
+          return 1;
+        
+        
+        *value = CUSTOM_MODE_NONE;
+        return 0; 
+      }
+      case CUSTOM_MODE_DOMINATION: {
+        if (gs->GameType == GAMETYPE_SIEGE || GAMETYPE_CTF)
+          return 1;
+        
+        
         *value = CUSTOM_MODE_NONE;
         return 0; 
       }
