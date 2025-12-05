@@ -1072,6 +1072,64 @@ VariableAddress_t vaPlayerSyncFixOverflow4 = {
 #endif
 };
 
+VariableAddress_t vaPlayerSyncFixLagout1 = {
+#if UYA_PAL
+	.Lobby = 0x00666240,
+	.Bakisi = 0x00538340,
+	.Hoven = 0x0053a458,
+	.OutpostX12 = 0x0052fd30,
+	.KorgonOutpost = 0x0052d4c8,
+	.Metropolis = 0x0052c818,
+	.BlackwaterCity = 0x0052a0b0,
+	.CommandCenter = 0x00529e70,
+	.BlackwaterDocks = 0x0052c6f0,
+	.AquatosSewers = 0x0052b9f0,
+	.MarcadiaPalace = 0x0052b370,
+#else
+	.Lobby = 0x00663968,
+	.Bakisi = 0x00535ac0,
+	.Hoven = 0x00537b18,
+	.OutpostX12 = 0x0052d430,
+	.KorgonOutpost = 0x0052ac48,
+	.Metropolis = 0x00529f98,
+	.BlackwaterCity = 0x005277b0,
+	.CommandCenter = 0x00527730,
+	.BlackwaterDocks = 0x00529f70,
+	.AquatosSewers = 0x005292b0,
+	.MarcadiaPalace = 0x00528bf0,
+#endif
+};
+
+VariableAddress_t vaPlayerSyncFixTurretDelay = {
+#if UYA_PAL
+	.Lobby = 0x00648204,
+	.Bakisi = 0x0051a304,
+	.Hoven = 0x0051c41c,
+	.OutpostX12 = 0x00511cf4,
+	.KorgonOutpost = 0x0050f48c,
+	.Metropolis = 0x0050e7dc,
+	.BlackwaterCity = 0x0050c074,
+	.CommandCenter = 0x0050be34,
+	.BlackwaterDocks = 0x0050e6b4,
+	.AquatosSewers = 0x0050d9b4,
+	.MarcadiaPalace = 0x0050d334,
+#else
+	.Lobby = 0x006459a4,
+	.Bakisi = 0x00517afc,
+	.Hoven = 0x00519b54,
+	.OutpostX12 = 0x0050f46c,
+	.KorgonOutpost = 0x0050cc84,
+	.Metropolis = 0x0050bfd4,
+	.BlackwaterCity = 0x005097ec,
+	.CommandCenter = 0x0050976c,
+	.BlackwaterDocks = 0x016aa3c4,
+	.AquatosSewers = 0x0050b2ec,
+	.MarcadiaPalace = 0x0050ac2c,
+#endif
+};
+
+
+
 VariableAddress_t vaNWUpdate_Func = {
 #if UYA_PAL
 	.Lobby = 0x001959f8,
