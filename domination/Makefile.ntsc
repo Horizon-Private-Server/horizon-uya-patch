@@ -1,0 +1,6 @@
+EE_ELF = domination-10684.elf
+EE_BIN = domination-10684.bin
+EE_LIBS = -luyantsc
+EE_DEFS = -DUYA_NTSC -DDEBUG
+
+include ${CURDIR}/Makefile.defs
