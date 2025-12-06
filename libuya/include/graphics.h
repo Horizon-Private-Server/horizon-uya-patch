@@ -17,18 +17,19 @@
 #define SCREEN					((Screen*)0x00240330)
 #define SCREEN_WIDTH			(512)
 #define SCREEN_HEIGHT			(448)
-#define fsAAbuff				(0x0)
+#define SCREEN_VISIBOMB_EFFECT	((ScreenVBEffect*)0x002424a4)
+#define SCREEN_INSERT_EFFECT	((ScreenInsertEffect*)0x00242520)
+#define fsAAbuff				((fsAABuff)0x00228580)
 #define COLOR_EXT_TABLE         ((ColorExtTable_t*)0x00242830)
 #else
 #define SCREEN					((Screen*)0x00240480)
 #define SCREEN_WIDTH			(512)
 #define SCREEN_HEIGHT			(416)
+#define SCREEN_VISIBOMB_EFFECT	((ScreenVBEffect*)0x00242624)
+#define SCREEN_INSERT_EFFECT	((ScreenInsertEffect*)0x002426a0)
 #define fsAAbuff				((fsAABuff)0x00228700)
 #define COLOR_EXT_TABLE         ((ColorExtTable_t*)0x002429b0)
 #endif
-
-#define SCREEN_VISIBOMB_EFFECT	((ScreenVBEffect*)0x00242624)
-#define SCREEN_INSERT_EFFECT	((ScreenInsertEffect*)0x002426A0)
 
 typedef enum eSpriteTex {
 	SPRITE_CHROME = -27,
@@ -439,25 +440,24 @@ typedef enum DrawType {
 } DrawyType_e;
 
 enum TextAlign {
-  TEXT_ALIGN_TOPLEFT,
-  TEXT_ALIGN_TOPCENTER,
-  TEXT_ALIGN_TOPRIGHT,
-  TEXT_ALIGN_MIDDLELEFT,
-  TEXT_ALIGN_MIDDLECENTER,
-  TEXT_ALIGN_MIDDLERIGHT,
-  TEXT_ALIGN_BOTTOMLEFT,
-  TEXT_ALIGN_BOTTOMCENTER,
-  TEXT_ALIGN_BOTTOMRIGHT,
+	TEXT_ALIGN_TOPLEFT,
+	TEXT_ALIGN_TOPCENTER,
+	TEXT_ALIGN_TOPRIGHT,
+	TEXT_ALIGN_MIDDLELEFT,
+	TEXT_ALIGN_MIDDLECENTER,
+	TEXT_ALIGN_MIDDLERIGHT,
+	TEXT_ALIGN_BOTTOMLEFT,
+	TEXT_ALIGN_BOTTOMCENTER,
+	TEXT_ALIGN_BOTTOMRIGHT,
 };
 
-enum FontWindowFlags
-{
-  FONT_WINDOW_FLAGS_NONE = 0,
-  FONT_WINDOW_FLAGS_H_ALIGN_CENTER = 1 << 0,
-  FONT_WINDOW_FLAGS_V_ALIGN_CENTER = 1 << 1,
-  FONT_WINDOW_FLAGS_NO_DRAW = 1 << 2,
-  FONT_WINDOW_FLAGS_SUBPIXEL = 1 << 3,
-  FONT_WINDOW_FLAGS_NO_SCISSOR = 1 << 4
+enum FontWindowFlags {
+	FONT_WINDOW_FLAGS_NONE = 0,
+	FONT_WINDOW_FLAGS_H_ALIGN_CENTER = 1 << 0,
+	FONT_WINDOW_FLAGS_V_ALIGN_CENTER = 1 << 1,
+	FONT_WINDOW_FLAGS_NO_DRAW = 1 << 2,
+	FONT_WINDOW_FLAGS_SUBPIXEL = 1 << 3,
+	FONT_WINDOW_FLAGS_NO_SCISSOR = 1 << 4
 };
 
 typedef enum FontNames {
@@ -470,48 +470,33 @@ typedef enum FontNames {
 
 typedef float POINT[2] __attribute__((__aligned__(8)));
 
-typedef struct RECT
-{
+typedef struct RECT{
     POINT TopLeft;
     POINT TopRight;
     POINT BottomLeft;
     POINT BottomRight;
 } RECT;
 
-struct FontWindow
-{
-  short windowTop;
-  short windowBottom;
-  short windowLeft;
-  short windowRight;
-  short textX;
-  short textY;
-  short maxWidth;
-  short maxHeight;
-  short lineSpacing;
-  short flags;
-  short subPixelX;
-  short subPixelY;
-  short shadowOffsetX;
-  short shadowOffsetY;
+struct FontWindow { // 0x1c
+/* 0x00 */ short windowTop;
+/* 0x02 */ short windowBottom;
+/* 0x04 */ short windowLeft;
+/* 0x06 */ short windowRight;
+/* 0x08 */ short textX;
+/* 0x0a */ short textY;
+/* 0x0c */ short maxWidth;
+/* 0x0e */ short maxHeight;
+/* 0x10 */ short lineSpacing;
+/* 0x12 */ short flags;
+/* 0x14 */ short subPixelX;
+/* 0x16 */ short subPixelY;
+/* 0x18 */ short shadowOffsetX;
+/* 0x1a */ short shadowOffsetY;
 };
 
-typedef struct CubicLineEndPoint {
-	/*   0 */ int iCoreRGBA;
-	/*   4 */ int iGlowRGBA;
-	/*   8 */ char bFadeEnd;
-	/*   9 */ char style;
-	/*   a */ unsigned char numEndPoints;
-	/*   b */ char bDisabled;
-	/*   c */ int iNumSkipPoints;
-	/*  10 */ VECTOR vPos;
-	/*  20 */ VECTOR vTangent;
-	/*  30 */ VECTOR vTangentOccQuat;
-} CubicLineEndPoint;
-
-typedef struct UV {
-	float x; // U: horizontal position
-	float y; // V: vertical position
+typedef struct UV { // 0x8
+/* 0x0 */ float x; // U: horizontal position
+/* 0x4 */ float y; // V: vertical position
 } UV_t;
 
 typedef struct QuadDef { // 0x90
@@ -525,114 +510,114 @@ typedef struct QuadDef { // 0x90
 } QuadDef;
 
 typedef struct ScreenVBEffect { // 0x34
-	/* 0x00 */ int enabled;
-	/* 0x04 */ u32 BKG_color;
-	/* 0x08 */ u64 BKG_alpha;
-	/* 0x10 */ int unk_10;
-	/* 0x14 */ int A_lines;
-	/* 0x18 */ u32 A_color;
-	/* 0x1c */ u64 A_alpha;
-	/* 0x24 */ int B_lines;
-	/* 0x28 */ u32 B_color;
-	/* 0x2c */ u64 B_alpha;
+/* 0x00 */ int enabled;
+/* 0x04 */ u32 BKG_color;
+/* 0x08 */ u64 BKG_alpha;
+/* 0x10 */ int unk_10;
+/* 0x14 */ int A_lines;
+/* 0x18 */ u32 A_color;
+/* 0x1c */ u64 A_alpha;
+/* 0x24 */ int B_lines;
+/* 0x28 */ u32 B_color;
+/* 0x2c */ u64 B_alpha;
 } ScreenVBEffect;
 
 typedef struct ScreenInsertEffect { // 0x10
-	/* 0x0 */ int enabled;
-	/* 0x4 */ u32 color;
-	/* 0x8 */ u64 alpha;
+/* 0x0 */ int enabled;
+/* 0x4 */ u32 color;
+/* 0x8 */ u64 alpha;
 } ScreenInsertEffect;
 
 typedef struct ViewContext { // 0x270
-	/* 0x000 */ int headerBase[6][4];
-	/* 0x060 */ u64 headerTex;
-	/* 0x070 */ u64 headerTexNoFog;
-	/* 0x080 */ u64 headerGr;
-	/* 0x090 */ u64 headerGrNoFog;
-	/* 0x0a0 */ float D;
-	/* 0x0a4 */ float F;
-	/* 0x0a8 */ float xclipratio;
-	/* 0x0ac */ float yclipratio;
-	/* 0x0b0 */ float xratio;
-	/* 0x0b4 */ float yratio;
-	/* 0x0b8 */ float xradpad;
-	/* 0x0bc */ float yradpad;
-	/* 0x0c0 */ MATRIX fMtx;
-	/* 0x100 */ MATRIX nfMtx;
-	/* 0x140 */ MATRIX hMtx;
-	/* 0x180 */ VECTOR hmgScale;
-	/* 0x190 */ VECTOR ihmgScale;
-	/* 0x1a0 */ VECTOR hvdf;
-	/* 0x1b0 */ VECTOR unSquish;
-	/* 0x1c0 */ VECTOR guard;
-	/* 0x1d0 */ VECTOR iguard;
-	/* 0x1e0 */ VECTOR sphereCheckA;
-	/* 0x1f0 */ VECTOR sphereCheckB;
-	/* 0x200 */ VECTOR sphereCheckC;
-	/* 0x210 */ float xpix;
-	/* 0x214 */ float ypix;
-	/* 0x218 */ float xclip;
-	/* 0x21c */ float yclip;
-	/* 0x220 */ float fog0;
-	/* 0x224 */ float fog1;
-	/* 0x228 */ float fogNearDist;
-	/* 0x22c */ float fogFarDist;
-	/* 0x230 */ float fogMult;
-	/* 0x234 */ float fogAdd;
-	/* 0x238 */ float fogNearIntensity;
-	/* 0x23c */ float fogFarIntensity;
-	/* 0x240 */ int scis_l;
-	/* 0x244 */ int scis_r;
-	/* 0x248 */ int scis_t;
-	/* 0x24c */ int scis_b;
-	/* 0x250 */ int fogR;
-	/* 0x254 */ int fogG;
-	/* 0x258 */ int fogB;
-	/* 0x25c */ int backR;
-	/* 0x260 */ int backG;
-	/* 0x264 */ int backB;
-	/* 0x268 */ int splitScreenMode;
+/* 0x000 */ int headerBase[6][4];
+/* 0x060 */ u64 headerTex;
+/* 0x070 */ u64 headerTexNoFog;
+/* 0x080 */ u64 headerGr;
+/* 0x090 */ u64 headerGrNoFog;
+/* 0x0a0 */ float D;
+/* 0x0a4 */ float F;
+/* 0x0a8 */ float xclipratio;
+/* 0x0ac */ float yclipratio;
+/* 0x0b0 */ float xratio;
+/* 0x0b4 */ float yratio;
+/* 0x0b8 */ float xradpad;
+/* 0x0bc */ float yradpad;
+/* 0x0c0 */ MATRIX fMtx;
+/* 0x100 */ MATRIX nfMtx;
+/* 0x140 */ MATRIX hMtx;
+/* 0x180 */ VECTOR hmgScale;
+/* 0x190 */ VECTOR ihmgScale;
+/* 0x1a0 */ VECTOR hvdf;
+/* 0x1b0 */ VECTOR unSquish;
+/* 0x1c0 */ VECTOR guard;
+/* 0x1d0 */ VECTOR iguard;
+/* 0x1e0 */ VECTOR sphereCheckA;
+/* 0x1f0 */ VECTOR sphereCheckB;
+/* 0x200 */ VECTOR sphereCheckC;
+/* 0x210 */ float xpix;
+/* 0x214 */ float ypix;
+/* 0x218 */ float xclip;
+/* 0x21c */ float yclip;
+/* 0x220 */ float fog0;
+/* 0x224 */ float fog1;
+/* 0x228 */ float fogNearDist;
+/* 0x22c */ float fogFarDist;
+/* 0x230 */ float fogMult;
+/* 0x234 */ float fogAdd;
+/* 0x238 */ float fogNearIntensity;
+/* 0x23c */ float fogFarIntensity;
+/* 0x240 */ int scis_l;
+/* 0x244 */ int scis_r;
+/* 0x248 */ int scis_t;
+/* 0x24c */ int scis_b;
+/* 0x250 */ int fogR;
+/* 0x254 */ int fogG;
+/* 0x258 */ int fogB;
+/* 0x25c */ int backR;
+/* 0x260 */ int backG;
+/* 0x264 */ int backB;
+/* 0x268 */ int splitScreenMode;
 } ViewContext;
 
 struct DataSource { // 0x8
-	/* 0x0 */ int m_state;
-	/* 0x4 */ void *__vtable;
+/* 0x0 */ int m_state;
+/* 0x4 */ void *__vtable;
 };
 
 typedef struct Screen { // 0x50
-	/* 0x00 */ int size_x;
-	/* 0x04 */ int size_y;
-	/* 0x08 */ int center_x;
-	/* 0x0c */ int center_y;
-	/* 0x10 */ int ofs_x;
-	/* 0x14 */ int ofs_y;
-	/* 0x18 */ int lim_x;
-	/* 0x1c */ int lim_y;
-	/* 0x20 */ float oneOverSize_x;
-	/* 0x24 */ float oneOverSize_y;
-	/* 0x30 */ vec4 vHalfSize;
-	/* 0x40 */ vec4 vOneOverSize;
+/* 0x00 */ int size_x;
+/* 0x04 */ int size_y;
+/* 0x08 */ int center_x;
+/* 0x0c */ int center_y;
+/* 0x10 */ int ofs_x;
+/* 0x14 */ int ofs_y;
+/* 0x18 */ int lim_x;
+/* 0x1c */ int lim_y;
+/* 0x20 */ float oneOverSize_x;
+/* 0x24 */ float oneOverSize_y;
+/* 0x30 */ vec4 vHalfSize;
+/* 0x40 */ vec4 vOneOverSize;
 } Screen;
 
 typedef struct ConcretePreLoadedImageBuffer {
-	/* 0x00 */ struct DataSource DataSourceImageBuffer;
-	/* 0x08 */ unsigned int tex0;
-	/* 0x0c */ void *m_memory_buffer;
-	/* 0x10 */ void *m_decompressed_buffer;
+/* 0x00 */ struct DataSource DataSourceImageBuffer;
+/* 0x08 */ unsigned int tex0;
+/* 0x0c */ void *m_memory_buffer;
+/* 0x10 */ void *m_decompressed_buffer;
 } ConcretePreLoadedImageBuffer;
 
 typedef struct PartInstance { // 0x40
-	/* 0x00 */ char i_class;
-	/* 0x01 */ char type;
-	/* 0x02 */ char tex;
-	/* 0x03 */ char gs_alpha;
-	/* 0x04 */ int rgba;
-	/* 0x08 */ char rot;
-	/* 0x09 */ char draw_dist;
-	/* 0x0a */ short int timer;
-	/* 0x0c */ float scale;
-	/* 0x10 */ VECTOR pos;
-	/* 0x20 */ int update[8];
+/* 0x00 */ char i_class;
+/* 0x01 */ char type;
+/* 0x02 */ char tex;
+/* 0x03 */ char gs_alpha;
+/* 0x04 */ int rgba;
+/* 0x08 */ char rot;
+/* 0x09 */ char draw_dist;
+/* 0x0a */ short int timer;
+/* 0x0c */ float scale;
+/* 0x10 */ VECTOR pos;
+/* 0x20 */ int update[8];
 } PartInstance_t;
 
 typedef struct ColorExtTable {
