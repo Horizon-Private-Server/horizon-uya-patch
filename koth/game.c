@@ -64,6 +64,7 @@ static int handlerInstalled = 0;
 static int nextScoreTickTime = 0;
 static int gameOverTriggered = 0;
 static int hillCycleStartTime = 0;
+static int lastTimeStart = -1;
 #ifdef KOTH_RANDOM_ORDER
 static int hillOrder[KOTH_MAX_HILLS];
 static int hillOrderCount = 0;
@@ -88,6 +89,7 @@ static int kothRandRange(u32 *state, int min, int max)
 static int kothScores[GAME_MAX_PLAYERS];
 static int lastBroadcastScore[GAME_MAX_PLAYERS];
 static PatchGameConfig_t *kothConfig = NULL;
+static int lastSeed = 0;
 
 // TIME_UP gameEnd callsites (Team modes)
 static VariableAddress_t vaGameTimerEndHookDmTeams = {
@@ -160,6 +162,7 @@ static int kothUseTeams(void);
 void kothSetConfig(PatchGameConfig_t *config)
 {
     kothConfig = config;
+    lastSeed = config ? config->grSeed : 0;
 }
 
 static void kothCopyName(char *dst, const char *src)
@@ -712,9 +715,19 @@ static void drawHills(void)
     int i;
     for (i = 0; i < hillCount; ++i) {
         if (hills[i].drawMoby) {
-            hills[i].drawMoby->pUpdate = (i == activeIdx) ? &hillUpdate : NULL;
-        } else if (i == activeIdx) {
-            drawHillAt(hills[i].position, 0x0080FF00, &hills[i].scroll);
+            // Clear draw hooks on all hills; we’ll enable only the active one.
+            hills[i].drawMoby->pUpdate = NULL;
+            hills[i].drawMoby->drawn = 0;
+            hills[i].drawMoby->opacity = 0;
+        }
+    }
+
+    if (activeIdx >= 0 && activeIdx < hillCount) {
+        if (hills[activeIdx].drawMoby) {
+            hills[activeIdx].drawMoby->pUpdate = &hillUpdate;
+            hills[activeIdx].drawMoby->drawn = 1;
+        } else {
+            drawHillAt(hills[activeIdx].position, 0x0080FF00, &hills[activeIdx].scroll);
         }
     }
 }
@@ -850,6 +863,8 @@ void kothReset(void)
     gameOverTriggered = 0;
     gameEndHandled = 0;
     hillCycleStartTime = 0;
+    lastTimeStart = -1;
+    lastSeed = 0;
 #ifdef KOTH_RANDOM_ORDER
     hillOrderCount = 0;
     ++hillOrderShuffleNonce;
@@ -898,6 +913,18 @@ void kothTick(void)
 {
     if (!isInGame())
         return;
+
+    // Detect a new match via timeStart and fully reset state (scores, hills, seed).
+    {
+        GameData *gd = gameGetData();
+        int timeStart = gd ? gd->timeStart : -1;
+        int seedNow = kothConfig ? kothConfig->grSeed : 0;
+        if ((timeStart > 0 && timeStart != lastTimeStart) || seedNow != lastSeed) {
+            kothReset();
+            lastTimeStart = timeStart;
+            lastSeed = seedNow;
+        }
+    }
 
     kothInit();
     drawHills();
