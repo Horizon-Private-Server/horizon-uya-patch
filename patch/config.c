@@ -111,6 +111,7 @@ void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_KOTH(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Nodes(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
@@ -274,13 +275,14 @@ const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithEx
 MenuElem_OrderedListData_t dataCustomModes = {
   .value = &gameConfig.customModeId,
   .stateHandler = menuStateHandler_SelectedGameModeOverride,
-  .count = 3,
+  .count = 4,
   .items = {
     {CUSTOM_MODE_NONE, "None"},
     // {CUSTOM_MODE_INFECTED, "Infected"},
     // {CUSTOM_MODE_JUGGERNAUGHT, "Juggernaut"},
-    {CUSTOM_MODE_DOMINATION, "Domination"},
     {CUSTOM_MODE_MIDFLAG, "MidFlag"},
+    {CUSTOM_MODE_DOMINATION, "Domination"},
+    {CUSTOM_MODE_KOTH, "King of the Hill"},
   }
 };
 
@@ -292,7 +294,22 @@ const char* CustomModeShortNames[] = {
   // [CUSTOM_MODE_INFECTED] "Infected",
   // [CUSTOM_MODE_JUGGERNAUT] NULL,
   [CUSTOM_MODE_MIDFLAG] NULL,
-  [CUSTOM_MODE_DOMINATION] "Domination"
+  [CUSTOM_MODE_DOMINATION] "Domination",
+  [CUSTOM_MODE_KOTH] "KOTH"
+};
+
+MenuElem_ListData_t dataKothScoreLimit = {
+    .value = &gameConfig.grKothScoreLimit,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 14,
+    .items = { "Off", "50", "100", "150", "200", "250", "300", "350", "400", "450", "500", "750", "1000", "2000" }
+};
+
+MenuElem_ListData_t dataKothHillDuration = {
+    .value = &gameConfig.grKothHillDuration,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 5,
+    .items = { "60", "120", "180", "240", "300" }
 };
 
 MenuElem_ListData_t dataV2_Setting = {
@@ -476,6 +493,8 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   // { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps, "Play on any of the custom maps from the Horizon Map Pack. Visit https://rac-horizon.com to download the map pack." },
   { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
+  { "KOTH Points", listActionHandler, menuStateHandler_KOTH, &dataKothScoreLimit, "Points needed to win King of the Hill (0 = disabled, uses timer if set)." },
+  { "KOTH Hill Duration", listActionHandler, menuStateHandler_KOTH, &dataKothHillDuration, "How long a hill stays active before rotating to the next." },
   { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset, "Select one of the preconfigured game rule presets or manually set the custom game rules below." },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
@@ -725,6 +744,16 @@ void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state)
   GameSettings * gs = gameGetSettings();
 
   if (!gs || gs->GameType != GAMETYPE_DM)
+    *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuStateHandler_KOTH(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  if (gameConfig.customModeId != CUSTOM_MODE_KOTH)
     *state = ELEMENT_HIDDEN;
   else if (preset)
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
@@ -2497,6 +2526,9 @@ void configTrySendGameConfig(void)
   tabElements[1].stateHandler(&tabElements[1], &state);
   if (state & ELEMENT_EDITABLE)
   {
+    // Generate a per-match seed for custom modes that rely on shared RNG (e.g. KOTH hill order).
+    gameConfig.grSeed = (int)gameGetTime();
+
     // validate everything
     for (i = 0; i < tabsCount; ++i)
     {
