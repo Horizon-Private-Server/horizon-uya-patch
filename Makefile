@@ -6,6 +6,7 @@ all:
 	$(MAKE) -C unpatch
 	$(MAKE) -C midflag
 	$(MAKE) -C domination
+	$(MAKE) -C koth
 	
 clean:
 	$(MAKE) -C libuya clean
@@ -16,6 +17,7 @@ clean:
 	$(MAKE) -C infected clean
 	$(MAKE) -C midflag clean
 	$(MAKE) -C domination clean
+	$(MAKE) -C koth clean
 
 install:
 	$(MAKE) -C libuya install

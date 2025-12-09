@@ -1,0 +1,6 @@
+EE_ELF = koth-10683.elf
+EE_BIN = koth-10683.bin
+EE_LIBS = -luyapal
+EE_DEFS = -DUYA_PAL
+
+include ${CURDIR}/Makefile.defs
