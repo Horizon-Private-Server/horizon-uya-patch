@@ -20,6 +20,8 @@
 #include "config.h"
 #include "include/koth.h"
 
+#define KOTH_ENABLE_HILL_SYNC 1
+
 #define KOTH_DEBUG
 #ifdef KOTH_DEBUG
 #define KOTH_LOG(fmt, args...) printf(fmt, ##args)
@@ -65,6 +67,9 @@ static int nextScoreTickTime = 0;
 static int gameOverTriggered = 0;
 static int hillCycleStartTime = 0;
 static int lastTimeStart = -1;
+#if KOTH_ENABLE_HILL_SYNC
+static int lastActiveHillIdx = -1;
+#endif
 #ifdef KOTH_RANDOM_ORDER
 static int hillOrder[KOTH_MAX_HILLS];
 static int hillOrderCount = 0;
@@ -158,6 +163,9 @@ static float clampf(float value, float min, float max)
 
 static int kothGetActiveHillIndex(void);
 static int kothUseTeams(void);
+#if KOTH_ENABLE_HILL_SYNC
+static void kothBroadcastHillIndex(int hillIdx);
+#endif
 
 void kothSetConfig(PatchGameConfig_t *config)
 {
@@ -227,6 +235,10 @@ static void scanHillsOnce(void)
         }
         ++moby;
     }
+
+    // If we didn't find any hills yet (e.g., moby list not populated), try again on the next tick.
+    if (hillCount <= 0)
+        return;
 
 #ifdef KOTH_RANDOM_ORDER
     hillOrderCount = hillCount;
@@ -712,6 +724,12 @@ static void hillUpdate(Moby *moby)
 static void drawHills(void)
 {
     int activeIdx = kothGetActiveHillIndex();
+#if KOTH_ENABLE_HILL_SYNC
+    if (activeIdx != lastActiveHillIdx && gameAmIHost()) {
+        kothBroadcastHillIndex(activeIdx);
+        lastActiveHillIdx = activeIdx;
+    }
+#endif
     int i;
     for (i = 0; i < hillCount; ++i) {
         if (hills[i].drawMoby) {
@@ -853,8 +871,39 @@ int kothOnReceiveScore(void *connection, void *data)
     return sizeof(KothScoreUpdate_t);
 }
 
+#if KOTH_ENABLE_HILL_SYNC
+static int kothOnReceiveHillSync(void *connection, void *data)
+{
+    KothHillSync_t *msg = (KothHillSync_t*)data;
+    int idx = msg->HillIdx;
+    if (idx < 0 || idx >= hillCount)
+        return sizeof(KothHillSync_t);
+
+    // Always snap to host's hill index/time; host is authoritative to recover from drift (ahead or behind).
+    // Use elapsed time so we don't depend on host absolute clock.
+    int elapsed = msg->ElapsedMs;
+    if (elapsed < 0)
+        elapsed = 0;
+    hillCycleStartTime = gameGetTime() - elapsed;
+    if (hillCycleStartTime < 0)
+        hillCycleStartTime = 0;
+    lastActiveHillIdx = idx;
+    KOTH_LOG("[KOTH][DBG] hill sync received idx=%d localIdx=%d seed=%d timeStart=%d elapsed=%d", idx, kothGetActiveHillIndex(), (kothConfig ? kothConfig->grSeed : -1), gameGetData() ? gameGetData()->timeStart : -1, elapsed);
+    return sizeof(KothHillSync_t);
+}
+#endif
+
 void kothReset(void)
 {
+    // Clean up any spawned draw mobies to clear registered draw callbacks.
+    int i;
+    for (i = 0; i < hillCount; ++i) {
+        if (hills[i].drawMoby) {
+            mobyDestroy(hills[i].drawMoby);
+            hills[i].drawMoby = NULL;
+        }
+    }
+
     initialized = 0;
     handlerInstalled = 0;
     gameEndHookInstalled = 0;
@@ -864,6 +913,9 @@ void kothReset(void)
     gameEndHandled = 0;
     hillCycleStartTime = 0;
     lastTimeStart = -1;
+#if KOTH_ENABLE_HILL_SYNC
+    lastActiveHillIdx = -1;
+#endif
     lastSeed = 0;
 #ifdef KOTH_RANDOM_ORDER
     hillOrderCount = 0;
@@ -878,6 +930,9 @@ void kothInit(void)
 {
     if (!handlerInstalled) {
         netInstallCustomMsgHandler(CUSTOM_MSG_ID_KOTH_SCORE_UPDATE, &kothOnReceiveScore);
+#if KOTH_ENABLE_HILL_SYNC
+        netInstallCustomMsgHandler(CUSTOM_MSG_ID_KOTH_HILL_SYNC, &kothOnReceiveHillSync);
+#endif
         handlerInstalled = 1;
     }
 
@@ -950,7 +1005,9 @@ void kothTick(void)
             int timeStart = gd ? gd->timeStart : -1;
             int timeEnd = gd ? gd->timeEnd : -1;
             int timeLeft = timerActive ? (resolvedEnd - gameTime) : -1;
-            KOTH_LOG("[KOTH][DBG] tick timerActive=%d timeNow=%d hasGd=%d startSet=%d endSet=%d endAfterStart=%d timeStart=%d timeEnd=%d resolvedEnd=%d timeLeft=%d\n", timerActive, gameTime, hasGd, startSet, endSet, endAfterStart, timeStart, timeEnd, resolvedEnd, timeLeft);
+            KOTH_LOG("[KOTH][DBG] tick timerActive=%d timeNow=%d hasGd=%d startSet=%d endSet=%d endAfterStart=%d timeStart=%d timeEnd=%d resolvedEnd=%d timeLeft=%d seed=%d hillIdx=%d\n",
+                     timerActive, gameTime, hasGd, startSet, endSet, endAfterStart, timeStart, timeEnd, resolvedEnd, timeLeft,
+                     (kothConfig ? kothConfig->grSeed : -1), kothGetActiveHillIndex());
         }
 #endif
         nextScoreTickTime = gameTime + KOTH_SCORE_TICK_MS;
@@ -958,3 +1015,19 @@ void kothTick(void)
 
     kothCheckVictory();
 }
+
+#if KOTH_ENABLE_HILL_SYNC
+static void kothBroadcastHillIndex(int hillIdx)
+{
+    void *connection = netGetDmeServerConnection();
+    if (!connection || hillIdx < 0 || hillIdx >= hillCount)
+        return;
+
+    KothHillSync_t msg;
+    msg.HillIdx = (char)hillIdx;
+    memset(msg.Padding, 0, sizeof(msg.Padding));
+    // Send elapsed time on current hill so clients can reconstruct cycle start on their own clock.
+    msg.ElapsedMs = gameGetTime() - hillCycleStartTime;
+    netBroadcastCustomAppMessage(connection, CUSTOM_MSG_ID_KOTH_HILL_SYNC, sizeof(msg), &msg);
+}
+#endif
