@@ -349,12 +349,15 @@ static int kothFindLeader(int *outScore, int *outTie)
     int leaderIdx = -1;
     int leaderScore = 0;
     int isTie = 0;
+    GameData *gd = gameGetData();
 
     if (useTeams) {
         int teamScores[TEAM_MAX];
         char teamSeen[TEAM_MAX];
         memset(teamScores, 0, sizeof(teamScores));
         memset(teamSeen, 0, sizeof(teamSeen));
+        int teamKills[TEAM_MAX];
+        memset(teamKills, 0, sizeof(teamKills));
 
         Player **players = playerGetAll();
         int i;
@@ -367,6 +370,7 @@ static int kothFindLeader(int *outScore, int *outTie)
                 continue;
             teamSeen[team] = 1;
             teamScores[team] += kothScores[p->mpIndex];
+            teamKills[team] += gd ? gd->playerStats.frag[p->mpIndex].kills : 0;
         }
 
         int t;
@@ -379,7 +383,16 @@ static int kothFindLeader(int *outScore, int *outTie)
                 leaderScore = score;
                 isTie = 0;
             } else if (score == leaderScore) {
-                isTie = 1;
+                // tie-break on kills between tied top teams only
+                if (teamKills[t] > teamKills[leaderIdx]) {
+                    leaderIdx = t;
+                    leaderScore = score;
+                    isTie = 0;
+                } else if (teamKills[t] == teamKills[leaderIdx]) {
+                    isTie = 1;
+                } else {
+                    isTie = 1;
+                }
             }
         }
     } else {
@@ -403,12 +416,23 @@ static int kothFindLeader(int *outScore, int *outTie)
 
             seen[idx] = 1;
             int score = kothScores[idx];
+            int kills = gd ? gd->playerStats.frag[idx].kills : 0;
             if (leaderIdx < 0 || score > leaderScore) {
                 leaderIdx = idx;
                 leaderScore = score;
                 isTie = 0;
             } else if (score == leaderScore) {
-                isTie = 1;
+                // tie-break on kills between tied top players only
+                int leaderKills = gd ? gd->playerStats.frag[leaderIdx].kills : 0;
+                if (kills > leaderKills) {
+                    leaderIdx = idx;
+                    leaderScore = score;
+                    isTie = 0;
+                } else if (kills == leaderKills) {
+                    isTie = 1;
+                } else {
+                    isTie = 1;
+                }
             }
         }
     }
