@@ -40,6 +40,8 @@
 #define KOTH_SCORE_TICK_MS     (TIME_SECOND)
 #define KOTH_HILL_ACTIVE_MS    (TIME_SECOND * 60)
 #define KOTH_NAME_MAX_LEN      (7)
+#define KOTH_OCLASS_CUSTOM     (0x3000) // custom hill moby oclass
+#define KOTH_MAX_CUSTOM_CUBOIDS (32)
 
 // Toggle how the active hill is selected each rotation window
 // Define KOTH_RANDOM_ORDER to cycle hills in a deterministic randomized order without replacement.
@@ -95,6 +97,10 @@ static int kothScores[GAME_MAX_PLAYERS];
 static int lastBroadcastScore[GAME_MAX_PLAYERS];
 static PatchGameConfig_t *kothConfig = NULL;
 static int lastSeed = 0;
+
+typedef struct KothCustomHillPVar {
+    int cuboidRefs[KOTH_MAX_CUSTOM_CUBOIDS];
+} KothCustomHillPVar_t;
 
 // TIME_UP gameEnd callsites (Team modes)
 static VariableAddress_t vaGameTimerEndHookDmTeams = {
@@ -216,24 +222,75 @@ static void scanHillsOnce(void)
 
     Moby* moby = mobyListGetStart();
     Moby* mobyEnd = mobyListGetEnd();
+    int foundCustom = 0;
     while (moby < mobyEnd && hillCount < KOTH_MAX_HILLS) {
-        if (moby->oClass == MOBY_ID_SIEGE_NODE) {
-            vector_copy(hills[hillCount].position, moby->position);
-            hills[hillCount].position[3] = 1;
-            hills[hillCount].moby = moby;
-            hills[hillCount].scroll = 0;
-            hills[hillCount].drawMoby = mobySpawn(0x1c0d, 0);
-            if (hills[hillCount].drawMoby) {
-                vector_copy(hills[hillCount].drawMoby->position, moby->position);
-                hills[hillCount].drawMoby->updateDist = -1;
-                hills[hillCount].drawMoby->drawn = 1;
-                hills[hillCount].drawMoby->opacity = 0;
-                hills[hillCount].drawMoby->drawDist = 0x00;
-                hills[hillCount].drawMoby->pUpdate = NULL; // set later
+        if (moby->oClass == KOTH_OCLASS_CUSTOM) {
+            // One custom hill moby defines multiple cuboids; emit a hill per valid cuboid. (OCLASS 3000) 
+//TODO we may want to scale the hill based off of the cuboid size (and other transformations?) 
+            if (moby->pVar) {
+                KothCustomHillPVar_t *hp = (KothCustomHillPVar_t *)moby->pVar;
+                int spCount = spawnPointGetCount();
+                int c;
+                for (c = 0; c < KOTH_MAX_CUSTOM_CUBOIDS && hillCount < KOTH_MAX_HILLS; ++c) {
+                    int idx = hp->cuboidRefs[c];
+                    if (idx < 0 || idx >= spCount)
+                        continue;
+                    Cuboid *cub = spawnPointGet(idx);
+                    if (!cub)
+                        continue;
+
+                    foundCustom = 1;
+                    vector_copy(hills[hillCount].position, cub->pos);
+                    hills[hillCount].position[3] = 1;
+                    hills[hillCount].moby = moby;
+                    hills[hillCount].scroll = 0;
+                    hills[hillCount].drawMoby = mobySpawn(0x1c0d, 0);
+                    if (hills[hillCount].drawMoby) {
+                        vector_copy(hills[hillCount].drawMoby->position, hills[hillCount].position);
+                        hills[hillCount].drawMoby->updateDist = -1;
+                        hills[hillCount].drawMoby->drawn = 1;
+                        hills[hillCount].drawMoby->opacity = 0;
+                        hills[hillCount].drawMoby->drawDist = 0x00;
+                        hills[hillCount].drawMoby->pUpdate = NULL; // set later
+                    }
+#ifdef KOTH_DEBUG
+                    KOTH_LOG("[KOTH][DBG] hill[%d] source=custom mobyIdx=0x%04X pos=(%.2f,%.2f,%.2f) cuboid=%d\n",
+                             hillCount, moby->oClass, hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2], idx);
+#endif
+                    ++hillCount;
+                }
             }
-            ++hillCount;
         }
         ++moby;
+    }
+
+    // If no custom hills found, fall back to siege nodes.
+    if (!foundCustom) {
+        moby = mobyListGetStart();
+        mobyEnd = mobyListGetEnd();
+        while (moby < mobyEnd && hillCount < KOTH_MAX_HILLS) {
+            if (moby->oClass == MOBY_ID_SIEGE_NODE) {
+                vector_copy(hills[hillCount].position, moby->position);
+                hills[hillCount].position[3] = 1;
+                hills[hillCount].moby = moby;
+                hills[hillCount].scroll = 0;
+                hills[hillCount].drawMoby = mobySpawn(0x1c0d, 0);
+                if (hills[hillCount].drawMoby) {
+                    vector_copy(hills[hillCount].drawMoby->position, hills[hillCount].position);
+                    hills[hillCount].drawMoby->updateDist = -1;
+                    hills[hillCount].drawMoby->drawn = 1;
+                    hills[hillCount].drawMoby->opacity = 0;
+                    hills[hillCount].drawMoby->drawDist = 0x00;
+                    hills[hillCount].drawMoby->pUpdate = NULL; // set later
+                }
+#ifdef KOTH_DEBUG
+                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%.2f,%.2f,%.2f)\n",
+                         hillCount, hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2]);
+#endif
+                ++hillCount;
+            }
+            ++moby;
+        }
     }
 
     // If we didn't find any hills yet (e.g., moby list not populated), try again on the next tick.
@@ -258,6 +315,9 @@ static void scanHillsOnce(void)
 #endif
 
     initialized = 1;
+#ifdef KOTH_DEBUG
+    KOTH_LOG("[KOTH][DBG] hills initialized count=%d source=%s\n", hillCount, foundCustom ? "custom" : "siege");
+#endif
 }
 
 static int playerInsideHill(Player *player)
@@ -779,6 +839,15 @@ static void drawHud(void)
     GameSettings *gs = gameGetSettings();
     if (!gs)
         return;
+
+    // Keep HUD title in sync with current score limit (handles any late-arriving config updates).
+    {
+        int scoreLimit = kothGetScoreLimit();
+        if (scoreLimit > 0)
+            snprintf(kothTitle, sizeof(kothTitle), "%d", scoreLimit);
+        else
+            snprintf(kothTitle, sizeof(kothTitle), "No limit");
+    }
 
     int useTeams = kothUseTeams();
 
