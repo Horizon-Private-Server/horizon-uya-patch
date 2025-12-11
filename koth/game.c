@@ -21,9 +21,12 @@
 #include "include/koth.h"
 
 #define KOTH_ENABLE_HILL_SYNC 1
+#define KOTH_FADE_WARNING 1
+#define KOTH_SIEGE_USE_BOLT_CRANK 1
 
-#define KOTH_DEBUG
-#ifdef KOTH_DEBUG
+// Set to 1 to enable verbose KOTH debugging at compile time.
+#define KOTH_DEBUG 1
+#if KOTH_DEBUG
 #define KOTH_LOG(fmt, args...) printf(fmt, ##args)
 #else
 #define KOTH_LOG(fmt, args...) ((void)0)
@@ -252,6 +255,10 @@ static void scanHillsOnce(void)
                         hills[hillCount].drawMoby->opacity = 0;
                         hills[hillCount].drawMoby->drawDist = 0x00;
                         hills[hillCount].drawMoby->pUpdate = NULL; // set later
+#ifdef KOTH_DEBUG
+                    } else {
+                        KOTH_LOG("[KOTH][DBG] failed to spawn draw moby for custom hill cuboid=%d\n", idx);
+#endif
                     }
 #ifdef KOTH_DEBUG
                     KOTH_LOG("[KOTH][DBG] hill[%d] source=custom mobyIdx=0x%04X pos=(%.2f,%.2f,%.2f) cuboid=%d\n",
@@ -270,8 +277,40 @@ static void scanHillsOnce(void)
         mobyEnd = mobyListGetEnd();
         while (moby < mobyEnd && hillCount < KOTH_MAX_HILLS) {
             if (moby->oClass == MOBY_ID_SIEGE_NODE) {
+#if KOTH_SIEGE_USE_BOLT_CRANK
+                // Prefer the bolt crank attached to this node (pVar + 0x3c) for positioning.
+                int usedCrank = 0;
+                if (moby->pVar) {
+                    int crankIdx = *(int*)(moby->pVar + 0x3c);
+                    Moby *listStart = mobyListGetStart();
+                    Moby *listEnd = mobyListGetEnd();
+                    Moby *crank = listStart + crankIdx;
+                    if (crank >= listStart && crank < listEnd && crank->oClass == MOBY_ID_BOLT_CRANK) {
+                        vector_copy(hills[hillCount].position, crank->position);
+                        hills[hillCount].position[3] = 1;
+                        usedCrank = 1;
+#ifdef KOTH_DEBUG
+                        KOTH_LOG("[KOTH][DBG] siege hill using bolt crank idx=%d pos=(%.2f,%.2f,%.2f)\n",
+                                 crankIdx, hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2]);
+#endif
+                    }
+                }
+                if (!usedCrank) {
+                    vector_copy(hills[hillCount].position, moby->position);
+                    hills[hillCount].position[3] = 1;
+#ifdef KOTH_DEBUG
+                    KOTH_LOG("[KOTH][DBG] siege hill using node pos=(%.2f,%.2f,%.2f)\n",
+                             hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2]);
+#endif
+                }
+#else
                 vector_copy(hills[hillCount].position, moby->position);
                 hills[hillCount].position[3] = 1;
+#ifdef KOTH_DEBUG
+                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%.2f,%.2f,%.2f)\n",
+                         hillCount, hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2]);
+#endif
+#endif
                 hills[hillCount].moby = moby;
                 hills[hillCount].scroll = 0;
                 hills[hillCount].drawMoby = mobySpawn(0x1c0d, 0);
@@ -282,6 +321,10 @@ static void scanHillsOnce(void)
                     hills[hillCount].drawMoby->opacity = 0;
                     hills[hillCount].drawMoby->drawDist = 0x00;
                     hills[hillCount].drawMoby->pUpdate = NULL; // set later
+#ifdef KOTH_DEBUG
+                } else {
+                    KOTH_LOG("[KOTH][DBG] failed to spawn draw moby for siege hill moby=0x%04X\n", moby->oClass);
+#endif
                 }
 #ifdef KOTH_DEBUG
                 KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%.2f,%.2f,%.2f)\n",
@@ -660,6 +703,31 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll)
     quad[0].uv[3].y -= uvOffset;
     quad[1] = quad[0];
 
+#if KOTH_FADE_WARNING
+    // Fade/pulse as we approach hill rotation.
+    float fadeScale = 1.0f;
+    const int warnMs = 10 * TIME_SECOND;
+    int duration = kothGetHillDurationMs();
+    if (duration > 0 && hillCount > 0) {
+        // Ensure we have a cycle start before using it.
+        kothEnsureCycleStart();
+        if (hillCycleStartTime > 0) {
+            int elapsed = gameGetTime() - hillCycleStartTime;
+            if (elapsed < 0)
+                elapsed = 0;
+            // Use modulo to keep timeLeft positive across cycles.
+            int cycElapsed = elapsed % duration;
+            int timeLeft = duration - cycElapsed;
+            if (timeLeft < warnMs) {
+                // Simple on/off pulse once per second between full alpha and fully hidden.
+                int seconds = timeLeft / TIME_SECOND;
+                int phase = seconds & 1; // toggle each second
+                fadeScale = phase ? 1.0f : 0.0f;
+            }
+        }
+    }
+#endif
+
     int alphaOuterNear = (int)(0x00 * KOTH_RING_ALPHA_SCALE) & 0xFF;
     int alphaOuterFar = (int)(0x30 * KOTH_RING_ALPHA_SCALE);
     if (alphaOuterFar > 0xFF) alphaOuterFar = 0xFF;
@@ -669,6 +737,17 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll)
     if (alphaMidFar > 0xFF) alphaMidFar = 0xFF;
     int alphaCenter = (int)(0x30 * KOTH_RING_ALPHA_SCALE);
     if (alphaCenter > 0xFF) alphaCenter = 0xFF;
+
+#if KOTH_FADE_WARNING
+    alphaOuterFar = (int)(alphaOuterFar * fadeScale);
+    alphaMidNear = (int)(alphaMidNear * fadeScale);
+    alphaMidFar = (int)(alphaMidFar * fadeScale);
+    alphaCenter = (int)(alphaCenter * fadeScale);
+    if (alphaOuterFar > 0xFF) alphaOuterFar = 0xFF;
+    if (alphaMidNear > 0xFF) alphaMidNear = 0xFF;
+    if (alphaMidFar > 0xFF) alphaMidFar = 0xFF;
+    if (alphaCenter > 0xFF) alphaCenter = 0xFF;
+#endif
 
     u32 baseRgb = color & 0x00FFFFFF;
     quad[0].rgba[0] = quad[0].rgba[1] = (alphaOuterNear << 24) | baseRgb;
@@ -735,7 +814,12 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll)
     floorQuad.uv[1] = (UV_t){0, 1};
     floorQuad.uv[2] = (UV_t){1, 0};
     floorQuad.uv[3] = (UV_t){1, 1};
-    floorQuad.rgba[0] = floorQuad.rgba[1] = floorQuad.rgba[2] = floorQuad.rgba[3] = (0x20 << 24) | baseRgb;
+    int floorAlpha = 0x20;
+#if KOTH_FADE_WARNING
+    floorAlpha = (int)(floorAlpha * fadeScale);
+    if (floorAlpha > 0xFF) floorAlpha = 0xFF;
+#endif
+    floorQuad.rgba[0] = floorQuad.rgba[1] = floorQuad.rgba[2] = floorQuad.rgba[3] = (floorAlpha << 24) | baseRgb;
     vector_copy(floorQuad.point[0], corners[1]);
     vector_copy(floorQuad.point[1], corners[0]);
     vector_copy(floorQuad.point[2], corners[2]);
@@ -831,6 +915,10 @@ static void drawHills(void)
         } else {
             drawHillAt(hills[activeIdx].position, 0x0080FF00, &hills[activeIdx].scroll);
         }
+#ifdef KOTH_DEBUG
+    } else {
+        KOTH_LOG("[KOTH][DBG] drawHills skip activeIdx=%d hillCount=%d\n", activeIdx, hillCount);
+#endif
     }
 }
 
@@ -1055,6 +1143,11 @@ void kothInit(void)
     }
 
     scanHillsOnce();
+#if KOTH_DEBUG
+    KOTH_LOG("[KOTH][DBG] init complete handler=%d gameEndHook=%d hills=%d seed=%d scoreLimit=%d hillMs=%d\n",
+             handlerInstalled, gameEndHookInstalled, hillCount, (kothConfig ? kothConfig->grSeed : -1),
+             kothGetScoreLimit(), kothGetHillDurationMs());
+#endif
 }
 
 void kothTick(void)
