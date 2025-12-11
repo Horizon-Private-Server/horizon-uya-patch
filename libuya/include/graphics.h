@@ -45,7 +45,7 @@ typedef enum eSpriteTex {
 	SPRITE_OXYGEN_METER_FULL,
 	SPRITE_EGG,
 	SPRITE_DIALOG_QWARK,
-	SPRITE_DIALOG,HELGA,
+	SPRITE_DIALOG_HELGA,
 	SPRITE_DIALOG_SKID,
 	SPRITE_DIALOG_AL,
 	SPRITE_DIALOG_SKURNCH,
@@ -437,7 +437,7 @@ typedef enum DrawType {
 	DRAW_TYPE_NORMAL,
 	DRAW_TYPE_BRIGHT,
 	DRAW_TYPE_NONTRASPARENT,
-} DrawyType_e;
+} DrawType_e;
 
 enum TextAlign {
 	TEXT_ALIGN_TOPLEFT,
@@ -935,7 +935,7 @@ void gfxSetupEffectTex(QuadDef *quad, int tex, int drawType, int opacity);
 void gfxDrawSprite(float x, float y, float w, float h, int tex_x, int tex_y, int tex_w, int tex_h, u64 color, u64 texture);
 void gfxDrawHUDIcon(int spriteId, float x, float y, float scale, u64 color);
 void gfxDrawEffect(float x, float y, float w, float h, int r, int tex_x, int tex_y, int tex_w, int tex_h, u64 texture, u64 color1, u64 color2, char bSetting1, char bSetting2);
-void gfxRegistserDrawFunction(void* callback, Moby* moby);
+void gfxRegisterDrawFunction(void* callback, Moby* moby);
 void gfxDrawBillboardQuad(float scale, float scale2, float theta, VECTOR position, int tex, int color, int drawType);
 void gfxDrawQuad(QuadDef quad, MATRIX worldMatrix);
 void gfxSetScissor(int xmin, int xmax, int ymin, int ymax);

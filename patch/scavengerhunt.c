@@ -244,7 +244,7 @@ void scavHuntHBoltUpdate(Moby* moby)
 	if (!pvars)
 		return;
 
-  gfxRegistserDrawFunction(&scavHuntHBoltPostDraw, moby);
+  gfxRegisterDrawFunction(&scavHuntHBoltPostDraw, moby);
 
 	// handle particles
 	u32 color = colorLerp(0, HBOLT_PARTICLE_COLOR, 1.0 / 4);

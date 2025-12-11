@@ -1174,7 +1174,7 @@ int gfxWorldSpaceToScreenSpace(VECTOR position, int * x, int * y)
     vector_normalize(offsetCamDir, offsetCamDir);
     float dot = vector_innerproduct_unscaled(offsetCamDir, toMoby);
     // dot needs to be negated when online.
-    if (-dot > 0)
+    if (dot > 0)
         return 0;
 
     // if(dot > 0) {
