@@ -23,6 +23,8 @@
 #define KOTH_ENABLE_HILL_SYNC 1
 #define KOTH_FADE_WARNING 1
 #define KOTH_SIEGE_USE_BOLT_CRANK 1
+#define KOTH_CUBOID_SCALE 1.0f
+#define KOTH_RING_HEIGHT_SCALE 1.0f
 
 // Set to 1 to enable verbose KOTH debugging at compile time.
 #define KOTH_DEBUG 1
@@ -56,6 +58,8 @@ typedef struct KothHill {
     Moby *moby;
     Moby *drawMoby;
     float scroll;
+    float radiusX;
+    float radiusY;
 #ifdef KOTH_RANDOM_ORDER
     int orderIdx;
 #endif
@@ -170,6 +174,7 @@ static float clampf(float value, float min, float max)
     return value;
 }
 
+static void kothEnsureCycleStart(void);
 static int kothGetActiveHillIndex(void);
 static int kothUseTeams(void);
 #if KOTH_ENABLE_HILL_SYNC
@@ -245,8 +250,18 @@ static void scanHillsOnce(void)
                     foundCustom = 1;
                     vector_copy(hills[hillCount].position, cub->pos);
                     hills[hillCount].position[3] = 1;
+                    // Derive radii from cuboid scale (basis vector lengths).
+                    hills[hillCount].radiusX = vector_length(cub->matrix.v0) * 0.5f * KOTH_CUBOID_SCALE;
+                    hills[hillCount].radiusY = vector_length(cub->matrix.v1) * 0.5f * KOTH_CUBOID_SCALE;
+                    if (hills[hillCount].radiusX <= 0) hills[hillCount].radiusX = KOTH_RING_RADIUS;
+                    if (hills[hillCount].radiusY <= 0) hills[hillCount].radiusY = KOTH_RING_RADIUS;
+#ifdef KOTH_DEBUG
+                    KOTH_LOG("[KOTH][DBG] cuboid radii x=%.2f y=%.2f\n", hills[hillCount].radiusX, hills[hillCount].radiusY);
+#endif
                     hills[hillCount].moby = moby;
                     hills[hillCount].scroll = 0;
+                    if (hills[hillCount].radiusX <= 0) hills[hillCount].radiusX = KOTH_RING_RADIUS;
+                    if (hills[hillCount].radiusY <= 0) hills[hillCount].radiusY = KOTH_RING_RADIUS;
                     hills[hillCount].drawMoby = mobySpawn(0x1c0d, 0);
                     if (hills[hillCount].drawMoby) {
                         vector_copy(hills[hillCount].drawMoby->position, hills[hillCount].position);
@@ -306,10 +321,12 @@ static void scanHillsOnce(void)
 #else
                 vector_copy(hills[hillCount].position, moby->position);
                 hills[hillCount].position[3] = 1;
+#endif
+                hills[hillCount].radiusX = KOTH_RING_RADIUS;
+                hills[hillCount].radiusY = KOTH_RING_RADIUS;
 #ifdef KOTH_DEBUG
                 KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%.2f,%.2f,%.2f)\n",
                          hillCount, hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2]);
-#endif
 #endif
                 hills[hillCount].moby = moby;
                 hills[hillCount].scroll = 0;
@@ -681,7 +698,7 @@ static void kothCheckVictory(void)
     }
 }
 
-static void drawHillAt(VECTOR center, u32 color, float *scroll)
+static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, float radiusZ)
 {
     const int MAX_SEGMENTS = 64;
     const int MIN_SEGMENTS = 8;
@@ -756,9 +773,11 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll)
     quad[1].rgba[2] = quad[1].rgba[3] = (alphaMidFar << 24) | baseRgb;
     quad[2].rgba[0] = quad[2].rgba[1] = quad[2].rgba[2] = quad[2].rgba[3] = (alphaCenter << 24) | baseRgb;
 
-    VECTOR xAxis = {KOTH_RING_RADIUS * 2, 0, 0, 0};
-    VECTOR zAxis = {0, KOTH_RING_RADIUS * 2, 0, 0};
-    VECTOR yAxis = {0, 0, KOTH_RING_HEIGHT, 0};
+    if (radiusX <= 0) radiusX = KOTH_RING_RADIUS;
+    if (radiusZ <= 0) radiusZ = KOTH_RING_RADIUS;
+    VECTOR xAxis = {radiusX * 2, 0, 0, 0};
+    VECTOR zAxis = {0, radiusZ * 2, 0, 0};
+    VECTOR yAxis = {0, 0, KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE, 0};
     VECTOR tempRight, tempUp, halfX, halfZ, vRadius, tempCenter;
     vector_scale(halfX, xAxis, .5);
     vector_scale(halfZ, zAxis, .5);
@@ -881,7 +900,9 @@ static void drawHill(Moby *moby)
     float fallbackScroll = 0;
     if (!scroll)
         scroll = &fallbackScroll;
-    drawHillAt(moby->position, baseColor, scroll);
+    float radiusX = hill ? hill->radiusX : KOTH_RING_RADIUS;
+    float radiusZ = hill ? hill->radiusY : KOTH_RING_RADIUS;
+    drawHillAt(moby->position, baseColor, scroll, radiusX, radiusZ);
 }
 
 static void hillUpdate(Moby *moby)
@@ -913,7 +934,8 @@ static void drawHills(void)
             hills[activeIdx].drawMoby->pUpdate = &hillUpdate;
             hills[activeIdx].drawMoby->drawn = 1;
         } else {
-            drawHillAt(hills[activeIdx].position, 0x0080FF00, &hills[activeIdx].scroll);
+            drawHillAt(hills[activeIdx].position, 0x0080FF00, &hills[activeIdx].scroll,
+                       hills[activeIdx].radiusX, hills[activeIdx].radiusY);
         }
 #ifdef KOTH_DEBUG
     } else {
