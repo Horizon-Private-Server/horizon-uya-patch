@@ -501,7 +501,7 @@ void updateBase(Moby* this)
 	pvars->node->collData = 0;
 
     // draw base
-    gfxRegistserDrawFunction(&drawBase, (Moby*)this);
+    gfxRegisterDrawFunction(&drawBase, (Moby*)this);
 
     // handle players and base color
     basePlayerUpdate(this);
