@@ -359,7 +359,7 @@ int onServerSentMapIrxModules(void * connection, void * data)
 //------------------------------------------------------------------------------
 void loadModules(void)
 {
-	int usbFsRes = 0, usbServRes = 0;
+	int mod_res = 0;
 	if (LOAD_MODULES_STATE < 7)
 		return;
 
