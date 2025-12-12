@@ -25,6 +25,7 @@ struct KothState {
     int Initialized;
     int GameOver;
     int IsHost;
+    int LastConfigSeed;
 };
 
 static struct KothState State;
@@ -46,11 +47,19 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
     // Determine if host
     State.IsHost = gameAmIHost();
 
+    // Apply config once per match or when seed (which carries hill size in high nibble) changes.
+    {
+        int currentSeed = gameConfig ? gameConfig->grSeed : 0;
+        if (!State.Initialized || currentSeed != State.LastConfigSeed) {
+            kothSetConfig(gameConfig);
+            State.LastConfigSeed = currentSeed;
+        }
+    }
+
     // initialize
     if (!State.Initialized) {
         State.Initialized = 1;
         isCustomMap = gameConfig ? gameConfig->isCustomMap : 0;
-        kothSetConfig(gameConfig);
         kothReset();
         return;
     }
