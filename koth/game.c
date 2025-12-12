@@ -61,8 +61,9 @@ typedef struct KothHill {
     float scroll;
     float radiusX;
     float radiusY;
-    float scaledRadiusX;
-    float scaledRadiusY;
+    // Derived footprint (currently uniform circle; keep both axes for future ellipse support).
+    float footprintRx;
+    float footprintRy;
 #ifdef KOTH_RANDOM_ORDER
     int orderIdx;
 #endif
@@ -120,8 +121,8 @@ static void kothApplyScaleToHill(KothHill_t *hill)
     float scaled = base * hillScale;
     if (scaled <= 0)
         scaled = KOTH_RING_RADIUS * hillScale;
-    hill->scaledRadiusX = scaled;
-    hill->scaledRadiusY = scaled;
+    hill->footprintRx = scaled;
+    hill->footprintRy = scaled;
 }
 
 static void kothOnHillSizeUpdated(void)
@@ -305,9 +306,9 @@ static void scanHillsOnce(void)
                     if (hills[hillCount].radiusY <= 0) hills[hillCount].radiusY = KOTH_RING_RADIUS;
                     kothApplyScaleToHill(&hills[hillCount]);
 #ifdef KOTH_DEBUG
-                    KOTH_LOG("[KOTH][DBG] cuboid radii x=%d y=%d scaled x=%d y=%d\n",
+                    KOTH_LOG("[KOTH][DBG] cuboid radii x=%d y=%d footprint x=%d y=%d\n",
                              (int)hills[hillCount].radiusX, (int)hills[hillCount].radiusY,
-                             (int)hills[hillCount].scaledRadiusX, (int)hills[hillCount].scaledRadiusY);
+                             (int)hills[hillCount].footprintRx, (int)hills[hillCount].footprintRy);
 #endif
                     hills[hillCount].moby = moby;
                     hills[hillCount].scroll = 0;
@@ -447,10 +448,8 @@ static int playerInsideHill(Player *player)
     vector_subtract(delta, player->playerPosition, hills[activeIdx].position);
     // ignore height to keep circle flat on ground
     delta[2] = 0;
-    // Treat hill as a circle with scaled radius.
-    float radius = hills[activeIdx].scaledRadiusX;
-    if (hills[activeIdx].scaledRadiusY > radius)
-        radius = hills[activeIdx].scaledRadiusY;
+    // Circle check using precomputed footprint radius.
+    float radius = hills[activeIdx].footprintRx;
     if (radius <= 0)
         radius = KOTH_RING_RADIUS * hillScale;
     float sqrDist = vector_sqrmag(delta);
@@ -762,23 +761,29 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
 {
     const int MAX_SEGMENTS = 64;
     const int MIN_SEGMENTS = 8;
-    QuadDef quad[3];
-    gfxSetupEffectTex(&quad[0], FX_VISIBOMB_HORIZONTAL_LINES, 0, 0x80);
-    gfxSetupEffectTex(&quad[2], FX_CIRLCE_NO_FADED_EDGE, 0, 0x80);
+#define KOTH_USE_STRIP 1
+    if (radiusX <= 0) radiusX = KOTH_RING_RADIUS;
+    if (radiusZ <= 0) radiusZ = KOTH_RING_RADIUS;
+    VECTOR xAxis = {radiusX * 2, 0, 0, 0};
+    VECTOR zAxis = {0, radiusZ * 2, 0, 0};
+    VECTOR yAxis = {0, 0, KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE, 0};
+    VECTOR tempRight, tempUp, halfX, vRadius;
+    vector_scale(halfX, xAxis, .5);
+    float fRadius = vector_length(halfX);
+    vector_normalize(yAxis, yAxis);
 
-    quad[0].uv[0] = (UV_t){0, 0};
-    quad[0].uv[1] = (UV_t){0, 1};
-    quad[0].uv[2] = (UV_t){1, 0};
-    quad[0].uv[3] = (UV_t){1, 1};
-    quad[1] = quad[0];
-    quad[2] = quad[0];
+    // Make the ring taller to improve visibility.
+    float ringHeight = KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE * 3.75f; // 1.5x the previous 2.5x setting
+    vector_scale(tempUp, yAxis, ringHeight * 0.5f);
 
-    float uvOffset = 0;
-    quad[0].uv[0].y += uvOffset;
-    quad[0].uv[1].y -= uvOffset;
-    quad[0].uv[2].y += uvOffset;
-    quad[0].uv[3].y -= uvOffset;
-    quad[1] = quad[0];
+    float segmentSize = 1.0f;
+    int segments = (int)((2 * MATH_PI * fRadius) / segmentSize);
+    segments = (int)clampf((float)segments, (float)MIN_SEGMENTS, (float)MAX_SEGMENTS);
+    float thetaStep = 2 * MATH_PI / (float)segments;
+
+    vec3 positions[(MAX_SEGMENTS + 1) * 2];
+    u32 colors[(MAX_SEGMENTS + 1) * 2];
+    UV_t uvs[(MAX_SEGMENTS + 1) * 2];
 
 #if KOTH_FADE_WARNING
     // Fade/pulse as we approach hill rotation.
@@ -786,17 +791,14 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
     const int warnMs = 10 * TIME_SECOND;
     int duration = kothGetHillDurationMs();
     if (duration > 0 && hillCount > 0) {
-        // Ensure we have a cycle start before using it.
         kothEnsureCycleStart();
         if (hillCycleStartTime > 0) {
             int elapsed = gameGetTime() - hillCycleStartTime;
             if (elapsed < 0)
                 elapsed = 0;
-            // Use modulo to keep timeLeft positive across cycles.
             int cycElapsed = elapsed % duration;
             int timeLeft = duration - cycElapsed;
             if (timeLeft < warnMs) {
-                // Simple on/off pulse once per second between full alpha and fully hidden.
                 int seconds = timeLeft / TIME_SECOND;
                 int phase = seconds & 1; // toggle each second
                 fadeScale = phase ? 1.0f : 0.0f;
@@ -805,87 +807,103 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
     }
 #endif
 
-    int alphaOuterNear = (int)(0x00 * KOTH_RING_ALPHA_SCALE) & 0xFF;
-    int alphaOuterFar = (int)(0x30 * KOTH_RING_ALPHA_SCALE);
-    if (alphaOuterFar > 0xFF) alphaOuterFar = 0xFF;
-    int alphaMidNear = (int)(0x50 * KOTH_RING_ALPHA_SCALE);
-    if (alphaMidNear > 0xFF) alphaMidNear = 0xFF;
-    int alphaMidFar = (int)(0x20 * KOTH_RING_ALPHA_SCALE);
-    if (alphaMidFar > 0xFF) alphaMidFar = 0xFF;
-    int alphaCenter = (int)(0x30 * KOTH_RING_ALPHA_SCALE);
-    if (alphaCenter > 0xFF) alphaCenter = 0xFF;
-
+    int alphaNear = (int)(0x80 * KOTH_RING_ALPHA_SCALE);
+    if (alphaNear > 0xFF) alphaNear = 0xFF;
+    int alphaFar = (int)(0x50 * KOTH_RING_ALPHA_SCALE);
+    if (alphaFar > 0xFF) alphaFar = 0xFF;
 #if KOTH_FADE_WARNING
-    alphaOuterFar = (int)(alphaOuterFar * fadeScale);
-    alphaMidNear = (int)(alphaMidNear * fadeScale);
-    alphaMidFar = (int)(alphaMidFar * fadeScale);
-    alphaCenter = (int)(alphaCenter * fadeScale);
-    if (alphaOuterFar > 0xFF) alphaOuterFar = 0xFF;
-    if (alphaMidNear > 0xFF) alphaMidNear = 0xFF;
-    if (alphaMidFar > 0xFF) alphaMidFar = 0xFF;
-    if (alphaCenter > 0xFF) alphaCenter = 0xFF;
+    alphaNear = (int)(alphaNear * fadeScale);
+    alphaFar = (int)(alphaFar * fadeScale);
+    if (alphaNear > 0xFF) alphaNear = 0xFF;
+    if (alphaFar > 0xFF) alphaFar = 0xFF;
 #endif
 
     u32 baseRgb = color & 0x00FFFFFF;
-    quad[0].rgba[0] = quad[0].rgba[1] = (alphaOuterNear << 24) | baseRgb;
-    quad[0].rgba[2] = quad[0].rgba[3] = (alphaOuterFar << 24) | baseRgb;
-    quad[1].rgba[0] = quad[1].rgba[1] = (alphaMidNear << 24) | baseRgb;
-    quad[1].rgba[2] = quad[1].rgba[3] = (alphaMidFar << 24) | baseRgb;
-    quad[2].rgba[0] = quad[2].rgba[1] = quad[2].rgba[2] = quad[2].rgba[3] = (alphaCenter << 24) | baseRgb;
 
-    if (radiusX <= 0) radiusX = KOTH_RING_RADIUS;
-    if (radiusZ <= 0) radiusZ = KOTH_RING_RADIUS;
-    VECTOR xAxis = {radiusX * 2, 0, 0, 0};
-    VECTOR zAxis = {0, radiusZ * 2, 0, 0};
-    VECTOR yAxis = {0, 0, KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE, 0};
-    VECTOR tempRight, tempUp, halfX, halfZ, vRadius, tempCenter;
-    vector_scale(halfX, xAxis, .5);
-    vector_scale(halfZ, zAxis, .5);
-    float fRadius = vector_length(halfX);
+#if KOTH_USE_STRIP
+    vector_copy(vRadius, halfX);
+    int i;
+    for (i = 0; i <= segments; ++i) {
+        VECTOR pos;
+        vector_add(pos, center, vRadius);
+
+        int idx = i * 2;
+        // build tangent for a small thickness so the strip has visible width
+        vector_outerproduct(tempRight, yAxis, vRadius);
+        vector_normalize(tempRight, tempRight);
+        vector_scale(tempRight, tempRight, 3.0f);
+
+        // bottom vertex
+        positions[idx][0] = pos[0] + tempRight[0] - tempUp[0];
+        positions[idx][1] = pos[1] + tempRight[1] - tempUp[1];
+        positions[idx][2] = pos[2] + tempRight[2] - tempUp[2];
+        colors[idx] = (alphaFar << 24) | baseRgb;
+        uvs[idx].x = *scroll;
+        uvs[idx].y = (float)i / (float)segments;
+
+        // top vertex
+        positions[idx + 1][0] = pos[0] + tempRight[0] + tempUp[0];
+        positions[idx + 1][1] = pos[1] + tempRight[1] + tempUp[1];
+        positions[idx + 1][2] = pos[2] + tempRight[2] + tempUp[2];
+        colors[idx + 1] = (alphaNear << 24) | baseRgb;
+        uvs[idx + 1].x = *scroll + 1.0f;
+        uvs[idx + 1].y = (float)i / (float)segments;
+
+        vector_rodrigues(vRadius, vRadius, yAxis, thetaStep);
+    }
+
+    gfxDrawStripInit();
+    gfxAddRegister(8, 0);
+    gfxAddRegister(0x14, 0xff9000000260);
+    gfxAddRegister(6, gfxGetEffectTex(FX_VISIBOMB_HORIZONTAL_LINES));
+    gfxAddRegister(0x47, 0x513f1);
+    gfxAddRegister(0x42, 0x8000000044);
+    gfxDrawStrip((segments + 1) * 2, positions, colors, uvs, 1);
+
+    *scroll += .007f;
+#else
+    // Quad-per-segment fallback (original approach).
     int signs[4][2] = {{1, -1}, {-1, -1}, {1, 1}, {-1, 1}};
-    vector_normalize(yAxis, yAxis);
+    vector_copy(vRadius, halfX);
+    QuadDef quad;
+    gfxSetupEffectTex(&quad, FX_VISIBOMB_HORIZONTAL_LINES, 0, 0x80);
+    quad.uv[0] = (UV_t){0, 0};
+    quad.uv[1] = (UV_t){0, 1};
+    quad.uv[2] = (UV_t){1, 0};
+    quad.uv[3] = (UV_t){1, 1};
+    quad.rgba[0] = quad.rgba[1] = (alphaNear << 24) | baseRgb;
+    quad.rgba[2] = quad.rgba[3] = (alphaFar << 24) | baseRgb;
 
-    vector_outerproduct(tempRight, yAxis, halfX);
-    vector_normalize(tempRight, tempRight);
-    vector_scale(tempRight, tempRight, 1);
-    vector_scale(tempUp, yAxis, KOTH_RING_HEIGHT * 0.5f);
-
-    float segmentSize = 1;
-    int segments = (int)((2 * MATH_PI * fRadius) / segmentSize);
-    float thetaStep = 2 * MATH_PI / clampf((float)segments, (float)MIN_SEGMENTS, (float)MAX_SEGMENTS);
-
-    int k, i;
-    for (k = 0; k < 2; ++k) {
-        vector_copy(vRadius, halfX);
-        for (i = 0; i < segments; ++i) {
-            vector_add(tempCenter, center, vRadius);
-            tempCenter[2] += k * KOTH_RING_HEIGHT;
-            int j;
-            for (j = 0; j < 4; ++j) {
-                quad[k].point[j][0] = tempCenter[0] + signs[j][0] * tempRight[0] + signs[j][1] * tempUp[0];
-                quad[k].point[j][1] = tempCenter[1] + signs[j][0] * tempRight[1] + signs[j][1] * tempUp[1];
-                quad[k].point[j][2] = tempCenter[2] + signs[j][0] * tempRight[2] + signs[j][1] * tempUp[2];
-                quad[k].point[j][3] = 1;
-            }
-
-            // Scroll texture vertically to keep the ring graphic oriented upward.
-            quad[k].uv[0].y = quad[k].uv[1].y = 0 - *scroll;
-            quad[k].uv[2].y = quad[k].uv[3].y = 1 - *scroll;
-
-            gfxDrawQuad(quad[k], NULL);
-            vector_rodrigues(vRadius, vRadius, yAxis, thetaStep);
-            vector_outerproduct(tempRight, yAxis, vRadius);
-            vector_normalize(tempRight, tempRight);
+    int i;
+    for (i = 0; i < segments; ++i) {
+        VECTOR tempCenter;
+        vector_add(tempCenter, center, vRadius);
+        int j;
+        for (j = 0; j < 4; ++j) {
+            quad.point[j][0] = tempCenter[0] + signs[j][0] * tempRight[0] + signs[j][1] * tempUp[0];
+            quad.point[j][1] = tempCenter[1] + signs[j][0] * tempRight[1] + signs[j][1] * tempUp[1];
+            quad.point[j][2] = tempCenter[2] + signs[j][0] * tempRight[2] + signs[j][1] * tempUp[2];
+            quad.point[j][3] = 1;
         }
+
+        quad.uv[0].y = quad.uv[1].y = 0 - *scroll;
+        quad.uv[2].y = quad.uv[3].y = 1 - *scroll;
+
+        gfxDrawQuad(quad, NULL);
+        vector_rodrigues(vRadius, vRadius, yAxis, thetaStep);
+        vector_outerproduct(tempRight, yAxis, vRadius);
+        vector_normalize(tempRight, tempRight);
+        vector_scale(tempRight, tempRight, 3.0f);
     }
     *scroll += .007f;
+#endif
 
     // floor quad
     VECTOR corners[4];
-    vector_copy(corners[0], (VECTOR){center[0] - fRadius, center[1] - fRadius, center[2], 0});
-    vector_copy(corners[1], (VECTOR){center[0] + fRadius, center[1] - fRadius, center[2], 0});
-    vector_copy(corners[2], (VECTOR){center[0] + fRadius, center[1] + fRadius, center[2], 0});
-    vector_copy(corners[3], (VECTOR){center[0] - fRadius, center[1] + fRadius, center[2], 0});
+    vector_copy(corners[0], (VECTOR){center[0] - halfX[0], center[1] - halfX[1], center[2], 0});
+    vector_copy(corners[1], (VECTOR){center[0] + halfX[0], center[1] + halfX[1], center[2], 0});
+    vector_copy(corners[2], (VECTOR){center[0] + halfX[0], center[1] + halfX[1], center[2], 0});
+    vector_copy(corners[3], (VECTOR){center[0] - halfX[0], center[1] - halfX[1], center[2], 0});
 
     QuadDef floorQuad;
     gfxSetupEffectTex(&floorQuad, FX_CIRLCE_NO_FADED_EDGE, 0, 0x80);
@@ -893,7 +911,7 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
     floorQuad.uv[1] = (UV_t){0, 1};
     floorQuad.uv[2] = (UV_t){1, 0};
     floorQuad.uv[3] = (UV_t){1, 1};
-    int floorAlpha = 0x20;
+    int floorAlpha = 0x40;
 #if KOTH_FADE_WARNING
     floorAlpha = (int)(floorAlpha * fadeScale);
     if (floorAlpha > 0xFF) floorAlpha = 0xFF;
@@ -960,8 +978,8 @@ static void drawHill(Moby *moby)
     float fallbackScroll = 0;
     if (!scroll)
         scroll = &fallbackScroll;
-    float radiusX = hill ? hill->scaledRadiusX : (KOTH_RING_RADIUS * hillScale);
-    float radiusZ = hill ? hill->scaledRadiusY : (KOTH_RING_RADIUS * hillScale);
+    float radiusX = hill ? hill->footprintRx : (KOTH_RING_RADIUS * hillScale);
+    float radiusZ = hill ? hill->footprintRy : (KOTH_RING_RADIUS * hillScale);
     drawHillAt(moby->position, baseColor, scroll, radiusX, radiusZ);
 }
 
@@ -995,7 +1013,7 @@ static void drawHills(void)
             hills[activeIdx].drawMoby->drawn = 1;
         } else {
             drawHillAt(hills[activeIdx].position, 0x0080FF00, &hills[activeIdx].scroll,
-                       hills[activeIdx].scaledRadiusX, hills[activeIdx].scaledRadiusY);
+                       hills[activeIdx].footprintRx, hills[activeIdx].footprintRy);
         }
 #ifdef KOTH_DEBUG
     } else {
