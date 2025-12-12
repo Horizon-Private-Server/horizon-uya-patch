@@ -25,6 +25,7 @@
 #define KOTH_SIEGE_USE_BOLT_CRANK 1
 #define KOTH_CUBOID_SCALE 1.0f
 #define KOTH_RING_HEIGHT_SCALE 1.0f
+#define KOTH_SIZE_OPTIONS 8
 
 // Set to 1 to enable verbose KOTH debugging at compile time.
 #define KOTH_DEBUG 1
@@ -60,6 +61,8 @@ typedef struct KothHill {
     float scroll;
     float radiusX;
     float radiusY;
+    float scaledRadiusX;
+    float scaledRadiusY;
 #ifdef KOTH_RANDOM_ORDER
     int orderIdx;
 #endif
@@ -79,6 +82,9 @@ static int lastTimeStart = -1;
 #if KOTH_ENABLE_HILL_SYNC
 static int lastActiveHillIdx = -1;
 #endif
+static int hillSizeIdx = 0; // synced hill size index
+static const float KOTH_HILL_SCALE_TABLE[KOTH_SIZE_OPTIONS] = {2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 10.0f, 20.0f, 1.0f};
+static float hillScale = 2.0f; // default scale (idx 0)
 #ifdef KOTH_RANDOM_ORDER
 static int hillOrder[KOTH_MAX_HILLS];
 static int hillOrderCount = 0;
@@ -100,10 +106,39 @@ static int kothRandRange(u32 *state, int min, int max)
     return min + (int)(r % (u32)(max - min));
 }
 #endif
+
+static void kothApplyScaleToHill(KothHill_t *hill)
+{
+    if (!hill)
+        return;
+    // Use a uniform radius (circle): pick the larger base axis then scale.
+    float base = hill->radiusX;
+    if (hill->radiusY > base)
+        base = hill->radiusY;
+    if (base <= 0)
+        base = KOTH_RING_RADIUS;
+    float scaled = base * hillScale;
+    if (scaled <= 0)
+        scaled = KOTH_RING_RADIUS * hillScale;
+    hill->scaledRadiusX = scaled;
+    hill->scaledRadiusY = scaled;
+}
+
+static void kothOnHillSizeUpdated(void)
+{
+    if (hillScale <= 0)
+        hillScale = 1.0f;
+
+    int i;
+    for (i = 0; i < hillCount; ++i) {
+        kothApplyScaleToHill(&hills[i]);
+    }
+}
 static int kothScores[GAME_MAX_PLAYERS];
 static int lastBroadcastScore[GAME_MAX_PLAYERS];
 static PatchGameConfig_t *kothConfig = NULL;
 static int lastSeed = 0;
+static int kothInitLogged = 0;
 
 typedef struct KothCustomHillPVar {
     int cuboidRefs[KOTH_MAX_CUSTOM_CUBOIDS];
@@ -180,11 +215,24 @@ static int kothUseTeams(void);
 #if KOTH_ENABLE_HILL_SYNC
 static void kothBroadcastHillIndex(int hillIdx);
 #endif
+static void kothOnHillSizeUpdated(void);
 
 void kothSetConfig(PatchGameConfig_t *config)
 {
     kothConfig = config;
-    lastSeed = config ? config->grSeed : 0;
+    int seedRaw = config ? config->grSeed : 0;
+    // High nibble carries hill size idx from host UI (packed in seed at send time).
+    int packedIdx = (seedRaw >> 28) & 0xF;
+    if (packedIdx < 0 || packedIdx >= KOTH_SIZE_OPTIONS)
+        packedIdx = 0;
+    hillSizeIdx = packedIdx;
+    hillScale = KOTH_HILL_SCALE_TABLE[hillSizeIdx];
+    // Lower 28 bits are the actual seed.
+    lastSeed = seedRaw & 0x0FFFFFFF;
+    kothOnHillSizeUpdated();
+#if KOTH_DEBUG
+    KOTH_LOG("[KOTH][DBG] config set sizeIdx=%d scale=%d seedLow=0x%X\n", hillSizeIdx, (int)hillScale, lastSeed);
+#endif
 }
 
 static void kothCopyName(char *dst, const char *src)
@@ -255,8 +303,11 @@ static void scanHillsOnce(void)
                     hills[hillCount].radiusY = vector_length(cub->matrix.v1) * 0.5f * KOTH_CUBOID_SCALE;
                     if (hills[hillCount].radiusX <= 0) hills[hillCount].radiusX = KOTH_RING_RADIUS;
                     if (hills[hillCount].radiusY <= 0) hills[hillCount].radiusY = KOTH_RING_RADIUS;
+                    kothApplyScaleToHill(&hills[hillCount]);
 #ifdef KOTH_DEBUG
-                    KOTH_LOG("[KOTH][DBG] cuboid radii x=%.2f y=%.2f\n", hills[hillCount].radiusX, hills[hillCount].radiusY);
+                    KOTH_LOG("[KOTH][DBG] cuboid radii x=%d y=%d scaled x=%d y=%d\n",
+                             (int)hills[hillCount].radiusX, (int)hills[hillCount].radiusY,
+                             (int)hills[hillCount].scaledRadiusX, (int)hills[hillCount].scaledRadiusY);
 #endif
                     hills[hillCount].moby = moby;
                     hills[hillCount].scroll = 0;
@@ -276,8 +327,9 @@ static void scanHillsOnce(void)
 #endif
                     }
 #ifdef KOTH_DEBUG
-                    KOTH_LOG("[KOTH][DBG] hill[%d] source=custom mobyIdx=0x%04X pos=(%.2f,%.2f,%.2f) cuboid=%d\n",
-                             hillCount, moby->oClass, hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2], idx);
+                    KOTH_LOG("[KOTH][DBG] hill[%d] source=custom mobyIdx=0x%04X pos=(%d,%d,%d) cuboid=%d\n",
+                             hillCount, moby->oClass,
+                             (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2], idx);
 #endif
                     ++hillCount;
                 }
@@ -305,8 +357,8 @@ static void scanHillsOnce(void)
                         hills[hillCount].position[3] = 1;
                         usedCrank = 1;
 #ifdef KOTH_DEBUG
-                        KOTH_LOG("[KOTH][DBG] siege hill using bolt crank idx=%d pos=(%.2f,%.2f,%.2f)\n",
-                                 crankIdx, hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2]);
+                        KOTH_LOG("[KOTH][DBG] siege hill using bolt crank idx=%d pos=(%d,%d,%d)\n",
+                                 crankIdx, (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2]);
 #endif
                     }
                 }
@@ -314,8 +366,8 @@ static void scanHillsOnce(void)
                     vector_copy(hills[hillCount].position, moby->position);
                     hills[hillCount].position[3] = 1;
 #ifdef KOTH_DEBUG
-                    KOTH_LOG("[KOTH][DBG] siege hill using node pos=(%.2f,%.2f,%.2f)\n",
-                             hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2]);
+                    KOTH_LOG("[KOTH][DBG] siege hill using node pos=(%d,%d,%d)\n",
+                             (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2]);
 #endif
                 }
 #else
@@ -324,9 +376,11 @@ static void scanHillsOnce(void)
 #endif
                 hills[hillCount].radiusX = KOTH_RING_RADIUS;
                 hills[hillCount].radiusY = KOTH_RING_RADIUS;
+                kothApplyScaleToHill(&hills[hillCount]);
 #ifdef KOTH_DEBUG
-                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%.2f,%.2f,%.2f)\n",
-                         hillCount, hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2]);
+                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%d,%d,%d)\n",
+                         hillCount,
+                         (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2]);
 #endif
                 hills[hillCount].moby = moby;
                 hills[hillCount].scroll = 0;
@@ -344,8 +398,8 @@ static void scanHillsOnce(void)
 #endif
                 }
 #ifdef KOTH_DEBUG
-                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%.2f,%.2f,%.2f)\n",
-                         hillCount, hills[hillCount].position[0], hills[hillCount].position[1], hills[hillCount].position[2]);
+                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%d,%d,%d)\n",
+                         hillCount, (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2]);
 #endif
                 ++hillCount;
             }
@@ -393,8 +447,14 @@ static int playerInsideHill(Player *player)
     vector_subtract(delta, player->playerPosition, hills[activeIdx].position);
     // ignore height to keep circle flat on ground
     delta[2] = 0;
+    // Treat hill as a circle with scaled radius.
+    float radius = hills[activeIdx].scaledRadiusX;
+    if (hills[activeIdx].scaledRadiusY > radius)
+        radius = hills[activeIdx].scaledRadiusY;
+    if (radius <= 0)
+        radius = KOTH_RING_RADIUS * hillScale;
     float sqrDist = vector_sqrmag(delta);
-    return sqrDist <= (KOTH_RING_RADIUS * KOTH_RING_RADIUS);
+    return sqrDist <= (radius * radius);
 }
 
 static void broadcastScore(int playerIdx)
@@ -900,8 +960,8 @@ static void drawHill(Moby *moby)
     float fallbackScroll = 0;
     if (!scroll)
         scroll = &fallbackScroll;
-    float radiusX = hill ? hill->radiusX : KOTH_RING_RADIUS;
-    float radiusZ = hill ? hill->radiusY : KOTH_RING_RADIUS;
+    float radiusX = hill ? hill->scaledRadiusX : (KOTH_RING_RADIUS * hillScale);
+    float radiusZ = hill ? hill->scaledRadiusY : (KOTH_RING_RADIUS * hillScale);
     drawHillAt(moby->position, baseColor, scroll, radiusX, radiusZ);
 }
 
@@ -935,7 +995,7 @@ static void drawHills(void)
             hills[activeIdx].drawMoby->drawn = 1;
         } else {
             drawHillAt(hills[activeIdx].position, 0x0080FF00, &hills[activeIdx].scroll,
-                       hills[activeIdx].radiusX, hills[activeIdx].radiusY);
+                       hills[activeIdx].scaledRadiusX, hills[activeIdx].scaledRadiusY);
         }
 #ifdef KOTH_DEBUG
     } else {
@@ -1082,6 +1142,19 @@ static int kothOnReceiveHillSync(void *connection, void *data)
     if (idx < 0 || idx >= hillCount)
         return sizeof(KothHillSync_t);
 
+    // Size index comes from padding[0]; default to 0 if out of range.
+    int incomingSizeIdx = msg->Padding[0];
+    if (incomingSizeIdx < 0 || incomingSizeIdx >= KOTH_SIZE_OPTIONS)
+        incomingSizeIdx = 0;
+    if (incomingSizeIdx != hillSizeIdx) {
+        hillSizeIdx = incomingSizeIdx;
+        hillScale = KOTH_HILL_SCALE_TABLE[hillSizeIdx];
+        kothOnHillSizeUpdated();
+#ifdef KOTH_DEBUG
+        KOTH_LOG("[KOTH][DBG] hill size updated from sync idx=%d scale=%d\n", hillSizeIdx, (int)hillScale);
+#endif
+    }
+
     // Always snap to host's hill index/time; host is authoritative to recover from drift (ahead or behind).
     // Use elapsed time so we don't depend on host absolute clock.
     int elapsed = msg->ElapsedMs;
@@ -1120,6 +1193,9 @@ void kothReset(void)
     lastActiveHillIdx = -1;
 #endif
     lastSeed = 0;
+    kothInitLogged = 0;
+    hillSizeIdx = 0;
+    hillScale = KOTH_HILL_SCALE_TABLE[hillSizeIdx];
 #ifdef KOTH_RANDOM_ORDER
     hillOrderCount = 0;
     ++hillOrderShuffleNonce;
@@ -1166,9 +1242,13 @@ void kothInit(void)
 
     scanHillsOnce();
 #if KOTH_DEBUG
-    KOTH_LOG("[KOTH][DBG] init complete handler=%d gameEndHook=%d hills=%d seed=%d scoreLimit=%d hillMs=%d\n",
-             handlerInstalled, gameEndHookInstalled, hillCount, (kothConfig ? kothConfig->grSeed : -1),
-             kothGetScoreLimit(), kothGetHillDurationMs());
+    // Log once per init call (not every frame) when we actually set up hills/handlers.
+    if (!kothInitLogged) {
+        KOTH_LOG("[KOTH][DBG] init complete handler=%d gameEndHook=%d hills=%d seed=%d scoreLimit=%d hillMs=%d\n",
+                 handlerInstalled, gameEndHookInstalled, hillCount, (kothConfig ? kothConfig->grSeed : -1),
+                 kothGetScoreLimit(), kothGetHillDurationMs());
+        kothInitLogged = 1;
+    }
 #endif
 }
 
@@ -1181,7 +1261,8 @@ void kothTick(void)
     {
         GameData *gd = gameGetData();
         int timeStart = gd ? gd->timeStart : -1;
-        int seedNow = kothConfig ? kothConfig->grSeed : 0;
+        int seedNowRaw = kothConfig ? kothConfig->grSeed : 0;
+        int seedNow = seedNowRaw & 0x0FFFFFFF;
         if ((timeStart > 0 && timeStart != lastTimeStart) || seedNow != lastSeed) {
             kothReset();
             lastTimeStart = timeStart;
@@ -1234,6 +1315,7 @@ static void kothBroadcastHillIndex(int hillIdx)
     KothHillSync_t msg;
     msg.HillIdx = (char)hillIdx;
     memset(msg.Padding, 0, sizeof(msg.Padding));
+    msg.Padding[0] = (char)hillSizeIdx;
     // Send elapsed time on current hill so clients can reconstruct cycle start on their own clock.
     msg.ElapsedMs = gameGetTime() - hillCycleStartTime;
     netBroadcastCustomAppMessage(connection, CUSTOM_MSG_ID_KOTH_HILL_SYNC, sizeof(msg), &msg);

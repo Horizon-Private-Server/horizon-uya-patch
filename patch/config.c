@@ -312,6 +312,15 @@ MenuElem_ListData_t dataKothHillDuration = {
     .items = { "60", "120", "180", "240", "300" }
 };
 
+// KOTH hill size scale options (XY). Order must match KOTH_HILL_SCALE_TABLE in koth/game.c.
+static char kothHillSizeIdx = 0; // host edit only; not serialized
+MenuElem_ListData_t dataKothHillSize = {
+    .value = &kothHillSizeIdx,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 8,
+    .items = { "2x", "3x", "4x", "5x", "6x", "10x", "20x", "1x" }
+};
+
 MenuElem_ListData_t dataV2_Setting = {
     .value = &gameConfig.grV2s,
     .stateHandler = NULL,
@@ -495,6 +504,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
   { "KOTH Points", listActionHandler, menuStateHandler_KOTH, &dataKothScoreLimit, "Points needed to win King of the Hill (0 = disabled, uses timer if set)." },
   { "KOTH Hill Duration", listActionHandler, menuStateHandler_KOTH, &dataKothHillDuration, "How long a hill stays active before rotating to the next." },
+  { "KOTH Hill Size", listActionHandler, menuStateHandler_KOTH, &dataKothHillSize, "Scale for KOTH hill radius (XY)." },
   { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset, "Select one of the preconfigured game rule presets or manually set the custom game rules below." },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
@@ -2527,7 +2537,8 @@ void configTrySendGameConfig(void)
   if (state & ELEMENT_EDITABLE)
   {
     // Generate a per-match seed for custom modes that rely on shared RNG (e.g. KOTH hill order).
-    gameConfig.grSeed = (int)gameGetTime();
+    // HACK: Pack KOTH hill size into the high nibble so the module can recover it later (no direct call into koth ELF).
+    gameConfig.grSeed = ((kothHillSizeIdx & 0xF) << 28) | ((int)gameGetTime() & 0x0FFFFFFF);
 
     // validate everything
     for (i = 0; i < tabsCount; ++i)
