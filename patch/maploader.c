@@ -158,9 +158,7 @@ void loadModules(void);
 
 int readLevelVersion(char * name, int * version);
 
-void * usbFsModuleStart = (void*)0x000D0000;
 int usbFsModuleSize = 0;
-void * usbSrvModuleStart = (void*)0x000DD000;
 int usbSrvModuleSize = 0;
 
 // patch config
@@ -341,7 +339,6 @@ int onServerSentMapIrxModules(void * connection, void * data)
 
 	//
 	int init = rpcInit = rpcUSBInit();
-	DPRINTF("rpcUSBInit: %d, %08X:%d, %08X:%d\n", init, (u32)usbFsModuleStart, usbFsModuleSize, (u32)usbSrvModuleStart, usbSrvModuleSize);
 
 	//
 	if (init < 0) {
@@ -371,9 +368,8 @@ void loadModules(void)
 		SifInitRpc(0);
 
 		// Load modules
-		//int usbd_id = SifExecModuleBuffer((void*)0x000AA000, 34993, 0, NULL, &mod_res);
-		USB_FS_ID = SifExecModuleBuffer(usbFsModuleStart, usbFsModuleSize, 0, NULL, &usbFsRes);
-		USB_SRV_ID = SifExecModuleBuffer(usbSrvModuleStart, usbSrvModuleSize, 0, NULL, &usbServRes);
+		USB_FS_ID = SifExecModuleBuffer(USB_FS_MODULE_PTR, usbFsModuleSize, 0, NULL, &mod_res);
+		USB_SRV_ID = SifExecModuleBuffer(USB_SRV_MODULE_PTR, usbSrvModuleSize, 0, NULL, &mod_res);
 
 		//DPRINTF("Loading USBD: %d\n", usbd_id);
 		DPRINTF("Loading MASS: %d %d\n", USB_FS_ID, usbFsRes);
@@ -1336,8 +1332,8 @@ int mapsPromptEnableCustomMaps(void)
 			return -1;
 
 		// request irx modules from server
-		request.Module1Start = (u32)usbFsModuleStart;
-		request.Module2Start = (u32)usbSrvModuleStart;
+		request.Module1Start = (u32)USB_FS_MODULE_PTR;
+		request.Module2Start = (u32)USB_SRV_MODULE_PTR;
 		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
 		actionState = ACTION_DOWNLOADING_MODULES;
 		return 1;
@@ -1396,8 +1392,8 @@ void onMapLoaderOnlineMenu(void)
 
 		// request irx modules from server
 		MapClientRequestModulesMessage request = { 0, 0 };
-		request.Module1Start = (u32)usbFsModuleStart;
-		request.Module2Start = (u32)usbSrvModuleStart;
+		request.Module1Start = (u32)USB_FS_MODULE_PTR;
+		request.Module2Start = (u32)USB_SRV_MODULE_PTR;
 		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_MAP_IRX_MODULES, sizeof(MapClientRequestModulesMessage), &request);
 		actionState = ACTION_DOWNLOADING_MODULES;
 		initialized = 1;
