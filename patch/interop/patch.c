@@ -1128,6 +1128,34 @@ VariableAddress_t vaPlayerSyncFixTurretDelay = {
 #endif
 };
 
+VariableAddress_t vaPlayerDisableAimAssist = {
+#if UYA_PAL
+	.Lobby = 0x00648638,
+	.Bakisi = 0x0051a738,
+	.Hoven = 0x0051c850,
+	.OutpostX12 = 0x00512128,
+	.KorgonOutpost = 0x0050f8c0,
+	.Metropolis = 0x0050ec10,
+	.BlackwaterCity = 0x0050c4a8,
+	.CommandCenter = 0x0050c268,
+	.BlackwaterDocks = 0x0050eae8,
+	.AquatosSewers = 0x0050dde8,
+	.MarcadiaPalace = 0x0050d768,
+#else
+	.Lobby = 0x00645dd8,
+	.Bakisi = 0x00517f30,
+	.Hoven = 0x00519f88,
+	.OutpostX12 = 0x0050f8a0,
+	.KorgonOutpost = 0x0050d0b8,
+	.Metropolis = 0x0050c408,
+	.BlackwaterCity = 0x00509c20,
+	.CommandCenter = 0x00509ba0,
+	.BlackwaterDocks = 0x0050c3e0,
+	.AquatosSewers = 0x0050b720,
+	.MarcadiaPalace = 0x0050b060,
+#endif
+};
+
 
 
 VariableAddress_t vaNWUpdate_Func = {

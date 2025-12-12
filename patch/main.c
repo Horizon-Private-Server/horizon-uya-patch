@@ -160,6 +160,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.hideFluxReticle = 0,
 	.dlStyleFlips = 0,
 	.enableTeamInfo = 0,
+	.disableAimAssist = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1774,6 +1775,23 @@ void teamInfo(void)
 }
 
 /*
+ * NAME :		teamInfo
+ * DESCRIPTION :	Disable Aim Assist
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			JelloGiant
+ */
+void disableAimAssist(void)
+{
+	if (config.disableAimAssist)
+		POKE_U32(GetAddress(&vaPlayerDisableAimAssist), 0x1000000E);
+	else
+		POKE_U32(GetAddress(&vaPlayerDisableAimAssist), 0x5440000E);
+	return 0;
+}
+
+/*
  * NAME :		onClientVoteToEndStateUpdateRemote
  * DESCRIPTION :
  * 			Receives when the host updates the vote to end state.
@@ -2959,6 +2977,8 @@ int main(void)
 
 		if (config.aimAssist)
 			patchAimAssist();
+		
+		disableAimAssist();
 
 		// Patch hiding of Flux Reticle
 		patchHideFluxReticle();

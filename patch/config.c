@@ -449,6 +449,7 @@ MenuElem_t menuElementsGeneral[] = {
 */
   { "Always Show Health", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.alwaysShowHealth, "Let that health bar hide no longer!  This will make it so the health bar is always visible." },
   { "Enable Team Info", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableTeamInfo, "Display team health and cycle v2 status on the bottom left of your screen." },
+  { "Disable Aim Assist", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.disableAimAssist, "Disable aim assist." },
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist, "Toggles code that pulls the camera towards nearby targets when aiming." },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake, "Toggles the camera shake caused by nearby explosions." },
   { "Disable D-Pad Movement", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.disableDpadMovement, "Disables the d-pad moving your character in game." },

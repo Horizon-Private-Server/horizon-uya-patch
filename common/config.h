@@ -26,6 +26,7 @@ typedef struct PatchConfig {
   char hideFluxReticle;
   char dlStyleFlips;
   char enableTeamInfo;
+  char disableAimAssist;
 } PatchConfig_t;
 
 // Game Rules Tab

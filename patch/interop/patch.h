@@ -40,6 +40,7 @@ VariableAddress_t vaPlayerSyncFixOverflow3;
 VariableAddress_t vaPlayerSyncFixOverflow4;
 VariableAddress_t vaPlayerSyncFixLagout1;
 VariableAddress_t vaPlayerSyncFixTurretDelay;
+VariableAddress_t vaPlayerDisableAimAssist;
 VariableAddress_t vaNWUpdate_Func;
 VariableAddress_t vaGameTimeUpdate_Hook;
 VariableAddress_t vaGadgetEventFunc;
