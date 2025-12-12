@@ -907,7 +907,7 @@ static void drawHill(Moby *moby)
 
 static void hillUpdate(Moby *moby)
 {
-    gfxRegistserDrawFunction(&drawHill, moby);
+    gfxRegisterDrawFunction(&drawHill, moby);
 }
 
 static void drawHills(void)
