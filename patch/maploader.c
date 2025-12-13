@@ -27,12 +27,14 @@
 #define HOST_PATH_PREFIX      "host:"
 
 #define MAP_FRAG_PAYLOAD_MAX_SIZE               (1024)
-#define LOAD_MODULES_STATE                      (*(u8*)0x000CFFF0)
-#define LOAD_MODULES_RESULT                     (*(u8*)0x000CFFF1)
+#define LOAD_MODULES_STATE                      (*(u8*)0x000cfff0)
+#define LOAD_MODULES_RESULT                     (*(u8*)0x000cfff1)
 #define HAS_LOADED_MODULES                      (LOAD_MODULES_STATE == 100)
 
-#define USB_FS_ID                               (*(u8*)0x000CFFF4)
-#define USB_SRV_ID                              (*(u8*)0x000CFFF8)
+#define USB_FS_ID                               (*(u8*)0x000cfff2)
+#define USB_SRV_ID                              (*(u8*)0x000cfff3)
+#define USB_FS_MODULE_PTR						(*(void**)0x000cfff8)
+#define USB_SRV_MODULE_PTR						(*(void**)0x000cfffc)
 
 #if UYA_PAL
 
@@ -1288,12 +1290,51 @@ int mapsDownloadingModules(void)
 	return actionState == ACTION_DOWNLOADING_MODULES;
 }
 
+//--------------------------------------------------------------------------
+int align(int addr, int align)
+{
+	if (addr % align)
+		return addr + (align - (addr % align));
+	
+	return addr;
+}
+
+//------------------------------------------------------------------------------
+int mapsAllocateModuleBuffer(void)
+{
+	if (!USB_FS_MODULE_PTR) {
+		USB_FS_MODULE_PTR = malloc(41216);
+		if (USB_FS_MODULE_PTR) {
+			memset(USB_FS_MODULE_PTR, 0, 41216);
+			USB_FS_MODULE_PTR = (void*)align((int)USB_FS_MODULE_PTR, 0x10);
+		}
+	}
+	if (!USB_SRV_MODULE_PTR) {
+		USB_SRV_MODULE_PTR = malloc(12288);
+		if (USB_SRV_MODULE_PTR) {
+			memset(USB_SRV_MODULE_PTR, 0, 12288);
+			USB_SRV_MODULE_PTR = (void*)align((int)USB_SRV_MODULE_PTR, 0x10);
+		}
+	}
+
+	DPRINTF("fs:%08X srv:%08x\n", (u32)USB_FS_MODULE_PTR, (u32)USB_SRV_MODULE_PTR);
+
+	if (!USB_FS_MODULE_PTR)
+		return 0;
+	if (!USB_SRV_MODULE_PTR)
+		return 0;
+
+	return 1;
+}
+
 //------------------------------------------------------------------------------
 int mapsPromptEnableCustomMaps(void)
 {
 	MapClientRequestModulesMessage request = { 0, 0 };
-	if (uiShowYesNoDialog("Enable Custom Maps", "Are you sure?") == 1)
-	{
+	if (uiShowYesNoDialog("Enable Custom Maps", "Are you sure?") == 1) {
+		if (!mapsAllocateModuleBuffer())
+			return -1;
+
 		// request irx modules from server
 		request.Module1Start = (u32)usbFsModuleStart;
 		request.Module2Start = (u32)usbSrvModuleStart;
@@ -1327,35 +1368,32 @@ void onMapLoaderOnlineMenu(void)
 
 		// render text
 		//gfxScreenSpaceText(SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5, 1, 1, downloadColor, "Downloading modules, please wait...", -1, 4);
-	}
-	else if (actionState == ACTION_MODULES_INSTALLED)
-	{
+	} else if (actionState == ACTION_MODULES_INSTALLED) {
 		// enable input
 		padEnableInput();
 
 		actionState = ACTION_NONE;
 		LOAD_MODULES_RESULT = 1;
-	}
-	else if (actionState == ACTION_NEW_MAPS_UPDATE)
-	{
+	} else if (actionState == ACTION_NEW_MAPS_UPDATE) {
 		// enable input
 		padEnableInput();
 		
 		uiShowOkDialog("Custom Maps", "New updates are available. Please download them at https://rac-horizon.com");
 		actionState = ACTION_MODULES_INSTALLED;
 		LOAD_MODULES_RESULT = 2;
-	}
-	else if (actionState == ACTION_ERROR_LOADING_MODULES)
-	{
+	} else if (actionState == ACTION_ERROR_LOADING_MODULES) {
 		// enable input
 		padEnableInput();
 		
 		uiShowOkDialog("Custom Maps", "There was an error loading the custom map modules.");
 		actionState = ACTION_NONE;
 		LOAD_MODULES_RESULT = -1;
-	}
-	else if (initialized == 2)
-	{
+	} else if (initialized == 2) {
+		if (!mapsAllocateModuleBuffer()) {
+			DPRINTF("failed to allocation module buffers\n");
+			initialized = 1;
+		}
+
 		// request irx modules from server
 		MapClientRequestModulesMessage request = { 0, 0 };
 		request.Module1Start = (u32)usbFsModuleStart;
@@ -1372,8 +1410,7 @@ void onMapLoaderOnlineMenu(void)
 void hook(void)
 {
 	// Install hooks
-	if (*LOAD_LEVEL_READ_WAD_HOOK == LOAD_LEVEL_READ_WAD_HOOK_VALUE)
-	{
+	if (*LOAD_LEVEL_READ_WAD_HOOK == LOAD_LEVEL_READ_WAD_HOOK_VALUE) {
 		*LOAD_LEVEL_READ_LEVEL_TOC_HOOK = 0x0C000000 | ((u32)(&hookedGetTable) / 4);
 		*LOAD_LEVEL_CD_SYNC_HOOK = 0x0C000000 | ((u32)(&hookedCheck) / 4);
 		*LOAD_LEVEL_READ_WAD_HOOK = 0x0C000000 | ((u32)(&hookedLoad) / 4);
@@ -1381,21 +1418,19 @@ void hook(void)
     *LOAD_LEVEL_SOUND_BANK_HOOK = 0x0C000000 | ((u32)(&hookedSoundCoreBankLoad) / 4);
 	}
 
-	if (*LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK == 0x03E00008)
-	{
+	if (*LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK == 0x03E00008) {
 		*LOAD_LEVEL_TRANSITION_MENU_LOAD_HOOK = 0x08000000 | ((u32)(&hookedLoadScreenMapNameString) / 4);
 	}
 
-  // hook radar
-  // this needs to be hook when the level loads
-  u32 radarMapHookAddr = GetAddressImmediate(&LOAD_LEVEL_RADAR_MAP_HOOK);
-  if (radarMapHookAddr) {
-
-    u32 hookReplaceIfValueIs = 0x0C000000 | (CDVD_LOAD_ASYNC_FUNC >> 2);
-    if (*(u32*)radarMapHookAddr == hookReplaceIfValueIs) {
-      *(u32*)radarMapHookAddr = 0x0C000000 | ((u32)(&hookedGetMap) / 4);
-    }
-  }
+	// hook radar
+	// this needs to be hook when the level loads
+	u32 radarMapHookAddr = GetAddressImmediate(&LOAD_LEVEL_RADAR_MAP_HOOK);
+	if (radarMapHookAddr) {
+		u32 hookReplaceIfValueIs = 0x0C000000 | (CDVD_LOAD_ASYNC_FUNC >> 2);
+		if (*(u32*)radarMapHookAddr == hookReplaceIfValueIs) {
+			*(u32*)radarMapHookAddr = 0x0C000000 | ((u32)(&hookedGetMap) / 4);
+		}
+	}
 }
 
 //------------------------------------------------------------------------------
