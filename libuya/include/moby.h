@@ -387,7 +387,10 @@ typedef struct Moby {
 	/* 0x7e */ short color;
 	/* 0x80 */ VECTOR lSphere;
 	/* 0x90 */ struct GuberMoby * guberMoby;
-	/* 0x94 */ int unk_94;
+	/* 0x94 */ char prevState;
+	/* 0x95 */ char stateType;
+	/* 0x96 */ char stateTimer;
+	/* 0x97 */ char unk_97;
 	/* 0x98 */ int *collData;
 	/* 0x9c */ int collActive;
 	/* 0xa0 */ int collCnt;
