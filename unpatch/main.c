@@ -78,8 +78,8 @@ const int clears[][2] = {
 	{ 0x000d0000, 0x00020000 }, // usb modules
 	{ 0x000f0000, 0x00010000 }, // game mode
 	{ 0x000cf000, 0x00000800 }, // module definitions
-	{ 0x000cffe0, 0x00000020 }, // patch hash
-	{ 0x000cffc0, 0x00000020 }, // patch pointers
+	{ 0x000cffd0, 0x00000020 }, // patch hash
+	{ 0x000cffc0, 0x00000010 }, // patch pointers
 };
 
 int hasClearedMemory = 0;
