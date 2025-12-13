@@ -372,8 +372,8 @@ void loadModules(void)
 		USB_SRV_ID = SifExecModuleBuffer(USB_SRV_MODULE_PTR, usbSrvModuleSize, 0, NULL, &mod_res);
 
 		//DPRINTF("Loading USBD: %d\n", usbd_id);
-		DPRINTF("Loading MASS: %d %d\n", USB_FS_ID, usbFsRes);
-		DPRINTF("Loading USBSERV: %d %d\n", USB_SRV_ID, usbServRes);
+		DPRINTF("Loading MASS: %d %d\n", USB_FS_ID, mod_res);
+		DPRINTF("Loading USBSERV: %d %d\n", USB_SRV_ID, mod_res);
 	}
 
 	LOAD_MODULES_STATE = 100;
