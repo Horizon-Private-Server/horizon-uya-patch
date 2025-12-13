@@ -2734,15 +2734,19 @@ void onOnlineMenu(void)
 #else
 	((void (*)(void))0x00679f08)();
 #endif
+
+	if (uiGetActiveMenu(UI_MENU_ONLINE_AGREEMENT, 0) != 0) return;
+	if (uiGetActiveMenu(UI_MENU_ANNOUNCEMENTS, 0) != 0) return;
+
 	lastMenuInvokedTime = gameGetTime();
 	if (!hasInitialized) {
 		padEnableInput();
 		onConfigInitialize();
-		refreshCustomMapList();
+		// refreshCustomMapList();
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		hasInitialized = 1;
 	}
-	if (hasInitialized == 1 && uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0) {
+	if (hasInitialized == 1) {
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
 	}
