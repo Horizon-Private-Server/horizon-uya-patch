@@ -61,6 +61,8 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
         State.Initialized = 1;
         isCustomMap = gameConfig ? gameConfig->isCustomMap : 0;
         kothReset();
+        // Reapply config after reset so size/seed stick on first init.
+        kothSetConfig(gameConfig);
         return;
     }
 

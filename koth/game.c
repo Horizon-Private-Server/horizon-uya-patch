@@ -1283,6 +1283,8 @@ void kothTick(void)
         int seedNow = seedNowRaw & 0x0FFFFFFF;
         if ((timeStart > 0 && timeStart != lastTimeStart) || seedNow != lastSeed) {
             kothReset();
+            // Reapply latest config so size/seed persist across match resets.
+            kothSetConfig(kothConfig);
             lastTimeStart = timeStart;
             lastSeed = seedNow;
         }
