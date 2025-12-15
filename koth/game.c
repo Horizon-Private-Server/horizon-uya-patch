@@ -34,6 +34,7 @@
 #else
 #define KOTH_LOG(fmt, args...) ((void)0)
 #endif
+#define KOTH_LOGVEC(label, v) KOTH_LOG(label ": %d,%d,%d,%d\n", (int)(v)[0], (int)(v)[1], (int)(v)[2], (int)(v)[3])
 
 #ifndef TEAM_MAX
 #define TEAM_MAX 8
@@ -61,6 +62,8 @@ typedef struct KothHill {
     float scroll;
     float radiusX;
     float radiusY;
+    Cuboid cuboid;
+    int isCircle;
     // Derived footprint (currently uniform circle; keep both axes for future ellipse support).
     float footprintRx;
     float footprintRy;
@@ -210,6 +213,46 @@ static float clampf(float value, float min, float max)
     return value;
 }
 
+static int clampi(int value, int min, int max)
+{
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
+
+static void kothBuildSyntheticCuboid(KothHill_t *hill, VECTOR pos, float radius)
+{
+    if (!hill)
+        return;
+    float r = radius > 0 ? radius : KOTH_RING_RADIUS;
+    vector_copy(hill->cuboid.matrix.v0, (VECTOR){r * 2, 0, 0, 0});
+    vector_copy(hill->cuboid.matrix.v1, (VECTOR){0, r * 2, 0, 0});
+    vector_copy(hill->cuboid.matrix.v2, (VECTOR){0, 0, 1, 0});
+    vector_copy(hill->cuboid.pos, pos);
+    vector_copy(hill->cuboid.rot, (VECTOR){0,0,0,0});
+    MATRIX tmp;
+    matrix_unit(tmp);
+    memcpy(&hill->cuboid.imatrix, tmp, sizeof(mtx3));
+    hill->isCircle = 1;
+}
+
+static void kothLogCuboid(const char *label, KothHill_t *hill)
+{
+#if KOTH_DEBUG
+    if (!hill) return;
+    KOTH_LOG("%s radii baseX=%d baseY=%d footprintX=%d footprintY=%d isCircle=%d\n",
+             label,
+             (int)hill->radiusX, (int)hill->radiusY,
+             (int)hill->footprintRx, (int)hill->footprintRy,
+             hill->isCircle);
+    KOTH_LOGVEC("[KOTH][DBG] cuboid v0", hill->cuboid.matrix.v0);
+    KOTH_LOGVEC("[KOTH][DBG] cuboid v1", hill->cuboid.matrix.v1);
+    KOTH_LOGVEC("[KOTH][DBG] cuboid v2", hill->cuboid.matrix.v2);
+    KOTH_LOGVEC("[KOTH][DBG] cuboid pos", hill->cuboid.pos);
+    KOTH_LOGVEC("[KOTH][DBG] cuboid rot", hill->cuboid.rot);
+#endif
+}
+
 static void kothEnsureCycleStart(void);
 static int kothGetActiveHillIndex(void);
 static int kothUseTeams(void);
@@ -299,6 +342,15 @@ static void scanHillsOnce(void)
                     foundCustom = 1;
                     vector_copy(hills[hillCount].position, cub->pos);
                     hills[hillCount].position[3] = 1;
+                    // Copy full cuboid so we can derive draw/score inputs uniformly.
+                    vector_copy(hills[hillCount].cuboid.matrix.v0, cub->matrix.v0);
+                    vector_copy(hills[hillCount].cuboid.matrix.v1, cub->matrix.v1);
+                    vector_copy(hills[hillCount].cuboid.matrix.v2, cub->matrix.v2);
+                    vector_copy(hills[hillCount].cuboid.pos, cub->pos);
+                    vector_copy(hills[hillCount].cuboid.rot, cub->rot);
+                    hills[hillCount].cuboid.imatrix = cub->imatrix;
+                    hills[hillCount].isCircle = 1;
+
                     // Derive radii from cuboid scale (basis vector lengths).
                     hills[hillCount].radiusX = vector_length(cub->matrix.v0) * 0.5f * KOTH_CUBOID_SCALE;
                     hills[hillCount].radiusY = vector_length(cub->matrix.v1) * 0.5f * KOTH_CUBOID_SCALE;
@@ -306,9 +358,7 @@ static void scanHillsOnce(void)
                     if (hills[hillCount].radiusY <= 0) hills[hillCount].radiusY = KOTH_RING_RADIUS;
                     kothApplyScaleToHill(&hills[hillCount]);
 #ifdef KOTH_DEBUG
-                    KOTH_LOG("[KOTH][DBG] cuboid radii x=%d y=%d footprint x=%d y=%d\n",
-                             (int)hills[hillCount].radiusX, (int)hills[hillCount].radiusY,
-                             (int)hills[hillCount].footprintRx, (int)hills[hillCount].footprintRy);
+                    kothLogCuboid("[KOTH][DBG] cuboid", &hills[hillCount]);
 #endif
                     hills[hillCount].moby = moby;
                     hills[hillCount].scroll = 0;
@@ -379,9 +429,15 @@ static void scanHillsOnce(void)
                 hills[hillCount].radiusY = KOTH_RING_RADIUS;
                 kothApplyScaleToHill(&hills[hillCount]);
 #ifdef KOTH_DEBUG
-                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%d,%d,%d)\n",
+                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%d,%d,%d) radius=%d\n",
                          hillCount,
-                         (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2]);
+                         (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2],
+                         (int)hills[hillCount].radiusX);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid v0", hills[hillCount].cuboid.matrix.v0);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid v1", hills[hillCount].cuboid.matrix.v1);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid v2", hills[hillCount].cuboid.matrix.v2);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid pos", hills[hillCount].cuboid.pos);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid rot", hills[hillCount].cuboid.rot);
 #endif
                 hills[hillCount].moby = moby;
                 hills[hillCount].scroll = 0;
@@ -399,8 +455,14 @@ static void scanHillsOnce(void)
 #endif
                 }
 #ifdef KOTH_DEBUG
-                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%d,%d,%d)\n",
-                         hillCount, (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2]);
+                KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%d,%d,%d) radius=%d\n",
+                         hillCount, (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2],
+                         (int)hills[hillCount].radiusX);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid v0", hills[hillCount].cuboid.matrix.v0);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid v1", hills[hillCount].cuboid.matrix.v1);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid v2", hills[hillCount].cuboid.matrix.v2);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid pos", hills[hillCount].cuboid.pos);
+                KOTH_LOGVEC("[KOTH][DBG] siege cuboid rot", hills[hillCount].cuboid.rot);
 #endif
                 ++hillCount;
             }
