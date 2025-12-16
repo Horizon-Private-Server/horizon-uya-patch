@@ -233,6 +233,22 @@ static int clampi(int value, int min, int max)
     return value;
 }
 
+static void kothGetHillYaw(const KothHill_t *hill, float *cosYaw, float *sinYaw)
+{
+    float c = 1.0f, s = 0.0f;
+    if (hill) {
+        float x = hill->cuboid.matrix.v0[0];
+        float y = hill->cuboid.matrix.v0[1];
+        if (x != 0.0f || y != 0.0f) {
+            float ang = atan2f(y, x);
+            c = cosf(ang);
+            s = sinf(ang);
+        }
+    }
+    if (cosYaw) *cosYaw = c;
+    if (sinYaw) *sinYaw = s;
+}
+
 #if 0 // unused helper kept for reference
 static void kothBuildSyntheticCuboid(KothHill_t *hill, VECTOR pos, float radius)
 {
@@ -536,8 +552,13 @@ static int playerInsideHill(Player *player)
         return sqrDist <= (radius * radius);
     }
 
-    float dx = fabsf(delta[0]);
-    float dy = fabsf(delta[1]);
+    float cosYaw, sinYaw;
+    kothGetHillYaw(&hills[activeIdx], &cosYaw, &sinYaw);
+    // Rotate into hill space (about Z) using only XY components.
+    float dx = delta[0] * cosYaw + delta[1] * sinYaw;
+    float dy = -delta[0] * sinYaw + delta[1] * cosYaw;
+    dx = fabsf(dx);
+    dy = fabsf(dy);
     return dx <= rx && dy <= ry;
 }
 
@@ -842,7 +863,7 @@ static void kothCheckVictory(void)
     }
 }
 
-static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, float radiusZ, int isCircle)
+static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, float radiusZ, int isCircle, float cosYaw, float sinYaw)
 {
     const int MAX_SEGMENTS = 64;
     const int MIN_SEGMENTS = 8;
@@ -949,18 +970,31 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
 
         *scroll += .007f;
     } else {
-        // Axis-aligned rectangle walls using only cuboid lengths.
-        VECTOR baseCorners[4];
-        vector_copy(baseCorners[0], (VECTOR){center[0] - halfX[0], center[1] - halfZ[1], center[2], 0});
-        vector_copy(baseCorners[1], (VECTOR){center[0] + halfX[0], center[1] - halfZ[1], center[2], 0});
-        vector_copy(baseCorners[2], (VECTOR){center[0] + halfX[0], center[1] + halfZ[1], center[2], 0});
-        vector_copy(baseCorners[3], (VECTOR){center[0] - halfX[0], center[1] + halfZ[1], center[2], 0});
+        // Rotated rectangle walls using only cuboid lengths.
+        // Pass center via translation after rotation.
+        // Local corners before rotation.
+        VECTOR localCorners[4];
+        vector_copy(localCorners[0], (VECTOR){-halfX[0], -halfZ[1], 0, 0});
+        vector_copy(localCorners[1], (VECTOR){ halfX[0], -halfZ[1], 0, 0});
+        vector_copy(localCorners[2], (VECTOR){ halfX[0],  halfZ[1], 0, 0});
+        vector_copy(localCorners[3], (VECTOR){-halfX[0],  halfZ[1], 0, 0});
 
         VECTOR topCorners[4], bottomCorners[4];
         int i;
         for (i = 0; i < 4; ++i) {
-            vector_add(topCorners[i], baseCorners[i], tempUp);
-            vector_subtract(bottomCorners[i], baseCorners[i], tempUp);
+            float lx = localCorners[i][0];
+            float ly = localCorners[i][1];
+            // Rotate around Z.
+            float rx = lx * cosYaw - ly * sinYaw;
+            float ry = lx * sinYaw + ly * cosYaw;
+            topCorners[i][0] = center[0] + rx + tempUp[0];
+            topCorners[i][1] = center[1] + ry + tempUp[1];
+            topCorners[i][2] = center[2] + tempUp[2];
+            topCorners[i][3] = 0;
+            bottomCorners[i][0] = center[0] + rx - tempUp[0];
+            bottomCorners[i][1] = center[1] + ry - tempUp[1];
+            bottomCorners[i][2] = center[2] - tempUp[2];
+            bottomCorners[i][3] = 0;
         }
 
         QuadDef wall;
@@ -1025,10 +1059,22 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
 
     // floor quad
     VECTOR corners[4];
-    vector_copy(corners[0], (VECTOR){center[0] - halfX[0], center[1] - halfZ[1], center[2], 0});
-    vector_copy(corners[1], (VECTOR){center[0] + halfX[0], center[1] - halfZ[1], center[2], 0});
-    vector_copy(corners[2], (VECTOR){center[0] + halfX[0], center[1] + halfZ[1], center[2], 0});
-    vector_copy(corners[3], (VECTOR){center[0] - halfX[0], center[1] + halfZ[1], center[2], 0});
+    VECTOR localCorners[4];
+    vector_copy(localCorners[0], (VECTOR){-halfX[0], -halfZ[1], 0, 0});
+    vector_copy(localCorners[1], (VECTOR){ halfX[0], -halfZ[1], 0, 0});
+    vector_copy(localCorners[2], (VECTOR){ halfX[0],  halfZ[1], 0, 0});
+    vector_copy(localCorners[3], (VECTOR){-halfX[0],  halfZ[1], 0, 0});
+    int c;
+    for (c = 0; c < 4; ++c) {
+        float lx = localCorners[c][0];
+        float ly = localCorners[c][1];
+        float rx = lx * cosYaw - ly * sinYaw;
+        float ry = lx * sinYaw + ly * cosYaw;
+        corners[c][0] = center[0] + rx;
+        corners[c][1] = center[1] + ry;
+        corners[c][2] = center[2];
+        corners[c][3] = 0;
+    }
 
     QuadDef floorQuad;
     gfxSetupEffectTex(&floorQuad, FX_CIRLCE_NO_FADED_EDGE, 0, 0x80);
@@ -1103,9 +1149,12 @@ static void drawHill(Moby *moby)
     float fallbackScroll = 0;
     if (!scroll)
         scroll = &fallbackScroll;
+    float cosYaw = 1.0f, sinYaw = 0.0f;
+    if (hill)
+        kothGetHillYaw(hill, &cosYaw, &sinYaw);
     float radiusX = hill ? hill->footprintRx : (KOTH_RING_RADIUS * hillScale);
     float radiusZ = hill ? hill->footprintRy : (KOTH_RING_RADIUS * hillScale);
-    drawHillAt(moby->position, baseColor, scroll, radiusX, radiusZ, hill ? hill->isCircle : 1);
+    drawHillAt(moby->position, baseColor, scroll, radiusX, radiusZ, hill ? hill->isCircle : 1, cosYaw, sinYaw);
 }
 
 static void hillUpdate(Moby *moby)
@@ -1137,8 +1186,10 @@ static void drawHills(void)
             hills[activeIdx].drawMoby->pUpdate = &hillUpdate;
             hills[activeIdx].drawMoby->drawn = 1;
         } else {
+            float cosYaw = 1.0f, sinYaw = 0.0f;
+            kothGetHillYaw(&hills[activeIdx], &cosYaw, &sinYaw);
             drawHillAt(hills[activeIdx].position, 0x0080FF00, &hills[activeIdx].scroll,
-                       hills[activeIdx].footprintRx, hills[activeIdx].footprintRy, hills[activeIdx].isCircle);
+                       hills[activeIdx].footprintRx, hills[activeIdx].footprintRy, hills[activeIdx].isCircle, cosYaw, sinYaw);
         }
 #ifdef KOTH_DEBUG
     } else {
