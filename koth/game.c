@@ -50,6 +50,14 @@
 #define KOTH_OCLASS_CUSTOM     (0x3000) // custom hill moby oclass
 #define KOTH_MAX_CUSTOM_CUBOIDS (32)
 
+#ifndef KOTH_RING_WALL_FX
+#define KOTH_RING_WALL_FX FX_VISIBOMB_HORIZONTAL_LINES
+//#define KOTH_RING_WALL_FX FX_TIRE_TRACKS
+#endif
+
+//TODO 1.1 is best at default scaling, but is a bit much if scaled 4x. Using 1.09, but may want to dynamically adjust 
+#define KOTH_SCORE_MARGIN_CIRCLE 1.09f //circle scoring needs a bit of maragin if player is near the boundary 
+
 // Toggle how the active hill is selected each rotation window
 // Define KOTH_RANDOM_ORDER to cycle hills in a deterministic randomized order without replacement.
 // Leave undefined to rotate in fixed index order.
@@ -389,6 +397,10 @@ static void scanHillsOnce(void)
                     hills[hillCount].radiusY = vector_length(cub->matrix.v1) * 0.5f * KOTH_CUBOID_SCALE;
                     if (hills[hillCount].radiusX <= 0) hills[hillCount].radiusX = KOTH_RING_RADIUS;
                     if (hills[hillCount].radiusY <= 0) hills[hillCount].radiusY = KOTH_RING_RADIUS;
+                    // Choose circle when axes are effectively equal.
+                    float diff = hills[hillCount].radiusX - hills[hillCount].radiusY;
+                    if (diff < 0) diff = -diff;
+                    hills[hillCount].isCircle = diff < 0.1f;
                     kothApplyScaleToHill(&hills[hillCount]);
                     hills[hillCount].moby = moby;
                     hills[hillCount].scroll = 0;
@@ -547,7 +559,7 @@ static int playerInsideHill(Player *player)
     if (ry <= 0) ry = KOTH_RING_RADIUS * hillScale;
 
     if (hills[activeIdx].isCircle) {
-        float radius = rx;
+        float radius = rx * KOTH_SCORE_MARGIN_CIRCLE;
         float sqrDist = vector_sqrmag(delta);
         return sqrDist <= (radius * radius);
     }
@@ -946,16 +958,16 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
             positions[idx][1] = pos[1] + tempRight[1] - tempUp[1];
             positions[idx][2] = pos[2] + tempRight[2] - tempUp[2];
             colors[idx] = (alphaFar << 24) | baseRgb;
-            uvs[idx].x = *scroll;
-            uvs[idx].y = (float)i / (float)segments;
+            uvs[idx].x = (float)i / (float)segments;
+            uvs[idx].y = -*scroll;
 
             // top vertex
             positions[idx + 1][0] = pos[0] + tempRight[0] + tempUp[0];
             positions[idx + 1][1] = pos[1] + tempRight[1] + tempUp[1];
             positions[idx + 1][2] = pos[2] + tempRight[2] + tempUp[2];
             colors[idx + 1] = (alphaNear << 24) | baseRgb;
-            uvs[idx + 1].x = *scroll + 1.0f;
-            uvs[idx + 1].y = (float)i / (float)segments;
+            uvs[idx + 1].x = (float)i / (float)segments;
+            uvs[idx + 1].y = -*scroll + 1.0f;
 
             vector_rodrigues(vRadius, vRadius, yAxis, thetaStep);
         }
@@ -963,7 +975,7 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
         gfxDrawStripInit();
         gfxAddRegister(8, 0);
         gfxAddRegister(0x14, 0xff9000000260);
-        gfxAddRegister(6, gfxGetEffectTex(FX_VISIBOMB_HORIZONTAL_LINES));
+        gfxAddRegister(6, gfxGetEffectTex(KOTH_RING_WALL_FX));
         gfxAddRegister(0x47, 0x513f1);
         gfxAddRegister(0x42, 0x8000000044);
         gfxDrawStrip((segments + 1) * 2, positions, colors, uvs, 1);
@@ -990,19 +1002,15 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
             topCorners[i][0] = center[0] + rx + tempUp[0];
             topCorners[i][1] = center[1] + ry + tempUp[1];
             topCorners[i][2] = center[2] + tempUp[2];
-            topCorners[i][3] = 0;
+            topCorners[i][3] = 1;
             bottomCorners[i][0] = center[0] + rx - tempUp[0];
             bottomCorners[i][1] = center[1] + ry - tempUp[1];
             bottomCorners[i][2] = center[2] - tempUp[2];
-            bottomCorners[i][3] = 0;
+            bottomCorners[i][3] = 1;
         }
 
         QuadDef wall;
-        gfxSetupEffectTex(&wall, FX_VISIBOMB_HORIZONTAL_LINES, 0, 0x80);
-        wall.uv[0] = (UV_t){0, 0};
-        wall.uv[1] = (UV_t){1, 0};
-        wall.uv[2] = (UV_t){1, 1};
-        wall.uv[3] = (UV_t){0, 1};
+        gfxSetupEffectTex(&wall, KOTH_RING_WALL_FX, 0, 0x80);
         wall.rgba[0] = wall.rgba[1] = (alphaNear << 24) | baseRgb;
         wall.rgba[2] = wall.rgba[3] = (alphaFar << 24) | baseRgb;
 
@@ -1010,12 +1018,17 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
         for (i = 0; i < 4; ++i) {
             int a = faces[i][0];
             int b = faces[i][1];
+            // Order points to keep consistent winding for both triangles.
             vector_copy(wall.point[0], topCorners[a]);
-            vector_copy(wall.point[1], topCorners[b]);
-            vector_copy(wall.point[2], bottomCorners[b]);
-            vector_copy(wall.point[3], bottomCorners[a]);
-            wall.uv[0].y = wall.uv[1].y = 0 - *scroll;
-            wall.uv[2].y = wall.uv[3].y = 1 - *scroll;
+            vector_copy(wall.point[1], bottomCorners[a]);
+            vector_copy(wall.point[2], topCorners[b]);
+            vector_copy(wall.point[3], bottomCorners[b]);
+            // Vertical scroll to match circle path (u across, v advances; keep top points sharing v).
+            wall.uv[0].x = 0;            wall.uv[0].y = *scroll;         // top A
+            wall.uv[1].x = 0;            wall.uv[1].y = *scroll + 1.0f;  // bottom A
+            wall.uv[2].x = 1.0f;         wall.uv[2].y = *scroll;         // top B
+            wall.uv[3].x = 1.0f;         wall.uv[3].y = *scroll + 1.0f;  // bottom B
+
             gfxDrawQuad(wall, NULL);
         }
         *scroll += .007f;
@@ -1025,7 +1038,7 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
     int signs[4][2] = {{1, -1}, {-1, -1}, {1, 1}, {-1, 1}};
     vector_copy(vRadius, halfX);
     QuadDef quad;
-    gfxSetupEffectTex(&quad, FX_VISIBOMB_HORIZONTAL_LINES, 0, 0x80);
+    gfxSetupEffectTex(&quad, KOTH_RING_WALL_FX, 0, 0x80);
     quad.uv[0] = (UV_t){0, 0};
     quad.uv[1] = (UV_t){0, 1};
     quad.uv[2] = (UV_t){1, 0};
@@ -1077,12 +1090,15 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
     }
 
     QuadDef floorQuad;
+    // gfxSetupEffectTex(&floorQuad, isCircle ? FX_CIRLCE_NO_FADED_EDGE : FX_SQUARE_FLAT_1, 0, 0x80);
     gfxSetupEffectTex(&floorQuad, FX_CIRLCE_NO_FADED_EDGE, 0, 0x80);
     floorQuad.uv[0] = (UV_t){0, 0};
     floorQuad.uv[1] = (UV_t){0, 1};
     floorQuad.uv[2] = (UV_t){1, 0};
     floorQuad.uv[3] = (UV_t){1, 1};
     int floorAlpha = 0x40;
+    // Optional: tweak floor tint to push greener (uncomment to apply).
+    // baseRgb = (baseRgb & 0x00FF00FF) | (((baseRgb >> 16) & 0xFF) << 8); // example tweak
 #if KOTH_FADE_WARNING
     floorAlpha = (int)(floorAlpha * fadeScale);
     if (floorAlpha > 0xFF) floorAlpha = 0xFF;
