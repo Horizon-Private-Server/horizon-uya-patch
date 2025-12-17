@@ -317,8 +317,8 @@ static char kothHillSizeIdx = 0; // host edit only; not serialized
 MenuElem_ListData_t dataKothHillSize = {
     .value = &kothHillSizeIdx,
     .stateHandler = menuStateHandler_KOTH,
-    .count = 8,
-    .items = { "2x", "3x", "4x", "5x", "6x", "10x", "20x", "1x" }
+    .count = 7,
+    .items = { "1x", "1.5x", "2x", "2.5x", "3x", "3.5x", "4x" }
 };
 
 MenuElem_ListData_t dataV2_Setting = {
