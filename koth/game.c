@@ -25,7 +25,7 @@
 #define KOTH_SIEGE_USE_BOLT_CRANK 1
 #define KOTH_CUBOID_SCALE 1.0f
 #define KOTH_RING_HEIGHT_SCALE 1.0f
-#define KOTH_SIZE_OPTIONS 8
+#define KOTH_SIZE_OPTIONS 7
 
 // Set to 1 to enable verbose KOTH debugging at compile time.
 #define KOTH_DEBUG 1
@@ -40,6 +40,7 @@
 #define TEAM_MAX 8
 #endif
 
+//TODO add height limits for scoring, currently unlimited. 
 #define KOTH_MAX_HILLS         (8)
 #define KOTH_RING_RADIUS       (10.0f)
 #define KOTH_RING_HEIGHT       (1.0f)
@@ -55,8 +56,8 @@
 //#define KOTH_RING_WALL_FX FX_TIRE_TRACKS
 #endif
 
-//TODO 1.1 is best at default scaling, but is a bit much if scaled 4x. Using 1.09, but may want to dynamically adjust 
-#define KOTH_SCORE_MARGIN_CIRCLE 1.09f //circle scoring needs a bit of maragin if player is near the boundary 
+//TODO 1.1 is best at default scaling, but is a bit much if scaled 4x. Using less but may want to dynamically adjust 
+#define KOTH_SCORE_MARGIN_CIRCLE 1.07f //circle scoring needs a bit of maragin if player is near the boundary 
 
 // Toggle how the active hill is selected each rotation window
 // Define KOTH_RANDOM_ORDER to cycle hills in a deterministic randomized order without replacement.
@@ -95,8 +96,8 @@ static int lastTimeStart = -1;
 static int lastActiveHillIdx = -1;
 #endif
 static int hillSizeIdx = 0; // synced hill size index
-static const float KOTH_HILL_SCALE_TABLE[KOTH_SIZE_OPTIONS] = {2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 10.0f, 20.0f, 1.0f};
-static float hillScale = 2.0f; // default scale (idx 0)
+static const float KOTH_HILL_SCALE_TABLE[KOTH_SIZE_OPTIONS] = {1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f};
+static float hillScale = 1.0f; // default scale (idx 0)
 #ifdef KOTH_RANDOM_ORDER
 static int hillOrder[KOTH_MAX_HILLS];
 static int hillOrderCount = 0;
