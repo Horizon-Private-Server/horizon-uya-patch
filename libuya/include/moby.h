@@ -688,7 +688,7 @@ typedef struct flagPVars {
 /* 0x2c */ int unk_2c;
 } flagPVars_t;
 
-typedef struct MupltiplayerConfig { // 0x3a0
+typedef struct MultiplayerConfig { // 0x3a0
 /* 0x000 */ int base[2];
 /* 0x008 */ int node[8];
 /* 0x040 */ int baseLight[2];
