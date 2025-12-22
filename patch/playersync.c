@@ -149,8 +149,7 @@ float playerSyncLerpAngleIfDelta(float from, float to, float lerpAmount, float m
   return lerpfAngle(from, to, lerpAmount);
 }
 
-/*
-This was more trouble than its worth, maybe DL handles pad different or dan knows something I don't
+
 //--------------------------------------------------------------------------
 int playerSyncHandlePlayerPadHook(Player* player)
 {
@@ -163,18 +162,20 @@ int playerSyncHandlePlayerPadHook(Player* player)
     PlayerSyncPlayerData_t* data = &PLAYER_SYNC_DATAS_PTR[player->fps.vars.camSettingsIndex];
     // process input
     // IN DL DECOMPILED WITH SYMBOLS V6: 00491050 - UpdatePad
-    // ((void (*)(struct PAD*))GetAddress(&vaUpdatePadAddr))(player->pPad); // 0x00494460 kisi
+    ((void (*)(struct PAD*))GetAddress(&vaUpdatePadAddr))(player->pPad); // 0x00494460 kisi
+    // ((void (*)(struct PAD*))0x00494460)(player->pPad);
 
     // update pad
     // IN DL DECOMPILED WITH SYMBOLS V6: 004907c0 - ProcessPadInput
-    // ((void (*)(struct PAD*, void*, int))GetAddress(&vaProcessPadInputAddr))(player->pPad, data->Pad, 0x14); // 0x493a68 kisi
+    ((void (*)(struct PAD*, void*, int))GetAddress(&vaProcessPadInputAddr))(player->pPad, data->Pad, 0x14); // 0x493a68 kisi
+    // ((void (*)(struct PAD*, void*, int))0x493a68)(player->pPad, data->Pad, 0x14);
   }
   // IN DL DECOMPILED WITH SYMBOLS V6: 00512608 - GadgetTransitions, maybe UpdateGadgetEvents from vtable in uya?
-  int result = ((int (*)(Player*))0x0052c920)(player); // call parent function GadgetTransitions
+  int result = ((int (*)(Player*))GetAddress(&vaGadgetTransitions_Func))(player); // call parent function GadgetTransitions
 
   return result;
 }
-*/
+
 
 //--------------------------------------------------------------------------
 void playerSyncHandlePostPlayerState(Player* player)
@@ -303,6 +304,9 @@ void playerSyncHandlePlayerState(Player* player)
   if (data->CurrentSubStateId == 0) {
     player->timers.noInput = stateInterpolated.NoInput;
   }
+
+  data->Pad[2] = 0xFF;
+  data->Pad[3] = 0xFF;
       
   // resurrecting 
   // TODO player lerps towards spawn location if they died close to spawn
@@ -399,12 +403,17 @@ void playerSyncHandlePlayerState(Player* player)
   player->stickRawAngle = ang; // stickRawAngle
   player->analogStickStrength = mag; // analog stick strength
   player->pPad->analog[2] = moveX;
-  player->pPad->analog[3] = moveY;
+  player->pPad->analog[3] = -moveY;
+
+  data->Pad[4] = 0x7F;
+  data->Pad[5] = 0x7F;
+  data->Pad[6] = stateInterpolated.MoveX;
+  data->Pad[7] = stateInterpolated.MoveY;
 
   struct tNW_Player* netPlayer = player->pNetPlayer;
   if (netPlayer) {
     netPlayer->padMessageElems[padIdx].msg.pad_data[2] = stateInterpolated.PadBits & 0xFF;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[3] = stateInterpolated.PadBits >> 8 | 0xc0; // 0x40 | 0x80; // don't let pad handle x or square, process as a state instead
+    netPlayer->padMessageElems[padIdx].msg.pad_data[3] = stateInterpolated.PadBits >> 8; // | 0xc0; // 0x40 | 0x80; // don't let pad handle x or square, process as a state instead
     netPlayer->padMessageElems[padIdx].msg.pad_data[4] = 0x7F;
     netPlayer->padMessageElems[padIdx].msg.pad_data[5] = 0x7F;
     netPlayer->padMessageElems[padIdx].msg.pad_data[6] = stateInterpolated.MoveX;
@@ -473,6 +482,13 @@ void playerSyncHandlePlayerState(Player* player)
     // to
     switch (stateInterpolated.State)
     {
+      case PLAYER_STATE_JUMP:
+      case PLAYER_STATE_FLIP_JUMP:
+      case PLAYER_STATE_DOUBLE_JUMP:
+      {
+        //skip = 1;
+        break;
+      }
       // pad does NOT handle square well, just let initbody handle wrench shit TODO - this works 80% of the time, look at 0x00504f88, understand the behavior of hero->unk1a1a[5]
       case PLAYER_STATE_JUMP_ATTACK:
       case PLAYER_STATE_COMBO_ATTACK:
@@ -796,7 +812,7 @@ void playerSyncTick(void)
   if (!initialized) {
     DPRINTF("hooked main player sync addresses\n");
     HOOK_JAL(GetAddress(&vaPlayerStateUpdate_Hook), &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
-    // HOOK_JAL(GetAddress(&vaHandlePlayerPad_Hook), &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
+    HOOK_JAL(GetAddress(&vaGadgetTransitions_Hook), &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
     HOOK_JAL(GetAddress(&vaPlayerPnetUpdates_Hook), &playerSyncDisablePlayerPnetUpdates); // disable function that keeps on overriding camRot, camumtx, camPos
     int EnableTurretSyncAddr = GetAddress(&vaEnableTurretSync_Addr);
     if (EnableTurretSyncAddr != 0){
@@ -807,6 +823,8 @@ void playerSyncTick(void)
 
     // disable tnw_PlayerData update gadgetid
     POKE_U32(GetAddress(&vaTNW_PlayerData_GadgetIdUpdate), 0);
+    // POKE_U32(0x00532568, 0x100002FD); // disable pnet pad shit
+    POKE_U32(GetAddress(&vaRemoteProcessPadInput_Addr), 0); // disable extra processPadInput
 
     // disable tnw_PlayerData time update
     POKE_U32(GetAddress(&vaTNW_PlayerData_TimeUpdate), 0);
