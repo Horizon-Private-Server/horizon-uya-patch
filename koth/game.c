@@ -1342,7 +1342,9 @@ void scoreboard(int maxScore, int* scores)
         gfxScreenSpaceBox(anchorX, rowYnorm, width, height, (opacity << 24) | bgColor);
         u32 teamColor = (currentTeam >= 0 && currentTeam < TEAM_MAX) ? TEAM_COLORS[currentTeam] : 0x00FFFFFF;
         // Solid color for bg (no lerp) to avoid NaN/inf.
-        gfxScreenSpaceBox(scoreBarX, scoreBarYnorm, scoreBarW, scoreBarH, (opacity << 24) | (teamColor & 0x00FFFFFF));
+        // Slightly lighter background for the bar track.
+        int trackOpacity = opacity >> 1;
+        gfxScreenSpaceBox(scoreBarX, scoreBarYnorm, scoreBarW, scoreBarH, (trackOpacity << 24) | (teamColor & 0x00FFFFFF));
         gfxScreenSpaceBox(scoreBarX, scoreBarYnorm, scoreBarW * fill, scoreBarH, (opacity << 24) | teamColor);
 
         snprintf(buf, sizeof(buf), "%d", currentScore);
