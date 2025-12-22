@@ -190,12 +190,24 @@ float fastDiffRots(float input0, float input1)
     return diff;
 }
 
-float sqrtf(float number) {
-    float x = number * 0.5f;
-    float y = number;
-    long i = *(long*)&y;           // evil float bit hack
-    i = 0x5f3759df - (i >> 1);     // what the hell?
-    y = *(float*)&i;
-    y = y * (1.5f - (x * y * y));  // 1st iteration
-    return number * y;
-}
+//float sqrtf(float number) {
+//    float x = number * 0.5f;
+//    float y = number;
+//    long i = *(long*)&y;           // evil float bit hack
+//    i = 0x5f3759df - (i >> 1);     // what the hell?
+//    y = *(float*)&i;
+//    y = y * (1.5f - (x * y * y));  // 1st iteration
+//    return number * y;
+//}
+
+float sqrtf(float x)
+{
+    if (x <= 0.0f) return 0.0f;
+    float out;
+    __asm__ volatile (
+        "sqrt.s %0, %1\n"
+         : "=f"(out)
+        : "f"(x)
+        );
+    return out;
+    }

@@ -86,7 +86,6 @@ static int hillCount = 0;
 static int initialized = 0;
 static int gameEndHookInstalled = 0;
 static int gameEndHandled = 0;
-static char kothTitle[32];
 static int handlerInstalled = 0;
 static int nextScoreTickTime = 0;
 static int gameOverTriggered = 0;
@@ -904,6 +903,10 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
     vec3 positions[(MAX_SEGMENTS + 1) * 2];
     u32 colors[(MAX_SEGMENTS + 1) * 2];
     UV_t uvs[(MAX_SEGMENTS + 1) * 2];
+    // Paranoia: clear buffers so unused slots can't leak stale data if segment count changes.
+    memset(positions, 0, sizeof(positions));
+    memset(colors, 0, sizeof(colors));
+    memset(uvs, 0, sizeof(uvs));
 
 #if KOTH_FADE_WARNING
     // Fade/pulse as we approach hill rotation.
@@ -942,44 +945,58 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
 
 #if KOTH_USE_STRIP
     if (isCircle) {
+        // Quad-per-segment along the arc (manual rotation instead of Rodrigues).
         vector_copy(vRadius, halfX);
+        float cosStep = cosf(thetaStep);
+        float sinStep = sinf(thetaStep);
+        QuadDef quad;
+        gfxSetupEffectTex(&quad, KOTH_RING_WALL_FX, 0, 0x80);
+        // u = 0 at current angle, u = 1 at next; v scrolls vertically.
+        quad.uv[0] = (UV_t){0, -*scroll};
+        quad.uv[1] = (UV_t){0, 1.0f - *scroll};
+        quad.uv[2] = (UV_t){1, -*scroll};
+        quad.uv[3] = (UV_t){1, 1.0f - *scroll};
+        // Fade top vs. bottom.
+        quad.rgba[0] = quad.rgba[2] = (alphaNear << 24) | baseRgb;
+        quad.rgba[1] = quad.rgba[3] = (alphaFar << 24) | baseRgb;
+
         int i;
-        for (i = 0; i <= segments; ++i) {
-            VECTOR pos;
-            vector_add(pos, center, vRadius);
+        for (i = 0; i < segments; ++i) {
+            VECTOR nextRadius = {
+                (vRadius[0] * cosStep) - (vRadius[1] * sinStep),
+                (vRadius[0] * sinStep) + (vRadius[1] * cosStep),
+                vRadius[2],
+                0
+            };
 
-            int idx = i * 2;
-            // build tangent for a small thickness so the strip has visible width
-            vector_outerproduct(tempRight, yAxis, vRadius);
-            vector_normalize(tempRight, tempRight);
-            vector_scale(tempRight, tempRight, 3.0f);
+            VECTOR currCenter, nextCenter;
+            vector_add(currCenter, center, vRadius);
+            vector_add(nextCenter, center, nextRadius);
 
-            // bottom vertex
-            positions[idx][0] = pos[0] + tempRight[0] - tempUp[0];
-            positions[idx][1] = pos[1] + tempRight[1] - tempUp[1];
-            positions[idx][2] = pos[2] + tempRight[2] - tempUp[2];
-            colors[idx] = (alphaFar << 24) | baseRgb;
-            uvs[idx].x = (float)i / (float)segments;
-            uvs[idx].y = -*scroll;
+            // top current
+            quad.point[0][0] = currCenter[0] + tempUp[0];
+            quad.point[0][1] = currCenter[1] + tempUp[1];
+            quad.point[0][2] = currCenter[2] + tempUp[2];
+            quad.point[0][3] = 1;
+            // bottom current
+            quad.point[1][0] = currCenter[0] - tempUp[0];
+            quad.point[1][1] = currCenter[1] - tempUp[1];
+            quad.point[1][2] = currCenter[2] - tempUp[2];
+            quad.point[1][3] = 1;
+            // top next
+            quad.point[2][0] = nextCenter[0] + tempUp[0];
+            quad.point[2][1] = nextCenter[1] + tempUp[1];
+            quad.point[2][2] = nextCenter[2] + tempUp[2];
+            quad.point[2][3] = 1;
+            // bottom next
+            quad.point[3][0] = nextCenter[0] - tempUp[0];
+            quad.point[3][1] = nextCenter[1] - tempUp[1];
+            quad.point[3][2] = nextCenter[2] - tempUp[2];
+            quad.point[3][3] = 1;
 
-            // top vertex
-            positions[idx + 1][0] = pos[0] + tempRight[0] + tempUp[0];
-            positions[idx + 1][1] = pos[1] + tempRight[1] + tempUp[1];
-            positions[idx + 1][2] = pos[2] + tempRight[2] + tempUp[2];
-            colors[idx + 1] = (alphaNear << 24) | baseRgb;
-            uvs[idx + 1].x = (float)i / (float)segments;
-            uvs[idx + 1].y = -*scroll + 1.0f;
-
-            vector_rodrigues(vRadius, vRadius, yAxis, thetaStep);
+            gfxDrawQuad(quad, NULL);
+            vector_copy(vRadius, nextRadius);
         }
-
-        gfxDrawStripInit();
-        gfxAddRegister(8, 0);
-        gfxAddRegister(0x14, 0xff9000000260);
-        gfxAddRegister(6, gfxGetEffectTex(KOTH_RING_WALL_FX));
-        gfxAddRegister(0x47, 0x513f1);
-        gfxAddRegister(0x42, 0x8000000044);
-        gfxDrawStrip((segments + 1) * 2, positions, colors, uvs, 1);
 
         *scroll += .007f;
     } else {
@@ -1034,41 +1051,7 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
         }
         *scroll += .007f;
     }
-#else
-    // Quad-per-segment fallback (original approach).
-    int signs[4][2] = {{1, -1}, {-1, -1}, {1, 1}, {-1, 1}};
-    vector_copy(vRadius, halfX);
-    QuadDef quad;
-    gfxSetupEffectTex(&quad, KOTH_RING_WALL_FX, 0, 0x80);
-    quad.uv[0] = (UV_t){0, 0};
-    quad.uv[1] = (UV_t){0, 1};
-    quad.uv[2] = (UV_t){1, 0};
-    quad.uv[3] = (UV_t){1, 1};
-    quad.rgba[0] = quad.rgba[1] = (alphaNear << 24) | baseRgb;
-    quad.rgba[2] = quad.rgba[3] = (alphaFar << 24) | baseRgb;
 
-    int i;
-    for (i = 0; i < segments; ++i) {
-        VECTOR tempCenter;
-        vector_add(tempCenter, center, vRadius);
-        int j;
-        for (j = 0; j < 4; ++j) {
-            quad.point[j][0] = tempCenter[0] + signs[j][0] * tempRight[0] + signs[j][1] * tempUp[0];
-            quad.point[j][1] = tempCenter[1] + signs[j][0] * tempRight[1] + signs[j][1] * tempUp[1];
-            quad.point[j][2] = tempCenter[2] + signs[j][0] * tempRight[2] + signs[j][1] * tempUp[2];
-            quad.point[j][3] = 1;
-        }
-
-        quad.uv[0].y = quad.uv[1].y = 0 - *scroll;
-        quad.uv[2].y = quad.uv[3].y = 1 - *scroll;
-
-        gfxDrawQuad(quad, NULL);
-        vector_rodrigues(vRadius, vRadius, yAxis, thetaStep);
-        vector_outerproduct(tempRight, yAxis, vRadius);
-        vector_normalize(tempRight, tempRight);
-        vector_scale(tempRight, tempRight, 3.0f);
-    }
-    *scroll += .007f;
 #endif
 
     // floor quad
@@ -1215,31 +1198,40 @@ static void drawHills(void)
     }
 }
 
-static void drawHud(void)
+void scoreboard(int maxScore, int* scores)
 {
-    GameSettings *gs = gameGetSettings();
-    if (!gs)
+    GameSettings *s = gameGetSettings();
+    GameOptions *o = gameGetOptions();
+    if (!s || !o || !scores)
         return;
 
-    // Keep HUD title in sync with current score limit (handles any late-arriving config updates).
-    {
-        int scoreLimit = kothGetScoreLimit();
-        if (scoreLimit > 0)
-            snprintf(kothTitle, sizeof(kothTitle), "%d", scoreLimit);
-        else
-            snprintf(kothTitle, sizeof(kothTitle), "No limit");
-    }
+    const int opacity = 0x60;
+    const u32 bgColor = 0x18608f;
+    const u32 textColor = 0x69cbf2;
+    const float bgScorebarLerp = 0.25f;
 
-    int useTeams = kothUseTeams();
+    // Layout constants (top-right, matched to uya-cheats test HUD).
+    const float anchorX = 0.8105f;
+    const float anchorY = 0.03f;
+    const float width = 0.1621f;
+    const float height = 0.05055f;
+    const float padding = 0.0025f;
+    const float scoreBarW = (width * 0.5f) - (padding * 3.0f);
+    const float scoreBarH = (height * 0.3333f) * 2.0f;
+    const float scoreBarX = anchorX + (width * 0.5f) + padding;
+    const float textX = anchorX + (width * 0.5f);
 
-    typedef struct {
-        int idx;
-        int score;
-    } Entry;
-    Entry entries[GAME_MAX_PLAYERS > TEAM_MAX ? GAME_MAX_PLAYERS : TEAM_MAX];
-    int count = 0;
+    typedef struct { int team; int score; } TeamScore;
+    TeamScore teamRows[TEAM_MAX];
+    TeamScore playerRows[GAME_MAX_PLAYERS];
+    TeamScore *sortedScores = NULL;
+    int maxRows = 0;
 
-    if (useTeams) {
+    int numRows = 0;
+    if (o->GameFlags.MultiplayerGameFlags.Teams) {
+        sortedScores = teamRows;
+        maxRows = TEAM_MAX;
+        // Accumulate scores per team only for teams that have players.
         int teamScores[TEAM_MAX];
         char teamSeen[TEAM_MAX];
         memset(teamScores, 0, sizeof(teamScores));
@@ -1251,87 +1243,118 @@ static void drawHud(void)
             Player *p = players[i];
             if (!p)
                 continue;
-            int team = gs->PlayerTeams[p->mpIndex];
+            int team = p->mpTeam;
             if (team < 0 || team >= TEAM_MAX)
                 continue;
             teamSeen[team] = 1;
-            teamScores[team] += kothScores[p->mpIndex];
+            teamScores[team] += scores[p->mpIndex];
         }
 
         int t;
-        for (t = 0; t < TEAM_MAX; ++t) {
+        for (t = 0; t < TEAM_MAX && numRows < maxRows; ++t) {
             if (!teamSeen[t])
                 continue;
-            entries[count].idx = t;
-            entries[count].score = teamScores[t];
-            ++count;
+            sortedScores[numRows].team = t;
+            sortedScores[numRows].score = teamScores[t];
+            ++numRows;
         }
     } else {
+        sortedScores = playerRows;
+        maxRows = GAME_MAX_PLAYERS;
+        // FFA: one row per active player.
         char seen[GAME_MAX_PLAYERS];
         memset(seen, 0, sizeof(seen));
         Player **players = playerGetAll();
         int i;
-        for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+        for (i = 0; i < GAME_MAX_PLAYERS && numRows < maxRows; ++i) {
             Player *p = players[i];
             if (!p)
                 continue;
-
             int idx = p->mpIndex;
             if (idx < 0 || idx >= GAME_MAX_PLAYERS)
                 continue;
             if (seen[idx])
                 continue;
-            if (!gs->PlayerNames[idx][0])
+            if (!s->PlayerNames[idx][0])
                 continue;
-
             seen[idx] = 1;
-            entries[count].idx = idx;
-            entries[count].score = kothScores[idx];
-            ++count;
+            sortedScores[numRows].team = idx;
+            sortedScores[numRows].score = scores[idx];
+            ++numRows;
         }
     }
 
-    // sort desc by score (small N)
-    int swapped = 1;
-    while (swapped) {
-        swapped = 0;
-        int i;
-        for (i = 0; i < count - 1; ++i) {
-            if (entries[i].score < entries[i + 1].score) {
-                Entry tmp = entries[i];
-                entries[i] = entries[i + 1];
-                entries[i + 1] = tmp;
-                swapped = 1;
-            }
+    if (numRows <= 0)
+        return;
+
+    // Sort rows by score descending (stable enough for small N).
+    int i, j;
+    for (i = 0; i < numRows - 1; ++i) {
+        int maxIdx = i;
+        for (j = i + 1; j < numRows; ++j) {
+            if (sortedScores[j].score > sortedScores[maxIdx].score)
+                maxIdx = j;
+        }
+        if (maxIdx != i) {
+            TeamScore tmp = sortedScores[i];
+            sortedScores[i] = sortedScores[maxIdx];
+            sortedScores[maxIdx] = tmp;
         }
     }
 
-    float startX = 20;
-    float startY = SCREEN_HEIGHT * 0.35f;
-    float lineH = 16.0f;
-    gfxScreenSpaceText(startX, startY - lineH, 1, 1, 0x80FFFFFF, kothTitle, -1, TEXT_ALIGN_TOPLEFT, FONT_BOLD);
+    int topScore = sortedScores[0].score;
+    if (maxScore <= 0)
+        maxScore = topScore;
+    if (maxScore <= 0)
+        maxScore = 1;
 
-    int i;
-    for (i = 0; i < count; ++i) {
-        int idx = entries[i].idx;
-        char line[64];
-        u32 color = 0x80FFFFFF;
-        if (useTeams) {
-            static const char *teamNames[TEAM_MAX] = {
-                "Blue", "Red", "Green", "Orange", "Yellow", "Purple", "Aqua", "Pink"
-            };
-            const char *name = (idx >= 0 && idx < TEAM_MAX) ? teamNames[idx] : "Team";
-            snprintf(line, sizeof(line), "%s: %d", name, entries[i].score);
-            color = (0x80 << 24) | ((idx >= 0 && idx < TEAM_MAX) ? TEAM_COLORS[idx] : 0x00FFFFFF);
-        } else {
-            char nameBuf[KOTH_NAME_MAX_LEN + 1];
-            kothCopyName(nameBuf, gs->PlayerNames[idx]);
-            snprintf(line, sizeof(line), "%s: %d", nameBuf, entries[i].score);
-            int team = gs->PlayerTeams[idx];
-            color = (0x80 << 24) | ((team >= 0 && team < 8) ? TEAM_COLORS[team] : 0x00FFFFFF);
-        }
-        gfxScreenSpaceText(startX, startY + (i * lineH), 1, 1, color, line, -1, TEXT_ALIGN_TOPLEFT, FONT_DEFAULT);
+    // Draw rows.
+    // Flush state once before HUD drawing to reduce GS/GIF bleed risk.
+    gfxDoGifPaging();
+    char buf[32];
+    for (i = 0; i < numRows; ++i) {
+        int currentScore = sortedScores[i].score;
+        int currentTeam = sortedScores[i].team;
+
+        float rowYnorm = anchorY + i * (height + padding);
+        float scoreBarYnorm = rowYnorm + (height - scoreBarH) * 0.5f;
+        float textYnorm = rowYnorm + (height * 0.5f) - 0.005f;
+        float fill = clampf((float)currentScore / (float)maxScore, 0.0f, 1.0f);
+        //float fill = 0.5f; 
+        //KOTH_LOG("[KOTH][DBG] scoreboard row=%d/%d team=%d score=%d maxScore=%d fillNum=%d fillRaw=%d\n",
+        //         i, numRows, currentTeam, currentScore, maxScore, (int)(fill * 1000), currentScore ? (int)((currentScore * 1000) / maxScore) : 0);
+
+        float textScale = currentScore > 9999 ? 0.5f : (currentScore > 999 ? 0.75f : 1.0f);
+        //float textScale = 1.0f; 
+
+
+        //// Log inputs for each draw to trace bad state (ints for PCSX2 log visibility).
+        //KOTH_LOG("[KOTH][DBG] scoreboard row=%d pos=%d,%d size=%d,%d fill=%d scoreBarY=%d textY=%d textScale=%d\\n",
+        //         i,
+        //         (int)(anchorX * 1000), (int)(rowYnorm * 1000),
+        //         (int)(width * 1000), (int)(height * 1000),
+        //         (int)(fill * 1000),
+        //         (int)(scoreBarYnorm * 1000),
+        //         (int)(textYnorm * 1000),
+        //         (int)(textScale * 1000));
+
+        // Normalized screen-space boxes to align with font pipeline.
+        gfxScreenSpaceBox(anchorX, rowYnorm, width, height, (opacity << 24) | bgColor);
+        u32 teamColor = (currentTeam >= 0 && currentTeam < TEAM_MAX) ? TEAM_COLORS[currentTeam] : 0x00FFFFFF;
+        // Solid color for bg (no lerp) to avoid NaN/inf.
+        gfxScreenSpaceBox(scoreBarX, scoreBarYnorm, scoreBarW, scoreBarH, (opacity << 24) | (teamColor & 0x00FFFFFF));
+        gfxScreenSpaceBox(scoreBarX, scoreBarYnorm, scoreBarW * fill, scoreBarH, (opacity << 24) | teamColor);
+
+        snprintf(buf, sizeof(buf), "%d", currentScore);
+        gfxScreenSpaceText(textX * SCREEN_WIDTH, textYnorm * SCREEN_HEIGHT, textScale, textScale, (opacity << 24) | textColor, buf, -1, TEXT_ALIGN_MIDDLERIGHT, FONT_BOLD);
+
     }
+
+}
+
+static void drawHud(void)
+{
+    scoreboard(kothGetScoreLimit(), kothScores);
 }
 
 int kothOnReceiveScore(void *connection, void *data)
@@ -1431,13 +1454,6 @@ void kothInit(void)
     if (go) {
         go->GameFlags.MultiplayerGameFlags.FragLimit = 0;
     }
-
-    // Cache header text for HUD.
-    int scoreLimit = kothGetScoreLimit();
-    if (scoreLimit > 0)
-        snprintf(kothTitle, sizeof(kothTitle), "%d", scoreLimit);
-    else
-        snprintf(kothTitle, sizeof(kothTitle), "No limit");
 
     if (!gameEndHookInstalled) {
         // Choose callsite table based on teams flag; fallback to teams table if FFA entry missing.
