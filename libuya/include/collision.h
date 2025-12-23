@@ -146,4 +146,44 @@ int CollHotspot(void);
  */
 CollOutput* colGetOutput(void);
 
+/*
+ * NAME :		CollSoundSurface
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int CollSoundSurface(void);
+
+/*
+ * NAME :		CollSoundSurface
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :		1.0f is safe, less than 1.0f: collision occurred partway along the sweep
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+float CollMovingSphere(float radius, VECTOR from, VECTOR to, int flags, Moby *pSkip);
+
+/*
+ * NAME :		CollHeroSphere
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :		Returns number of polygons hit
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int CollHeroSphere(float radius, VECTOR position, int flags);
+
+/*
+ * NAME :		CollSphere_Fix
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :		Returns number of polygons hit
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int CollSphere_Fix(float radius, VECTOR position, int flags);
+
 #endif // _LIBUYA_COLLISION_H_

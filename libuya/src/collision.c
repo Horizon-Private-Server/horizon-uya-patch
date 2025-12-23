@@ -146,6 +146,90 @@ VariableAddress_t vaCollMobysSphereFix = {
 #endif
 };
 
+VariableAddress_t vaCollMovingSphere = {
+#if UYA_PAL
+	.Lobby = 0x005b6490,
+	.Bakisi = 0x00482fc8,
+	.Hoven = 0x00484b88,
+	.OutpostX12 = 0x0047b988,
+	.KorgonOutpost = 0x00479508,
+	.Metropolis = 0x00478848,
+	.BlackwaterCity = 0x00475e00,
+	.CommandCenter = 0x00476948,
+	.BlackwaterDocks = 0x004791c8,
+	.AquatosSewers = 0x004784c8,
+	.MarcadiaPalace = 0x00477e48,
+#else
+	.Lobby = 0x005b4558,
+	.Bakisi = 0x004811d0,
+	.Hoven = 0x00482cd0,
+	.OutpostX12 = 0x00479b10,
+	.KorgonOutpost = 0x00477710,
+	.Metropolis = 0x00476a50,
+	.BlackwaterCity = 0x00473f88,
+	.CommandCenter = 0x00474c90,
+	.BlackwaterDocks = 0x004774d0,
+	.AquatosSewers = 0x00476810,
+	.MarcadiaPalace = 0x00476150,
+#endif
+};
+
+VariableAddress_t vaCollHeroSphere = {
+#if UYA_PAL
+	.Lobby = 0x005838d0,
+	.Bakisi = 0x004507e8,
+	.Hoven = 0x00452368,
+	.OutpostX12 = 0x00449168,
+	.KorgonOutpost = 0x00446d28,
+	.Metropolis = 0x00446068,
+	.BlackwaterCity = 0x00443868,
+	.CommandCenter = 0x004444e8,
+	.BlackwaterDocks = 0x00446d68,
+	.AquatosSewers = 0x00446068,
+	.MarcadiaPalace = 0x004459e8,
+#else
+	.Lobby = 0x00582928,
+	.Bakisi = 0x0044f940,
+	.Hoven = 0x00451400,
+	.OutpostX12 = 0x00448240,
+	.KorgonOutpost = 0x00445e80,
+	.Metropolis = 0x004451c0,
+	.BlackwaterCity = 0x00442940,
+	.CommandCenter = 0x00443780,
+	.BlackwaterDocks = 0x00445fc0,
+	.AquatosSewers = 0x00445300,
+	.MarcadiaPalace = 0x00444c40,
+#endif
+};
+
+VariableAddress_t vaCollsphereFix = {
+#if UYA_PAL
+	.Lobby = 0x00581270,
+	.Bakisi = 0x0044e188,
+	.Hoven = 0x0044fd08,
+	.OutpostX12 = 0x00446b08,
+	.KorgonOutpost = 0x004446c8,
+	.Metropolis = 0x00443a08,
+	.BlackwaterCity = 0x00441208,
+	.CommandCenter = 0x00441e88,
+	.BlackwaterDocks = 0x00444708,
+	.AquatosSewers = 0x00443a08,
+	.MarcadiaPalace = 0x00443388,
+#else
+	.Lobby = 0x005802c8,
+	.Bakisi = 0x0044d2e0,
+	.Hoven = 0x0044eda0,
+	.OutpostX12 = 0x00445be0,
+	.KorgonOutpost = 0x00443820,
+	.Metropolis = 0x00442b60,
+	.BlackwaterCity = 0x004402e0,
+	.CommandCenter = 0x00441120,
+	.BlackwaterDocks = 0x00443960,
+	.AquatosSewers = 0x00442ca0,
+	.MarcadiaPalace = 0x004425e0,
+#endif
+};
+
 Moby** CollMobysSphere_Fix_GetHitMobies(void)
 {
   return COLL_MOBY_LIST;
@@ -174,4 +258,13 @@ float* CollLine_Fix_GetHitNormal(void)
 int CollLine_Fix_GetHitCollisionId(void)
 {
 	return COLLOUTPUT->poly;
+}
+
+int CollSoundSurface(void)
+{
+	int poly = COLLOUTPUT->poly;
+    if (poly < 0)
+    	return -1;
+
+    return (poly >> 5) & 0x3;
 }
