@@ -186,4 +186,16 @@ int CollHeroSphere(float radius, VECTOR position, int flags);
  */
 int CollSphere_Fix(float radius, VECTOR position, int flags);
 
+/*
+ * NAME :		CollLineList
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS :       VECTOR from: start position
+ *              VECTOR to: end position
+ *              int maxPolyHit: if this many poly/triangles are hit, return false.
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+bool CollLineList(VECTOR from, VECTOR to, int maxPolyHit);
+
 #endif // _LIBUYA_COLLISION_H_

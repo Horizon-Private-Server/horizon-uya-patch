@@ -474,6 +474,7 @@ VARIABLE_FUNCTION(CollMobysSphere_Fix, vaCollMobysSphereFix)
 VARIABLE_FUNCTION(CollMovingSphere, vaCollMovingSphere)
 VARIABLE_FUNCTION(CollHeroSphere, vaCollHeroSphere)
 VARIABLE_FUNCTION(CollSphere_Fix, vaCollsphereFix)
+VARIABLE_FUNCTION(CollLineList, vaCollLineList)
 
 #--------------------------------------------------------
 #------------------------ FLAG --------------------------

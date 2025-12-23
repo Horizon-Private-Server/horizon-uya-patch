@@ -230,6 +230,34 @@ VariableAddress_t vaCollsphereFix = {
 #endif
 };
 
+VariableAddress_t vaCollLineList = {
+#if UYA_PAL
+	.Lobby = 0x00583e18,
+	.Bakisi = 0x00450d30,
+	.Hoven = 0x004528b0,
+	.OutpostX12 = 0x004496b0,
+	.KorgonOutpost = 0x00447270,
+	.Metropolis = 0x004465b0,
+	.BlackwaterCity = 0x00443db0,
+	.CommandCenter = 0x00444a30,
+	.BlackwaterDocks = 0x004472b0,
+	.AquatosSewers = 0x004465b0,
+	.MarcadiaPalace = 0x00445f30,
+#else
+	.Lobby = 0x00582e70,
+	.Bakisi = 0x0044fe88,
+	.Hoven = 0x00451948,
+	.OutpostX12 = 0x00448788,
+	.KorgonOutpost = 0x004463c8,
+	.Metropolis = 0x00445708,
+	.BlackwaterCity = 0x00442e88,
+	.CommandCenter = 0x00443cc8,
+	.BlackwaterDocks = 0x00446508,
+	.AquatosSewers = 0x00445848,
+	.MarcadiaPalace = 0x00445188,
+#endif
+};
+
 Moby** CollMobysSphere_Fix_GetHitMobies(void)
 {
   return COLL_MOBY_LIST;
