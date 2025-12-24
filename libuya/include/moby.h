@@ -387,7 +387,10 @@ typedef struct Moby {
 	/* 0x7e */ short color;
 	/* 0x80 */ VECTOR lSphere;
 	/* 0x90 */ struct GuberMoby * guberMoby;
-	/* 0x94 */ int unk_94;
+	/* 0x94 */ char prevState;
+	/* 0x95 */ char stateType;
+	/* 0x96 */ char stateTimer;
+	/* 0x97 */ char unk_97;
 	/* 0x98 */ int *collData;
 	/* 0x9c */ int collActive;
 	/* 0xa0 */ int collCnt;
@@ -685,7 +688,7 @@ typedef struct flagPVars {
 /* 0x2c */ int unk_2c;
 } flagPVars_t;
 
-typedef struct MupltiplayerConfig { // 0x3a0
+typedef struct MultiplayerConfig { // 0x3a0
 /* 0x000 */ int base[2];
 /* 0x008 */ int node[8];
 /* 0x040 */ int baseLight[2];

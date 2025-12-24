@@ -341,8 +341,8 @@ typedef struct tNW_Info {
     tNW_PlayerInfoStats_t myStats;
     char gameName[64];
     char gamePassword[24];
-    enum eNW_STATE state;
     char unk_0128[12];
+    enum eNW_STATE state;
     int unk_0134;
     int netFrameTime;
     int numClients;
