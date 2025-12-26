@@ -6,8 +6,8 @@
 
 typedef enum eEngineState {
     ENGINE_IDLE = 0,
-	ENGINE_READY = 1,
-	ENGINE_PAUSED = 2
+    ENGINE_READY = 1,
+    ENGINE_PAUSED = 2
 } EngineState_e;
 
 struct MapOffsets { // 0x20
@@ -16,7 +16,7 @@ struct MapOffsets { // 0x20
 /* 0x08 */ float pad_08[2];
 /* 0x10 */ float max_x;
 /* 0x14 */ float max_y;
-/* 0x08 */ float pad_18[2];
+/* 0x18 */ float pad_18[2];  // Fixed: was 0x08, should be 0x18
 };
 
 typedef struct HudMap {
@@ -70,7 +70,7 @@ typedef struct CanvasData {
 } CanvasData_t;
 
 struct Canvas {
-/* 0x0*/ CanvasData_t *data;
+/* 0x0 */ CanvasData_t *data;
 };
 
 struct iHeap { // 0x4
@@ -82,7 +82,7 @@ struct DataSource {
 /* 0x4 */ int *vtable;
 };
 
-struct EngineData { // 0x78
+typedef struct EngineData { // 0x78  // Fixed: removed duplicate "struct" keyword
 /* 0x00 */ struct Canvas *canvases[5];
 /* 0x14 */ int current_canvas;
 /* 0x18 */ struct iHeap *heaps[2];
@@ -91,12 +91,12 @@ struct EngineData { // 0x78
 /* 0x60 */ int postdraw_counter;
 /* 0x64 */ void *predraws[4];
 /* 0x74 */ int predraw_counter;
-};
+} EngineData_t;
 
-struct Engine {
-/* 0x0 */ int lockable;
-/* 0x4 */ struct EngineData *data
-};
+typedef struct Engine {
+/* 0x0 */ int lockerId;
+/* 0x4 */ EngineData_t *data;
+} Engine_t;
 
 typedef struct ConcretePreLoadedImageBuffer {
 /* 0x00 */ struct DataSource dataSourceImageBuffer;
@@ -107,6 +107,11 @@ typedef struct ConcretePreLoadedImageBuffer {
 
 // returns pointer to radar map settings.
 HudMap_t *hudGetMapData(void);
+
+Engine_t *hudGetInstance(void);
+EngineData_t *hudGetEngineData(void);
+int hudGetCurrentCanvas(void);
+
 ConcretePreLoadedImageBuffer_t* gfxGetPreLoadedImageBufferSource(int which);
 
 #endif // _LIBUYA_HUD_H_

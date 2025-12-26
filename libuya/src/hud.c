@@ -2,7 +2,8 @@
 #include "hud.h"
 
 #define HUD_RADAR_PLAYERDATA ((HudMap_t*)GetAddress(&vaHudRadar_PlayerData))
-#define ENGINE ((Engine*)GetAddress(&vaEngine))
+#define ENGINE_INSTANCE ((Engine_t*)GetAddress(&vaEngine))
+#define ENGINE_DATA ((EngineData_t*)((u32)GetAddress(&vaEngine) + 0x4))
 
 VariableAddress_t vaHudRadar_PlayerData = {
 #if UYA_PAL
@@ -119,5 +120,42 @@ VariableAddress_t vaGetPreLoadedImageBufferSource = {
 HudMap_t *hudGetMapData(void)
 {
     return HUD_RADAR_PLAYERDATA;
+}
+
+Engine_t *hudGetInstance(void)
+{
+	return ENGINE_INSTANCE;
+}
+
+EngineData_t *hudGetEngineData(void)
+{
+	return ENGINE_DATA;
+}
+
+static Engine_t *hudInitInstance(void)
+{
+	Engine_t *instance = ENGINE_INSTANCE;
+	EngineData_t *data = ENGINE_DATA;
+	instance->data = data;
+	memset(data->heaps, 0, 8);
+	memset(data, 0, 0x14);
+	memset(data->data_source, 0, 0x30);
+	memset(data->postdraws, 0, 0x10);
+	memset(data->predraws, 0, 0x10);
+	data->postdraw_counter = 0;
+	data->predraw_counter = 0;
+	data->current_canvas = 0;
+	return instance;
+}
+
+int hudGetCurrentCanvas(void)
+{
+	Engine_t *instance = ENGINE_INSTANCE;
+	if (instance->data == NULL)
+		instance = hudInitInstance();
+	if (instance->data == NULL)
+		return -1;
+	
+	return instance->data->current_canvas;
 }
 
