@@ -46,7 +46,7 @@ int mapMaskToId(int mapMask)
 }
 
 //--------------------------------------------------------
-char * mapGetName(int mapId)
+char * mapGetName(enum MAP_IDS mapId)
 {
   switch (mapId)
   {

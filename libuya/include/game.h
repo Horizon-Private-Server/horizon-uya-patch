@@ -14,14 +14,23 @@
 #include "common.h"
 #include "net.h"
 
+
 #if UYA_PAL
 #define GAME_FPS                            (50.0)
 #define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5810)
 #define GAME_NET_INFO                       ((tNW_Info_t*)0x01a5cc0)
+
+#define GAME_ACTIVE                         (*(volatile int*)0x00241a50)
+#define SCENE_LOADED                        (*(volatile int*)0x00245848)
+#define GAME_MAP_ID                         (*(volatile int*)0x001f83a8)
 #else
 #define GAME_FPS                            (60.0)
 #define GAME_LOCAL_SETTINGS                 ((GameLocalSettings*)0x001a5990)
 #define GAME_NET_INFO                       ((tNW_Info_t*)0x001a5e40)
+
+#define GAME_ACTIVE                         (*(volatile int*)0x00241BD0)
+#define SCENE_LOADED                        (*(volatile int*)0x002459C8)
+#define GAME_MAP_ID                         (*(volatile int*)0x001f8528)
 #endif
 
 #define GAME_MAX_PLAYERS                    (8)
@@ -95,7 +104,7 @@ typedef struct LocalPlayerYourBaseGameData { // 0x1b0
 /* 0x008 */ int unk_08[6];
 /* 0x020 */ int nodeResurrectionPts[8];
 /* 0x040 */ int baseLightIndex[8]; // aka: moby instance index
-/* 0x060 */ int unk_BaseMobySpawnPts[8];
+/* 0x060 */ int nodeMobyIndex[8];
 /* 0x080 */ int unk_team1;
 /* 0x084 */ int unk_team2;
 /* 0x088 */ int team1_BaseComputerTeam;

@@ -10,11 +10,9 @@
 #define _LIBUYA_MAP_H_
 
 #include <tamtypes.h>
+#include "math.h"
 
-/*
- */
-enum MAP_IDS
-{
+enum MAP_IDS {
     MAP_ID_BAKISI           = 40,
     MAP_ID_HOVEN            = 41,
     MAP_ID_OUTPOST_X12      = 42,
@@ -27,8 +25,7 @@ enum MAP_IDS
     MAP_ID_MARCADIA         = 49,
 };
 
-enum MAP_MASK_IDS
-{
+enum MAP_MASK_IDS {
     MAP_MASK_NONE               = 0,
     MAP_MASK_BAKISI             = (1 << 0),
     MAP_MASK_HOVEN              = (1 << 1),
@@ -46,6 +43,6 @@ enum MAP_MASK_IDS
 int mapMaskHasMask(int value, int maskValue);
 int mapIdToMask(int mapId);
 int mapMaskToId(int mapMask);
-char * mapGetName(int mapId);
+char * mapGetName(enum MAP_IDS mapId);
 
 #endif // _LIBUYA_MAP_H_

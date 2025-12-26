@@ -1193,7 +1193,7 @@ typedef struct Player { // 0x4500
 	/* 0x24a8 */ short int unkGadgetTimer_24a8; // gets set when flag is captured.
 	/* 0x24aa */ char unk_24aa; // gets set when flag is captured.
 	/*        */ char unk_24ab[0x1d];
-	/* 0x24c8 */ char unk_24c8;
+	/* 0x24c8 */ char canvasId;
 	/* 0x24c9 */ char isLocal2; // hides reticle/hud, does something with CTF Flag and setting to 0x32 shows save filed popup.
 	/*        */ char unk_24ca;
 	/*        */ char unk_24cb;

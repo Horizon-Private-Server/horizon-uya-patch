@@ -580,11 +580,6 @@ typedef struct ViewContext { // 0x270
 /* 0x268 */ int splitScreenMode;
 } ViewContext;
 
-struct DataSource { // 0x8
-/* 0x0 */ int m_state;
-/* 0x4 */ void *__vtable;
-};
-
 typedef struct Screen { // 0x50
 /* 0x00 */ int size_x;
 /* 0x04 */ int size_y;
@@ -599,13 +594,6 @@ typedef struct Screen { // 0x50
 /* 0x30 */ vec4 vHalfSize;
 /* 0x40 */ vec4 vOneOverSize;
 } Screen;
-
-typedef struct ConcretePreLoadedImageBuffer {
-/* 0x00 */ struct DataSource DataSourceImageBuffer;
-/* 0x08 */ unsigned int tex0;
-/* 0x0c */ void *m_memory_buffer;
-/* 0x10 */ void *m_decompressed_buffer;
-} ConcretePreLoadedImageBuffer;
 
 typedef struct PartInstance { // 0x40
 /* 0x00 */ char i_class;
@@ -956,6 +944,18 @@ void gfxAddRegister(int register, u64 value);
 
 //
 ViewContext* gfxViewContext(void);
-ConcretePreLoadedImageBuffer* gfxGetPreLoadedImageBufferSource(int which);
 void gfxDrawScreenOverlay(int r, int g, int b, int a);
+
+/*
+ * NAME:			gfxWStoMapSpace
+ * DESCRIPTION:		Transforms a world space vector to x and y coordinates for mini map.
+ * NOTES:
+ * ARGS:
+ * RETURN:
+ * AUTHOR:			Troy "Metroynome" Pruitt
+ */
+void gfxWStoMapSpace(VECTOR position, float *output_x, float *output_y);
+void gfxGetMapSpaceFromMoby(Moby *pMoby, float *output_x, float *output_y);
+void gfxGetMapSpaceFromMobyIndex(int mobyIndex, float *output_x, float *output_y);
+
 #endif // _LIBUYA_GRAPHICS_H_
