@@ -4,16 +4,6 @@
 #include "help.h"
 #include "interop.h"
 
-#if UYA_PAL
-#define GAME_ACTIVE                         (*(int*)0x00241a50)
-#define SCENE_LOADED                        (*(int*)0x00245848)
-#define GAME_MAP_ID                         (*(int*)0x001f83a8)
-#else
-#define GAME_ACTIVE                         (*(int*)0x00241BD0)
-#define SCENE_LOADED                        (*(int*)0x002459C8)
-#define GAME_MAP_ID                         (*(int*)0x001f8528)
-#endif
-
 #define GAME_DATA                           ((GameData*)GetAddress(&vaGAME_DATA))
 
 #define GAME_DEATH_BARRIER                  (*(float*)GetAddress(&vaDeathBarrier))
