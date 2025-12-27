@@ -29,6 +29,12 @@ typedef float vec3[3] __attribute__((__aligned__(16)));
 typedef float vec4[4] __attribute__((__aligned__(16)));
 typedef float MATRIX[16] __attribute__((__aligned__(16)));
 
+typedef struct vec2f {
+/* 0x0 */ float x;
+/* 0x4 */ float y;
+} vec2f;
+
+
 typedef struct vec4f { // 0x10
 /* 0x0 */ float x;
 /* 0x4 */ float z;
