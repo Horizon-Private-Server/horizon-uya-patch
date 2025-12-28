@@ -4,6 +4,7 @@
 #include <tamtypes.h>
 #include "common.h"
 #include "math3d.h"
+#include "graphics.h"
 
 typedef unsigned int HANDLE_ID;
 
@@ -19,6 +20,16 @@ typedef enum eTextAlignment {
 	TEXT_ALIGN_RIGHT = 2,
 	TEXT_ALIGN_MAX = 3
 } TextAlignment_e;
+
+typedef enum WIDGET_TYPE {
+	WIDGET_IFRAME = 1,
+	WIDGET_TEXT = 2,
+	WIDGET_TEXTAREA = 3,
+	WIDGET_RECTANGLE = 4,
+	WIDGET_HOLLOW_RECTANGLE = 5,
+	WIDGET_3D = 6,
+	WIDGIET_FRAME_CONTAINER = 7
+};
 
 struct MapOffsets { // 0x20
 /* 0x00 */ float min_x;
@@ -200,18 +211,17 @@ struct iGraphicsObject { // 0x28
 struct iFrame {
 /* 0x00 */ struct iObject object;
 /* 0x0c */ u32 controlFlags;
-/* 0x10 */ float rot;
-/* 0x14 */ vec2f pos;
-/* 0x1c */ vec2f scale;
-/* 0x24 */ vec2f dropshadow_offset;
-/* 0x2c */ float alpha;
-/* 0x30 */ u32 color;
+/* 0x10 */ vec2f pos;
+/* 0x18 */ vec2f scale;
+/* 0x20 */ vec2f dropshadow_offset;
+/* 0x28 */ float alpha;
+/* 0x2c */ float rot;
+/* 0x30 */ int unk_30;
 /* 0x34 */ u32 dropshadow_color;
-/* 0x38 */ int animation_id;
-/* 0x3c */ struct EventResponseTOC *m_event_listen_toc;
+/* 0x38 */ u32 color;
 };
 
-typedef struct WidgetRectangle {
+typedef struct WidgetRectangle { // 60
 /* 0x00 */ struct iFrame frame;
 /* 0x40 */ float rotation;
 /* 0x44 */ u32 color1;
@@ -222,6 +232,7 @@ typedef struct WidgetRectangle {
 /* 0x54 */ char total_fade_frames;
 /* 0x55 */ char fade_frame;
 /* 0x56 */ char renderstate;
+/* 0x57 */ char pad;
 /* 0x58 */ struct DataSource *datasource;
 } WidgetRectangle_t;
 
@@ -230,7 +241,15 @@ typedef struct WidgetHallowRectangle { // 0x48
 /* 0x40 */ vec2f insets;
 } WidgetHallowRectangle_t;
 
-typedef struct WidgetText { // 0x70
+typedef struct WidgetTextGraphic { // 0x40
+/* 0x00 */ struct iGraphicsObject object;
+/* 0x28 */ struct fontLetter *pFontTable;
+/* 0x30 */ u64 font_FX;
+/* 0x38 */ char *mExternalString;
+/* 0x3c */ TextAlignment_e textAlignment;
+} WidgetTextGraphic_t;
+
+typedef struct WidgetTextFrame { // 0x70
 /* 0x00 */ struct iFrame frame;
 /* 0x40 */ vec2f rot;
 /* 0x48 */ int fontTable;
@@ -242,7 +261,7 @@ typedef struct WidgetText { // 0x70
 /* 0x60 */ unsigned char pointSize;
 /* 0x64 */ int fontText;
 /* 0x68 */ vec2f cached_scale;
-} WidgetText_t;
+} WidgetTextFrame_t;
 
 typedef struct WidgetTextAreaData { // 0x54
 /* 0x00 */ vec2f rot;
@@ -340,6 +359,18 @@ HudMap_t *hudGetMapData(void);
 Engine_t *hudGetInstance(void);
 EngineData_t *hudGetEngineData(void);
 int hudGetCurrentCanvas(void);
+
+bool hudAddToContainer(unsigned int container_id, unsigned int frame_id);
+bool hudCreateRectangle(float x, float y, float w, float h, unsigned int handle_id, u32 color,int sprite);
+bool hudCreateText(float x, float y, float w, float h, unsigned int handle_id, char *pText, u32 color);
+bool hudCreateTextArea(float x, float y, float w, float h, float text_scale, unsigned int handle_id, char *pText, u32 color);
+
+bool hudSetScale(float width, float height, unsigned int handle_id);
+bool hudSetPosition(float x, float y, unsigned int handle_id);
+bool hudSetColor(unsigned int handle_id, u32 color);
+bool hudSetSprite(unsigned int handle_id, SpriteTex_Hud_e sprite);
+bool hudSetFlags(unsigned int handle_id, unsigned int flags, bool value);
+bool hudSetTextScale(float scale, unsigned int handle_id);
 
 ConcretePreLoadedImageBuffer_t* gfxGetPreLoadedImageBufferSource(int which);
 
