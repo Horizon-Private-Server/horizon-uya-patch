@@ -175,6 +175,34 @@ typedef struct KothCustomHillPVar {
     int cuboidRefs[KOTH_MAX_CUSTOM_CUBOIDS];
 } KothCustomHillPVar_t;
 
+VariableAddress_t vaResurrectSpawnDistance = {
+#if UYA_PAL
+    .Lobby = 0x00671760,
+    .Bakisi = 0x00545108,
+    .Hoven = 0x005472d0,
+    .OutpostX12 = 0x0053cba8,
+    .KorgonOutpost = 0x0053a290,
+    .Metropolis = 0x00539690,
+    .BlackwaterCity = 0x00536e78,
+    .CommandCenter = 0x005366d0,
+    .BlackwaterDocks = 0x00538f50,
+    .AquatosSewers = 0x00538250,
+    .MarcadiaPalace = 0x00537bd0,
+#else
+    .Lobby = 0x0066ee10,
+    .Bakisi = 0x005427f8,
+    .Hoven = 0x00544900,
+    .OutpostX12 = 0x0053a218,
+    .KorgonOutpost = 0x00537980,
+    .Metropolis = 0x00536d80,
+    .BlackwaterCity = 0x005344e8,
+    .CommandCenter = 0x00533f18,
+    .BlackwaterDocks = 0x00536758,
+    .AquatosSewers = 0x00535a98,
+    .MarcadiaPalace = 0x005353d8,
+#endif
+};
+
 // TIME_UP gameEnd callsites (Team modes)
 static VariableAddress_t vaGameTimerEndHookDmTeams = {
 #if UYA_PAL
@@ -307,6 +335,12 @@ static int kothUseTeams(void);
 static void kothBroadcastHillIndex(int hillIdx);
 #endif
 static void kothOnHillSizeUpdated(void);
+static float kothGetInsideRespawnDistance(void);
+static float kothGetOutsideRespawnDistance(void);
+static float kothSelectRespawnDistance(Player *player);
+static void kothUpdateRespawnDistance(Player *player);
+static void kothUpdateRespawnDistanceForLocals(void);
+static u32 kothGetActiveHillColor(void);
 
 void kothSetConfig(PatchGameConfig_t *config)
 {
@@ -1149,7 +1183,7 @@ static int kothGetActiveHillIndex(void)
 
 static void drawHill(Moby *moby)
 {
-    u32 baseColor = 0x0080FF00; // green tint for hill marker
+    u32 baseColor = kothGetActiveHillColor(); // default white; tinted by team in hill when applicable
     KothHill_t *hill = kothFindHill(moby);
     float *scroll = hill ? &hill->scroll : NULL;
     float fallbackScroll = 0;
@@ -1194,7 +1228,7 @@ static void drawHills(void)
         } else {
             float cosYaw = 1.0f, sinYaw = 0.0f;
             kothGetHillYaw(&hills[activeIdx], &cosYaw, &sinYaw);
-            drawHillAt(hills[activeIdx].position, 0x0080FF00, &hills[activeIdx].scroll,
+            drawHillAt(hills[activeIdx].position, kothGetActiveHillColor(), &hills[activeIdx].scroll,
                        hills[activeIdx].footprintRx, hills[activeIdx].footprintRy, hills[activeIdx].isCircle, cosYaw, sinYaw);
         }
 #ifdef KOTH_DEBUG
@@ -1470,12 +1504,170 @@ void radarUpdate(void)
     float x, y;
     int id = KOTH_HUD_FRAME_ID;
     int a = kothGetActiveHillIndex();
-    if (!hills[a].drawMoby)
+    if (a < 0 || a >= hillCount)
         return;
 
-    gfxWStoMapSpace(hills[a].drawMoby->position, &x, &y);
+    Moby *draw = hills[a].drawMoby;
+    if (!draw)
+        return;
+
+    gfxWStoMapSpace(draw->position, &x, &y);
     hudSetPosition(x, y, id);
-    hudSetColor(id, 0x80ffffff);
+    // Alpha overlay tinted by current hill occupant team (if any).
+    hudSetColor(id, 0x80000000 | (kothGetActiveHillColor() & 0x00FFFFFF));
+}
+
+static float kothDecodeRespawnValue(char idx)
+{
+    static const float OPTIONS[] = {40.0f, 60.0f, 80.0f, 120.0f, 10.0f, 20.0f, 30.0f};
+    int count = (int)(sizeof(OPTIONS) / sizeof(OPTIONS[0]));
+    if (idx < 0 || idx >= count)
+        return OPTIONS[0];
+    return OPTIONS[(int)idx];
+}
+
+static float kothGetOutsideRespawnDistance(void)
+{
+    // Default to index 0 (40.0f) if config is missing.
+    return kothDecodeRespawnValue(kothConfig ? kothConfig->grKothRespawnOutside : 0);
+}
+
+static float kothGetInsideRespawnDistance(void)
+{
+    // Default to index 0 (40.0f) if config is missing.
+    return kothDecodeRespawnValue(kothConfig ? kothConfig->grKothRespawnInside : 0);
+}
+
+static void setSpawnDistance(float distance)
+{
+    short s = (short)distance;
+    POKE_U16(GetAddress(&vaResurrectSpawnDistance), s);
+}
+
+static int kothTeamHasPlayerInHill(int team)
+{
+    if (team < 0)
+        return 0;
+
+    Player **players = playerGetAll();
+    int i;
+    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+        Player *p = players[i];
+        if (!p || playerIsDead(p) || p->vehicle)
+            continue;
+        if (p->mpTeam != team)
+            continue;
+        if (playerInsideHill(p))
+            return 1;
+    }
+
+    return 0;
+}
+
+static float kothSelectRespawnDistance(Player *player)
+{
+    float outsideDist = kothGetOutsideRespawnDistance();
+
+    if (!player)
+        return outsideDist;
+
+    if (!kothUseTeams())
+        return outsideDist;
+
+    if (kothTeamHasPlayerInHill(player->mpTeam))
+        return kothGetInsideRespawnDistance();
+
+    return outsideDist;
+}
+
+static void kothUpdateRespawnDistance(Player *player)
+{
+    static char lastPrintWaiting[GAME_MAX_PLAYERS];
+    static int lastPrintDistance[GAME_MAX_PLAYERS];
+
+    if (!player)
+        return;
+
+    float distance = kothSelectRespawnDistance(player);
+    if (distance < 0)
+        distance = 0;
+    int idx = player->mpIndex;
+    int waiting = player->timers.resurrectWait != 0;
+    int distInt = (int)distance;
+
+    if (idx >= 0 && idx < GAME_MAX_PLAYERS) {
+        if (waiting) {
+            if (!lastPrintWaiting[idx] || lastPrintDistance[idx] != distInt) {
+                printf("KOTH respawn distance %d\n", distInt);
+                lastPrintDistance[idx] = distInt;
+            }
+        } else {
+            lastPrintWaiting[idx] = 0;
+        }
+        lastPrintWaiting[idx] = waiting;
+    }
+
+    setSpawnDistance(distance);
+}
+
+static void kothUpdateRespawnDistanceForLocals(void)
+{
+    Player **players = playerGetAll();
+    int i;
+    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+        Player *p = players[i];
+        if (!p || !p->isLocal)
+            continue;
+        if (!p->timers.resurrectWait)
+            continue;
+        kothUpdateRespawnDistance(p);
+    }
+}
+
+static u32 kothGetActiveHillColor(void)
+{
+    // Default white; tint to the single team occupying the hill if applicable.
+    const u32 defaultColor = 0x00FFFFFF;
+    static u32 cachedColor = defaultColor;
+    static int lastPollTime = 0;
+
+    int now = gameGetTime();
+    // Update at most once per second to reduce per-frame scanning cost.
+    if (now - lastPollTime < TIME_SECOND)
+        return cachedColor;
+    lastPollTime = now;
+
+    if (!kothUseTeams())
+        return (cachedColor = defaultColor);
+
+    int activeIdx = kothGetActiveHillIndex();
+    if (activeIdx < 0)
+        return (cachedColor = defaultColor);
+
+    int seenTeam = -1;
+    Player **players = playerGetAll();
+    int i;
+    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+        Player *p = players[i];
+        if (!p || playerIsDead(p) || p->vehicle)
+            continue;
+        if (!playerInsideHill(p))
+            continue;
+        int team = p->mpTeam;
+        if (team < 0 || team >= TEAM_MAX)
+            continue;
+        if (seenTeam < 0) {
+            seenTeam = team;
+        } else if (seenTeam != team) {
+            // Mixed teams; keep neutral to avoid confusing tint.
+            return (cachedColor = defaultColor);
+        }
+    }
+
+    if (seenTeam >= 0 && seenTeam < TEAM_MAX)
+        return (cachedColor = TEAM_COLORS[seenTeam]);
+
+    return (cachedColor = defaultColor);
 }
 
 void kothInit(void)
@@ -1542,6 +1734,7 @@ void kothTick(void)
     }
 
     kothInit();
+    kothUpdateRespawnDistanceForLocals();
     drawHills();
     drawHud();
 
