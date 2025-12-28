@@ -41,8 +41,15 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
     uyaPreUpdate();
 
     // Ensure in game
-    if (!gameSettings || !isInGame())
+    if (!gameSettings || !isInGame()) {
+        // If we dropped out of a match, clear KOTH state so the next game starts fresh.
+        if (State.Initialized) {
+            kothReset();
+            State.Initialized = 0;
+            State.GameOver = 0;
+        }
         return;
+    }
 
     // Determine if host
     State.IsHost = gameAmIHost();

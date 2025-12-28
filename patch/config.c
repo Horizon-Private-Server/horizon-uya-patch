@@ -321,6 +321,20 @@ MenuElem_ListData_t dataKothHillSize = {
     .items = { "1x", "1.5x", "2x", "2.5x", "3x", "3.5x", "4x" }
 };
 
+MenuElem_ListData_t dataKothRespawnOutside = {
+    .value = &gameConfig.grKothRespawnOutside,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 7,
+    .items = { "40", "60", "80", "120", "10", "20", "30" }
+};
+
+MenuElem_ListData_t dataKothRespawnInside = {
+    .value = &gameConfig.grKothRespawnInside,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 7,
+    .items = { "40", "60", "80", "120", "10", "20", "30" }
+};
+
 MenuElem_ListData_t dataV2_Setting = {
     .value = &gameConfig.grV2s,
     .stateHandler = NULL,
@@ -505,6 +519,8 @@ MenuElem_t menuElementsGameSettings[] = {
   { "KOTH Points", listActionHandler, menuStateHandler_KOTH, &dataKothScoreLimit, "Points needed to win King of the Hill (0 = disabled, uses timer if set)." },
   { "KOTH Hill Duration", listActionHandler, menuStateHandler_KOTH, &dataKothHillDuration, "How long a hill stays active before rotating to the next." },
   { "KOTH Hill Size", listActionHandler, menuStateHandler_KOTH, &dataKothHillSize, "Scale for KOTH hill radius (XY)." },
+  { "KOTH Outside Respawn Dist", listActionHandler, menuStateHandler_KOTH, &dataKothRespawnOutside, "Spawn distance used while waiting to respawn (default 40)." },
+  { "KOTH Inside Respawn Dist", listActionHandler, menuStateHandler_KOTH, &dataKothRespawnInside, "If a teammate is holding the hill, use this spawn distance while waiting to respawn." },
   { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset, "Select one of the preconfigured game rule presets or manually set the custom game rules below." },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
