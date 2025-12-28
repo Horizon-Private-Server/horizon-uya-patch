@@ -516,3 +516,17 @@ VARIABLE_FUNCTION(cameraSetFov, vaCameraSetFOV)
 #------------------------ PAD ---------------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(padRingBitsOn, vaPadRingBitsOn)
+
+#--------------------------------------------------------
+#------------------------ HUD ---------------------------
+#--------------------------------------------------------
+VARIABLE_FUNCTION(hudAddToContainer, vaAddFrameToContainer)
+VARIABLE_FUNCTION(hudCreateTextArea, vaCreateWidgetTextArea)
+VARIABLE_FUNCTION(hudCreateText, vaCreateWidgetText)
+VARIABLE_FUNCTION(hudCreateRectangle, vaCreateWidgetRectangle)
+VARIABLE_FUNCTION(hudSetSprite, vaWidgetSetTexture)
+VARIABLE_FUNCTION(hudSetColor, vaWidgetSetColor)
+VARIABLE_FUNCTION(hudSetPosition, vaWidgetSetPosition)
+VARIABLE_FUNCTION(hudSetScale, vaWidgetSetScale)
+VARIABLE_FUNCTION(hudSetFlags, vaSetFrameContainerFlags)
+VARIABLE_FUNCTION(hudSetTextScale, vaSetTextScale)
