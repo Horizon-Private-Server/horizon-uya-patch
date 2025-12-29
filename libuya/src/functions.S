@@ -308,6 +308,8 @@ VARIABLE_FUNCTION(gfxDrawScreenOverlay, vaDrawScreenOverlay)
 VARIABLE_FUNCTION(gfxDrawStrip, vaFastDrawStrip);
 VARIABLE_FUNCTION(gfxDrawStripInit, vaDrawStripInit)
 VARIABLE_FUNCTION(gfxAddRegister, vaVU0_addGSRegister)
+VARIABLE_FUNCTION(gfxWStoMapSpace, vaWorldSpaceToMapSpaceFromPosition)
+
 
 #--------------------------------------------------------
 #------------------------- GAME -------------------------
@@ -521,12 +523,18 @@ VARIABLE_FUNCTION(padRingBitsOn, vaPadRingBitsOn)
 #------------------------ HUD ---------------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(hudAddToContainer, vaAddFrameToContainer)
+
+VARIABLE_FUNCTION(hudCreateContainer, vaCreateWidgdetFrameContainer)
 VARIABLE_FUNCTION(hudCreateTextArea, vaCreateWidgetTextArea)
 VARIABLE_FUNCTION(hudCreateText, vaCreateWidgetText)
 VARIABLE_FUNCTION(hudCreateRectangle, vaCreateWidgetRectangle)
+
 VARIABLE_FUNCTION(hudSetSprite, vaWidgetSetTexture)
 VARIABLE_FUNCTION(hudSetColor, vaWidgetSetColor)
 VARIABLE_FUNCTION(hudSetPosition, vaWidgetSetPosition)
 VARIABLE_FUNCTION(hudSetScale, vaWidgetSetScale)
-VARIABLE_FUNCTION(hudSetFlags, vaSetFrameContainerFlags)
-VARIABLE_FUNCTION(hudSetTextScale, vaSetTextScale)
+VARIABLE_FUNCTION(hudSetFlags, vaWidgetSetFrameContainerFlags)
+VARIABLE_FUNCTION(hudSetTextScale, vaWidgetSetTextScale)
+VARIABLE_FUNCTION(hudSetRotation, vaWidgetSetRotation)
+VARIABLE_FUNCTION(hudSetDropShaddowOffset, vaWidgetSetDropShadowOffset)
+VARIABLE_FUNCTION(hudSetAlignFlags, vaWidgetSetAlignmentFlags)
