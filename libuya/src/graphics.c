@@ -921,6 +921,34 @@ VariableAddress_t vaVU0_addGSRegister = {
 #endif
 };
 
+VariableAddress_t vaWorldSpaceToMapSpaceFromPosition = {
+#if UYA_PAL
+	.Lobby = 0x005dc338,
+	.Bakisi = 0x004aea20,
+	.Hoven = 0x004b0b38,
+	.OutpostX12 = 0x004a6410,
+	.KorgonOutpost = 0x004a3ba8,
+	.Metropolis = 0x004a2ef8,
+	.BlackwaterCity = 0x004a0790,
+	.CommandCenter = 0x004a0788,
+	.BlackwaterDocks = 0x004a3008,
+	.AquatosSewers = 0x004a2308,
+	.MarcadiaPalace = 0x004a1c88,
+#else
+	.Lobby = 0x005d9d90,
+	.Bakisi = 0x004ac4d0,
+	.Hoven = 0x004ae528,
+	.OutpostX12 = 0x004a3e40,
+	.KorgonOutpost = 0x004a1658,
+	.Metropolis = 0x004a09a8,
+	.BlackwaterCity = 0x0049e1c0,
+	.CommandCenter = 0x0049e378,
+	.BlackwaterDocks = 0x004a0bb8,
+	.AquatosSewers = 0x0049fef8,
+	.MarcadiaPalace = 0x0049f838,
+#endif
+};
+
 //--------------------------------------------------------
 int gfxScreenSpaceText(float x, float y, float scaleX, float scaleY, u32 color, const char * string, int length, int alignment, int font)
 {
@@ -1242,20 +1270,6 @@ int gfxGetRegisteredDrawCount(void)
     return REGISTERED_DRAW_COUNT;
 }
 
-void gfxWStoMapSpace(VECTOR position, float *output_x, float *output_y)
-{
-    if(GAME_MAP_ID % 10 > 6) return;
-
-    HudMap_t *minimap = (HudMap_t*)hudGetMapData();
-    int mapId = GAME_MAP_ID;
-    float xNorm = (position[0] - minimap->offset[mapId].max_x) / (minimap->offset[mapId].max_x - minimap->offset[mapId].min_x);
-    float yNorm = (position[1] - minimap->offset[mapId].min_y) / (minimap->offset[mapId].max_y - minimap->offset[mapId].min_y);
-    xNorm = (0.8 * xNorm) + 0.1;
-    yNorm = (0.35 - yNorm * 0.7) + 0.52;
-    *output_x = clamp(xNorm, 0, 1);
-    *output_y = clamp(yNorm, 0, 1);
-}
-
 void gfxMapSpaceFromMoby(Moby *pMoby, float *output_x, float *output_y)
 {
     gfxWStoMapSpace(pMoby->position, output_x, output_y);
@@ -1263,9 +1277,5 @@ void gfxMapSpaceFromMoby(Moby *pMoby, float *output_x, float *output_y)
 
 void gfxGetMapSpaceFromMobyIndex(int mobyIndex, float *output_x, float *output_y)
 {
-    if (mobyIndex < 0)
-        return -1;
-
-    Moby *m = mobyListGetStart();
-    gfxWStoMapSpace(m + mobyIndex, output_x, output_y);
+    gfxMapSpaceFromMoby(&((Moby*)mobyListGetStart())[mobyIndex], output_x, output_y);
 }
