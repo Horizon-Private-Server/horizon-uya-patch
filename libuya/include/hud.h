@@ -8,6 +8,50 @@
 
 typedef unsigned int HANDLE_ID;
 
+// 1. Define widget ID ranges using enums with explicit values
+typedef enum {
+    // Radar widgets (0x50000 - 0x500FF)
+    HUD_RADAR_ROOT          = 0x50000,
+    HUD_RADAR_MAP_CONTAINER = 0x50001,
+    HUD_RADAR_MAP_BG        = 0x50006,
+    HUD_RADAR_CURSOR_SELECT = 0x50007,
+    HUD_RADAR_CURSOR_PLAYER = 0x50008,
+    HUD_RADAR_BASE_TEAM1    = 0x50009,
+    HUD_RADAR_BASE_TEAM2    = 0x5000A,
+    
+    HUD_RADAR_NODE_CONTAINER = 0x50002,
+    HUD_RADAR_NODE_START     = 0x5000B,
+    HUD_RADAR_NODE_END       = 0x50012,
+    
+    HUD_RADAR_VEHICLE_CONTAINER = 0x50003,
+    HUD_RADAR_VEHICLE_START     = 0x5001B,
+    HUD_RADAR_VEHICLE_END       = 0x50022,
+    
+    HUD_RADAR_PLAYER_CONTAINER = 0x50004,
+    HUD_RADAR_PLAYER_START     = 0x50013,
+    HUD_RADAR_PLAYER_END       = 0x5001A,
+    
+    HUD_RADAR_TEXT_CONTAINER = 0x50005,
+    HUD_RADAR_TEXT_RESPAWN   = 0x50023,
+    HUD_RADAR_TEXT_NODE_SEL  = 0x50024,
+    
+    // Health HUD widgets (0x51000 - 0x510FF)
+    HUD_HEALTH_ROOT          = 0x51000,
+    HUD_HEALTH_BAR_BG        = 0x51001,
+    HUD_HEALTH_BAR_FILL      = 0x51002,
+    // ... more health widgets
+    
+    // Weapon HUD widgets (0x52000 - 0x520FF)
+    HUD_WEAPON_ROOT          = 0x52000,
+    // ... weapon widgets
+    
+} HudWidgetId_e;
+
+typedef struct HudEntry {
+    HANDLE_ID parent;
+    HANDLE_ID child;
+} HudEntry_t;
+
 typedef enum eEngineState {
     ENGINE_IDLE = 0,
     ENGINE_READY = 1,
@@ -208,7 +252,7 @@ struct iGraphicsObject { // 0x28
 /* 0x24 */ int *vtable;
 };
 
-struct iFrame {
+struct iFrame { // 0x3c
 /* 0x00 */ struct iObject object;
 /* 0x0c */ u32 controlFlags;
 /* 0x10 */ vec2f pos;
@@ -221,7 +265,7 @@ struct iFrame {
 /* 0x38 */ u32 color;
 };
 
-typedef struct WidgetRectangle { // 60
+typedef struct WidgetRectangle { // 0x60
 /* 0x00 */ struct iFrame frame;
 /* 0x40 */ float rotation;
 /* 0x44 */ u32 color1;
@@ -360,17 +404,20 @@ Engine_t *hudGetInstance(void);
 EngineData_t *hudGetEngineData(void);
 int hudGetCurrentCanvas(void);
 
-bool hudAddToContainer(unsigned int container_id, unsigned int frame_id);
-bool hudCreateRectangle(float x, float y, float w, float h, unsigned int handle_id, u32 color,int sprite);
-bool hudCreateText(float x, float y, float w, float h, unsigned int handle_id, char *pText, u32 color);
-bool hudCreateTextArea(float x, float y, float w, float h, float text_scale, unsigned int handle_id, char *pText, u32 color);
+bool hudAddToContainer(HANDLE_ID container_id, HANDLE_ID frame_id);
+bool hudCreateRectangle(float x, float y, float w, float h, HANDLE_ID handle_id, u32 color,int sprite);
+bool hudCreateText(float x, float y, float w, float h, HANDLE_ID handle_id, char *pText, u32 color);
+bool hudCreateTextArea(float x, float y, float w, float h, float text_scale, HANDLE_ID handle_id, char *pText, u32 color);
 
-bool hudSetScale(float width, float height, unsigned int handle_id);
-bool hudSetPosition(float x, float y, unsigned int handle_id);
-bool hudSetColor(unsigned int handle_id, u32 color);
-bool hudSetSprite(unsigned int handle_id, SpriteTex_Hud_e sprite);
-bool hudSetFlags(unsigned int handle_id, unsigned int flags, bool value);
-bool hudSetTextScale(float scale, unsigned int handle_id);
+bool hudSetScale(float width, float height, HANDLE_ID handle_id);
+bool hudSetPosition(float x, float y, HANDLE_ID handle_id);
+bool hudSetColor(HANDLE_ID handle_id, u32 color);
+bool hudSetSprite(HANDLE_ID handle_id, SpriteTex_Hud_e sprite);
+bool hudSetFlags(HANDLE_ID handle_id, unsigned int flags, bool value);
+bool hudSetTextScale(float scale, HANDLE_ID handle_id);
+bool hudSetRotation(float rotation, HANDLE_ID handle_id);
+bool hudSetDropShadowOffset(float x, float y, HANDLE_ID handle_id);
+bool hudSetAligFlags(HANDLE_ID handle_id, unsigned int align_x, unsigned int align_y);
 
 ConcretePreLoadedImageBuffer_t* gfxGetPreLoadedImageBufferSource(int which);
 
