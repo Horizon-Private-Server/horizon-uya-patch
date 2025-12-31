@@ -16,6 +16,7 @@
 #include <libuya/net.h>
 #include <libuya/team.h>
 #include <libuya/math.h>
+#include <libuya/hud.h>
 #include "messageid.h"
 #include "config.h"
 #include "include/koth.h"
@@ -27,8 +28,13 @@
 #define KOTH_RING_HEIGHT_SCALE 1.0f
 #define KOTH_SIZE_OPTIONS 7
 
+#define KOTH_HUD_SPRITE (SPRITE_HUD_BOLT)
+#define KOTH_HUD_CONTAINER_ID (0xacdc0000)
+#define KOTH_HUD_FRAME_ID (KOTH_HUD_CONTAINER_ID + 1)
+
+
 // Set to 1 to enable verbose KOTH debugging at compile time.
-#define KOTH_DEBUG 1
+#define KOTH_DEBUG 0
 #if KOTH_DEBUG
 #define KOTH_LOG(fmt, args...) printf(fmt, ##args)
 #else
@@ -900,13 +906,13 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
     segments = (int)clampf((float)segments, (float)MIN_SEGMENTS, (float)MAX_SEGMENTS);
     float thetaStep = 2 * MATH_PI / (float)segments;
 
-    vec3 positions[(MAX_SEGMENTS + 1) * 2];
-    u32 colors[(MAX_SEGMENTS + 1) * 2];
-    UV_t uvs[(MAX_SEGMENTS + 1) * 2];
-    // Paranoia: clear buffers so unused slots can't leak stale data if segment count changes.
-    memset(positions, 0, sizeof(positions));
-    memset(colors, 0, sizeof(colors));
-    memset(uvs, 0, sizeof(uvs));
+    // vec3 positions[(MAX_SEGMENTS + 1) * 2];
+    // u32 colors[(MAX_SEGMENTS + 1) * 2];
+    // UV_t uvs[(MAX_SEGMENTS + 1) * 2];
+    // // Paranoia: clear buffers so unused slots can't leak stale data if segment count changes.
+    // memset(positions, 0, sizeof(positions));
+    // memset(colors, 0, sizeof(colors));
+    // memset(uvs, 0, sizeof(uvs));
 
 #if KOTH_FADE_WARNING
     // Fade/pulse as we approach hill rotation.
@@ -1357,6 +1363,7 @@ void scoreboard(int maxScore, int* scores)
 static void drawHud(void)
 {
     scoreboard(kothGetScoreLimit(), kothScores);
+    radarUpdate();
 }
 
 int kothOnReceiveScore(void *connection, void *data)
@@ -1441,6 +1448,36 @@ void kothReset(void)
     memset(lastBroadcastScore, 0, sizeof(lastBroadcastScore));
 }
 
+void radarInit(void)
+{
+    // Create container first
+    hudCreateContainer(KOTH_HUD_CONTAINER_ID);
+    // Make container visible
+    hudSetFlags(KOTH_HUD_CONTAINER_ID, 1, true);
+    // Add container to radar root (0x50000) so it renders
+    hudAddToContainer(HUD_RADAR_ROOT, KOTH_HUD_CONTAINER_ID);
+    // create rectangle widget
+    if (hudCreateRectangle(0.05, 0.05, 0.05, 0.05, KOTH_HUD_FRAME_ID, 0x80ffffff, KOTH_HUD_SPRITE)) {
+        // add rectrangle frame to main container
+        hudAddToContainer(KOTH_HUD_CONTAINER_ID, KOTH_HUD_FRAME_ID);
+        // set visibility
+        hudSetFlags(KOTH_HUD_FRAME_ID, 1, true);
+    }
+}
+
+void radarUpdate(void)
+{
+    float x, y;
+    int id = KOTH_HUD_FRAME_ID;
+    int a = kothGetActiveHillIndex();
+    if (!hills[a].drawMoby)
+        return;
+
+    gfxWStoMapSpace(hills[a].drawMoby->position, &x, &y);
+    hudSetPosition(x, y, id);
+    hudSetColor(id, 0x80ffffff);
+}
+
 void kothInit(void)
 {
     if (!handlerInstalled) {
@@ -1470,6 +1507,9 @@ void kothInit(void)
     }
 
     scanHillsOnce();
+
+    radarInit();
+
 #if KOTH_DEBUG
     // Log once per init call (not every frame) when we actually set up hills/handlers.
     if (!kothInitLogged) {
