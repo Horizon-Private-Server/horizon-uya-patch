@@ -275,6 +275,34 @@ VariableAddress_t vaCreateWidgdetFrameContainer = {
 #endif
 };
 
+VariableAddress_t vaWidgetCreate3d_2D = {
+#if UYA_PAL
+	.Lobby = 0x006129e8,
+	.Bakisi = 0x004e4910,
+	.Hoven = 0x004e6a28,
+	.OutpostX12 = 0x004dc300,
+	.KorgonOutpost = 0x004d9a98,
+	.Metropolis = 0x004d8de8,
+	.BlackwaterCity = 0x004d6680,
+	.CommandCenter = 0x004d6648,
+	.BlackwaterDocks = 0x004d8ec8,
+	.AquatosSewers = 0x004d81c8,
+	.MarcadiaPalace = 0x004d7b48,
+#else
+	.Lobby = 0x006102d0,
+	.Bakisi = 0x004e2250,
+	.Hoven = 0x004e42a8,
+	.OutpostX12 = 0x004d9bc0,
+	.KorgonOutpost = 0x004d73d8,
+	.Metropolis = 0x004d6728,
+	.BlackwaterCity = 0x004d3f40,
+	.CommandCenter = 0x004d40c8,
+	.BlackwaterDocks = 0x004d6908,
+	.AquatosSewers = 0x004d5c48,
+	.MarcadiaPalace = 0x004d5588,
+#endif
+};
+
 VariableAddress_t vaCreateWidgetRectangle = {
 #if UYA_PAL
 	.Lobby = 0x00612c30,
@@ -527,6 +555,62 @@ VariableAddress_t vaAddFrameToContainer = {
 #endif
 };
 
+VariableAddress_t vaSetLayer = {
+#if UYA_PAL
+	.Lobby = 0x0060f1c0,
+	.Bakisi = 0x004e1920,
+	.Hoven = 0x004e3a38,
+	.OutpostX12 = 0x004d9310,
+	.KorgonOutpost = 0x004d6aa8,
+	.Metropolis = 0x004d5df8,
+	.BlackwaterCity = 0x004d3690,
+	.CommandCenter = 0x004d3658,
+	.BlackwaterDocks = 0x004d5ed8,
+	.AquatosSewers = 0x004d51d8,
+	.MarcadiaPalace = 0x004d4b58,
+#else
+	.Lobby = 0x0060cac0,
+	.Bakisi = 0x004df278,
+	.Hoven = 0x004e12d0,
+	.OutpostX12 = 0x004d6be8,
+	.KorgonOutpost = 0x004d4400,
+	.Metropolis = 0x004d3750,
+	.BlackwaterCity = 0x004d0f68,
+	.CommandCenter = 0x004d10f0,
+	.BlackwaterDocks = 0x004d3930,
+	.AquatosSewers = 0x004d2c70,
+	.MarcadiaPalace = 0x004d25b0,
+#endif
+};
+
+VariableAddress_t vaClearLayer = {
+#if UYA_PAL
+	.Lobby = 0x0060f298,
+	.Bakisi = 0x004e19f8,
+	.Hoven = 0x004e3b10,
+	.OutpostX12 = 0x004d93e8,
+	.KorgonOutpost = 0x004d6b80,
+	.Metropolis = 0x004d5ed0,
+	.BlackwaterCity = 0x004d3768,
+	.CommandCenter = 0x004d3730,
+	.BlackwaterDocks = 0x004d5fb0,
+	.AquatosSewers = 0x004d52b0,
+	.MarcadiaPalace = 0x004d4c30,
+#else
+	.Lobby = 0x0060cb98,
+	.Bakisi = 0x004df350,
+	.Hoven = 0x004e13a8,
+	.OutpostX12 = 0x004d6cc0,
+	.KorgonOutpost = 0x004d44d8,
+	.Metropolis = 0x004d3828,
+	.BlackwaterCity = 0x004d1040,
+	.CommandCenter = 0x004d11c8,
+	.BlackwaterDocks = 0x004d3a08,
+	.AquatosSewers = 0x004d2d48,
+	.MarcadiaPalace = 0x004d2688,
+#endif
+};
+
 HudMap_t *hudGetMapData(void)
 {
     return HUD_RADAR_PLAYERDATA;
@@ -567,4 +651,20 @@ int hudGetCurrentCanvas(void)
 		return -1;
 	
 	return instance->data->current_canvas;
+}
+
+bool hudSetCurrentCanvasLayer(int whichLayer, HANDLE_ID handle_id)
+{
+	Canvas_t *c = hudGetCurrentCanvas();
+	if(!c) return 0;
+
+	return hudSetLayer(&c, whichLayer, handle_id);
+}
+
+bool hudClearCurrentCanvasLayer(int whichLayer)
+{
+	Canvas_t *c = hudGetCurrentCanvas();
+	if(!c) return 0;
+
+	return hudClearLayer(c, whichLayer);
 }

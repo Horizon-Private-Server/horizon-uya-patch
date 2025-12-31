@@ -71,8 +71,8 @@ typedef enum WIDGET_TYPE {
 	WIDGET_TEXTAREA = 3,
 	WIDGET_RECTANGLE = 4,
 	WIDGET_HOLLOW_RECTANGLE = 5,
-	WIDGET_3D = 6,
-	WIDGIET_FRAME_CONTAINER = 7
+	WIDGET_3D_2D = 6,
+	WIDGET_FRAME_CONTAINER = 7
 };
 
 struct MapOffsets { // 0x20
@@ -134,9 +134,9 @@ typedef struct CanvasData {
 /* 0x2678 */ unsigned int data_layer;
 } CanvasData_t;
 
-struct Canvas {
+typedef struct Canvas {
 /* 0x0 */ CanvasData_t *data;
-};
+} Canvas_t;
 
 struct iHeap { // 0x4
 /* 0x0 */ int *vtable;
@@ -252,37 +252,37 @@ struct iGraphicsObject { // 0x28
 /* 0x24 */ int *vtable;
 };
 
-struct iFrame { // 0x3c
+struct iFrame { // 0x30
 /* 0x00 */ struct iObject object;
 /* 0x0c */ u32 controlFlags;
 /* 0x10 */ vec2f pos;
 /* 0x18 */ vec2f scale;
 /* 0x20 */ vec2f dropshadow_offset;
-/* 0x28 */ float alpha;
-/* 0x2c */ float rot;
-/* 0x30 */ int unk_30;
-/* 0x34 */ u32 dropshadow_color;
-/* 0x38 */ u32 color;
+/* 0x28 */ u32 dropshadow_color;
+/* 0x2c */ u32 color;
 };
 
-typedef struct WidgetRectangle { // 0x60
+typedef struct WidgetRectangle { // 0x54
 /* 0x00 */ struct iFrame frame;
-/* 0x40 */ float rotation;
-/* 0x44 */ u32 color1;
-/* 0x48 */ u32 color2;
-/* 0x4c */ u32 color3;
-/* 0x50 */ u16 textureId;
-/* 0x52 */ u16 frameNum;
-/* 0x54 */ char total_fade_frames;
-/* 0x55 */ char fade_frame;
-/* 0x56 */ char renderstate;
-/* 0x57 */ char pad;
-/* 0x58 */ struct DataSource *datasource;
+/* 0x30 */ float rotation;
+/* 0x34 */ int unk_34;
+/* 0x38 */ u32 color1;
+/* 0x3c */ u32 color2;
+/* 0x40 */ u32 color3;
+/* 0x44 */ u32 color4;
+/* 0x48 */ u16 textureId;
+/* 0x4a */ u16 currFrame;
+/* 0x4c */ char total_fade_frames;
+/* 0x4d */ char fade_frame;
+/* 0x4e */ char renderstate;
+/* 0x4f */ char pad;
+/* 0x50 */ struct DataSource *datasource;
 } WidgetRectangle_t;
 
-typedef struct WidgetHallowRectangle { // 0x48
+typedef struct WidgetHallowRectangle { // 0x3c
 /* 0x00 */ struct iFrame frame;
-/* 0x40 */ vec2f insets;
+/* 0x30 */ char unk_30[0x4];
+/* 0x34 */ vec2f insets;
 } WidgetHallowRectangle_t;
 
 typedef struct WidgetTextGraphic { // 0x40
@@ -293,19 +293,20 @@ typedef struct WidgetTextGraphic { // 0x40
 /* 0x3c */ TextAlignment_e textAlignment;
 } WidgetTextGraphic_t;
 
-typedef struct WidgetTextFrame { // 0x70
+typedef struct WidgetText { // 0x64
 /* 0x00 */ struct iFrame frame;
-/* 0x40 */ vec2f rot;
-/* 0x48 */ int fontTable;
-/* 0x4c */ char *pExternalStringMemory;
-/* 0x50 */ unsigned int font_FX;
-/* 0x54 */ unsigned char widget_text_control;
-/* 0x58 */ float maxWidth;
-/* 0x5c */ float minimumScale;
-/* 0x60 */ unsigned char pointSize;
-/* 0x64 */ int fontText;
-/* 0x68 */ vec2f cached_scale;
-} WidgetTextFrame_t;
+/* 0x30 */ int unk_30;
+/* 0x34 */ vec2f rot;
+/* 0x3c */ int fontTable;
+/* 0x40 */ char *pExternalStringMemory;
+/* 0x44 */ unsigned int font_FX;
+/* 0x48 */ u32 widget_text_control;
+/* 0x4c */ float maxWidth;
+/* 0x50 */ float minimumScale;
+/* 0x54 */ u32 pointSize;
+/* 0x58 */ int fontText;
+/* 0x5c */ vec2f cached_scale;
+} WidgetText_t;
 
 typedef struct WidgetTextAreaData { // 0x54
 /* 0x00 */ vec2f rot;
@@ -334,13 +335,21 @@ typedef struct WidgetTextAreaData { // 0x54
 /* 0x52 */ char did_first_pass;
 } WidgetTextAreaData_t;
 
-typedef struct WidgetTextArea { // 0x50
+typedef struct WidgetTextArea { // 0x38
 /* 0x00 */ struct iFrame frame;
-/* 0x40 */ WidgetTextAreaData_t *data;
-/* 0x44 */ bool bTextSizesDirty;
-/* 0x48 */ float text_w;
-/* 0x4c */ float text_h;
+/* 0x30 */ WidgetTextAreaData_t *data;
+/* 0x34 */ bool bTextSizesDirty;
+/* 0x38 */ float text_w;
+/* 0x3c */ float text_h;
 } WidgetTextArea_t;
+
+struct Widget3d_2D { // 0x48
+/* 0x00 */ struct iFrame frame;
+/* 0x30 */ float rotation;
+/* 0x34 */ float widget_frame;
+/* 0x38 */ unsigned int widget_id;
+/* 0x3c */ void *widget_data_source;
+};
 
 typedef struct Widget2D { // 0x20
 /* 0x00 */ short int *positions;
@@ -403,11 +412,16 @@ HudMap_t *hudGetMapData(void);
 Engine_t *hudGetInstance(void);
 EngineData_t *hudGetEngineData(void);
 int hudGetCurrentCanvas(void);
+bool hudSetLayer(Canvas_t *canvas, int whichLayer, HANDLE_ID handle_id);
+bool hudSetCurrentCanvasLayer(int whichLayer, HANDLE_ID handle_id);
+bool hudClearLayer(Canvas_t *canvas, int whichLayer);
+bool hudClearCurrentCanvasLayer(int whichLayer);
 
 bool hudAddToContainer(HANDLE_ID container_id, HANDLE_ID frame_id);
 bool hudCreateRectangle(float x, float y, float w, float h, HANDLE_ID handle_id, u32 color,int sprite);
 bool hudCreateText(float x, float y, float w, float h, HANDLE_ID handle_id, char *pText, u32 color);
 bool hudCreateTextArea(float x, float y, float w, float h, float text_scale, HANDLE_ID handle_id, char *pText, u32 color);
+bool hudCreateFrame(float x, float y, float w, float h, float art_animation_frame, HANDLE_ID handle_id, int art_data_id, u32 color);
 
 bool hudSetScale(float width, float height, HANDLE_ID handle_id);
 bool hudSetPosition(float x, float y, HANDLE_ID handle_id);
