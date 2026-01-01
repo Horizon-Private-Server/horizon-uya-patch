@@ -341,6 +341,7 @@ static float kothSelectRespawnDistance(Player *player);
 static void kothUpdateRespawnDistance(Player *player);
 static void kothUpdateRespawnDistanceForLocals(void);
 static u32 kothGetActiveHillColor(void);
+static float kothGetBlinkScale(void);
 
 void kothSetConfig(PatchGameConfig_t *config)
 {
@@ -915,6 +916,34 @@ static void kothCheckVictory(void)
     }
 }
 
+static float kothGetBlinkScale(void)
+{
+#if KOTH_FADE_WARNING
+    // Fade/pulse as we approach hill rotation.
+    float fadeScale = 1.0f;
+    const int warnMs = 10 * TIME_SECOND;
+    int duration = kothGetHillDurationMs();
+    if (duration > 0 && hillCount > 0) {
+        kothEnsureCycleStart();
+        if (hillCycleStartTime > 0) {
+            int elapsed = gameGetTime() - hillCycleStartTime;
+            if (elapsed < 0)
+                elapsed = 0;
+            int cycElapsed = elapsed % duration;
+            int timeLeft = duration - cycElapsed;
+            if (timeLeft < warnMs) {
+                int seconds = timeLeft / TIME_SECOND;
+                int phase = seconds & 1; // toggle each second
+                fadeScale = phase ? 1.0f : 0.0f;
+            }
+        }
+    }
+    return fadeScale;
+#else
+    return 1.0f;
+#endif
+}
+
 static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, float radiusZ, int isCircle, float cosYaw, float sinYaw)
 {
     const int MAX_SEGMENTS = 64;
@@ -948,38 +977,16 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
     // memset(colors, 0, sizeof(colors));
     // memset(uvs, 0, sizeof(uvs));
 
-#if KOTH_FADE_WARNING
-    // Fade/pulse as we approach hill rotation.
-    float fadeScale = 1.0f;
-    const int warnMs = 10 * TIME_SECOND;
-    int duration = kothGetHillDurationMs();
-    if (duration > 0 && hillCount > 0) {
-        kothEnsureCycleStart();
-        if (hillCycleStartTime > 0) {
-            int elapsed = gameGetTime() - hillCycleStartTime;
-            if (elapsed < 0)
-                elapsed = 0;
-            int cycElapsed = elapsed % duration;
-            int timeLeft = duration - cycElapsed;
-            if (timeLeft < warnMs) {
-                int seconds = timeLeft / TIME_SECOND;
-                int phase = seconds & 1; // toggle each second
-                fadeScale = phase ? 1.0f : 0.0f;
-            }
-        }
-    }
-#endif
+    float fadeScale = kothGetBlinkScale();
 
     int alphaNear = (int)(0x80 * KOTH_RING_ALPHA_SCALE);
     if (alphaNear > 0xFF) alphaNear = 0xFF;
     int alphaFar = (int)(0x50 * KOTH_RING_ALPHA_SCALE);
     if (alphaFar > 0xFF) alphaFar = 0xFF;
-#if KOTH_FADE_WARNING
     alphaNear = (int)(alphaNear * fadeScale);
     alphaFar = (int)(alphaFar * fadeScale);
     if (alphaNear > 0xFF) alphaNear = 0xFF;
     if (alphaFar > 0xFF) alphaFar = 0xFF;
-#endif
 
     u32 baseRgb = color & 0x00FFFFFF;
 
@@ -1123,10 +1130,8 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
     int floorAlpha = 0x40;
     // Optional: tweak floor tint to push greener (uncomment to apply).
     // baseRgb = (baseRgb & 0x00FF00FF) | (((baseRgb >> 16) & 0xFF) << 8); // example tweak
-#if KOTH_FADE_WARNING
     floorAlpha = (int)(floorAlpha * fadeScale);
     if (floorAlpha > 0xFF) floorAlpha = 0xFF;
-#endif
     floorQuad.rgba[0] = floorQuad.rgba[1] = floorQuad.rgba[2] = floorQuad.rgba[3] = (floorAlpha << 24) | baseRgb;
     vector_copy(floorQuad.point[0], corners[1]);
     vector_copy(floorQuad.point[1], corners[0]);
@@ -1183,7 +1188,7 @@ static int kothGetActiveHillIndex(void)
 
 static void drawHill(Moby *moby)
 {
-    u32 baseColor = kothGetActiveHillColor(); // default white; tinted by team in hill when applicable
+    u32 baseColor = kothGetActiveHillColor(); // default white; blended toward hill occupants
     KothHill_t *hill = kothFindHill(moby);
     float *scroll = hill ? &hill->scroll : NULL;
     float fallbackScroll = 0;
@@ -1513,8 +1518,11 @@ void radarUpdate(void)
 
     gfxWStoMapSpace(draw->position, &x, &y);
     hudSetPosition(x, y, id);
-    // Alpha overlay tinted by current hill occupant team (if any).
-    hudSetColor(id, 0x80000000 | (kothGetActiveHillColor() & 0x00FFFFFF));
+    // Alpha overlay tinted by current hill occupant team (if any) and blinked with hill warning.
+    float fadeScale = kothGetBlinkScale();
+    int alpha = (int)(0x80 * fadeScale);
+    if (alpha > 0xFF) alpha = 0xFF;
+    hudSetColor(id, (alpha << 24) | (kothGetActiveHillColor() & 0x00FFFFFF));
 }
 
 static float kothDecodeRespawnValue(char idx)
@@ -1626,7 +1634,7 @@ static void kothUpdateRespawnDistanceForLocals(void)
 
 static u32 kothGetActiveHillColor(void)
 {
-    // Default white; tint to the single team occupying the hill if applicable.
+    // Default white; tint/blend to the colors of anyone occupying the hill.
     const u32 defaultColor = 0x00FFFFFF;
     static u32 cachedColor = defaultColor;
     static int lastPollTime = 0;
@@ -1638,13 +1646,15 @@ static u32 kothGetActiveHillColor(void)
     lastPollTime = now;
 
     if (!kothUseTeams())
-        return (cachedColor = defaultColor);
+        ; // still allow blending based on player index colors below
 
     int activeIdx = kothGetActiveHillIndex();
     if (activeIdx < 0)
         return (cachedColor = defaultColor);
 
-    int seenTeam = -1;
+    int colorCount = 0;
+    int accumR = 0, accumG = 0, accumB = 0;
+    int teamsMode = kothUseTeams();
     Player **players = playerGetAll();
     int i;
     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
@@ -1653,21 +1663,22 @@ static u32 kothGetActiveHillColor(void)
             continue;
         if (!playerInsideHill(p))
             continue;
-        int team = p->mpTeam;
-        if (team < 0 || team >= TEAM_MAX)
-            continue;
-        if (seenTeam < 0) {
-            seenTeam = team;
-        } else if (seenTeam != team) {
-            // Mixed teams; keep neutral to avoid confusing tint.
-            return (cachedColor = defaultColor);
-        }
+        int colorIdx = teamsMode ? p->mpTeam : p->mpIndex;
+        if (colorIdx < 0)
+            colorIdx = 0;
+        // Reuse TEAM_COLORS palette even in FFA for variety.
+        u32 color = TEAM_COLORS[colorIdx % TEAM_MAX];
+        accumR += (color >> 16) & 0xFF;
+        accumG += (color >> 8) & 0xFF;
+        accumB += color & 0xFF;
+        ++colorCount;
     }
 
-    if (seenTeam >= 0 && seenTeam < TEAM_MAX)
-        return (cachedColor = TEAM_COLORS[seenTeam]);
+    if (colorCount <= 0)
+        return (cachedColor = defaultColor);
 
-    return (cachedColor = defaultColor);
+    u32 blended = ((accumR / colorCount) << 16) | ((accumG / colorCount) << 8) | (accumB / colorCount);
+    return (cachedColor = blended);
 }
 
 void kothInit(void)
