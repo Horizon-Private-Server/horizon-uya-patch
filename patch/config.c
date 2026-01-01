@@ -2547,6 +2547,7 @@ void configTrySendGameConfig(void)
 {
   int state = 0;
   int i = 0, j = 0;
+//TODO before configTrySendGameConfig() decode hill size nibble for UI (so clients know see selected hill size in staging)
 
   // send game config to server for saving if tab is enabled
   tabElements[1].stateHandler(&tabElements[1], &state);
