@@ -8,7 +8,6 @@
 
 typedef unsigned int HANDLE_ID;
 
-// 1. Define widget ID ranges using enums with explicit values
 typedef enum {
     // Radar widgets (0x50000 - 0x500FF)
     HUD_RADAR_ROOT          = 0x50000,
@@ -34,6 +33,43 @@ typedef enum {
     HUD_RADAR_TEXT_CONTAINER = 0x50005,
     HUD_RADAR_TEXT_RESPAWN   = 0x50023,
     HUD_RADAR_TEXT_NODE_SEL  = 0x50024,
+    
+    // Siege/CTF HUD widgets (0x70000 - 0x700FF)
+    HUD_SIEGE_ROOT           = 0x70000,
+    HUD_SIEGE_MAIN_CONTAINER = 0x70001,  // Main score container
+    HUD_SIEGE_FRAME_BG_1     = 0x70002,  // Background frame (blue)
+    HUD_SIEGE_FRAME_BG_2     = 0x70003,  // Background frame (darker blue)
+    HUD_SIEGE_BAR_RED        = 0x70004,  // Red team bar
+    HUD_SIEGE_BAR_BLUE       = 0x70005,  // Blue team bar
+    HUD_SIEGE_BAR_BLUE_BG    = 0x70006,  // Blue bar background
+    HUD_SIEGE_BAR_RED_BG     = 0x70007,  // Red bar background
+    HUD_SIEGE_ICON_1         = 0x70008,
+    HUD_SIEGE_BAR_BG_2       = 0x70009,
+    HUD_SIEGE_BAR_FG_2       = 0x7000A,
+    HUD_SIEGE_NODE_1         = 0x7000B,  // Node indicators start
+    HUD_SIEGE_NODE_2         = 0x7000C,
+    HUD_SIEGE_NODE_3         = 0x7000D,
+    HUD_SIEGE_NODE_4         = 0x7000E,
+    HUD_SIEGE_NODE_5         = 0x7000F,
+    HUD_SIEGE_NODE_6         = 0x70010,
+    HUD_SIEGE_NODE_7         = 0x70011,  // Node indicators end
+    HUD_CTF_CONTAINER        = 0x70012,  // CTF-specific container
+    HUD_CTF_FRAME_BG_1       = 0x70013,
+    HUD_CTF_FRAME_BG_2       = 0x70014,
+    HUD_CTF_ICON             = 0x70015,
+    HUD_CTF_BAR_BLUE         = 0x70016,
+    HUD_CTF_BAR_RED          = 0x70017,
+    HUD_CTF_TEXT_1           = 0x70018,
+    HUD_CTF_TEXT_2           = 0x70019,
+    HUD_SIEGE_FLAG_CONTAINER = 0x7001A,  // Flag/node indicator container
+    HUD_SIEGE_FLAG_1         = 0x7001B,
+    HUD_SIEGE_FLAG_2         = 0x7001C,
+    HUD_SIEGE_FLAG_3         = 0x7001D,
+    HUD_SIEGE_FLAG_4         = 0x7001E,
+    HUD_SIEGE_FLAG_5         = 0x7001F,
+    HUD_SIEGE_FLAG_6         = 0x70020,
+    HUD_SIEGE_FLAG_7         = 0x70021,
+    HUD_SIEGE_FLAG_8         = 0x70022,
     
     // Health HUD widgets (0x51000 - 0x510FF)
     HUD_HEALTH_ROOT          = 0x51000,
@@ -411,7 +447,8 @@ HudMap_t *hudGetMapData(void);
 
 Engine_t *hudGetInstance(void);
 EngineData_t *hudGetEngineData(void);
-int hudGetCurrentCanvas(void);
+int hudGetCurrentCanvasIndex(void);
+Canvas_t *hudGetCurrentCanvas(void);
 bool hudSetLayer(Canvas_t *canvas, int whichLayer, HANDLE_ID handle_id);
 bool hudSetCurrentCanvasLayer(int whichLayer, HANDLE_ID handle_id);
 bool hudClearLayer(Canvas_t *canvas, int whichLayer);

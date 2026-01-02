@@ -23,6 +23,50 @@ static const HudEntry_t hud_radar[] = {
     {HUD_RADAR_TEXT_CONTAINER, HUD_RADAR_TEXT_NODE_SEL},
 };
 
+static const HudEntry_t hud_siege_ctf[] = {
+    // Root containers
+    {HUD_SIEGE_ROOT, HUD_SIEGE_MAIN_CONTAINER},
+    {HUD_SIEGE_ROOT, HUD_CTF_CONTAINER},
+    {HUD_SIEGE_ROOT, HUD_SIEGE_FLAG_CONTAINER},
+    
+    // Main container children (Siege score display)
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_FRAME_BG_2},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_FRAME_BG_1},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_BAR_BG_2},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_BAR_FG_2},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_ICON_1},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_BAR_RED_BG},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_BAR_BLUE_BG},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_BAR_BLUE},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_BAR_RED},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_NODE_1},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_NODE_2},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_NODE_3},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_NODE_4},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_NODE_5},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_NODE_6},
+    {HUD_SIEGE_MAIN_CONTAINER, HUD_SIEGE_NODE_7},
+    
+    // CTF container children
+    {HUD_CTF_CONTAINER, HUD_CTF_FRAME_BG_2},
+    {HUD_CTF_CONTAINER, HUD_CTF_BAR_BLUE},
+    {HUD_CTF_CONTAINER, HUD_CTF_BAR_RED},
+    {HUD_CTF_CONTAINER, HUD_CTF_ICON},
+    {HUD_CTF_CONTAINER, HUD_CTF_FRAME_BG_1},
+    {HUD_CTF_CONTAINER, HUD_CTF_TEXT_1},
+    {HUD_CTF_CONTAINER, HUD_CTF_TEXT_2},
+    
+    // Flag container children
+    {HUD_SIEGE_FLAG_CONTAINER, HUD_SIEGE_FLAG_8},
+    {HUD_SIEGE_FLAG_CONTAINER, HUD_SIEGE_FLAG_1},
+    {HUD_SIEGE_FLAG_CONTAINER, HUD_SIEGE_FLAG_2},
+    {HUD_SIEGE_FLAG_CONTAINER, HUD_SIEGE_FLAG_3},
+    {HUD_SIEGE_FLAG_CONTAINER, HUD_SIEGE_FLAG_4},
+    {HUD_SIEGE_FLAG_CONTAINER, HUD_SIEGE_FLAG_5},
+    {HUD_SIEGE_FLAG_CONTAINER, HUD_SIEGE_FLAG_6},
+    {HUD_SIEGE_FLAG_CONTAINER, HUD_SIEGE_FLAG_7},
+};
+
 VariableAddress_t vaHudRadar_PlayerData = {
 #if UYA_PAL
 	.Lobby = 0x00499ff0,
@@ -275,7 +319,7 @@ VariableAddress_t vaCreateWidgdetFrameContainer = {
 #endif
 };
 
-VariableAddress_t vaWidgetCreate3d_2D = {
+VariableAddress_t vaCreateWidget3d_2D = {
 #if UYA_PAL
 	.Lobby = 0x006129e8,
 	.Bakisi = 0x004e4910,
@@ -642,7 +686,7 @@ static Engine_t *hudInitInstance(void)
 	return instance;
 }
 
-int hudGetCurrentCanvas(void)
+int hudGetCurrentCanvasIndex(void)
 {
 	Engine_t *instance = ENGINE_INSTANCE;
 	if (instance->data == NULL)
@@ -653,12 +697,28 @@ int hudGetCurrentCanvas(void)
 	return instance->data->current_canvas;
 }
 
+// Returns pointer to the current canvas
+Canvas_t *hudGetCurrentCanvas(void)
+{
+	Engine_t *instance = ENGINE_INSTANCE;
+	EngineData_t *data;
+	
+	if (instance->data == NULL)
+		instance = hudInitInstance();
+	if (instance->data == NULL)
+		return NULL;
+	
+	data = instance->data;
+	return data->canvases[data->current_canvas];
+}
+
+// Keep your existing helper functions the same
 bool hudSetCurrentCanvasLayer(int whichLayer, HANDLE_ID handle_id)
 {
 	Canvas_t *c = hudGetCurrentCanvas();
 	if(!c) return 0;
 
-	return hudSetLayer(&c, whichLayer, handle_id);
+	return hudSetLayer(c, whichLayer, handle_id);
 }
 
 bool hudClearCurrentCanvasLayer(int whichLayer)

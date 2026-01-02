@@ -528,7 +528,7 @@ VARIABLE_FUNCTION(hudCreateContainer, vaCreateWidgdetFrameContainer)
 VARIABLE_FUNCTION(hudCreateTextArea, vaCreateWidgetTextArea)
 VARIABLE_FUNCTION(hudCreateText, vaCreateWidgetText)
 VARIABLE_FUNCTION(hudCreateRectangle, vaCreateWidgetRectangle)
-VARIABLE_FUNCTION(hudCreateFrame,  vaWidgetCreate3d_2D)
+VARIABLE_FUNCTION(hudCreateFrame,  vaCreateWidget3d_2D)
 
 VARIABLE_FUNCTION(hudSetSprite, vaWidgetSetTexture)
 VARIABLE_FUNCTION(hudSetColor, vaWidgetSetColor)
