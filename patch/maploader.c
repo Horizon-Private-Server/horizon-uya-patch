@@ -1488,6 +1488,7 @@ void runMapLoader(void)
 	if (MapLoaderState.Enabled == 1) {
 		if (isInMenus()) {
 			GameSettings * settings = gameGetSettings();
+			GameOptions *options = gameGetOptions();
 			if (settings && settings->GameLoadStartTime > 0) {
 				settings->GameLevel = MapLoaderState.MapId;
 				gameConfig.isCustomMap = 1;
