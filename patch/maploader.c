@@ -1491,6 +1491,8 @@ void runMapLoader(void)
 			if (settings && settings->GameLoadStartTime > 0) {
 				settings->GameLevel = MapLoaderState.MapId;
 				gameConfig.isCustomMap = 1;
+				// fix wrong small turret team
+				options->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth = 1;
 			}
 		}
 	}
