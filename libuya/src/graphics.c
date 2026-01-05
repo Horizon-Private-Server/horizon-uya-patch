@@ -885,6 +885,7 @@ VariableAddress_t vaDrawStripInit = {
 	.Hoven = 0x0045a248,
 	.OutpostX12 = 0x00451088,
 	.KorgonOutpost = 0x0044ecc8,
+    .Metropolis = 0x0044e008,
 	.BlackwaterCity = 0x0044b788,
 	.CommandCenter = 0x0044c5c8,
 	.BlackwaterDocks = 0x0044ee08,
