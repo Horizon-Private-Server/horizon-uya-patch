@@ -10,7 +10,7 @@
 # $Id: linkfile 798 2005-02-07 06:21:37Z herben $
 # Linkfile script for ee-ld
 */
-INCLUDE ../sections.ld
+INCLUDE ../regions.ld
 
 ENTRY(_start);
 

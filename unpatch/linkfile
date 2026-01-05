@@ -11,7 +11,7 @@
 # Linkfile script for ee-ld
 */
 
-INCLUDE ../sections.ld
+INCLUDE ../regions.ld
 
 ENTRY(_start);
 
