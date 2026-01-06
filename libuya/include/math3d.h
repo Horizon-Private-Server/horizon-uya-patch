@@ -79,6 +79,7 @@ void vector_projectonhorizontal(VECTOR output, VECTOR input0);
 void vector_print(VECTOR input0);
 void vector_transform(VECTOR output, VECTOR input, MATRIX matrix);
 void vector_sphere(VECTOR output, float radius, float angle, float elevation);
+void vector_setLength(VECTOR output, VECTOR input, float scale);
 
 void matrix_toeuler(VECTOR output, MATRIX input0);
 void matrix_fromrows(MATRIX output, VECTOR input0, VECTOR input1, VECTOR input2, VECTOR input3);

@@ -319,6 +319,21 @@ ShieldVars* mobyGetShieldVars(void)
 	return GetAddress(&vaShieldTriggerVars);
 }
 
+void mobySetState(Moby *this, char state, char stateType)
+{
+    u8 t = this->triggers;
+    u8 s = this->state;
+    this->state = state;
+    this->prevState = s;
+    this->stateTimer = 0;
+    this->unk_97 = 0;
+    this->triggers = t & 0xfe;
+    if (stateType != -1) {
+        this->stateType = stateType;
+        this->triggers = t & 0xfc;
+    }
+}
+
 VariableAddress_t vaFlagUpdate_Func = {
 #if UYA_PAL
     .Lobby = 0,

@@ -385,6 +385,11 @@ void vector_sphere(VECTOR output, float radius, float angle, float elevation)
     output[3] = 0.0f;
 }
 
+void vector_setLength(VECTOR output, VECTOR input, float scale) {
+    vector_normalize(output, input);
+    vector_scale(output, output, scale);
+}
+
 //--------------------------------------------------------
 void matrix_toeuler(VECTOR output, MATRIX input0)
 {
