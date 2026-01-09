@@ -997,6 +997,13 @@ typedef struct HeroQueuedSound { // 0x8
 	/* 0x6 */ short int flags;
 } HeroQueuedSound;
 
+struct tNW_GetHitMessage { // 0x10
+	/* 0x0 */ vec3 momentum;
+	/* 0xc */ u8 sequenceNum;
+	/* 0xd */ char hitPlayerIndex;
+	/* 0xe */ char frame;
+};
+
 typedef struct HeroSpecialIdleDef { // 0x10
 	/* 0x0 */ int anim;
 	/* 0x4 */ float frequency;
@@ -1104,12 +1111,14 @@ typedef struct Player { // 0x4500
 	/* 0x1a17 */ char curSeg;
 	/* 0x1a18 */ char handGadgetType;
 	/* 0x1a19 */ char externalUpdate;
-	/*        */ char unk_1a1a[0x14];
+	/*        */ char unk_1a1a[0xb];
+	/* 0x1a25 */ char unk_1a25;
+	/* 0x1a26 */ char unk_1a26[0x8];
 	/*        */ char unk_1a2e[0x4];
 	/* 0x1a32 */ WeaponQuickSelect quickSelect;
 	/*        */ char unk_1a3a[0x6];
 	/* 0x1a40 */ char chargebootsSlot;
-	/* 0x1a41 */ char unk_1a41; // obfuscated
+	/* 0x1a41 */ char availableGadgets; // obfuscated bitmask
 	/*        */ char unk_1a42[0x11];
 	/* 0x1a53 */ Weapons weaponAmmo;
 	/*        */ char unk_1a5f[0x4];
@@ -1183,16 +1192,17 @@ typedef struct Player { // 0x4500
 	/* 0x24dc */ int rAmb;
 	/* 0x24e0 */ int gAmb;
 	/* 0x24e4 */ int bAmb;
-	/*        */ char unk_24e8[0x14];
+	/* 0x24e8 */ char unk_24e8[0x4];
+	/* 0x24ec */ struct tNW_GetHitMessage getHitMessage;
 	/* 0x24fc */ char isGetHitMsgPending;
 	/* 0x24fd */ char lookAndCrouch;
 	/* 0x24fe */ char lookAndThrowWrench;
 	/* 0x24ff */ char earlyThrowAbort;
 	/* 0x2500 */ char lookAndGetHit;
-	// lastDeathWasSuicide: Doesn't Spawn Pack if true
 	/* 0x2501 */ char lastDeathWasSuicide;
-	/* 0x2502 */ char unk_2502; // Gets set to -1 when Ressurecting.
-	/*        */ char unk_2503[0x11];
+	/* 0x2502 */ char rocketHitMe;
+	/* 0x2503 */ char unk_2503;
+	/* 0x2504 */ struct FlashVars flashVars;
 	/* 0x2514 */ int hudHealthTimer;
 	/* 0x2518 */ char pauseOn;
 	/* 0x2519 */ char pauseTimer;
@@ -1588,6 +1598,9 @@ int playerGetRespawnTimer(Player *player);
 int playerGetGadetId(Player *player, int slot);
 int playerGetGadgetLevel(Player *player, int slot);
 int playerGetGadgetAmmo(Player *player, int slot);
+
+// returns bitmask of gadget if available
+int playerIsGadgetAvailable(Player *player, eGADGET_IDs gadgetId);
 
 /*
 * NAME :		playerDeobfuscate

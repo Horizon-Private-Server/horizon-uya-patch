@@ -816,6 +816,11 @@ int playerGetGadgetAmmo(Player *player, int slot)
     return playerDeobfuscate(&player->weaponAmmo.Slot[slot], DEOBFUSCATE_MODE_GADGET);
 }
 
+int playerIsGadgetAvailable(Player *player, eGADGET_IDs gadget_id)
+{
+    return playerDeobfuscate(&player->availableGadgets, DEOBFUSCATE_MODE_GADGET) & (1 << gadget_id);
+}
+
 int playerHasShield(Player * player)
 {
     Moby *shield = mobyListGetStart();
