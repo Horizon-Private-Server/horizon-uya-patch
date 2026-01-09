@@ -15,39 +15,55 @@
 #include "common.h"
 #include "math3d.h"
 
-/*
- * NAME :		WEAPON_IDS
- * DESCRIPTION :
- * 			Defines the value for each weapon id.
- * NOTES :
- *          
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-enum WEAPON_IDS
-{
-    WEAPON_ID_N60 = 1,
-    WEAPON_ID_BLITZ = 2,
-    WEAPON_ID_FLUX = 3,
-    WEAPON_ID_ROCKET = 4,
-    WEAPON_ID_GBOMB = 5,
-    WEAPON_ID_MINE = 6,
-    WEAPON_ID_LAVA = 7,
-    WEAPON_ID_MORPH = 9,
-    WEAPON_ID_WRENCH = 10,
-    WEAPON_ID_SWINGSHOT = 11,
-    WEAPON_ID_HOLO = 12,
-    WEAPON_ID_GRAVITYBOOTS = 14,
-    WEAPON_ID_CHARGEBOOTS = 15,
-    WEAPON_ID_N60_V2 = 16,
-    WEAPON_ID_BLITZ_V2 = 17,
-    WEAPON_ID_FLUX_V2 = 18,
-    WEAPON_ID_ROCKET_V2 = 19,
-    WEAPON_ID_GBOMB_V2 = 20,
-    WEAPON_ID_MINE_V2 = 21,
-    WEAPON_ID_LAVA_V2 = 22,
-    WEAPON_ID_MORPH_V2 = 23,
-    WEAPON_ID_WRENCH_V2 = 24,
-};
+typedef enum GADGET_IDs {
+    GADGET_ID_NONE = 0,
+    GADGET_ID_N60 = 1,
+    GADGET_ID_BLITZ = 2,
+    GADGET_ID_FLUX = 3,
+    GADGET_ID_ROCKET = 4,
+    GADGET_ID_GBOMB = 5,
+    GADGET_ID_MINE = 6,
+    GADGET_ID_LAVA = 7,
+    GADGET_ID_MORPH = 9,
+    GADGET_ID_WRENCH = 10,
+    GADGET_ID_SWINGSHOT = 11,
+    GADGET_ID_HOLO = 12,
+    GADGET_ID_GRAVITYBOOTS = 14,
+    GADGET_ID_CHARGEBOOTS = 15,
+    GADGET_ID_N60_V2 = 16,
+    GADGET_ID_BLITZ_V2 = 17,
+    GADGET_ID_FLUX_V2 = 18,
+    GADGET_ID_ROCKET_V2 = 19,
+    GADGET_ID_GBOMB_V2 = 20,
+    GADGET_ID_MINE_V2 = 21,
+    GADGET_ID_LAVA_V2 = 22,
+    GADGET_ID_MORPH_V2 = 23,
+    GADGET_ID_WRENCH_V2 = 24,
+} eGADGET_IDs;
+
+typedef enum GADGET_BITMASK {
+    GADGET_BIT_N60          = (1 << GADGET_ID_N60),
+    GADGET_BIT_BLITZ        = (1 << GADGET_ID_BLITZ),
+    GADGET_BIT_FLUX         = (1 << GADGET_ID_FLUX),
+    GADGET_BIT_ROCKET       = (1 << GADGET_ID_ROCKET),
+    GADGET_BIT_GBOMB        = (1 << GADGET_ID_GBOMB),
+    GADGET_BIT_MINE         = (1 << GADGET_ID_MINE),
+    GADGET_BIT_LAVA         = (1 << GADGET_ID_LAVA),
+    GADGET_BIT_MORPH        = (1 << GADGET_ID_MORPH),
+    GADGET_BIT_SWINGSHOT    = (1 << GADGET_ID_SWINGSHOT),
+    GADGET_BIT_HOLO         = (1 << GADGET_ID_HOLO),
+    GADGET_BIT_GRAVITYBOOTS = (1 << GADGET_ID_GRAVITYBOOTS),
+    GADGET_BIT_CHARGEBOOTS  = (1 << GADGET_ID_CHARGEBOOTS),
+    GADGET_BIT_N60_V2       = (1 << GADGET_ID_N60_V2),
+    GADGET_BIT_BLITZ_V2     = (1 << GADGET_ID_BLITZ_V2),
+    GADGET_BIT_FLUX_V2      = (1 << GADGET_ID_FLUX_V2),
+    GADGET_BIT_ROCKET_V2    = (1 << GADGET_ID_ROCKET_V2),
+    GADGET_BIT_GBOMB_V2     = (1 << GADGET_ID_GBOMB_V2),
+    GADGET_BIT_MINE_V2      = (1 << GADGET_ID_MINE_V2),
+    GADGET_BIT_LAVA_V2      = (1 << GADGET_ID_LAVA_V2),
+    GADGET_BIT_MORPH_V2     = (1 << GADGET_ID_MORPH_V2),
+    GADGET_BIT_WRENCH_V2    = (1 << GADGET_ID_WRENCH_V2),
+} eGADGET_BITMASK;
 
 typedef struct TweakersGravityBomb {
 /* 0x00 */ float maxThrowDist;
@@ -120,7 +136,7 @@ typedef struct GadgetDef { // 0x80
 	/* 0x16 */ short int upgAmmotag;
     /* 0x18 */ short int unk_18; 
     /* 0x1a */ short int unk_1a;
-    /* 0x1c */ short int ammoClass;
+    /* 0x1c */ short int padButton;
 	/* 0x1e */ short int ammoAmount;
     /* 0x20 */ short int unk_20; 
     /* 0x22 */ short int unk_22;

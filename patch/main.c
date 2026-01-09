@@ -823,8 +823,8 @@ int patchResurrectWeaponOrdering_ConvertToWeaponId(int id)
 {
 	int weapon;
 	switch (id) {
-		case 8: return WEAPON_ID_MORPH;
-		case 9:	return WEAPON_ID_HOLO;
+		case 8: return GADGET_ID_MORPH;
+		case 9:	return GADGET_ID_HOLO;
 		default: return id;
 	}
 }
@@ -853,9 +853,9 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 	int index = player->mpIndex;
 	// Set loadout/cycle weapons.  If not chosen, it will be set to default cycle.
 	char cycle[] = {
-		config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : WEAPON_ID_GBOMB,
-		config.cycleWeapon2 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon2) : WEAPON_ID_BLITZ,
-		config.cycleWeapon3 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon3) : WEAPON_ID_FLUX
+		config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : GADGET_ID_GBOMB,
+		config.cycleWeapon2 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon2) : GADGET_ID_BLITZ,
+		config.cycleWeapon3 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon3) : GADGET_ID_FLUX
 	};
 
 	// if Loadout Weapons Only is not on
@@ -923,7 +923,7 @@ void spawnWithLoadoutWeapons(void)
 	patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(player, 3);
 	// Give chargeboots if needed
 	if (gameGetOptions()->GameFlags.MultiplayerGameFlags.Chargeboots == 1)
-		playerGiveWeapon(player, WEAPON_ID_CHARGEBOOTS, 0);
+		playerGiveWeapon(player, GADGET_ID_CHARGEBOOTS, 0);
 }
 
 /*
@@ -1097,7 +1097,7 @@ void patchFov(void)
 		patched.config.playerFov = 0;
 	} else {
 		// if in FPS and not holding Flux, use new FOV, else use normal FOV.
-		if (p->weaponHeldId != WEAPON_ID_FLUX) {
+		if (p->weaponHeldId != GADGET_ID_FLUX) {
 			// set to new FOV
 			p->camera->fov.ideal = newFOV;
 			patched.config.playerFov = 0;
@@ -2064,7 +2064,7 @@ void hypershotEquipButton(void)
 	Player *p = playerGetFromSlot(0);
 	// if player is found and presses needed button, equip hypershot.
 	if (p && playerPadGetButtonDown(p, hypershotGetButton()) > 0)
-		playerEquipWeapon(p, WEAPON_ID_SWINGSHOT);
+		playerEquipWeapon(p, GADGET_ID_SWINGSHOT);
 }
 
 int remapButtons(pad)
