@@ -16,6 +16,7 @@
 #define JAL2ADDR(jal)                                       ((jal & 0x03FFFFFF) << 2)
 #define ADDR2JAL(address)                                   (0x0C000000 | ((u32)(address) >> 2))
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((unsigned long)(!(sizeof(x) % sizeof(0[x])))))
+#define COUNT_SET_BITS(mask) __builtin_popcount(mask)
 
 /*
  * NAME :		isInEEMemory
