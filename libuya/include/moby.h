@@ -453,12 +453,12 @@ enum FlashTypes {
 	FT_SLOWFADE = 6
 };
 
-struct FlashVars {
-	/*   0 */ short int timer;
-	/*   2 */ short int type;
-	/*   4 */ int destColor;
-	/*   8 */ int srcColor;
-	/*   c */ int flags;
+struct FlashVars { // 0x10
+	/* 0x0 */ short int timer;
+	/* 0x2 */ short int type;
+	/* 0x4 */ int destColor;
+	/* 0x8 */ int srcColor;
+	/* 0xc */ int flags;
 };
 
 struct TargetVars {
