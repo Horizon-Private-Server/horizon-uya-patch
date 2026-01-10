@@ -152,35 +152,6 @@ typedef struct GadgetDef { // 0x80
     /* 0x74 */ char unk_74[0xc];
 } GadgetDef;
 
-
-
-
-
-	/*        */ char unk_1a1a[0xb];
-	/* 0x1a25 */ char unk_1a25;
-	/* 0x1a26 */ char unk_1a26[0x8];
-	/*        */ char unk_1a2e[0x4];
-	/* 0x1a32 */ WeaponQuickSelect quickSelect;
-	/*        */ char unk_1a3a[0x6];
-	/* 0x1a40 */ char chargebootsSlot;
-	/* 0x1a41 */ char availableGadgets; // obfuscated bitmask
-	/*        */ char unk_1a42[0x11];
-	/* 0x1a53 */ Weapons weaponAmmo;
-	/*        */ char unk_1a5f[0x4];
-	/* 0x1a63 */ Weapons weaponMeter;
-	/*        */ char unk_1a6f[0x11];
-	/* 0x1a80 */ GadgetEvent gadgetEventSlots[10];
-	/*        */ int unk_1da0;
-	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;
-	/* 0x1da8 */ struct Player *GadgetBox; // Doesn't work at all like Deadlocked's
-	/*        */ char unk_1dac[0x14];
-
-typedef struct GadgetBox_UYA {
-
-} GadgetBox_UYA_t;
-
-
-
 /*
  * Returns pointer to the start of the weapon list.
  */
