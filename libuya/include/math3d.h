@@ -34,6 +34,11 @@ typedef struct vec2f {
 /* 0x4 */ float y;
 } vec2f;
 
+typedef struct vec3f {
+/* 0x0 */ float x;
+/* 0x4 */ float z;
+/* 0x8 */ float y;
+} vec3f;
 
 typedef struct vec4f { // 0x10
 /* 0x0 */ float x;
