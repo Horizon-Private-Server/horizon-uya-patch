@@ -998,7 +998,7 @@ typedef struct HeroQueuedSound { // 0x8
 } HeroQueuedSound;
 
 struct tNW_GetHitMessage { // 0x10
-	/* 0x0 */ vec3 momentum;
+	/* 0x0 */ vec3f momentum;
 	/* 0xc */ u8 sequenceNum;
 	/* 0xd */ char hitPlayerIndex;
 	/* 0xe */ char frame;
