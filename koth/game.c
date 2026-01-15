@@ -16,6 +16,7 @@
 #include <libuya/net.h>
 #include <libuya/team.h>
 #include <libuya/math.h>
+#include <libuya/map.h>
 #include <libuya/hud.h>
 #include "messageid.h"
 #include "config.h"
@@ -70,6 +71,9 @@
 // Leave undefined to rotate in fixed index order.
 #define KOTH_RANDOM_ORDER
 
+// Exposed from koth/main.c for map source selection.
+extern int isCustomMap;
+
 typedef struct KothHill {
     VECTOR position;
     Moby *moby;
@@ -79,6 +83,7 @@ typedef struct KothHill {
     float radiusY;
     Cuboid cuboid;
     int isCircle;
+    int drawAtMidpoint; // 1 = center of cuboid, 0 = base of cuboid
     // Derived footprint (currently uniform circle; keep both axes for future ellipse support).
     float footprintRx;
     float footprintRy;
@@ -174,6 +179,495 @@ static int kothInitLogged = 0;
 typedef struct KothCustomHillPVar {
     int cuboidRefs[KOTH_MAX_CUSTOM_CUBOIDS];
 } KothCustomHillPVar_t;
+
+typedef struct KothVanillaHillSet {
+    const Cuboid *cuboids;
+    int count;
+} KothVanillaHillSet_t;
+
+// Vanilla hill cuboids (indexed by MAP_ID_* - MAP_ID_BAKISI).
+static const Cuboid VANILLA_HILLS_BAKISI[] = {
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 20, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {373.6029f, 414.3022f, 203.8417f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 30, 0, 0},
+            {0, 0, 1, 0}
+        },
+        .pos = {519.58356f, 398.7586f, 201.38f, 1},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {35, 0, 0, 0},
+            {0, 35, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {409.012f, 567.944f, 201.250f, 1},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {18, 0, 0, 0},
+            {0, 18, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {281.9309f, 429.3058f, 201.3012f, 1},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {30, 0, 0, 0},
+            {0, 30, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {325.4687f, 298.8129f, 201.1440f, 1},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 20, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {567.0633f, 259.2868f, 202.3434f, 1},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+};
+
+static const Cuboid VANILLA_HILLS_HOVEN[] = {
+    {
+        .matrix = {
+            {30, 0, 0, 0},
+            {0, 30, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {352.0844f, 334.7871f, 67.0f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {25, 0, 0, 0},
+            {0, 25, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {339.51f, 240.437f, 66.4f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {30, 0, 0, 0},
+            {0, 30, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {260.38f, 251.191f, 63.68f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {25, 0, 0, 0},
+            {0, 25, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {172.397f, 251.956f, 67.25f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 20, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {166.521f, 164.01f, 66.20f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+};
+
+static const Cuboid VANILLA_HILLS_OUTPOST[] = {
+    {
+        .matrix = {
+            {25, 0, 0, 0},
+            {0, 25, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {327.71f, 257.880f, 101.35f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {35, 0, 0, 0},
+            {0, 35, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {478.67f, 191.556f, 102.10f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 20, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {509.34f, 248.783f, 101.1f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {30, 0, 0, 0},
+            {0, 30, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {389.9045f, 236.870f, 102.10f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {25, 0, 0, 0},
+            {0, 25, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {373.82f, 285.54f, 101.1f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+};
+
+static const Cuboid VANILLA_HILLS_KORGON[] = {
+    {
+        .matrix = {
+            {33, 0, 0, 0},
+            {0, 33, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {359.3894f, 427.6866f, 97.0f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {25, 0, 0, 0},
+            {0, 25, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {322.8834f, 337.7596f, 97.1f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 20, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {395.0782f, 298.7676f, 97.0844f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {27, 0, 0, 0},
+            {0, 27, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {424.8894f, 335.7746f, 97.1f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {30, 0, 0, 0},
+            {0, 30, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {215.4736f, 338.2934f, 97.1f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {15, 0, 0, 0},
+            {0, 15, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {283.20f, 291.9809f, 97.3f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+};
+
+static const Cuboid VANILLA_HILLS_METRO[] = {
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 11, 0, 0},
+            {0, 0, 1, 0}
+        },
+        .pos = {755.4391f, 339.3310f, 338.8f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0.8125f, 0}
+    },
+    {
+        .matrix = {
+            {66.915f, 0, 0, 0},
+            {0, 66.915f, 0, 0},
+            {0, 0, 1, 0}
+        },
+        .pos = {797.5479f, 296.7849f, 336.597f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {66.915f, 0, 0, 0},
+            {0, 66.915f, 0, 0},
+            {0, 0, 1, 0}
+        },
+        .pos = {712.8783f, 381.7458f, 336.597f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {18, 0, 0, 0},
+            {0, 18, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {773.9068f, 445.8956f, 336.4594f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {18, 0, 0, 0},
+            {0, 18, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {737.2782f, 231.7361f, 336.4694f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 20, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {707.1735f, 290.8173f, 329.2778f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 20, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {803.4766f, 387.5046f, 329.2790f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+};
+
+static const Cuboid VANILLA_HILLS_BWCITY[] = {
+    {
+        .matrix = {
+            {25, 0, 0, 0},
+            {0, 25, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {226.9902f, 366.6711f, 81.6625f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {25, 0, 0, 0},
+            {0, 25, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {209.0136f, 171.8414f, 81.6825f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {30, 0, 0, 0},
+            {0, 30, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {219.9686f, 235.8673f, 87.4906f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {30, 0, 0, 0},
+            {0, 30, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {219.6191f, 297.8083f, 87.4906f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+};
+
+static const Cuboid VANILLA_HILLS_COMMAND[] = {
+    {
+        .matrix = {
+            {40, 0, 0, 0},
+            {0, 40, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {330.1714f, 365.327f, 35.0198f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+};
+
+static const Cuboid VANILLA_HILLS_BWDOCKS[] = {
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 20, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {211.7765f, 191.4453f, 100.4812f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {15, 0, 0, 0},
+            {0, 15, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {261.8332f, 191.4044f, 100.7406f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {15, 0, 0, 0},
+            {0, 15, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {261.8378f, 263.7712f, 98.3135f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {30, 0, 0, 0},
+            {0, 30, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {212.0f, 263.6f, 106.3031f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+};
+
+static const Cuboid VANILLA_HILLS_AQUATOS[] = {
+    {
+        .matrix = {
+            {16, 0, 0, 0},
+            {0, 16, 0, 0},
+            {0, 0, 1, 0}
+        },
+        .pos = {400.9128f, 336.8955f, 941.5f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+};
+
+static const Cuboid VANILLA_HILLS_MARCADIA[] = {
+    {
+        .matrix = {
+            {10, 0, 0, 0},
+            {0, 10, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {538.2250f, 843.2510f, 116.1824f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {20, 0, 0, 0},
+            {0, 20, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {502.108f, 864.6436f, 117.0f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {15, 0, 0, 0},
+            {0, 15, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {478.471f, 869.456f, 117.1281f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {15, 0, 0, 0},
+            {0, 15, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {450.248f, 889.508f, 117.0f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    },
+    {
+        .matrix = {
+            {15, 0, 0, 0},
+            {0, 15, 0, 0},
+            {0, 0, 2, 0}
+        },
+        .pos = {433.1663f, 862.41f, 116.9276f, 0},
+        .imatrix = 0,
+        .rot = {0, 0, 0, 0}
+    }
+};
+
+static const KothVanillaHillSet_t KOTH_VANILLA_HILLS[] = {
+    { VANILLA_HILLS_BAKISI,   (int)(sizeof(VANILLA_HILLS_BAKISI) / sizeof(VANILLA_HILLS_BAKISI[0])) },
+    { VANILLA_HILLS_HOVEN,    (int)(sizeof(VANILLA_HILLS_HOVEN) / sizeof(VANILLA_HILLS_HOVEN[0])) },
+    { VANILLA_HILLS_OUTPOST,  (int)(sizeof(VANILLA_HILLS_OUTPOST) / sizeof(VANILLA_HILLS_OUTPOST[0])) },
+    { VANILLA_HILLS_KORGON,   (int)(sizeof(VANILLA_HILLS_KORGON) / sizeof(VANILLA_HILLS_KORGON[0])) },
+    { VANILLA_HILLS_METRO,    (int)(sizeof(VANILLA_HILLS_METRO) / sizeof(VANILLA_HILLS_METRO[0])) },
+    { VANILLA_HILLS_BWCITY,   (int)(sizeof(VANILLA_HILLS_BWCITY) / sizeof(VANILLA_HILLS_BWCITY[0])) },
+    { VANILLA_HILLS_COMMAND,  (int)(sizeof(VANILLA_HILLS_COMMAND) / sizeof(VANILLA_HILLS_COMMAND[0])) },
+    { VANILLA_HILLS_BWDOCKS,  (int)(sizeof(VANILLA_HILLS_BWDOCKS) / sizeof(VANILLA_HILLS_BWDOCKS[0])) },
+    { VANILLA_HILLS_AQUATOS,  (int)(sizeof(VANILLA_HILLS_AQUATOS) / sizeof(VANILLA_HILLS_AQUATOS[0])) },
+    { VANILLA_HILLS_MARCADIA, (int)(sizeof(VANILLA_HILLS_MARCADIA) / sizeof(VANILLA_HILLS_MARCADIA[0])) },
+};
 
 VariableAddress_t vaResurrectSpawnDistance = {
 #if UYA_PAL
@@ -401,10 +895,67 @@ static void scanHillsOnce(void)
 
     memset(hills, 0, sizeof(hills));
     hillCount = 0;
+    int source = 0; // 1=custom, 2=siege, 3=vanilla
+
+    // On vanilla maps, prefer the hard-coded hill set.
+    if (!isCustomMap) {
+        GameSettings *gs = gameGetSettings();
+        int mapId = gs ? gs->GameLevel : GAME_MAP_ID;
+        if (mapId >= MAP_ID_BAKISI && mapId <= MAP_ID_MARCADIA) {
+            int idx = mapId - MAP_ID_BAKISI;
+            const KothVanillaHillSet_t *set = &KOTH_VANILLA_HILLS[idx];
+            int c;
+            for (c = 0; c < set->count && hillCount < KOTH_MAX_HILLS; ++c) {
+                const Cuboid *cub = &set->cuboids[c];
+                if (!cub)
+                    continue;
+                float rx = vector_length(cub->matrix.v0) * 0.5f * KOTH_CUBOID_SCALE;
+                float ry = vector_length(cub->matrix.v1) * 0.5f * KOTH_CUBOID_SCALE;
+                if (rx <= 0 || ry <= 0)
+                    continue;
+
+                vector_copy(hills[hillCount].position, cub->pos);
+                hills[hillCount].position[3] = 1;
+                    vector_copy(hills[hillCount].cuboid.matrix.v0, cub->matrix.v0);
+                    vector_copy(hills[hillCount].cuboid.matrix.v1, cub->matrix.v1);
+                    vector_copy(hills[hillCount].cuboid.matrix.v2, cub->matrix.v2);
+                    vector_copy(hills[hillCount].cuboid.pos, cub->pos);
+                    vector_copy(hills[hillCount].cuboid.rot, cub->rot);
+                    hills[hillCount].cuboid.imatrix = cub->imatrix;
+                    hills[hillCount].radiusX = rx;
+                    hills[hillCount].radiusY = ry;
+                    float diff = rx - ry;
+                    if (diff < 0) diff = -diff;
+                    hills[hillCount].isCircle = diff < 0.1f;
+                    kothApplyScaleToHill(&hills[hillCount]);
+                    hills[hillCount].moby = NULL;
+                    hills[hillCount].scroll = 0;
+                    hills[hillCount].drawAtMidpoint = 0;
+                    hills[hillCount].drawMoby = mobySpawn(0x1c0d, 0);
+                    if (hills[hillCount].drawMoby) {
+                        vector_copy(hills[hillCount].drawMoby->position, hills[hillCount].position);
+                        hills[hillCount].drawMoby->updateDist = -1;
+                        hills[hillCount].drawMoby->drawn = 1;
+                    hills[hillCount].drawMoby->opacity = 0;
+                    hills[hillCount].drawMoby->drawDist = 0x00;
+                    hills[hillCount].drawMoby->pUpdate = NULL; // set later
+                }
+#ifdef KOTH_DEBUG
+                KOTH_LOG("[KOTH][DBG] hill[%d] source=vanilla mapId=%d pos=(%d,%d,%d)\n",
+                         hillCount, mapId,
+                         (int)hills[hillCount].position[0], (int)hills[hillCount].position[1], (int)hills[hillCount].position[2]);
+#endif
+                ++hillCount;
+            }
+            if (hillCount > 0)
+                source = 3;
+        }
+    }
 
     Moby* moby = mobyListGetStart();
     Moby* mobyEnd = mobyListGetEnd();
     int foundCustom = 0;
+    if (source != 3) {
     while (moby < mobyEnd && hillCount < KOTH_MAX_HILLS) {
         if (moby->oClass == KOTH_OCLASS_CUSTOM) {
             // One custom hill moby defines multiple cuboids; emit a hill per valid cuboid. (OCLASS 3000) 
@@ -445,6 +996,7 @@ static void scanHillsOnce(void)
                     kothApplyScaleToHill(&hills[hillCount]);
                     hills[hillCount].moby = moby;
                     hills[hillCount].scroll = 0;
+                    hills[hillCount].drawAtMidpoint = 1;
                     if (hills[hillCount].radiusX <= 0) hills[hillCount].radiusX = KOTH_RING_RADIUS;
                     if (hills[hillCount].radiusY <= 0) hills[hillCount].radiusY = KOTH_RING_RADIUS;
                     hills[hillCount].drawMoby = mobySpawn(0x1c0d, 0);
@@ -471,9 +1023,10 @@ static void scanHillsOnce(void)
         }
         ++moby;
     }
+    }
 
     // If no custom hills found, fall back to siege nodes.
-    if (!foundCustom) {
+    if (source != 3 && !foundCustom) {
         moby = mobyListGetStart();
         mobyEnd = mobyListGetEnd();
         while (moby < mobyEnd && hillCount < KOTH_MAX_HILLS) {
@@ -512,6 +1065,7 @@ static void scanHillsOnce(void)
                 hills[hillCount].radiusX = KOTH_RING_RADIUS;
                 hills[hillCount].radiusY = KOTH_RING_RADIUS;
                 kothApplyScaleToHill(&hills[hillCount]);
+                hills[hillCount].drawAtMidpoint = 1;
 #ifdef KOTH_DEBUG
                 KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%d,%d,%d) radius=%d\n",
                          hillCount,
@@ -553,6 +1107,12 @@ static void scanHillsOnce(void)
             ++moby;
         }
     }
+    if (source == 0) {
+        if (foundCustom)
+            source = 1;
+        else if (hillCount > 0)
+            source = 2;
+    }
 
     // If we didn't find any hills yet (e.g., moby list not populated), try again on the next tick.
     if (hillCount <= 0)
@@ -577,7 +1137,11 @@ static void scanHillsOnce(void)
 
     initialized = 1;
 #ifdef KOTH_DEBUG
-    KOTH_LOG("[KOTH][DBG] hills initialized count=%d source=%s\n", hillCount, foundCustom ? "custom" : "siege");
+    const char *sourceStr = "unknown";
+    if (source == 1) sourceStr = "custom";
+    else if (source == 2) sourceStr = "siege";
+    else if (source == 3) sourceStr = "vanilla";
+    KOTH_LOG("[KOTH][DBG] hills initialized count=%d source=%s\n", hillCount, sourceStr);
 #endif
 }
 
@@ -944,7 +1508,7 @@ static float kothGetBlinkScale(void)
 #endif
 }
 
-static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, float radiusZ, int isCircle, float cosYaw, float sinYaw)
+static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, float radiusZ, int isCircle, float cosYaw, float sinYaw, int drawAtMidpoint)
 {
     const int MAX_SEGMENTS = 64;
     const int MIN_SEGMENTS = 8;
@@ -962,7 +1526,10 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
 
     // Make the ring taller to improve visibility.
     float ringHeight = KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE * 3.75f; // 1.5x the previous 2.5x setting
+    // Rings stay centered; footprint quad can be pushed to the base if requested.
     vector_scale(tempUp, yAxis, ringHeight * 0.5f);
+    // Nudge the footprint down slightly when anchoring to the base so it remains visible above terrain.
+    float floorOffsetZ = drawAtMidpoint ? 0.0f : -(ringHeight * 0.45f);
 
     float segmentSize = 1.0f;
     int segments = (int)((2 * MATH_PI * fRadius) / segmentSize);
@@ -1116,7 +1683,7 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
         float ry = lx * sinYaw + ly * cosYaw;
         corners[c][0] = center[0] + rx;
         corners[c][1] = center[1] + ry;
-        corners[c][2] = center[2];
+        corners[c][2] = center[2] + floorOffsetZ;
         corners[c][3] = 0;
     }
 
@@ -1199,7 +1766,7 @@ static void drawHill(Moby *moby)
         kothGetHillYaw(hill, &cosYaw, &sinYaw);
     float radiusX = hill ? hill->footprintRx : (KOTH_RING_RADIUS * hillScale);
     float radiusZ = hill ? hill->footprintRy : (KOTH_RING_RADIUS * hillScale);
-    drawHillAt(moby->position, baseColor, scroll, radiusX, radiusZ, hill ? hill->isCircle : 1, cosYaw, sinYaw);
+    drawHillAt(moby->position, baseColor, scroll, radiusX, radiusZ, hill ? hill->isCircle : 1, cosYaw, sinYaw, hill ? hill->drawAtMidpoint : 1);
 }
 
 static void hillUpdate(Moby *moby)
@@ -1234,7 +1801,7 @@ static void drawHills(void)
             float cosYaw = 1.0f, sinYaw = 0.0f;
             kothGetHillYaw(&hills[activeIdx], &cosYaw, &sinYaw);
             drawHillAt(hills[activeIdx].position, kothGetActiveHillColor(), &hills[activeIdx].scroll,
-                       hills[activeIdx].footprintRx, hills[activeIdx].footprintRy, hills[activeIdx].isCircle, cosYaw, sinYaw);
+                       hills[activeIdx].footprintRx, hills[activeIdx].footprintRy, hills[activeIdx].isCircle, cosYaw, sinYaw, hills[activeIdx].drawAtMidpoint);
         }
 #ifdef KOTH_DEBUG
     } else {

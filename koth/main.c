@@ -29,7 +29,7 @@ struct KothState {
 };
 
 static struct KothState State;
-static int isCustomMap = 0;
+int isCustomMap = 0;
 
 static void setLobbyGameOptions(PatchStateContainer_t *gameState);
 
