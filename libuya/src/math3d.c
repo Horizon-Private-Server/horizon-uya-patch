@@ -390,6 +390,35 @@ void vector_setLength(VECTOR output, VECTOR input, float scale) {
     vector_scale(output, output, scale);
 }
 
+void vector_rodrigues(VECTOR output, VECTOR input, VECTOR axis, float angle)
+{
+    VECTOR k, v_cross, term1, term2, term3;
+    float cosTheta = cosf(angle);
+    float sinTheta = sinf(angle);
+
+    // normalize axis into k
+    vector_normalize(k, axis);
+
+    // term1 = v * cos(theta)
+    vector_scale(term1, input, cosTheta);
+
+    // term2 = (k x v) * sin(theta)
+    vector_outerproduct(v_cross, k, input);  // cross product
+    vector_scale(term2, v_cross, sinTheta);
+
+    // term3 = k * (k . v) * (1 - cos(theta))
+    float dot = vector_innerproduct(k, input);
+    vector_scale(term3, k, dot * (1.0f - cosTheta));
+
+    // output = term1 + term2 + term3
+    vector_add(output, term1, term2);
+    vector_add(output, output, term3);
+
+    // preserve homogeneous component
+    output[3] = input[3];
+}
+
+
 //--------------------------------------------------------
 void matrix_toeuler(VECTOR output, MATRIX input0)
 {
