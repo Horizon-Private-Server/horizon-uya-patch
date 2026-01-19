@@ -124,34 +124,6 @@ DominationInfo_t domInfo;
 
 Moby *spawnBaseMobies(Moby *node, Moby *boltCrank);
 
-void vector_rodrigues(VECTOR output, VECTOR v, VECTOR axis, float angle)
-{
-    VECTOR k, v_cross, term1, term2, term3;
-    float cosTheta = cosf(angle);
-    float sinTheta = sinf(angle);
-
-    // normalize axis into k
-    vector_normalize(k, axis);
-
-    // term1 = v * cos(theta)
-    vector_scale(term1, v, cosTheta);
-
-    // term2 = (k x v) * sin(theta)
-    vector_outerproduct(v_cross, k, v);  // cross product
-    vector_scale(term2, v_cross, sinTheta);
-
-    // term3 = k * (k . v) * (1 - cos(theta))
-    float dot = vector_innerproduct(k, v);
-    vector_scale(term3, k, dot * (1.0f - cosTheta));
-
-    // output = term1 + term2 + term3
-    vector_add(output, term1, term2);
-    vector_add(output, output, term3);
-
-    // preserve homogeneous component
-    output[3] = v[3];
-}
-
 void getBases(void)
 {
 	Moby* moby = mobyListGetStart();
