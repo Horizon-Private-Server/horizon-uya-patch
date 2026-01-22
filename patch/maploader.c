@@ -185,8 +185,8 @@ extern u32 colorRed;
 extern u32 colorContentBg;
 extern u32 colorText;
 
-extern char mapOverrideResponse;
-extern char expectedMapVersion;
+extern int mapOverrideResponse;
+extern int expectedMapVersion;
 
 enum MenuActionId
 {
