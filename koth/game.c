@@ -871,23 +871,6 @@ static int kothUseTeams(void)
 
 static int kothGetActiveHillIndex(void);
 
-static void vector_rodrigues(VECTOR output, VECTOR v, VECTOR axis, float angle)
-{
-    VECTOR k, v_cross, term1, term2, term3;
-    float cosTheta = cosf(angle);
-    float sinTheta = sinf(angle);
-
-    vector_normalize(k, axis);
-    vector_scale(term1, v, cosTheta);
-    vector_outerproduct(v_cross, k, v);
-    vector_scale(term2, v_cross, sinTheta);
-    float dot = vector_innerproduct(k, v);
-    vector_scale(term3, k, dot * (1.0f - cosTheta));
-    vector_add(output, term1, term2);
-    vector_add(output, output, term3);
-    output[3] = v[3];
-}
-
 static void scanHillsOnce(void)
 {
     if (initialized)
@@ -1228,6 +1211,7 @@ static int kothGetHillDurationMs(void)
 {
     static const int HILL_DURATION_OPTIONS_MS[] = {
         KOTH_HILL_ACTIVE_MS,        // 60
+        TIME_SECOND * 90,
         TIME_SECOND * 120,
         TIME_SECOND * 180,
         TIME_SECOND * 240,
@@ -2094,7 +2078,7 @@ void radarUpdate(void)
 
 static float kothDecodeRespawnValue(char idx)
 {
-    static const float OPTIONS[] = {40.0f, 60.0f, 80.0f, 120.0f, 10.0f, 20.0f, 30.0f};
+    static const float OPTIONS[] = {40.0f, 60.0f, 80.0f, 120.0f, 10.0f, 20.0f, 30.0f, 500.0f};
     int count = (int)(sizeof(OPTIONS) / sizeof(OPTIONS[0]));
     if (idx < 0 || idx >= count)
         return OPTIONS[0];

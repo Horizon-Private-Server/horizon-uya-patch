@@ -308,8 +308,8 @@ MenuElem_ListData_t dataKothScoreLimit = {
 MenuElem_ListData_t dataKothHillDuration = {
     .value = &gameConfig.grKothHillDuration,
     .stateHandler = menuStateHandler_KOTH,
-    .count = 5,
-    .items = { "60", "120", "180", "240", "300" }
+    .count = 6,
+    .items = { "60", "90", "120", "180", "240", "300" }
 };
 
 // KOTH hill size scale options (XY). Order must match KOTH_HILL_SCALE_TABLE in koth/game.c.
@@ -324,15 +324,15 @@ MenuElem_ListData_t dataKothHillSize = {
 MenuElem_ListData_t dataKothRespawnOutside = {
     .value = &gameConfig.grKothRespawnOutside,
     .stateHandler = menuStateHandler_KOTH,
-    .count = 7,
-    .items = { "40", "60", "80", "120", "10", "20", "30" }
+    .count = 8,
+    .items = { "40", "60", "80", "120", "10", "20", "30", "500" }
 };
 
 MenuElem_ListData_t dataKothRespawnInside = {
     .value = &gameConfig.grKothRespawnInside,
     .stateHandler = menuStateHandler_KOTH,
-    .count = 7,
-    .items = { "40", "60", "80", "120", "10", "20", "30" }
+    .count = 8,
+    .items = { "40", "60", "80", "120", "10", "20", "30", "500" }
 };
 
 MenuElem_ListData_t dataV2_Setting = {
