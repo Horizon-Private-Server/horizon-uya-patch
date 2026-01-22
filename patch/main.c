@@ -98,7 +98,7 @@ int sentGameStart = 0;
 int isInStaging = 0;
 int location = LOCATION_NULL;
 int hasInstalledExceptionHandler = 0;
-char mapOverrideResponse = 9001;
+int mapOverrideResponse = 9001;
 int expectedMapVersion = -1;
 char showNoMapPopup = 0;
 int isConfigMenuActive = 0;
@@ -2434,7 +2434,7 @@ void patchHeadsetSprite(GameSettings* gs, int clientId)
 	// check state and set color
 	u32 color = 0;
 	u32 sprite = SPRITE_HUD_X;
-	if (clientId > 0) {
+	if (clientId >= 0) {
 		switch (gs->PlayerStates[clientId]) {
 			case GS_PLAYER_STATE_MAP_NONE: {
 				sprite = SPRITE_HUD_X;
@@ -2501,9 +2501,9 @@ void runCheckGameMapInstalled(void)
 					// Player has map, but wrong version.
 					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
 						if (mapOverrideResponse > expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
-						} else if (mapOverrideResponse < expectedMapVersion) {
 							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
+						} else if (mapOverrideResponse < expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
 						}
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
@@ -2529,9 +2529,9 @@ void runCheckGameMapInstalled(void)
 					// Player has map, but wrong version.
 					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
 						if (mapOverrideResponse > expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
-						} else if (mapOverrideResponse < expectedMapVersion) {
 							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
+						} else if (mapOverrideResponse < expectedMapVersion) {
+							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
 						}
 						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
 					}
