@@ -829,6 +829,7 @@ static int kothUseTeams(void);
 static void kothBroadcastHillIndex(int hillIdx);
 #endif
 static void kothOnHillSizeUpdated(void);
+static int kothRespawnDistanceIsCustom(void);
 static float kothGetInsideRespawnDistance(void);
 static float kothGetOutsideRespawnDistance(void);
 static float kothSelectRespawnDistance(Player *player);
@@ -2097,10 +2098,36 @@ static float kothGetInsideRespawnDistance(void)
     return kothDecodeRespawnValue(kothConfig ? kothConfig->grKothRespawnInside : 0);
 }
 
+static int kothRespawnDistanceIsCustom(void)
+{
+    // Skip touching the spawn distance when both options are left at default 40.
+    return !(kothGetOutsideRespawnDistance() == 40.0f && kothGetInsideRespawnDistance() == 40.0f);
+}
+
 static void setSpawnDistance(float distance)
 {
-    short s = (short)distance;
-    POKE_U16(GetAddress(&vaResurrectSpawnDistance), s);
+    u32 addr = GetAddress(&vaResurrectSpawnDistance);
+    if (!addr)
+        return;
+
+    if (distance < 0)
+        distance = 0;
+
+    union {
+        float f;
+        u32 u;
+    } bits = { distance };
+
+    // The target is a LUI immediate loading the high 16 bits of the float constant.
+    u16 s = (u16)(bits.u >> 16);
+    POKE_U16(addr, s);
+
+#if KOTH_DEBUG
+    u16 confirm = *(u16*)addr;
+    if (confirm != s) {
+        KOTH_LOG("[KOTH][DBG] spawn distance poke mismatch want=%u got=%u addr=0x%08X\n", s, confirm, addr);
+    }
+#endif
 }
 
 static int kothTeamHasPlayerInHill(int team)
@@ -2171,6 +2198,9 @@ static void kothUpdateRespawnDistance(Player *player)
 
 static void kothUpdateRespawnDistanceForLocals(void)
 {
+    if (!kothRespawnDistanceIsCustom())
+        return;
+
     Player **players = playerGetAll();
     int i;
     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
@@ -2296,7 +2326,8 @@ void kothTick(void)
     }
 
     kothInit();
-    kothUpdateRespawnDistanceForLocals();
+    if (kothRespawnDistanceIsCustom())
+        kothUpdateRespawnDistanceForLocals();
     drawHills();
     drawHud();
 
