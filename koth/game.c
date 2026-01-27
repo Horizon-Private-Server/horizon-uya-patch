@@ -108,6 +108,7 @@ static int lastActiveHillIdx = -1;
 static int hillSizeIdx = 0; // synced hill size index
 static const float KOTH_HILL_SCALE_TABLE[KOTH_SIZE_OPTIONS] = {1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f};
 static float hillScale = 1.0f; // default scale (idx 0)
+static int kothContestedStopsScore = 0;
 #ifdef KOTH_RANDOM_ORDER
 static int hillOrder[KOTH_MAX_HILLS];
 static int hillOrderCount = 0;
@@ -835,6 +836,7 @@ static float kothGetOutsideRespawnDistance(void);
 static float kothSelectRespawnDistance(Player *player);
 static void kothUpdateRespawnDistance(Player *player);
 static void kothUpdateRespawnDistanceForLocals(void);
+static int kothHillIsContested(void);
 static u32 kothGetActiveHillColor(void);
 static float kothGetBlinkScale(void);
 
@@ -842,14 +844,15 @@ void kothSetConfig(PatchGameConfig_t *config)
 {
     kothConfig = config;
     int seedRaw = config ? config->grSeed : 0;
-    // High nibble carries hill size idx from host UI (packed in seed at send time).
-    int packedIdx = (seedRaw >> 28) & 0xF;
-    if (packedIdx < 0 || packedIdx >= KOTH_SIZE_OPTIONS)
-        packedIdx = 0;
-    hillSizeIdx = packedIdx;
+    // Hill size is now sent explicitly.
+    int sizeIdx = config ? config->grKothHillSizeIdx : 0;
+    if (sizeIdx < 0 || sizeIdx >= KOTH_SIZE_OPTIONS)
+        sizeIdx = 0;
+    hillSizeIdx = sizeIdx;
     hillScale = KOTH_HILL_SCALE_TABLE[hillSizeIdx];
-    // Lower 28 bits are the actual seed.
+    // Seed no longer carries size; keep lower bits for randomness if needed.
     lastSeed = seedRaw & 0x0FFFFFFF;
+    kothContestedStopsScore = config ? config->grKothContestedStopsScore : 0;
     kothOnHillSizeUpdated();
 #if KOTH_DEBUG
     KOTH_LOG("[KOTH][DBG] config set sizeIdx=%d scale=%d seedLow=0x%X\n", hillSizeIdx, (int)hillScale, lastSeed);
@@ -1178,21 +1181,74 @@ static void broadcastScore(int playerIdx)
     lastBroadcastScore[playerIdx] = kothScores[playerIdx];
 }
 
-static void updateScores(void)
+static void kothAwardHillScoreForLocals(Player **players)
 {
-    Player **players = playerGetAll();
     int i;
     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
         Player *p = players[i];
-        if (!p || playerIsDead(p) || p->vehicle)
+        if (!p || playerIsDead(p) || p->vehicle || !p->isLocal)
             continue;
 
-        if (playerInsideHill(p) && p->isLocal) {
+        if (playerInsideHill(p)) {
             ++kothScores[p->mpIndex];
             if (kothScores[p->mpIndex] != lastBroadcastScore[p->mpIndex])
                 broadcastScore(p->mpIndex);
         }
     }
+}
+
+static int kothHillIsContested(void)
+{
+    int contested = 0;
+    int occupantCount = 0;
+    int occupantTeam = -1;
+    Player **players = playerGetAll();
+    int i;
+
+    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+        Player *p = players[i];
+        if (!p || playerIsDead(p) || p->vehicle)
+            continue;
+        if (!playerInsideHill(p))
+            continue;
+
+        ++occupantCount;
+        if (!kothUseTeams()) {
+            if (occupantCount > 1) {
+                contested = 1;
+                break;
+            }
+        } else {
+            int team = p->mpTeam;
+            if (occupantTeam < 0)
+                occupantTeam = team;
+            else if (team != occupantTeam) {
+                contested = 1;
+                break;
+            }
+        }
+    }
+
+    return contested;
+}
+
+static void updateScores(void)
+{
+    Player **players = playerGetAll();
+    int i;
+
+    // Fast path: legacy behavior when contested scoring is disabled.
+    if (!kothContestedStopsScore) {
+        kothAwardHillScoreForLocals(players);
+        return;
+    }
+
+    // Contested mode: block scoring if more than one team (or more than one body in FFA) occupies the hill.
+    if (kothHillIsContested())
+        return;
+
+    // Award points to locals only when uncontested.
+    kothAwardHillScoreForLocals(players);
 }
 
 static int kothGetScoreLimit(void)
@@ -2079,7 +2135,7 @@ void radarUpdate(void)
 
 static float kothDecodeRespawnValue(char idx)
 {
-    static const float OPTIONS[] = {40.0f, 60.0f, 80.0f, 120.0f, 10.0f, 20.0f, 30.0f, 500.0f};
+    static const float OPTIONS[] = {40.0f, 60.0f, 80.0f, 120.0f, 500.0f, 10.0f, 20.0f, 30.0f};
     int count = (int)(sizeof(OPTIONS) / sizeof(OPTIONS[0]));
     if (idx < 0 || idx >= count)
         return OPTIONS[0];
@@ -2228,6 +2284,10 @@ static u32 kothGetActiveHillColor(void)
 
     if (!kothUseTeams())
         ; // still allow blending based on player index colors below
+
+    // If the hill is contested and the feature is enabled, force white.
+    if (kothContestedStopsScore && kothHillIsContested())
+        return (cachedColor = defaultColor);
 
     int activeIdx = kothGetActiveHillIndex();
     if (activeIdx < 0)
