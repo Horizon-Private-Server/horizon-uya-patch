@@ -111,6 +111,7 @@ void menuStateHandler_Siege(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_CTF(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_CTFandSiege(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_KOTH(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Nodes(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
@@ -274,13 +275,14 @@ const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithEx
 MenuElem_OrderedListData_t dataCustomModes = {
   .value = &gameConfig.customModeId,
   .stateHandler = menuStateHandler_SelectedGameModeOverride,
-  .count = 3,
+  .count = 4,
   .items = {
     {CUSTOM_MODE_NONE, "None"},
     // {CUSTOM_MODE_INFECTED, "Infected"},
     // {CUSTOM_MODE_JUGGERNAUGHT, "Juggernaut"},
-    {CUSTOM_MODE_DOMINATION, "Domination"},
     {CUSTOM_MODE_MIDFLAG, "MidFlag"},
+    {CUSTOM_MODE_DOMINATION, "Domination"},
+    {CUSTOM_MODE_KOTH, "King of the Hill"},
   }
 };
 
@@ -292,7 +294,44 @@ const char* CustomModeShortNames[] = {
   // [CUSTOM_MODE_INFECTED] "Infected",
   // [CUSTOM_MODE_JUGGERNAUT] NULL,
   [CUSTOM_MODE_MIDFLAG] NULL,
-  [CUSTOM_MODE_DOMINATION] "Domination"
+  [CUSTOM_MODE_DOMINATION] "Domination",
+  [CUSTOM_MODE_KOTH] "KOTH"
+};
+
+MenuElem_ListData_t dataKothScoreLimit = {
+    .value = &gameConfig.grKothScoreLimit,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 14,
+    .items = { "Off", "50", "100", "150", "200", "250", "300", "350", "400", "450", "500", "750", "1000", "2000" }
+};
+
+MenuElem_ListData_t dataKothHillDuration = {
+    .value = &gameConfig.grKothHillDuration,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 6,
+    .items = { "60", "90", "120", "180", "240", "300" }
+};
+
+// KOTH hill size scale options (XY). Order must match KOTH_HILL_SCALE_TABLE in koth/game.c.
+MenuElem_ListData_t dataKothHillSize = {
+    .value = &gameConfig.grKothHillSizeIdx,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 7,
+    .items = { "1x", "1.5x", "2x", "2.5x", "3x", "3.5x", "4x" }
+};
+
+MenuElem_ListData_t dataKothRespawnOutside = {
+    .value = &gameConfig.grKothRespawnOutside,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 8,
+    .items = { "40", "60", "80", "120", "500", "10", "20", "30" }
+};
+
+MenuElem_ListData_t dataKothRespawnInside = {
+    .value = &gameConfig.grKothRespawnInside,
+    .stateHandler = menuStateHandler_KOTH,
+    .count = 8,
+    .items = { "40", "60", "80", "120", "500", "10", "20", "30" }
 };
 
 MenuElem_ListData_t dataV2_Setting = {
@@ -476,6 +515,12 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   // { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps, "Play on any of the custom maps from the Horizon Map Pack. Visit https://rac-horizon.com to download the map pack." },
   { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
+  { "KOTH Points", listActionHandler, menuStateHandler_KOTH, &dataKothScoreLimit, "Points to win (0 uses timer)." },
+  { "KOTH Hill Duration", listActionHandler, menuStateHandler_KOTH, &dataKothHillDuration, "Time a hill stays active." },
+  { "KOTH Hill Size", listActionHandler, menuStateHandler_KOTH, &dataKothHillSize, "Scale hill radius (XY)." },
+  { "KOTH Outside Respawn Dist", listActionHandler, menuStateHandler_KOTH, &dataKothRespawnOutside, "Respawn distance while waiting." },
+  { "KOTH Inside Respawn Dist", listActionHandler, menuStateHandler_KOTH, &dataKothRespawnInside, "Respawn distance when teammate holds hill." },
+  { "KOTH Contested Mode", toggleActionHandler, menuStateHandler_KOTH, &gameConfig.grKothContestedStopsScore, "Stop scoring when hill is contested." },
   { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset, "Select one of the preconfigured game rule presets or manually set the custom game rules below." },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
@@ -725,6 +770,16 @@ void menuStateHandler_DM(TabElem_t* tab, MenuElem_t* element, int* state)
   GameSettings * gs = gameGetSettings();
 
   if (!gs || gs->GameType != GAMETYPE_DM)
+    *state = ELEMENT_HIDDEN;
+  else if (preset)
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
+}
+
+void menuStateHandler_KOTH(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  if (gameConfig.customModeId != CUSTOM_MODE_KOTH)
     *state = ELEMENT_HIDDEN;
   else if (preset)
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE;
@@ -2492,11 +2547,13 @@ void configTrySendGameConfig(void)
 {
   int state = 0;
   int i = 0, j = 0;
-
   // send game config to server for saving if tab is enabled
   tabElements[1].stateHandler(&tabElements[1], &state);
   if (state & ELEMENT_EDITABLE)
   {
+    // Generate a per-match seed for custom modes that rely on shared RNG (e.g. KOTH hill order).
+    gameConfig.grSeed = ((int)gameGetTime() & 0x0FFFFFFF);
+
     // validate everything
     for (i = 0; i < tabsCount; ++i)
     {

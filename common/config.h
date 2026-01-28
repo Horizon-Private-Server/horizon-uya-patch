@@ -65,6 +65,13 @@ typedef struct PatchGameConfig {
   char grAllNodesTimer;
   char grNodeSelectTimer;
   char grSiegeNoTies;
+  char grKothScoreLimit;
+  char grKothHillDuration;
+  char grKothRespawnOutside;
+  char grKothRespawnInside;
+  char grKothHillSizeIdx;
+  char grKothContestedStopsScore;
+  int grSeed;
   char grNewPlayerSync;
 
   // Party
@@ -73,7 +80,7 @@ typedef struct PatchGameConfig {
   char prLoadoutWeaponsOnly;
   char prGravityBombTweakers;
   char prDisableDlStyleFlips;
-} PatchGameConfig_t;
+} __attribute__((packed)) PatchGameConfig_t;
 
 typedef struct PatchPatches {
   PatchConfig_t config;
@@ -127,6 +134,7 @@ enum CUSTOM_MODE_ID {
   // CUSTOM_MODE_INFECTED = 2,
   // CUSTOM_MODE_JUGGERNAUT = 3,
   CUSTOM_MODE_DOMINATION = 4,
+  CUSTOM_MODE_KOTH = 5,
   // always at the end to indicate how many items there are
   CUSTOM_MODE_COUNT
 };

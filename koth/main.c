@@ -1,0 +1,123 @@
+/***************************************************
+ * FILENAME :        main.c
+ * DESCRIPTION :
+ *      KOTH custom game mode entrypoints.
+ */
+
+#include <tamtypes.h>
+#include <string.h>
+
+#include <libuya/time.h>
+#include <libuya/game.h>
+#include <libuya/gamesettings.h>
+#include <libuya/player.h>
+#include <libuya/ui.h>
+#include <libuya/stdio.h>
+#include <libuya/graphics.h>
+#include <libuya/net.h>
+#include <libuya/uya.h>
+#include "module.h"
+#include "config.h"
+#include "messageid.h"
+#include "include/koth.h"
+
+struct KothState {
+    int Initialized;
+    int GameOver;
+    int IsHost;
+    int LastConfigSeed;
+};
+
+static struct KothState State;
+int isCustomMap = 0;
+
+static void setLobbyGameOptions(PatchStateContainer_t *gameState);
+
+//--------------------------------------------------------------------------
+void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t *gameState)
+{
+    GameSettings * gameSettings = gameGetSettings();
+
+    uyaPreUpdate();
+
+    // Ensure in game
+    if (!gameSettings || !isInGame()) {
+        // If we dropped out of a match, clear KOTH state so the next game starts fresh.
+        if (State.Initialized) {
+            kothReset();
+            State.Initialized = 0;
+            State.GameOver = 0;
+        }
+        return;
+    }
+
+    // Determine if host
+    State.IsHost = gameAmIHost();
+
+    // Apply config once per match or when seed (which carries hill size in high nibble) changes.
+    {
+        int currentSeed = gameConfig ? gameConfig->grSeed : 0;
+        if (!State.Initialized || currentSeed != State.LastConfigSeed) {
+            kothSetConfig(gameConfig);
+            State.LastConfigSeed = currentSeed;
+        }
+    }
+
+    // initialize
+    if (!State.Initialized) {
+        State.Initialized = 1;
+        isCustomMap = gameConfig ? gameConfig->isCustomMap : 0;
+        kothReset();
+        // Reapply config after reset so size/seed stick on first init.
+        kothSetConfig(gameConfig);
+        return;
+    }
+
+    // tick
+    if (!State.GameOver) {
+        kothTick();
+    }
+
+    uyaPostUpdate();
+    return;
+}
+
+//--------------------------------------------------------------------------
+void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t *gameState)
+{
+    u32 menu;
+
+    // Lobby
+    if (menu = uiGetActiveMenu(UI_MENU_STAGING, 0), menu > 0) {
+        // Ensure KOTH state is clean when entering staging for a new match.
+        if (State.Initialized) {
+            kothReset();
+            State.Initialized = 0;
+            State.GameOver = 0;
+        }
+        setLobbyGameOptions(gameState);
+    } else if (menu = uiGetActiveMenu(UI_MENU_END_GAME_DETAILS, 0), menu > 0) {
+        // scoreboard spot if needed
+    }
+}
+
+//--------------------------------------------------------------------------
+void loadStart(struct GameModule * module, PatchStateContainer_t * gameState)
+{
+    setLobbyGameOptions(gameState);
+}
+
+static void setLobbyGameOptions(PatchStateContainer_t *gameState)
+{
+    // set game options
+    GameOptions * gameOptions = gameGetOptions();
+    GameSettings* gameSettings = gameGetSettings();
+    if (!gameOptions || !gameSettings || gameSettings->GameLoadStartTime <= 0)
+        return;
+
+    // Keep DM base rules but ensure frag limit is off; KOTH handles scoring.
+    gameSettings->GameType = GAMETYPE_DM;
+    gameOptions->GameFlags.MultiplayerGameFlags.FragLimit = 0;
+    gameOptions->GameFlags.MultiplayerGameFlags.Chargeboots = 1;
+    gameOptions->GameFlags.MultiplayerGameFlags.PlayerNames = 1;
+}
