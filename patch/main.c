@@ -2879,7 +2879,7 @@ int main(void)
 	// 
 	runVoteToEndLogic();
 
-	runHolidays();
+	// runHolidays();
 
 	patchColors();
 
