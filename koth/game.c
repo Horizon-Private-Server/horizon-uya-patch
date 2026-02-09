@@ -64,7 +64,7 @@
 #endif
 
 //TODO 1.1 is best at default scaling, but is a bit much if scaled 4x. Using less but may want to dynamically adjust 
-#define KOTH_SCORE_MARGIN_CIRCLE 1.07f //circle scoring needs a bit of maragin if player is near the boundary 
+#define KOTH_SCORE_MARGIN_CIRCLE 1.0f // TODO: restore small margin (was 1.07f) if boundary leniency is desired
 
 // Toggle how the active hill is selected each rotation window
 // Define KOTH_RANDOM_ORDER to cycle hills in a deterministic randomized order without replacement.
@@ -87,6 +87,12 @@ typedef struct KothHill {
     // Derived footprint (currently uniform circle; keep both axes for future ellipse support).
     float footprintRx;
     float footprintRy;
+    VECTOR axisX;          // normalized local X in world space
+    VECTOR axisY;          // normalized local Y in world space
+    VECTOR axisUp;         // normalized local Z in world space
+    float halfHeight;      // half-height derived from cuboid up axis length
+    int axesComputed;      // 1 if axes are valid
+    int preferRotYaw;      // 1 to prefer cuboid.rot.z for yaw (custom hills)
 #ifdef KOTH_RANDOM_ORDER
     int orderIdx;
 #endif
@@ -770,12 +776,62 @@ static int clampi(int value, int min, int max)
     return value;
 }
 
+// Derive yaw for a hill using its cuboid basis; optionally prefer rot.z (for custom maps).
+static void kothComputeHillAxes(KothHill_t *hill)
+{
+    if (!hill)
+        return;
+
+    VECTOR x = {1,0,0,0};
+    VECTOR y = {0,1,0,0};
+    VECTOR z = {0,0,1,0};
+
+    vector_copy(x, hill->cuboid.matrix.v0);
+    vector_copy(y, hill->cuboid.matrix.v1);
+    vector_copy(z, hill->cuboid.matrix.v2);
+
+    float lenX = vector_length(x);
+    float lenY = vector_length(y);
+    float lenZ = vector_length(z);
+    if (lenX < 0.0001f) {
+        vector_copy(x, hill->cuboid.imatrix.v0);
+        lenX = vector_length(x);
+    }
+    if (lenY < 0.0001f) {
+        vector_copy(y, hill->cuboid.imatrix.v1);
+        lenY = vector_length(y);
+    }
+    if (lenZ < 0.0001f) {
+        vector_copy(z, hill->cuboid.imatrix.v2);
+        lenZ = vector_length(z);
+    }
+
+    // Preserve raw length for height/anchoring from the up axis.
+    float rawHeight = lenZ;
+
+    if (lenX > 0.0001f) vector_scale(x, x, 1.0f / lenX); else vector_copy(x, (VECTOR){1,0,0,0});
+    if (lenY > 0.0001f) vector_scale(y, y, 1.0f / lenY); else vector_copy(y, (VECTOR){0,1,0,0});
+    if (lenZ > 0.0001f) vector_scale(z, z, 1.0f / lenZ); else vector_copy(z, (VECTOR){0,0,1,0});
+
+    vector_copy(hill->axisX, x);
+    vector_copy(hill->axisY, y);
+    vector_copy(hill->axisUp, z);
+    if (rawHeight < 2.0f)
+        rawHeight = 2.0f; // clamp minimum raw height so scaled halfHeight doesn't get too small
+    hill->halfHeight = (rawHeight > 0.0001f) ? (rawHeight * KOTH_RING_HEIGHT_SCALE * 0.5f) : 0.0f;
+    hill->axesComputed = 1;
+}
+
 static void kothGetHillYaw(const KothHill_t *hill, float *cosYaw, float *sinYaw)
 {
     float c = 1.0f, s = 0.0f;
     if (hill) {
-        float x = hill->cuboid.matrix.v0[0];
-        float y = hill->cuboid.matrix.v0[1];
+        if (!hill->axesComputed)
+            kothComputeHillAxes((KothHill_t*)hill);
+
+        // Derive yaw from the X axis projected onto the XY plane.
+        float x = hill->axisX[0];
+        float y = hill->axisX[1];
         if (x != 0.0f || y != 0.0f) {
             float ang = atan2f(y, x);
             c = cosf(ang);
@@ -916,6 +972,8 @@ static void scanHillsOnce(void)
                     hills[hillCount].isCircle = diff < 0.1f;
                     kothApplyScaleToHill(&hills[hillCount]);
                     hills[hillCount].moby = NULL;
+                    hills[hillCount].preferRotYaw = 0;
+                    kothComputeHillAxes(&hills[hillCount]);
                     hills[hillCount].scroll = 0;
                     hills[hillCount].drawAtMidpoint = 0;
                     hills[hillCount].drawMoby = mobySpawn(0x1c0d, 0);
@@ -972,8 +1030,9 @@ static void scanHillsOnce(void)
                     hills[hillCount].isCircle = 0;
 
                     // Derive radii from cuboid scale (basis vector lengths).
-                    hills[hillCount].radiusX = vector_length(cub->matrix.v0) * 0.5f * KOTH_CUBOID_SCALE;
-                    hills[hillCount].radiusY = vector_length(cub->matrix.v1) * 0.5f * KOTH_CUBOID_SCALE;
+                    // Custom maps author scale as full width; do not halve here.
+                    hills[hillCount].radiusX = vector_length(cub->matrix.v0) * KOTH_CUBOID_SCALE;
+                    hills[hillCount].radiusY = vector_length(cub->matrix.v1) * KOTH_CUBOID_SCALE;
                     if (hills[hillCount].radiusX <= 0) hills[hillCount].radiusX = KOTH_RING_RADIUS;
                     if (hills[hillCount].radiusY <= 0) hills[hillCount].radiusY = KOTH_RING_RADIUS;
                     // Choose circle when axes are effectively equal.
@@ -982,8 +1041,10 @@ static void scanHillsOnce(void)
                     hills[hillCount].isCircle = diff < 0.1f;
                     kothApplyScaleToHill(&hills[hillCount]);
                     hills[hillCount].moby = moby;
+                    hills[hillCount].preferRotYaw = 1;
+                    kothComputeHillAxes(&hills[hillCount]);
                     hills[hillCount].scroll = 0;
-                    hills[hillCount].drawAtMidpoint = 1;
+                    hills[hillCount].drawAtMidpoint = 0;
                     if (hills[hillCount].radiusX <= 0) hills[hillCount].radiusX = KOTH_RING_RADIUS;
                     if (hills[hillCount].radiusY <= 0) hills[hillCount].radiusY = KOTH_RING_RADIUS;
                     hills[hillCount].drawMoby = mobySpawn(0x1c0d, 0);
@@ -1052,7 +1113,9 @@ static void scanHillsOnce(void)
                 hills[hillCount].radiusX = KOTH_RING_RADIUS;
                 hills[hillCount].radiusY = KOTH_RING_RADIUS;
                 kothApplyScaleToHill(&hills[hillCount]);
-                hills[hillCount].drawAtMidpoint = 1;
+                hills[hillCount].preferRotYaw = 0;
+                kothComputeHillAxes(&hills[hillCount]);
+                hills[hillCount].drawAtMidpoint = 0;
 #ifdef KOTH_DEBUG
                 KOTH_LOG("[KOTH][DBG] hill[%d] source=siege pos=(%d,%d,%d) radius=%d\n",
                          hillCount,
@@ -1141,28 +1204,44 @@ static int playerInsideHill(Player *player)
     if (activeIdx < 0 || activeIdx >= hillCount)
         return 0;
 
-    VECTOR delta;
-    vector_subtract(delta, player->playerPosition, hills[activeIdx].position);
-    // ignore height to keep circle flat on ground
-    delta[2] = 0;
+    // Build normalized axes from the cuboid basis (fallback to inverse if needed).
+    if (!hills[activeIdx].axesComputed)
+        kothComputeHillAxes(&hills[activeIdx]);
+
     float rx = hills[activeIdx].footprintRx;
     float ry = hills[activeIdx].footprintRy;
     if (rx <= 0) rx = KOTH_RING_RADIUS * hillScale;
     if (ry <= 0) ry = KOTH_RING_RADIUS * hillScale;
+    float hz = hills[activeIdx].halfHeight * 2.0f;
+    if (hz <= 0)
+        hz = (KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE * 0.5f);
+    float ringHeight = hz * 2.0f;
+    float baseNudge = 0.0f;
+
+    // Anchor scoring to the same base plane as rendering.
+    VECTOR baseCenter;
+    vector_copy(baseCenter, hills[activeIdx].position);
+    VECTOR upOffset;
+    vector_scale(upOffset, hills[activeIdx].axisUp, hz + baseNudge);
+    vector_subtract(baseCenter, baseCenter, upOffset);
+
+    VECTOR delta;
+    vector_subtract(delta, player->playerPosition, baseCenter);
+
+    float projX = vector_innerproduct_unscaled(delta, hills[activeIdx].axisX);
+    float projY = vector_innerproduct_unscaled(delta, hills[activeIdx].axisY);
+    float projZ = vector_innerproduct_unscaled(delta, hills[activeIdx].axisUp);
+    if (projZ < -0.1f || projZ > ringHeight)
+        return 0;
 
     if (hills[activeIdx].isCircle) {
         float radius = rx * KOTH_SCORE_MARGIN_CIRCLE;
-        float sqrDist = vector_sqrmag(delta);
+        float sqrDist = (projX * projX) + (projY * projY);
         return sqrDist <= (radius * radius);
     }
 
-    float cosYaw, sinYaw;
-    kothGetHillYaw(&hills[activeIdx], &cosYaw, &sinYaw);
-    // Rotate into hill space (about Z) using only XY components.
-    float dx = delta[0] * cosYaw + delta[1] * sinYaw;
-    float dy = -delta[0] * sinYaw + delta[1] * cosYaw;
-    dx = fabsf(dx);
-    dy = fabsf(dy);
+    float dx = fabsf(projX);
+    float dy = fabsf(projY);
     return dx <= rx && dy <= ry;
 }
 
@@ -1549,28 +1628,58 @@ static float kothGetBlinkScale(void)
 #endif
 }
 
-static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, float radiusZ, int isCircle, float cosYaw, float sinYaw, int drawAtMidpoint)
+static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *scroll, float radiusX, float radiusZ, int isCircle, float cosYaw, float sinYaw, int drawAtMidpoint)
 {
     const int MAX_SEGMENTS = 64;
     const int MIN_SEGMENTS = 8;
 #define KOTH_USE_STRIP 1
     if (radiusX <= 0) radiusX = KOTH_RING_RADIUS;
     if (radiusZ <= 0) radiusZ = KOTH_RING_RADIUS;
-    VECTOR xAxis = {radiusX * 2, 0, 0, 0};
-    VECTOR zAxis = {0, radiusZ * 2, 0, 0};
-    VECTOR yAxis = {0, 0, KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE, 0};
     VECTOR tempRight, tempUp, halfX, halfZ, vRadius;
-    vector_scale(halfX, xAxis, .5);
-    vector_scale(halfZ, zAxis, .5);
-    float fRadius = vector_length(halfX);
-    vector_normalize(yAxis, yAxis);
 
-    // Make the ring taller to improve visibility.
-    float ringHeight = KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE * 3.75f; // 1.5x the previous 2.5x setting
-    // Rings stay centered; footprint quad can be pushed to the base if requested.
-    vector_scale(tempUp, yAxis, ringHeight * 0.5f);
-    // Nudge the footprint down slightly when anchoring to the base so it remains visible above terrain.
-    float floorOffsetZ = drawAtMidpoint ? 0.0f : -(ringHeight * 0.45f);
+    // Build oriented axes from the cuboid basis if available.
+    VECTOR axisX = {1,0,0,0};
+    VECTOR axisZ = {0,1,0,0};
+    VECTOR axisUp = {0,0,1,0};
+    if (hill) {
+    vector_copy(axisX, hill->cuboid.matrix.v0);
+    vector_copy(axisZ, hill->cuboid.matrix.v1);
+    vector_copy(axisUp, hill->cuboid.matrix.v2);
+    }
+    float lenX = vector_length(axisX);
+    float lenZ = vector_length(axisZ);
+    float lenUp = vector_length(axisUp);
+    if (lenX > 0.0001f) vector_scale(axisX, axisX, 1.0f / lenX); else vector_copy(axisX, (VECTOR){1,0,0,0});
+    if (lenZ > 0.0001f) vector_scale(axisZ, axisZ, 1.0f / lenZ); else vector_copy(axisZ, (VECTOR){0,1,0,0});
+    if (lenUp > 0.0001f) vector_scale(axisUp, axisUp, 1.0f / lenUp); else vector_copy(axisUp, (VECTOR){0,0,1,0});
+
+    vector_scale(halfX, axisX, radiusX);
+    vector_scale(halfZ, axisZ, radiusZ);
+    float fRadius = vector_length(halfX);
+
+    // Use cuboid-derived half-height; apply a modest scale to better span base-to-top while anchored.
+    float halfHeight = hill ? (hill->halfHeight * 2.0f) : 0.0f;
+    if (halfHeight <= 0)
+        halfHeight = (KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE * 0.5f);
+    float ringHeight = halfHeight * 2.0f;
+    float baseNudge = 0.0f;
+    VECTOR baseCenter, topCenter;
+    if (drawAtMidpoint) {
+        VECTOR upOffset;
+        vector_scale(upOffset, axisUp, halfHeight);
+        vector_subtract(baseCenter, center, upOffset);
+        vector_add(topCenter, center, upOffset);
+    } else {
+        VECTOR upOffset;
+        vector_scale(upOffset, axisUp, halfHeight);
+        vector_subtract(baseCenter, center, upOffset);
+        vector_add(topCenter, baseCenter, upOffset);
+        vector_add(topCenter, topCenter, upOffset);
+    }
+    VECTOR upVec;
+    vector_subtract(upVec, topCenter, baseCenter); // full height vector
+    // TODO: if floor Z-fighting occurs, consider reintroducing a small offset (previously -5% of ringHeight).
+    float floorOffsetZ = 0.0f;
 
     float segmentSize = 1.0f;
     int segments = (int)((2 * MATH_PI * fRadius) / segmentSize);
@@ -1625,28 +1734,20 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
             };
 
             VECTOR currCenter, nextCenter;
-            vector_add(currCenter, center, vRadius);
-            vector_add(nextCenter, center, nextRadius);
+            vector_add(currCenter, baseCenter, vRadius);
+            vector_add(nextCenter, baseCenter, nextRadius);
 
             // top current
-            quad.point[0][0] = currCenter[0] + tempUp[0];
-            quad.point[0][1] = currCenter[1] + tempUp[1];
-            quad.point[0][2] = currCenter[2] + tempUp[2];
+            vector_add(quad.point[0], currCenter, upVec);
             quad.point[0][3] = 1;
             // bottom current
-            quad.point[1][0] = currCenter[0] - tempUp[0];
-            quad.point[1][1] = currCenter[1] - tempUp[1];
-            quad.point[1][2] = currCenter[2] - tempUp[2];
+            vector_copy(quad.point[1], currCenter);
             quad.point[1][3] = 1;
             // top next
-            quad.point[2][0] = nextCenter[0] + tempUp[0];
-            quad.point[2][1] = nextCenter[1] + tempUp[1];
-            quad.point[2][2] = nextCenter[2] + tempUp[2];
+            vector_add(quad.point[2], nextCenter, upVec);
             quad.point[2][3] = 1;
             // bottom next
-            quad.point[3][0] = nextCenter[0] - tempUp[0];
-            quad.point[3][1] = nextCenter[1] - tempUp[1];
-            quad.point[3][2] = nextCenter[2] - tempUp[2];
+            vector_copy(quad.point[3], nextCenter);
             quad.point[3][3] = 1;
 
             gfxDrawQuad(quad, NULL);
@@ -1655,30 +1756,19 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
 
         *scroll += .007f;
     } else {
-        // Rotated rectangle walls using only cuboid lengths.
-        // Pass center via translation after rotation.
-        // Local corners before rotation.
-        VECTOR localCorners[4];
-        vector_copy(localCorners[0], (VECTOR){-halfX[0], -halfZ[1], 0, 0});
-        vector_copy(localCorners[1], (VECTOR){ halfX[0], -halfZ[1], 0, 0});
-        vector_copy(localCorners[2], (VECTOR){ halfX[0],  halfZ[1], 0, 0});
-        vector_copy(localCorners[3], (VECTOR){-halfX[0],  halfZ[1], 0, 0});
+        // Oriented rectangle walls using cuboid axes.
+        VECTOR corners[4];
+        vector_add(corners[0], baseCenter, (VECTOR){ -halfX[0] - halfZ[0], -halfX[1] - halfZ[1], -halfX[2] - halfZ[2], 0});
+        vector_add(corners[1], baseCenter, (VECTOR){  halfX[0] - halfZ[0],  halfX[1] - halfZ[1],  halfX[2] - halfZ[2], 0});
+        vector_add(corners[2], baseCenter, (VECTOR){  halfX[0] + halfZ[0],  halfX[1] + halfZ[1],  halfX[2] + halfZ[2], 0});
+        vector_add(corners[3], baseCenter, (VECTOR){ -halfX[0] + halfZ[0], -halfX[1] + halfZ[1], -halfX[2] + halfZ[2], 0});
 
         VECTOR topCorners[4], bottomCorners[4];
         int i;
         for (i = 0; i < 4; ++i) {
-            float lx = localCorners[i][0];
-            float ly = localCorners[i][1];
-            // Rotate around Z.
-            float rx = lx * cosYaw - ly * sinYaw;
-            float ry = lx * sinYaw + ly * cosYaw;
-            topCorners[i][0] = center[0] + rx + tempUp[0];
-            topCorners[i][1] = center[1] + ry + tempUp[1];
-            topCorners[i][2] = center[2] + tempUp[2];
+            vector_add(topCorners[i], corners[i], upVec);
             topCorners[i][3] = 1;
-            bottomCorners[i][0] = center[0] + rx - tempUp[0];
-            bottomCorners[i][1] = center[1] + ry - tempUp[1];
-            bottomCorners[i][2] = center[2] - tempUp[2];
+            vector_copy(bottomCorners[i], corners[i]);
             bottomCorners[i][3] = 1;
         }
 
@@ -1711,20 +1801,15 @@ static void drawHillAt(VECTOR center, u32 color, float *scroll, float radiusX, f
 
     // floor quad
     VECTOR corners[4];
-    VECTOR localCorners[4];
-    vector_copy(localCorners[0], (VECTOR){-halfX[0], -halfZ[1], 0, 0});
-    vector_copy(localCorners[1], (VECTOR){ halfX[0], -halfZ[1], 0, 0});
-    vector_copy(localCorners[2], (VECTOR){ halfX[0],  halfZ[1], 0, 0});
-    vector_copy(localCorners[3], (VECTOR){-halfX[0],  halfZ[1], 0, 0});
+        vector_add(corners[0], baseCenter, (VECTOR){ -halfX[0] - halfZ[0], -halfX[1] - halfZ[1], -halfX[2] - halfZ[2], 0});
+        vector_add(corners[1], baseCenter, (VECTOR){  halfX[0] - halfZ[0],  halfX[1] - halfZ[1],  halfX[2] - halfZ[2], 0});
+        vector_add(corners[2], baseCenter, (VECTOR){  halfX[0] + halfZ[0],  halfX[1] + halfZ[1],  halfX[2] + halfZ[2], 0});
+        vector_add(corners[3], baseCenter, (VECTOR){ -halfX[0] + halfZ[0], -halfX[1] + halfZ[1], -halfX[2] + halfZ[2], 0});
     int c;
     for (c = 0; c < 4; ++c) {
-        float lx = localCorners[c][0];
-        float ly = localCorners[c][1];
-        float rx = lx * cosYaw - ly * sinYaw;
-        float ry = lx * sinYaw + ly * cosYaw;
-        corners[c][0] = center[0] + rx;
-        corners[c][1] = center[1] + ry;
-        corners[c][2] = center[2] + floorOffsetZ;
+        corners[c][0] += axisUp[0] * floorOffsetZ;
+        corners[c][1] += axisUp[1] * floorOffsetZ;
+        corners[c][2] += axisUp[2] * floorOffsetZ;
         corners[c][3] = 0;
     }
 
@@ -1807,7 +1892,7 @@ static void drawHill(Moby *moby)
         kothGetHillYaw(hill, &cosYaw, &sinYaw);
     float radiusX = hill ? hill->footprintRx : (KOTH_RING_RADIUS * hillScale);
     float radiusZ = hill ? hill->footprintRy : (KOTH_RING_RADIUS * hillScale);
-    drawHillAt(moby->position, baseColor, scroll, radiusX, radiusZ, hill ? hill->isCircle : 1, cosYaw, sinYaw, hill ? hill->drawAtMidpoint : 1);
+    drawHillAt(hill, moby->position, baseColor, scroll, radiusX, radiusZ, hill ? hill->isCircle : 1, cosYaw, sinYaw, hill ? hill->drawAtMidpoint : 1);
 }
 
 static void hillUpdate(Moby *moby)
@@ -1841,7 +1926,7 @@ static void drawHills(void)
         } else {
             float cosYaw = 1.0f, sinYaw = 0.0f;
             kothGetHillYaw(&hills[activeIdx], &cosYaw, &sinYaw);
-            drawHillAt(hills[activeIdx].position, kothGetActiveHillColor(), &hills[activeIdx].scroll,
+            drawHillAt(&hills[activeIdx], hills[activeIdx].position, kothGetActiveHillColor(), &hills[activeIdx].scroll,
                        hills[activeIdx].footprintRx, hills[activeIdx].footprintRy, hills[activeIdx].isCircle, cosYaw, sinYaw, hills[activeIdx].drawAtMidpoint);
         }
 #ifdef KOTH_DEBUG
@@ -2277,8 +2362,9 @@ static u32 kothGetActiveHillColor(void)
     static int lastPollTime = 0;
 
     int now = gameGetTime();
-    // Update at most once per second to reduce per-frame scanning cost.
-    if (now - lastPollTime < TIME_SECOND)
+    // Update at most twice per second to reduce per-frame scanning cost.
+    // Use shift instead of divide for ~half-second cadence.
+    if (now - lastPollTime < (TIME_SECOND >> 1))
         return cachedColor;
     lastPollTime = now;
 
