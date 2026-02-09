@@ -160,6 +160,9 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.hideFluxReticle = 0,
 	.dlStyleFlips = 0,
 	.enableTeamInfo = 0,
+	.kothScrollSpeed = 0,
+	.kothHillTransparency = 0,
+	.kothHillFxId = FX_VISIBOMB_HORIZONTAL_LINES,
 };
 
 PatchGameConfig_t gameConfig;

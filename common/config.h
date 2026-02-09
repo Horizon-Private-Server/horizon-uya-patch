@@ -26,6 +26,9 @@ typedef struct PatchConfig {
   char hideFluxReticle;
   char dlStyleFlips;
   char enableTeamInfo;
+  char kothScrollSpeed;
+  char kothHillTransparency;
+  char kothHillFxId;
 } PatchConfig_t;
 
 // Game Rules Tab

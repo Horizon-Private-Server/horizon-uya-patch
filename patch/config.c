@@ -383,6 +383,27 @@ MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
     .items = { "Default", "Select", "L3", "R3" }
 };
 
+MenuElem_ListData_t dataKothScrollSpeed = {
+    .value = &config.kothScrollSpeed,
+    .stateHandler = NULL,
+    .count = 4,
+    .items = { "100%", "50%", "25%", "0%" }
+};
+
+MenuElem_ListData_t dataKothHillTransparency = {
+    .value = &config.kothHillTransparency,
+    .stateHandler = NULL,
+    .count = 5,
+    .items = { "100%", "75%", "50%", "25%", "10%" }
+};
+
+MenuElem_RangeData_t dataKothHillFxId = {
+    .value = &config.kothHillFxId,
+    .stateHandler = NULL,
+    .minValue = 0,
+    .maxValue = 105,
+};
+
 MenuElem_ListData_t dataGameConfigPreset = {
     .value = &preset,
     .stateHandler = NULL,
@@ -506,6 +527,9 @@ MenuElem_t menuElementsGeneral[] = {
   { "Single Player Music", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSingleplayerMusic, "Tired of the same BORING songs in game?!  Spice it up by adding the music tracks from Single Player!" },
   { "Toggle Map Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_MapAccess, "The button that you will need to press to show the Map." },
   { "Toggle Scoreboard Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_ScoreboardAccess, "The button that you will need to press to show the Scoreboard." },
+  { "KOTH Scroll Speed", listActionHandler, menuStateAlwaysEnabledHandler, &dataKothScrollSpeed, "Scale hill ring scroll speed." },
+  { "KOTH Hill Transparency", listActionHandler, menuStateAlwaysEnabledHandler, &dataKothHillTransparency, "Adjust hill transparency." },
+  { "KOTH Wall FX ID", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataKothHillFxId, "Texture FX id for hill walls (0-105)." },
 };
 
 // Game Settings

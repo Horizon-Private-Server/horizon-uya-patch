@@ -53,6 +53,8 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 
     // Determine if host
     State.IsHost = gameAmIHost();
+    // Apply per-player visual preferences.
+    kothSetUserConfig(config);
 
     // Apply config once per match or when seed (which carries hill size in high nibble) changes.
     {

@@ -115,6 +115,14 @@ static int hillSizeIdx = 0; // synced hill size index
 static const float KOTH_HILL_SCALE_TABLE[KOTH_SIZE_OPTIONS] = {1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f};
 static float hillScale = 1.0f; // default scale (idx 0)
 static int kothContestedStopsScore = 0;
+static float kothScrollSpeedMultiplier = 1.0f;
+static float kothHillAlphaScale = 1.0f;
+static float kothScrollStep = 0.007f;
+static int kothAlphaNearBase = 0x80;
+static int kothAlphaFarBase = 0x50;
+static int kothAlphaFloorBase = 0x40;
+static int kothRingWallFx = KOTH_RING_WALL_FX;
+static int kothUserCfgPollTimeMs = -TIME_SECOND;
 #ifdef KOTH_RANDOM_ORDER
 static int hillOrder[KOTH_MAX_HILLS];
 static int hillOrderCount = 0;
@@ -895,6 +903,49 @@ static void kothUpdateRespawnDistanceForLocals(void);
 static int kothHillIsContested(void);
 static u32 kothGetActiveHillColor(void);
 static float kothGetBlinkScale(void);
+
+static float kothMapScrollSpeed(char value)
+{
+    static const float options[] = {1.0f, 0.5f, 0.25f, 0.0f};
+    int idx = value;
+    if (idx < 0 || idx >= (int)(sizeof(options) / sizeof(options[0])))
+        idx = 0;
+    return options[idx];
+}
+
+static float kothMapHillAlphaScale(char value)
+{
+    static const float options[] = {1.0f, 0.75f, 0.5f, 0.25f, 0.10f};
+    int idx = value;
+    if (idx < 0 || idx >= (int)(sizeof(options) / sizeof(options[0])))
+        idx = 0;
+    return options[idx];
+}
+
+void kothSetUserConfig(PatchConfig_t *config)
+{
+    int now = gameGetTime();
+    if (now - kothUserCfgPollTimeMs < (TIME_SECOND >> 1))
+        return;
+    kothUserCfgPollTimeMs = now;
+
+    kothScrollSpeedMultiplier = kothMapScrollSpeed(config ? config->kothScrollSpeed : 0);
+    kothScrollStep = 0.007f * kothScrollSpeedMultiplier;
+
+    kothHillAlphaScale = kothMapHillAlphaScale(config ? config->kothHillTransparency : 0);
+    kothAlphaNearBase = (int)(0x80 * kothHillAlphaScale);
+    kothAlphaFarBase = (int)(0x50 * kothHillAlphaScale);
+    kothAlphaFloorBase = (int)(0x40 * kothHillAlphaScale);
+    if (kothAlphaNearBase > 0xFF) kothAlphaNearBase = 0xFF;
+    if (kothAlphaFarBase > 0xFF) kothAlphaFarBase = 0xFF;
+    if (kothAlphaFloorBase > 0xFF) kothAlphaFloorBase = 0xFF;
+
+    // Clamp FX id; fall back to default wall effect on invalid values.
+    int fxId = config ? (int)config->kothHillFxId : KOTH_RING_WALL_FX;
+    if (fxId < 0 || fxId > 105)
+        fxId = KOTH_RING_WALL_FX;
+    kothRingWallFx = fxId;
+}
 
 void kothSetConfig(PatchGameConfig_t *config)
 {
@@ -1696,9 +1747,9 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
 
     float fadeScale = kothGetBlinkScale();
 
-    int alphaNear = (int)(0x80 * KOTH_RING_ALPHA_SCALE);
+    int alphaNear = (int)(kothAlphaNearBase * KOTH_RING_ALPHA_SCALE);
     if (alphaNear > 0xFF) alphaNear = 0xFF;
-    int alphaFar = (int)(0x50 * KOTH_RING_ALPHA_SCALE);
+    int alphaFar = (int)(kothAlphaFarBase * KOTH_RING_ALPHA_SCALE);
     if (alphaFar > 0xFF) alphaFar = 0xFF;
     alphaNear = (int)(alphaNear * fadeScale);
     alphaFar = (int)(alphaFar * fadeScale);
@@ -1714,7 +1765,7 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
         float cosStep = cosf(thetaStep);
         float sinStep = sinf(thetaStep);
         QuadDef quad;
-        gfxSetupEffectTex(&quad, KOTH_RING_WALL_FX, 0, 0x80);
+        gfxSetupEffectTex(&quad, kothRingWallFx, 0, 0x80);
         // u = 0 at current angle, u = 1 at next; v scrolls vertically.
         quad.uv[0] = (UV_t){0, -*scroll};
         quad.uv[1] = (UV_t){0, 1.0f - *scroll};
@@ -1754,7 +1805,7 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
             vector_copy(vRadius, nextRadius);
         }
 
-        *scroll += .007f;
+        *scroll += kothScrollStep;
     } else {
         // Oriented rectangle walls using cuboid axes.
         VECTOR corners[4];
@@ -1773,7 +1824,7 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
         }
 
         QuadDef wall;
-        gfxSetupEffectTex(&wall, KOTH_RING_WALL_FX, 0, 0x80);
+        gfxSetupEffectTex(&wall, kothRingWallFx, 0, 0x80);
         wall.rgba[0] = wall.rgba[1] = (alphaNear << 24) | baseRgb;
         wall.rgba[2] = wall.rgba[3] = (alphaFar << 24) | baseRgb;
 
@@ -1794,7 +1845,7 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
 
             gfxDrawQuad(wall, NULL);
         }
-        *scroll += .007f;
+        *scroll += kothScrollStep;
     }
 
 #endif
@@ -1820,7 +1871,7 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
     floorQuad.uv[1] = (UV_t){0, 1};
     floorQuad.uv[2] = (UV_t){1, 0};
     floorQuad.uv[3] = (UV_t){1, 1};
-    int floorAlpha = 0x40;
+    int floorAlpha = kothAlphaFloorBase;
     // Optional: tweak floor tint to push greener (uncomment to apply).
     // baseRgb = (baseRgb & 0x00FF00FF) | (((baseRgb >> 16) & 0xFF) << 8); // example tweak
     floorAlpha = (int)(floorAlpha * fadeScale);
