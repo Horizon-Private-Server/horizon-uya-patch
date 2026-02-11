@@ -115,6 +115,7 @@ static int hillSizeIdx = 0; // synced hill size index
 static const float KOTH_HILL_SCALE_TABLE[KOTH_SIZE_OPTIONS] = {1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f};
 static float hillScale = 1.0f; // default scale (idx 0)
 static int kothContestedStopsScore = 0;
+static int kothPointStacking = 0;
 static float kothScrollSpeedMultiplier = 1.0f;
 static float kothHillAlphaScale = 1.0f;
 static float kothScrollStep = 0.007f;
@@ -900,6 +901,16 @@ static float kothGetOutsideRespawnDistance(void);
 static float kothSelectRespawnDistance(Player *player);
 static void kothUpdateRespawnDistance(Player *player);
 static void kothUpdateRespawnDistanceForLocals(void);
+typedef struct KothOccupancyResult {
+    int occupantTeam;
+    int controllingPlayerIdx;
+    int contested;
+    int occupantCount;
+    int accumR;
+    int accumG;
+    int accumB;
+} KothOccupancyResult_t;
+static void kothScanHillOccupants(KothOccupancyResult_t *out, int accumulateColor);
 static int kothHillIsContested(void);
 static u32 kothGetActiveHillColor(void);
 static float kothGetBlinkScale(void);
@@ -960,6 +971,7 @@ void kothSetConfig(PatchGameConfig_t *config)
     // Seed no longer carries size; keep lower bits for randomness if needed.
     lastSeed = seedRaw & 0x0FFFFFFF;
     kothContestedStopsScore = config ? config->grKothContestedStopsScore : 0;
+    kothPointStacking = config ? config->grKothPointStacking : 0;
     kothOnHillSizeUpdated();
 #if KOTH_DEBUG
     KOTH_LOG("[KOTH][DBG] config set sizeIdx=%d scale=%d seedLow=0x%X\n", hillSizeIdx, (int)hillScale, lastSeed);
@@ -1329,12 +1341,24 @@ static void kothAwardHillScoreForLocals(Player **players)
 
 static int kothHillIsContested(void)
 {
-    int contested = 0;
-    int occupantCount = 0;
-    int occupantTeam = -1;
+    KothOccupancyResult_t occ;
+    kothScanHillOccupants(&occ, 0);
+    return occ.contested;
+}
+
+static void kothScanHillOccupants(KothOccupancyResult_t *out, int accumulateColor)
+{
+    if (!out)
+        return;
+    out->occupantTeam = -1;
+    out->controllingPlayerIdx = -1;
+    out->contested = 0;
+    out->occupantCount = 0;
+    out->accumR = out->accumG = out->accumB = 0;
+
+    int teamsMode = kothUseTeams();
     Player **players = playerGetAll();
     int i;
-
     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
         Player *p = players[i];
         if (!p || playerIsDead(p) || p->vehicle)
@@ -1342,30 +1366,91 @@ static int kothHillIsContested(void)
         if (!playerInsideHill(p))
             continue;
 
-        ++occupantCount;
-        if (!kothUseTeams()) {
-            if (occupantCount > 1) {
-                contested = 1;
-                break;
+        ++out->occupantCount;
+        if (accumulateColor) {
+            int colorIdx = teamsMode ? p->mpTeam : p->mpIndex;
+            if (colorIdx < 0)
+                colorIdx = 0;
+            u32 color = TEAM_COLORS[colorIdx % TEAM_MAX];
+            out->accumR += (color >> 16) & 0xFF;
+            out->accumG += (color >> 8) & 0xFF;
+            out->accumB += color & 0xFF;
+        }
+
+        if (teamsMode) {
+            int team = p->mpTeam;
+            if (out->occupantTeam < 0) {
+                out->occupantTeam = team;
+                out->controllingPlayerIdx = p->mpIndex; // first occupant is authoritative scorer
+            } else if (team != out->occupantTeam) {
+                out->contested = 1;
+            } else if (p->mpIndex < out->controllingPlayerIdx) {
+                out->controllingPlayerIdx = p->mpIndex; // keep lowest mpIndex for determinism
             }
         } else {
-            int team = p->mpTeam;
-            if (occupantTeam < 0)
-                occupantTeam = team;
-            else if (team != occupantTeam) {
-                contested = 1;
-                break;
-            }
+            if (out->occupantCount > 1)
+                out->contested = 1;
+            if (out->controllingPlayerIdx < 0)
+                out->controllingPlayerIdx = p->mpIndex;
         }
     }
-
-    return contested;
 }
 
 static void updateScores(void)
 {
     Player **players = playerGetAll();
-    int i;
+
+    // Optional host-owned flat team rate: award exactly one tick per team regardless of stacked teammates.
+    if (kothPointStacking && kothUseTeams()) {
+        // Let host own the award to keep totals deterministic and reduce duplicate broadcasts.
+        if (!gameAmIHost())
+            return;
+
+        KothOccupancyResult_t occ;
+        kothScanHillOccupants(&occ, 0);
+        if (kothContestedStopsScore) {
+            // Respect contested-off flag; otherwise skip scoring when multiple teams are present.
+            if (occ.contested)
+                return;
+
+            int scorerIdx = occ.controllingPlayerIdx;
+            if (occ.occupantTeam < 0 || scorerIdx < 0)
+                return;
+
+            ++kothScores[scorerIdx];
+            if (kothScores[scorerIdx] != lastBroadcastScore[scorerIdx])
+                broadcastScore(scorerIdx);
+        } else {
+            // Contested scoring allowed: award one tick per team with at least one occupant.
+            int teamScorer[TEAM_MAX];
+            memset(teamScorer, 0xFF, sizeof(teamScorer));
+
+            Player **players = playerGetAll();
+            int i;
+            for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+                Player *p = players[i];
+                if (!p || playerIsDead(p) || p->vehicle)
+                    continue;
+                if (!playerInsideHill(p))
+                    continue;
+                int team = p->mpTeam;
+                if (team < 0 || team >= TEAM_MAX)
+                    continue;
+                if (teamScorer[team] < 0 || p->mpIndex < teamScorer[team])
+                    teamScorer[team] = p->mpIndex;
+            }
+
+            for (i = 0; i < TEAM_MAX; ++i) {
+                int scorerIdx = teamScorer[i];
+                if (scorerIdx < 0)
+                    continue;
+                ++kothScores[scorerIdx];
+                if (kothScores[scorerIdx] != lastBroadcastScore[scorerIdx])
+                    broadcastScore(scorerIdx);
+            }
+        }
+        return;
+    }
 
     // Fast path: legacy behavior when contested scoring is disabled.
     if (!kothContestedStopsScore) {
@@ -2419,43 +2504,25 @@ static u32 kothGetActiveHillColor(void)
         return cachedColor;
     lastPollTime = now;
 
-    if (!kothUseTeams())
-        ; // still allow blending based on player index colors below
-
-    // If the hill is contested and the feature is enabled, force white.
-    if (kothContestedStopsScore && kothHillIsContested())
-        return (cachedColor = defaultColor);
-
     int activeIdx = kothGetActiveHillIndex();
     if (activeIdx < 0)
         return (cachedColor = defaultColor);
 
-    int colorCount = 0;
-    int accumR = 0, accumG = 0, accumB = 0;
-    int teamsMode = kothUseTeams();
-    Player **players = playerGetAll();
-    int i;
-    for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-        Player *p = players[i];
-        if (!p || playerIsDead(p) || p->vehicle)
-            continue;
-        if (!playerInsideHill(p))
-            continue;
-        int colorIdx = teamsMode ? p->mpTeam : p->mpIndex;
-        if (colorIdx < 0)
-            colorIdx = 0;
-        // Reuse TEAM_COLORS palette even in FFA for variety.
-        u32 color = TEAM_COLORS[colorIdx % TEAM_MAX];
-        accumR += (color >> 16) & 0xFF;
-        accumG += (color >> 8) & 0xFF;
-        accumB += color & 0xFF;
-        ++colorCount;
-    }
+    KothOccupancyResult_t occ;
+    kothScanHillOccupants(&occ, 1);
 
-    if (colorCount <= 0)
+    // If the hill is contested and contested mode is enabled, force white to reflect neutral state.
+    if (kothContestedStopsScore && occ.contested)
         return (cachedColor = defaultColor);
 
-    u32 blended = ((accumR / colorCount) << 16) | ((accumG / colorCount) << 8) | (accumB / colorCount);
+    if (kothUseTeams() && occ.occupantTeam >= 0 && !occ.contested) {
+        return (cachedColor = TEAM_COLORS[occ.occupantTeam % TEAM_MAX]);
+    }
+
+    if (occ.occupantCount <= 0)
+        return (cachedColor = defaultColor);
+
+    u32 blended = ((occ.accumR / occ.occupantCount) << 16) | ((occ.accumG / occ.occupantCount) << 8) | (occ.accumB / occ.occupantCount);
     return (cachedColor = blended);
 }
 
@@ -2537,19 +2604,19 @@ void kothTick(void)
 #ifdef KOTH_DEBUG
         // KOTHDBUG: trace timer every tick (host only) to see countdown activity
         if (gameAmIHost()) {
-            GameData *gd = gameGetData();
-            int hasGd = gd != NULL;
-            int startSet = gd && (gd->timeStart > 0);
-            int endSet = gd && (gd->timeEnd > 0);
+            GameData *gdDbg = gameGetData();
+            int hasGd = gdDbg != NULL;
+            int startSet = gdDbg && (gdDbg->timeStart > 0);
+            int endSet = gdDbg && (gdDbg->timeEnd > 0);
             // Treat timeEnd as a duration in ms from timeStart (base game may store duration, not absolute end).
-            int resolvedEnd = (startSet && endSet) ? (gd->timeStart + gd->timeEnd) : -1;
-            int endAfterStart = resolvedEnd > (startSet ? gd->timeStart : 0);
+            int resolvedEnd = (startSet && endSet) ? (gdDbg->timeStart + gdDbg->timeEnd) : -1;
+            int endAfterStart = resolvedEnd > (startSet ? gdDbg->timeStart : 0);
             int timerActive = hasGd && startSet && endAfterStart;
-            int timeStart = gd ? gd->timeStart : -1;
-            int timeEnd = gd ? gd->timeEnd : -1;
-            int timeLeft = timerActive ? (resolvedEnd - gameTime) : -1;
+            int dbgTimeStart = gdDbg ? gdDbg->timeStart : -1;
+            int dbgTimeEnd = gdDbg ? gdDbg->timeEnd : -1;
+            int dbgTimeLeft = timerActive ? (resolvedEnd - gameTime) : -1;
             KOTH_LOG("[KOTH][DBG] tick timerActive=%d timeNow=%d hasGd=%d startSet=%d endSet=%d endAfterStart=%d timeStart=%d timeEnd=%d resolvedEnd=%d timeLeft=%d seed=%d hillIdx=%d\n",
-                     timerActive, gameTime, hasGd, startSet, endSet, endAfterStart, timeStart, timeEnd, resolvedEnd, timeLeft,
+                     timerActive, gameTime, hasGd, startSet, endSet, endAfterStart, dbgTimeStart, dbgTimeEnd, resolvedEnd, dbgTimeLeft,
                      (kothConfig ? kothConfig->grSeed : -1), kothGetActiveHillIndex());
         }
 #endif

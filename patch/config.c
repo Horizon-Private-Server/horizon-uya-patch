@@ -545,6 +545,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "KOTH Outside Respawn Dist", listActionHandler, menuStateHandler_KOTH, &dataKothRespawnOutside, "Respawn distance while waiting." },
   { "KOTH Inside Respawn Dist", listActionHandler, menuStateHandler_KOTH, &dataKothRespawnInside, "Respawn distance when teammate holds hill." },
   { "KOTH Contested Mode", toggleActionHandler, menuStateHandler_KOTH, &gameConfig.grKothContestedStopsScore, "Stop scoring when hill is contested." },
+  { "KOTH Anti-Stacking", toggleActionHandler, menuStateHandler_KOTH, &gameConfig.grKothPointStacking, "ON = host-only flat team scoring (no stacking). OFF = legacy per-player stacking." },
   { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset, "Select one of the preconfigured game rule presets or manually set the custom game rules below." },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },

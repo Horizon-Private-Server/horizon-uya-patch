@@ -87,10 +87,10 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 //--------------------------------------------------------------------------
 void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameConfig_t * gameConfig, PatchStateContainer_t *gameState)
 {
-    u32 menu;
+    UiMenu_t *menu;
 
     // Lobby
-    if (menu = uiGetActiveMenu(UI_MENU_STAGING, 0), menu > 0) {
+    if (menu = uiGetActiveMenu(UI_MENU_STAGING, 0), menu != NULL) {
         // Ensure KOTH state is clean when entering staging for a new match.
         if (State.Initialized) {
             kothReset();
@@ -98,7 +98,7 @@ void lobbyStart(struct GameModule * module, PatchConfig_t * config, PatchGameCon
             State.GameOver = 0;
         }
         setLobbyGameOptions(gameState);
-    } else if (menu = uiGetActiveMenu(UI_MENU_END_GAME_DETAILS, 0), menu > 0) {
+    } else if (menu = uiGetActiveMenu(UI_MENU_END_GAME_DETAILS, 0), menu != NULL) {
         // scoreboard spot if needed
     }
 }

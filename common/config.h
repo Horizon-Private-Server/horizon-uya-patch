@@ -74,6 +74,7 @@ typedef struct PatchGameConfig {
   char grKothRespawnInside;
   char grKothHillSizeIdx;
   char grKothContestedStopsScore;
+  char grKothPointStacking;
   int grSeed;
   char grNewPlayerSync;
 
