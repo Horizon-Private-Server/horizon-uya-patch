@@ -11,6 +11,20 @@
 #include <tamtypes.h>
 #include "player.h"
 
+#define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
+#define UI_POINTERS								((u32)0x01c5C064)
+#define UI_ACTIVE_MENU_1						(0x01c5c110)
+#define UI_ACTIVE_MENU_2						(0x01c5c114)
+#define UI_ACTIVE_MENU_3						(0x01c5c118)
+
+#ifdef UYA_PAL
+#define UI_BACKGROUND_COLOR                     ((u32)0x0)
+#else
+#define UI_BACKGROUND_COLOR                     ((u32)0x00247B98)
+#endif
+
+// REMEMBER FOR LATER: Portal (MultiplayerLanding Update Function) 006AE328
+
 enum UiMenuIds {
     UI_MENU_SELECT_PROFILE = 0,
     UI_MENU_ONLINE_AGREEMENT = 1,
@@ -146,8 +160,36 @@ enum UiElementType {
     UI_ELEMENT_RANGE_SELECT = 6,
     UI_ELEMENT_TEXT_INFO = 7,
     UI_ELEMENT_TEXT_INPUT = 8,
+    UI_ELEMENT_UNK_09 = 9,
     UI_ELEMENT_SPRITE = 12,
 };
+
+typedef struct UiMenuVTable { // 0x170
+    // start of list: 0x0047e160
+/* 0x000 */ int pad_000[2];
+/* 0x008 */ void (*setup)(UiMenu_t* ui);
+/* 0x00c */ void (*return_zero_00c)();
+/* 0x010 */ void (*return_zero_010)();
+/* 0x014 */ int (*update)(UiMenu_t* ui, struct uiPadButtons pad);
+/* 0x018 */ void (*draw)(UiMenu_t* ui);
+/* 0x01c */ void (*setState)(void* ui, int state); // a0 can be any ui element.
+/* 0x020 */ void (*setStateToggle)(void* ui, int state); // a0 can be any ui element.
+/* 0x024 */ void (*setTitle)(void* ui, char* title); // a0 can be any ui element.
+/* 0x028 */ void (*setCursorPosition)(float x, float y, void* ui);
+/* 0x02c */ void (*setCursorSize)(float width, float height, void* ui);
+/* 0x030 */ void (*getCursorPosition)(void* ui, float* x, float* y);
+/* 0x034 */ void (*getCursorSize)(void* ui, float* w, float* h);
+/* 0x038 */ void* return_zero[44];
+/* 0x0e8 */ void (*resetState)(void* ui); // unsure if this is correct
+/* 0x0ec */ void (*somethindNetworkSelect)(UiMenu_t* ui);
+/* 0x0f0 */ void (*unk_0f0)(UiMenu_t* ui);
+/* 0x0f4 */ void* return_nothing_0;
+/* 0x0f8 */ int (*cursorUpdate)(UiMenu_t* ui, struct uiPadButtons pad);
+/* 0x0fc */ int pad;
+/* 0x100 */ void (*unk_100)();
+/* 0x104 */ void* func[26];
+/* 0x16c */ int pad_16c;
+} UiMenuVTable_t;
 
 typedef struct UiVTable {
 /* 0x00 */ int *unk_00[0x14];
@@ -205,7 +247,7 @@ typedef struct UiElementImage { // 0x84
 /* 0x04 */ int state;
 /* 0x08 */ int lastState;
 /* 0x0c */ int unk_0c;
-/* 0x10 */ struct UiElementImage* pParent;
+/* 0x10 */ void* pParent;
 /* 0x14 */ char title[56];
 /* 0x4c */ int padding;
 /* 0x50 */ float selectorBoxSize[4];
@@ -281,6 +323,16 @@ typedef struct UiElementTextInput { // 0x4a8
 /* 0x074*/ char unk_74[0x434];
 } UiElementTextInput_t;
 
+typedef struct UIElementUnk_09 {
+/* 0x00 */ enum UiElementType type;
+/* 0x04 */ int state;
+/* 0x08 */ int lastState;
+/* 0x0c */ int unk_0c;
+/* 0x10 */ void* pParent;
+/* 0x14 */ char unk_014[0x4c];
+/* 0x60 */ UiVTable_t* vTable;
+} UIElementUnk_09_t;
+
 typedef struct UiElementSprite { // 0x84
 /* 0x00 */ enum UiElementType type;
 /* 0x04 */ int state;
@@ -315,6 +367,14 @@ typedef struct UiMenu {
 /* 0x2ac */ int unk_2ac;
 /* 0x2b0 */ char itemValues;
 } UiMenu_t;
+
+typedef struct UiMultiplayerLandingelements {
+/* 0x00 */ UiElementText_t* onlinePlay;
+/* 0x04 */ UiElementText_t* localPlay;
+/* 0x08 */ UiElementText_t* editProfiles;
+/* 0x0c */ UiElementText_t* exitMultiplayer;
+/* 0x10 */ IElementUnk_09_t* unknown;
+} UiMultiplayerLandingelements_t;
 
 typedef struct UiOnlineLobbyElements {
 // do stuff here later

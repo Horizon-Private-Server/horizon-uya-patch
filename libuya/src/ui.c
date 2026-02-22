@@ -4,13 +4,6 @@
 #include "interop.h"
 #include "game.h"
 
-#define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
-#define UI_POINTERS								((u32)0x01c5C064)
-#define UI_ACTIVE_MENU_1						(0x01c5c110)
-#define UI_ACTIVE_MENU_2						(0x01c5c114)
-#define UI_ACTIVE_MENU_3						(0x01c5c118)
-
-
 int internal_uiDialog(void *, const char *, const char *, int, int, float);
 void internal_uiShowPopup(const char *, int, Player * player);
 int internal_uiSelectDialog_Simple(void *, const char *, const char *, int);
