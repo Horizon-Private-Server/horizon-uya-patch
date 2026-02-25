@@ -160,18 +160,18 @@ enum UiElementType {
     UI_ELEMENT_RANGE_SELECT = 6,
     UI_ELEMENT_TEXT_INFO = 7,
     UI_ELEMENT_TEXT_INPUT = 8,
-    UI_ELEMENT_UNK_09 = 9,
+    UI_ELEMENT_UNK = 9,
     UI_ELEMENT_SPRITE = 12,
 };
 
 typedef struct UiMenuVTable { // 0x170
     // start of list: 0x0047e160
 /* 0x000 */ int pad_000[2];
-/* 0x008 */ void (*setup)(UiMenu_t* ui);
+/* 0x008 */ void (*setup)(int ui);
 /* 0x00c */ void (*return_zero_00c)();
 /* 0x010 */ void (*return_zero_010)();
-/* 0x014 */ int (*update)(UiMenu_t* ui, struct uiPadButtons pad);
-/* 0x018 */ void (*draw)(UiMenu_t* ui);
+/* 0x014 */ int (*update)(int ui, int pad);
+/* 0x018 */ void (*draw)(int ui);
 /* 0x01c */ void (*setState)(void* ui, int state); // a0 can be any ui element.
 /* 0x020 */ void (*setStateToggle)(void* ui, int state); // a0 can be any ui element.
 /* 0x024 */ void (*setTitle)(void* ui, char* title); // a0 can be any ui element.
@@ -181,10 +181,10 @@ typedef struct UiMenuVTable { // 0x170
 /* 0x034 */ void (*getCursorSize)(void* ui, float* w, float* h);
 /* 0x038 */ void* return_zero[44];
 /* 0x0e8 */ void (*resetState)(void* ui); // unsure if this is correct
-/* 0x0ec */ void (*somethindNetworkSelect)(UiMenu_t* ui);
-/* 0x0f0 */ void (*unk_0f0)(UiMenu_t* ui);
+/* 0x0ec */ void (*somethindNetworkSelect)(int ui);
+/* 0x0f0 */ void (*unk_0f0)(int ui);
 /* 0x0f4 */ void* return_nothing_0;
-/* 0x0f8 */ int (*cursorUpdate)(UiMenu_t* ui, struct uiPadButtons pad);
+/* 0x0f8 */ int (*cursorUpdate)(int ui, int pad);
 /* 0x0fc */ int pad;
 /* 0x100 */ void (*unk_100)();
 /* 0x104 */ void* func[26];
@@ -373,7 +373,7 @@ typedef struct UiMultiplayerLandingelements {
 /* 0x04 */ UiElementText_t* localPlay;
 /* 0x08 */ UiElementText_t* editProfiles;
 /* 0x0c */ UiElementText_t* exitMultiplayer;
-/* 0x10 */ IElementUnk_09_t* unknown;
+/* 0x10 */ UIElementUnk_09_t* unknown;
 } UiMultiplayerLandingelements_t;
 
 typedef struct UiOnlineLobbyElements {
