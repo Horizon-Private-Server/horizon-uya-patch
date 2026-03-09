@@ -383,6 +383,27 @@ MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
     .items = { "Default", "Select", "L3", "R3" }
 };
 
+MenuElem_ListData_t dataKothScrollSpeed = {
+    .value = &config.kothScrollSpeed,
+    .stateHandler = NULL,
+    .count = 4,
+    .items = { "100%", "50%", "25%", "0%" }
+};
+
+MenuElem_ListData_t dataKothHillTransparency = {
+    .value = &config.kothHillTransparency,
+    .stateHandler = NULL,
+    .count = 5,
+    .items = { "100%", "75%", "50%", "25%", "10%" }
+};
+
+MenuElem_RangeData_t dataKothHillFxId = {
+    .value = &config.kothHillFxId,
+    .stateHandler = NULL,
+    .minValue = 0,
+    .maxValue = 105,
+};
+
 MenuElem_ListData_t dataGameConfigPreset = {
     .value = &preset,
     .stateHandler = NULL,
@@ -506,6 +527,9 @@ MenuElem_t menuElementsGeneral[] = {
   { "Single Player Music", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSingleplayerMusic, "Tired of the same BORING songs in game?!  Spice it up by adding the music tracks from Single Player!" },
   { "Toggle Map Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_MapAccess, "The button that you will need to press to show the Map." },
   { "Toggle Scoreboard Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataMapScore_ScoreboardAccess, "The button that you will need to press to show the Scoreboard." },
+  { "KOTH Scroll Speed", listActionHandler, menuStateAlwaysEnabledHandler, &dataKothScrollSpeed, "Scale hill ring scroll speed." },
+  { "KOTH Hill Transparency", listActionHandler, menuStateAlwaysEnabledHandler, &dataKothHillTransparency, "Adjust hill transparency." },
+  { "KOTH Wall FX ID", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataKothHillFxId, "Texture FX id for hill walls (0-105)." },
 };
 
 // Game Settings
@@ -521,6 +545,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "KOTH Outside Respawn Dist", listActionHandler, menuStateHandler_KOTH, &dataKothRespawnOutside, "Respawn distance while waiting." },
   { "KOTH Inside Respawn Dist", listActionHandler, menuStateHandler_KOTH, &dataKothRespawnInside, "Respawn distance when teammate holds hill." },
   { "KOTH Contested Mode", toggleActionHandler, menuStateHandler_KOTH, &gameConfig.grKothContestedStopsScore, "Stop scoring when hill is contested." },
+  { "KOTH Anti-Stacking", toggleActionHandler, menuStateHandler_KOTH, &gameConfig.grKothPointStacking, "ON = host-only flat team scoring (no stacking). OFF = legacy per-player stacking." },
   { "Preset", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameConfigPreset, "Select one of the preconfigured game rule presets or manually set the custom game rules below." },
 
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
