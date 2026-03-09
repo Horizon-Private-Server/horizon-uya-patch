@@ -5,6 +5,7 @@
 #include "module.h"
 
 void kothSetConfig(PatchGameConfig_t *config);
+void kothSetUserConfig(PatchConfig_t *config);
 void kothReset(void);
 void kothTick(void);
 

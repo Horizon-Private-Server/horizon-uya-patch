@@ -26,6 +26,9 @@ typedef struct PatchConfig {
   char hideFluxReticle;
   char dlStyleFlips;
   char enableTeamInfo;
+  char kothScrollSpeed;
+  char kothHillTransparency;
+  char kothHillFxId;
 } PatchConfig_t;
 
 // Game Rules Tab
@@ -71,6 +74,7 @@ typedef struct PatchGameConfig {
   char grKothRespawnInside;
   char grKothHillSizeIdx;
   char grKothContestedStopsScore;
+  char grKothPointStacking;
   int grSeed;
   char grNewPlayerSync;
 
