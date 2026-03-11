@@ -29,6 +29,7 @@ typedef struct PatchConfig {
   char kothScrollSpeed;
   char kothHillTransparency;
   char kothHillFxId;
+  char playerSyncRate;
 } PatchConfig_t;
 
 // Game Rules Tab

@@ -90,6 +90,7 @@ typedef struct PlayerSyncPlayerData
 
 
 // config reference to check options such as if the playersync config is enabled
+extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 
 //--------------------------------------------------------------------------
@@ -123,13 +124,7 @@ int playerSyncCmdGetBufIndex(int cmdId)
 //--------------------------------------------------------------------------
 int playerSyncGetSendRate(void)
 {
-
-  // in larger lobbies we want to reduce network bandwidth by reducing send rate
-  GameSettings* gs = gameGetSettings();
-  if (gs && gs->PlayerCount > 6) return 2;
-  //if (gs && gs->PlayerCount > 4) return 1;
-
-  return 0;
+  return config.playerSyncRate;
 }
 
 //--------------------------------------------------------------------------
@@ -584,6 +579,11 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
   unpacked.CmdId = msg.CmdId;
   unpacked.Valid = 1;
 
+  // Bitfield decode is signed here, so malformed packets can produce negative values.
+  if (msg.PlayerIdx < 0 || msg.PlayerIdx >= GAME_MAX_PLAYERS) {
+    return sizeof(PlayerSyncStateUpdatePacked_t);
+  }
+
 
   if (msg.GroundMobyUID != -1 && (msg.Flags & 1)) {
     Guber* groundGuber = guberGetObjectByUID(msg.GroundMobyUID);
@@ -632,7 +632,7 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
 void playerSyncBroadcastPlayerState(Player* player)
 {
   VECTOR dt;
-  PlayerSyncStateUpdatePacked_t msg;
+  PlayerSyncStateUpdatePacked_t msg = {0};
   void * connection = netGetDmeServerConnection();
   if (!connection || !player || !player->isLocal || !PLAYER_SYNC_DATAS_PTR) return;
 
@@ -781,6 +781,9 @@ void playerSyncTick(void)
     DPRINTF("allocated memory for the player sync datas ptr!\n");
     DPRINTF("The address of the player sync datas pts is: %p and is of size %d", PLAYER_SYNC_DATAS_PTR, sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
     PLAYER_SYNC_DATAS_PTR = malloc(sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
+    if (PLAYER_SYNC_DATAS_PTR) {
+      memset(PLAYER_SYNC_DATAS_PTR, 0, sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
+    }
     initialized = 0;
   }
 
