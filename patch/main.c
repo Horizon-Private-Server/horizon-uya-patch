@@ -163,6 +163,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.kothScrollSpeed = 0,
 	.kothHillTransparency = 0,
 	.kothHillFxId = FX_VISIBOMB_HORIZONTAL_LINES,
+	.playerSyncRate = 0,
 };
 
 PatchGameConfig_t gameConfig;
