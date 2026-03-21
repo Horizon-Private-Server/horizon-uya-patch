@@ -25,7 +25,7 @@ VariableAddress_t vaProcessGadgetState_Func = {
 	.CommandCenter = 0x00504f38,
 	.BlackwaterDocks = 0x00507778,
 	.AquatosSewers = 0x00506ab8,
-	.MarcadiaPalace = 0x0164b874,
+	.MarcadiaPalace = 0x005063f8,
 #endif
 };
 

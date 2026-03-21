@@ -166,6 +166,13 @@ MenuElem_ListData_t dataLevelOfDetail = {
     .items = { "Potato", "Low", "Normal", "High" }
 };
 
+MenuElem_ListData_t dataPlayerSyncRate = {
+    .value = &config.playerSyncRate,
+    .stateHandler = NULL,
+    .count = 4,
+    .items = { "High", "Med", "Low", "Very Low" }
+};
+
 MenuElem_RangeData_t dataFieldOfView = {
     .value = &config.playerFov,
     .stateHandler = NULL,
@@ -518,6 +525,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Hide Flux Reticle", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.hideFluxReticle, "Hide the Flux's reticle to show how tough you really are!" },
   { "Hypershot Equip Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataHypershotEquipButton, "The button that you will press to take out the hypershot." },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
+  { "Player Sync Rate", listActionHandler, menuStateAlwaysEnabledHandler, &dataPlayerSyncRate, "Adjusts new player sync update frequency. High sends every tick, Very Low sends least often." },
   { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1, "Main Weapon 1.  Defaults to Gravity Bomb if nothing is selected." },
   { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2, "Main Weapon 2.  Defaults to Blitz Cannon if nothing is selected." },
   { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3, "Main Weapon 3.  Defaults to Flux Rifle if nothing is selected." },
