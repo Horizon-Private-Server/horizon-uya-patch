@@ -124,6 +124,7 @@ static int kothAlphaFarBase = 0x50;
 static int kothAlphaFloorBase = 0x40;
 static int kothRingWallFx = KOTH_RING_WALL_FX;
 static int kothUserCfgPollTimeMs = -TIME_SECOND;
+static int radarInitialized = 0;
 #ifdef KOTH_RANDOM_ORDER
 static int hillOrder[KOTH_MAX_HILLS];
 static int hillOrderCount = 0;
@@ -785,6 +786,44 @@ static int clampi(int value, int min, int max)
     return value;
 }
 
+static int kothValidPlayerIdx(int idx)
+{
+    return idx >= 0 && idx < GAME_MAX_PLAYERS;
+}
+
+static int kothFloatIsSane(float value)
+{
+    // Reject NaN and obviously bogus HUD coordinates before they reach UI code.
+    return value == value && value > -10000.0f && value < 10000.0f;
+}
+
+/*
+ * Disabled crash-hardening helper kept for quick restore during freeze triage.
+ * The lean path now assumes hill extents are already valid once hills are scanned.
+ */
+#if 0
+static float kothSanitizeExtent(float value, float fallback, float maxAbs)
+{
+    if (!kothFloatIsSane(value) || value <= 0.0f)
+        value = fallback;
+    if (value <= 0.0f)
+        value = 1.0f;
+    if (maxAbs > 0.0f)
+        value = clampf(value, 1.0f, maxAbs);
+    return value;
+}
+#endif
+
+static int kothVectorIsSane(VECTOR value)
+{
+    return kothFloatIsSane(value[0]) && kothFloatIsSane(value[1]) && kothFloatIsSane(value[2]);
+}
+
+static int kothQuadPointsAreSane(VECTOR a, VECTOR b, VECTOR c, VECTOR d)
+{
+    return kothVectorIsSane(a) && kothVectorIsSane(b) && kothVectorIsSane(c) && kothVectorIsSane(d);
+}
+
 // Derive yaw for a hill using its cuboid basis; optionally prefer rot.z (for custom maps).
 static void kothComputeHillAxes(KothHill_t *hill)
 {
@@ -1310,6 +1349,9 @@ static int playerInsideHill(Player *player)
 
 static void broadcastScore(int playerIdx)
 {
+    if (!kothValidPlayerIdx(playerIdx))
+        return;
+
     void *connection = netGetDmeServerConnection();
     if (!connection)
         return;
@@ -1331,10 +1373,14 @@ static void kothAwardHillScoreForLocals(Player **players)
         if (!p || playerIsDead(p) || p->vehicle || !p->isLocal)
             continue;
 
+        int playerIdx = p->mpIndex;
+        if (!kothValidPlayerIdx(playerIdx))
+            continue;
+
         if (playerInsideHill(p)) {
-            ++kothScores[p->mpIndex];
-            if (kothScores[p->mpIndex] != lastBroadcastScore[p->mpIndex])
-                broadcastScore(p->mpIndex);
+            ++kothScores[playerIdx];
+            if (kothScores[playerIdx] != lastBroadcastScore[playerIdx])
+                broadcastScore(playerIdx);
         }
     }
 }
@@ -1379,18 +1425,21 @@ static void kothScanHillOccupants(KothOccupancyResult_t *out, int accumulateColo
 
         if (teamsMode) {
             int team = p->mpTeam;
+            int playerIdx = p->mpIndex;
+            if (!kothValidPlayerIdx(playerIdx))
+                continue;
             if (out->occupantTeam < 0) {
                 out->occupantTeam = team;
-                out->controllingPlayerIdx = p->mpIndex; // first occupant is authoritative scorer
+                out->controllingPlayerIdx = playerIdx; // first occupant is authoritative scorer
             } else if (team != out->occupantTeam) {
                 out->contested = 1;
-            } else if (p->mpIndex < out->controllingPlayerIdx) {
-                out->controllingPlayerIdx = p->mpIndex; // keep lowest mpIndex for determinism
+            } else if (playerIdx < out->controllingPlayerIdx) {
+                out->controllingPlayerIdx = playerIdx; // keep lowest mpIndex for determinism
             }
         } else {
             if (out->occupantCount > 1)
                 out->contested = 1;
-            if (out->controllingPlayerIdx < 0)
+            if (out->controllingPlayerIdx < 0 && kothValidPlayerIdx(p->mpIndex))
                 out->controllingPlayerIdx = p->mpIndex;
         }
     }
@@ -1434,10 +1483,13 @@ static void updateScores(void)
                 if (!playerInsideHill(p))
                     continue;
                 int team = p->mpTeam;
+                int playerIdx = p->mpIndex;
                 if (team < 0 || team >= TEAM_MAX)
                     continue;
-                if (teamScorer[team] < 0 || p->mpIndex < teamScorer[team])
-                    teamScorer[team] = p->mpIndex;
+                if (!kothValidPlayerIdx(playerIdx))
+                    continue;
+                if (teamScorer[team] < 0 || playerIdx < teamScorer[team])
+                    teamScorer[team] = playerIdx;
             }
 
             for (i = 0; i < TEAM_MAX; ++i) {
@@ -1523,12 +1575,15 @@ static int kothFindLeader(int *outScore, int *outTie)
             Player *p = players[i];
             if (!p)
                 continue;
-            int team = gs->PlayerTeams[p->mpIndex];
+            int playerIdx = p->mpIndex;
+            if (!kothValidPlayerIdx(playerIdx))
+                continue;
+            int team = gs->PlayerTeams[playerIdx];
             if (team < 0 || team >= TEAM_MAX)
                 continue;
             teamSeen[team] = 1;
-            teamScores[team] += kothScores[p->mpIndex];
-            teamKills[team] += gd ? gd->playerStats.frag[p->mpIndex].kills : 0;
+            teamScores[team] += kothScores[playerIdx];
+            teamKills[team] += gd ? gd->playerStats.frag[playerIdx].kills : 0;
         }
 
         int t;
@@ -1769,18 +1824,34 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
     const int MAX_SEGMENTS = 64;
     const int MIN_SEGMENTS = 8;
 #define KOTH_USE_STRIP 1
+    /*
+     * Disabled crash-hardening clamp: hill extents are static and should be
+     * valid after startup scanning, so keep the original lightweight fallback.
+     */
+    // const float defaultRadius = KOTH_RING_RADIUS * (hillScale > 0.0f ? hillScale : 1.0f);
+    // radiusX = kothSanitizeExtent(radiusX, defaultRadius, 128.0f);
+    // radiusZ = kothSanitizeExtent(radiusZ, defaultRadius, 128.0f);
     if (radiusX <= 0) radiusX = KOTH_RING_RADIUS;
     if (radiusZ <= 0) radiusZ = KOTH_RING_RADIUS;
     VECTOR tempRight, tempUp, halfX, halfZ, vRadius;
 
-    // Build oriented axes from the cuboid basis if available.
+    // Use the original raw cuboid basis here. The extra axis sanity/fallback
+    // logic is kept commented out below in case crash triage points back here.
     VECTOR axisX = {1,0,0,0};
     VECTOR axisZ = {0,1,0,0};
     VECTOR axisUp = {0,0,1,0};
     if (hill) {
-    vector_copy(axisX, hill->cuboid.matrix.v0);
-    vector_copy(axisZ, hill->cuboid.matrix.v1);
-    vector_copy(axisUp, hill->cuboid.matrix.v2);
+        // if (!hill->axesComputed)
+        //     kothComputeHillAxes((KothHill_t*)hill);
+        // if (kothVectorIsSane(hill->axisX))
+        //     vector_copy(axisX, hill->axisX);
+        // if (kothVectorIsSane(hill->axisY))
+        //     vector_copy(axisZ, hill->axisY);
+        // if (kothVectorIsSane(hill->axisUp))
+        //     vector_copy(axisUp, hill->axisUp);
+        vector_copy(axisX, hill->cuboid.matrix.v0);
+        vector_copy(axisZ, hill->cuboid.matrix.v1);
+        vector_copy(axisUp, hill->cuboid.matrix.v2);
     }
     float lenX = vector_length(axisX);
     float lenZ = vector_length(axisZ);
@@ -1795,6 +1866,13 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
 
     // Use cuboid-derived half-height; apply a modest scale to better span base-to-top while anchored.
     float halfHeight = hill ? (hill->halfHeight * 2.0f) : 0.0f;
+    /*
+     * Disabled crash-hardening clamp: half-height is derived from static hill
+     * data and should already be valid when hills are initialized.
+     */
+    // if (!kothFloatIsSane(halfHeight) || halfHeight <= 0)
+    //     halfHeight = (KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE * 0.5f);
+    // halfHeight = clampf(halfHeight, 0.5f, 64.0f);
     if (halfHeight <= 0)
         halfHeight = (KOTH_RING_HEIGHT * KOTH_RING_HEIGHT_SCALE * 0.5f);
     float ringHeight = halfHeight * 2.0f;
@@ -1814,6 +1892,12 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
     }
     VECTOR upVec;
     vector_subtract(upVec, topCenter, baseCenter); // full height vector
+    /*
+     * Disabled crash-hardening bailout: this was only here to skip rendering
+     * if the assembled hill vectors looked malformed at runtime.
+     */
+    // if (!kothVectorIsSane(baseCenter) || !kothVectorIsSane(upVec) || !kothVectorIsSane(halfX) || !kothVectorIsSane(halfZ))
+    //     return;
     // TODO: if floor Z-fighting occurs, consider reintroducing a small offset (previously -5% of ringHeight).
     float floorOffsetZ = 0.0f;
 
@@ -1886,6 +1970,8 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
             vector_copy(quad.point[3], nextCenter);
             quad.point[3][3] = 1;
 
+            if (!kothQuadPointsAreSane(quad.point[0], quad.point[1], quad.point[2], quad.point[3]))
+                return;
             gfxDrawQuad(quad, NULL);
             vector_copy(vRadius, nextRadius);
         }
@@ -1928,6 +2014,8 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
             wall.uv[2].x = 1.0f;         wall.uv[2].y = *scroll;         // top B
             wall.uv[3].x = 1.0f;         wall.uv[3].y = *scroll + 1.0f;  // bottom B
 
+            if (!kothQuadPointsAreSane(wall.point[0], wall.point[1], wall.point[2], wall.point[3]))
+                return;
             gfxDrawQuad(wall, NULL);
         }
         *scroll += kothScrollStep;
@@ -1966,6 +2054,8 @@ static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *
     vector_copy(floorQuad.point[1], corners[0]);
     vector_copy(floorQuad.point[2], corners[2]);
     vector_copy(floorQuad.point[3], corners[3]);
+    if (!kothQuadPointsAreSane(floorQuad.point[0], floorQuad.point[1], floorQuad.point[2], floorQuad.point[3]))
+        return;
     gfxDrawQuad(floorQuad, NULL);
 }
 
@@ -2028,7 +2118,7 @@ static void drawHill(Moby *moby)
         kothGetHillYaw(hill, &cosYaw, &sinYaw);
     float radiusX = hill ? hill->footprintRx : (KOTH_RING_RADIUS * hillScale);
     float radiusZ = hill ? hill->footprintRy : (KOTH_RING_RADIUS * hillScale);
-    drawHillAt(hill, moby->position, baseColor, scroll, radiusX, radiusZ, hill ? hill->isCircle : 1, cosYaw, sinYaw, hill ? hill->drawAtMidpoint : 1);
+    drawHillAt(hill, hill ? hill->position : moby->position, baseColor, scroll, radiusX, radiusZ, hill ? hill->isCircle : 1, cosYaw, sinYaw, hill ? hill->drawAtMidpoint : 1);
 }
 
 static void hillUpdate(Moby *moby)
@@ -2117,11 +2207,14 @@ void scoreboard(int maxScore, int* scores)
             Player *p = players[i];
             if (!p)
                 continue;
+            int playerIdx = p->mpIndex;
             int team = p->mpTeam;
+            if (!kothValidPlayerIdx(playerIdx))
+                continue;
             if (team < 0 || team >= TEAM_MAX)
                 continue;
             teamSeen[team] = 1;
-            teamScores[team] += scores[p->mpIndex];
+            teamScores[team] += scores[playerIdx];
         }
 
         int t;
@@ -2314,10 +2407,32 @@ void kothReset(void)
     memset(hills, 0, sizeof(hills));
     memset(kothScores, 0, sizeof(kothScores));
     memset(lastBroadcastScore, 0, sizeof(lastBroadcastScore));
+
+    // Hide the radar marker between matches, but keep the widget alive so we
+    // don't recreate/re-add it every frame or every round.
+    hudSetFlags(KOTH_HUD_FRAME_ID, 1, false);
+    hudSetFlags(KOTH_HUD_CONTAINER_ID, 1, false);
+}
+
+static int radarSetVisible(int visible)
+{
+    int hasFrame = hudSetFlags(KOTH_HUD_FRAME_ID, 1, visible);
+    int hasContainer = hudSetFlags(KOTH_HUD_CONTAINER_ID, 1, visible);
+    return hasFrame || hasContainer;
 }
 
 void radarInit(void)
 {
+    // Reuse the HUD widget once it exists. Recreating and re-adding it every
+    // tick can corrupt the HUD tree and manifests like a soft freeze.
+    if (radarInitialized) {
+        if (radarSetVisible(1))
+            return;
+
+        // HUD state was torn down underneath us (map load/reset), so rebuild it.
+        radarInitialized = 0;
+    }
+
     // Create container first
     hudCreateContainer(KOTH_HUD_CONTAINER_ID);
     // Make container visible
@@ -2328,9 +2443,10 @@ void radarInit(void)
     if (hudCreateRectangle(0.05, 0.05, 0.05, 0.05, KOTH_HUD_FRAME_ID, 0x80ffffff, KOTH_HUD_SPRITE)) {
         // add rectrangle frame to main container
         hudAddToContainer(KOTH_HUD_CONTAINER_ID, KOTH_HUD_FRAME_ID);
-        // set visibility
-        hudSetFlags(KOTH_HUD_FRAME_ID, 1, true);
     }
+
+    hudSetFlags(KOTH_HUD_FRAME_ID, 1, true);
+    radarInitialized = 1;
 }
 
 void radarUpdate(void)
@@ -2338,14 +2454,24 @@ void radarUpdate(void)
     float x, y;
     int id = KOTH_HUD_FRAME_ID;
     int a = kothGetActiveHillIndex();
-    if (a < 0 || a >= hillCount)
+    if (a < 0 || a >= hillCount) {
+        radarSetVisible(0);
         return;
+    }
 
-    Moby *draw = hills[a].drawMoby;
-    if (!draw)
+    if (!kothVectorIsSane(hills[a].position)) {
+        radarSetVisible(0);
         return;
+    }
 
-    gfxWStoMapSpace(draw->position, &x, &y);
+    radarSetVisible(1);
+    gfxWStoMapSpace(hills[a].position, &x, &y);
+    if (!kothFloatIsSane(x) || !kothFloatIsSane(y)) {
+        radarSetVisible(0);
+        return;
+    }
+    x = clampf(x, 0.0f, 1.0f);
+    y = clampf(y, 0.0f, 1.0f);
     hudSetPosition(x, y, id);
     // Alpha overlay tinted by current hill occupant team (if any) and blinked with hill warning.
     float fadeScale = kothGetBlinkScale();
