@@ -401,7 +401,7 @@ typedef struct tNW_Info {
     int unk_0640;
     int m_JoinResponse;
     int superCheat;
-    int unk_064c;
+    int timeBanditHack;
     int sendMessageToPlayerClient[8];
     int sendMessageData[8];
     int Unk___ClientSettings_1;
