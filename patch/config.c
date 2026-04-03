@@ -1017,7 +1017,7 @@ void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
   // popup
   if (isInMenus()) {
     char buf[32];
-    snprintf(buf, sizeof(buf), "Found %d maps", CustomMapDefCount);
+    snprintf(buf, sizeof(buf), "Found %d maps", customMapDefCount);
     uiShowOkDialog("Custom Maps", buf);
   }
 }
@@ -1378,7 +1378,7 @@ void drawMapsListVerticalMenuElementInfo(TabElem_t* tab, MenuElem_t* element, Me
     mapOverrideSelectedMapTicks = 0;
 
     // read author/description
-    if (selIdx <= 0 || !mapReadCustomMapAuthorDescription(CustomMapDefs[selIdx-1].Filename, mapOverrideSelectedMapAuthor, mapOverrideSelectedMapDesc)) {
+    if (selIdx <= 0 || !mapReadCustomMapAuthorDescription(customMapDefs[selIdx-1].Filename, mapOverrideSelectedMapAuthor, mapOverrideSelectedMapDesc)) {
       mapOverrideSelectedMapAuthor[0] = 0;
       mapOverrideSelectedMapDesc[0] = 0;
     }
@@ -1390,7 +1390,7 @@ void drawMapsListVerticalMenuElementInfo(TabElem_t* tab, MenuElem_t* element, Me
 
     // try read thumbnail
     mapOverrideSelectedMapHasThumbnail = 0;
-    if (selIdx > 0 && mapOverrideSelectedMapThumbnail && mapReadCustomMapThumbnail(CustomMapDefs[selIdx-1].Filename, mapOverrideSelectedMapThumbnail, THUMBNAIL_SIZE) == THUMBNAIL_SIZE) {
+    if (selIdx > 0 && mapOverrideSelectedMapThumbnail && mapReadCustomMapThumbnail(customMapDefs[selIdx-1].Filename, mapOverrideSelectedMapThumbnail, THUMBNAIL_SIZE) == THUMBNAIL_SIZE) {
       mapOverrideSelectedMapHasThumbnail = 1;
     }
   }
@@ -2854,7 +2854,7 @@ void configTrySendGameConfig(void)
 
       memset(&msg, 0, sizeof(msg));
       if (patchStateContainer.CustomMapId > 0)
-        memcpy(&msg.CustomMap, &CustomMapDefs[patchStateContainer.CustomMapId-1], sizeof(msg.CustomMap));
+        memcpy(&msg.CustomMap, &customMapDefs[patchStateContainer.CustomMapId-1], sizeof(msg.CustomMap));
       memcpy(&msg.GameConfig, &gameConfig, sizeof(msg.GameConfig));
       netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(ClientSetGameConfig_t), &msg);
     }

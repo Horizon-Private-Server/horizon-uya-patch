@@ -111,12 +111,13 @@ typedef struct TabElem
   int menuOffset;
 } TabElem_t;
 
-typedef struct CustomMapVersionFileDef
-{
+typedef struct CustomMapVersionFileDef {
   int Version;
   int BaseMapId;
-  int ForcedCustomModeId;
-  char padding[4];
+  short ForcedCustomModeId;
+  short Subsort;
+  short ExtraDataCount;
+  short ShrubMinRenderDistance;
   char Name[32];
 } CustomMapVersionFileDef_t;
 
@@ -139,6 +140,8 @@ struct MapLoaderState {
     int LoadingFileSize;
     int LoadingFd;
     int Loaded;
+    int FinishedLoading;
+    int MapCodeInited;
     void * LevelBuffer;
     void * GameplayBuffer;
     void * SoundBuffer;
@@ -168,8 +171,9 @@ enum eMapOverride {
 };
 
 extern struct MapLoaderState MapLoaderState;
-extern CustomMapDef_t *CustomMapDefs;
-extern int CustomMapDefCount;
+extern CustomMapDef_t *customMapDefs;
+extern int customMapDefCount;
+extern char *customMapExDataBuf;
 extern PatchStateContainer_t patchStateContainer;
 
 #endif // __PATCH_CONFIG_H__
