@@ -102,6 +102,7 @@ int onServerDownloadDataRequest(void * connection, void * data)
 		ClientDownloadDataResponse_t response;
 		response.Id = request->Id;
 		response.BytesReceived = bytesReceived;
+		response.Stop = 0;
 		netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_DOWNLOAD_DATA_RESPONSE, sizeof(ClientDownloadDataResponse_t), &response);
 	}
 

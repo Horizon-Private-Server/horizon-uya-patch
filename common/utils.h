@@ -26,7 +26,7 @@ typedef struct TimerVars {
     int font;
     int timeValue;
     int timeStartTicking;
-    SoundDef *tickSound;
+    struct SoundDef *tickSound;
     int startTime;
     int lastPlayedTickSound;
     short bDynamicScaleTime;
@@ -34,5 +34,6 @@ typedef struct TimerVars {
 } TimerVars_t;
 
 void runTimer(TimerVars_t *timer);
+int charArrayContains(char* list, int count, char value);
 
 #endif // _PATCH_UTILS_

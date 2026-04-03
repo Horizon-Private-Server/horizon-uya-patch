@@ -157,6 +157,15 @@ enum CustomMessageId
      * Sent by host when the active KOTH hill changes to keep clients in sync.
      */
     CUSTOM_MSG_ID_KOTH_HILL_SYNC = 29,
+    /*
+     * Sent by the client to the server when the client wants a boot elf.
+     */
+    CUSTOM_MSG_ID_CLIENT_REQUEST_BOOT_ELF = 30,
+
+    /*
+     * Sent by the server to the client when the server has finished sending a boot elf.
+     */
+    CUSTOM_MSG_ID_SERVER_RESPONSE_BOOT_ELF = 31,
 
     /*
      * Start of custom message ids reserved for custom game modes.
@@ -175,10 +184,10 @@ typedef struct ServerDownloadDataRequest
     char Data[2048];
 } ServerDownloadDataRequest_t;
 
-typedef struct ClientDownloadDataResponse
-{
-    int Id;
-    int BytesReceived;
+typedef struct ClientDownloadDataResponse {
+  int Id;
+  int BytesReceived;
+  int Stop;
 } ClientDownloadDataResponse_t;
 
 typedef struct ClientSetGameConfig
@@ -219,5 +228,20 @@ typedef struct KothHillSync {
   char Padding[3];
   int ElapsedMs; // how long current hill has been active on host
 } KothHillSync_t;
+
+typedef struct ClientRequestBootElf {
+  int BootElfId;
+} ClientRequestBootElf_t;
+
+typedef struct ServerResponseBootElf {
+  int BootElfId;
+  u32 Address;
+  u32 Size;
+} ServerResponseBootElf_t;
+
+typedef struct ClientSetClientTypeRequest {
+  int ClientType;
+  u8 mac[6];
+} ClientSetClientTypeRequest_t;
 
 #endif // _MESSAGEID_H_

@@ -68,3 +68,14 @@ void runTimer(TimerVars_t *timer)
         timer->status = 1;
     }
 }
+
+int charArrayContains(char* list, int count, char value)
+{
+	int i;
+
+	for (i = 0; i < count; ++i)
+		if (list[i] == value)
+			return 1;
+
+	return 0;
+}

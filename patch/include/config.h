@@ -15,7 +15,8 @@ enum ActionType
   ACTIONTYPE_DECREMENT,
   ACTIONTYPE_VALIDATE,
   ACTIONTYPE_DRAW_HIGHLIGHT,
-  ACTIONTYPE_INPUT
+  ACTIONTYPE_INPUT,
+  ACTIONTYPE_INIT
 };
 
 enum ElementState
@@ -24,6 +25,7 @@ enum ElementState
   ELEMENT_VISIBLE = (1 << 0),
   ELEMENT_EDITABLE = (1 << 1),
   ELEMENT_SELECTABLE = (1 << 2),
+  ELEMENT_FILTERABLE = (1 << 3),
 };
 
 enum LabelType
@@ -42,6 +44,7 @@ typedef void (*ActionHandler)(struct TabElem* tab, struct MenuElem* element, int
 typedef void (*ButtonSelectHandler)(struct TabElem* tab, struct MenuElem* element);
 typedef void (*MenuElementStateHandler)(struct TabElem* tab, struct MenuElem* element, int * state);
 typedef int (*MenuElementListStateHandler)(struct MenuElem_ListData* listData, char* value);
+typedef int (*MenuElementVerticalListStateHandler)(struct MenuElem_VerticalListData* listData, char* value);
 typedef int (*MenuElementOrderedListStateHandler)(struct MenuElem_OrderedListData* listData, char* value);
 typedef int (*MenuElementRangeStateHandler)(struct MenuElem_RangeData* listData, char* value);
 typedef void (*TabStateHandler)(struct TabElem* tab, int * state);
@@ -77,6 +80,16 @@ typedef struct MenuElem_OrderedListData
   int count;
   MenuElem_OrderedListDataItem_t items[];
 } MenuElem_OrderedListData_t;
+
+typedef struct MenuElem_VerticalListData
+{
+  char * value;
+  char * stagingValue;
+  MenuElementVerticalListStateHandler stateHandler;
+  int count;
+  int rows;
+  char * items[];
+} MenuElem_VerticalListData_t;
 
 typedef struct MenuElem_RangeData
 {
