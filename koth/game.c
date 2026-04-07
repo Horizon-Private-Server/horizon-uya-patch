@@ -30,6 +30,8 @@
 #define KOTH_SIZE_OPTIONS 7
 
 #define KOTH_HUD_SPRITE (SPRITE_HUD_BOLT)
+//#define KOTH_TIMER_ICON_SPRITE (0x51) // bolt
+#define KOTH_TIMER_ICON_SPRITE (0x63) // clock_widget
 #define KOTH_HUD_CONTAINER_ID (0xacdc0000)
 #define KOTH_HUD_FRAME_ID (KOTH_HUD_CONTAINER_ID + 1)
 
@@ -98,6 +100,22 @@ typedef struct KothHill {
 #endif
 } KothHill_t;
 
+typedef struct KothScoreRow {
+    int team;
+    int score;
+} KothScoreRow_t;
+
+typedef struct KothHudCache {
+    int scoreboardDirty;
+    int lastScoreboardRefreshSecond;
+    int numRows;
+    int maxScore;
+    KothScoreRow_t rows[GAME_MAX_PLAYERS];
+    int timerSeconds;
+    int timerTextWidth;
+    char timerBuf[32];
+} KothHudCache_t;
+
 static KothHill_t hills[KOTH_MAX_HILLS];
 static int hillCount = 0;
 static int initialized = 0;
@@ -125,6 +143,11 @@ static int kothAlphaFloorBase = 0x40;
 static int kothRingWallFx = KOTH_RING_WALL_FX;
 static int kothUserCfgPollTimeMs = -TIME_SECOND;
 static int radarInitialized = 0;
+static KothHudCache_t kothHudCache = {
+    .scoreboardDirty = 1,
+    .lastScoreboardRefreshSecond = -1,
+    .timerSeconds = -1,
+};
 #ifdef KOTH_RANDOM_ORDER
 static int hillOrder[KOTH_MAX_HILLS];
 static int hillOrderCount = 0;
@@ -953,6 +976,11 @@ static void kothScanHillOccupants(KothOccupancyResult_t *out, int accumulateColo
 static int kothHillIsContested(void);
 static u32 kothGetActiveHillColor(void);
 static float kothGetBlinkScale(void);
+static int kothGetCurrentHillTimeLeftMs(void);
+static void kothInvalidateTimerDisplayCache(void);
+static void kothInvalidateScoreboardCache(void);
+static void kothUpdateTimerDisplayCache(void);
+static void kothRefreshScoreboardCache(GameSettings *s, GameOptions *o, int maxScore, int *scores);
 
 static float kothMapScrollSpeed(char value)
 {
@@ -1012,6 +1040,8 @@ void kothSetConfig(PatchGameConfig_t *config)
     kothContestedStopsScore = config ? config->grKothContestedStopsScore : 0;
     kothPointStacking = config ? config->grKothPointStacking : 0;
     kothOnHillSizeUpdated();
+    kothInvalidateTimerDisplayCache();
+    kothInvalidateScoreboardCache();
 #if KOTH_DEBUG
     KOTH_LOG("[KOTH][DBG] config set sizeIdx=%d scale=%d seedLow=0x%X\n", hillSizeIdx, (int)hillScale, lastSeed);
 #endif
@@ -1797,26 +1827,173 @@ static float kothGetBlinkScale(void)
     // Fade/pulse as we approach hill rotation.
     float fadeScale = 1.0f;
     const int warnMs = 10 * TIME_SECOND;
-    int duration = kothGetHillDurationMs();
-    if (duration > 0 && hillCount > 0) {
-        kothEnsureCycleStart();
-        if (hillCycleStartTime > 0) {
-            int elapsed = gameGetTime() - hillCycleStartTime;
-            if (elapsed < 0)
-                elapsed = 0;
-            int cycElapsed = elapsed % duration;
-            int timeLeft = duration - cycElapsed;
-            if (timeLeft < warnMs) {
-                int seconds = timeLeft / TIME_SECOND;
-                int phase = seconds & 1; // toggle each second
-                fadeScale = phase ? 1.0f : 0.0f;
-            }
-        }
+    int timeLeft = kothGetCurrentHillTimeLeftMs();
+    if (timeLeft > 0 && timeLeft < warnMs) {
+        int seconds = timeLeft / TIME_SECOND;
+        int phase = seconds & 1; // toggle each second
+        fadeScale = phase ? 1.0f : 0.0f;
     }
     return fadeScale;
 #else
     return 1.0f;
 #endif
+}
+
+static int kothGetCurrentHillTimeLeftMs(void)
+{
+    int duration = kothGetHillDurationMs();
+    if (duration <= 0)
+        return 0;
+
+    if (hillCount <= 0)
+        return duration;
+
+    kothEnsureCycleStart();
+    if (hillCycleStartTime <= 0)
+        return duration;
+
+    int elapsed = gameGetTime() - hillCycleStartTime;
+    if (elapsed < 0)
+        elapsed = 0;
+
+    int cycElapsed = elapsed % duration;
+    int timeLeft = duration - cycElapsed;
+    if (timeLeft < 0)
+        timeLeft = 0;
+    if (timeLeft > duration)
+        timeLeft = duration;
+
+    return timeLeft;
+}
+
+static void kothInvalidateTimerDisplayCache(void)
+{
+    kothHudCache.timerSeconds = -1;
+    kothHudCache.timerTextWidth = 0;
+    kothHudCache.timerBuf[0] = 0;
+}
+
+static void kothInvalidateScoreboardCache(void)
+{
+    kothHudCache.scoreboardDirty = 1;
+    kothHudCache.lastScoreboardRefreshSecond = -1;
+    kothHudCache.numRows = 0;
+    kothHudCache.maxScore = 1;
+}
+
+static void kothUpdateTimerDisplayCache(void)
+{
+    int timeLeftMs = kothGetCurrentHillTimeLeftMs();
+    int timeLeftSeconds = 0;
+    if (timeLeftMs > 0)
+        timeLeftSeconds = (timeLeftMs + TIME_SECOND - 1) / TIME_SECOND;
+
+    if (kothHudCache.timerSeconds == timeLeftSeconds)
+        return;
+
+    kothHudCache.timerSeconds = timeLeftSeconds;
+    snprintf(kothHudCache.timerBuf, sizeof(kothHudCache.timerBuf), "%d", timeLeftSeconds);
+    kothHudCache.timerTextWidth = gfxGetFontWidth(kothHudCache.timerBuf, -1, 1.0f);
+    if (kothHudCache.timerTextWidth < 0)
+        kothHudCache.timerTextWidth = 0;
+}
+
+static void kothRefreshScoreboardCache(GameSettings *s, GameOptions *o, int maxScore, int *scores)
+{
+    if (!s || !o || !scores)
+        return;
+
+    int nowSecond = gameGetTime() / TIME_SECOND;
+    if (!kothHudCache.scoreboardDirty && kothHudCache.lastScoreboardRefreshSecond == nowSecond)
+        return;
+
+    KothScoreRow_t rows[GAME_MAX_PLAYERS];
+    int numRows = 0;
+    int maxRows = 0;
+
+    if (o->GameFlags.MultiplayerGameFlags.Teams) {
+        maxRows = TEAM_MAX;
+
+        int teamScores[TEAM_MAX];
+        char teamSeen[TEAM_MAX];
+        memset(teamScores, 0, sizeof(teamScores));
+        memset(teamSeen, 0, sizeof(teamSeen));
+
+        Player **players = playerGetAll();
+        int i;
+        for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+            Player *p = players[i];
+            if (!p)
+                continue;
+            int playerIdx = p->mpIndex;
+            int team = p->mpTeam;
+            if (!kothValidPlayerIdx(playerIdx))
+                continue;
+            if (team < 0 || team >= TEAM_MAX)
+                continue;
+            teamSeen[team] = 1;
+            teamScores[team] += scores[playerIdx];
+        }
+
+        int t;
+        for (t = 0; t < TEAM_MAX && numRows < maxRows; ++t) {
+            if (!teamSeen[t])
+                continue;
+            rows[numRows].team = t;
+            rows[numRows].score = teamScores[t];
+            ++numRows;
+        }
+    } else {
+        maxRows = GAME_MAX_PLAYERS;
+
+        char seen[GAME_MAX_PLAYERS];
+        memset(seen, 0, sizeof(seen));
+        Player **players = playerGetAll();
+        int i;
+        for (i = 0; i < GAME_MAX_PLAYERS && numRows < maxRows; ++i) {
+            Player *p = players[i];
+            if (!p)
+                continue;
+            int idx = p->mpIndex;
+            if (idx < 0 || idx >= GAME_MAX_PLAYERS)
+                continue;
+            if (seen[idx])
+                continue;
+            if (!s->PlayerNames[idx][0])
+                continue;
+            seen[idx] = 1;
+            rows[numRows].team = idx;
+            rows[numRows].score = scores[idx];
+            ++numRows;
+        }
+    }
+
+    int i, j;
+    for (i = 0; i < numRows - 1; ++i) {
+        int maxIdx = i;
+        for (j = i + 1; j < numRows; ++j) {
+            if (rows[j].score > rows[maxIdx].score)
+                maxIdx = j;
+        }
+        if (maxIdx != i) {
+            KothScoreRow_t tmp = rows[i];
+            rows[i] = rows[maxIdx];
+            rows[maxIdx] = tmp;
+        }
+    }
+
+    int topScore = numRows > 0 ? rows[0].score : 0;
+    if (maxScore <= 0)
+        maxScore = topScore;
+    if (maxScore <= 0)
+        maxScore = 1;
+
+    if (numRows > 0)
+        memcpy(kothHudCache.rows, rows, sizeof(KothScoreRow_t) * numRows);
+    kothHudCache.numRows = numRows;
+    kothHudCache.maxScore = maxScore;
+    kothHudCache.scoreboardDirty = 0;
+    kothHudCache.lastScoreboardRefreshSecond = nowSecond;
 }
 
 static void drawHillAt(const KothHill_t *hill, VECTOR center, u32 color, float *scroll, float radiusX, float radiusZ, int isCircle, float cosYaw, float sinYaw, int drawAtMidpoint)
@@ -2169,10 +2346,12 @@ void scoreboard(int maxScore, int* scores)
     if (!s || !o || !scores)
         return;
 
+    kothUpdateTimerDisplayCache();
+    kothRefreshScoreboardCache(s, o, maxScore, scores);
+
     const int opacity = 0x60;
     const u32 bgColor = 0x18608f;
     const u32 textColor = 0x69cbf2;
-    const float bgScorebarLerp = 0.25f;
 
     // Layout constants (top-right, matched to uya-cheats test HUD).
     const float anchorX = 0.8105f;
@@ -2184,112 +2363,49 @@ void scoreboard(int maxScore, int* scores)
     const float scoreBarH = (height * 0.3333f) * 2.0f;
     const float scoreBarX = anchorX + (width * 0.5f) + padding;
     const float textX = anchorX + (width * 0.5f);
-
-    typedef struct { int team; int score; } TeamScore;
-    TeamScore teamRows[TEAM_MAX];
-    TeamScore playerRows[GAME_MAX_PLAYERS];
-    TeamScore *sortedScores = NULL;
-    int maxRows = 0;
-
-    int numRows = 0;
-    if (o->GameFlags.MultiplayerGameFlags.Teams) {
-        sortedScores = teamRows;
-        maxRows = TEAM_MAX;
-        // Accumulate scores per team only for teams that have players.
-        int teamScores[TEAM_MAX];
-        char teamSeen[TEAM_MAX];
-        memset(teamScores, 0, sizeof(teamScores));
-        memset(teamSeen, 0, sizeof(teamSeen));
-
-        Player **players = playerGetAll();
-        int i;
-        for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-            Player *p = players[i];
-            if (!p)
-                continue;
-            int playerIdx = p->mpIndex;
-            int team = p->mpTeam;
-            if (!kothValidPlayerIdx(playerIdx))
-                continue;
-            if (team < 0 || team >= TEAM_MAX)
-                continue;
-            teamSeen[team] = 1;
-            teamScores[team] += scores[playerIdx];
-        }
-
-        int t;
-        for (t = 0; t < TEAM_MAX && numRows < maxRows; ++t) {
-            if (!teamSeen[t])
-                continue;
-            sortedScores[numRows].team = t;
-            sortedScores[numRows].score = teamScores[t];
-            ++numRows;
-        }
-    } else {
-        sortedScores = playerRows;
-        maxRows = GAME_MAX_PLAYERS;
-        // FFA: one row per active player.
-        char seen[GAME_MAX_PLAYERS];
-        memset(seen, 0, sizeof(seen));
-        Player **players = playerGetAll();
-        int i;
-        for (i = 0; i < GAME_MAX_PLAYERS && numRows < maxRows; ++i) {
-            Player *p = players[i];
-            if (!p)
-                continue;
-            int idx = p->mpIndex;
-            if (idx < 0 || idx >= GAME_MAX_PLAYERS)
-                continue;
-            if (seen[idx])
-                continue;
-            if (!s->PlayerNames[idx][0])
-                continue;
-            seen[idx] = 1;
-            sortedScores[numRows].team = idx;
-            sortedScores[numRows].score = scores[idx];
-            ++numRows;
-        }
-    }
-
-    if (numRows <= 0)
-        return;
-
-    // Sort rows by score descending (stable enough for small N).
-    int i, j;
-    for (i = 0; i < numRows - 1; ++i) {
-        int maxIdx = i;
-        for (j = i + 1; j < numRows; ++j) {
-            if (sortedScores[j].score > sortedScores[maxIdx].score)
-                maxIdx = j;
-        }
-        if (maxIdx != i) {
-            TeamScore tmp = sortedScores[i];
-            sortedScores[i] = sortedScores[maxIdx];
-            sortedScores[maxIdx] = tmp;
-        }
-    }
-
-    int topScore = sortedScores[0].score;
-    if (maxScore <= 0)
-        maxScore = topScore;
-    if (maxScore <= 0)
-        maxScore = 1;
+    const int reservedRows = 1;
 
     // Draw rows.
     // Flush state once before HUD drawing to reduce GS/GIF bleed risk.
     gfxDoGifPaging();
     char buf[32];
-    for (i = 0; i < numRows; ++i) {
-        int currentScore = sortedScores[i].score;
-        int currentTeam = sortedScores[i].team;
 
-        float rowYnorm = anchorY + i * (height + padding);
+    {
+        float rowYnorm = anchorY;
+        float textYnorm = rowYnorm + (height * 0.5f) - 0.005f;
+        float slotX = anchorX * SCREEN_WIDTH;
+        float slotY = rowYnorm * SCREEN_HEIGHT;
+        float slotW = width * SCREEN_WIDTH;
+        float slotH = height * SCREEN_HEIGHT;
+        float iconScale = slotH * 0.6f;
+        float iconGap = 4.0f;
+        int textWidth = kothHudCache.timerTextWidth;
+        float groupWidth = iconScale + iconGap + textWidth;
+        float groupX = slotX + (slotW - groupWidth) * 0.5f;
+        float iconX = groupX;
+        float iconY = slotY + (slotH - iconScale) * 0.5f;
+        float timerTextX = iconX + iconScale + iconGap;
+
+        gfxScreenSpaceBox(anchorX, rowYnorm, width, height, (opacity << 24) | bgColor);
+        gfxDrawHUDIcon(KOTH_TIMER_ICON_SPRITE, iconX, iconY, iconScale, (opacity << 24) | textColor);
+        gfxScreenSpaceText(timerTextX, textYnorm * SCREEN_HEIGHT, 1.0f, 1.0f, (opacity << 24) | textColor, kothHudCache.timerBuf, -1, TEXT_ALIGN_MIDDLELEFT, FONT_BOLD);
+    }
+
+    if (kothHudCache.numRows <= 0)
+        return;
+
+    int i;
+    for (i = 0; i < kothHudCache.numRows; ++i) {
+        int currentScore = kothHudCache.rows[i].score;
+        int currentTeam = kothHudCache.rows[i].team;
+
+        float rowYnorm = anchorY + (i + reservedRows) * (height + padding);
         float scoreBarYnorm = rowYnorm + (height - scoreBarH) * 0.5f;
         float textYnorm = rowYnorm + (height * 0.5f) - 0.005f;
-        float fill = clampf((float)currentScore / (float)maxScore, 0.0f, 1.0f);
+        float fill = clampf((float)currentScore / (float)kothHudCache.maxScore, 0.0f, 1.0f);
         //float fill = 0.5f; 
         //KOTH_LOG("[KOTH][DBG] scoreboard row=%d/%d team=%d score=%d maxScore=%d fillNum=%d fillRaw=%d\n",
-        //         i, numRows, currentTeam, currentScore, maxScore, (int)(fill * 1000), currentScore ? (int)((currentScore * 1000) / maxScore) : 0);
+        //         i, kothHudCache.numRows, currentTeam, currentScore, kothHudCache.maxScore, (int)(fill * 1000), currentScore ? (int)((currentScore * 1000) / kothHudCache.maxScore) : 0);
 
         float textScale = currentScore > 9999 ? 0.5f : (currentScore > 999 ? 0.75f : 1.0f);
         //float textScale = 1.0f; 
@@ -2335,6 +2451,7 @@ int kothOnReceiveScore(void *connection, void *data)
         return sizeof(KothScoreUpdate_t);
 
     kothScores[idx] = msg->Score;
+    kothInvalidateScoreboardCache();
     return sizeof(KothScoreUpdate_t);
 }
 
@@ -2368,6 +2485,7 @@ static int kothOnReceiveHillSync(void *connection, void *data)
     if (hillCycleStartTime < 0)
         hillCycleStartTime = 0;
     lastActiveHillIdx = idx;
+    kothInvalidateTimerDisplayCache();
     KOTH_LOG("[KOTH][DBG] hill sync received idx=%d localIdx=%d seed=%d timeStart=%d elapsed=%d", idx, kothGetActiveHillIndex(), (kothConfig ? kothConfig->grSeed : -1), gameGetData() ? gameGetData()->timeStart : -1, elapsed);
     return sizeof(KothHillSync_t);
 }
@@ -2407,6 +2525,11 @@ void kothReset(void)
     memset(hills, 0, sizeof(hills));
     memset(kothScores, 0, sizeof(kothScores));
     memset(lastBroadcastScore, 0, sizeof(lastBroadcastScore));
+    memset(&kothHudCache, 0, sizeof(kothHudCache));
+    kothHudCache.scoreboardDirty = 1;
+    kothHudCache.lastScoreboardRefreshSecond = -1;
+    kothHudCache.timerSeconds = -1;
+    kothHudCache.maxScore = 1;
 
     // Hide the radar marker between matches, but keep the widget alive so we
     // don't recreate/re-add it every frame or every round.
@@ -2727,6 +2850,7 @@ void kothTick(void)
 
     if (gameTime >= nextScoreTickTime) {
         updateScores();
+        kothInvalidateScoreboardCache();
 #ifdef KOTH_DEBUG
         // KOTHDBUG: trace timer every tick (host only) to see countdown activity
         if (gameAmIHost()) {
