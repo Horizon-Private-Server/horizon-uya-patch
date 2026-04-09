@@ -489,6 +489,25 @@ typedef struct UiTipsElements { // 0x8
 /* 0x4 */ UiElementList_t* tips;
 } UiTipsElements_t;
 
+// uiSelectDialog_Simple Defs start at: 0x00248504
+typedef struct UiWidgetDefs {
+/* 0x00 */ float x;
+/* 0x04 */ float y;
+/* 0x08 */ float w;
+/* 0x0c */ float h;
+/* 0x10 */ float inner_h;
+/* 0x14 */ float cursor_x;
+/* 0x18 */ float divider_x;
+/* 0x1c */ float inner_w;
+/* 0x20 */ float unk_20;
+/* 0x24 */ float unk_24;
+/* 0x28 */ float unk_28;
+/* 0x2c */ float cursor_h;
+/* 0x30 */ float unk_30;
+/* 0x34 */ float unk_34;
+/* 0x38 */ float cursor_offset_y;
+} UiWidgetDefs_t;
+
 /*
  * NAME :		uiGetActive
  * DESCRIPTION :
