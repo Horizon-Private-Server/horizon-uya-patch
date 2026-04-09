@@ -2746,6 +2746,7 @@ void onOnlineMenu(void)
 	if (!hasInitialized) {
 		padEnableInput();
 		onConfigInitialize();
+		// error location for loading maps: 000d45dc
 		// refreshCustomMapList();
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		hasInitialized = 1;
@@ -2754,7 +2755,7 @@ void onOnlineMenu(void)
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
 	}
-  
+
 	// map loader
 	onMapLoaderOnlineMenu();
 

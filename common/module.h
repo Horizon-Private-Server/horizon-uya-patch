@@ -16,6 +16,9 @@
 #include <libuya/gamesettings.h>
 #include "config.h"
 
+#define EXTRA_CODE_SEG_PTR                      ((void*)0x000b0000)
+
+
 // Forward declarations
 struct GameModule;
 
@@ -110,6 +113,7 @@ typedef struct CustomGameModeStats
 
 typedef struct PatchStateContainer {
     int CustomMapId;
+    int SelectedCustomMapChanged;
     int UpdateGameState;
     UpdateGameStateRequest_t GameStateUpdate;
     int UpdateCustomGameStats;

@@ -15,7 +15,8 @@ enum ActionType
   ACTIONTYPE_DECREMENT,
   ACTIONTYPE_VALIDATE,
   ACTIONTYPE_DRAW_HIGHLIGHT,
-  ACTIONTYPE_INPUT
+  ACTIONTYPE_INPUT,
+  ACTIONTYPE_INIT
 };
 
 enum ElementState
@@ -24,6 +25,7 @@ enum ElementState
   ELEMENT_VISIBLE = (1 << 0),
   ELEMENT_EDITABLE = (1 << 1),
   ELEMENT_SELECTABLE = (1 << 2),
+  ELEMENT_FILTERABLE = (1 << 3),
 };
 
 enum LabelType
@@ -42,6 +44,7 @@ typedef void (*ActionHandler)(struct TabElem* tab, struct MenuElem* element, int
 typedef void (*ButtonSelectHandler)(struct TabElem* tab, struct MenuElem* element);
 typedef void (*MenuElementStateHandler)(struct TabElem* tab, struct MenuElem* element, int * state);
 typedef int (*MenuElementListStateHandler)(struct MenuElem_ListData* listData, char* value);
+typedef int (*MenuElementVerticalListStateHandler)(struct MenuElem_VerticalListData* listData, char* value);
 typedef int (*MenuElementOrderedListStateHandler)(struct MenuElem_OrderedListData* listData, char* value);
 typedef int (*MenuElementRangeStateHandler)(struct MenuElem_RangeData* listData, char* value);
 typedef void (*TabStateHandler)(struct TabElem* tab, int * state);
@@ -78,6 +81,16 @@ typedef struct MenuElem_OrderedListData
   MenuElem_OrderedListDataItem_t items[];
 } MenuElem_OrderedListData_t;
 
+typedef struct MenuElem_VerticalListData
+{
+  char * value;
+  char * stagingValue;
+  MenuElementVerticalListStateHandler stateHandler;
+  int count;
+  int rows;
+  char * items[];
+} MenuElem_VerticalListData_t;
+
 typedef struct MenuElem_RangeData
 {
   char * value;
@@ -98,12 +111,13 @@ typedef struct TabElem
   int menuOffset;
 } TabElem_t;
 
-typedef struct CustomMapVersionFileDef
-{
+typedef struct CustomMapVersionFileDef {
   int Version;
   int BaseMapId;
-  int ForcedCustomModeId;
-  char padding[4];
+  short ForcedCustomModeId;
+  short Subsort;
+  short ExtraDataCount;
+  short ShrubMinRenderDistance;
   char Name[32];
 } CustomMapVersionFileDef_t;
 
@@ -126,6 +140,8 @@ struct MapLoaderState {
     int LoadingFileSize;
     int LoadingFd;
     int Loaded;
+    int FinishedLoading;
+    int MapCodeInited;
     void * LevelBuffer;
     void * GameplayBuffer;
     void * SoundBuffer;
@@ -155,8 +171,9 @@ enum eMapOverride {
 };
 
 extern struct MapLoaderState MapLoaderState;
-extern CustomMapDef_t *CustomMapDefs;
-extern int CustomMapDefCount;
+extern CustomMapDef_t *customMapDefs;
+extern int customMapDefCount;
+extern char *customMapExDataBuf;
 extern PatchStateContainer_t patchStateContainer;
 
 #endif // __PATCH_CONFIG_H__

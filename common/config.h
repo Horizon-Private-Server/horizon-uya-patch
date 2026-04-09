@@ -3,6 +3,19 @@
 
 #define PATCH_POINTERS             (*(PatchPointers_t**)0x000CFFC0)
 
+
+struct CustomMapDef;
+
+typedef void (*SendCustomCommandToClientFunc_t)(int id, int size, void * data);
+typedef void (*SetSpectateFunc_t)(int localPlayerIndex, int spectatePlayerOrDisable);
+typedef int (*GetCustomMapDefCountFunc_t)(void);
+typedef struct CustomMapDef* (*GetCustomMapDefFunc_t)(int index);
+typedef int (*ReadCustomMapExtraDataFunc_t)(char* mapFilename, void* buffer, int bufferSize, int customModeId);
+typedef void (*RefreshCustomMapDefsFunc_t)(void);
+typedef void (*HopToCustomMapFunc_t)(struct CustomMapDef* def);
+typedef int (*ReadExtraData_f)(void* dst, int len);
+
+
 // General Tab
 typedef struct PatchConfig {
   char enableAutoMaps;
@@ -120,8 +133,11 @@ typedef struct PatchPointers {
 
 typedef struct CustomMapDef {
   int Version;
-  int BaseMapId;
-  int ForcedCustomModeId;
+  // int CustomModeExtraDataMask;
+  // short ShrubMinRenderDistance;
+  // short Subsort;
+  char BaseMapId;
+  char ForcedCustomModeId;
   char Name[32];
   char Filename[64];
 } CustomMapDef_t;
