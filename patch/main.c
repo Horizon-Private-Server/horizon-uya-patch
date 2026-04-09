@@ -2754,7 +2754,7 @@ void onOnlineMenu(void)
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
 	}
-  
+
 	// map loader
 	onMapLoaderOnlineMenu();
 

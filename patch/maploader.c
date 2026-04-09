@@ -342,7 +342,9 @@ int onSetMapOverride(void * connection, void * data)
 int onServerSentMapIrxModules(void * connection, void * data)
 {
 	DPRINTF("server sent map irx modules\n");
+
 	MapServerSentModulesMessage * msg = (MapServerSentModulesMessage*)data;
+	//mapsRemoteGlobalVersion = msg->Version;
 
 	// we've already initialized the usb interface
 	if (rpcInit > 0)
@@ -356,23 +358,12 @@ int onServerSentMapIrxModules(void * connection, void * data)
 	usbFsModuleSize = msg->Module1Size;
 	usbSrvModuleSize = msg->Module2Size;
 
-	// 
-	loadModules();
-
-	//
-	int init = rpcInit = rpcUSBInit();
-
-	//
-	if (init < 0) {
-		actionState = ACTION_ERROR_LOADING_MODULES;
+	// if not OPL load modules
+	if (loadModulesImmediately()) {
+		loadModules();
+		initModules();
 	} else {
-		actionState = ACTION_MODULES_INSTALLED;
-		// refresh map list
-		refreshCustomMapList();
-
-		// if in game, ask server to resend map override to use
-		if (gameGetSettings())
-			netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
+		actionState = ACTION_MODULES_WAIT_FOR_INSTALL;
 	}
 
 	return sizeof(MapServerSentModulesMessage);
@@ -393,12 +384,47 @@ void loadModules(void)
 		USB_FS_ID = SifExecModuleBuffer(USB_FS_MODULE_PTR, usbFsModuleSize, 0, NULL, &mod_res);
 		USB_SRV_ID = SifExecModuleBuffer(USB_SRV_MODULE_PTR, usbSrvModuleSize, 0, NULL, &mod_res);
 
-		//DPRINTF("Loading USBD: %d\n", usbd_id);
-		DPRINTF("Loading MASS: %d %d\n", USB_FS_ID, mod_res);
-		DPRINTF("Loading USBSERV: %d %d\n", USB_SRV_ID, mod_res);
+		DPRINTF("Loading MASS: %d\n", USB_FS_ID);
+		DPRINTF("Loading USBSERV: %d\n", USB_SRV_ID);
 	}
-
 	LOAD_MODULES_STATE = 100;
+}
+
+//------------------------------------------------------------------------------
+void initModules(void)
+{
+	int init = rpcInit = rpcUSBInit();
+
+	DPRINTF("rpcUSBInit: %d, %08X:%d, %08X:%d\n", init, (u32)USB_FS_MODULE_PTR, usbFsModuleSize, (u32)USB_SRV_MODULE_PTR, usbSrvModuleSize);
+	//
+	if (init < 0) {
+		actionState = ACTION_ERROR_LOADING_MODULES;
+	} else {
+		// check if host fs exists
+		useHost = 1;
+		if (!hasCustomMapsFolder()) useHost = 0;
+
+		// indicate maps installed
+		actionState = ACTION_MODULES_INSTALLED;
+
+		// refresh map list
+		refreshCustomMapList();
+
+		// if in game, ask server to resend map override to use
+		if (gameGetSettings())
+			netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
+	}
+}
+
+//------------------------------------------------------------------------------
+int loadModulesImmediately(void)
+{
+	return 1;
+
+	// if on OPL USB wait for loadHookFunc
+	// if (config.altModuleLoad) return 0;
+
+	return 1;
 }
 
 //------------------------------------------------------------------------------
