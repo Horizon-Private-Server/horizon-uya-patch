@@ -653,11 +653,11 @@ void customMapInsert(char* versionFileBuffer, int versionFileBufferSize, char* f
 	// insert by sort, then alphabetically
 	int insertAtIdx = customMapDefCount;
 	for (i = 0; i < customMapDefCount; ++i) {
-		int c = versionFileDef.Subsort - customMapDefs[i].Subsort;
-		if (c < 0) {
-			insertAtIdx = i;
-			break;
-		}
+		int c = 0; //versionFileDef.Subsort - customMapDefs[i].Subsort;
+		// if (c < 0) {
+		// 	insertAtIdx = i;
+		// 	break;
+		// }
 
 		if (c == 0) {
 			c = strncmp(versionFileDef.Name, customMapDefs[i].Name, sizeof(customMapDefs[i].Name));
@@ -677,9 +677,9 @@ void customMapInsert(char* versionFileBuffer, int versionFileBufferSize, char* f
 	customMapDefs[insertAtIdx].Version = versionFileDef.Version;
 	customMapDefs[insertAtIdx].BaseMapId = versionFileDef.BaseMapId;
 	customMapDefs[insertAtIdx].ForcedCustomModeId = versionFileDef.ForcedCustomModeId;
-	customMapDefs[insertAtIdx].CustomModeExtraDataMask = extraDataModeMask;
-	customMapDefs[insertAtIdx].ShrubMinRenderDistance = versionFileDef.ShrubMinRenderDistance;
-	customMapDefs[insertAtIdx].Subsort = versionFileDef.Subsort;
+	// customMapDefs[insertAtIdx].CustomModeExtraDataMask = extraDataModeMask;
+	// customMapDefs[insertAtIdx].ShrubMinRenderDistance = versionFileDef.ShrubMinRenderDistance;
+	// customMapDefs[insertAtIdx].Subsort = versionFileDef.Subsort;
 	strcpy(customMapDefs[insertAtIdx].Filename, filenameWithoutExtension, sizeof(customMapDefs[insertAtIdx].Filename));
 	strcpy(customMapDefs[insertAtIdx].Name, versionFileDef.Name, sizeof(customMapDefs[insertAtIdx].Name));
 	customMapDefCount++;
