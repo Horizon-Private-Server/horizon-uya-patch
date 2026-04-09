@@ -2746,6 +2746,7 @@ void onOnlineMenu(void)
 	if (!hasInitialized) {
 		padEnableInput();
 		onConfigInitialize();
+		// error location for loading maps: 000d45dc
 		// refreshCustomMapList();
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		hasInitialized = 1;

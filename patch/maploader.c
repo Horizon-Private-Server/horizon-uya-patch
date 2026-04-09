@@ -778,16 +778,14 @@ void refreshCustomMapList(void)
 		// read next entry
 		// stop if we've reached the end
 		if (rpcUSBdread(fd, &dirent) != 0) break;
-		
 		rpcUSBSync(0, NULL, &r);
-		
 		if (r <= 0) break;
 
 		// extract filename
 		// for some reason there's a mixup between if we're using ioman or iomanX
 		// PS2s use iomanX but the emu HLE hostfs thinks we're using ioman
-		if (useHost) strncpy(filename, iomanDirent->name, sizeof(filename));
-		else strncpy(filename, dirent.name, sizeof(filename));
+		if (useHost) strcpy(filename, iomanDirent->name, sizeof(filename));
+		else strcpy(filename, dirent.name, sizeof(filename));
 
 		// OSX creates index files starting with a '.'
 		// filter those out
@@ -796,11 +794,11 @@ void refreshCustomMapList(void)
 		// we want to parse the .version files
 		// check if filename ends with ".version"
 		int len = strlen(filename);
-		if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
+		if (strcmp(&filename[len-versionExtLen], versionExt) != 0) continue;
 
 		#if DSCRPRINT
-		snprintf(buf, sizeof(buf), "y %s", filename);
-		pushScrPrintLine(buf);
+		snprintf(buffer, sizeof(buffer), "y %s", filename);
+		pushScrPrintLine(buffer);
 		#endif
 
 		DPRINTF("found version %s\n", filename);
@@ -808,46 +806,42 @@ void refreshCustomMapList(void)
 		// parse version file
 		CustomMapVersionFileDef_t versionFileDef;
 		snprintf(fullpath, sizeof(fullpath), "%s/%s", dirpath, filename);
-		int read = readFile(fullpath, &versionFileDef, 0, sizeof(CustomMapVersionFileDef_t));
+		int read = readFile(fullpath, buffer, 0, sizeof(buffer));
 
 		// ensure version file is valid
 		if (read < sizeof(CustomMapVersionFileDef_t)) {
 			DPRINTF("%s (%d) does not match expected file size %d. Skipping.\n", filename, read, sizeof(CustomMapVersionFileDef_t));
 			continue;
 		}
-		
+
 		// compute filename without extension
-		strncpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
+		strcpy(filenameWithoutExtension, filename, sizeof(filenameWithoutExtension));
 		len = strlen(filenameWithoutExtension);
 		filenameWithoutExtension[len - versionExtLen] = 0;
 
-		// ensure version file has matching .world OR .wad
+		// ensure version file has matching .wad
 		snprintf(fullpath, sizeof(fullpath), fWad, getMapPathPrefix(), filenameWithoutExtension);
 		int fWadLen = readFileLength(fullpath);
-		snprintf(fullpath, sizeof(fullpath), fWorld, getMapPathPrefix(), filenameWithoutExtension);
-		int fWorldLen = readFileLength(fullpath);
-		if (fWadLen <= 0 && fWorldLen <= 0) continue;
+		if (fWadLen <= 0) continue;
 
 		// parse extra data
 		customMapInsert(buffer, read, filenameWithoutExtension);
 
-
 		// reached max maps
 		if (customMapDefCount >= MAX_CUSTOM_MAP_DEFINITIONS) break;
-		
 	} while (1);
 
 	// close
 	rpcUSBdclose(fd);
 	rpcUSBSync(0, NULL, NULL);
-  
+
 	// populate config
 	for (i = 0; i < customMapDefCount; ++i) {
 		dataCustomMaps.items[i+1] = (char*)customMapDefs[i].Name;
 		dataCustomMaps.count += 1;
 	}
 
-  	// clamp
+	// clamp
 	if (patchStateContainer.CustomMapId >= dataCustomMaps.count)
 		patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
 

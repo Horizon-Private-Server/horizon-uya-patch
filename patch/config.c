@@ -759,48 +759,70 @@ int menuStateHandler_SelectedMapOverride(MenuElem_VerticalListData_t* listData, 
 
   char gm = gameConfig.customModeId;
   char v = *value;
+  char selIdx = *(listData->stagingValue ? listData->stagingValue : listData->value);
 
-  // here we can disable certain maps depending on the gamemode
-  /*
-  switch (gm)
-  {
-    case CUSTOM_MODE_SURVIVAL:
-    {
-      if (v >= CUSTOM_MAP_SURVIVAL_START && v <= CUSTOM_MAP_SURVIVAL_END)
-        return 1;
-      *value = CUSTOM_MAP_SURVIVAL_START;
-      return 0;
-    }
-    case CUSTOM_MODE_PAYLOAD:
-    {
-      if (v == CUSTOM_MAP_SARATHOS_SP || v == CUSTOM_MAP_DESERT_PRISON)
-        return 1;
-      *value = CUSTOM_MAP_DESERT_PRISON;
-      return 0;
-    }
+  // if no override selected, let user see all maps
+  if (!gm) return 1;
+
+  // otherwise filter by game mode
+  switch (gm) {
+    // case CUSTOM_MODE_COLLECTATHON:
+    // {
+    //   //if (v && strcmp(customMapDefs[v-1].Name, "test") == 0)
+    //   //  printf("%s => %x\n", customMapDefs[v-1].Name, customMapDefs[v-1].CustomModeExtraDataMask);
+
+    //   // supported custom maps only
+    //   if (v && (customMapDefs[v-1].CustomModeExtraDataMask & (1 << gm)) != 0)
+    //     return 1;
+
+    //   // force first map
+    //   for (i = 0; i < customMapDefCount; ++i) {
+    //     if ((customMapDefs[i].CustomModeExtraDataMask & (1 << gm)) != 0) {
+    //       *value = i+1;
+    //       //*dataCustomMaps.value = i+1;
+    //       return 0;
+    //     }
+    //   }
+
+    //   *value = 0;
+    //   return 0;
+    // }
+    // case CUSTOM_MODE_TRAINING:
+    // {
+    //   // endless cycle supports custom maps
+    //   if ((gameConfig.trainingConfig.type == TRAINING_TYPE_CYCLE || gameConfig.trainingConfig.type == TRAINING_TYPE_RUSH) && gameConfig.trainingConfig.variant != 0) {
+    //     if (v && customMapDefs[v-1].ForcedCustomModeId) {
+    //       *value = 0;
+    //       return 0;
+    //     }
+
+    //     return 1;
+    //   }
+
+    //   *value = 0;
+    //   return 0;
+    // }
     default:
     {
-      if (v < CUSTOM_MAP_SURVIVAL_START)
-        return 1;
-      
-      *value = CUSTOM_MAP_NONE;
-      return 0;
-    }
-  }
-  */
+      // hide maps with gamemode override
+      if (gm > CUSTOM_MODE_NONE)
+      {
+        if (v && customMapDefs[v-1].ForcedCustomModeId && customMapDefs[v-1].ForcedCustomModeId != gm)
+        {
+          *value = 0;
+          return 0;
+        }
+      }
 
-  // hide maps with gamemode override
-  if (gm > CUSTOM_MODE_NONE) {
-    for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i) {
-      if (v == dataCustomMapsWithExclusiveGameMode[i]) {
-        *value = CUSTOM_MAP_NONE;
+      // hide unless forced mode is negative (benchmark, spleef) or selected mode matches map
+      if (v && customMapDefs[v-1].ForcedCustomModeId > 0 && customMapDefs[v-1].ForcedCustomModeId != gm) {
+        *value = 0;
         return 0;
       }
+
+      return 1;
     }
   }
-
-  // success
-  return 1;
 }
 
 // 
@@ -1501,11 +1523,11 @@ void drawButtonMenuElement(TabElem_t* tab, MenuElem_t* element, RECT* rect)
 
   // bg
   color = colorLerp(colorButtonBg, 0, lerp);
-	gfxScreenSpaceQuad(&rBg, color, color, color, color);
+    gfxScreenSpaceQuad(&rBg, color, color, color, color);
 
   // fg
   color = colorLerp(colorButtonFg, 0, lerp);
-	gfxScreenSpaceQuad(&rFg, color, color, color, color);
+    gfxScreenSpaceQuad(&rFg, color, color, color, color);
 
   // draw name
   x = 0.5 * SCREEN_WIDTH;
@@ -2379,7 +2401,7 @@ void drawTab(TabElem_t* tab)
   int i = 0, state = 0;
   int menuElementRenderEnd = tab->menuOffset;
   MenuElem_t * menuElements = tab->elements;
-	int menuElementsCount = tab->elementsCount;
+    int menuElementsCount = tab->elementsCount;
   MenuElem_t* currentElement;
 
   float contentX = frameX + contentPaddingX;
@@ -2504,14 +2526,14 @@ void onMenuUpdate(int inGame)
     // prevent pad from affecting menus
     padDisableInput();
 
-		// draw
-		if (padGetButtonDown(0, PAD_L3) <= 0)
-		{
-			// draw frame
-			drawFrame();
+        // draw
+        if (padGetButtonDown(0, PAD_L3) <= 0)
+        {
+            // draw frame
+            drawFrame();
 
-			// draw tab
-			drawTab(tab);
+            // draw tab
+            drawTab(tab);
 
       // draw footer
       drawFooter();
@@ -2523,45 +2545,45 @@ void onMenuUpdate(int inGame)
       //   sprintf(buf, "ping %d", ping);
       //   gfxScreenSpaceText(0.88 * SCREEN_WIDTH, 0.15 * SCREEN_HEIGHT, 1, 1, 0x80FFFFFF, buf, -1, 2, FONT_BOLD);
       // }
-		}
+        }
 
-		// nav tab right
-		if (padGetButtonUp(0, PAD_R1) > 0)
-		{
-			navTab(1);
-		}
-		// nav tab left
-		else if (padGetButtonUp(0, PAD_L1) > 0)
-		{
-			navTab(-1);
-		}
-		// close
-		else if (padGetButtonUp(0, PAD_TRIANGLE) > 0 || padGetButtonUp(0, PAD_START) > 0)
-		{
+        // nav tab right
+        if (padGetButtonUp(0, PAD_R1) > 0)
+        {
+            navTab(1);
+        }
+        // nav tab left
+        else if (padGetButtonUp(0, PAD_L1) > 0)
+        {
+            navTab(-1);
+        }
+        // close
+        else if (padGetButtonUp(0, PAD_TRIANGLE) > 0 || padGetButtonUp(0, PAD_START) > 0)
+        {
       configMenuDisable();
-		}
-	}
-	else if (!inGame)
+        }
+    }
+    else if (!inGame)
   {
     // if in Online Lobby, and SubPointer equals zero (not on find game)
-		if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && *(u32*)0x01C5C114 == 0) {
-			// render message
-			// gfxScreenSpaceBox(SCREEN_WIDTH * 0.2, SCREEN_HEIGHT * 0.81, 0.4, 0.3, colorOpenBg);
+        if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && *(u32*)0x01C5C114 == 0) {
+            // render message
+            // gfxScreenSpaceBox(SCREEN_WIDTH * 0.2, SCREEN_HEIGHT * 0.81, 0.4, 0.3, colorOpenBg);
       float scale = .85;
-	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.77, scale, scale, 0x80FFFFFF, "Press START to", -1, 4, FONT_BOLD);
-			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4, FONT_BOLD);
+          gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.77, scale, scale, 0x80FFFFFF, "Press START to", -1, 4, FONT_BOLD);
+            gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4, FONT_BOLD);
     }
     if (uiGetActiveMenu(UI_MENU_STAGING, 0) > 0 && *(u32*)0x01C5C114 == 0) {
       int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
       if (gameAmIHost() && isTeams)
         gfxScreenSpaceText(SCREEN_WIDTH * 0.205, SCREEN_HEIGHT * 0.07, 0.7, .85, 0x8069cbf2, "\x14 RANDOM TEAMS", -1, 4, FONT_BOLD);
     }
-		// check for pad input
-		if (padGetButtonUp(0, PAD_START) > 0)
-		{
-			configMenuEnable();
-		}
-	}
+        // check for pad input
+        if (padGetButtonUp(0, PAD_START) > 0)
+        {
+            configMenuEnable();
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -2646,27 +2668,27 @@ void navTab(int direction)
 //------------------------------------------------------------------------------
 int onServerDownloadDataRequest(void * connection, void * data)
 {
-	ServerDownloadDataRequest_t request;
+    ServerDownloadDataRequest_t request;
   memcpy(&request, data, sizeof(request));
   int msgSize = sizeof(ServerDownloadDataRequest_t) - sizeof(request.Data) + request.DataSize;
 
-	// copy bytes to target
+    // copy bytes to target
   dlIsActive = request.Id;
-	dlTotalBytes = request.TotalSize;
-	dlBytesReceived += request.DataSize;
+    dlTotalBytes = request.TotalSize;
+    dlBytesReceived += request.DataSize;
   if (!dlIgnore && request.DataSize > 0)
     memcpy((void*)request.TargetAddress, request.Data, request.DataSize);
-	DPRINTF("DOWNLOAD: %d/%d, writing %d to %08X\n", dlBytesReceived, request.TotalSize, request.DataSize, request.TargetAddress);
+    DPRINTF("DOWNLOAD: %d/%d, writing %d to %08X\n", dlBytesReceived, request.TotalSize, request.DataSize, request.TargetAddress);
   
-	// respond
-	if (connection && (!request.Chunk || dlBytesReceived >= request.TotalSize))
-	{
-		ClientDownloadDataResponse_t response;
-		response.Id = request.Id;
-		response.BytesReceived = dlBytesReceived;
+    // respond
+    if (connection && (!request.Chunk || dlBytesReceived >= request.TotalSize))
+    {
+        ClientDownloadDataResponse_t response;
+        response.Id = request.Id;
+        response.BytesReceived = dlBytesReceived;
     response.Stop = dlIgnore;
-		netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_DOWNLOAD_DATA_RESPONSE, sizeof(ClientDownloadDataResponse_t), &response);
-	}
+        netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_DOWNLOAD_DATA_RESPONSE, sizeof(ClientDownloadDataResponse_t), &response);
+    }
 
   // reset at end
   if (dlBytesReceived >= request.TotalSize)
@@ -2682,7 +2704,7 @@ int onServerDownloadDataRequest(void * connection, void * data)
     //*(u32*)0x00167F54 = 1000 * 15;
   }
 
-	return msgSize;
+    return msgSize;
 }
 
 //------------------------------------------------------------------------------
@@ -2782,15 +2804,15 @@ void onConfigGameMenu(void)
 void onConfigOnlineMenu(void)
 {
   // draw download data box
-	if (dlTotalBytes > 0)
-	{
+    if (dlTotalBytes > 0)
+    {
     gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, colorBlack);
     gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, colorContentBg);
     gfxScreenSpaceText(SCREEN_WIDTH * 0.4, SCREEN_HEIGHT * 0.4, 1, 1, colorText, "Downloading...", 11 + (gameGetTime()/240 % 4), 3, FONT_BOLD);
 
-		float w = (float)dlBytesReceived / (float)dlTotalBytes;
-		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, colorRed);
-	}
+        float w = (float)dlBytesReceived / (float)dlTotalBytes;
+        gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, colorRed);
+    }
 
   onMenuUpdate(0);
 
@@ -2803,9 +2825,9 @@ void onConfigOnlineMenu(void)
 //------------------------------------------------------------------------------
 void onConfigInitialize(void)
 {
-	// install net handlers
+    // install net handlers
   netInstallCustomMsgHook(1);
-	netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_SET_GAME_CONFIG, &onSetGameConfig);
+    netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_SET_GAME_CONFIG, &onSetGameConfig);
   netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
 
 
