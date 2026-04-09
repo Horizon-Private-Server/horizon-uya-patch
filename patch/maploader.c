@@ -178,7 +178,7 @@ extern PatchGameConfig_t gameConfig;
 extern struct MenuElem_OrderedListData dataCustomModes;
 
 // map overrides
-extern struct MenuElem_VerticalListData dataCustomMaps;
+extern MenuElem_ListData_t dataCustomMaps;
 
 // custom map defs
 CustomMapDef_t *customMapDefs = NULL;
@@ -987,22 +987,24 @@ void refreshCustomMapList(void)
 	rpcUSBSync(0, NULL, NULL);
   
     // sort names alphabetically
-	CustomMapDef_t temp[MAX_CUSTOM_MAP_DEFINITIONS];
-	int k = 0, j;
-    for(k; k < customMapDefCount; ++k) {
-        for(j = 0; j < customMapDefCount; ++j) {
-            if(strcmp(customMapDefs[k].Name, customMapDefs[j].Name) < 0) {
-                temp[k] = customMapDefs[k];
-                customMapDefs[k] = customMapDefs[j];
-                customMapDefs[j] = temp[k];
-            }
-        }
-    }
+	// CustomMapDef_t temp[MAX_CUSTOM_MAP_DEFINITIONS];
+	// int k = 0, j;
+    // for(k; k < customMapDefCount; ++k) {
+    //     for(j = 0; j < customMapDefCount; ++j) {
+    //         if(strcmp(customMapDefs[k].Name, customMapDefs[j].Name) < 0) {
+    //             temp[k] = customMapDefs[k];
+    //             customMapDefs[k] = customMapDefs[j];
+    //             customMapDefs[j] = temp[k];
+    //         }
+    //     }
+    // }
 	// populate config
 	for (i = 0; i < customMapDefCount; ++i) {
 		dataCustomMaps.items[i+1] = (char*)customMapDefs[i].Name;
 		dataCustomMaps.count += 1;
 	}
+
+	DPRINTF("dataCustomMaps: %08x", dataCustomMaps);
 
   	// clamp
 	if (patchStateContainer.CustomMapId >= dataCustomMaps.count)
@@ -1633,6 +1635,7 @@ void runMapLoader(void)
 
 		if (!customMapDefs) {
 			customMapDefs = malloc(sizeof(CustomMapDef_t) * MAX_CUSTOM_MAP_DEFINITIONS);
+			DPRINTF("CUSTOMMAPDEFS MALLOC: %08x", customMapDefs);
 		}
 
 		// install on login
