@@ -133,8 +133,11 @@ typedef struct PatchPointers {
 
 typedef struct CustomMapDef {
   int Version;
-  int BaseMapId;
-  int ForcedCustomModeId;
+  // int CustomModeExtraDataMask;
+  // short ShrubMinRenderDistance;
+  // short Subsort;
+  char BaseMapId;
+  char ForcedCustomModeId;
   char Name[32];
   char Filename[64];
 } CustomMapDef_t;
