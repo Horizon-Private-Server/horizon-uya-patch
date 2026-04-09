@@ -276,13 +276,14 @@ int maploaderIsLoadingCustomMap(void)
 //------------------------------------------------------------------------------
 int onSetMapOverride(void * connection, void * data)
 {
-	MapOverrideMessage *payload = (MapOverrideMessage*)data;
-	MapOverrideResponseMessage msg;
+	MapOverrideMessage payload;
+	memcpy(&payload, data, sizeof(payload));
 
 	// reset
+	static int lastCustomMapId = 0;
 	patchStateContainer.CustomMapId = 0;
 
-	if (payload->CustomMap.BaseMapId == 0) {
+	if (payload.CustomMap.BaseMapId == 0) {
 		DPRINTF("recv empty map\n");
 		MapLoaderState.Enabled = 0;
 		MapLoaderState.CheckState = 0;
@@ -298,7 +299,7 @@ int onSetMapOverride(void * connection, void * data)
 
 		int i = 0;
 		for (i = 0; i < customMapDefCount; ++i) {
-			if (strncmp(customMapDefs[i].Filename, payload->CustomMap.Filename, sizeof(customMapDefs[i].Filename)) == 0) {
+			if (strncmp(customMapDefs[i].Filename, payload.CustomMap.Filename, sizeof(customMapDefs[i].Filename)) == 0) {
 				patchStateContainer.CustomMapId = i + 1;
 				version = customMapDefs[i].Version;
 				break;
@@ -311,23 +312,24 @@ int onSetMapOverride(void * connection, void * data)
 			version = -2;
 
 		// Store the host's expected version for comparison
-		expectedMapVersion = payload->CustomMap.Version;
+		expectedMapVersion = payload.CustomMap.Version;
 
-		DPRINTF("MapId:%d MapName:%s MapFileName:%s Version:%d\n", payload->CustomMap.BaseMapId, payload->CustomMap.Name, payload->CustomMap.Filename, version);
+		DPRINTF("MapId:%d MapName:%s MapFileName:%s Version:%d\n", payload.CustomMap.BaseMapId, payload.CustomMap.Name, payload.CustomMap.Filename, version);
 		// send response
-		msg.Version = version;
-		strncpy(msg.Filename, payload->CustomMap.Filename, sizeof(msg.Filename));
+		SetMapOverrideResponse_t msg;
+		msg.MapVersion = version;
+		strncpy(msg.MapFilename, payload.CustomMap.Filename, sizeof(msg.MapFilename));
 		netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_SET_MAP_OVERRIDE_RESPONSE, sizeof(msg), &msg);
 
-		strncpy(MapLoaderState.MapName, payload->CustomMap.Name, sizeof(MapLoaderState.MapName));
-		strncpy(MapLoaderState.MapFileName, payload->CustomMap.Filename, sizeof(MapLoaderState.MapFileName));
+		strncpy(MapLoaderState.MapName, payload.CustomMap.Name, sizeof(MapLoaderState.MapName));
+		strncpy(MapLoaderState.MapFileName, payload.CustomMap.Filename, sizeof(MapLoaderState.MapFileName));
 		
 		// enable
 		if (version >= 0) {
 			MapLoaderState.Enabled = 1;
 			MapLoaderState.CheckState = 0;
 			mapOverrideResponse = version;
-			MapLoaderState.MapId = payload->CustomMap.BaseMapId;
+			MapLoaderState.MapId = payload.CustomMap.BaseMapId;
 			MapLoaderState.LoadingFd = -1;
 			MapLoaderState.LoadingFileSize = -1;
 		} else {
@@ -335,6 +337,8 @@ int onSetMapOverride(void * connection, void * data)
 			mapOverrideResponse = version;
 		}
 	}
+	patchStateContainer.SelectedCustomMapChanged = isInMenus() && lastCustomMapId != patchStateContainer.CustomMapId;
+	lastCustomMapId = patchStateContainer.CustomMapId;
 	return sizeof(MapOverrideMessage);
 }
 

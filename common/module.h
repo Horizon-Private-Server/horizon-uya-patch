@@ -113,6 +113,7 @@ typedef struct CustomGameModeStats
 
 typedef struct PatchStateContainer {
     int CustomMapId;
+    int SelectedCustomMapChanged;
     int UpdateGameState;
     UpdateGameStateRequest_t GameStateUpdate;
     int UpdateCustomGameStats;
