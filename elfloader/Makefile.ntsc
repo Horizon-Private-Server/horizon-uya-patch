@@ -1,0 +1,6 @@
+EE_ELF = elfloader-10684.elf
+EE_BIN = elfloader-10684.bin
+EE_LIBS = -luyantsc
+EE_DEFS = -DUYA_NTSC
+
+include ${CURDIR}/Makefile.defs
