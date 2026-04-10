@@ -24,7 +24,7 @@
 #include <libuya/player.h>
 #include <libuya/gamesettings.h>
 
-int selfDestruct __attribute__((section(".config"))) = 0;
+// int selfDestruct __attribute__((section(".config"))) = 0;
 
 /*
 	-1 = Both
@@ -191,9 +191,9 @@ int main (void)
 	}
 
 	// just clear if selfDestruct is true
-	if (selfDestruct) {
-		return;
-	}
+	// if (selfDestruct) {
+	// 	return;
+	// }
 
 	// 
 	netInstallCustomMsgHook(1);
