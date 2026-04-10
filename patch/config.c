@@ -116,6 +116,7 @@ void menuStateHandler_Nodes(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_VoteToEndStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_BootMapDownloaderStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_DisabledInGame(TabElem_t* tab, MenuElem_t* element, int* state);
 
 int menuStateHandler_SelectedMapOverride(MenuElem_OrderedListData_t* listData, char* value);
@@ -504,6 +505,9 @@ MenuElem_t menuElementsGeneral[] = {
 #endif
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
+#ifdef MAPBOOTELF
+  { "Boot Map Downloader", buttonActionHandler, menuStateHandler_BootMapDownloaderStateHandler, downloadMapUpdatesSelectHandler },
+#endif
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
@@ -943,6 +947,24 @@ void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
     char buf[32];
     snprintf(buf, sizeof(buf), "Found %d maps", customMapDefCount);
     uiShowOkDialog("Custom Maps", buf);
+  }
+}
+
+//------------------------------------------------------------------------------
+void downloadMapUpdatesSelectHandler(TabElem_t* tab, MenuElem_t* element)
+{
+  // close menu
+  configMenuDisable();
+
+  // prompt
+  if (uiShowYesNoDialog("Are you sure?", "Launching the map downloader will exit the game.") == 1) {
+    ClientRequestBootElf_t request;
+    request.BootElfId = 0;
+    
+    // send request
+    void * lobbyConnection = netGetLobbyServerConnection();
+    if (lobbyConnection)
+      netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_BOOT_ELF, sizeof(ClientRequestBootElf_t), &request);
   }
 }
 

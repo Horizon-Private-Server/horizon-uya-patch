@@ -24,6 +24,8 @@
 #include <libuya/player.h>
 #include <libuya/gamesettings.h>
 
+int selfDestruct __attribute__((section(".config"))) = 0;
+
 /*
 	-1 = Both
 	0 = Not In Game
@@ -186,6 +188,11 @@ int main (void)
 		{
 			memset((void*)clears[i][0], 0, clears[i][1]);
 		}
+	}
+
+	// just clear if selfDestruct is true
+	if (selfDestruct) {
+		return;
 	}
 
 	// 
