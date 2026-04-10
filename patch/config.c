@@ -129,7 +129,7 @@ void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void voteToEndSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element);
-
+void downloadMapUpdatesSelectHandler(TabElem_t* tab, MenuElem_t* element);
 
 #ifdef DEBUG
 void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
@@ -496,7 +496,6 @@ MenuElem_ListData_t botProfile = {
     .count = 10,
     .items = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
 };
-
 
 // General
 MenuElem_t menuElementsGeneral[] = {
@@ -991,6 +990,18 @@ void menuStateHandler_VoteToEndStateHandler(TabElem_t* tab, MenuElem_t* element,
   }
   
   *state = ELEMENT_HIDDEN;
+}
+
+void menuStateHandler_BootMapDownloaderStateHandler(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings* gs = gameGetSettings();
+  int i = 0;
+  int hidden = isInGame();
+  
+  if (hidden)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 // 
