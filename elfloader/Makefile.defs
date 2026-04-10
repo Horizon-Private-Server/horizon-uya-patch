@@ -1,6 +1,6 @@
 
 EE_OBJS = main.o elfloader.o
-EE_LIBS = -ldl -lkernel
+EE_LIBS += -lkernel
 
 EE_INCS := -I../common -I../libdl/include
 EE_LDFLAGS = -fno-builtin -nostdlib -nostartfiles -L. -L../libdl/lib -L$(PS2SDK)/ee/lib
@@ -13,3 +13,4 @@ clean:
 
 include ${CURDIR}/../Makefile.pref
 include ${CURDIR}/../Makefile.eeglobal
+include ${CURDIR}/../Makefile.rules

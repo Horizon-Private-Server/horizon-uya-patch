@@ -24,8 +24,6 @@
 #include <libuya/string.h>
 #include <libuya/stdio.h>
 #include <libuya/gamesettings.h>
-#include <libuya/dialog.h>
-#include <libuya/patch.h>
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
 
@@ -60,7 +58,7 @@ int onServerDownloadDataRequest(void * connection, void * data)
     response.Id = request->Id;
     response.BytesReceived = bytesReceived;
     response.Stop = 0;
-    netSendCustomAppMessage(NET_DELIVERY_CRITICAL, connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_DOWNLOAD_DATA_RESPONSE, sizeof(ClientDownloadDataResponse_t), &response);
+    netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_DOWNLOAD_DATA_RESPONSE, sizeof(ClientDownloadDataResponse_t), &response);
   }
 
   return sizeof(ServerDownloadDataRequest_t) - sizeof(request->Data) + request->DataSize;
@@ -125,12 +123,12 @@ void onOnlineMenu(void)
   }
 
   // only show on main menu
-  if (uiGetActive() != UI_ID_ONLINE_MAIN_MENU)
+	if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0)
     return;
 
   gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
   gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
-  gfxScreenSpaceText(SCREEN_WIDTH * 0.35, SCREEN_HEIGHT * 0.4, 1, 1, textColor, "Downloading elf...", 17 + (gameGetTime()/240 % 4), 3);
+  gfxScreenSpaceText(SCREEN_WIDTH * 0.35, SCREEN_HEIGHT * 0.4, 1, 1, textColor, "Downloading elf...", 17 + (gameGetTime()/240 % 4), 3, FONT_BOLD);
 
   if (totalBytes > 0)
   {
@@ -167,7 +165,7 @@ int main (void)
   
   if (doBootElf == 2) {
     gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, 0x80000000);
-    gfxScreenSpaceText(SCREEN_WIDTH * 0.26, SCREEN_HEIGHT * 0.41, 1, 1, 0x80C0C0C0, "Loading... this may take awhile...", 31 + (gameGetTime()/240 % 4), 3);
+    gfxScreenSpaceText(SCREEN_WIDTH * 0.26, SCREEN_HEIGHT * 0.41, 1, 1, 0x80C0C0C0, "Loading... this may take awhile...", 31 + (gameGetTime()/240 % 4), 3, FONT_BOLD);
   }
   
   // just clear if selfDestruct is true

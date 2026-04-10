@@ -81,7 +81,7 @@ void ResetEE(int a0)
 	);
 }
 
-void FlushCache(int a0)
+void doFlushCache(int a0)
 {
 	__asm__ __volatile__(
 		"	li $3, 0x64;"
@@ -325,8 +325,8 @@ int load_elf_ram(u32 loadFromAddress, u32 size) {
   //SifLoadFileExit();
   //fioExit();
 
-  //FlushCache(0);
-  //FlushCache(2);
+  //doFlushCache(0);
+  //doFlushCache(2);
   
   //((void (*)(u32*, u32, u32, u32))0x001267f0)((u32*)boot_header->entry, 0, 0, NULL);
   char * args[] = { "" };
