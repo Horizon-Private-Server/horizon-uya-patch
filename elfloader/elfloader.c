@@ -266,15 +266,18 @@ int loadelf (u32 loadFromAddress, u32 size)
   _size = size;
 
   //
+  DPRINTF("[elfloader] loading unknown function\n");
   void * connection = netGetLobbyServerConnection();
   ((void (*)(void**))UNKNOWN_FUNCTION_00)(&connection);
 
   // shut everything down
   //*(u32*)0x005cb848 = 0x0C000000 | ((u32)&hook2 >> 2);
 
+  DPRINTF("[elfloader] LoadExecPS2: hooked\n");
   // hook into LoadExecPS2
   *(u32*)LoadExecPS2_Hook = 0x08000000 | ((u32)&hook2 >> 2);
 
+  DPRINTF("[elfloader] reboot to frontend\n");
   // reboot
   ((void (*)(void))RebootToFrontEnd_Func)();
 

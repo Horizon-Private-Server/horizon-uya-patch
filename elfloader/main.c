@@ -27,7 +27,7 @@
 #include <libuya/ui.h>
 #include <libuya/graphics.h>
 
-int selfDestruct __attribute__((section(".config"))) = 0;
+// int selfDestruct __attribute__((section(".config"))) = 0;
 
 int bytesReceived = 0;
 int totalBytes = 0;
@@ -82,7 +82,7 @@ int onBootElfResponse(void * connection, void * data)
 {
   memcpy(&bootElf, data, sizeof(ServerResponseBootElf_t));
 
-  DPRINTF("boot elf response id:%d addr:%08X size:%08X\n", bootElf.BootElfId, bootElf.Address, bootElf.Size);
+  DPRINTF("[elfloader] boot elf response id:%d addr:%08X size:%08X\n", bootElf.BootElfId, bootElf.Address, bootElf.Size);
   doBootElf = 1;
 
   return sizeof(ServerResponseBootElf_t);
@@ -112,13 +112,14 @@ void onOnlineMenu(void)
 
   // call normal draw routine
 #ifdef UYA_PAL
-    ((void (*)(void))0x0067C9C0)();
+  ((void (*)(void))0x0067C9C0)();
 #else
 	((void (*)(void))0x00679F08)();
 #endif
 
   if (bootElf.Address && bootElf.Size && doBootElf == 1) {
     doBootElf = 2;
+    DPRINTF("[elfloader] before loadelf\n");
     loadelf(bootElf.Address, bootElf.Size);
   }
 
@@ -161,6 +162,7 @@ int main (void)
     // *(u32*)0x00211E64 = 0;
 
     initialized = 1;
+    DPRINTF("\n[elfloader]: main init\n");
   }
   
   if (doBootElf == 2) {
@@ -168,11 +170,10 @@ int main (void)
     gfxScreenSpaceText(SCREEN_WIDTH * 0.26, SCREEN_HEIGHT * 0.41, 1, 1, 0x80C0C0C0, "Loading... this may take awhile...", 31 + (gameGetTime()/240 % 4), 3, FONT_BOLD);
   }
   
-  // just clear if selfDestruct is true
-  if (selfDestruct) {
-    return;
-  }
-
+  // // just clear if selfDestruct is true
+  // if (selfDestruct) {
+  //   return;
+  // }
 
   // 
   netInstallCustomMsgHandler(CUSTOM_MSG_ID_SERVER_DOWNLOAD_DATA_REQUEST, &onServerDownloadDataRequest);
