@@ -1271,3 +1271,34 @@ VariableAddress_t vaWaitingForResponse_Addr = {
 	.MarcadiaPalace = 0x00521f04,
 #endif
 };
+
+//================================================
+//=============  patchSwingshotGunBug
+//================================================
+VariableAddress_t vaPatchSwingshotGunBug_Hook = {
+#ifdef UYA_PAL
+	.Lobby = 0x0062a434,
+	.Bakisi = 0x004fc32c,
+	.Hoven = 0x004fe444,
+	.OutpostX12 = 0x004f3d1c,
+	.KorgonOutpost = 0x004f14b4,
+	.Metropolis = 0x004f0804,
+	.BlackwaterCity = 0x004ee09c,
+	.CommandCenter = 0x004ee064,
+	.BlackwaterDocks = 0x004f08e4,
+	.AquatosSewers = 0x004efbe4,
+	.MarcadiaPalace = 0x004ef564,
+#else
+	.Lobby = 0x00627c5c,
+	.Bakisi = 0x004f9bac,
+	.Hoven = 0x004fbc04,
+	.OutpostX12 = 0x004f151c,
+	.KorgonOutpost = 0x004eed34,
+	.Metropolis = 0x004ee084,
+	.BlackwaterCity = 0x004eb89c,
+	.CommandCenter = 0x004eba24,
+	.BlackwaterDocks = 0x004ee264,
+	.AquatosSewers = 0x004ed5a4,
+	.MarcadiaPalace = 0x004ecee4,
+#endif
+};

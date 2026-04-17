@@ -111,6 +111,7 @@ typedef struct PatchPatches {
   char weaponShotLag;
   char resurrectWeaponOrdering;
   char ctfLogic;
+  char swingshotGunBug;
 
   // gameConfig misc.
   char spawnWeaponPackOnDeath;
@@ -133,11 +134,8 @@ typedef struct PatchPointers {
 
 typedef struct CustomMapDef {
   int Version;
-  // int CustomModeExtraDataMask;
-  // short ShrubMinRenderDistance;
-  // short Subsort;
-  char BaseMapId;
-  char ForcedCustomModeId;
+  int BaseMapId;
+  int ForcedCustomModeId;
   char Name[32];
   char Filename[64];
 } CustomMapDef_t;

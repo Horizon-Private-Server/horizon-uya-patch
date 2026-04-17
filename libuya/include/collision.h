@@ -137,14 +137,14 @@ __LIBUYA_GETTER__ int CollLine_Fix_GetHitCollisionId(void);
 int CollHotspot(void);
 
 /*
- * NAME :		colGetOutput
+ * NAME :		collGetOutput
  * DESCRIPTION :
  * NOTES :
  * ARGS : 
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-CollOutput* colGetOutput(void);
+CollOutput* collGetOutput(void);
 
 /*
  * NAME :		CollSoundSurface

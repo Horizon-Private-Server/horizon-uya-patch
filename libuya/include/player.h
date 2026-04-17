@@ -916,7 +916,7 @@ struct tNW_PlayerPadInputMessageListElem { // 0xa4
 };
 
 
-struct tNW_Player { // 0xunk
+struct tNW_Player { // 0xc70
     /* 0x000 */ int netClientIndex;
     /* 0x004 */ struct tNW_PlayerData* pNetPlayerData;
     /* 0x008 */ char unk_008[8];
@@ -1128,7 +1128,9 @@ typedef struct Player { // 0x4500
 	/*        */ int unk_1da0;
 	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;
 	/* 0x1da8 */ struct Player *GadgetBox; // Doesn't work at all like Deadlocked's
-	/*        */ char unk_1dac[0x14];
+	/* 0x1dac */ short unk_1dac;
+	/* 0x1dae */ short unk_1dae;
+	/*        */ char unk_1db0[0x10];
 	/* 0x1dc0 */ VECTOR failsafePosRing[32];
 	/* 0x1fc0 */ float rotZRing[32];
 	/* 0x2040 */ mtx3 gadgetRotRing[16];

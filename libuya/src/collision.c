@@ -263,7 +263,7 @@ Moby** CollMobysSphere_Fix_GetHitMobies(void)
   return COLL_MOBY_LIST;
 }
 
-CollOutput* colGetOutput(void)
+CollOutput* collGetOutput(void)
 {
 	return COLLOUTPUT;
 }
