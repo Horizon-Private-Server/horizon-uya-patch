@@ -2292,6 +2292,43 @@ void patchSideFlipJoystickVal(void)
 }
 
 /*
+ * NAME :		patchSwingshotGunBug
+ * DESCRIPTION :Changes how close/far a player needs to be to a swingshot for the gadget to be taken out.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int patchSwingshotGunBug_Logic(VECTOR from, VECTOR to, int hitFlag, Moby *pMoby, int *collDamage)
+{
+	float offset = 0.7f;
+	VECTOR fromVec, toVec, dir, offsetVec;
+	vector_copy(fromVec, from);
+	vector_copy(toVec, to);
+
+	// get direction, and normalize.
+	vector_subtract(dir, toVec, fromVec);
+	vector_normalize(dir, dir);
+	// generate offset
+	vector_scale(offsetVec, dir, offset);
+	// subtract offset
+	vector_subtract(fromVec, fromVec, offsetVec);
+
+	// keep original height.
+	toVec[2] = fromVec[2];
+
+	return CollLine_Fix(fromVec, toVec, hitFlag, pMoby, collDamage);
+}
+void patchSwingshotGunBug(void)
+{
+	if (patched.swingshotGunBug)
+		return;
+
+	HOOK_JAL(GetAddress(&vaPatchSwingshotGunBug_Hook), &patchSwingshotGunBug_Logic);
+	patched.swingshotGunBug = 1;
+}
+
+/*
  * NAME :		onMobyUpdate
  * DESCRIPTION :Patches the player packets for smoother movement.
  * NOTES :
@@ -2315,7 +2352,7 @@ void onMobyUpdate(Moby* moby)
 
 
 /*
- * NAME :		runHolidyas
+ * NAME :		runHolidays
  * DESCRIPTION :
  * NOTES :
  * ARGS : 
@@ -2339,7 +2376,7 @@ void runHolidays(void)
 			break;
 		}
 		case 12: {
-			if (day >= 24)
+			if (day >= 24  && day <= 26)
 				skin = SKIN_SNOWMAN;
 
 			break;
@@ -2884,7 +2921,8 @@ int main(void)
 	// 
 	runVoteToEndLogic();
 
-	// runHolidays();
+	// Holiday easter eggs!
+	runHolidays();
 
 	patchColors();
 
@@ -2924,6 +2962,9 @@ int main(void)
 
 		// Patch Flux Wall Sniping
 		patchSniperWallSniping();
+
+		// Patch bug if too close to swingshot, weaepons don't appear/shoot.
+		patchSwingshotGunBug();
 
 		// Patches FOV to let it be user selectable.
 		if (config.playerFov != 0)
