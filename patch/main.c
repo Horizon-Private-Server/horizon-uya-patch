@@ -2321,7 +2321,7 @@ int patchSwingshotGunBug_Logic(VECTOR from, VECTOR to, int hitFlag, Moby *pMoby,
 }
 void patchSwingshotGunBug(void)
 {
-	if (patched.swingshotGunBug)
+	if (patched.swingshotGunBug == 1 || patchStateContainer.CustomMapId == 0)
 		return;
 
 	HOOK_JAL(GetAddress(&vaPatchSwingshotGunBug_Hook), &patchSwingshotGunBug_Logic);
