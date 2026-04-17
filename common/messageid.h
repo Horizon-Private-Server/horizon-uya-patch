@@ -185,8 +185,8 @@ typedef struct ServerDownloadDataRequest
 } ServerDownloadDataRequest_t;
 
 typedef struct SetMapOverrideResponse {
-  int MapVersion;
   char MapFilename[64];
+  int MapVersion;
 } SetMapOverrideResponse_t;
 
 typedef struct ClientDownloadDataResponse {
