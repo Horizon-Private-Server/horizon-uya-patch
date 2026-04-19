@@ -291,7 +291,7 @@ void sendMACAddress(void)
 //------------------------------------------------------------------------------
 void requestServerTime(void)
 {
-  void* connection = netGetLobbyServerConnection();
+	void* connection = netGetLobbyServerConnection();
 	if (!connection) return;
 	
 	netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_DATE_SETTINGS, 0, NULL);
