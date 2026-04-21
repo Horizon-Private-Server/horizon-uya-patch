@@ -856,7 +856,7 @@ int playerGetLatency(Player *player)
     // Same indexing logic
     int clientId = player->pNetPlayer->netClientIndex;
     int netClientMap = GAME_NET_INFO->clientIndexRemapper[clientId];
-    int lastPacketTime = GAME_NET_INFO->lastUdpPacketReceived[netClientMap];
+    int lastPacketTime = GAME_NET_INFO->m_LastUdpPacketReceived[netClientMap];
     int deltaTime = GAME_NET_INFO->netFrameTime - lastPacketTime;
 
     return deltaTime;

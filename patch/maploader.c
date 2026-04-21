@@ -717,6 +717,31 @@ int hasCustomMapsFolder(void)
 	return 1;
 }
 
+//------------------------------------------------------------------------------
+void checkForHostFs(void)
+{
+	char dirpath[64];
+	int fd;
+
+	useHost = 1;
+	snprintf(dirpath, sizeof(dirpath), "%suya", getMapPathPrefix());
+
+	// try to open directory on host:
+	rpcUSBdopen(dirpath);
+	rpcUSBSync(0, NULL, &fd);
+
+	// Ensure the dir was opened successfully
+	if (fd < 0) {
+		useHost = 0;
+		return;
+	}
+
+	// close
+	rpcUSBdclose(fd);
+	rpcUSBSync(0, NULL, NULL);
+}
+
+//------------------------------------------------------------------------------
 void refreshCustomMapList(void)
 {
 	int fd, r, i;
