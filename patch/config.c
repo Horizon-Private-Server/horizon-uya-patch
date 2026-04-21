@@ -415,7 +415,7 @@ MenuElem_ListData_t dataGameConfigPreset = {
     .value = &preset,
     .stateHandler = NULL,
     .count = 6,
-    .items = { "None", "Meta", "Competitive", "1v1", "Bot", "Siege"}
+    .items = { "None", "Meta", "Meta (No Base)", "1v1", "Bot", "Siege"}
 };
 
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
