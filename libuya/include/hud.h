@@ -458,7 +458,7 @@ bool hudAddToContainer(HANDLE_ID container_id, HANDLE_ID frame_id);
 bool hudCreateRectangle(float x, float y, float w, float h, HANDLE_ID handle_id, u32 color,int sprite);
 bool hudCreateText(float x, float y, float w, float h, HANDLE_ID handle_id, char *pText, u32 color);
 bool hudCreateTextArea(float x, float y, float w, float h, float text_scale, HANDLE_ID handle_id, char *pText, u32 color);
-bool hudCreateFrame(float x, float y, float w, float h, float art_animation_frame, HANDLE_ID handle_id, int art_data_id, u32 color);
+bool hudCreate3d_2D(float x, float y, float w, float h, float art_animation_frame, HANDLE_ID handle_id, int art_data_id, u32 color);
 
 bool hudSetScale(float width, float height, HANDLE_ID handle_id);
 bool hudSetPosition(float x, float y, HANDLE_ID handle_id);
@@ -471,5 +471,11 @@ bool hudSetDropShadowOffset(float x, float y, HANDLE_ID handle_id);
 bool hudSetAligFlags(HANDLE_ID handle_id, unsigned int align_x, unsigned int align_y);
 
 ConcretePreLoadedImageBuffer_t* gfxGetPreLoadedImageBufferSource(int which);
+
+VariableAddress_t vaCreateWidgdetFrameContainer;
+VariableAddress_t vaCreateWidget3d_2D;
+VariableAddress_t vaCreateWidgetRectangle;
+VariableAddress_t vaCreateWidgetText;
+VariableAddress_t vaCreateWidgetTextArea;
 
 #endif // _LIBUYA_HUD_H_
