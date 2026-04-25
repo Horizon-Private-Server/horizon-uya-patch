@@ -2340,7 +2340,10 @@ void onMobyUpdate(Moby* moby)
 {
 	if (gameConfig.grNewPlayerSync) {
 		playerSyncTick();
-		processGameModules();
+		// KOTH already runs through the normal main-loop module pass. Skip the
+		// extra NPS-side dispatch so KOTH doesn't tick twice per frame.
+		if (gameConfig.customModeId != CUSTOM_MODE_KOTH)
+			processGameModules();
 
 		((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);
 
