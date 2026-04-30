@@ -1224,7 +1224,10 @@ typedef struct Player { // 0x4500
 	/* 0x2548 */ int mpTeam;
 	/* 0x254c */ int vehicleState;
 	/* 0x2550 */ int vehicleStateTimer;
-	/* 0x2554 */ int pointsLastKill;
+	/* 0x2554 */ char maxHP;
+	/* 0x2255 */ char unk_2255;
+	/* 0x2256 */ char unk_2256;
+	/* 0x2257 */ char unk_2257;
 	/* 0x2558 */ struct tNW_Player *pNetPlayer;
 	/* 0x255c */ tNW_PlayerStateMessage newStateMessage;
 	/* 0x2578 */ Moby *lastVehicleMoby;
@@ -1460,6 +1463,33 @@ void playerSetHealth(Player * player, int health);
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
 int playerGetHealth(Player * player);
+
+/*
+* NAME :		playerSetMaxHealth
+* DESCRIPTION :
+* 			Set a players health to a certain amount (1 to 15)
+* NOTES :
+* ARGS : 
+*          player:                     Pointer to player's player object.
+*          health:                 		Value to set health to (1 to 15)
+* RETURN :
+* AUTHOR :			Troy "Metroynome" Pruitt
+*/
+void playerSetMaxHealth(Player * player, int health);
+
+/*
+* NAME :		playerGeMaxtHealth
+* DESCRIPTION :
+* 				Get a players health
+* NOTES :
+* ARGS : 
+*         		player:         Pointer to player's player object.
+* RETURN :
+* 				Returns players health in float value
+* AUTHOR :			Troy "Metroynome" Pruitt
+*/
+int playerGetMaxHealth(Player * player);
+
 
 int playerGetRespawnTimer(Player * player);
 
