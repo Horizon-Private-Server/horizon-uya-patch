@@ -415,7 +415,7 @@ MenuElem_ListData_t dataGameConfigPreset = {
     .value = &preset,
     .stateHandler = NULL,
     .count = 6,
-    .items = { "None", "Meta", "Competitive", "1v1", "Bot", "Siege"}
+    .items = { "None", "Meta (Base)", "Meta (No Base)", "1v1", "Bot", "Siege"}
 };
 
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
@@ -2636,7 +2636,7 @@ void configMenuDisable(void)
     // force game config to preset
         switch (preset)
     {
-      case 1: // Meta
+      case 1: // Meta (Base)
       {
         // Game Rules
         gameConfig.grRadarBlipsDistance = 0; // Short
@@ -2670,13 +2670,13 @@ void configMenuDisable(void)
         gameConfig.prSurvivor = 0; // Off
         break;
       }
-      case 2: // Competitive
+      case 2: // Meta (No Base)
       {
         // Game Rules
         gameConfig.grRadarBlipsDistance = 0; // Short
         gameConfig.grRespawnTimer_Player = 0; // 1.5 Seconds
         gameConfig.grRespawnInvincibility = 0; // Off
-        gameConfig.grDisablePenaltyTimers = 0; // On
+        gameConfig.grDisablePenaltyTimers = 1; // Off
         gameConfig.grDisableWeaponPacks = 1; // Off
         gameConfig.grV2s = 0; // On
         gameConfig.grNoCooldown = 1; // Cooldown disabled
@@ -2695,7 +2695,7 @@ void configMenuDisable(void)
         gameConfig.grDisablePlayerTurrets = 1; // Disabled
         gameConfig.grDestructableBridges = 0; // Enabled
         // Base / Node mods
-        gameConfig.grSetGatlingTurretHealth = 0; // Default
+        gameConfig.grSetGatlingTurretHealth = 1; // .5x
         gameConfig.grBaseHealthPadActive = 0; // Off
         gameConfig.grNoBaseDefense_Bots = 1; // Off
         // Party Rules

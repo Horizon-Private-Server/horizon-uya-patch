@@ -894,7 +894,7 @@ VariableAddress_t vaDrawStripInit = {
 #endif
 };
 
-VariableAddress_t vaVU0_addGSRegister = {
+VariableAddress_t vaVU1_addGSRegister = {
 #if UYA_PAL
 	.Lobby = 0x005fd068,
 	.Bakisi = 0x004cf7b0,

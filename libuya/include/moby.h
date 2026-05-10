@@ -374,7 +374,9 @@ typedef struct Moby {
 /* 0x43 */ char animSeqId;
 /* 0x44 */ struct MobyAnimLayer *animLayers;
 /* 0x48 */ float unk_float_48;
-/*      */ char unk_4c[0x17];
+/* 0x4c */ char unk_4c[0x4];
+/* 0x50 */ void* unk_50;
+/*      */ char unk_54[0xf];
 /* 0x63 */ char metal;
 /* 0x64 */ void * pUpdate;
 /* 0x68 */ void * pVar;
