@@ -1,0 +1,31 @@
+commit e5b13c539e81924a819e4fbb85c0b9440222c224
+Author: electrogecko <electrogecko@users.noreply.github.com>
+Date:   Mon Apr 20 05:41:35 2026 +0000
+
+    Reduce flag pickup delay after self-dropped or dropped by enemy from 1.5s to 0.5s
+
+diff --git a/patch/main.c b/patch/main.c
+index f73dc87..b42408e 100644
+--- a/patch/main.c
++++ b/patch/main.c
+@@ -1369,8 +1369,8 @@ void customFlagLogic(Moby* flagMoby)
+ 		return;
+ 	}
+ 
+-    if ((pvars->TimeFlagDropped + (TIME_SECOND * 1.5)) > gameTime)
+-        return;
++	if ((pvars->TimeFlagDropped + (TIME_SECOND / 2)) > gameTime)
++		return;
+ 
+     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+         Player* player = players[i];
+@@ -1407,6 +1407,9 @@ void customFlagLogic(Moby* flagMoby)
+ 		// player is on different team than flag and player isn't already holding flag
+ 		if (player->mpTeam != pvars->Team) {
+ 			if (!player->flagMoby) {
++				if (player->mpIndex != pvars->LastCarrierIdx && (pvars->TimeFlagDropped + ((TIME_SECOND * 3) / 2)) > gameTime)
++					continue;
++
+ 				flagRequestPickup(flagMoby, player->mpIndex);
+ 				return;
+ 			}

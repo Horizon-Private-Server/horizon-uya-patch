@@ -1,0 +1,8 @@
+On branch master
+Your branch is behind 'origin/master' by 3 commits, and can be fast-forwarded.
+  (use "git pull" to update your local branch)
+
+was on commit
+6df1131d627815f9e855f6b9f45864062d848be9
+
+moose.patch

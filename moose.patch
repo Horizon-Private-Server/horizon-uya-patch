@@ -1,0 +1,115 @@
+diff --git a/patch/Makefile.defs b/patch/Makefile.defs
+index 21fc56d..5c58820 100644
+--- a/patch/Makefile.defs
++++ b/patch/Makefile.defs
+@@ -5,7 +5,7 @@ EE_LIBS := $(EE_LIBS) -lkernel
+ 
+ EE_INCS := -I../common -I../libuya/include
+ EE_LDFLAGS = -fno-builtin -nostdlib -nostartfiles -L. -L../libuya/lib -L$(PS2SDK)/ee/lib
+-#EE_DEFS += -DDEBUG
++EE_DEFS += -DDEBUG
+ #EE_DEFS += -DDSCRPRINT
+ #EE_DEFS += -DTEST
+ #EE_DEFS += -DSCAVENGER_HUNT
+diff --git a/patch/main.c b/patch/main.c
+index 5c93101..250fee6 100644
+--- a/patch/main.c
++++ b/patch/main.c
+@@ -291,7 +291,7 @@ void sendMACAddress(void)
+ //------------------------------------------------------------------------------
+ void requestServerTime(void)
+ {
+-  void* connection = netGetLobbyServerConnection();
++	void* connection = netGetLobbyServerConnection();
+ 	if (!connection) return;
+ 	
+ 	netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_DATE_SETTINGS, 0, NULL);
+@@ -2441,7 +2441,7 @@ void runGameStartMessager(void)
+ 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_GAME_LOBBY_STARTED, 0, gameSettings);
+ 
+ 			// request server time
+-			requestServerTime();
++			// requestServerTime();
+ 
+ 			#ifdef SCAVENGER_HUNT
+ 			// request latest scavenger hunt settings
+@@ -2860,7 +2860,7 @@ int main(void)
+ 	}
+ 
+ 	//
+-  	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
++  	// netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
+ 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, &onClientVoteToEndRemote);
+ 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, &onClientVoteToEndStateUpdateRemote);
+ 	
+@@ -2922,7 +2922,7 @@ int main(void)
+ 	runVoteToEndLogic();
+ 
+ 	// Holiday easter eggs!
+-	runHolidays();
++	// runHolidays();
+ 
+ 	patchColors();
+ 
+diff --git a/patch/maploader.c b/patch/maploader.c
+index b6101c3..1750e14 100644
+--- a/patch/maploader.c
++++ b/patch/maploader.c
+@@ -690,7 +690,7 @@ int hasCustomMapsFolder(void)
+ {
+ 	iox_dirent_t dirent;
+ 	io_dirent_t* iomanDirent = (io_dirent_t*)&dirent;
+-  
++
+ 	// need usb modules
+ 	if (!HAS_LOADED_MODULES) return 0;
+ 
+@@ -709,7 +709,7 @@ int hasCustomMapsFolder(void)
+ 		DPRINTF("error opening dir (%s): %d\n", dirpath, fd);
+ 		return 0;
+ 	}
+-	
++
+ 	// close
+ 	rpcUSBdclose(fd);
+ 	rpcUSBSync(0, NULL, NULL);
+@@ -855,6 +855,29 @@ int hasCustomMapsFolder(void)
+ // 	actionState = actionStateAtStart;
+ // }
+ 
++void checkForHostFs(void)
++{
++	char dirpath[64];
++	int fd;
++
++	useHost = 1;
++	snprintf(dirpath, sizeof(dirpath), "%suya", getMapPathPrefix());
++
++	// try to open directory on host:
++	rpcUSBdopen(dirpath);
++	rpcUSBSync(0, NULL, &fd);
++
++	// Ensure the dir was opened successfully
++	if (fd < 0) {
++		useHost = 0;
++		return;
++	}
++
++	// close
++	rpcUSBdclose(fd);
++	rpcUSBSync(0, NULL, NULL);
++}
++
+ // ========
+ // ======= BELOW IS ORIGINAL (LAST KNOWN WORKING)
+ // ========
+@@ -885,6 +908,9 @@ void refreshCustomMapList(void)
+ 	clearScrPrintLine();
+ 	#endif
+ 
++	// check if host fs exists
++	checkForHostFs();
++
+ 	//
+ 	snprintf(dirpath, sizeof(dirpath), "%suya", getMapPathPrefix());
+ 	DPRINTF("dir path %s\n", dirpath);
