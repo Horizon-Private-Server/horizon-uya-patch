@@ -497,10 +497,14 @@ void hill_update(Moby *moby)
     }
 
     // this is where the random hill part goes.
-    if (!pvars->currentCuboid) {
+    if (!pvars->currentCuboid)
         pvars->currentCuboid = pvars->hillCuboidPtrs[0];
-        vector_copy(moby->position, pvars->currentCuboid->pos);
-    }
+    // move hill if vectors don't match.
+    // float dX = moby->position[0] == pvars->currentCuboid->pos[0];
+    // float dZ = moby->position[1] == pvars->currentCuboid->pos[1];
+    // float dY = moby->position[2] == pvars->currentCuboid->pos[2];
+    // if (!dX || !dY || !dZ)
+    vector_copy(moby->position, pvars->currentCuboid->pos);
     
     gfxRegisterDrawFunction(&hill_drawShape, moby);
 
@@ -534,7 +538,6 @@ Moby *getHillMoby(void)
 void hill_setupMoby(void)
 {
     Moby *moby = getHillMoby();
-    printf("\nfound moby: %08x", moby);
     if (!moby)
         return;
 
@@ -876,7 +879,6 @@ void koth(void)
     if (!kothInfo.hillMoby) {
         hill_setupMoby();
         printf("\nkothInfo: %08x", &kothInfo);
-        return;
     } else {
         hill_update(kothInfo.hillMoby);
         printf("\nkothInfo (hill updated): %08x", &kothInfo);

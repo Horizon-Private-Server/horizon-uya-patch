@@ -532,14 +532,14 @@ Cuboid *createCuboid(VECTOR pos, int num)
 
 void getHillCuboids(hillPvar_t *this, bool isCustomMap, bool foundCustomMoby)
 {
-    if (foundCustomMoby) {
+    if (foundCustomMoby  && isCustomMap) {
         // get cuboid pointers from custom cuboid index.
         int i = 0;
-        for (i; i < sizeof(this->hillCuboidIndex); ++i) {
+        for (i; i < 32; ++i) {
             if (this->hillCuboidIndex[i] > 0)
                 this->hillCuboidPtrs[i] = spawnPointGet(this->hillCuboidIndex[i]);
         }
-    } else if (!isCustomMap) {
+    } else if (!foundCustomMoby && !isCustomMap) {
         // get custom vanilla hills
         int mapId = GAME_MAP_ID - 40;
         int numCuboids = MAP_CUBOID_COUNTS[mapId];
@@ -549,7 +549,7 @@ void getHillCuboids(hillPvar_t *this, bool isCustomMap, bool foundCustomMoby)
         for (i = 0; i < numCuboids; i++) {
             this->hillCuboidPtrs[i] = &cuboids[i];
         }
-    } else {
+    } else if (!foundCustomMoby && isCustomMap) {
         // get siege nodes for hills
         Moby* moby = mobyListGetStart();
         Moby* mobyEnd = mobyListGetEnd();
