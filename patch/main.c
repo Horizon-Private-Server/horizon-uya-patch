@@ -2967,7 +2967,7 @@ int main(void)
 		patchSniperWallSniping();
 
 		// Patch bug if too close to swingshot, weaepons don't appear/shoot.
-		patchSwingshotGunBug();
+		// patchSwingshotGunBug();
 
 		// Patches FOV to let it be user selectable.
 		if (config.playerFov != 0)
