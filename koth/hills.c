@@ -532,14 +532,36 @@ Cuboid *createCuboid(VECTOR pos, int num)
 
 void getHillCuboids(hillPvar_t *this, bool isCustomMap, bool foundCustomMoby)
 {
-    if (foundCustomMoby  && isCustomMap) {
-        // get cuboid pointers from custom cuboid index.
-        int i = 0;
-        for (i; i < 32; ++i) {
-            if (this->hillCuboidIndex[i] > 0)
-                this->hillCuboidPtrs[i] = spawnPointGet(this->hillCuboidIndex[i]);
+    if (isCustomMap) {
+        if (foundCustomMoby) {
+            memcpy(&this->hillCuboidIndex, kothInfo.hillMoby->pVar, 0x80);
+            // get cuboid pointers from custom cuboid index.
+            int i = 0;
+            for (i; i < 32; ++i) {
+                if (this->hillCuboidIndex[i] > 0)
+                    this->hillCuboidPtrs[i] = spawnPointGet(this->hillCuboidIndex[i]);
+            }
+        } else {
+            // get siege nodes for hills
+            Moby* moby = mobyListGetStart();
+            Moby* mobyEnd = mobyListGetEnd();
+            int i = 0;
+            while (moby < mobyEnd) {
+                if (moby->oClass == MOBY_ID_SIEGE_NODE) {
+                    // grab associated bolt crank from bridge peice
+                    int boltCrankInstanceNum = *(int*)(moby->pVar + 0x3c);
+                    Moby* list = mobyListGetStart();
+                    Moby* boltCrank = list + boltCrankInstanceNum;
+                    if (boltCrank->oClass == MOBY_ID_BOLT_CRANK) {
+                        this->hillCuboidPtrs[i] = createCuboid(boltCrank->position, i);
+                    }
+                    ++i;
+                }
+                ++moby;
+            }
+            kothInfo.lastGameUsedMalloc = true;
         }
-    } else if (!foundCustomMoby && !isCustomMap) {
+    } else {
         // get custom vanilla hills
         int mapId = GAME_MAP_ID - 40;
         int numCuboids = MAP_CUBOID_COUNTS[mapId];
@@ -549,24 +571,5 @@ void getHillCuboids(hillPvar_t *this, bool isCustomMap, bool foundCustomMoby)
         for (i = 0; i < numCuboids; i++) {
             this->hillCuboidPtrs[i] = &cuboids[i];
         }
-    } else if (!foundCustomMoby && isCustomMap) {
-        // get siege nodes for hills
-        Moby* moby = mobyListGetStart();
-        Moby* mobyEnd = mobyListGetEnd();
-        int i = 0;
-        while (moby < mobyEnd) {
-            if (moby->oClass == MOBY_ID_SIEGE_NODE) {
-                // grab associated bolt crank from bridge peice
-                int boltCrankInstanceNum = *(int*)(moby->pVar + 0x3c);
-                Moby* list = mobyListGetStart();
-                Moby* boltCrank = list + boltCrankInstanceNum;
-                if (boltCrank->oClass == MOBY_ID_BOLT_CRANK) {
-                    this->hillCuboidPtrs[i] = createCuboid(boltCrank->position, i);
-                }
-                ++i;
-            }
-            ++moby;
-        }
-        kothInfo.lastGameUsedMalloc = true;
     }
 }

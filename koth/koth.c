@@ -207,18 +207,22 @@ void hill_drawShape(Moby *this)
     hillPvar_t *pvar = (hillPvar_t*)this->pVar;
     if (!pvar->currentCuboid) return;
     Cuboid *cube = (Cuboid*)pvar->currentCuboid;
-    if (!vector_length(cube->pos)) return;
+    vector_copy(this->position, cube->pos);
 
     int arraySize = (pvar->globalRing.max_segments + 1) * 2;
-    if (!pvar->positions || !pvar->colors || !pvar->uvs) {
-        pvar->positions = malloc(sizeof(vec3[2][arraySize]));
-        pvar->colors = malloc(sizeof(int[2][arraySize]));
-        pvar->uvs = malloc(sizeof(UV_t[2][arraySize]));
-    }
+    // if (!pvar->positions || !pvar->colors || !pvar->uvs) {
+    //     pvar->positions = malloc(sizeof(vec3[2][arraySize]));
+    //     pvar->colors = malloc(sizeof(int[2][arraySize]));
+    //     pvar->uvs = malloc(sizeof(UV_t[2][arraySize]));
+    // }
 
-    vec3 (*positions)[arraySize] = pvar->positions;
-    int (*colors)[arraySize] = pvar->colors;
-    UV_t (*uvs)[arraySize] = pvar->uvs;
+    // vec3 (*positions)[arraySize] = pvar->positions;
+    // int (*colors)[arraySize] = pvar->colors;
+    // UV_t (*uvs)[arraySize] = pvar->uvs;
+
+    vec3 positions[2][arraySize];
+    int colors[2][arraySize];
+    UV_t uvs[2][arraySize];
 
     pvar->isCircle = (vector_length(cube->matrix.v2) > 1.0001) ? true : false;
     bool isCircle = pvar->isCircle;
@@ -411,15 +415,14 @@ void hill_drawShape(Moby *this)
     
     /* === Update colors and UVs every frame === */
     float trimmedU = uMin + (pvar->scrollTex - floorf(pvar->scrollTex)) * uRange;
-    
     for (i = 0; i <= segments; i++) {
         float trimmedV = vMin + (((float)i / segmentSize) - floorf((float)i / segmentSize)) * vRange;
         int idx = i * 2;
 
-        colors[1][idx] = ((pvar->upperRing.top_opacity * (int)opacityFactor) << 24) | baseColor;
-        colors[1][idx + 1] = ((pvar->upperRing.bottom_opacity * (int)opacityFactor) << 24) | baseColor;
-        colors[0][idx + 1] = ((pvar->lowerRing.top_opacity * (int)opacityFactor) << 24) | baseColor;
-        colors[0][idx] = ((pvar->lowerRing.bottom_opacity * (int)opacityFactor) << 24) | baseColor;
+        colors[1][idx] = (((int)(pvar->upperRing.top_opacity * opacityFactor)) << 24) | baseColor;
+        colors[1][idx + 1] = (((int)(pvar->upperRing.bottom_opacity * opacityFactor)) << 24) | baseColor;
+        colors[0][idx + 1] = (((int)(pvar->lowerRing.top_opacity * opacityFactor)) << 24) | baseColor;
+        colors[0][idx] = (((int)(pvar->lowerRing.bottom_opacity * opacityFactor)) << 24) | baseColor;
 
         uvs[0][idx].x = uvs[1][idx].x = trimmedU;
         uvs[0][idx].y = uvs[0][idx + 1].y = uvs[1][idx].y = uvs[1][idx + 1].y = trimmedV;
@@ -497,14 +500,16 @@ void hill_update(Moby *moby)
     }
 
     // this is where the random hill part goes.
-    if (!pvars->currentCuboid)
+    if (!pvars->currentCuboid) {
         pvars->currentCuboid = pvars->hillCuboidPtrs[0];
+    }
+
     // move hill if vectors don't match.
     // float dX = moby->position[0] == pvars->currentCuboid->pos[0];
     // float dZ = moby->position[1] == pvars->currentCuboid->pos[1];
     // float dY = moby->position[2] == pvars->currentCuboid->pos[2];
     // if (!dX || !dY || !dZ)
-    vector_copy(moby->position, pvars->currentCuboid->pos);
+    //     vector_copy(moby->position, pvars->currentCuboid->pos);
     
     gfxRegisterDrawFunction(&hill_drawShape, moby);
 
@@ -527,7 +532,9 @@ Moby *getHillMoby(void)
 	while (moby < mobyEnd) {
 		if (moby->oClass == HILL_MOBY_OCLASS) {
             kothInfo.foundCustomMoby = true;
-            return moby;
+            kothInfo.hillMoby = moby;
+            // return moby;
+            break;
 		}
 		++moby;
 	}
@@ -546,8 +553,12 @@ void hill_setupMoby(void)
     getHillCuboids(pvars, isCustomMap, kothInfo.foundCustomMoby);
 
     moby->pUpdate = &hill_update;
+    moby->modeBits = 5;
+    moby->group = 0xff;
     moby->updateDist = 0xff;
+    moby->drawn = 1;
     moby->drawDist = 0x7fff;
+
 
     // update hill pvar with our things
     pvars->globalRing.max_segments = HILL_RING_GLOBAL_MAX_SEGMENTS;
@@ -878,10 +889,6 @@ void koth(void)
     // setup hill
     if (!kothInfo.hillMoby) {
         hill_setupMoby();
-        printf("\nkothInfo: %08x", &kothInfo);
-    } else {
-        hill_update(kothInfo.hillMoby);
-        printf("\nkothInfo (hill updated): %08x", &kothInfo);
     }
 
     // create and run radar icon.
