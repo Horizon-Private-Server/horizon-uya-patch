@@ -1113,7 +1113,7 @@ static void scanHillsOnce(void)
                         vector_copy(hills[hillCount].drawMoby->position, hills[hillCount].position);
                         hills[hillCount].drawMoby->updateDist = -1;
                         hills[hillCount].drawMoby->drawn = 1;
-                    hills[hillCount].drawMoby->opacity = 0;
+                    hills[hillCount].drawMoby->alpha = 0;
                     hills[hillCount].drawMoby->drawDist = 0x00;
                     hills[hillCount].drawMoby->pUpdate = NULL; // set later
                 }
@@ -1184,7 +1184,7 @@ static void scanHillsOnce(void)
                         vector_copy(hills[hillCount].drawMoby->position, hills[hillCount].position);
                         hills[hillCount].drawMoby->updateDist = -1;
                         hills[hillCount].drawMoby->drawn = 1;
-                        hills[hillCount].drawMoby->opacity = 0;
+                        hills[hillCount].drawMoby->alpha = 0;
                         hills[hillCount].drawMoby->drawDist = 0x00;
                         hills[hillCount].drawMoby->pUpdate = NULL; // set later
 #ifdef KOTH_DEBUG
@@ -1266,7 +1266,7 @@ static void scanHillsOnce(void)
                     vector_copy(hills[hillCount].drawMoby->position, hills[hillCount].position);
                     hills[hillCount].drawMoby->updateDist = -1;
                     hills[hillCount].drawMoby->drawn = 1;
-                    hills[hillCount].drawMoby->opacity = 0;
+                    hills[hillCount].drawMoby->alpha = 0;
                     hills[hillCount].drawMoby->drawDist = 0x00;
                     hills[hillCount].drawMoby->pUpdate = NULL; // set later
 #ifdef KOTH_DEBUG
@@ -2318,7 +2318,7 @@ static void drawHills(void)
             // Clear draw hooks on all hills; we’ll enable only the active one.
             hills[i].drawMoby->pUpdate = NULL;
             hills[i].drawMoby->drawn = 0;
-            hills[i].drawMoby->opacity = 0;
+            hills[i].drawMoby->alpha = 0;
         }
     }
 

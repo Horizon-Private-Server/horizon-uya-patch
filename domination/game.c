@@ -491,7 +491,7 @@ Moby *spawnBaseMobies(Moby *node, Moby *boltCrank)
     vector_copy(moby->position, boltCrank->position);
     moby->updateDist = -1;
     moby->drawn = 1;
-    moby->opacity = 0x00;
+    moby->alpha = 0x00;
     moby->drawDist = 0x00;
 
     // set pvars

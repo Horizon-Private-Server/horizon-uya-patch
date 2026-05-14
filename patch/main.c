@@ -2444,7 +2444,7 @@ void runGameStartMessager(void)
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_GAME_LOBBY_STARTED, 0, gameSettings);
 
 			// request server time
-			requestServerTime();
+			// requestServerTime();
 
 			#ifdef SCAVENGER_HUNT
 			// request latest scavenger hunt settings
@@ -2863,7 +2863,7 @@ int main(void)
 	}
 
 	//
-  	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
+  	// netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, &onClientVoteToEndRemote);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, &onClientVoteToEndStateUpdateRemote);
 	
@@ -2925,7 +2925,7 @@ int main(void)
 	runVoteToEndLogic();
 
 	// Holiday easter eggs!
-	runHolidays();
+	// runHolidays();
 
 	patchColors();
 
