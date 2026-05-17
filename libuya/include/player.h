@@ -1286,6 +1286,8 @@ typedef struct Player { // 0x4500
 	};
 } Player;
 
+typedef Player Hero;
+
 typedef void (*PlayerUpdate_Func)(Player *player);
 typedef int (*ReNewMe_Func)(Player *player);
 typedef void (*HandleEvent_Func)(Player *player, GuberEvent *event);
