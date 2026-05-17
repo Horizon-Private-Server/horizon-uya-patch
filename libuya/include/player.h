@@ -1289,7 +1289,7 @@ typedef struct Player { // 0x4500
 typedef Player Hero;
 
 typedef void (*PlayerUpdate_Func)(Player *player);
-typedef int (*ReNewMe_Func)(Player *player);
+typedef int (*GetMoby_Func)(Player *player);
 typedef void (*HandleEvent_Func)(Player *player, GuberEvent *event);
 typedef int (*FriendlyToTeam_Func)(Player *player, int team);
 typedef void (*ResetHero_Func)(Moby *pHeroMoby, VECTOR *pos, VECTOR *rot, int mpIndex);
@@ -1309,7 +1309,7 @@ typedef struct PlayerVTable
 /* 0x04 */ void * FUNC_04; // no pointer
 /* 0x08 */ void * FUNC_08; // just a return;
 /* 0x0c */ PlayerUpdate_Func Update;
-/* 0x10 */ ReNewMe_Func ReNewMe; // returns (player->pMoby)
+/* 0x10 */ GetMoby_Func GetMoby; // returns (player->pMoby)
 /* 0x14 */ HandleEvent_Func HandleEvent;
 /* 0x18 */ void * FUNC_18; // just a return;
 /* 0x1c */ FriendlyToTeam_Func FriendlyToTeam; // Retunrs True if friendly.
