@@ -117,6 +117,7 @@ const char * regionStr = "NTSC: ";
 #endif
 int lastLodLevel = 2;
 short int QuickSelectTimeCurrent = 0;
+int flagTrackedLastCarrierIdx[2] = {-1, -1};
 
 #if DSCRPRINT
 #define MAX_DEBUG_SCR_PRINT_LINES       (16)
@@ -180,51 +181,6 @@ PatchPointers_t patchPointers = {
   .ServerTimeMinute = 0,
   .ServerTimeSecond = 0,
 };
-
-static int flagTrackedLastCarrierIdx[2] = {-1, -1};
-
-static int flagGetTrackerIndex(Moby* flagMoby)
-{
-	if (!flagMoby)
-		return -1;
-
-	switch (flagMoby->oClass) {
-		case MOBY_ID_CTF_RED_FLAG: return 0;
-		case MOBY_ID_CTF_BLUE_FLAG: return 1;
-		default: return -1;
-	}
-}
-
-static void flagClearTrackedLastCarrier(Moby* flagMoby)
-{
-	int flagIdx = flagGetTrackerIndex(flagMoby);
-	if (flagIdx >= 0)
-		flagTrackedLastCarrierIdx[flagIdx] = -1;
-}
-
-static void flagTrackCarrier(Moby* flagMoby, flagPVars_t* pvars)
-{
-	int flagIdx = flagGetTrackerIndex(flagMoby);
-	if (flagIdx < 0 || !pvars)
-		return;
-
-	if (pvars->carrierIdx >= 0 && pvars->carrierIdx < GAME_MAX_PLAYERS) {
-		flagTrackedLastCarrierIdx[flagIdx] = pvars->carrierIdx;
-		return;
-	}
-
-	if (flagIsAtBase(flagMoby))
-		flagTrackedLastCarrierIdx[flagIdx] = -1;
-}
-
-static int flagGetLastCarrierIdx(Moby* flagMoby)
-{
-	int flagIdx = flagGetTrackerIndex(flagMoby);
-	if (flagIdx >= 0 && flagTrackedLastCarrierIdx[flagIdx] >= 0)
-		return flagTrackedLastCarrierIdx[flagIdx];
-
-	return -1;
-}
 
 #if DSCRPRINT
 //------------------------------------------------------------------------------
@@ -1278,6 +1234,81 @@ void patchMapAndScoreboardToggle(void)
 			}
 		}
 	}
+}
+
+/*
+ * NAME :		flagGetTrackerIndex
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :		
+ */
+int flagGetTrackerIndex(Moby* flagMoby)
+{
+	if (!flagMoby)
+		return -1;
+
+	switch (flagMoby->oClass) {
+		case MOBY_ID_CTF_RED_FLAG: return 0;
+		case MOBY_ID_CTF_BLUE_FLAG: return 1;
+		default: return -1;
+	}
+}
+
+/*
+ * NAME :		flagClearTrackedLastCarrier
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :		
+ */
+void flagClearTrackedLastCarrier(Moby* flagMoby)
+{
+	int flagIdx = flagGetTrackerIndex(flagMoby);
+	if (flagIdx >= 0)
+		flagTrackedLastCarrierIdx[flagIdx] = -1;
+}
+
+/*
+ * NAME :		flagTrackCarrier
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :		
+ */
+void flagTrackCarrier(Moby* flagMoby, flagPVars_t* pvars)
+{
+	int flagIdx = flagGetTrackerIndex(flagMoby);
+	if (flagIdx < 0 || !pvars)
+		return;
+
+	if (pvars->carrierIdx >= 0 && pvars->carrierIdx < GAME_MAX_PLAYERS) {
+		flagTrackedLastCarrierIdx[flagIdx] = pvars->carrierIdx;
+		return;
+	}
+
+	if (flagIsAtBase(flagMoby))
+		flagTrackedLastCarrierIdx[flagIdx] = -1;
+}
+
+/*
+ * NAME :		flagGetLastCarrierIdx
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :		
+ */
+int flagGetLastCarrierIdx(Moby* flagMoby)
+{
+	int flagIdx = flagGetTrackerIndex(flagMoby);
+	if (flagIdx >= 0 && flagTrackedLastCarrierIdx[flagIdx] >= 0)
+		return flagTrackedLastCarrierIdx[flagIdx];
+
+	return -1;
 }
 
 /*
