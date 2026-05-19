@@ -1301,7 +1301,6 @@ typedef int (*GetVehicleMoby_Func)(Player *player);
 typedef int (*IsMyLookCamDisabled_Func)(Player *player);
 typedef int (*AllowRemoteLedgeGrab_Func)(Player *player);
 typedef int (*GetSlot_Func)(Player *player);
-typedef int (*GetMoby_Func)(Player *player);
 
 typedef struct PlayerVTable
 {
@@ -1331,20 +1330,6 @@ typedef struct PlayerVTable
 /* 0x5c */ void * FUNC_5c;
 /* 0x60 */ void * FUNC_60;
 /* 0x64 */ void * FUNC_64;
-/* 0x68 */ GetMoby_Func GetMoby; // Returns pMoby of player.
-/* 0x6c */ HandleEvent_Func HandleEvent2;
-/* 0x70 */ void * FUNC_70; // Just a return;
-/* 0x74 */ FriendlyToTeam_Func FriendlyToTeam2; // Retunrs True if friendly.
-/* 0x78 */ void * FUNC_78; //memset zero 0x4dc0 bytes
-/* 0x7c */ ResetHero_Func PlayerReset2;
-/* 0x80 */ void * FUNC_80;
-/* 0x84 */ void * FUNC_84;
-/* 0x88 */ void * FUNC_88;
-/* 0x8c */ void * FUNC_8c;
-/* 0x90 */ void * FUNC_90;
-/* 0x94 */ void * FUNC_94;
-/* 0x98 */ void * FUNC_98;
-/* 0x9c */ void * FUNC_9c;
 } PlayerVTable;
 
 /*
