@@ -131,6 +131,7 @@ extern int _correctTieLod_Jump;
 extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern VariableAddress_t vaFlagUpdate_Func;
+extern void FlushCache(int);
 extern MenuElem_ListData_t dataCustomMaps;
 #ifdef SCAVENGER_HUNT
 extern scavHuntEnabled;
@@ -180,14 +181,50 @@ PatchPointers_t patchPointers = {
   .ServerTimeSecond = 0,
 };
 
-struct FlagPVars {
-	VECTOR BasePosition;
-	short CarrierIdx;
-	short LastCarrierIdx;
-	short Team;
-	char UNK_16[6];
-	int TimeFlagDropped;
-};
+static int flagTrackedLastCarrierIdx[2] = {-1, -1};
+
+static int flagGetTrackerIndex(Moby* flagMoby)
+{
+	if (!flagMoby)
+		return -1;
+
+	switch (flagMoby->oClass) {
+		case MOBY_ID_CTF_RED_FLAG: return 0;
+		case MOBY_ID_CTF_BLUE_FLAG: return 1;
+		default: return -1;
+	}
+}
+
+static void flagClearTrackedLastCarrier(Moby* flagMoby)
+{
+	int flagIdx = flagGetTrackerIndex(flagMoby);
+	if (flagIdx >= 0)
+		flagTrackedLastCarrierIdx[flagIdx] = -1;
+}
+
+static void flagTrackCarrier(Moby* flagMoby, flagPVars_t* pvars)
+{
+	int flagIdx = flagGetTrackerIndex(flagMoby);
+	if (flagIdx < 0 || !pvars)
+		return;
+
+	if (pvars->carrierIdx >= 0 && pvars->carrierIdx < GAME_MAX_PLAYERS) {
+		flagTrackedLastCarrierIdx[flagIdx] = pvars->carrierIdx;
+		return;
+	}
+
+	if (flagIsAtBase(flagMoby))
+		flagTrackedLastCarrierIdx[flagIdx] = -1;
+}
+
+static int flagGetLastCarrierIdx(Moby* flagMoby)
+{
+	int flagIdx = flagGetTrackerIndex(flagMoby);
+	if (flagIdx >= 0 && flagTrackedLastCarrierIdx[flagIdx] >= 0)
+		return flagTrackedLastCarrierIdx[flagIdx];
+
+	return -1;
+}
 
 #if DSCRPRINT
 //------------------------------------------------------------------------------
@@ -1258,7 +1295,7 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 	if (!player || !flagMoby)
 		return;
 	
-	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
+	flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
 	if (!pvars)
 		return;
 
@@ -1279,9 +1316,13 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 		return;
 
 	// Handle pickup/return
-	if (player->mpTeam == pvars->Team) {
+	if (player->mpTeam == pvars->team) {
 		flagReturnToBase(flagMoby, 0, pIdx);
+		flagClearTrackedLastCarrier(flagMoby);
 	} else {
+		int flagIdx = flagGetTrackerIndex(flagMoby);
+		if (flagIdx >= 0)
+			flagTrackedLastCarrierIdx[flagIdx] = pIdx;
 		flagPickup(flagMoby, pIdx);
 		player->flagMoby = flagMoby;
 	}
@@ -1307,7 +1348,7 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
 	if (!player || !flagMoby)
 		return;
 	
-	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
+	flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
 	if (!pvars)
 		return;
 
@@ -1333,6 +1374,30 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
 	}
 }
 
+static int flagPickupDelayReady(Moby* flagMoby, flagPVars_t* pvars, Player* player, int gameTime)
+{
+	int lastCarrierIdx;
+
+	if (!flagMoby || !pvars || !player)
+		return 0;
+
+	if (gameConfig.customModeId == CUSTOM_MODE_MIDFLAG) // Logic doesnt work for midflag
+		return 1;
+
+	if (flagIsAtBase(flagMoby)) // No delay when flag is returned 
+		return 1;
+
+	if ((pvars->timeFlagDropped + (TIME_SECOND * 0.5)) > gameTime) // Self & Other Team Delay 
+		return 0;
+
+	lastCarrierIdx = flagGetLastCarrierIdx(flagMoby);
+	if (player->mpTeam != pvars->team && player->mpIndex != lastCarrierIdx
+		&& (pvars->timeFlagDropped + (TIME_SECOND * 1.5)) > gameTime) // Same Team's Delay 
+		return 0;
+
+	return 1;
+}
+
 /*
  * NAME :		customFlagLogic
  * DESCRIPTION :
@@ -1349,11 +1414,13 @@ void customFlagLogic(Moby* flagMoby)
 	Player** players = playerGetAll();
 	int gameTime = gameGetTime();
 	GameOptions* gameOptions = gameGetOptions();
-	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
+	flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
 
 	// if flag moby or pvars don't exist, stop.
 	if (!flagMoby || !pvars)
 		return;
+
+	flagTrackCarrier(flagMoby, pvars);
 
     // if flag state is not 1 (being picked up) and if flag is returning to base
     if (flagMoby->state != 1 || flagIsReturning(flagMoby))
@@ -1364,13 +1431,11 @@ void customFlagLogic(Moby* flagMoby)
         return;
     
 	// return to base if flag has been idle for 40 seconds and not already at base.
-	if ((pvars->TimeFlagDropped + (TIME_SECOND * 40)) < gameTime && !flagIsAtBase(flagMoby) && !flagIsAtBase(flagMoby)) {
+	if ((pvars->timeFlagDropped + (TIME_SECOND * 40)) < gameTime && !flagIsAtBase(flagMoby) && !flagIsAtBase(flagMoby)) {
 		flagReturnToBase(flagMoby, 0, 0xff);
+		flagClearTrackedLastCarrier(flagMoby);
 		return;
 	}
-
-    if ((pvars->TimeFlagDropped + (TIME_SECOND * 1.5)) > gameTime)
-        return;
 
     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
         Player* player = players[i];
@@ -1404,15 +1469,18 @@ void customFlagLogic(Moby* flagMoby)
 		if (sqrDistance > (2*2))
 			continue;
 
+		if (!flagPickupDelayReady(flagMoby, pvars, player, gameTime))
+			continue; // Gate here for flag pickup delay
+
 		// player is on different team than flag and player isn't already holding flag
-		if (player->mpTeam != pvars->Team) {
+		if (player->mpTeam != pvars->team) {
 			if (!player->flagMoby) {
 				flagRequestPickup(flagMoby, player->mpIndex);
 				return;
 			}
 		} else {
 			// if player is on same team as flag and close enough to return it
-			vector_subtract(t, pvars->BasePosition, flagMoby->position);
+			vector_subtract(t, pvars->basePos, flagMoby->position);
 			float sqrDistanceToBase = vector_sqrmag(t);
 			if (sqrDistanceToBase > 0.1) {
 				flagRequestPickup(flagMoby, player->mpIndex);
@@ -1457,7 +1525,9 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
 	GuberMoby* gm = (GuberMoby*)guberGetObjectByUID(msg.FlagUID);
 	if (gm && gm->Moby) {
 		Moby* flagMoby = gm->Moby;
-		flagHandlePickup(flagMoby, msg.PlayerId);
+		flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
+		if (pvars && flagPickupDelayReady(flagMoby, pvars, remotePlayer, gameGetTime()))
+			flagHandlePickup(flagMoby, msg.PlayerId);
 	}
 	return sizeof(ClientRequestPickUpFlag_t);
 }
@@ -1489,6 +1559,8 @@ void patchCTFFlag(void)
 		if (flagFunc) {
 			*(u32*)flagFunc = 0x03e00008;
 			*(u32*)(flagFunc + 0x4) = 0x0000102D;
+			FlushCache(0); // ensure execution does not use stale cached code
+			FlushCache(2);
 		}
 		patched.ctfLogic = 1;
 	}
