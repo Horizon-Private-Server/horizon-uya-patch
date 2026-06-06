@@ -1875,6 +1875,9 @@ void teamInfo(void)
 			gfxDrawHUDIcon(SPRITE_WEAPON_GRAVITY_BOMB, width_start * 3, height_start - (height_step * height_spacing), 16, gbomb_color);
 			gfxDrawHUDIcon(SPRITE_WEAPON_GLITZ_GUN, width_start * 4 , height_start - (height_step * height_spacing), 16, blitz_color);
 			gfxDrawHUDIcon(SPRITE_WEAPON_FLUX_RIFLE_4, width_start * 5, height_start - (height_step * height_spacing), 16, flux_color);
+			if (p->flagMoby) {
+				gfxDrawHUDIcon(SPRITE_FLAG, width_start * 6, height_start - (height_step * height_spacing), 16, icon_colors[0]);
+			}
 			height_spacing +=1;
 		}
 	}
