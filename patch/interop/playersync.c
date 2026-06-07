@@ -366,3 +366,31 @@ VariableAddress_t vaGadgetTransitions_Hook = {
 #endif
 };
 
+VariableAddress_t remoteStateProcess1_Hook = {
+#if UYA_PAL
+	.Lobby = 0x0066457c,
+	.Bakisi = 0x0053667c,
+	.Hoven = 0x00538794,
+	.OutpostX12 = 0x0052e06c,
+	.KorgonOutpost = 0x0052b804,
+	.Metropolis = 0x0052ab54,
+	.BlackwaterCity = 0x005283ec,
+	.CommandCenter = 0x005281ac,
+	.BlackwaterDocks = 0x0052aa2c,
+	.AquatosSewers = 0x00529d2c,
+	.MarcadiaPalace = 0x005296ac,
+#else
+	.Lobby = 0x00661ca4,
+	.Bakisi = 0x00533dfc,
+	.Hoven = 0x00535e54,
+	.OutpostX12 = 0x0052b76c,
+	.KorgonOutpost = 0x00528f84,
+	.Metropolis = 0x005282d4,
+	.BlackwaterCity = 0x00525aec,
+	.CommandCenter = 0x00525a6c,
+	.BlackwaterDocks = 0x005282ac,
+	.AquatosSewers = 0x005275ec,
+	.MarcadiaPalace = 0x00526f2c,
+#endif
+};
+

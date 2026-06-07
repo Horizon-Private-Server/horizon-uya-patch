@@ -858,6 +858,10 @@ void playerSyncTick(void)
     // force gadget moby to be created regardless of gsframe
     POKE_U32(GetAddress(&vaForceGadgetMobyCreation_Addr),0);
 
+    // disable some func that triggers unintentional states
+    POKE_U32(GetAddress(&remoteStateProcess1_Hook),0);
+
+
   }
 
   // init

@@ -13,3 +13,4 @@ VariableAddress_t vaUpdatePadAddr;
 VariableAddress_t vaProcessPadInputAddr;
 VariableAddress_t vaGadgetTransitions_Func;
 VariableAddress_t vaGadgetTransitions_Hook;
+VariableAddress_t remoteStateProcess1_Hook;
