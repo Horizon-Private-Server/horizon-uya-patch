@@ -25,6 +25,7 @@
 #include <libuya/utils.h>
 #include <libuya/player.h>
 #include <libuya/map.h>
+#include <libuya/hud.h>
 #include <libuya/guber.h>
 #include <libuya/music.h>
 #include <libuya/team.h>
@@ -2564,6 +2565,15 @@ void runGameStartMessager(void)
 	}
 }
 
+bool setPlayerHudTexture(HANDLE_ID container, SpriteTex_Hud_e texture) {
+	register Player *player asm("s4");
+	SpriteTex_Hud_e tex = texture;
+	if (player->flagMoby) {
+		tex = SPRITE_HUD_FLAG;
+	}
+	return hudSetSprite(container, tex);
+}
+
 /*
  * NAME :		patchHeadsetSprite
  * DESCRIPTION: Patches staging sprite for custom map detection
@@ -3053,6 +3063,8 @@ int main(void)
 		POKE_U32(GetAddress(&vaWaitingForResponse_Addr), 0x24020001); // patch out artificial "waiting for response" lag out
 
 		HOOK_JAL(GetAddress(&vaGameTimeUpdate_Hook), GetAddress(&vaNWUpdate_Func)); // poll nwupdate instead of updatepad for consistent game time
+
+		HOOK_JAL(GetAddress(&vaSetTextureArrow_Hook), &setPlayerHudTexture);
 
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();

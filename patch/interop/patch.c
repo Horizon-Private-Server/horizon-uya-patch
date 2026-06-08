@@ -1302,3 +1302,32 @@ VariableAddress_t vaPatchSwingshotGunBug_Hook = {
 	.MarcadiaPalace = 0x004ecee4,
 #endif
 };
+
+
+VariableAddress_t vaSetTextureArrow_Hook = {
+#if UYA_PAL
+	.Lobby = 0x005de440,
+	.Bakisi = 0x004b0b28,
+	.Hoven = 0x004b2c40,
+	.OutpostX12 = 0x004a8518,
+	.KorgonOutpost = 0x004a5cb0,
+	.Metropolis = 0x004a5000,
+	.BlackwaterCity = 0x004a2898,
+	.CommandCenter = 0x004a2890,
+	.BlackwaterDocks = 0x004a5110,
+	.AquatosSewers = 0x004a4410,
+	.MarcadiaPalace = 0x004a3d90,
+#else
+	.Lobby = 0x005dbe98,
+	.Bakisi = 0x004ae5d8,
+	.Hoven = 0x004b0630,
+	.OutpostX12 = 0x004a5f48,
+	.KorgonOutpost = 0x004a3760,
+	.Metropolis = 0x004a2ab0,
+	.BlackwaterCity = 0x004a02c8,
+	.CommandCenter = 0x004a0480,
+	.BlackwaterDocks = 0x004a2cc0,
+	.AquatosSewers = 0x004a2000,
+	.MarcadiaPalace = 0x004a1940,
+#endif
+};
