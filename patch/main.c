@@ -2566,7 +2566,10 @@ void runGameStartMessager(void)
 }
 
 bool setPlayerHudTexture(HANDLE_ID container, SpriteTex_Hud_e texture) {
-	register Player *player asm("s4");
+	// 0x50013 maps to current player's icon, 14 the 2nd player, 15 the 3rd, and so on
+	int playerNum = container - 0x50013;
+	Player ** players = playerGetAll();
+	Player* player = players[playerNum]; 
 	SpriteTex_Hud_e tex = texture;
 	if (player->flagMoby) {
 		tex = SPRITE_HUD_FLAG;
