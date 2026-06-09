@@ -28,6 +28,7 @@
 #include <libuya/guber.h>
 #include <libuya/music.h>
 #include <libuya/team.h>
+#include <libuya/hud.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -1875,6 +1876,9 @@ void teamInfo(void)
 			gfxDrawHUDIcon(SPRITE_WEAPON_GRAVITY_BOMB, width_start * 3, height_start - (height_step * height_spacing), 16, gbomb_color);
 			gfxDrawHUDIcon(SPRITE_WEAPON_GLITZ_GUN, width_start * 4 , height_start - (height_step * height_spacing), 16, blitz_color);
 			gfxDrawHUDIcon(SPRITE_WEAPON_FLUX_RIFLE_4, width_start * 5, height_start - (height_step * height_spacing), 16, flux_color);
+			if (p->flagMoby) {
+				gfxDrawHUDIcon(SPRITE_FLAG, width_start * 6, height_start - (height_step * height_spacing), 16, icon_colors[0]);
+			}
 			height_spacing +=1;
 		}
 	}
@@ -2690,6 +2694,19 @@ void runCheckGameMapInstalled(void)
 	}
 }
 
+bool setPlayerHudTexture(HANDLE_ID container, SpriteTex_Hud_e texture) {
+	// 0x50013 maps to current player's icon, 14 the 2nd player, 15 the 3rd, and so on
+	int playerNum = container - 0x50013;
+	Player ** players = playerGetAll();
+	Player* player = players[playerNum]; 
+	SpriteTex_Hud_e tex = texture;
+	if (player->flagMoby) {
+		tex = SPRITE_HUD_FLAG;
+	}
+	return hudSetSprite(container, tex);
+}
+
+
 /*
  * NAME :		setupPatchConfigInGame
  * DESCRIPTION :
@@ -3050,6 +3067,9 @@ int main(void)
 		POKE_U32(GetAddress(&vaWaitingForResponse_Addr), 0x24020001); // patch out artificial "waiting for response" lag out
 
 		HOOK_JAL(GetAddress(&vaGameTimeUpdate_Hook), GetAddress(&vaNWUpdate_Func)); // poll nwupdate instead of updatepad for consistent game time
+
+		// replace player arrow with flag sprite on map when someone is holding flag
+		HOOK_JAL(GetAddress(&vaSetTextureArrow_Hook), &setPlayerHudTexture);
 
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
