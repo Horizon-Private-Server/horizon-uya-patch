@@ -1816,22 +1816,22 @@ void runCampaignMusic(void)
 }
 
 /*
- * NAME :		patchAimAssist
- * DESCRIPTION :	Disables Aim Assist for player weapons
+ * NAME :		patchCameraPull
+ * DESCRIPTION :	Disables Camera Pull for player weapons
  * NOTES :
  * ARGS : 
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void patchAimAssist(void)
+void patchCameraPull(void)
 {
 
 	Player* p = playerGetFromSlot(0);
-	p->fps.vars.cameraZ.target_slowness_factor_quick = 0;
-	p->fps.vars.cameraZ.target_slowness_factor_aim = 0;
-	p->fps.vars.cameraY.target_slowness_factor = 0;
-	p->fps.vars.cameraY.strafe_turn_factor = 0;
-	p->fps.vars.cameraY.strafe_tilt_factor = 0;
+	// p->fps.vars.cameraZ.target_slowness_factor_quick = 0; // doesn't do anything
+	// p->fps.vars.cameraZ.target_slowness_factor_aim = 0; // how much aim assist "locks onto" enemies X/horizontally
+	// p->fps.vars.cameraY.target_slowness_factor = 0; // how much aim assist "locks onto" enemies Y/vertically
+	p->fps.vars.cameraY.strafe_turn_factor = 0; // camera pull var 1
+	p->fps.vars.cameraY.strafe_tilt_factor = 0; //camera pull var 2
 }
 
 /*
@@ -3131,7 +3131,7 @@ int main(void)
 		patchMapAndScoreboardToggle();
 
 		if (config.aimAssist)
-			patchAimAssist();
+			patchCameraPull();
 
 		// Patch hiding of Flux Reticle
 		patchHideFluxReticle();
