@@ -46,3 +46,4 @@ VariableAddress_t vaGadgetEventFunc;
 VariableAddress_t vaGadgetEventHook;
 VariableAddress_t vaWaitingForResponse_Addr;
 VariableAddress_t vaPatchSwingshotGunBug_Hook;
+VariableAddress_t vaSetTextureArrow_Hook;
