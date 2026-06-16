@@ -222,7 +222,7 @@ void playerPadUpdate(void)
             // Copy last player pad
             if (playerPad)
             {
-                memcpy(padHistory, &playerPad->buffer.btns, sizeof(struct PadHistory));
+                memcpy(padHistory, &playerPad->btns, sizeof(struct PadHistory));
                 padHistory->id = player->mpIndex;
             }
             // Reset pad if no player
@@ -251,7 +251,7 @@ int playerPadGetButton(Player * player, u16 buttonMask)
     if (!paddata)
         return 0;
 
-    return (paddata->buffer.btns & buttonMask) == 0;
+    return (paddata->btns & buttonMask) == 0;
 }
 
 //--------------------------------------------------------------------------------
