@@ -348,7 +348,9 @@ typedef struct tNW_Info {
     char myLicenseAccepted;
     char unk_0085[19];
     tNW_PlayerInfoStats_t myStats;
-    char gameName[64];
+    char myStatsHaveDropPenalty;
+    bool isGameRanked;
+    char gameName[62];
     char gamePassword[24];
     char unk_0128[12];
     enum eNW_STATE state;
@@ -670,5 +672,14 @@ float gameGetGsUsage(void);
  */
 float gameGetCpuUsage(void);
 
+/*
+ * NAME :		gameIsGameRanked
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void gameIsGameRanked(bool yayOrNay);
 
 #endif // _LIBUYA_GAME_H_
