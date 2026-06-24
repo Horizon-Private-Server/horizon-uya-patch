@@ -362,6 +362,13 @@ MenuElem_ListData_t dataSetGatlingTurretHealth = {
     .items = { "Default", ".5x", "1.5x", "2x", "3x", "4x", "5x", "6x", "7x", "8x" }
 };
 
+MenuElem_ListData_t dataSmallTurrets = {
+    .value = &gameConfig.grNoBaseDefense_SmallTurrets,
+    .stateHandler = NULL,
+    .count = 3,
+    .items = { "On", "No Base Turrets", "Off" }
+};
+
 MenuElem_ListData_t dataRespawnTimer_Player = {
     .value = &gameConfig.grRespawnTimer_Player,
     .stateHandler = NULL,
@@ -593,7 +600,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Gatling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGatlingTurretHealth, "Increase or decrease the amount of health each teams base turrets have." },
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive, "Let the Health and Ammo pads in each base always stay active, even if parts of the base are destroyed." },
   { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots, "toggle Troopers (and other bots) on or off." },
-  // { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
+  { "Small Turrets", listActionHandler, menuStateHandler_CTFandSiege, &dataSmallTurrets },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever, "Double tap and hold R2 to chargeboot forever." },
@@ -2698,6 +2705,7 @@ void configMenuDisable(void)
         gameConfig.grSetGatlingTurretHealth = 1; // .5x
         gameConfig.grBaseHealthPadActive = 0; // Off
         gameConfig.grNoBaseDefense_Bots = 1; // Off
+        gameConfig.grNoBaseDefense_SmallTurrets = 1;
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
         gameConfig.prLoadoutWeaponsOnly = 0; // Off
@@ -2751,6 +2759,7 @@ void configMenuDisable(void)
         gameConfig.grSetGatlingTurretHealth = 1; // .5x
         gameConfig.grBaseHealthPadActive = 0; // Off
         gameConfig.grNoBaseDefense_Bots = 1; // Off
+        gameConfig.grNoBaseDefense_SmallTurrets = 1;
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
         gameConfig.prLoadoutWeaponsOnly = 0; // Off
@@ -2790,6 +2799,7 @@ void configMenuDisable(void)
         gameConfig.grSetGatlingTurretHealth = 4; // 3x
         gameConfig.grBaseHealthPadActive = 0; // Off
         gameConfig.grNoBaseDefense_Bots = 1; // Off
+        gameConfig.grNoBaseDefense_SmallTurrets = 1;
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
         gameConfig.prLoadoutWeaponsOnly = 0; // Off

@@ -539,7 +539,7 @@ void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int 
  *              still spawns normally - vanilla code is unaffected.
  */
 #define NODE_TURRET_PVAR_PARENT_NODE_OFFSET (588)
-void onGameplayLoad_hideTeamNodeTurrets(GameplayHeaderDef_t * gameplay)
+void onGameplayLoad_hideTeamNodeTurrets(GameplayHeaderDef_t * gameplay, bool disableAll)
 {
 	int i;
 	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
@@ -551,19 +551,23 @@ void onGameplayLoad_hideTeamNodeTurrets(GameplayHeaderDef_t * gameplay)
 		if (moby->OClass != MOBY_ID_NODE_TURRET)
 			continue;
 
-		// a turret with no pVars cannot be a team turret - and guards against a bad table read
-		if (moby->PVarIndex < 0)
-			continue;
+		if (!disableAll) {
+			// a turret with no pVars cannot be a team turret - and guards against a bad table read
+			if (moby->PVarIndex < 0)
+				continue;
 
-		// resolve this turret's pVar data and read its Parent Node ref (a static instance index)
-		GameplayPVarDef_t * pvar = &pvarTable[moby->PVarIndex];
-		int parentIndex = *(int*)(pvarData + pvar->Offset + NODE_TURRET_PVAR_PARENT_NODE_OFFSET);
-		if (parentIndex < 0 || parentIndex >= mobyInstancesHeader->StaticCount)
-			continue;
+			// resolve this turret's pVar data and read its Parent Node ref (a static instance index)
+			GameplayPVarDef_t * pvar = &pvarTable[moby->PVarIndex];
+			int parentIndex = *(int*)(pvarData + pvar->Offset + NODE_TURRET_PVAR_PARENT_NODE_OFFSET);
+			if (parentIndex < 0 || parentIndex >= mobyInstancesHeader->StaticCount)
+				continue;
 
-		// team turrets are parented to the team BASE_LIGHT; neutral turrets to a SIEGE_NODE
-		if (mobyInstancesHeader->MobyInstances[parentIndex].OClass == MOBY_ID_BASE_LIGHT)
+			// team turrets are parented to the team BASE_LIGHT; neutral turrets to a SIEGE_NODE
+			if (mobyInstancesHeader->MobyInstances[parentIndex].OClass == MOBY_ID_BASE_LIGHT)
+				moby->PosY = 1;
+		} else {
 			moby->PosY = 1;
+		}
 	}
 }
 
