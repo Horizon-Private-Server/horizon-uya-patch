@@ -522,6 +522,52 @@ void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int 
 }
 
 /*
+ * NAME :		onGameplayLoad_hideTeamNodeTurrets
+ * DESCRIPTION :
+ *              Hides ONLY the team (base) node turrets - the two-per-team turrets
+ *              that guard each team's home base - by sinking their vertical
+ *              position to 1.  The neutral capture-node turrets are left alone.
+ *
+ *              A node turret (MOBY_ID_NODE_TURRET / 0x1a63) stores a "Parent Node"
+ *              MobyRef at pVar offset 588 (0x24c).  Team turrets are parented to the
+ *              team's BASE_LIGHT (0x0cbe); neutral turrets are parented to a
+ *              SIEGE_NODE (0x1a47).  We resolve the parent instance's OClass and only
+ *              move turrets whose parent is a BASE_LIGHT.  This is map-independent.
+ *
+ *              Runs at gameplay-load time (before the engine spawns/rewires mobies),
+ *              so the parent ref is still a raw static-instance index and the turret
+ *              still spawns normally - vanilla code is unaffected.
+ */
+#define NODE_TURRET_PVAR_PARENT_NODE_OFFSET (588)
+void onGameplayLoad_hideTeamNodeTurrets(GameplayHeaderDef_t * gameplay)
+{
+	int i;
+	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
+	GameplayPVarDef_t * pvarTable = (GameplayPVarDef_t*)((u32)gameplay + gameplay->PVarTableOffset);
+	u32 pvarData = (u32)gameplay + gameplay->PVarDataOffset;
+
+	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
+		GameplayMobyDef_t * moby = &mobyInstancesHeader->MobyInstances[i];
+		if (moby->OClass != MOBY_ID_NODE_TURRET)
+			continue;
+
+		// a turret with no pVars cannot be a team turret - and guards against a bad table read
+		if (moby->PVarIndex < 0)
+			continue;
+
+		// resolve this turret's pVar data and read its Parent Node ref (a static instance index)
+		GameplayPVarDef_t * pvar = &pvarTable[moby->PVarIndex];
+		int parentIndex = *(int*)(pvarData + pvar->Offset + NODE_TURRET_PVAR_PARENT_NODE_OFFSET);
+		if (parentIndex < 0 || parentIndex >= mobyInstancesHeader->StaticCount)
+			continue;
+
+		// team turrets are parented to the team BASE_LIGHT; neutral turrets to a SIEGE_NODE
+		if (mobyInstancesHeader->MobyInstances[parentIndex].OClass == MOBY_ID_BASE_LIGHT)
+			moby->PosY = 1;
+	}
+}
+
+/*
  * NAME :		keepBaseHealthPadActive
  * DESCRIPTION :
  *              Keeps Base Ammo/Health Pads Active even if Gatlin Turrets are destroyed.

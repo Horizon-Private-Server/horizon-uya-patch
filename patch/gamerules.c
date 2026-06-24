@@ -123,6 +123,11 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grNoBaseDefense_SmallTurrets)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_NODE_TURRET, 100);
 
+	// Hide only the team (base) node turrets - the 2-per-team turrets parented to
+	// the team BASE_LIGHT - while leaving the neutral capture-node turrets intact.
+	if (gameConfig.grNoBaseDefense_Bots)
+		onGameplayLoad_hideTeamNodeTurrets(gameplay);
+
 	if (gameConfig.grRespawnTimer_HealthBoxes || gameConfig.grRespawnTimer_WeaponCrates || gameConfig.grRespawnTimer_AmmoPickups)
 		onGameplayLoad_miscRespawnTimers(gameplay);
 
