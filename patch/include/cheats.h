@@ -13,6 +13,7 @@ int deleteSiegeNodeTurrets(void);
 void deleteNodeTurretsUpdate(void);
 void setRespawnTimer_Player(void);
 void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int ypos);
+void onGameplayLoad_hideTeamNodeTurrets(GameplayHeaderDef_t * gameplay);
 int keepBaseHealthPadActive(void);
 void noPostHitInvinc(void);
 void onGameplayLoad_disableWeaponCrates(GameplayHeaderDef_t * gameplay);
