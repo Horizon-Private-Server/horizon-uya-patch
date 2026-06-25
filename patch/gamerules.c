@@ -120,9 +120,8 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grDisablePlayerTurrets)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_PLAYER_TURRET, 0);
 
-	if (gameConfig.grNoBaseDefense_SmallTurrets)
-		onGameplayLoad_disableMoby(gameplay, MOBY_ID_NODE_TURRET, 100);
-
+	// 1 = "No Base Turrets" -> hide only the team/base turrets (hideAll=0), neutral stay.
+	// 2 = "Off"             -> hide every node turret (hideAll=1).
 	if (gameConfig.grNoBaseDefense_SmallTurrets) {
 		bool hideAll = gameConfig.grNoBaseDefense_SmallTurrets - 1;
 		onGameplayLoad_hideTeamNodeTurrets(gameplay, hideAll);
@@ -204,7 +203,9 @@ void grGameStart(void)
 	if (gameConfig.grSetGatlingTurretHealth && !HasSetGatlingTurretHealth)
 		HasSetGatlingTurretHealth = setGatlingTurretHealth(gameConfig.grSetGatlingTurretHealth);
 
-	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasDisableSiegeNodeTurrets) {
+	// Only fully disable turret behavior for "Off" (2). "No Base Turrets" (1) relies
+	// purely on hiding the base turrets by position so neutral turrets keep working.
+	if (gameConfig.grNoBaseDefense_SmallTurrets == 2 && !HasDisableSiegeNodeTurrets) {
 		deleteNodeTurretsUpdate();
 		HasDisableSiegeNodeTurrets = deleteSiegeNodeTurrets();
 	}

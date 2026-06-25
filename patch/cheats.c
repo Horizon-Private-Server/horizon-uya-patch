@@ -277,7 +277,7 @@ void deleteNodeTurretsUpdate(void)
 
 	u32 UpdateFunc = GetAddress(&vaNodeTurret_UpdateFunc);
 	if (*(u32*)UpdateFunc == 0x27bdffe0) {
-		*(u32*)UpdateFunc = 0x03e0008;
+		*(u32*)UpdateFunc = 0x03e00008; // jr ra
 		*(u32*)((u32)UpdateFunc + 0x4) = 0;
 		patched.gameConfig.grNoBaseDefense_SmallTurrets = 1;
 	}
