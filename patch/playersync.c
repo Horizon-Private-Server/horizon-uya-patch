@@ -306,7 +306,7 @@ void playerSyncHandlePlayerState(Player* player)
     player->pNetPlayer->warpMessage.isResurrecting = 0;
   }
 
-  // compute absolute position (always absolute — relative ground-moby positions removed due to one-frame platform lag)
+  // compute absolute position (always absolute — ground-moby relative positions removed due to platform drift)
   VECTOR stateCurrentPosition;
   vector_copy(stateCurrentPosition, stateInterpolated.Position);
 
