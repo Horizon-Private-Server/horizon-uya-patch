@@ -306,12 +306,9 @@ void playerSyncHandlePlayerState(Player* player)
     player->pNetPlayer->warpMessage.isResurrecting = 0;
   }
 
-  // compute absolute position
+  // compute absolute position (always absolute — relative ground-moby positions removed due to one-frame platform lag)
   VECTOR stateCurrentPosition;
   vector_copy(stateCurrentPosition, stateInterpolated.Position);
-  if (stateInterpolated.GroundMoby) {
-    vector_add(stateCurrentPosition, stateCurrentPosition, stateInterpolated.GroundMoby->position);
-  }
 
 
   // snap position if lerp distance is too much (i.e using teleport pads)
@@ -690,10 +687,9 @@ void playerSyncBroadcastPlayerState(Player* player)
   msg.CmdId = data->StateUpdateCmdId = playerSyncGetCmdId(data->StateUpdateCmdId + 1);
 
   // check if we're on a ground moby
-  // if so, sync relative position
+  // send uid for snap radius calculation on remote
   Moby* groundMoby = player->ground.pMoby;
   if (groundMoby) {
-    //DPRINTF("Moby found with UID %d and oClass %d\n", (u32))
     Guber* groundMobyGuber = guberGetObjectByMoby(groundMoby);
     if (groundMobyGuber) {
       msg.GroundMobyUID = groundMobyGuber->Id.UID;
@@ -701,12 +697,6 @@ void playerSyncBroadcastPlayerState(Player* player)
     } else if (groundMoby->UID > 0) {
       msg.GroundMobyUID = groundMoby->UID;
       msg.Flags = 2;
-    }
-
-    if (msg.GroundMobyUID != -1) {
-      VECTOR relativePosition;
-      vector_subtract(relativePosition, player->playerPosition, groundMoby->position);
-      memcpy(msg.Position, relativePosition, sizeof(float) * 3);
     }
   }
 
