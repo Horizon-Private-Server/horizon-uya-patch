@@ -249,41 +249,6 @@ int setGatlingTurretHealth(int value)
 }
 
 /*
- * NAME :		deleteSiegeNodeTurret
- * DESCRIPTION :
- *              
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-int deleteSiegeNodeTurrets(void)
-{
-    int init = 0;
-    Moby * moby = mobyListGetStart();
-    while ((moby = mobyFindNextByOClass(moby, MOBY_ID_SIEGE_NODE))) {
-        if (moby->pUpdate)
-			*(u32*)((u32)moby->pUpdate + 0x810) = 0;
-
-        ++moby; // next moby
-    }
-    init = 1;
-    return init;
-}
-void deleteNodeTurretsUpdate(void)
-{
-	if (patched.gameConfig.grNoBaseDefense_SmallTurrets)
-		return;
-
-	u32 UpdateFunc = GetAddress(&vaNodeTurret_UpdateFunc);
-	if (*(u32*)UpdateFunc == 0x27bdffe0) {
-		*(u32*)UpdateFunc = 0x03e0008;
-		*(u32*)((u32)UpdateFunc + 0x4) = 0;
-		patched.gameConfig.grNoBaseDefense_SmallTurrets = 1;
-	}
-}
-
-/*
  * NAME :		ChargebootForever
  * DESCRIPTION :
  *              Lets Player keep Chargebooting if R2 is held.
