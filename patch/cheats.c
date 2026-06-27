@@ -581,27 +581,22 @@ int keepBaseHealthPadActive(void)
  */
 int noPostHitInvinc_Logic(void)
 {
-    // Post-hit invincibility timer values (2000ms target)
-#if UYA_PAL
-    int DEFAULT_TIMER = 0x27;
-#else
-    int DEFAULT_TIMER = 0x2f;
-#endif
+	// define ntsc and pal timer
+	#if UYA_PAL
+	int DEFAULT_TIMER = 0x27;
+	#else
+	int DEFAULT_TIMER = 0x2f;
+	#endif
+	// if player is getting shot by the gatling turret, set to default timer.
+	// Player *p = playerGetFromSlot(0);
+	// if (!p || !p->pWhoHitMe->oClass)
+	// 	return 1;
 
-    // Cooldown ON: return default timer for all damage (original game behavior)
-    if (!gameConfig.grNoCooldown)
-        return DEFAULT_TIMER;
-
-    // Cooldown OFF: only restore invincibility for turret damage to prevent stunlock
-    register Player *p asm("s1");
-    if (p && p->pWhoHitMe) {
-        if (p->pWhoHitMe->oClass == MOBY_ID_GATLING_TURRET_SHOT)
-            return DEFAULT_TIMER;
-        if (p->pWhoHitMe->pParent && p->pWhoHitMe->pParent->oClass == MOBY_ID_GATLING_TURRET)
-            return DEFAULT_TIMER;
-    }
-
-    return 1;
+	// if (p->pWhoHitMe->oClass == MOBY_ID_GATLING_TURRET_SHOT && p->pWhoHitMe->pParent->oClass == MOBY_ID_GATLING_TURRET)
+	// 	return DEFAULT_TIMER;
+	
+	// else return 1
+	return 1;
 }
 void noPostHitInvinc(void)
 {
