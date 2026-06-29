@@ -2390,7 +2390,7 @@ void patchSideFlipJoystickVal(void)
 	if (!gameConfig.prDisableDlStyleFlips && patched.config.dlStyleFlips == config.dlStyleFlips)
 		return;
 
-	u16 val = config.dlStyleFlips ? 0x3f80 : 0x3f66;
+	u16 val = config.dlStyleFlips ? 0x3fa0 : 0x3f66;
 	POKE_U16(GetAddress(&vaSideFlipJoystickVal), val);
 	patched.config.dlStyleFlips = config.dlStyleFlips;
 }
@@ -3140,7 +3140,7 @@ int main(void)
 			hypershotEquipButton();
 
 		// Patch Side Flipping joystick offset value
-		// patchSideFlipJoystickVal();
+		patchSideFlipJoystickVal();
 
 		// close config menu on transition to lobby
 		if (lastGameState != 1)
