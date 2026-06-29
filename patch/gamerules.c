@@ -204,11 +204,6 @@ void grGameStart(void)
 	if (gameConfig.grSetGatlingTurretHealth && !HasSetGatlingTurretHealth)
 		HasSetGatlingTurretHealth = setGatlingTurretHealth(gameConfig.grSetGatlingTurretHealth);
 
-	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasDisableSiegeNodeTurrets) {
-		deleteNodeTurretsUpdate();
-		HasDisableSiegeNodeTurrets = deleteSiegeNodeTurrets();
-	}
-
 	if (gameConfig.prChargebootForever)
 		chargebootForever();
 	

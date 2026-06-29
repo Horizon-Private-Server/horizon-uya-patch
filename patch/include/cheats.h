@@ -9,8 +9,6 @@ void spawnWeaponPackOnDeath(void);
 void v2_Setting(int setting, int FirstPass);
 void AutoRespawn(void);
 int setGatlingTurretHealth(int value);
-int deleteSiegeNodeTurrets(void);
-void deleteNodeTurretsUpdate(void);
 void setRespawnTimer_Player(void);
 void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int ypos);
 void onGameplayLoad_hideTeamNodeTurrets(GameplayHeaderDef_t * gameplay, bool disableAll);
