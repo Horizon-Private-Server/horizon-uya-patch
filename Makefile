@@ -8,7 +8,7 @@ all:
 	$(MAKE) -C domination
 	$(MAKE) -C koth
 	$(MAKE) -C elfloader
-	
+	$(MAKE) -C juggernaut
 clean:
 	$(MAKE) -C libuya clean
 	$(MAKE) -C patch clean
@@ -20,6 +20,7 @@ clean:
 	$(MAKE) -C domination clean
 	$(MAKE) -C koth clean
 	$(MAKE) -C elfloader clean
+	$(MAKE) -C juggernaut clean
 
 install:
 	$(MAKE) -C libuya install
