@@ -1416,16 +1416,23 @@ static int flagPickupDelayReady(Moby* flagMoby, flagPVars_t* pvars, Player* play
 	if (gameConfig.customModeId == CUSTOM_MODE_MIDFLAG) // Logic doesnt work for midflag
 		return 1;
 
-	if (flagIsAtBase(flagMoby)) // No delay when flag is returned 
+	if (flagIsAtBase(flagMoby))
 		return 1;
 
-	if ((pvars->timeFlagDropped + (TIME_SECOND * 0.5)) > gameTime) // Self & Other Team Delay 
-		return 0;
-
 	lastCarrierIdx = flagGetLastCarrierIdx(flagMoby);
-	if (player->mpTeam != pvars->team && player->mpIndex != lastCarrierIdx
-		&& (pvars->timeFlagDropped + (TIME_SECOND * 1.5)) > gameTime) // Same Team's Delay 
-		return 0;
+	if (player->mpIndex == lastCarrierIdx) {
+		// self: player who dropped the flag
+		if ((pvars->timeFlagDropped + (TIME_SECOND * 1.5)) > gameTime)
+			return 0;
+	} else if (player->mpTeam != pvars->team) {
+		// team: dropper's teammates
+		if ((pvars->timeFlagDropped + (TIME_SECOND * 0.5)) > gameTime)
+			return 0;
+	} else {
+		// enemy: flag's own team returning it
+		if ((pvars->timeFlagDropped + (TIME_SECOND * 0.5)) > gameTime)
+			return 0;
+	}
 
 	return 1;
 }
