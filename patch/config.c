@@ -775,20 +775,6 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
 
   if (gs) {
     switch (v) {
-/*
-      #ifdef DEBUG
-      case CUSTOM_MODE_INFECTED:
-      case CUSTOM_MODE_JUGGERNAUGHT: {
-        // only allow deathmatch
-        if (gs->GameType == GAMETYPE_DM)
-          return 1;
-        
-        // otherwise reject custom mode
-        *value = CUSTOM_MODE_NONE;
-        return 0;
-      }
-      #endif
-*/
       case CUSTOM_MODE_JUGGERNAUT: {
         if (gs->GameType == GAMETYPE_DM)
           return 1;
