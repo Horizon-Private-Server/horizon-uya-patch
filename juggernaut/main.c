@@ -21,9 +21,10 @@
  *
  * NOTES :
  *      Compile-time options (promote to game rules later):
- *        JUGGERNAUT_JUGGY_SHIELD      - give the juggy a shield bubble as a
- *                                       visual marker + extra survivability
- *                                       (default on; real shield, clears on death).
+ *        JUGGERNAUT_JUGGY_SHIELD      - cosmetic shield bubble on the juggy,
+ *                                       drawn by every client EXCEPT the juggy's
+ *                                       own screen (default on; owner-side sim is
+ *                                       untouched, so the juggy stays killable).
  *        JUGGERNAUT_BRUISER_SKIN      - juggy's hero skin becomes Bruiser
  *                                       (default off; crashes mid-match, needs
  *                                       a proper in-game model swap).
@@ -59,18 +60,27 @@
 // ---- Compile-time options -------------------------------------------------
 // Diagnostic: throttled on-screen status line (host?/pickup?/juggy?/spawns?).
 // Set to 0 to ship.
-#define JUGG_DEBUG                      1
+#define JUGG_DEBUG                      0
 
 // Skin swap is disabled: changing a live player's skin via gameSetClientSkin()
 // fires a lobby-settings network update that crashes the client mid-match. A
 // proper in-game model/skin swap needs to be REd separately before re-enabling.
 #define JUGGERNAUT_BRUISER_SKIN         0
 
-// Give the juggy a shield bubble. DISABLED: playerGiveShield spawns a LOCAL
-// shield (only visible on the owner's screen) and grants owner-side damage
-// absorption/invincibility -- the juggy became unkillable, so the crown could
-// never transfer. The juggy is marked by a floating crown orb instead.
-#define JUGGERNAUT_JUGGY_SHIELD         0
+// Give the juggy a cosmetic shield bubble as a "still-buffed" tell. It shows
+// while the juggy is above base max health and DROPS once they've been hurt to
+// <= normal max (JUGGERNAUT_BASE_HEALTH) -- i.e. their 2x cushion is gone and
+// they're now killable at normal health, a visible "vulnerable now" signal.
+// Health is never networked, so the juggy's OWN client (the only one that knows
+// its health) decides on/off and broadcasts the flag; every client applies the
+// bubble from it. playerGiveShield() spawns a client-LOCAL moby and grants
+// owner-side absorption, so we only ever apply it to REMOTE mirrors (purely
+// visual, juggy stays killable) unless JUGGERNAUT_JUGGY_SHIELD_LOCAL is set.
+#define JUGGERNAUT_JUGGY_SHIELD         1
+
+// Also render the bubble on the juggy's OWN screen (unlike the crown orb, which
+// is hidden locally). Off by default -- it can obscure the juggy's own view.
+#define JUGGERNAUT_JUGGY_SHIELD_LOCAL   1
 
 #define JUGGERNAUT_HEALTH_MULTIPLIER    2
 
@@ -109,6 +119,8 @@
 // module, and only one custom mode runs at a time, so the game-mode range is
 // safe to use without editing common/messageid.h (keeps changes module-local).
 #define CROWN_MSG_ID_STATE              (CUSTOM_MSG_ID_GAME_MODE_START)
+// Juggy shield on/off flag, broadcast by the juggy's own client (see shield block).
+#define CROWN_MSG_ID_SHIELD             (CUSTOM_MSG_ID_GAME_MODE_START + 1)
 
 // Base weapons upgraded to V2 while juggy (no-op if the player doesn't hold them).
 static const int JUGGERNAUT_WEAPONS[] = {
@@ -222,6 +234,12 @@ typedef struct CrownStateMsg {
     float PickupPos[3];
 } CrownStateMsg_t;
 
+// Juggy shield state, broadcast by the juggy's own client (health isn't synced).
+typedef struct CrownShieldMsg {
+    short JuggyIdx;       // sender's view of who the juggy is (for validation)
+    short ShieldOn;       // 0/1
+} CrownShieldMsg_t;
+
 // ---- State ----------------------------------------------------------------
 static int Initialized = 0;
 static int HandlerInstalled = 0;
@@ -243,6 +261,13 @@ static int    HostNextHeartbeat = 0;
 // Per-player buff bookkeeping.
 static char   Buffed[GAME_MAX_PLAYERS];             // one-time heal + weapon upgrades this life?
 static char   MaxHealthSet[GAME_MAX_PLAYERS];       // 2x max-health applied for this juggy?
+
+// Shield tell: is the current juggy above base max health? Computed on the
+// juggy's own client, mirrored from broadcast elsewhere. Default on (a freshly
+// crowned juggy is at full buffed health until they take damage).
+static int    JuggyShieldOn = 1;
+static int    ShieldLastSent = -1;                  // last value this client broadcast (juggy only)
+static int    ShieldNextResend = 0;                 // periodic re-broadcast time (late joiners / loss)
 
 // Local cosmetic sprite.
 static Moby * CrownMoby = NULL;
@@ -517,6 +542,51 @@ static void crownBroadcastState(void)
     netBroadcastCustomAppMessage(connection, CROWN_MSG_ID_STATE, sizeof(msg), &msg);
 }
 
+// Broadcast the juggy shield flag. Sent by the juggy's own client only.
+static void juggyBroadcastShield(int on)
+{
+    void * connection = netGetDmeServerConnection();
+    if (!connection)
+        return;
+
+    CrownShieldMsg_t msg;
+    msg.JuggyIdx = (short)JuggyIndex;
+    msg.ShieldOn = (short)(on ? 1 : 0);
+    netBroadcastCustomAppMessage(connection, CROWN_MSG_ID_SHIELD, sizeof(msg), &msg);
+}
+
+// Update the local shield flag and broadcast it on change (plus a periodic
+// re-send so late joiners / dropped packets converge). Called on the juggy's
+// own client, which is the sole authority for its own health.
+static void juggyUpdateShieldState(int want)
+{
+    int now = gameGetTime();
+    JuggyShieldOn = want ? 1 : 0;
+    if (JuggyShieldOn != ShieldLastSent || now >= ShieldNextResend) {
+        juggyBroadcastShield(JuggyShieldOn);
+        ShieldLastSent = JuggyShieldOn;
+        ShieldNextResend = now + CROWN_HEARTBEAT_MS;
+    }
+}
+
+// A freshly crowned juggy starts at full buffed health -> shielded. Force the
+// next tick to (re)broadcast so remote clients converge immediately.
+static void juggyResetShieldForNewJuggy(void)
+{
+    JuggyShieldOn = 1;
+    ShieldLastSent = -1;
+    ShieldNextResend = 0;
+}
+
+static int crownOnReceiveShield(void * connection, void * data)
+{
+    CrownShieldMsg_t * msg = (CrownShieldMsg_t*)data;
+    // Trust the flag only for the current juggy (ignore stale/foreign senders).
+    if (msg->JuggyIdx == JuggyIndex)
+        JuggyShieldOn = msg->ShieldOn ? 1 : 0;
+    return sizeof(CrownShieldMsg_t);
+}
+
 static int crownOnReceiveState(void * connection, void * data)
 {
     // The host is authoritative and never applies incoming snapshots.
@@ -532,8 +602,10 @@ static int crownOnReceiveState(void * connection, void * data)
     StateSeq = msg->Seq;
 
     int newJuggy = msg->JuggyIdx;
-    if (newJuggy != JuggyIndex && newJuggy >= 0 && newJuggy < GAME_MAX_PLAYERS)
+    if (newJuggy != JuggyIndex && newJuggy >= 0 && newJuggy < GAME_MAX_PLAYERS) {
         announceJuggy(newJuggy);
+        juggyResetShieldForNewJuggy();   // default shielded until the juggy says otherwise
+    }
     JuggyIndex = (newJuggy >= 0 && newJuggy < GAME_MAX_PLAYERS) ? newJuggy : -1;
 
     PickupActive = msg->PickupActive ? 1 : 0;
@@ -570,6 +642,7 @@ static void hostCrownPlayer(int idx, int gameTime)
     JuggyIndex = idx;
     PickupActive = 0;
     announceJuggy(idx);
+    juggyResetShieldForNewJuggy();
     hostCommitAndBroadcast();
 }
 
@@ -664,13 +737,29 @@ static void juggySetMaxHealth(Player * player, int health)
     // Never write to a dead player's moby: during death the hero moby/pVar can
     // be torn down (dangling pointer), and writing pVar+0x30 there corrupts
     // memory -> later null load in game code (the pc=0x49e1fc TLB miss on juggy
-    // death). Respawn re-initializes max health anyway, so deferring is safe.
+    // death). NOTE: respawn resets current health but NOT max, so callers must
+    // re-assert max on the first alive tick rather than assuming respawn cleans
+    // it up (see the restore branch in processPlayer).
     if (!player || playerIsDead(player) || !player->pMoby || !player->pMoby->pVar)
         return;
 
     playerObfuscate((u32)&player->maxHP, health, OBFUSCATE_MODE_HEALTH);
     *(float*)((u32)player->pMoby->pVar + 0x30) = (float)health;
 }
+
+#if JUGGERNAUT_JUGGY_SHIELD
+// Destroy this player's cosmetic shield moby, if present. Mirrors the scan in
+// playerHasShield (shield moby stores its owner at pVar+0x40).
+static void juggyRemoveShield(Player * player)
+{
+    Moby * shield = mobyListGetStart();
+    while ((shield = mobyFindNextByOClass(shield, MOBY_ID_OMNI_SHIELD))) {
+        if (shield->pVar && *(u32*)((u32)shield->pVar + 0x40) == (u32)player)
+            mobyDestroy(shield);
+        ++shield;
+    }
+}
+#endif
 
 static void processPlayer(Player * player)
 {
@@ -683,7 +772,12 @@ static void processPlayer(Player * player)
 
     if (idx == JuggyIndex) {
         // Raise max health once per juggy role (per-player, no global POKE).
-        if (!MaxHealthSet[idx] && player->pMoby && player->pMoby->pVar) {
+        // OWNER ONLY: playerObfuscate scatter-writes a shared global table keyed
+        // by field address/value; doing it for a remote mirror corrupts the table
+        // the game uses to read every player's health AND state. Health/death is
+        // owner-authoritative (state is broadcast, hitPoints is never synced), so
+        // the remote max value is unused anyway -- there is no remote health bar.
+        if (!MaxHealthSet[idx] && player->isLocal && player->pMoby && player->pMoby->pVar) {
             juggySetMaxHealth(player, JUGGERNAUT_BUFFED_HEALTH);
             MaxHealthSet[idx] = 1;
         }
@@ -701,19 +795,45 @@ static void processPlayer(Player * player)
             for (w = 0; w < (int)JUGGERNAUT_WEAPON_COUNT; ++w)
                 playerGiveWeaponUpgrade(player, JUGGERNAUT_WEAPONS[w]);
 
-#if JUGGERNAUT_JUGGY_SHIELD
-            // Only the owning client gives the shield (it spawns a replicated
-            // moby). Guard against double-giving within a life.
-            if (!playerHasShield(player))
-                playerGiveShield(player);
-#endif
-
             Buffed[idx] = 1;
         }
+
+#if JUGGERNAUT_JUGGY_SHIELD
+        // Cosmetic shield "still-buffed" tell. The juggy's own client is the
+        // only one that knows its health, so it decides on/off (shielded while
+        // above base max health) and broadcasts the flag; every client renders
+        // from JuggyShieldOn. We only ever apply a real shield to REMOTE mirrors
+        // (owner-side absorption would make the local juggy unkillable), unless
+        // JUGGERNAUT_JUGGY_SHIELD_LOCAL is set to also draw it on the own screen.
+        if (player->isLocal)
+            juggyUpdateShieldState(!playerIsDead(player)
+                                   && playerGetHealth(player) > JUGGERNAUT_BASE_HEALTH);
+
+        {
+            int show = JuggyShieldOn && !playerIsDead(player)
+                       && player->pMoby && player->pMoby->pVar;
+#if !JUGGERNAUT_JUGGY_SHIELD_LOCAL
+            if (player->isLocal)
+                show = 0;   // keep the bubble off the juggy's own view
+#endif
+            if (show) {
+                if (!playerHasShield(player))
+                    playerGiveShield(player);
+            } else if (playerHasShield(player)) {
+                juggyRemoveShield(player);
+            }
+        }
+#endif
     } else {
-        // Not (or no longer) the juggy: restore base max health once. V2 weapons
-        // clear naturally on the next respawn.
-        if (MaxHealthSet[idx]) {
+        // Not (or no longer) the juggy: restore base max health. Owner only
+        // (see the raise path above -- never touch a remote mirror's health).
+        // DEFERRED until alive: juggySetMaxHealth won't write a dead player's
+        // moby, and respawn does NOT reset max, so clearing the latch on the
+        // death tick would strand the ex-juggy at buffed max (30) with base
+        // respawn health (15) => a permanent 50% health bar. Keep the latch set
+        // until the restore actually lands on the first alive tick.
+        // V2 weapons clear naturally on the next respawn.
+        if (MaxHealthSet[idx] && player->isLocal && !playerIsDead(player)) {
             juggySetMaxHealth(player, JUGGERNAUT_BASE_HEALTH);
             MaxHealthSet[idx] = 0;
         }
@@ -752,6 +872,10 @@ static void resetState(void)
     memset(Buffed, 0, sizeof(Buffed));
     memset(MaxHealthSet, 0, sizeof(MaxHealthSet));
 
+    JuggyShieldOn = 1;
+    ShieldLastSent = -1;
+    ShieldNextResend = 0;
+
     crownSpriteDestroy();
     juggMapSetVisible(0);   // hide the minimap icon between matches (widget kept)
 }
@@ -764,6 +888,7 @@ static void initialize(void)
 
     if (!HandlerInstalled) {
         netInstallCustomMsgHandler(CROWN_MSG_ID_STATE, &crownOnReceiveState);
+        netInstallCustomMsgHandler(CROWN_MSG_ID_SHIELD, &crownOnReceiveShield);
         HandlerInstalled = 1;
     }
 
