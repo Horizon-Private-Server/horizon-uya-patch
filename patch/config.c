@@ -173,6 +173,16 @@ MenuElem_ListData_t dataPlayerSyncRate = {
     .items = { "High", "Med", "Low", "Very Low" }
 };
 
+MenuElem_ListData_t dataGameServers = {
+    .value = &config.preferredGameServer,
+    .stateHandler = NULL,
+    .count = 2,
+    .items = {
+      "US Central",
+      "Europe"
+    }
+};
+
 MenuElem_RangeData_t dataFieldOfView = {
     .value = &config.playerFov,
     .stateHandler = NULL,
@@ -511,6 +521,7 @@ MenuElem_t menuElementsGeneral[] = {
 #endif
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
+  { "Game Server (Host)", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameServers, "Which game server you'd like to use when creating a game. Takes effect the next time you create a game." },
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },

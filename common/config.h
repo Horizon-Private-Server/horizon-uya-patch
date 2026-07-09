@@ -39,6 +39,7 @@ typedef struct PatchConfig {
   char hideFluxReticle;
   char dlStyleFlips;
   char enableTeamInfo;
+  char preferredGameServer;
   char kothScrollSpeed;
   char kothHillTransparency;
   char kothHillFxId;
