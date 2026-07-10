@@ -24,6 +24,8 @@
 
 #define KOTH_ENABLE_HILL_SYNC 1
 #define KOTH_FADE_WARNING 1
+#define KOTH_FADE_MIN_TRANSPARENCY 0.2f
+#define KOTH_FADE_FREQUENCY 0.6f
 #define KOTH_SIEGE_USE_BOLT_CRANK 1
 #define KOTH_CUBOID_SCALE 1.0f
 #define KOTH_RING_HEIGHT_SCALE 1.0f
@@ -1821,23 +1823,45 @@ static void kothCheckVictory(void)
     }
 }
 
+static float fmodf(float x, float y)
+{
+    float quotient = x / y;
+    int truncated = (int)quotient;
+    return x - ((float)truncated * y);
+}
+
+#if KOTH_FADE_WARNING
+// Fade/pulse as we approach hill rotation.
 static float kothGetBlinkScale(void)
 {
-#if KOTH_FADE_WARNING
-    // Fade/pulse as we approach hill rotation.
     float fadeScale = 1.0f;
     const int warnMs = 10 * TIME_SECOND;
     int timeLeft = kothGetCurrentHillTimeLeftMs();
+
     if (timeLeft > 0 && timeLeft < warnMs) {
-        int seconds = timeLeft / TIME_SECOND;
-        int phase = seconds & 1; // toggle each second
-        fadeScale = phase ? 1.0f : 0.0f;
+        float t = (float)timeLeft / (float)TIME_SECOND;
+
+        // Convert time into an angle (radians) for a periodic wave
+        float angle = t * KOTH_FADE_FREQUENCY * 2.0f * MATH_PI;
+
+        // Wrap angle into [0, 2π) so cosf() operates on a sane range
+        // and floating point precision doesn't degrade over large angles.
+        angle = fmodf(angle, 2.0f * MATH_PI);
+        if (angle < 0.0f) {
+            angle += 2.0f * MATH_PI;
+        }
+
+        float wave = 0.5f + 0.5f * cosf(angle);
+
+        // Remap the 0–1 wave into [KOTH_FADE_MIN_TRANSPARENCY, 1.0]
+        fadeScale = KOTH_FADE_MIN_TRANSPARENCY + (1.0f - KOTH_FADE_MIN_TRANSPARENCY) * wave;
     }
+    
     return fadeScale;
-#else
-    return 1.0f;
-#endif
 }
+#else
+static float kothGetBlinkScale(void) { return 1.0f; }
+#endif
 
 static int kothGetCurrentHillTimeLeftMs(void)
 {
