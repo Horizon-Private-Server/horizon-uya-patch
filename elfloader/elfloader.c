@@ -211,6 +211,8 @@ u32 _addr = 0, _size = 0;
 void hook2()
 {
   int i;
+  u32 preserveStart;
+  u32 preserveEnd;
 
   // remove timer handlers
   DIntr();
@@ -227,13 +229,18 @@ void hook2()
 	//Taken from Open PS2 Loader's elfldr.c
 	ResetEE(0x7f);
 
-	/* Clear user memory */
+	/* Clear user memory, but preserve the staged ELF until load_elf_ram can copy it. */
+	preserveStart = _addr & ~0x3f;
+	preserveEnd = (_addr + _size + 0x3f) & ~0x3f;
 	for (i = 0x00100000; i < 0x02000000; i += 64) {
+		if (i >= preserveStart && i < preserveEnd)
+			continue;
+
 		__asm__ (
-			"\tsq $0, 0(%0) \n"
-			"\tsq $0, 16(%0) \n"
-			"\tsq $0, 32(%0) \n"
-			"\tsq $0, 48(%0) \n"
+			"	sq $0, 0(%0) \n"
+			"	sq $0, 16(%0) \n"
+			"	sq $0, 32(%0) \n"
+			"	sq $0, 48(%0) \n"
 			:: "r" (i)
 		);
 	}
