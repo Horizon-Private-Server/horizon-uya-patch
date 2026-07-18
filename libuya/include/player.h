@@ -1011,7 +1011,7 @@ typedef struct HeroSpecialIdleDef { // 0x10
 	/* 0xc */ int repeatTimer;
 } HeroSpecialIdleDef;
 
-typedef struct Player { // 0x4500
+typedef struct Hero { // 0x4500
 	/* 0x0000 */ struct Guber guber;
 	/* 0x0020 */ MATRIX mtx;
 	/* 0x0060 */ MATRIX invMtx;
@@ -1127,7 +1127,7 @@ typedef struct Player { // 0x4500
 	/* 0x1a80 */ GadgetEvent gadgetEventSlots[10];
 	/*        */ int unk_1da0;
 	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;
-	/* 0x1da8 */ struct Player *GadgetBox; // Doesn't work at all like Deadlocked's
+	/* 0x1da8 */ struct Hero *GadgetBox; // Doesn't work at all like Deadlocked's
 	/* 0x1dac */ short unk_1dac;
 	/* 0x1dae */ short unk_1dae;
 	/*        */ char unk_1db0[0x10];
@@ -1156,7 +1156,7 @@ typedef struct Player { // 0x4500
 	/* 0x2454 */ Moby *pHeadTargetMoby;
 	/* 0x2458 */ Moby *pSheepMoby;
 	/* 0x245c */ Moby *pWhoHitMe;
-	/* 0x2460 */ struct Player *pWhoSheepedMe;
+	/* 0x2460 */ struct Hero *pWhoSheepedMe;
 	/* 0x2464 */ int sheepMeLongTime;
 	/* 0x2468 */ float stickStrength;
 	/* 0x246c */ float stickRawAngle;
@@ -1284,9 +1284,9 @@ typedef struct Player { // 0x4500
 	/*        */ char syncFrameOffset;
 		} RemoteHero;
 	};
-} Player;
+} Hero;
 
-typedef Player Hero;
+typedef Hero Player;
 
 typedef void (*PlayerUpdate_Func)(Player *player);
 typedef int (*GetMoby_Func)(Player *player);
