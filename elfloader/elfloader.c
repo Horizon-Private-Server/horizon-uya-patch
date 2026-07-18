@@ -7,9 +7,9 @@
 #define GS_BGCOLOUR	*((vu32*)0x120000e0)
 
 #ifdef UYA_PAL
-#define UNKNOWN_FUNCTION_00 (0)
-#define LoadExecPS2_Hook ((u32*)0x00125ea8)
-#define RebootToFrontEnd_Func (0)
+#define UNKNOWN_FUNCTION_00 (0x006dd340)
+#define LoadExecPS2_Hook (0x00125ea8)
+#define RebootToFrontEnd_Func (0x0059dad0)
 #else
 #define UNKNOWN_FUNCTION_00 (0x006da7e0)
 #define LoadExecPS2_Hook (0x00125ea8)

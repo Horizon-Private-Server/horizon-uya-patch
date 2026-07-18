@@ -124,7 +124,7 @@ void onOnlineMenu(void)
   }
 
   // only show on main menu
-	if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0)
+	if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) == 0)
     return;
 
   gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
