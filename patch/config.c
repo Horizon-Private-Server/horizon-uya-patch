@@ -174,6 +174,16 @@ MenuElem_ListData_t dataPlayerSyncRate = {
     .items = { "High", "Med", "Low", "Very Low" }
 };
 
+MenuElem_ListData_t dataGameServers = {
+    .value = &config.preferredGameServer,
+    .stateHandler = NULL,
+    .count = 2,
+    .items = {
+      "US Central",
+      "Europe"
+    }
+};
+
 MenuElem_RangeData_t dataFieldOfView = {
     .value = &config.playerFov,
     .stateHandler = NULL,
@@ -363,6 +373,13 @@ MenuElem_ListData_t dataSetGatlingTurretHealth = {
     .items = { "Default", ".5x", "1.5x", "2x", "3x", "4x", "5x", "6x", "7x", "8x" }
 };
 
+MenuElem_ListData_t dataSmallTurrets = {
+    .value = &gameConfig.grNoBaseDefense_SmallTurrets,
+    .stateHandler = NULL,
+    .count = 3,
+    .items = { "On", "No Base Turrets", "Off" }
+};
+
 MenuElem_ListData_t dataRespawnTimer_Player = {
     .value = &gameConfig.grRespawnTimer_Player,
     .stateHandler = NULL,
@@ -416,7 +433,7 @@ MenuElem_ListData_t dataGameConfigPreset = {
     .value = &preset,
     .stateHandler = NULL,
     .count = 6,
-    .items = { "None", "Meta", "Competitive", "1v1", "Bot", "Siege"}
+    .items = { "None", "Meta (Base)", "Meta (No Base)", "1v1", "Bot", "Siege"}
 };
 
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
@@ -504,6 +521,7 @@ MenuElem_t menuElementsGeneral[] = {
 #endif
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
+  { "Game Server (Host)", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameServers, "Which game server you'd like to use when creating a game. Takes effect the next time you create a game." },
 #ifdef MAPBOOTELF
   { "Boot Map Downloader", buttonActionHandler, menuStateHandler_BootMapDownloaderStateHandler, downloadMapUpdatesSelectHandler },
 #endif
@@ -596,7 +614,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Gatling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGatlingTurretHealth, "Increase or decrease the amount of health each teams base turrets have." },
   { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive, "Let the Health and Ammo pads in each base always stay active, even if parts of the base are destroyed." },
   { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots, "toggle Troopers (and other bots) on or off." },
-  // { "Small Turrets", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_SmallTurrets },
+  { "Small Turrets", listActionHandler, menuStateHandler_CTFandSiege, &dataSmallTurrets },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever, "Double tap and hold R2 to chargeboot forever." },
@@ -2669,7 +2687,7 @@ void configMenuDisable(void)
     // force game config to preset
         switch (preset)
     {
-      case 1: // Meta
+      case 1: // Meta (Base)
       {
         // Game Rules
         gameConfig.grRadarBlipsDistance = 0; // Short
@@ -2703,13 +2721,13 @@ void configMenuDisable(void)
         gameConfig.prSurvivor = 0; // Off
         break;
       }
-      case 2: // Competitive
+      case 2: // Meta (No Base)
       {
         // Game Rules
         gameConfig.grRadarBlipsDistance = 0; // Short
         gameConfig.grRespawnTimer_Player = 0; // 1.5 Seconds
         gameConfig.grRespawnInvincibility = 0; // Off
-        gameConfig.grDisablePenaltyTimers = 0; // On
+        gameConfig.grDisablePenaltyTimers = 1; // Off
         gameConfig.grDisableWeaponPacks = 1; // Off
         gameConfig.grV2s = 0; // On
         gameConfig.grNoCooldown = 1; // Cooldown disabled
@@ -2728,9 +2746,10 @@ void configMenuDisable(void)
         gameConfig.grDisablePlayerTurrets = 1; // Disabled
         gameConfig.grDestructableBridges = 0; // Enabled
         // Base / Node mods
-        gameConfig.grSetGatlingTurretHealth = 0; // Default
+        gameConfig.grSetGatlingTurretHealth = 1; // .5x
         gameConfig.grBaseHealthPadActive = 0; // Off
         gameConfig.grNoBaseDefense_Bots = 1; // Off
+        gameConfig.grNoBaseDefense_SmallTurrets = 1;
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
         gameConfig.prLoadoutWeaponsOnly = 0; // Off
@@ -2784,6 +2803,7 @@ void configMenuDisable(void)
         gameConfig.grSetGatlingTurretHealth = 1; // .5x
         gameConfig.grBaseHealthPadActive = 0; // Off
         gameConfig.grNoBaseDefense_Bots = 1; // Off
+        gameConfig.grNoBaseDefense_SmallTurrets = 1;
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
         gameConfig.prLoadoutWeaponsOnly = 0; // Off
@@ -2823,6 +2843,7 @@ void configMenuDisable(void)
         gameConfig.grSetGatlingTurretHealth = 4; // 3x
         gameConfig.grBaseHealthPadActive = 0; // Off
         gameConfig.grNoBaseDefense_Bots = 1; // Off
+        gameConfig.grNoBaseDefense_SmallTurrets = 1;
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
         gameConfig.prLoadoutWeaponsOnly = 0; // Off

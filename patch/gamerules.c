@@ -123,6 +123,11 @@ u32 onGameplayLoad(void* a0, long a1)
 	if (gameConfig.grNoBaseDefense_SmallTurrets)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_NODE_TURRET, 100);
 
+	if (gameConfig.grNoBaseDefense_SmallTurrets) {
+		bool hideAll = gameConfig.grNoBaseDefense_SmallTurrets - 1;
+		onGameplayLoad_hideTeamNodeTurrets(gameplay, hideAll);
+	}
+
 	if (gameConfig.grRespawnTimer_HealthBoxes || gameConfig.grRespawnTimer_WeaponCrates || gameConfig.grRespawnTimer_AmmoPickups)
 		onGameplayLoad_miscRespawnTimers(gameplay);
 
@@ -199,11 +204,6 @@ void grGameStart(void)
 	if (gameConfig.grSetGatlingTurretHealth && !HasSetGatlingTurretHealth)
 		HasSetGatlingTurretHealth = setGatlingTurretHealth(gameConfig.grSetGatlingTurretHealth);
 
-	if (gameConfig.grNoBaseDefense_SmallTurrets && !HasDisableSiegeNodeTurrets) {
-		deleteNodeTurretsUpdate();
-		HasDisableSiegeNodeTurrets = deleteSiegeNodeTurrets();
-	}
-
 	if (gameConfig.prChargebootForever)
 		chargebootForever();
 	
@@ -277,8 +277,10 @@ void grLobbyStart(void)
 		if (gameConfig.grNoBaseDefense_Bots)
 			gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_Bots = 0;
 		
-		if (gameConfig.grNoBaseDefense_SmallTurrets)
-			gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = 0;
+		// no longer needed, but kept here for rememberance.
+		// main issue: froze due to guber bug in siege.
+		// if (gameConfig.grNoBaseDefense_SmallTurrets)
+		// 	gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets = 0;
 	} else {
 		// If we're not in staging then reset
 		GameRulesInitialized = 0;

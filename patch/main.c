@@ -28,6 +28,7 @@
 #include <libuya/guber.h>
 #include <libuya/music.h>
 #include <libuya/team.h>
+#include <libuya/hud.h>
 #include "module.h"
 #include "messageid.h"
 #include "config.h"
@@ -117,6 +118,7 @@ const char * regionStr = "NTSC: ";
 #endif
 int lastLodLevel = 2;
 short int QuickSelectTimeCurrent = 0;
+int flagTrackedLastCarrierIdx[2] = {-1, -1};
 
 #if DSCRPRINT
 #define MAX_DEBUG_SCR_PRINT_LINES       (16)
@@ -131,6 +133,7 @@ extern int _correctTieLod_Jump;
 extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern VariableAddress_t vaFlagUpdate_Func;
+extern void FlushCache(int);
 extern MenuElem_ListData_t dataCustomMaps;
 #ifdef SCAVENGER_HUNT
 extern scavHuntEnabled;
@@ -160,6 +163,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.hideFluxReticle = 0,
 	.dlStyleFlips = 0,
 	.enableTeamInfo = 0,
+	.preferredGameServer = 0,
 	.kothScrollSpeed = 0,
 	.kothHillTransparency = 0,
 	.kothHillFxId = FX_VISIBOMB_HORIZONTAL_LINES,
@@ -178,15 +182,6 @@ PatchPointers_t patchPointers = {
   .ServerTimeHour = 0,
   .ServerTimeMinute = 0,
   .ServerTimeSecond = 0,
-};
-
-struct FlagPVars {
-	VECTOR BasePosition;
-	short CarrierIdx;
-	short LastCarrierIdx;
-	short Team;
-	char UNK_16[6];
-	int TimeFlagDropped;
 };
 
 #if DSCRPRINT
@@ -291,7 +286,7 @@ void sendMACAddress(void)
 //------------------------------------------------------------------------------
 void requestServerTime(void)
 {
-  void* connection = netGetLobbyServerConnection();
+	void* connection = netGetLobbyServerConnection();
 	if (!connection) return;
 	
 	netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_DATE_SETTINGS, 0, NULL);
@@ -1244,6 +1239,81 @@ void patchMapAndScoreboardToggle(void)
 }
 
 /*
+ * NAME :		flagGetTrackerIndex
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :		
+ */
+int flagGetTrackerIndex(Moby* flagMoby)
+{
+	if (!flagMoby)
+		return -1;
+
+	switch (flagMoby->oClass) {
+		case MOBY_ID_CTF_RED_FLAG: return 0;
+		case MOBY_ID_CTF_BLUE_FLAG: return 1;
+		default: return -1;
+	}
+}
+
+/*
+ * NAME :		flagClearTrackedLastCarrier
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :		
+ */
+void flagClearTrackedLastCarrier(Moby* flagMoby)
+{
+	int flagIdx = flagGetTrackerIndex(flagMoby);
+	if (flagIdx >= 0)
+		flagTrackedLastCarrierIdx[flagIdx] = -1;
+}
+
+/*
+ * NAME :		flagTrackCarrier
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :		
+ */
+void flagTrackCarrier(Moby* flagMoby, flagPVars_t* pvars)
+{
+	int flagIdx = flagGetTrackerIndex(flagMoby);
+	if (flagIdx < 0 || !pvars)
+		return;
+
+	if (pvars->carrierIdx >= 0 && pvars->carrierIdx < GAME_MAX_PLAYERS) {
+		flagTrackedLastCarrierIdx[flagIdx] = pvars->carrierIdx;
+		return;
+	}
+
+	if (flagIsAtBase(flagMoby))
+		flagTrackedLastCarrierIdx[flagIdx] = -1;
+}
+
+/*
+ * NAME :		flagGetLastCarrierIdx
+ * DESCRIPTION :
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :		
+ */
+int flagGetLastCarrierIdx(Moby* flagMoby)
+{
+	int flagIdx = flagGetTrackerIndex(flagMoby);
+	if (flagIdx >= 0 && flagTrackedLastCarrierIdx[flagIdx] >= 0)
+		return flagTrackedLastCarrierIdx[flagIdx];
+
+	return -1;
+}
+
+/*
  * NAME :		flagHandlePickup
  * DESCRIPTION :
  * NOTES :
@@ -1258,7 +1328,7 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 	if (!player || !flagMoby)
 		return;
 	
-	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
+	flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
 	if (!pvars)
 		return;
 
@@ -1279,9 +1349,13 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 		return;
 
 	// Handle pickup/return
-	if (player->mpTeam == pvars->Team) {
+	if (player->mpTeam == pvars->team) {
 		flagReturnToBase(flagMoby, 0, pIdx);
+		flagClearTrackedLastCarrier(flagMoby);
 	} else {
+		int flagIdx = flagGetTrackerIndex(flagMoby);
+		if (flagIdx >= 0)
+			flagTrackedLastCarrierIdx[flagIdx] = pIdx;
 		flagPickup(flagMoby, pIdx);
 		player->flagMoby = flagMoby;
 	}
@@ -1307,7 +1381,7 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
 	if (!player || !flagMoby)
 		return;
 	
-	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
+	flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
 	if (!pvars)
 		return;
 
@@ -1333,6 +1407,37 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
 	}
 }
 
+static int flagPickupDelayReady(Moby* flagMoby, flagPVars_t* pvars, Player* player, int gameTime)
+{
+	int lastCarrierIdx;
+
+	if (!flagMoby || !pvars || !player)
+		return 0;
+
+	if (gameConfig.customModeId == CUSTOM_MODE_MIDFLAG) // Logic doesnt work for midflag
+		return 1;
+
+	if (flagIsAtBase(flagMoby))
+		return 1;
+
+	lastCarrierIdx = flagGetLastCarrierIdx(flagMoby);
+	if (player->mpIndex == lastCarrierIdx) {
+		// self: player who dropped the flag
+		if ((pvars->timeFlagDropped + (TIME_SECOND * 1.5)) > gameTime)
+			return 0;
+	} else if (player->mpTeam != pvars->team) {
+		// team: dropper's teammates
+		if ((pvars->timeFlagDropped + (TIME_SECOND * 0.5)) > gameTime)
+			return 0;
+	} else {
+		// enemy: flag's own team returning it
+		if ((pvars->timeFlagDropped + (TIME_SECOND * 0.5)) > gameTime)
+			return 0;
+	}
+
+	return 1;
+}
+
 /*
  * NAME :		customFlagLogic
  * DESCRIPTION :
@@ -1349,11 +1454,13 @@ void customFlagLogic(Moby* flagMoby)
 	Player** players = playerGetAll();
 	int gameTime = gameGetTime();
 	GameOptions* gameOptions = gameGetOptions();
-	struct FlagPVars* pvars = (struct FlagPVars*)flagMoby->pVar;
+	flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
 
 	// if flag moby or pvars don't exist, stop.
 	if (!flagMoby || !pvars)
 		return;
+
+	flagTrackCarrier(flagMoby, pvars);
 
     // if flag state is not 1 (being picked up) and if flag is returning to base
     if (flagMoby->state != 1 || flagIsReturning(flagMoby))
@@ -1364,13 +1471,11 @@ void customFlagLogic(Moby* flagMoby)
         return;
     
 	// return to base if flag has been idle for 40 seconds and not already at base.
-	if ((pvars->TimeFlagDropped + (TIME_SECOND * 40)) < gameTime && !flagIsAtBase(flagMoby) && !flagIsAtBase(flagMoby)) {
+	if ((pvars->timeFlagDropped + (TIME_SECOND * 40)) < gameTime && !flagIsAtBase(flagMoby) && !flagIsAtBase(flagMoby)) {
 		flagReturnToBase(flagMoby, 0, 0xff);
+		flagClearTrackedLastCarrier(flagMoby);
 		return;
 	}
-
-    if ((pvars->TimeFlagDropped + (TIME_SECOND * 1.5)) > gameTime)
-        return;
 
     for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
         Player* player = players[i];
@@ -1404,15 +1509,18 @@ void customFlagLogic(Moby* flagMoby)
 		if (sqrDistance > (2*2))
 			continue;
 
+		if (!flagPickupDelayReady(flagMoby, pvars, player, gameTime))
+			continue; // Gate here for flag pickup delay
+
 		// player is on different team than flag and player isn't already holding flag
-		if (player->mpTeam != pvars->Team) {
+		if (player->mpTeam != pvars->team) {
 			if (!player->flagMoby) {
 				flagRequestPickup(flagMoby, player->mpIndex);
 				return;
 			}
 		} else {
 			// if player is on same team as flag and close enough to return it
-			vector_subtract(t, pvars->BasePosition, flagMoby->position);
+			vector_subtract(t, pvars->basePos, flagMoby->position);
 			float sqrDistanceToBase = vector_sqrmag(t);
 			if (sqrDistanceToBase > 0.1) {
 				flagRequestPickup(flagMoby, player->mpIndex);
@@ -1457,7 +1565,9 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
 	GuberMoby* gm = (GuberMoby*)guberGetObjectByUID(msg.FlagUID);
 	if (gm && gm->Moby) {
 		Moby* flagMoby = gm->Moby;
-		flagHandlePickup(flagMoby, msg.PlayerId);
+		flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
+		if (pvars && flagPickupDelayReady(flagMoby, pvars, remotePlayer, gameGetTime()))
+			flagHandlePickup(flagMoby, msg.PlayerId);
 	}
 	return sizeof(ClientRequestPickUpFlag_t);
 }
@@ -1489,6 +1599,8 @@ void patchCTFFlag(void)
 		if (flagFunc) {
 			*(u32*)flagFunc = 0x03e00008;
 			*(u32*)(flagFunc + 0x4) = 0x0000102D;
+			FlushCache(0); // ensure execution does not use stale cached code
+			FlushCache(2);
 		}
 		patched.ctfLogic = 1;
 	}
@@ -1712,25 +1824,22 @@ void runCampaignMusic(void)
 }
 
 /*
- * NAME :		patchAimAssist
- * DESCRIPTION :	Disables Aim Assist for player weapons
+ * NAME :		patchCameraPull
+ * DESCRIPTION :	Disables Camera Pull for player weapons
  * NOTES :
  * ARGS : 
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void patchAimAssist(void)
+void patchCameraPull(void)
 {
-	if (patched.config.aimAssist)
-		return;
 
 	Player* p = playerGetFromSlot(0);
-	p->fps.vars.cameraZ.target_slowness_factor_quick = 0;
-	p->fps.vars.cameraZ.target_slowness_factor_aim = 0;
-	p->fps.vars.cameraY.target_slowness_factor = 0;
-	p->fps.vars.cameraY.strafe_turn_factor = 0;
-	p->fps.vars.cameraY.strafe_tilt_factor = 0;
-	patched.config.aimAssist = 1;
+	// p->fps.vars.cameraZ.target_slowness_factor_quick = 0; // doesn't do anything
+	// p->fps.vars.cameraZ.target_slowness_factor_aim = 0; // how much aim assist "locks onto" enemies X/horizontally
+	// p->fps.vars.cameraY.target_slowness_factor = 0; // how much aim assist "locks onto" enemies Y/vertically
+	p->fps.vars.cameraY.strafe_turn_factor = 0; // camera pull var 1
+	p->fps.vars.cameraY.strafe_tilt_factor = 0; //camera pull var 2
 }
 
 /*
@@ -1772,6 +1881,9 @@ void teamInfo(void)
 			gfxDrawHUDIcon(SPRITE_WEAPON_GRAVITY_BOMB, width_start * 3, height_start - (height_step * height_spacing), 16, gbomb_color);
 			gfxDrawHUDIcon(SPRITE_WEAPON_GLITZ_GUN, width_start * 4 , height_start - (height_step * height_spacing), 16, blitz_color);
 			gfxDrawHUDIcon(SPRITE_WEAPON_FLUX_RIFLE_4, width_start * 5, height_start - (height_step * height_spacing), 16, flux_color);
+			if (p->flagMoby) {
+				gfxDrawHUDIcon(SPRITE_FLAG, width_start * 6, height_start - (height_step * height_spacing), 16, icon_colors[0]);
+			}
 			height_spacing +=1;
 		}
 	}
@@ -2340,7 +2452,10 @@ void onMobyUpdate(Moby* moby)
 {
 	if (gameConfig.grNewPlayerSync) {
 		playerSyncTick();
-		processGameModules();
+		// KOTH already runs through the normal main-loop module pass. Skip the
+		// extra NPS-side dispatch so KOTH doesn't tick twice per frame.
+		if (gameConfig.customModeId != CUSTOM_MODE_KOTH)
+			processGameModules();
 
 		((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);
 
@@ -2441,7 +2556,7 @@ void runGameStartMessager(void)
 				netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_GAME_LOBBY_STARTED, 0, gameSettings);
 
 			// request server time
-			requestServerTime();
+			// requestServerTime();
 
 			#ifdef SCAVENGER_HUNT
 			// request latest scavenger hunt settings
@@ -2583,6 +2698,19 @@ void runCheckGameMapInstalled(void)
 		patchHeadsetSprite(gs, i);
 	}
 }
+
+bool setPlayerHudTexture(HANDLE_ID container, SpriteTex_Hud_e texture) {
+	// 0x50013 maps to current player's icon, 14 the 2nd player, 15 the 3rd, and so on
+	int playerNum = container - 0x50013;
+	Player ** players = playerGetAll();
+	Player* player = players[playerNum]; 
+	SpriteTex_Hud_e tex = texture;
+	if (player->flagMoby) {
+		tex = SPRITE_HUD_FLAG;
+	}
+	return hudSetSprite(container, tex);
+}
+
 
 /*
  * NAME :		setupPatchConfigInGame
@@ -2859,7 +2987,7 @@ int main(void)
 	}
 
 	//
-  	netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
+  	// netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, &onClientVoteToEndRemote);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, &onClientVoteToEndStateUpdateRemote);
 	
@@ -2921,7 +3049,7 @@ int main(void)
 	runVoteToEndLogic();
 
 	// Holiday easter eggs!
-	runHolidays();
+	// runHolidays();
 
 	patchColors();
 
@@ -2944,6 +3072,9 @@ int main(void)
 
 		HOOK_JAL(GetAddress(&vaGameTimeUpdate_Hook), GetAddress(&vaNWUpdate_Func)); // poll nwupdate instead of updatepad for consistent game time
 
+		// replace player arrow with flag sprite on map when someone is holding flag
+		HOOK_JAL(GetAddress(&vaSetTextureArrow_Hook), &setPlayerHudTexture);
+
 		// Patch Dead Jumping/Crouching
 		patchDeadJumping();
 
@@ -2963,7 +3094,7 @@ int main(void)
 		patchSniperWallSniping();
 
 		// Patch bug if too close to swingshot, weaepons don't appear/shoot.
-		patchSwingshotGunBug();
+		// patchSwingshotGunBug();
 
 		// Patches FOV to let it be user selectable.
 		if (config.playerFov != 0)
@@ -3007,7 +3138,7 @@ int main(void)
 		patchMapAndScoreboardToggle();
 
 		if (config.aimAssist)
-			patchAimAssist();
+			patchCameraPull();
 
 		// Patch hiding of Flux Reticle
 		patchHideFluxReticle();

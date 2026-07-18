@@ -4,7 +4,6 @@ VariableAddress_t vaWeaponPackSpawnFunc;
 VariableAddress_t vaCheckWeaponKill;
 VariableAddress_t vaUpdateWeaponKill;
 VariableAddress_t vaDM_PressXToRespawn;
-VariableAddress_t vaNodeTurret_UpdateFunc;
 VariableAddress_t vaCameraShakeFunc;
 VariableAddress_t vaDM_RespawnUpdater;
 VariableAddress_t vaRespawnTimerFunc_Player;

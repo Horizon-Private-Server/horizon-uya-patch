@@ -121,37 +121,6 @@ VariableAddress_t vaDM_PressXToRespawn = {
 };
 
 //================================================
-//=============  deleteNodeTurretsUpdate
-//================================================
-VariableAddress_t vaNodeTurret_UpdateFunc = {
-#if UYA_PAL
-    .Lobby = 0,
-    .Bakisi = 0x0041ef60,
-    .Hoven = 0x004209b8,
-    .OutpostX12 = 0x004178e8,
-    .KorgonOutpost = 0x00414f58,
-    .Metropolis = 0x004147e8,
-    .BlackwaterCity = 0x00410650,
-    .CommandCenter = 0x0041acc0,
-    .BlackwaterDocks = 0x0041d510,
-    .AquatosSewers = 0x0041c828,
-    .MarcadiaPalace = 0x0041c190,
-#else
-    .Lobby = 0,
-    .Bakisi = 0x0041e6f8,
-    .Hoven = 0x00420088,
-    .OutpostX12 = 0x00416fd0,
-    .KorgonOutpost = 0x004146e8,
-    .Metropolis = 0x00413f80,
-    .BlackwaterCity = 0x0040fda0,
-    .CommandCenter = 0x0041a488,
-    .BlackwaterDocks = 0x0041ccc0,
-    .AquatosSewers = 0x0041bff0,
-    .MarcadiaPalace = 0x0041b940,
-#endif
-};
-
-//================================================
 //=============  disableCameraShake
 //================================================
 VariableAddress_t vaCameraShakeFunc = {

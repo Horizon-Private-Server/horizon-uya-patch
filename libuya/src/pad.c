@@ -69,8 +69,8 @@ void padUpdate(void)
     memcpy(LocalPadHistory+2, LocalPadHistory+0, 6);
     memcpy(LocalPadHistory+3, LocalPadHistory+1, 6);
 
-    memcpy(LocalPadHistory, &P1_PAD->buffer.btns, 6);
-    memcpy(LocalPadHistory+1, &P2_PAD->buffer.btns, 6);
+    memcpy(LocalPadHistory, &P1_PAD->btns, 6);
+    memcpy(LocalPadHistory+1, &P2_PAD->btns, 6);
 }
 
 /*
@@ -89,8 +89,8 @@ int padGetButton(int port, u16 buttonMask)
 {
     switch (port)
     {
-        case 0: return (P1_PAD->buffer.btns & buttonMask) == 0;
-        case 1: return (P2_PAD->buffer.btns & buttonMask) == 0;
+        case 0: return (P1_PAD->btns & buttonMask) == 0;
+        case 1: return (P2_PAD->btns & buttonMask) == 0;
         default: return -1;
     }
 }

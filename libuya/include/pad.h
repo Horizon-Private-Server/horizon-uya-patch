@@ -86,7 +86,7 @@ typedef struct PAD { // 0x5c0
 				unsigned char r1_p;
 				unsigned char l2_p;
 				unsigned char r2_p;
-			} buffer;
+			};
 	};
 	/* 0x100 */ float analog[16];
 	/* 0x140 */ float hudAnalog[16];

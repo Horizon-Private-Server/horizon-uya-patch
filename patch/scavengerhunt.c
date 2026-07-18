@@ -292,7 +292,7 @@ void scavHuntSpawn(VECTOR position)
   vector_copy(moby->position, position);
   moby->updateDist = -1;
   moby->drawn = 1;
-  moby->opacity = 0x00;
+  moby->alpha = 0x00;
   moby->drawDist = 0x00;
 
   // update pvars

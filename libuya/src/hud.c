@@ -237,7 +237,7 @@ VariableAddress_t vaWidgetSetPosition = {
 
 VariableAddress_t vaWidgetSetColor = {
 #if UYA_PAL
-	.Lobby = 0,
+	.Lobby = 0x00611838,
 	.Bakisi = 0x004e3ba8,
 	.Hoven = 0x004e5cc0,
 	.OutpostX12 = 0x004db598,
@@ -249,7 +249,7 @@ VariableAddress_t vaWidgetSetColor = {
 	.AquatosSewers = 0x004d7460,
 	.MarcadiaPalace = 0x004d6de0,
 #else
-	.Lobby = 0,
+	.Lobby = 0x0060f120,
 	.Bakisi = 0x004e14e8,
 	.Hoven = 0x004e3540,
 	.OutpostX12 = 0x004d8e58,

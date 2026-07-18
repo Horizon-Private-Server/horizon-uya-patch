@@ -307,7 +307,7 @@ VARIABLE_FUNCTION(internal_WorldSpaceToScreenSpace, vaWorldSpaceToScreenSpace)
 VARIABLE_FUNCTION(gfxDrawScreenOverlay, vaDrawScreenOverlay)
 VARIABLE_FUNCTION(gfxDrawStrip, vaFastDrawStrip);
 VARIABLE_FUNCTION(gfxDrawStripInit, vaDrawStripInit)
-VARIABLE_FUNCTION(gfxAddRegister, vaVU0_addGSRegister)
+VARIABLE_FUNCTION(gfxAddRegister, vaVU1_addGSRegister)
 VARIABLE_FUNCTION(gfxWStoMapSpace, vaWorldSpaceToMapSpaceFromPosition)
 
 
@@ -528,7 +528,7 @@ VARIABLE_FUNCTION(hudCreateContainer, vaCreateWidgdetFrameContainer)
 VARIABLE_FUNCTION(hudCreateTextArea, vaCreateWidgetTextArea)
 VARIABLE_FUNCTION(hudCreateText, vaCreateWidgetText)
 VARIABLE_FUNCTION(hudCreateRectangle, vaCreateWidgetRectangle)
-VARIABLE_FUNCTION(hudCreateFrame,  vaCreateWidget3d_2D)
+VARIABLE_FUNCTION(hudCreate3d_2D,  vaCreateWidget3d_2D)
 
 VARIABLE_FUNCTION(hudSetSprite, vaWidgetSetTexture)
 VARIABLE_FUNCTION(hudSetColor, vaWidgetSetColor)

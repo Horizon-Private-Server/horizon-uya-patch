@@ -1011,7 +1011,7 @@ typedef struct HeroSpecialIdleDef { // 0x10
 	/* 0xc */ int repeatTimer;
 } HeroSpecialIdleDef;
 
-typedef struct Player { // 0x4500
+typedef struct Hero { // 0x4500
 	/* 0x0000 */ struct Guber guber;
 	/* 0x0020 */ MATRIX mtx;
 	/* 0x0060 */ MATRIX invMtx;
@@ -1127,7 +1127,7 @@ typedef struct Player { // 0x4500
 	/* 0x1a80 */ GadgetEvent gadgetEventSlots[10];
 	/*        */ int unk_1da0;
 	/* 0x1da4 */ GadgetEvent *pNextGadgetEvent;
-	/* 0x1da8 */ struct Player *GadgetBox; // Doesn't work at all like Deadlocked's
+	/* 0x1da8 */ struct Hero *GadgetBox; // Doesn't work at all like Deadlocked's
 	/* 0x1dac */ short unk_1dac;
 	/* 0x1dae */ short unk_1dae;
 	/*        */ char unk_1db0[0x10];
@@ -1156,7 +1156,7 @@ typedef struct Player { // 0x4500
 	/* 0x2454 */ Moby *pHeadTargetMoby;
 	/* 0x2458 */ Moby *pSheepMoby;
 	/* 0x245c */ Moby *pWhoHitMe;
-	/* 0x2460 */ struct Player *pWhoSheepedMe;
+	/* 0x2460 */ struct Hero *pWhoSheepedMe;
 	/* 0x2464 */ int sheepMeLongTime;
 	/* 0x2468 */ float stickStrength;
 	/* 0x246c */ float stickRawAngle;
@@ -1224,7 +1224,10 @@ typedef struct Player { // 0x4500
 	/* 0x2548 */ int mpTeam;
 	/* 0x254c */ int vehicleState;
 	/* 0x2550 */ int vehicleStateTimer;
-	/* 0x2554 */ int pointsLastKill;
+	/* 0x2554 */ char maxHP;
+	/* 0x2255 */ char unk_2255;
+	/* 0x2256 */ char unk_2256;
+	/* 0x2257 */ char unk_2257;
 	/* 0x2558 */ struct tNW_Player *pNetPlayer;
 	/* 0x255c */ tNW_PlayerStateMessage newStateMessage;
 	/* 0x2578 */ Moby *lastVehicleMoby;
@@ -1281,10 +1284,12 @@ typedef struct Player { // 0x4500
 	/*        */ char syncFrameOffset;
 		} RemoteHero;
 	};
-} Player;
+} Hero;
+
+typedef Hero Player;
 
 typedef void (*PlayerUpdate_Func)(Player *player);
-typedef int (*ReNewMe_Func)(Player *player);
+typedef int (*GetMoby_Func)(Player *player);
 typedef void (*HandleEvent_Func)(Player *player, GuberEvent *event);
 typedef int (*FriendlyToTeam_Func)(Player *player, int team);
 typedef void (*ResetHero_Func)(Moby *pHeroMoby, VECTOR *pos, VECTOR *rot, int mpIndex);
@@ -1296,7 +1301,6 @@ typedef int (*GetVehicleMoby_Func)(Player *player);
 typedef int (*IsMyLookCamDisabled_Func)(Player *player);
 typedef int (*AllowRemoteLedgeGrab_Func)(Player *player);
 typedef int (*GetSlot_Func)(Player *player);
-typedef int (*GetMoby_Func)(Player *player);
 
 typedef struct PlayerVTable
 {
@@ -1304,7 +1308,7 @@ typedef struct PlayerVTable
 /* 0x04 */ void * FUNC_04; // no pointer
 /* 0x08 */ void * FUNC_08; // just a return;
 /* 0x0c */ PlayerUpdate_Func Update;
-/* 0x10 */ ReNewMe_Func ReNewMe; // returns (player->pMoby)
+/* 0x10 */ GetMoby_Func GetMoby; // returns (player->pMoby)
 /* 0x14 */ HandleEvent_Func HandleEvent;
 /* 0x18 */ void * FUNC_18; // just a return;
 /* 0x1c */ FriendlyToTeam_Func FriendlyToTeam; // Retunrs True if friendly.
@@ -1326,20 +1330,6 @@ typedef struct PlayerVTable
 /* 0x5c */ void * FUNC_5c;
 /* 0x60 */ void * FUNC_60;
 /* 0x64 */ void * FUNC_64;
-/* 0x68 */ GetMoby_Func GetMoby; // Returns pMoby of player.
-/* 0x6c */ HandleEvent_Func HandleEvent2;
-/* 0x70 */ void * FUNC_70; // Just a return;
-/* 0x74 */ FriendlyToTeam_Func FriendlyToTeam2; // Retunrs True if friendly.
-/* 0x78 */ void * FUNC_78; //memset zero 0x4dc0 bytes
-/* 0x7c */ ResetHero_Func PlayerReset2;
-/* 0x80 */ void * FUNC_80;
-/* 0x84 */ void * FUNC_84;
-/* 0x88 */ void * FUNC_88;
-/* 0x8c */ void * FUNC_8c;
-/* 0x90 */ void * FUNC_90;
-/* 0x94 */ void * FUNC_94;
-/* 0x98 */ void * FUNC_98;
-/* 0x9c */ void * FUNC_9c;
 } PlayerVTable;
 
 /*
@@ -1460,6 +1450,33 @@ void playerSetHealth(Player * player, int health);
 * AUTHOR :			Troy "Metroynome" Pruitt
 */
 int playerGetHealth(Player * player);
+
+/*
+* NAME :		playerSetMaxHealth
+* DESCRIPTION :
+* 			Set a players health to a certain amount (1 to 15)
+* NOTES :
+* ARGS : 
+*          player:                     Pointer to player's player object.
+*          health:                 		Value to set health to (1 to 15)
+* RETURN :
+* AUTHOR :			Troy "Metroynome" Pruitt
+*/
+void playerSetMaxHealth(Player * player, int health);
+
+/*
+* NAME :		playerGeMaxtHealth
+* DESCRIPTION :
+* 				Get a players health
+* NOTES :
+* ARGS : 
+*         		player:         Pointer to player's player object.
+* RETURN :
+* 				Returns players health in float value
+* AUTHOR :			Troy "Metroynome" Pruitt
+*/
+int playerGetMaxHealth(Player * player);
+
 
 int playerGetRespawnTimer(Player * player);
 

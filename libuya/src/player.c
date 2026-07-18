@@ -4,6 +4,7 @@
 #include "game.h"
 #include "spawnpoint.h"
 #include "team.h"
+#include "utils.h"
 
 #define PLAYER_STRUCT_ARRAY                         ((Player**)GetAddress(&vaPlayerStructArray))
 
@@ -221,7 +222,7 @@ void playerPadUpdate(void)
             // Copy last player pad
             if (playerPad)
             {
-                memcpy(padHistory, &playerPad->buffer.btns, sizeof(struct PadHistory));
+                memcpy(padHistory, &playerPad->btns, sizeof(struct PadHistory));
                 padHistory->id = player->mpIndex;
             }
             // Reset pad if no player
@@ -250,7 +251,7 @@ int playerPadGetButton(Player * player, u16 buttonMask)
     if (!paddata)
         return 0;
 
-    return (paddata->buffer.btns & buttonMask) == 0;
+    return (paddata->btns & buttonMask) == 0;
 }
 
 //--------------------------------------------------------------------------------
@@ -574,11 +575,33 @@ int playerGetHealth(Player * player)
     u32 fHealth = playerDeobfuscate(&player->hitPoints, 0);
     return *(float*)&fHealth;
 }
+
+//--------------------------------------------------------------------------------
+void playerSetMaxHealth(Player * player, int health)
+{
+    if (!player)
+        return;
+
+    // set player struct max health
+    playerObfuscate(&player->maxHP, health, OBFUSCATE_MODE_HEALTH);
+	// set Resurrect max health variable
+    POKE_U16(((u32)GetAddress(&vaPlayerRespawnFunc) + 0x140), FLOAT_TO_U16(health));
+    // set player pvar max health
+	*(float*)((u32)player->pMoby->pVar + 0x30) = (float)health;
+}
+
+int playerGetMaxHealth(Player * player)
+{
+    u32 fMaxHP = playerDeobfuscate(&player->maxHP, 0);
+    return *(float*)&fMaxHP;
+}
+
 //--------------------------------------------------------------------------------
 int playerGetRespawnTimer(Player * player)
 {
     return playerDeobfuscate(&player->timers.resurrectWait, 2);
 }
+
 //--------------------------------------------------------------------------------
 int playerGetState(Player *player)
 {
@@ -839,7 +862,7 @@ int playerMapHealth(int health)
 {
     const int diff[3] = {6, 7, 7};
     int result = 0;
-		int i = 0;
+	int i = 0;
 
     for (i = 0; i < health; i++) {
         result += diff[i % 3];
@@ -850,18 +873,15 @@ int playerMapHealth(int health)
 
 int playerGetLatency(Player *player)
 {
-    if (!player)
+    if (!player || GAME_NET_INFO->onlyLocalPlayers || player->isLocal)
         return 0;
 
-    // if only locals, or if player is a local, return true.
-    if (GAME_NET_INFO->onlyLocalPlayers || player->isLocal)
-        return 1;
-
-    // if last packet time is less than or equal to 150, return true.
+    // Same indexing logic
     int clientId = player->pNetPlayer->netClientIndex;
     int netClientMap = GAME_NET_INFO->clientIndexRemapper[clientId];
-    int lastPackettime = GAME_NET_INFO->m_LastUdpPacketReceived[netClientMap];
-    int deltaTime = GAME_TIME - lastPackettime;
+    int lastPacketTime = GAME_NET_INFO->m_LastUdpPacketReceived[netClientMap];
+    int deltaTime = GAME_NET_INFO->netFrameTime - lastPacketTime;
+
     return deltaTime;
 }
 

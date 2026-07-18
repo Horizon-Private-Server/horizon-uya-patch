@@ -357,7 +357,7 @@ typedef struct Moby {
 /* 0x20 */ char state;
 /* 0x21 */ u8 group;
 /* 0x22 */ char mClass;
-/* 0x23 */ u8 opacity;
+/* 0x23 */ u8 alpha;
 /* 0x24 */ struct MobyClass* pClass;
 /* 0x28 */ struct Moby * pChain;
 /* 0x2c */ float scale;
@@ -365,7 +365,7 @@ typedef struct Moby {
 /* 0x31 */ char drawn;
 /* 0x32 */ short drawDist;
 /* 0x34 */ u16 modeBits;
-/* 0x36 */ u16 modeBits2;
+/* 0x36 */ u16 occlIndex;
 /* 0x38 */ u32 lights;
 /* 0x3c */ u32 primaryColor;
 /* 0x40	*/ char animSeqT;
@@ -373,18 +373,23 @@ typedef struct Moby {
 /* 0x42 */ char unk_042;
 /* 0x43 */ char animSeqId;
 /* 0x44 */ struct MobyAnimLayer *animLayers;
-/* 0x48 */ float unk_float_48;
-/*      */ char unk_4c[0x17];
+/* 0x48 */ void *unk_ptr_48;
+/* 0x4c */ float unk_float_4c;
+/* 0x50 */ void* unk_50;
+/*      */ char unk_54[0xd];
+/* 0x61 */ char lSeq;
+/* 0x62 */ char lod_trans;
 /* 0x63 */ char metal;
 /* 0x64 */ void * pUpdate;
 /* 0x68 */ void * pVar;
 /* 0x6c */ char soundDesired;
 /* 0x6d */ char soundTrigger;
-/* 0x6e */ char shadow;
-/* 0x6f */ char shadowIndex;
-/* 0x70 */ float shadowPlane;
-/* 0x74 */ float shadowRange;
-/*      */ char unk_78[0x6];
+/* 0x6e */ char unk_6e;
+/* 0x6f */ char shadow;
+/* 0x70 */ float shadow_plane;
+/* 0x74 */ float shadow_range;
+/* 0x78 */ int glow_rgba;
+/* 0x7c */ char unk_7c[2];
 /* 0x7e */ short color;
 /* 0x80 */ VECTOR lSphere;
 /* 0x90 */ struct GuberMoby * guberMoby;
@@ -408,7 +413,7 @@ typedef struct Moby {
 /* 0xb6	*/ u16 xp;
 /* 0xb8 */ struct Moby * pParent;
 /* 0xbc */ char subState;
-/* 0xbd */ char unk_bd;
+/* 0xbd */ char shadow_index;
 /* 0xbe */ short triggers;
 /* 0xc0 */ mtx3 rMtx;
 /* 0xf0 */ VECTOR rotation;
@@ -747,6 +752,56 @@ typedef struct M4246_FluxRifle {
 /* 0x40 */ VECTOR aimDirection;
 /* 0x50 */ float savedCameraSettings[4];
 } M4246_FluxRifle_t;
+
+typedef struct M6870_GatlinTurret {
+/* 0x000 */ char unk_000[0x30];
+/* 0x030 */ float initAngleFloat;
+/* 0x034 */ short initAngleRaw;
+/* 0x036 */ short unk_036;
+/* 0x038 */ char initFlags;
+/* 0x039 */ char unk_039;
+/* 0x03a */ short unk_03a;
+/* 0x03c */ char unk_03c[0x02];
+/* 0x03e */ char state;
+/* 0x03f */ char unk_03f;
+/* 0x040 */ char unk_040[0x30];
+/* 0x070 */ u32 colorFlash[4];
+/* 0x080 */ char barrelJoint[0x80];
+/* 0x100 */ char unk_jointData[0x80];
+/* 0x180 */ char particleData[0x80];
+/* 0x1e4 */ float aimAngleOut;
+/* 0x1e8 */ char unk_1e8[0x08];
+/* 0x1f0 */ float initScale;
+/* 0x1f4 */ char unk_1f4[0x0c];
+/* 0x200 */ VECTOR aim;
+/* 0x210 */ VECTOR targetPos;
+/* 0x220 */ int unk_220;
+/* 0x224 */ int unk_224;
+/* 0x228 */ int unk_228;
+/* 0x22c */ int unk_22c;
+/* 0x230 */ Moby* ownerMoby;
+/* 0x234 */ int unk_234;
+/* 0x238 */ int ownerMobyIndex;
+/* 0x23c */ int unk_23c;                 // init to 0x80
+/* 0x240 */ float currentSpinSpeed;
+/* 0x244 */ float maxSpinSpeedDeg;       // stored in degrees, converted to rad/frame on spawn
+/* 0x248 */ float spinAccelDeg;          // stored in degrees, converted to rad/frame on spawn
+/* 0x24c */ float spinDecelDeg;          // stored in degrees, converted to rad/frame on spawn
+/* 0x250 */ float barrelRotation;
+/* 0x254 */ float range;                 // used raw; squared into 0x258 on spawn
+/* 0x258 */ float rangeSq;              // range * range, computed on spawn
+/* 0x25c */ float rangeOrScale;          // separate scale value used in damage/muzzle flash
+/* 0x260 */ char unk_260[0x1c];
+/* 0x27c */ char weaponTypeIndex;
+/* 0x27d */ char unk_27d[0x03];
+/* 0x280 */ int leftGunSoundChannel;
+/* 0x284 */ int gunMobyIndex[3];
+/* 0x290 */ int unk_290;
+/* 0x294 */ int unk_294;
+/* 0x298 */ int unk_298;
+/* 0x29c */ int loopSoundChannel;        // init to -1
+/* 0x2a0 */ int initDone;               // set to 0 on spawn; guards tracking/flash logic
+} M6870_GatlinTurret_t;
 
 
 /*

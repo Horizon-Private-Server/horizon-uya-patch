@@ -263,3 +263,8 @@ float gameGetCpuUsage(void)
 {
     return GAME_CPU_USAGE;
 }
+
+void gameIsGameRanked(bool yayOrNay)
+{
+    GAME_NET_INFO->isGameRanked = yayOrNay;
+}
