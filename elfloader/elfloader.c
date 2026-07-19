@@ -8,11 +8,11 @@
 
 #ifdef UYA_PAL
 #define UNKNOWN_FUNCTION_00 (0x006dd340)
-#define LoadExecPS2_Hook (0x00125ea8)
+#define LoadExecPS2_Hook (0x00125eb0)
 #define RebootToFrontEnd_Func (0x0059dad0)
 #else
 #define UNKNOWN_FUNCTION_00 (0x006da7e0)
-#define LoadExecPS2_Hook (0x00125ea8)
+#define LoadExecPS2_Hook (0x00125eb0)
 #define RebootToFrontEnd_Func (0x0059c740)
 #endif
 
@@ -283,6 +283,8 @@ int loadelf (u32 loadFromAddress, u32 size)
   DPRINTF("[elfloader] LoadExecPS2: hooked\n");
   // hook into LoadExecPS2
   *(u32*)LoadExecPS2_Hook = 0x08000000 | ((u32)&hook2 >> 2);
+  doFlushCache(0);
+  doFlushCache(2);
 
   DPRINTF("[elfloader] reboot to frontend\n");
   // reboot
