@@ -18,6 +18,13 @@
 #define DEFAULT_GAMEMODE    (0)
 #define THUMBNAIL_SIZE      (9248)
 #define TPS                 (60)
+#define MAIN_LOBBY_SUBPTR   (*(u32*)0x01C5C114)
+
+#ifdef ULAUNCHELF
+#define LAUNCH_ELF_PATH     "mass:BOOT.ELF"
+#define LAUNCH_ELF_ADDRESS  (0x01800000)
+#define LAUNCH_ELF_MAX_SIZE (0x00100000)
+#endif
 
 int selectedTabItem = 0;
 u32 padPointer = 0;
@@ -130,6 +137,9 @@ void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void voteToEndSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void downloadMapUpdatesSelectHandler(TabElem_t* tab, MenuElem_t* element);
+#ifdef ULAUNCHELF
+void launchElfFromUsb(void);
+#endif
 
 #ifdef DEBUG
 void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
@@ -148,6 +158,11 @@ void navTab(int direction);
 // extern
 int mapsGetInstallationResult(void);
 int mapsDownloadingModules(void);
+#ifdef ULAUNCHELF
+int readFileLength(char * path);
+int readFile(char * path, void * buffer, int offset, int length);
+int loadelf(u32 loadFromAddress, u32 size);
+#endif
 int mapReadCustomMapAuthorDescription(char* mapFilename, char dstAuthor[32], char dstDescription[256]);
 int mapReadCustomMapThumbnail(char* mapFilename, char *buf, int bufSize);
 void refreshCustomMapList(void);
@@ -521,10 +536,11 @@ MenuElem_t menuElementsGeneral[] = {
 #endif
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
-  { "Game Server (Host)", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameServers, "Which game server you'd like to use when creating a game. Takes effect the next time you create a game." },
 #ifdef MAPBOOTELF
   { "Boot Map Downloader", buttonActionHandler, menuStateHandler_BootMapDownloaderStateHandler, downloadMapUpdatesSelectHandler },
 #endif
+  { "Game Server (Host)", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameServers, "Which game server you'd like to use when creating a game. Takes effect the next time you create a game." },
+
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
@@ -966,6 +982,40 @@ void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
     uiShowOkDialog("Custom Maps", buf);
   }
 }
+
+#ifdef ULAUNCHELF
+//------------------------------------------------------------------------------
+void launchElfFromUsb(void)
+{
+  int size;
+  int read;
+
+  configMenuDisable();
+
+  if (uiShowYesNoDialog("Are you sure?", "Launching mass:launch.elf will exit the game.") != 1)
+    return;
+
+  size = readFileLength(LAUNCH_ELF_PATH);
+  if (size <= 0) {
+    uiShowOkDialog("Launch ELF", "Could not find mass:launch.elf.");
+    return;
+  }
+
+  if (size > LAUNCH_ELF_MAX_SIZE) {
+    uiShowOkDialog("Launch ELF", "launch.elf is too large.");
+    return;
+  }
+
+  read = readFile(LAUNCH_ELF_PATH, (void*)LAUNCH_ELF_ADDRESS, 0, size);
+  if (read != size) {
+    uiShowOkDialog("Launch ELF", "Could not read launch.elf.");
+    return;
+  }
+
+  DPRINTF("launch.elf: read %d bytes to %08X\n", read, LAUNCH_ELF_ADDRESS);
+  loadelf(LAUNCH_ELF_ADDRESS, size);
+}
+#endif
 
 //------------------------------------------------------------------------------
 void downloadMapUpdatesSelectHandler(TabElem_t* tab, MenuElem_t* element)
@@ -1511,7 +1561,7 @@ void buttonActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, vo
     }
     case ACTIONTYPE_GETHEIGHT:
     {
-      *(float*)actionArg = LINE_HEIGHT * 2;
+      *(float*)actionArg = LINE_HEIGHT * 1;
       break;
     }
     case ACTIONTYPE_DRAW:
@@ -2358,6 +2408,14 @@ void onMenuUpdate(int inGame)
 			drawTab(tab);
 		}
 
+#ifdef ULAUNCHELF
+		if (!inGame && uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && MAIN_LOBBY_SUBPTR == 0 && padGetButtonDown(0, PAD_L3 | PAD_R3 | PAD_SELECT) > 0)
+		{
+			launchElfFromUsb();
+			return;
+		}
+#endif
+
 		// nav tab right
 		if (padGetButtonUp(0, PAD_R1) > 0)
 		{
@@ -2377,7 +2435,7 @@ void onMenuUpdate(int inGame)
 	else if (!inGame)
   {
     // if in Online Lobby, and SubPointer equals zero (not on find game)
-		if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && *(u32*)0x01C5C114 == 0) {
+		if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && MAIN_LOBBY_SUBPTR == 0) {
 			// render message
 			// gfxScreenSpaceBox(SCREEN_WIDTH * 0.2, SCREEN_HEIGHT * 0.81, 0.4, 0.3, colorOpenBg);
       float scale = .85;

@@ -11,6 +11,10 @@ EE_LDFLAGS = -fno-builtin -nostdlib -nostartfiles -L. -L../libuya/lib -L$(PS2SDK
 #EE_DEFS += -DSCAVENGER_HUNT
 EE_DEFS += -DMAPBOOTELF
 
+
+ifneq (,$(findstring -DULAUNCHELF,$(EE_DEFS)))
+    EE_OBJS += ../elfloader/elfloader.o
+endif
 # build test if defined
 ifneq (,$(findstring -DTEST,$(EE_DEFS)))
     EE_OBJS += test.o
