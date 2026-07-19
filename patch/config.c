@@ -18,6 +18,13 @@
 #define DEFAULT_GAMEMODE    (0)
 #define THUMBNAIL_SIZE      (9248)
 #define TPS                 (60)
+#define MAIN_LOBBY_SUBPTR   (*(u32*)0x01C5C114)
+
+#ifdef ULAUNCHELF
+#define LAUNCH_ELF_PATH     "mass:BOOT.ELF"
+#define LAUNCH_ELF_ADDRESS  (0x01800000)
+#define LAUNCH_ELF_MAX_SIZE (0x00100000)
+#endif
 
 int selectedTabItem = 0;
 u32 padPointer = 0;
@@ -116,6 +123,7 @@ void menuStateHandler_Nodes(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Survivor(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_Default(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_VoteToEndStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
+void menuStateHandler_BootMapDownloaderStateHandler(TabElem_t* tab, MenuElem_t* element, int* state);
 void menuStateHandler_DisabledInGame(TabElem_t* tab, MenuElem_t* element, int* state);
 
 int menuStateHandler_SelectedMapOverride(MenuElem_OrderedListData_t* listData, char* value);
@@ -128,7 +136,10 @@ void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void voteToEndSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element);
-
+void downloadMapUpdatesSelectHandler(TabElem_t* tab, MenuElem_t* element);
+#ifdef ULAUNCHELF
+void launchElfFromUsb(void);
+#endif
 
 #ifdef DEBUG
 void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
@@ -147,6 +158,11 @@ void navTab(int direction);
 // extern
 int mapsGetInstallationResult(void);
 int mapsDownloadingModules(void);
+#ifdef ULAUNCHELF
+int readFileLength(char * path);
+int readFile(char * path, void * buffer, int offset, int length);
+int loadelf(u32 loadFromAddress, u32 size);
+#endif
 int mapReadCustomMapAuthorDescription(char* mapFilename, char dstAuthor[32], char dstDescription[256]);
 int mapReadCustomMapThumbnail(char* mapFilename, char *buf, int bufSize);
 void refreshCustomMapList(void);
@@ -513,7 +529,6 @@ MenuElem_ListData_t botProfile = {
     .items = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
 };
 
-
 // General
 MenuElem_t menuElementsGeneral[] = {
 #ifdef DEBUG
@@ -521,7 +536,11 @@ MenuElem_t menuElementsGeneral[] = {
 #endif
   { "Vote to End", buttonActionHandler, menuStateHandler_VoteToEndStateHandler, voteToEndSelectHandler, "Vote to end the game. If a team/player is in the lead they will win." },
   { "Refresh Maps", buttonActionHandler, menuStateEnabledInMenusHandler, gmRefreshMapsSelectHandler, "Refresh the custom map list." },
+#ifdef MAPBOOTELF
+  { "Boot Map Downloader", buttonActionHandler, menuStateHandler_BootMapDownloaderStateHandler, downloadMapUpdatesSelectHandler },
+#endif
   { "Game Server (Host)", listActionHandler, menuStateAlwaysEnabledHandler, &dataGameServers, "Which game server you'd like to use when creating a game. Takes effect the next time you create a game." },
+
   // { "Install Custom Maps on Login", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableAutoMaps },
 #if SCAVENGER_HUNT
   { "Participate in Scavenger Hunt", toggleInvertedActionHandler, menuStateScavengerHuntEnabledHandler, &config.disableScavengerHunt, "If you see this option, there is a Horizon scavenger hunt active. Enabling this will spawn random Horizon bolts in game. Collect the most to win the hunt!" },
@@ -964,6 +983,56 @@ void gmRefreshMapsSelectHandler(TabElem_t* tab, MenuElem_t* element)
   }
 }
 
+#ifdef ULAUNCHELF
+//------------------------------------------------------------------------------
+void launchElfFromUsb(void)
+{
+  int size;
+  int read;
+
+  size = readFileLength(LAUNCH_ELF_PATH);
+  if (size <= 0)
+    return;
+
+  configMenuDisable();
+
+  if (size > LAUNCH_ELF_MAX_SIZE) {
+    uiShowOkDialog("Launch ELF", "BOOT.ELF is too large.");
+    return;
+  }
+
+  if (uiShowYesNoDialog("Are you sure?", "Launching BOOT.ELF will exit the game.") != 1)
+    return;
+
+  read = readFile(LAUNCH_ELF_PATH, (void*)LAUNCH_ELF_ADDRESS, 0, size);
+  if (read != size) {
+    uiShowOkDialog("Launch ELF", "Could not read BOOT.ELF.");
+    return;
+  }
+
+  DPRINTF("BOOT.ELF: read %d bytes to %08X\n", read, LAUNCH_ELF_ADDRESS);
+  loadelf(LAUNCH_ELF_ADDRESS, size);
+}
+#endif
+
+//------------------------------------------------------------------------------
+void downloadMapUpdatesSelectHandler(TabElem_t* tab, MenuElem_t* element)
+{
+  // close menu
+  configMenuDisable();
+
+  // prompt
+  if (uiShowYesNoDialog("Are you sure?", "Launching the map downloader will exit the game.") == 1) {
+    ClientRequestBootElf_t request;
+    request.BootElfId = 0;
+    
+    // send request
+    void * lobbyConnection = netGetLobbyServerConnection();
+    if (lobbyConnection)
+      netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_REQUEST_BOOT_ELF, sizeof(ClientRequestBootElf_t), &request);
+  }
+}
+
 //
 void voteToEndSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
@@ -987,6 +1056,18 @@ void menuStateHandler_VoteToEndStateHandler(TabElem_t* tab, MenuElem_t* element,
   }
   
   *state = ELEMENT_HIDDEN;
+}
+
+void menuStateHandler_BootMapDownloaderStateHandler(TabElem_t* tab, MenuElem_t* element, int* state)
+{
+  GameSettings* gs = gameGetSettings();
+  int i = 0;
+  int hidden = isInGame();
+  
+  if (hidden)
+    *state = ELEMENT_HIDDEN;
+  else
+    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
 // 
@@ -1478,7 +1559,7 @@ void buttonActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, vo
     }
     case ACTIONTYPE_GETHEIGHT:
     {
-      *(float*)actionArg = LINE_HEIGHT * 2;
+      *(float*)actionArg = LINE_HEIGHT * 1;
       break;
     }
     case ACTIONTYPE_DRAW:
@@ -2325,6 +2406,14 @@ void onMenuUpdate(int inGame)
 			drawTab(tab);
 		}
 
+#ifdef ULAUNCHELF
+		if (!inGame && uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && MAIN_LOBBY_SUBPTR == 0 && padGetButton(0, PAD_L3 | PAD_R3) > 0 && padGetButtonDown(0, PAD_SELECT) > 0)
+		{
+			launchElfFromUsb();
+			return;
+		}
+#endif
+
 		// nav tab right
 		if (padGetButtonUp(0, PAD_R1) > 0)
 		{
@@ -2344,7 +2433,7 @@ void onMenuUpdate(int inGame)
 	else if (!inGame)
   {
     // if in Online Lobby, and SubPointer equals zero (not on find game)
-		if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && *(u32*)0x01C5C114 == 0) {
+		if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && MAIN_LOBBY_SUBPTR == 0) {
 			// render message
 			// gfxScreenSpaceBox(SCREEN_WIDTH * 0.2, SCREEN_HEIGHT * 0.81, 0.4, 0.3, colorOpenBg);
       float scale = .85;

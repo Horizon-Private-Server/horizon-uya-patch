@@ -7,6 +7,7 @@ all:
 	$(MAKE) -C midflag
 	$(MAKE) -C domination
 	$(MAKE) -C koth
+	$(MAKE) -C elfloader
 	
 clean:
 	$(MAKE) -C libuya clean
@@ -18,6 +19,7 @@ clean:
 	$(MAKE) -C midflag clean
 	$(MAKE) -C domination clean
 	$(MAKE) -C koth clean
+	$(MAKE) -C elfloader clean
 
 install:
 	$(MAKE) -C libuya install

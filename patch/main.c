@@ -2883,7 +2883,6 @@ void processGameModules()
 		++module;
 	}
 }
-
 /*
  * NAME :		onOnlineMenu
  * DESCRIPTION :
