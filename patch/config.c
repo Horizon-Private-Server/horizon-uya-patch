@@ -990,29 +990,27 @@ void launchElfFromUsb(void)
   int size;
   int read;
 
+  size = readFileLength(LAUNCH_ELF_PATH);
+  if (size <= 0)
+    return;
+
   configMenuDisable();
 
-  if (uiShowYesNoDialog("Are you sure?", "Launching mass:launch.elf will exit the game.") != 1)
-    return;
-
-  size = readFileLength(LAUNCH_ELF_PATH);
-  if (size <= 0) {
-    uiShowOkDialog("Launch ELF", "Could not find mass:launch.elf.");
-    return;
-  }
-
   if (size > LAUNCH_ELF_MAX_SIZE) {
-    uiShowOkDialog("Launch ELF", "launch.elf is too large.");
+    uiShowOkDialog("Launch ELF", "BOOT.ELF is too large.");
     return;
   }
+
+  if (uiShowYesNoDialog("Are you sure?", "Launching BOOT.ELF will exit the game.") != 1)
+    return;
 
   read = readFile(LAUNCH_ELF_PATH, (void*)LAUNCH_ELF_ADDRESS, 0, size);
   if (read != size) {
-    uiShowOkDialog("Launch ELF", "Could not read launch.elf.");
+    uiShowOkDialog("Launch ELF", "Could not read BOOT.ELF.");
     return;
   }
 
-  DPRINTF("launch.elf: read %d bytes to %08X\n", read, LAUNCH_ELF_ADDRESS);
+  DPRINTF("BOOT.ELF: read %d bytes to %08X\n", read, LAUNCH_ELF_ADDRESS);
   loadelf(LAUNCH_ELF_ADDRESS, size);
 }
 #endif
