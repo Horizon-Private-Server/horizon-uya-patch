@@ -2407,7 +2407,7 @@ void onMenuUpdate(int inGame)
 		}
 
 #ifdef ULAUNCHELF
-		if (!inGame && uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && MAIN_LOBBY_SUBPTR == 0 && padGetButtonDown(0, PAD_L3 | PAD_R3 | PAD_SELECT) > 0)
+		if (!inGame && uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && MAIN_LOBBY_SUBPTR == 0 && padGetButton(0, PAD_L3 | PAD_R3) > 0 && padGetButtonDown(0, PAD_SELECT) > 0)
 		{
 			launchElfFromUsb();
 			return;
