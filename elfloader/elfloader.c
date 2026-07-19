@@ -8,11 +8,11 @@
 
 #ifdef UYA_PAL
 #define UNKNOWN_FUNCTION_00 (0x006dd340)
-#define LoadExecPS2_Hook (0x00125eb0)
+#define LoadExecPS2_Hook (0x0012d358)
 #define RebootToFrontEnd_Func (0x0059dad0)
 #else
 #define UNKNOWN_FUNCTION_00 (0x006da7e0)
-#define LoadExecPS2_Hook (0x00125eb0)
+#define LoadExecPS2_Hook (0x0012d358)
 #define RebootToFrontEnd_Func (0x0059c740)
 #endif
 
