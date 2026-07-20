@@ -2864,7 +2864,7 @@ int runSendGameUpdate(void)
 		int i;
 		// reset
 		memset(patchStateContainer.GameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.GameStateUpdate.TeamScores));
-		// memset(patchStateContainer.GameStateUpdate.Nodes, 0, sizeof(patchStateContainer.GameStateUpdate.Nodes));
+		memset(patchStateContainer.GameStateUpdate.Nodes, 0, sizeof(patchStateContainer.GameStateUpdate.Nodes));
 
 		if (gameSettings->GameType == GAMETYPE_SIEGE) {	
 			for (i = 0; i < 8; ++i) {
@@ -2876,9 +2876,6 @@ int runSendGameUpdate(void)
 			patchStateContainer.GameStateUpdate.TeamScores[0] = gameData->allYourBaseGameData->hudHealth[0];
 			patchStateContainer.GameStateUpdate.TeamScores[1] = gameData->allYourBaseGameData->hudHealth[1];
 		} else if (gameSettings->GameType == GAMETYPE_CTF) {
-			// Nodes are turned off
-			patchStateContainer.GameStateUpdate.Nodes[0] = -1;
-			patchStateContainer.GameStateUpdate.Nodes[1] = -1;
 			// Check if nodes are on
 			if (gameOptions->GameFlags.MultiplayerGameFlags.Nodes) {
 				for (i = 0; i < 8; ++i) {
@@ -2887,6 +2884,10 @@ int runSendGameUpdate(void)
 					else if (gameData->allYourBaseGameData->nodeTeam[i] == 1)
 						++patchStateContainer.GameStateUpdate.Nodes[1];
 				}	
+			} else {
+				// Nodes are turned off
+				patchStateContainer.GameStateUpdate.Nodes[0] = -1;
+				patchStateContainer.GameStateUpdate.Nodes[1] = -1;
 			}
 			patchStateContainer.GameStateUpdate.TeamScores[0] = gameData->CTFGameData->blueTeamCaptures;
 			patchStateContainer.GameStateUpdate.TeamScores[1] = gameData->CTFGameData->redTeamCaptures;

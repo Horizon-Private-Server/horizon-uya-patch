@@ -2683,6 +2683,28 @@ void onConfigInitialize(void)
 }
 
 //------------------------------------------------------------------------------
+void configSendGameConfig(void)
+{
+  int customMapId = patchStateContainer.CustomMapId;
+  gameConfig.isCustomMap = customMapId > 0 && customMapId < dataCustomMaps.count && customMapDefs;
+
+  // backup
+  memcpy(&gameConfigHostBackup, &gameConfig, sizeof(PatchGameConfig_t));
+
+  // send
+  void * lobbyConnection = netGetLobbyServerConnection();
+  if (lobbyConnection) {
+    ClientSetGameConfig_t msg;
+
+    memset(&msg, 0, sizeof(msg));
+    if (gameConfig.isCustomMap)
+      memcpy(&msg.CustomMap, &customMapDefs[customMapId-1], sizeof(msg.CustomMap));
+    memcpy(&msg.GameConfig, &gameConfig, sizeof(msg.GameConfig));
+    netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(ClientSetGameConfig_t), &msg);
+  }
+}
+
+//------------------------------------------------------------------------------
 void configTrySendGameConfig(void)
 {
   int state = 0;
@@ -2706,20 +2728,7 @@ void configTrySendGameConfig(void)
       }
     }
 
-    // backup
-    memcpy(&gameConfigHostBackup, &gameConfig, sizeof(PatchGameConfig_t));
-
-    // send
-    void * lobbyConnection = netGetLobbyServerConnection();
-    if (lobbyConnection) {
-      ClientSetGameConfig_t msg;
-
-      memset(&msg, 0, sizeof(msg));
-      if (patchStateContainer.CustomMapId > 0)
-        memcpy(&msg.CustomMap, &customMapDefs[patchStateContainer.CustomMapId-1], sizeof(msg.CustomMap));
-      memcpy(&msg.GameConfig, &gameConfig, sizeof(msg.GameConfig));
-      netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(ClientSetGameConfig_t), &msg);
-    }
+    configSendGameConfig();
   }
 }
 
