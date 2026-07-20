@@ -319,8 +319,8 @@ typedef struct UiElementTextInput { // 0x4a8
 /* 0x4c */ int padding;
 /* 0x50 */ float selectorBoxSize[4];
 /* 0x60 */ UiVTable_t* vTable;
-/* 0x064 */ char textInput[16];
-/* 0x074*/ char unk_74[0x434];
+/* 0x064 */ char textInput[0xa0];
+/* 0x104*/ char unk_74[0x3a4];
 } UiElementTextInput_t;
 
 typedef struct UIElementUnk_09 {
@@ -488,6 +488,30 @@ typedef struct UiTipsElements { // 0x8
 /* 0x0 */ UiElementImage_t* image;
 /* 0x4 */ UiElementList_t* tips;
 } UiTipsElements_t;
+
+typedef struct UiGameDetailsElements { // 0x8
+/* 0x00 */ UiElementImage_t* image;
+/* 0x04 */ UiElementSprite_t* rankSprite[4];
+/* 0x14 */ UiElementSprite_t* fluxRifleSprite;
+/* 0x18 */ UiElementSprite_t* n60StormSprite;
+/* 0x1c */ UiElementSprite_t* blitzGunSprite;
+/* 0x20 */ UiElementSprite_t* miniRocketTubeSprite;
+/* 0x24 */ UiElementSprite_t* gravityBombSprite;
+/* 0x28 */ UiElementSprite_t* mineGloveSprite;
+/* 0x2c */ UiElementSprite_t* morphORaySprite;
+/* 0x30 */ UiElementSprite_t* lavaGunSprite;
+/* 0x34 */ UiElementTextInput_t* gameName;
+/* 0x38 */ UiElementTextInput_t* map;
+/* 0x3c */ UiElementTextInput_t* type;
+/* 0x40 */ UiElementTextInput_t* city;
+/* 0x44 */ UiElementTextInfo_t* skill;
+/* 0x48 */ UiElementTextInput_t* weapons;
+/* 0x4c */ UiElementText_t* advancedOptions;
+/* 0x50 */ UiElementText_t* playersHeader;
+/* 0x54 */ UiElementList_t* playerList;
+/* 0x58 */ UiElementRangeSelect_t* localPlayers;
+/* 0x5c */ UiElementText_t* join;
+} UiGameDetailsElements_t;
 
 // uiSelectDialog_Simple Defs start at: 0x00248504
 typedef struct UiWidgetDefs {
