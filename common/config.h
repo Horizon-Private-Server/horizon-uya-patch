@@ -1,6 +1,9 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+#define HZN_LAUNCHER_MAGIC         (0x314E5A48)
+#define HZN_LAUNCHER_MAGIC_VALUE   (*(u32*)0x000CFFA0)
+
 #define PATCH_POINTERS             (*(PatchPointers_t**)0x000CFFC0)
 
 
@@ -159,4 +162,9 @@ enum CUSTOM_MODE_ID {
   CUSTOM_MODE_COUNT
 };
 
+enum CLIENT_TYPE {
+  CLIENT_TYPE_NORMAL = 0,
+  CLIENT_TYPE_HZN = 1,
+  CLIENT_TYPE_PCSX2 = 2
+};
 #endif // _CONFIG_H_

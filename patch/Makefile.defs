@@ -1,5 +1,5 @@
 BIN_PATH = ../bin/
-EE_OBJS = utils.o functions.o interop/patch.o interop/gamerules.o interop/cheats.o main.o config.o maploader.o rpc.o \
+EE_OBJS = utils.o functions.o interop/patch.o interop/gamerules.o interop/cheats.o main.o config.o maploader.o rpc.o macaddrs.o \
 			cheats.o gamerules.o ui.o interop/playersync.o playersync.o
 EE_LIBS := $(EE_LIBS) -lkernel
 

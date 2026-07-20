@@ -261,6 +261,32 @@ int getMACAddress(u8 output[6])
 	return hasMACAddress = 1;
 }
 
+
+//------------------------------------------------------------------------------
+int hasSonyMACAddress(void)
+{
+	int i;
+	static int hasSonyMACAddressResult = -1;
+	u8 mac[6];
+
+	if (hasSonyMACAddressResult >= 0)
+		return hasSonyMACAddressResult;
+
+	if (!getMACAddress(mac))
+		return 1;
+
+	u32 firstWordMacAddress = *(u32*)mac;
+	if (firstWordMacAddress == 0x821F0400)
+		return hasSonyMACAddressResult = 0;
+
+	u32 firstHalfMacAddress = (mac[0] << 16) | (mac[1] << 8) | (mac[2] << 0);
+	for (i = 0; i < SONY_MAC_ADDRESSES_COUNT; ++i) {
+		if (SONY_MAC_ADDRESSES[i] == firstHalfMacAddress)
+			return hasSonyMACAddressResult = 1;
+	}
+
+	return hasSonyMACAddressResult = 0;
+}
 //------------------------------------------------------------------------------
 void sendMACAddress(void)
 {
@@ -283,6 +309,48 @@ void sendMACAddress(void)
 	DPRINTF("sent mac\n");
 }
 
+
+//------------------------------------------------------------------------------
+void sendClientType(void)
+{
+	static int lastAccountId = -1;
+	static int lastClientType = -1;
+	static int sendCounter = -1;
+	ClientSetClientTypeRequest_t msg;
+	int accountId = gameGetMyAccountId();
+	void* connection = netGetLobbyServerConnection();
+
+	if (HZN_LAUNCHER_MAGIC_VALUE == HZN_LAUNCHER_MAGIC)
+		msg.ClientType = CLIENT_TYPE_HZN;
+	else
+		msg.ClientType = hasSonyMACAddress() ? CLIENT_TYPE_NORMAL : CLIENT_TYPE_PCSX2;
+	getMACAddress(msg.mac);
+
+	if (accountId < 0)
+		lastAccountId = accountId;
+
+	if (!connection) {
+		sendCounter = -1;
+		return;
+	}
+
+	if (sendCounter > 0) {
+		--sendCounter;
+	} else if (sendCounter < 0) {
+		if (accountId > 0 && (lastAccountId != accountId || lastClientType != msg.ClientType))
+			sendCounter = 60;
+	} else {
+		lastClientType = msg.ClientType;
+		lastAccountId = accountId;
+
+		if (netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_CLIENT_TYPE, sizeof(ClientSetClientTypeRequest_t), &msg)) {
+			sendCounter = 60;
+		} else {
+			sendCounter = -1;
+			DPRINTF("sent client type %d\n", msg.ClientType);
+		}
+	}
+}
 //------------------------------------------------------------------------------
 void requestServerTime(void)
 {
@@ -3024,6 +3092,9 @@ int main(void)
 
 	// 
 	sendMACAddress();
+
+	//
+	sendClientType();
 
 	// find and hook multiplayer moby to hook
 	static Moby* mpMoby = NULL;

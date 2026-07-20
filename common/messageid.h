@@ -168,6 +168,11 @@ enum CustomMessageId
     CUSTOM_MSG_ID_SERVER_RESPONSE_BOOT_ELF = 31,
 
     /*
+     * Sent from the client to the server with the client's detected client type.
+     */
+    CUSTOM_MSG_ID_CLIENT_SET_CLIENT_TYPE = 32,
+
+    /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,
