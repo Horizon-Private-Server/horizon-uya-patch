@@ -203,6 +203,11 @@ int gameGetMyClientId(void)
     return GAME_CLIENT_ID;
 }
 
+int gameGetMyAccountId(void)
+{
+    return GAME_NET_INFO->myAccountId;
+}
+
 int gameGetCurrentMapId(void)
 {
     return GAME_MAP_ID;
