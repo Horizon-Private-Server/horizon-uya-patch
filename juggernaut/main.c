@@ -82,6 +82,13 @@
 // is hidden locally). Off by default -- it can obscure the juggy's own view.
 #define JUGGERNAUT_JUGGY_SHIELD_LOCAL   1
 
+// Only the current juggy scores frags. We wrap the forwarded-score-event handler
+// and apply it only when the killer is the juggy; every other kill is dropped (no
+// frag credit, no death tally, no kill-feed). The score event is forwarded
+// identically to all clients and JuggyIndex is broadcast, so every client gates
+// the same way and scoreboards stay in sync.
+#define JUGGERNAUT_JUGGY_ONLY_KILLS     1
+
 #define JUGGERNAUT_HEALTH_MULTIPLIER    2
 
 // UYA hero base max health is a fixed constant (PLAYER_MAX_HEALTH == 15, stored
@@ -123,7 +130,12 @@
 #define CROWN_BEAM_COLOR                (0x8027D0FF)    // gold, ~50% alpha (ABGR)
 #define CROWN_HEARTBEAT_MS              (500)
 #define CROWN_STALE_RELOCATE_MS         (20 * TIME_SECOND)
-#define CROWN_DEATH_DROP_DELAY_MS       (1 * TIME_SECOND)
+// Arm delay before the dropped crown becomes grabbable after the juggy dies. Long
+// enough to (a) give every player a fair chance to converge on the drop spot, and
+// (b) let the kill that dropped the crown (and any in-flight kills) fully score
+// before a new juggy can be crowned -- during this window JuggyIndex is -1, so no
+// kill can be mis-credited to a just-crowned player racing the kill logic.
+#define CROWN_DEATH_DROP_DELAY_MS       (3 * TIME_SECOND)
 // Hold the FIRST pickup this long after match start so players spread out from
 // their spawn cuboids before the crown appears -- avoids an instant "spawned on
 // the pickup" crown. Applies only to the initial pickup, not mid-match respawns.
@@ -306,6 +318,39 @@ static u32  HurtFuncAddr  = 0;                     // resolved vaHurtPlayerFunc 
 // plus the per-map address table itself (used to build the jal we scan for).
 extern void internal_HurtPlayer(Player * player, int damage);
 extern VariableAddress_t vaHurtPlayerFunc;
+
+#if JUGGERNAUT_JUGGY_ONLY_KILLS
+// ---- Juggy-only kill credit -----------------------------------------------
+// vaOnPlayerKill_Func is the forwarded score-event apply (decomp
+// matchStateApplyForwardedScoreEvent) -- it bumps the killer's frags, the victim's
+// deaths, and the kill-feed. It is called from TWO sites: the receive path (other
+// clients applying a forwarded kill) AND the killer's own originate path. Hooking
+// only one leaves the killer scoring locally, so -- like the hurt hook -- we scan
+// and hook EVERY jal to it. Same addresses infected uses for the function.
+static VariableAddress_t vaOnPlayerKill_Func = {
+#if UYA_PAL
+    .Lobby = 0,
+    .Bakisi = 0x00544488, .Hoven = 0x00546650, .OutpostX12 = 0x0053bf28,
+    .KorgonOutpost = 0x00539610, .Metropolis = 0x00538a10, .BlackwaterCity = 0x005361f8,
+    .CommandCenter = 0x00535a50, .BlackwaterDocks = 0x005382d0, .AquatosSewers = 0x005375d0,
+    .MarcadiaPalace = 0x00536f50,
+#else
+    .Lobby = 0,
+    .Bakisi = 0x00541b78, .Hoven = 0x00543c80, .OutpostX12 = 0x00539598,
+    .KorgonOutpost = 0x00536d00, .Metropolis = 0x00536100, .BlackwaterCity = 0x00533868,
+    .CommandCenter = 0x00533298, .BlackwaterDocks = 0x00535ad8, .AquatosSewers = 0x00534e18,
+    .MarcadiaPalace = 0x00534758,
+#endif
+};
+// The two call sites sit ~0x4a000 below and ~0x7000 above the function; this
+// window brackets both while staying inside the overlay.
+#define JUGGY_KILL_SCAN_LO      (0x4b000)
+#define JUGGY_KILL_SCAN_HI      (0x8000)
+#define JUGGY_KILL_MAX_SITES    (8)
+static u32 KillHookSites[JUGGY_KILL_MAX_SITES];
+static u32 KillHookSaved[JUGGY_KILL_MAX_SITES];
+static int KillHookCount = 0;   // 0 = not installed
+#endif
 
 // Shield tell: is the current juggy above base max health? Computed on the
 // juggy's own client, mirrored from broadcast elsewhere. Default on (a freshly
@@ -867,6 +912,53 @@ static void juggyInstallHurtHook(void)
     }
 }
 
+#if JUGGERNAUT_JUGGY_ONLY_KILLS
+// Wraps the forwarded score-event apply so only the juggy's kills count. fragMsg[0]
+// is the killer's mpIndex; if it's the juggy we run the real handler (frag credit,
+// death tally, kill-feed), otherwise we drop the event entirely. Runs on every
+// client (each applies the same forwarded event) and JuggyIndex is broadcast, so
+// the gate is consistent -> no scoreboard divergence except at a crown-change instant.
+static void juggyOnPlayerKill(char * fragMsg)
+{
+    if (fragMsg && fragMsg[0] >= 0 && fragMsg[0] == JuggyIndex)
+        ((void (*)(char *))GetAddress(&vaOnPlayerKill_Func))(fragMsg);
+    // else: non-juggy kill -> not applied (no credit / death / kill-feed)
+}
+
+static void juggyUninstallKillHook(void)
+{
+    // Restore only sites that still hold our hook (map-reload safety, as with hurt).
+    u32 ourJal = ADDR2JAL((u32)&juggyOnPlayerKill);
+    int i;
+    for (i = 0; i < KillHookCount; ++i)
+        if (*(u32*)KillHookSites[i] == ourJal)
+            *(u32*)KillHookSites[i] = KillHookSaved[i];
+    KillHookCount = 0;
+}
+
+static void juggyInstallKillHook(void)
+{
+    juggyUninstallKillHook();                 // clear stale state, then scan fresh
+
+    u32 func = GetAddress(&vaOnPlayerKill_Func);
+    if (!func)
+        return;
+
+    u32 jalWord = ADDR2JAL(func);
+    u32 lo = func - JUGGY_KILL_SCAN_LO;
+    u32 hi = func + JUGGY_KILL_SCAN_HI;
+    u32 a;
+    for (a = lo; a < hi && KillHookCount < JUGGY_KILL_MAX_SITES; a += 4) {
+        if (*(u32*)a == jalWord) {
+            KillHookSites[KillHookCount] = a;
+            KillHookSaved[KillHookCount] = *(u32*)a;
+            HOOK_JAL(a, &juggyOnPlayerKill);
+            KillHookCount++;
+        }
+    }
+}
+#endif
+
 #if JUGGERNAUT_JUGGY_SHIELD
 // Destroy this player's cosmetic shield moby, if present. Mirrors the scan in
 // playerHasShield (shield moby stores its owner at pVar+0x40).
@@ -1037,6 +1129,11 @@ static void initialize(void)
     // Patch the weapon-hit hurt call so the juggy's cushion can absorb damage.
     juggyInstallHurtHook();
 
+#if JUGGERNAUT_JUGGY_ONLY_KILLS
+    // Gate frag scoring to the juggy's kills only.
+    juggyInstallKillHook();
+#endif
+
     Initialized = 1;
 }
 
@@ -1047,6 +1144,9 @@ static void teardown(void)
     // the level overlay is reloaded per match anyway, but our handler lives in
     // this overlay, so don't leave a live jump into it during the lobby window).
     juggyUninstallHurtHook();
+#if JUGGERNAUT_JUGGY_ONLY_KILLS
+    juggyUninstallKillHook();
+#endif
     resetState();
     Initialized = 0;
 }
