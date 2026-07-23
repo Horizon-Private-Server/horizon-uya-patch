@@ -106,6 +106,12 @@
 // integer health points (base bar == 15), so a full bar of cushion == 2x.
 #define JUGGERNAUT_CUSHION_HP           JUGGERNAUT_BASE_HEALTH
 
+// When the juggy grabs health mid-life, grant one free absorb by bumping the
+// cushion UP to 1 (if it's below 1) -- a "one blow" resist, not a full refill.
+// Only ever raises the cushion, so a juggy crowned at low HP with a still-full
+// cushion who then heals is never reduced. Detected by a read-only HP poll.
+#define JUGGERNAUT_REFILL_ON_HEAL       1
+
 // ---- Crown pickup tuning --------------------------------------------------
 // NOTE: 3D/GS draw colors are 0xAABBGGRR (alpha, blue, green, RED-low-byte) --
 // NOT 0xAARRGGBB. Gold (R=255,G=208,B=39) is therefore 0x__27D0FF.
@@ -296,6 +302,9 @@ static char   Buffed[GAME_MAX_PLAYERS];             // one-time cushion refill +
 // Refilled once per juggy life; decremented by absorbed weapon damage; shield tell
 // is shown while > 0. Replaces the old obfuscated-health buff entirely.
 static int    JuggyCushion = 0;
+#if JUGGERNAUT_REFILL_ON_HEAL
+static int    JuggyLastHp = 0;   // local juggy's last HP (read-only), to detect a heal
+#endif
 
 // ---- Guarded-hurt hook ----------------------------------------------------
 // We patch the WEAPON-HIT `jal vaHurtPlayerFunc` inside the per-frame player
@@ -1027,7 +1036,22 @@ static void processPlayer(Player * player)
                 playerGiveWeaponUpgrade(player, JUGGERNAUT_WEAPONS[w]);
 
             Buffed[idx] = 1;
+#if JUGGERNAUT_REFILL_ON_HEAL
+            JuggyLastHp = playerGetHealth(player);  // seed so respawn/crown HP isn't seen as a "heal"
+#endif
         }
+
+#if JUGGERNAUT_REFILL_ON_HEAL
+        // Grabbing health mid-life grants one free absorb: bump the cushion UP to 1
+        // if it's spent. Read-only HP poll (no obfuscation write), and never lowers
+        // an active cushion (a juggy crowned at low HP keeps its full cushion).
+        if (Buffed[idx] && !playerIsDead(player) && player->isLocal) {
+            int hp = playerGetHealth(player);
+            if (hp > JuggyLastHp && JuggyCushion < 1)
+                JuggyCushion = 1;
+            JuggyLastHp = hp;
+        }
+#endif
 
 #if JUGGERNAUT_JUGGY_SHIELD
         // Cosmetic shield "still-buffed" tell, driven off the remaining cushion
@@ -1080,7 +1104,9 @@ static void setLobbyGameOptions(void)
     if (!gameOptions || !gameSettings || gameSettings->GameLoadStartTime <= 0)
         return;
 
-    gameSettings->GameType = GAMETYPE_DM;
+    // Respect the base game type (DM/CTF/Siege) rather than forcing DM, so the
+    // crown buff can ride on top of other modes. Frag-scoring is gated to DM
+    // separately (see initialize()); on CTF/Siege the crown is a pure buff.
     gameOptions->GameFlags.MultiplayerGameFlags.Chargeboots = 1;
     gameOptions->GameFlags.MultiplayerGameFlags.PlayerNames = 1;
 }
@@ -1105,6 +1131,9 @@ static void resetState(void)
 
     memset(Buffed, 0, sizeof(Buffed));
     JuggyCushion = 0;
+#if JUGGERNAUT_REFILL_ON_HEAL
+    JuggyLastHp = 0;
+#endif
 
     JuggyShieldOn = 1;
     ShieldLastSent = -1;
@@ -1130,8 +1159,14 @@ static void initialize(void)
     juggyInstallHurtHook();
 
 #if JUGGERNAUT_JUGGY_ONLY_KILLS
-    // Gate frag scoring to the juggy's kills only.
-    juggyInstallKillHook();
+    // Gate frag scoring to the juggy -- but only in DM, where frags are the
+    // objective. In CTF/Siege the objective is flags/nodes, so leave kills scoring
+    // normally and let the crown be a pure buff (hook simply not installed).
+    {
+        GameSettings * gs = gameGetSettings();
+        if (gs && gs->GameType == GAMETYPE_DM)
+            juggyInstallKillHook();
+    }
 #endif
 
     Initialized = 1;

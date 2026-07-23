@@ -776,11 +776,9 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
   if (gs) {
     switch (v) {
       case CUSTOM_MODE_JUGGERNAUT: {
-        if (gs->GameType == GAMETYPE_DM)
-          return 1;
-
-        *value = CUSTOM_MODE_NONE;
-        return 0;
+        // Allowed on any base type -- frag scoring is gated to DM inside the mode;
+        // on CTF/Siege the crown is a pure buff.
+        return 1;
       }
       case CUSTOM_MODE_MIDFLAG: {
         if (gs->GameType == GAMETYPE_CTF)
