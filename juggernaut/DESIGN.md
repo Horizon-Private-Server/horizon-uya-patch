@@ -1,115 +1,52 @@
-# Juggernaut v2 — Host-Authoritative Crown Pickup
+# Juggernaut
 
-Design for replacing the current kill/stat-based crown tracking with a physical
-**crown pickup** object. This document is the build spec; no code has been
-written against it yet.
+Juggernaut is a crown-pickup mode layered onto DM, CTF, and Siege. The crown
+holder is the juggy: their base weapons are upgraded to V2 and they receive a
+damage cushion equivalent to one extra health bar.
 
-## Why change
-The shipped v1 derives the juggernaut from the synced DM kill/death stats
-(`updateJuggyFromStats`). That works, but ties the crown to kill attribution and
-handles non-kill deaths (suicide, fall/lava, disconnect) awkwardly. Moving to a
-world pickup makes the crown a visible, contestable object and removes kill
-attribution from the design entirely.
+## State and authority
 
-## Principle
-The crown is a **world object**. Holding it = juggy. The host only ever watches
-two things:
-1. Did the current juggy die? (`playerIsDead(players[JuggyIndex])`)
-2. Did a living player touch the active pickup? (radius test)
+The host owns the crown state. It chooses a validated player-spawn position,
+detects pickups, drops the crown after a juggy death, and relocates stale
+pickups. It broadcasts a heartbeat containing:
 
-No kill tracking anywhere. The buff layer is untouched — `processPlayer` still
-just reads `JuggyIndex`; we only replace *how that value is decided*.
+`{ sequence, juggy index, pickup active, pickup position }`
 
-## Authority: host-owned, KOTH-style
-- The host is the single source of truth for crown state and pickup position.
-- The host broadcasts a **heartbeat** (~500ms), not only on transitions:
-  `{ seq, juggyIdx (-1 = none), pickupActive, pickupPos[3] }`.
-- Clients apply any snapshot with a newer `seq`, set `JuggyIndex`, and render a
-  **local cosmetic sprite** at `pickupPos`. Clients never decide the crown.
-- **Host migration:** because the full state rides the heartbeat, a reassigned
-  host (`gameAmIHost()` flips when UYA reassigns `GAME_HOST_ID`) resumes from its
-  last cached snapshot and keeps broadcasting. Same model as KOTH — no handshake.
+Clients accept newer snapshots, update `JuggyIndex`, and render the crown
+locally. A migrated host continues from the latest cached state.
 
-## Host state machine
-```
-MATCH START -> host picks a random, validated player spawn -> PICKUP_ACTIVE
+The juggy's own client owns the damage cushion because health is not networked.
+It broadcasts the cosmetic shield state; other clients only render it.
 
-PICKUP_ACTIVE (crown in world):
-  host checks every living player vs pickupPos (radius test)
-    on overlap        -> crown that player: JuggyIndex=X, pickupActive=0 -> CROWNED
-    on stale (~20s)   -> relocate to a new random validated spawn
+## Crown flow
 
-CROWNED(X):
-  host watches playerIsDead(players[X])
-    on juggy death    -> record deathPos, arm 1s timer -> (after 1s) PICKUP_ACTIVE @ deathPos
-    on juggy disconnect -> PICKUP_ACTIVE @ last known pos (fallback: random spawn)
+```text
+match start -> delayed pickup at a validated player spawn
+pickup      -> living player overlaps it -> that player becomes juggy
+juggy dies  -> short arm delay -> pickup at death position
+disconnect  -> pickup at last known position, or a new spawn
+stale       -> relocate to a new validated player spawn
 ```
 
-## Contest behavior
-- On juggy death the crown drops at the **dead juggy's location** after a **1s arm
-  delay**. The delay is the contest window — nearby players (including whoever got
-  the kill) converge and race for it. No auto-regrab: there's a beat before it is
-  live and it sits on neutral ground.
-- Knob held in reserve if testing shows it still favors the killer: a short
-  "last holder can't instantly regrab" lockout. Not in v1.
+Pickup positions reject NaN and out-of-range coordinates. If no valid spawn is
+available, the host retries and eventually falls back to a living player's
+position.
 
-## Client side (cosmetic only)
-Lift the presentation from `patch/scavengerhunt.c`:
-- `mobySpawn` + `pUpdate` for the visual object.
-- `gfxDrawBillboardQuad` + particles (`gfxSpawnParticle`) for the sprite.
-- `soundPlayByOClass` on spawn/grab.
-- The grab **decision is host-side**, so unlike scav hunt there is no
-  `GAME_MAX_LOCALS` self-detection — the sprite is purely a render of the
-  host-broadcast `pickupPos`/`pickupActive`.
+## Implementation notes
 
-## Spawn placement (random player spawn, validated)
-API in `libuya/spawnpoint.h`:
-- `spawnPointGetCount()` — total cuboids.
-- `spawnPointGet(index)` -> `Cuboid*`; `Cuboid.pos` (VECTOR @ 0x30) is the spawn
-  position. NOTE: no bounds/sanity checking inside — caller owns it.
-- `spawnPointIsPlayer(index)` — true for player-spawn cuboids (checks
-  `gameData->DeathMatchGameData->resurrectionPts[]`).
+- `processPlayer` reads `JuggyIndex`; crown ownership is separate from buffs.
+- The health buff uses a guarded damage hook instead of writing obfuscated
+  health/max-health fields, which share state with player status.
+- Damage hooks scan all matching call sites because PvP damage does not use one
+  universal site. Hook installation and removal are map-reload safe.
+- Crown visuals are client-local. The held crown is an orb over the juggy; an
+  unheld crown also draws a beam and a minimap marker.
+- Only the juggy receives frag credit when the juggy-only scoring option is on.
 
-Selection procedure (host, at match start and on stale relocate):
-1. Collect indices `i` in `[0, spawnPointGetCount())` where `spawnPointIsPlayer(i)`.
-2. Pick one at random; read `->pos`.
-3. Validate with a KOTH-style sanity check (reject NaN + out-of-range):
-   ```c
-   // from koth/game.c
-   static int floatIsSane(float v)  { return v == v && v > -10000.0f && v < 10000.0f; }
-   static int vectorIsSane(VECTOR v){ return floatIsSane(v[0]) && floatIsSane(v[1]) && floatIsSane(v[2]); }
-   ```
-4. On failure, re-roll (bounded retries); final fallback = a living player's
-   position.
-5. Broadcast the validated `pos`; trust it thereafter (validate once at selection,
-   not per tick — KOTH's lean-path lesson).
+## Tuning
 
-Vanilla map spawns pass trivially; the validation exists to catch malformed
-**custom-map** cuboids.
-
-## The clean seam (what to add / remove)
-- **Remove:** `updateJuggyFromStats()`, `LastKills[]`/`LastDeaths[]`, and the
-  `SCORE_JUGGY_ONLY` erase (revisit scoring separately once the crown is solid).
-- **Add:**
-  - `juggyHostTick()` — the state machine above, host-only.
-  - `juggyBroadcastState()` / `juggyOnReceiveState()` — heartbeat send + handler
-    installed via `netInstallCustomMsgHandler`.
-  - Pickup sprite spawn/despawn + `pUpdate` render.
-  - New `CUSTOM_MSG_ID_JUGGERNAUT_STATE`.
-- **Unchanged:** everything in `processPlayer` — 2x health, V2 weapons, and all
-  `isLocal`-gated buffs. `JuggyIndex` simply gets its value from the broadcast
-  instead of the stat poll.
-
-## Defaults (revisit if needed)
-- Heartbeat interval: ~500ms.
-- Pickup radius: reuse scav hunt's `HBOLT_PICKUP_RADIUS` feel.
-- Stale relocate timeout: ~20s.
-- Death-drop arm delay: 1s.
-
-## Open items to nail at build time
-- Confirm `CUSTOM_MSG_ID_JUGGERNAUT_STATE` id allocation against the existing
-  custom-message enum.
-- Confirm the message send path (`netGetDmeServerConnection()` +
-  `netBroadcastCustomAppMessage`, mirroring KOTH's hill sync).
-- Decide the crown sprite oclass/asset (reuse an existing pickup oclass vs a
-  dedicated one).
+- Heartbeat: 500 ms
+- Initial pickup delay: 10 s
+- Stale relocation: 20 s
+- Death-drop arm delay: 3 s
+- Pickup radius: 3 world units

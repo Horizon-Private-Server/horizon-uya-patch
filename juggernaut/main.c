@@ -1,35 +1,6 @@
-/***************************************************
- * FILENAME :        main.c
- * DESCRIPTION :
- *      Juggernaut custom game mode.
- *
- *      DM-based mode built around a physical "crown" pickup. Whoever holds the
- *      crown is the juggernaut (juggy): they get double max health and their
- *      carried base weapons upgraded to V2. When the juggy dies the crown drops
- *      at their death location after a short delay; whoever touches it next
- *      becomes the juggy.
- *
- *      Authority is host-owned (KOTH-style). The host runs the crown state
- *      machine -- spawn point, grab detection, drop-on-death -- and broadcasts a
- *      heartbeat snapshot { seq, juggyIdx, pickupActive, pickupPos }. Every
- *      client (and any future host after migration) applies the newest snapshot,
- *      sets JuggyIndex, and renders a local cosmetic sprite. Because the full
- *      state rides the heartbeat, a reassigned host resumes seamlessly.
- *
- *      The buff layer (processPlayer) only ever reads JuggyIndex, so it is
- *      agnostic to how the crown is decided.
- *
- * NOTES :
- *      Compile-time options (promote to game rules later):
- *        JUGGERNAUT_JUGGY_SHIELD      - cosmetic shield bubble on the juggy,
- *                                       drawn by every client EXCEPT the juggy's
- *                                       own screen (default on; owner-side sim is
- *                                       untouched, so the juggy stays killable).
- *        JUGGERNAUT_BRUISER_SKIN      - juggy's hero skin becomes Bruiser
- *                                       (default off; crashes mid-match, needs
- *                                       a proper in-game model swap).
- *      See DESIGN.md for the full specification.
- */
+/* Host-authoritative crown pickup mode. The juggy receives V2 base weapons and
+ * a damage cushion; clients render the synchronized crown locally. See
+ * DESIGN.md for the state flow and engine-specific constraints. */
 
 #include <tamtypes.h>
 #include <string.h>
@@ -58,63 +29,35 @@
 #include "config.h"
 
 // ---- Compile-time options -------------------------------------------------
-// Diagnostic: throttled on-screen status line (host?/pickup?/juggy?/spawns?).
-// Set to 0 to ship.
 #define JUGG_DEBUG                      0
 
-// Skin swap is disabled: changing a live player's skin via gameSetClientSkin()
-// fires a lobby-settings network update that crashes the client mid-match. A
-// proper in-game model/skin swap needs to be REd separately before re-enabling.
+// Disabled: changing a live skin through gameSetClientSkin() crashes mid-match.
 #define JUGGERNAUT_BRUISER_SKIN         0
 
-// Give the juggy a cosmetic shield bubble as a "still-buffed" tell. It shows
-// while the juggy is above base max health and DROPS once they've been hurt to
-// <= normal max (JUGGERNAUT_BASE_HEALTH) -- i.e. their 2x cushion is gone and
-// they're now killable at normal health, a visible "vulnerable now" signal.
-// Health is never networked, so the juggy's OWN client (the only one that knows
-// its health) decides on/off and broadcasts the flag; every client applies the
-// bubble from it. playerGiveShield() spawns a client-LOCAL moby and grants
-// owner-side absorption, so we only ever apply it to REMOTE mirrors (purely
-// visual, juggy stays killable) unless JUGGERNAUT_JUGGY_SHIELD_LOCAL is set.
+// Cosmetic shield follows the owner-local damage cushion and is broadcast to
+// remote clients; it does not provide gameplay absorption.
 #define JUGGERNAUT_JUGGY_SHIELD         1
 
-// Also render the bubble on the juggy's OWN screen (unlike the crown orb, which
-// is hidden locally). Off by default -- it can obscure the juggy's own view.
+// Also render the cosmetic shield on the juggy's own screen.
 #define JUGGERNAUT_JUGGY_SHIELD_LOCAL   1
 
-// Only the current juggy scores frags. We wrap the forwarded-score-event handler
-// and apply it only when the killer is the juggy; every other kill is dropped (no
-// frag credit, no death tally, no kill-feed). The score event is forwarded
-// identically to all clients and JuggyIndex is broadcast, so every client gates
-// the same way and scoreboards stay in sync.
+// Only the current juggy's forwarded kill events are applied.
 #define JUGGERNAUT_JUGGY_ONLY_KILLS     1
 
 #define JUGGERNAUT_HEALTH_MULTIPLIER    2
 
-// UYA hero base max health is a fixed constant (PLAYER_MAX_HEALTH == 15, stored
-// as a float). DM is uniform, so we use the constant directly.
+// UYA's fixed base max health (15 in DM).
 #define JUGGERNAUT_BASE_HEALTH          PLAYER_MAX_HEALTH
 #define JUGGERNAUT_BUFFED_HEALTH        (JUGGERNAUT_BASE_HEALTH * JUGGERNAUT_HEALTH_MULTIPLIER)
 
-// Damage cushion (the "2x health" buff, done WITHOUT writing health/maxHP).
-// Instead of raising the juggy's max health -- which requires obfuscated writes
-// to player->hitPoints/maxHP that share a self-modifying global table with
-// player STATE, and corrupt it (juggy ends up invincible + unable to shoot) --
-// we intercept weapon damage on the juggy's own client and absorb the first
-// JUGGERNAUT_CUSHION_HP points before letting damage through normally. Net
-// effect is ~2x survivability with ZERO health/state writes. Damage is in
-// integer health points (base bar == 15), so a full bar of cushion == 2x.
+// Extra survivability without writing obfuscated health/state fields.
 #define JUGGERNAUT_CUSHION_HP           JUGGERNAUT_BASE_HEALTH
 
-// When the juggy grabs health mid-life, grant one free absorb by bumping the
-// cushion UP to 1 (if it's below 1) -- a "one blow" resist, not a full refill.
-// Only ever raises the cushion, so a juggy crowned at low HP with a still-full
-// cushion who then heals is never reduced. Detected by a read-only HP poll.
+// A mid-life health pickup restores one absorbed hit, not the full cushion.
 #define JUGGERNAUT_REFILL_ON_HEAL       1
 
 // ---- Crown pickup tuning --------------------------------------------------
-// NOTE: 3D/GS draw colors are 0xAABBGGRR (alpha, blue, green, RED-low-byte) --
-// NOT 0xAARRGGBB. Gold (R=255,G=208,B=39) is therefore 0x__27D0FF.
+// 3D/GS colors are ABGR (not ARGB).
 #define CROWN_MOBY_OCLASS               (0x1C0D)        // reused glowing-orb effect moby
 #define CROWN_SPRITE_TEX                (81)
 #define CROWN_SPRITE_COLOR              (0x0027D0FF)    // gold (ABGR)
@@ -136,22 +79,14 @@
 #define CROWN_BEAM_COLOR                (0x8027D0FF)    // gold, ~50% alpha (ABGR)
 #define CROWN_HEARTBEAT_MS              (500)
 #define CROWN_STALE_RELOCATE_MS         (20 * TIME_SECOND)
-// Arm delay before the dropped crown becomes grabbable after the juggy dies. Long
-// enough to (a) give every player a fair chance to converge on the drop spot, and
-// (b) let the kill that dropped the crown (and any in-flight kills) fully score
-// before a new juggy can be crowned -- during this window JuggyIndex is -1, so no
-// kill can be mis-credited to a just-crowned player racing the kill logic.
+// Keep the crown neutral briefly after a death so the drop can be contested.
 #define CROWN_DEATH_DROP_DELAY_MS       (3 * TIME_SECOND)
-// Hold the FIRST pickup this long after match start so players spread out from
-// their spawn cuboids before the crown appears -- avoids an instant "spawned on
-// the pickup" crown. Applies only to the initial pickup, not mid-match respawns.
+// Give players time to leave their spawn before the first pickup appears.
 #define CROWN_FIRST_PICKUP_DELAY_MS     (10 * TIME_SECOND)
 
-// Local (per-client) custom message id -- both sender and receiver are this
-// module, and only one custom mode runs at a time, so the game-mode range is
-// safe to use without editing common/messageid.h (keeps changes module-local).
+// Module-local message IDs; only one custom mode runs at a time.
 #define CROWN_MSG_ID_STATE              (CUSTOM_MSG_ID_GAME_MODE_START)
-// Juggy shield on/off flag, broadcast by the juggy's own client (see shield block).
+// Shield state is broadcast by the juggy's own client.
 #define CROWN_MSG_ID_SHIELD             (CUSTOM_MSG_ID_GAME_MODE_START + 1)
 
 // Base weapons upgraded to V2 while juggy (no-op if the player doesn't hold them).
@@ -167,17 +102,11 @@ static const int JUGGERNAUT_WEAPONS[] = {
 };
 #define JUGGERNAUT_WEAPON_COUNT (sizeof(JUGGERNAUT_WEAPONS) / sizeof(JUGGERNAUT_WEAPONS[0]))
 
-// ---- Billboard texture-swap plumbing (mirrors scavengerhunt.c) ------------
-// gfxDrawBillboardQuad with the frame texture (81) requires temporarily
-// swapping the effect-texture getter for the frame-texture getter around the
-// draw call. vaGetFrameTex / vaGetEffectTex live in libuya (linked); the JAL
-// call-site table is per-map and copied from patch/scavengerhunt.c.
+// Billboard frame textures require a temporary per-map getter swap.
 extern VariableAddress_t vaGetFrameTex;
 extern VariableAddress_t vaGetEffectTex;
 
-// Line-beam API from libuya (draw.c). The types live in draw.c (not a header),
-// so we mirror them here with the SAME field types/order so the ABI matches.
-// The beam uses the normal effect-texture getter -- no frame-texture swap.
+// These draw.c types are mirrored here because no public header exists.
 typedef enum LineStyle {
     LINE_STYLE_NONE = 0,
     LINE_STYLE_BEAM = 1,
@@ -297,24 +226,15 @@ static int    HostFirstPickupDone = 0;               // first pickup placed? gra
 // Per-player buff bookkeeping.
 static char   Buffed[GAME_MAX_PLAYERS];             // one-time cushion refill + weapon upgrades this life?
 
-// Damage cushion for the current juggy, tracked on the juggy's OWN client (damage
-// is owner-authoritative, so the weapon-hit hook only ever fires meaningfully there).
-// Refilled once per juggy life; decremented by absorbed weapon damage; shield tell
-// is shown while > 0. Replaces the old obfuscated-health buff entirely.
+// Owner-local cushion, refilled once per juggy life and spent by absorbed damage.
 static int    JuggyCushion = 0;
 #if JUGGERNAUT_REFILL_ON_HEAL
 static int    JuggyLastHp = 0;   // local juggy's last HP (read-only), to detect a heal
 #endif
 
 // ---- Guarded-hurt hook ----------------------------------------------------
-// We patch the WEAPON-HIT `jal vaHurtPlayerFunc` inside the per-frame player
-// health-reduction function. Networked PvP weapon damage did NOT go through the
-// single site we tried (an in-game counter showed 0 hits), so instead of guessing
-// which of the ~9 call sites carries it, we hook EVERY `jal vaHurtPlayerFunc` in
-// the overlay. They all pass (a0=player, a1=damage) identically -- it's the same
-// callee -- so one hook works at all of them, and the juggy check means only the
-// juggy absorbs; every other call passes straight through unchanged. Catches
-// whatever path PvP damage uses (weapon, collision, hazard) without site ID.
+// Hook every matching damage call site: PvP damage is not routed through one
+// universal site. Non-juggy damage passes through unchanged.
 #define JUGGY_HURT_SCAN_RANGE   (0x20000)   // sites span ~HF-0x19000 .. HF+0x1f000
 #define JUGGY_HURT_MAX_SITES    (24)        // ~9 expected; headroom
 
@@ -323,19 +243,14 @@ static u32  HurtHookSaved[JUGGY_HURT_MAX_SITES];  // their original words, for t
 static int  HurtHookCount = 0;                    // 0 = not installed
 static u32  HurtFuncAddr  = 0;                     // resolved vaHurtPlayerFunc (direct passthrough, no per-hit re-resolve)
 
-// libuya's map-resolved trampoline to the real vaHurtPlayerFunc (see functions.S),
-// plus the per-map address table itself (used to build the jal we scan for).
+// Map-resolved trampoline and per-map call-site table.
 extern void internal_HurtPlayer(Player * player, int damage);
 extern VariableAddress_t vaHurtPlayerFunc;
 
 #if JUGGERNAUT_JUGGY_ONLY_KILLS
 // ---- Juggy-only kill credit -----------------------------------------------
-// vaOnPlayerKill_Func is the forwarded score-event apply (decomp
-// matchStateApplyForwardedScoreEvent) -- it bumps the killer's frags, the victim's
-// deaths, and the kill-feed. It is called from TWO sites: the receive path (other
-// clients applying a forwarded kill) AND the killer's own originate path. Hooking
-// only one leaves the killer scoring locally, so -- like the hurt hook -- we scan
-// and hook EVERY jal to it. Same addresses infected uses for the function.
+// The score handler runs on both receive and originate paths, so hook every
+// matching call site to keep local and remote scoreboards consistent.
 static VariableAddress_t vaOnPlayerKill_Func = {
 #if UYA_PAL
     .Lobby = 0,
@@ -351,8 +266,7 @@ static VariableAddress_t vaOnPlayerKill_Func = {
     .MarcadiaPalace = 0x00534758,
 #endif
 };
-// The two call sites sit ~0x4a000 below and ~0x7000 above the function; this
-// window brackets both while staying inside the overlay.
+// This window brackets both known call sites while staying inside the overlay.
 #define JUGGY_KILL_SCAN_LO      (0x4b000)
 #define JUGGY_KILL_SCAN_HI      (0x8000)
 #define JUGGY_KILL_MAX_SITES    (8)
@@ -361,9 +275,7 @@ static u32 KillHookSaved[JUGGY_KILL_MAX_SITES];
 static int KillHookCount = 0;   // 0 = not installed
 #endif
 
-// Shield tell: is the current juggy above base max health? Computed on the
-// juggy's own client, mirrored from broadcast elsewhere. Default on (a freshly
-// crowned juggy is at full buffed health until they take damage).
+// Cosmetic shield state: owner-computed, then mirrored to other clients.
 static int    JuggyShieldOn = 1;
 static int    ShieldLastSent = -1;                  // last value this client broadcast (juggy only)
 static int    ShieldNextResend = 0;                 // periodic re-broadcast time (late joiners / loss)
@@ -411,8 +323,7 @@ static int vectorIsSane(VECTOR v)
 }
 
 //--------------------------------------------------------------------------
-// Pick a random, validated player-spawn position. Falls back to a living
-// player's position if no sane spawn cuboid is found. Returns 1 on success.
+// Pick a validated player spawn, falling back to a living player.
 static int pickRandomSpawnPos(VECTOR out)
 {
     int count = spawnPointGetCount();
@@ -449,8 +360,7 @@ static int pickRandomSpawnPos(VECTOR out)
 // ==========================================================================
 //  Local cosmetic crown sprite
 // ==========================================================================
-// Vertical beacon beam -- straight base-light pillar, fades out toward the top.
-// No frame-texture swap needed (drawLines uses the normal effect-texture getter).
+// Draw the beacon beam with the normal effect-texture getter.
 static void crownDrawBeam(VECTOR at)
 {
     LineEndPoint_t eps[2];
@@ -474,14 +384,11 @@ static void crownDraw(Moby * moby)
     if (!moby)
         return;
 
-    // Tall beacon pillar only for the un-held pickup; the juggy marker is just
-    // the orb hovering over their head.
+    // The beam marks an unheld pickup; a held crown is an orb over the juggy.
     if (CrownShowBeam)
         crownDrawBeam(moby->position);
 
-    // The orb billboard uses the frame texture, which needs a per-map JAL swap.
-    // Guard the addresses: on maps not in the table GetAddress returns 0, and
-    // hooking at 0x20 / jumping to 0 would corrupt low memory (TLB miss).
+    // Frame-texture drawing needs a guarded per-map JAL swap.
     u32 site = (u32)GetAddress(&vaReplace_GetEffectTexJAL);
     u32 frameTex = (u32)GetAddress(&vaGetFrameTex);
     u32 effectTex = (u32)GetAddress(&vaGetEffectTex);
@@ -501,12 +408,9 @@ static void crownDraw(Moby * moby)
 
 static void crownUpdate(Moby * moby)
 {
-    // Two visuals, driven by the synced state:
-    //   - un-held pickup  -> tall pillar + orb at the pickup point
-    //   - held (juggy)     -> orb hovering over the juggy's head (cross-client
-    //                         marker; player positions are networked)
-    // No gfxSpawnParticle here: holding PartInstance_t* across frames on a
-    // persistent moby risks a double-free that corrupts the particle pool.
+    // Unheld: beam plus orb at the pickup. Held: orb over the juggy.
+    // Keep the moby persistent; retaining a particle instance across frames can
+    // corrupt the particle pool.
     if (PickupActive) {
         vector_copy(moby->position, PickupPos);
         CrownShowBeam = 1;
@@ -537,9 +441,7 @@ static void crownSpriteDestroy(void)
     CrownMoby = NULL;
 }
 
-// Keep a single persistent crown moby alive for the whole match. Its update
-// hides/shows itself from PickupActive, so we never spawn/destroy per pickup
-// (which risked a destroy-during-deferred-draw fault). Destroyed on teardown.
+// Keep one crown moby for the match; update hides or shows it as needed.
 static void crownSpriteSync(void)
 {
     if (CrownMoby && !mobyIsDestroyed(CrownMoby))
@@ -641,7 +543,7 @@ static void crownBroadcastState(void)
     netBroadcastCustomAppMessage(connection, CROWN_MSG_ID_STATE, sizeof(msg), &msg);
 }
 
-// Broadcast the juggy shield flag. Sent by the juggy's own client only.
+// The juggy's own client broadcasts this flag.
 static void juggyBroadcastShield(int on)
 {
     void * connection = netGetDmeServerConnection();
@@ -654,9 +556,7 @@ static void juggyBroadcastShield(int on)
     netBroadcastCustomAppMessage(connection, CROWN_MSG_ID_SHIELD, sizeof(msg), &msg);
 }
 
-// Update the local shield flag and broadcast it on change (plus a periodic
-// re-send so late joiners / dropped packets converge). Called on the juggy's
-// own client, which is the sole authority for its own health.
+// Broadcast on change and periodically for late joiners or dropped packets.
 static void juggyUpdateShieldState(int want)
 {
     int now = gameGetTime();
@@ -668,8 +568,7 @@ static void juggyUpdateShieldState(int want)
     }
 }
 
-// A freshly crowned juggy starts at full buffed health -> shielded. Force the
-// next tick to (re)broadcast so remote clients converge immediately.
+// A new juggy starts shielded; force an immediate broadcast.
 static void juggyResetShieldForNewJuggy(void)
 {
     JuggyShieldOn = 1;
@@ -680,7 +579,7 @@ static void juggyResetShieldForNewJuggy(void)
 static int crownOnReceiveShield(void * connection, void * data)
 {
     CrownShieldMsg_t * msg = (CrownShieldMsg_t*)data;
-    // Trust the flag only for the current juggy (ignore stale/foreign senders).
+    // Ignore stale or foreign flags.
     if (msg->JuggyIdx == JuggyIndex)
         JuggyShieldOn = msg->ShieldOn ? 1 : 0;
     return sizeof(CrownShieldMsg_t);
@@ -688,13 +587,13 @@ static int crownOnReceiveShield(void * connection, void * data)
 
 static int crownOnReceiveState(void * connection, void * data)
 {
-    // The host is authoritative and never applies incoming snapshots.
+    // The host is authoritative.
     if (gameAmIHost())
         return sizeof(CrownStateMsg_t);
 
     CrownStateMsg_t * msg = (CrownStateMsg_t*)data;
 
-    // Only accept newer (or equal, for idempotent heartbeats) snapshots.
+    // Equal snapshots are harmless and keep heartbeats idempotent.
     if (msg->Seq < StateSeq)
         return sizeof(CrownStateMsg_t);
 
@@ -762,13 +661,13 @@ static void juggyHostTick(int gameTime)
 {
     Player ** players = playerGetAll();
 
-    // Stamp match start on the host's first tick (drives the initial-pickup grace).
+    // Stamp match start for the initial-pickup delay.
     if (!HostStarted) {
         HostStarted = 1;
         HostMatchStartTime = gameTime;
     }
 
-    // 1. Crowned: watch for the juggy dying or disconnecting.
+    // 1. Watch the juggy for death or disconnect.
     if (JuggyIndex >= 0 && JuggyIndex < GAME_MAX_PLAYERS) {
         Player * jp = players[JuggyIndex];
         if (!jp) {
@@ -779,23 +678,20 @@ static void juggyHostTick(int gameTime)
         }
     }
 
-    // 2. Death drop pending: materialize the pickup once the arm delay elapses.
+    // 2. Materialize a pending death drop.
     if (HostDropPending && gameTime >= HostDropAtTime) {
         VECTOR pos;
         if (HostDropHasPos)
             vector_copy(pos, HostDropPos);
         else if (!pickRandomSpawnPos(pos)) {
-            // No sane location yet; retry next tick.
+            // Retry if no valid location is available yet.
             HostDropAtTime = gameTime + CROWN_HEARTBEAT_MS;
             return;
         }
         hostActivatePickup(pos, gameTime);
     }
 
-    // 3. Self-heal / match start: no juggy, no pickup, nothing pending -> spawn.
-    // The FIRST pickup is held for CROWN_FIRST_PICKUP_DELAY_MS after match start so
-    // players move off their spawn cuboids before the crown appears (no instant
-    // spawn-on-pickup crown). Mid-match respawns (HostFirstPickupDone) skip the wait.
+    // 3. Spawn the initial or a mid-match pickup.
     if (JuggyIndex < 0 && !PickupActive && !HostDropPending) {
         if (HostFirstPickupDone || gameTime >= HostMatchStartTime + CROWN_FIRST_PICKUP_DELAY_MS) {
             VECTOR pos;
@@ -806,7 +702,7 @@ static void juggyHostTick(int gameTime)
         }
     }
 
-    // 4. Pickup active: grab detection + stale relocate.
+    // 4. Detect pickup overlap and relocate stale pickups.
     if (PickupActive) {
         int i;
         for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
@@ -831,7 +727,7 @@ static void juggyHostTick(int gameTime)
         }
     }
 
-    // 5. Periodic heartbeat so late joiners / a migrated host converge.
+    // 5. Heartbeat for late joiners and host migration.
     if (gameTime >= HostNextHeartbeat) {
         crownBroadcastState();
         HostNextHeartbeat = gameTime + CROWN_HEARTBEAT_MS;
@@ -841,13 +737,8 @@ static void juggyHostTick(int gameTime)
 // ==========================================================================
 //  Guarded-hurt hook -- the "2x health" buff, without touching health/state
 // ==========================================================================
-// Replaces the WEAPON-HIT `jal vaHurtPlayerFunc` in the player damage
-// dispatcher. Args arrive exactly as the engine set them up: a0 = player,
-// a1 = damage. For the juggy with cushion remaining, we swallow the damage into
-// JuggyCushion and return WITHOUT calling the real hurt -> no health/state write,
-// so nothing corrupts. Knockback is applied by the projectile impact separately
-// (not by this call), so it is preserved -- the juggy still visibly reacts.
-// Everyone else (and the juggy once the cushion is spent) passes straight through.
+// Absorb damage into the cushion without writing health/state. Knockback is
+// applied separately by the projectile impact.
 #if JUGG_DEBUG
 static int HookCalls   = 0;   // times the hooked site fired (any player)
 static int HookAbsorbs = 0;   // times we actually absorbed for the juggy
@@ -870,9 +761,7 @@ static void juggyHurtWeaponHit_Hook(Player * player, int damage)
         return;                     // damage NOT applied
     }
 
-    // Normal damage. Call the resolved address directly (cached at install) to
-    // avoid re-resolving the map address on every hit; fall back to the trampoline
-    // only if somehow uncached.
+    // Use the cached address; retain the trampoline as a fallback.
     if (HurtFuncAddr)
         ((void (*)(Player *, int))HurtFuncAddr)(player, damage);
     else
@@ -881,9 +770,8 @@ static void juggyHurtWeaponHit_Hook(Player * player, int damage)
 
 static void juggyUninstallHurtHook(void)
 {
-    // Only restore a site that STILL holds our hook. If the overlay was reloaded
-    // (map change) under stale addresses, those slots now hold unrelated code --
-    // writing the old jal back would corrupt it, so skip any that aren't ours.
+    // Restore only slots that still contain our hook; map reloads may invalidate
+    // the saved addresses.
     u32 ourJal = ADDR2JAL((u32)&juggyHurtWeaponHit_Hook);
     int i;
     for (i = 0; i < HurtHookCount; ++i)
@@ -904,10 +792,7 @@ static void juggyInstallHurtHook(void)
     HurtFuncAddr = hurtFunc;
     u32 jalWord = ADDR2JAL(hurtFunc);        // `jal vaHurtPlayerFunc` for this map
 
-    // Hook EVERY jal to vaHurtPlayerFunc in a window around it. Matching only the
-    // exact jal word means we never patch anything but a real call to that
-    // function. If none are found (unexpected build), nothing is patched and the
-    // cushion is simply disabled -- never a crash.
+    // Match the exact call word. If no sites are found, the cushion stays off.
     u32 lo = hurtFunc - JUGGY_HURT_SCAN_RANGE;
     u32 hi = hurtFunc + JUGGY_HURT_SCAN_RANGE;
     u32 a;
@@ -922,11 +807,7 @@ static void juggyInstallHurtHook(void)
 }
 
 #if JUGGERNAUT_JUGGY_ONLY_KILLS
-// Wraps the forwarded score-event apply so only the juggy's kills count. fragMsg[0]
-// is the killer's mpIndex; if it's the juggy we run the real handler (frag credit,
-// death tally, kill-feed), otherwise we drop the event entirely. Runs on every
-// client (each applies the same forwarded event) and JuggyIndex is broadcast, so
-// the gate is consistent -> no scoreboard divergence except at a crown-change instant.
+// Apply forwarded score events only when fragMsg[0] is the juggy's mpIndex.
 static void juggyOnPlayerKill(char * fragMsg)
 {
     if (fragMsg && fragMsg[0] >= 0 && fragMsg[0] == JuggyIndex)
@@ -936,7 +817,7 @@ static void juggyOnPlayerKill(char * fragMsg)
 
 static void juggyUninstallKillHook(void)
 {
-    // Restore only sites that still hold our hook (map-reload safety, as with hurt).
+    // Restore only sites that still contain our hook.
     u32 ourJal = ADDR2JAL((u32)&juggyOnPlayerKill);
     int i;
     for (i = 0; i < KillHookCount; ++i)
@@ -969,8 +850,7 @@ static void juggyInstallKillHook(void)
 #endif
 
 #if JUGGERNAUT_JUGGY_SHIELD
-// Destroy this player's cosmetic shield moby, if present. Mirrors the scan in
-// playerHasShield (shield moby stores its owner at pVar+0x40).
+// Destroy this player's cosmetic shield moby, if present.
 static void juggyRemoveShield(Player * player)
 {
     Moby * shield = mobyListGetStart();
@@ -981,15 +861,8 @@ static void juggyRemoveShield(Player * player)
     }
 }
 
-// Disconnect / crown-transfer safety. The engine's shield update
-// (shieldEffectUpdateSourceJoint) reads the OWNER player's moby joint every frame,
-// and its draw path calls the HUD-quad / vec-lerp / sine-motion helpers. An
-// ex-juggy or a disconnected player leaves a shield whose owner pointer
-// (pVar+0x40) now dangles -> that per-frame read hits freed/unmapped memory -> the
-// repeating TLB miss seen on disconnect. Fix: each frame, destroy any shield not
-// owned by the current LIVE juggy. We only COMPARE the stored owner pointer, never
-// dereference it, so the sweep is safe even when the owner has been freed. Cheap:
-// one oclass-list walk (normally 0-1 shields), same cost as the give/remove scans.
+// Remove shields whose owner is no longer the live juggy. Compare the stored
+// owner pointer without dereferencing it; this avoids stale-owner TLB faults.
 static void juggySweepStrayShields(void)
 {
     Player * juggy = NULL;
@@ -1019,15 +892,11 @@ static void processPlayer(Player * player)
         return;
 
     if (idx == JuggyIndex) {
-        // Reset Buffed on death so the cushion + weapons re-apply after respawn.
+        // Re-apply the cushion and weapons after respawn.
         if (playerIsDead(player))
             Buffed[idx] = 0;
 
-        // Once per life (owner only): refill the damage cushion + upgrade weapons.
-        // No health/maxHP writes -- the cushion (guarded weapon-hit hook) provides
-        // the effective 2x survivability without touching the obfuscated fields
-        // that share a table with player STATE. V2 weapon upgrades don't touch
-        // that table, so they stay.
+        // Apply the owner-local cushion and weapon upgrades once per life.
         if (!Buffed[idx] && !playerIsDead(player) && player->isLocal) {
             JuggyCushion = JUGGERNAUT_CUSHION_HP;
 
@@ -1042,9 +911,7 @@ static void processPlayer(Player * player)
         }
 
 #if JUGGERNAUT_REFILL_ON_HEAL
-        // Grabbing health mid-life grants one free absorb: bump the cushion UP to 1
-        // if it's spent. Read-only HP poll (no obfuscation write), and never lowers
-        // an active cushion (a juggy crowned at low HP keeps its full cushion).
+        // A mid-life health pickup restores one absorbed hit.
         if (Buffed[idx] && !playerIsDead(player) && player->isLocal) {
             int hp = playerGetHealth(player);
             if (hp > JuggyLastHp && JuggyCushion < 1)
@@ -1054,22 +921,12 @@ static void processPlayer(Player * player)
 #endif
 
 #if JUGGERNAUT_JUGGY_SHIELD
-        // Cosmetic shield "still-buffed" tell, driven off the remaining cushion
-        // (a truthful "still cushioned / vulnerable-soon" signal). The juggy's own
-        // client owns the cushion, decides on/off, and broadcasts the flag; every
-        // client renders the bubble from JuggyShieldOn.
-        // Owner computes on/off from its cushion and broadcasts JuggyShieldOn.
+        // The owner derives shield state from its cushion; all clients render it.
         if (player->isLocal)
             juggyUpdateShieldState(!playerIsDead(player) && JuggyCushion > 0);
 
-        // Draw the cosmetic bubble on every client via playerGiveShield -- the
-        // omni-shield moby (0x1b37) has no gameplay callbacks, so it is purely
-        // visual on local AND remote (NOT shieldTrigger, which does a real
-        // networked equip and desynced player state). Because the cushion now
-        // absorbs all damage, the juggy can't die while shielded, so the bubble is
-        // removed on cushion-spent while ALIVE -- not torn down mid-loop on death
-        // (the old "sound loops on death" case, which only happened back when the
-        // cushion didn't work and the juggy died shielded).
+        // playerGiveShield() creates a cosmetic moby; shieldTrigger() would alter
+        // networked player state.
         {
             int show = JuggyShieldOn && !playerIsDead(player)
                        && player->pMoby && player->pMoby->pVar;
@@ -1086,10 +943,7 @@ static void processPlayer(Player * player)
         }
 #endif
     } else {
-        // Not (or no longer) the juggy: clear the per-life latch. No health to
-        // restore -- we never changed max health. Zero a stale cushion on our own
-        // ex-juggy (harmless otherwise: the hook only absorbs while idx==JuggyIndex).
-        // V2 weapons clear naturally on the next respawn.
+        // Clear state when this player is no longer the juggy.
         if (player->isLocal)
             JuggyCushion = 0;
         Buffed[idx] = 0;
@@ -1104,9 +958,7 @@ static void setLobbyGameOptions(void)
     if (!gameOptions || !gameSettings || gameSettings->GameLoadStartTime <= 0)
         return;
 
-    // Respect the base game type (DM/CTF/Siege) rather than forcing DM, so the
-    // crown buff can ride on top of other modes. Frag-scoring is gated to DM
-    // separately (see initialize()); on CTF/Siege the crown is a pure buff.
+    // Preserve DM/CTF/Siege; scoring is gated separately for non-DM modes.
     gameOptions->GameFlags.MultiplayerGameFlags.Chargeboots = 1;
     gameOptions->GameFlags.MultiplayerGameFlags.PlayerNames = 1;
 }
@@ -1175,9 +1027,7 @@ static void initialize(void)
 //--------------------------------------------------------------------------
 static void teardown(void)
 {
-    // Restore the original hurt call site before we leave (belt-and-suspenders:
-    // the level overlay is reloaded per match anyway, but our handler lives in
-    // this overlay, so don't leave a live jump into it during the lobby window).
+    // Restore hooks before returning to the lobby.
     juggyUninstallHurtHook();
 #if JUGGERNAUT_JUGGY_ONLY_KILLS
     juggyUninstallKillHook();
@@ -1191,17 +1041,14 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
 {
     GameSettings * gameSettings = gameGetSettings();
 
-    // Ensure in game
+    // Tear down when leaving the match.
     if (!gameSettings || !isInGame()) {
         if (Initialized)
             teardown();
         return;
     }
 
-    // Fresh init on first entry, OR when the match changed but teardown never
-    // fired (e.g. a map transition that kept isInGame() true) -- GameLoadStartTime
-    // changes per match load, so a mismatch means a new game and we must clear
-    // stale crown state (otherwise last match's JuggyIndex carries over).
+    // Reinitialize if a new match loaded without teardown.
     if (!Initialized) {
         initialize();
         LastGameLoadTime = gameSettings->GameLoadStartTime;
@@ -1214,15 +1061,12 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
     if (!gameHasEnded()) {
         int gameTime = gameGetTime();
 
-        // Host advances the authoritative crown state; clients get it via broadcast.
+        // The host advances state; clients receive it by broadcast.
         if (gameAmIHost())
             juggyHostTick(gameTime);
 
-        // Render the local sprite from current state, then apply per-player buffs.
         crownSpriteSync();
-        // Init runs every tick (idempotent): the radar HUD root may not exist on
-        // the first in-game ticks, so we retry until the widget sticks -- same
-        // as koth calling radarInit() each frame.
+        // Retry until the HUD root exists.
         juggMapInit();
         juggMapUpdate();
 
@@ -1232,16 +1076,12 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
             processPlayer(players[i]);
 
 #if JUGGERNAUT_JUGGY_SHIELD
-        // Reap any shield left orphaned by a crown transfer, death, or disconnect
-        // before the engine's shield update dereferences its freed owner.
+        // Remove shields orphaned by transfer, death, or disconnect.
         juggySweepStrayShields();
 #endif
 
 #if JUGG_DEBUG
-        // Live status on each local screen. "JUGGv3" marker confirms THIS build is
-        // running (vs a stale module). hook=1 means the weapon-hit scan installed;
-        // @=low16 of the site it patched; cush=current cushion. If the popup is
-        // absent or says an older marker, the game is running an old .bin.
+        // Optional live diagnostic for confirming the loaded module.
         {
             static int nextDbg = 0;
             if (gameTime >= nextDbg) {
