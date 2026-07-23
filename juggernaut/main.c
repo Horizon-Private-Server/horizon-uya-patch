@@ -89,6 +89,16 @@
 #define JUGGERNAUT_BASE_HEALTH          PLAYER_MAX_HEALTH
 #define JUGGERNAUT_BUFFED_HEALTH        (JUGGERNAUT_BASE_HEALTH * JUGGERNAUT_HEALTH_MULTIPLIER)
 
+// Damage cushion (the "2x health" buff, done WITHOUT writing health/maxHP).
+// Instead of raising the juggy's max health -- which requires obfuscated writes
+// to player->hitPoints/maxHP that share a self-modifying global table with
+// player STATE, and corrupt it (juggy ends up invincible + unable to shoot) --
+// we intercept weapon damage on the juggy's own client and absorb the first
+// JUGGERNAUT_CUSHION_HP points before letting damage through normally. Net
+// effect is ~2x survivability with ZERO health/state writes. Damage is in
+// integer health points (base bar == 15), so a full bar of cushion == 2x.
+#define JUGGERNAUT_CUSHION_HP           JUGGERNAUT_BASE_HEALTH
+
 // ---- Crown pickup tuning --------------------------------------------------
 // NOTE: 3D/GS draw colors are 0xAABBGGRR (alpha, blue, green, RED-low-byte) --
 // NOT 0xAARRGGBB. Gold (R=255,G=208,B=39) is therefore 0x__27D0FF.
@@ -114,6 +124,10 @@
 #define CROWN_HEARTBEAT_MS              (500)
 #define CROWN_STALE_RELOCATE_MS         (20 * TIME_SECOND)
 #define CROWN_DEATH_DROP_DELAY_MS       (1 * TIME_SECOND)
+// Hold the FIRST pickup this long after match start so players spread out from
+// their spawn cuboids before the crown appears -- avoids an instant "spawned on
+// the pickup" crown. Applies only to the initial pickup, not mid-match respawns.
+#define CROWN_FIRST_PICKUP_DELAY_MS     (10 * TIME_SECOND)
 
 // Local (per-client) custom message id -- both sender and receiver are this
 // module, and only one custom mode runs at a time, so the game-mode range is
@@ -243,6 +257,7 @@ typedef struct CrownShieldMsg {
 // ---- State ----------------------------------------------------------------
 static int Initialized = 0;
 static int HandlerInstalled = 0;
+static int LastGameLoadTime = 0;   // detects a new match even if teardown was skipped
 
 // Crown state (authoritative on host, mirrored from broadcast on clients).
 static int    StateSeq = 0;
@@ -257,10 +272,40 @@ static VECTOR HostDropPos;
 static int    HostDropHasPos = 0;
 static int    HostStaleAtTime = 0;                  // relocate pickup if untouched by then
 static int    HostNextHeartbeat = 0;
+static int    HostStarted = 0;                       // host seen its first in-game tick this match?
+static int    HostMatchStartTime = 0;                // gameTime of that first tick (initial-pickup grace)
+static int    HostFirstPickupDone = 0;               // first pickup placed? grace applies only once
 
 // Per-player buff bookkeeping.
-static char   Buffed[GAME_MAX_PLAYERS];             // one-time heal + weapon upgrades this life?
-static char   MaxHealthSet[GAME_MAX_PLAYERS];       // 2x max-health applied for this juggy?
+static char   Buffed[GAME_MAX_PLAYERS];             // one-time cushion refill + weapon upgrades this life?
+
+// Damage cushion for the current juggy, tracked on the juggy's OWN client (damage
+// is owner-authoritative, so the weapon-hit hook only ever fires meaningfully there).
+// Refilled once per juggy life; decremented by absorbed weapon damage; shield tell
+// is shown while > 0. Replaces the old obfuscated-health buff entirely.
+static int    JuggyCushion = 0;
+
+// ---- Guarded-hurt hook ----------------------------------------------------
+// We patch the WEAPON-HIT `jal vaHurtPlayerFunc` inside the per-frame player
+// health-reduction function. Networked PvP weapon damage did NOT go through the
+// single site we tried (an in-game counter showed 0 hits), so instead of guessing
+// which of the ~9 call sites carries it, we hook EVERY `jal vaHurtPlayerFunc` in
+// the overlay. They all pass (a0=player, a1=damage) identically -- it's the same
+// callee -- so one hook works at all of them, and the juggy check means only the
+// juggy absorbs; every other call passes straight through unchanged. Catches
+// whatever path PvP damage uses (weapon, collision, hazard) without site ID.
+#define JUGGY_HURT_SCAN_RANGE   (0x20000)   // sites span ~HF-0x19000 .. HF+0x1f000
+#define JUGGY_HURT_MAX_SITES    (24)        // ~9 expected; headroom
+
+static u32  HurtHookSites[JUGGY_HURT_MAX_SITES];  // patched call-site addresses
+static u32  HurtHookSaved[JUGGY_HURT_MAX_SITES];  // their original words, for teardown
+static int  HurtHookCount = 0;                    // 0 = not installed
+static u32  HurtFuncAddr  = 0;                     // resolved vaHurtPlayerFunc (direct passthrough, no per-hit re-resolve)
+
+// libuya's map-resolved trampoline to the real vaHurtPlayerFunc (see functions.S),
+// plus the per-map address table itself (used to build the jal we scan for).
+extern void internal_HurtPlayer(Player * player, int damage);
+extern VariableAddress_t vaHurtPlayerFunc;
 
 // Shield tell: is the current juggy above base max health? Computed on the
 // juggy's own client, mirrored from broadcast elsewhere. Default on (a freshly
@@ -663,6 +708,12 @@ static void juggyHostTick(int gameTime)
 {
     Player ** players = playerGetAll();
 
+    // Stamp match start on the host's first tick (drives the initial-pickup grace).
+    if (!HostStarted) {
+        HostStarted = 1;
+        HostMatchStartTime = gameTime;
+    }
+
     // 1. Crowned: watch for the juggy dying or disconnecting.
     if (JuggyIndex >= 0 && JuggyIndex < GAME_MAX_PLAYERS) {
         Player * jp = players[JuggyIndex];
@@ -688,10 +739,17 @@ static void juggyHostTick(int gameTime)
     }
 
     // 3. Self-heal / match start: no juggy, no pickup, nothing pending -> spawn.
+    // The FIRST pickup is held for CROWN_FIRST_PICKUP_DELAY_MS after match start so
+    // players move off their spawn cuboids before the crown appears (no instant
+    // spawn-on-pickup crown). Mid-match respawns (HostFirstPickupDone) skip the wait.
     if (JuggyIndex < 0 && !PickupActive && !HostDropPending) {
-        VECTOR pos;
-        if (pickRandomSpawnPos(pos))
-            hostActivatePickup(pos, gameTime);
+        if (HostFirstPickupDone || gameTime >= HostMatchStartTime + CROWN_FIRST_PICKUP_DELAY_MS) {
+            VECTOR pos;
+            if (pickRandomSpawnPos(pos)) {
+                hostActivatePickup(pos, gameTime);
+                HostFirstPickupDone = 1;
+            }
+        }
     }
 
     // 4. Pickup active: grab detection + stale relocate.
@@ -727,24 +785,86 @@ static void juggyHostTick(int gameTime)
 }
 
 // ==========================================================================
-//  Per-player buffs (unchanged from v1 -- only reads JuggyIndex)
+//  Guarded-hurt hook -- the "2x health" buff, without touching health/state
 // ==========================================================================
-// libuya's playerSetMaxHealth() POKEs a single global respawn instruction
-// shared by every player; using it for a per-player buff corrupts everyone's
-// respawn health. We only touch this player's own obfuscated cap + pVar bar.
-static void juggySetMaxHealth(Player * player, int health)
+// Replaces the WEAPON-HIT `jal vaHurtPlayerFunc` in the player damage
+// dispatcher. Args arrive exactly as the engine set them up: a0 = player,
+// a1 = damage. For the juggy with cushion remaining, we swallow the damage into
+// JuggyCushion and return WITHOUT calling the real hurt -> no health/state write,
+// so nothing corrupts. Knockback is applied by the projectile impact separately
+// (not by this call), so it is preserved -- the juggy still visibly reacts.
+// Everyone else (and the juggy once the cushion is spent) passes straight through.
+#if JUGG_DEBUG
+static int HookCalls   = 0;   // times the hooked site fired (any player)
+static int HookAbsorbs = 0;   // times we actually absorbed for the juggy
+static int HookLastIdx = -1;  // mpIndex of the last hurt player seen here
+static int HookLastDmg = 0;   // last damage value seen here
+#endif
+
+static void juggyHurtWeaponHit_Hook(Player * player, int damage)
 {
-    // Never write to a dead player's moby: during death the hero moby/pVar can
-    // be torn down (dangling pointer), and writing pVar+0x30 there corrupts
-    // memory -> later null load in game code (the pc=0x49e1fc TLB miss on juggy
-    // death). NOTE: respawn resets current health but NOT max, so callers must
-    // re-assert max on the first alive tick rather than assuming respawn cleans
-    // it up (see the restore branch in processPlayer).
-    if (!player || playerIsDead(player) || !player->pMoby || !player->pMoby->pVar)
+#if JUGG_DEBUG
+    HookCalls++;
+    HookLastIdx = player ? player->mpIndex : -2;
+    HookLastDmg = damage;
+#endif
+    if (player && player->mpIndex == JuggyIndex && JuggyCushion > 0 && damage > 0) {
+#if JUGG_DEBUG
+        HookAbsorbs++;
+#endif
+        JuggyCushion -= damage;     // crossing-hit overflow is fully absorbed, NOT passed through -- shield then drops on cu<=0 for a "last block, now you take damage" feel
+        return;                     // damage NOT applied
+    }
+
+    // Normal damage. Call the resolved address directly (cached at install) to
+    // avoid re-resolving the map address on every hit; fall back to the trampoline
+    // only if somehow uncached.
+    if (HurtFuncAddr)
+        ((void (*)(Player *, int))HurtFuncAddr)(player, damage);
+    else
+        internal_HurtPlayer(player, damage);
+}
+
+static void juggyUninstallHurtHook(void)
+{
+    // Only restore a site that STILL holds our hook. If the overlay was reloaded
+    // (map change) under stale addresses, those slots now hold unrelated code --
+    // writing the old jal back would corrupt it, so skip any that aren't ours.
+    u32 ourJal = ADDR2JAL((u32)&juggyHurtWeaponHit_Hook);
+    int i;
+    for (i = 0; i < HurtHookCount; ++i)
+        if (*(u32*)HurtHookSites[i] == ourJal)
+            *(u32*)HurtHookSites[i] = HurtHookSaved[i];
+    HurtHookCount = 0;
+    HurtFuncAddr = 0;
+}
+
+static void juggyInstallHurtHook(void)
+{
+    juggyUninstallHurtHook();                // clear any stale state, then scan fresh
+
+    u32 hurtFunc = GetAddress(&vaHurtPlayerFunc);
+    if (!hurtFunc)
         return;
 
-    playerObfuscate((u32)&player->maxHP, health, OBFUSCATE_MODE_HEALTH);
-    *(float*)((u32)player->pMoby->pVar + 0x30) = (float)health;
+    HurtFuncAddr = hurtFunc;
+    u32 jalWord = ADDR2JAL(hurtFunc);        // `jal vaHurtPlayerFunc` for this map
+
+    // Hook EVERY jal to vaHurtPlayerFunc in a window around it. Matching only the
+    // exact jal word means we never patch anything but a real call to that
+    // function. If none are found (unexpected build), nothing is patched and the
+    // cushion is simply disabled -- never a crash.
+    u32 lo = hurtFunc - JUGGY_HURT_SCAN_RANGE;
+    u32 hi = hurtFunc + JUGGY_HURT_SCAN_RANGE;
+    u32 a;
+    for (a = lo; a < hi && HurtHookCount < JUGGY_HURT_MAX_SITES; a += 4) {
+        if (*(u32*)a == jalWord) {
+            HurtHookSites[HurtHookCount] = a;
+            HurtHookSaved[HurtHookCount] = *(u32*)a;
+            HOOK_JAL(a, &juggyHurtWeaponHit_Hook);
+            HurtHookCount++;
+        }
+    }
 }
 
 #if JUGGERNAUT_JUGGY_SHIELD
@@ -755,6 +875,33 @@ static void juggyRemoveShield(Player * player)
     Moby * shield = mobyListGetStart();
     while ((shield = mobyFindNextByOClass(shield, MOBY_ID_OMNI_SHIELD))) {
         if (shield->pVar && *(u32*)((u32)shield->pVar + 0x40) == (u32)player)
+            mobyDestroy(shield);
+        ++shield;
+    }
+}
+
+// Disconnect / crown-transfer safety. The engine's shield update
+// (shieldEffectUpdateSourceJoint) reads the OWNER player's moby joint every frame,
+// and its draw path calls the HUD-quad / vec-lerp / sine-motion helpers. An
+// ex-juggy or a disconnected player leaves a shield whose owner pointer
+// (pVar+0x40) now dangles -> that per-frame read hits freed/unmapped memory -> the
+// repeating TLB miss seen on disconnect. Fix: each frame, destroy any shield not
+// owned by the current LIVE juggy. We only COMPARE the stored owner pointer, never
+// dereference it, so the sweep is safe even when the owner has been freed. Cheap:
+// one oclass-list walk (normally 0-1 shields), same cost as the give/remove scans.
+static void juggySweepStrayShields(void)
+{
+    Player * juggy = NULL;
+    if (JuggyIndex >= 0 && JuggyIndex < GAME_MAX_PLAYERS) {
+        Player ** players = playerGetAll();
+        Player * jp = players ? players[JuggyIndex] : NULL;
+        if (jp && !playerIsDead(jp))
+            juggy = jp;
+    }
+
+    Moby * shield = mobyListGetStart();
+    while ((shield = mobyFindNextByOClass(shield, MOBY_ID_OMNI_SHIELD))) {
+        if (shield->pVar && *(u32*)((u32)shield->pVar + 0x40) != (u32)juggy)
             mobyDestroy(shield);
         ++shield;
     }
@@ -771,25 +918,17 @@ static void processPlayer(Player * player)
         return;
 
     if (idx == JuggyIndex) {
-        // Raise max health once per juggy role (per-player, no global POKE).
-        // OWNER ONLY: playerObfuscate scatter-writes a shared global table keyed
-        // by field address/value; doing it for a remote mirror corrupts the table
-        // the game uses to read every player's health AND state. Health/death is
-        // owner-authoritative (state is broadcast, hitPoints is never synced), so
-        // the remote max value is unused anyway -- there is no remote health bar.
-        if (!MaxHealthSet[idx] && player->isLocal && player->pMoby && player->pMoby->pVar) {
-            juggySetMaxHealth(player, JUGGERNAUT_BUFFED_HEALTH);
-            MaxHealthSet[idx] = 1;
-        }
-
-        // Reset Buffed on death so heal + weapons re-apply after each respawn.
+        // Reset Buffed on death so the cushion + weapons re-apply after respawn.
         if (playerIsDead(player))
             Buffed[idx] = 0;
 
-        // Once per life: full heal + weapon upgrades. Only the owning client
-        // writes authoritative health/weapons for its local player.
+        // Once per life (owner only): refill the damage cushion + upgrade weapons.
+        // No health/maxHP writes -- the cushion (guarded weapon-hit hook) provides
+        // the effective 2x survivability without touching the obfuscated fields
+        // that share a table with player STATE. V2 weapon upgrades don't touch
+        // that table, so they stay.
         if (!Buffed[idx] && !playerIsDead(player) && player->isLocal) {
-            playerSetHealth(player, JUGGERNAUT_BUFFED_HEALTH);
+            JuggyCushion = JUGGERNAUT_CUSHION_HP;
 
             int w;
             for (w = 0; w < (int)JUGGERNAUT_WEAPON_COUNT; ++w)
@@ -799,16 +938,22 @@ static void processPlayer(Player * player)
         }
 
 #if JUGGERNAUT_JUGGY_SHIELD
-        // Cosmetic shield "still-buffed" tell. The juggy's own client is the
-        // only one that knows its health, so it decides on/off (shielded while
-        // above base max health) and broadcasts the flag; every client renders
-        // from JuggyShieldOn. We only ever apply a real shield to REMOTE mirrors
-        // (owner-side absorption would make the local juggy unkillable), unless
-        // JUGGERNAUT_JUGGY_SHIELD_LOCAL is set to also draw it on the own screen.
+        // Cosmetic shield "still-buffed" tell, driven off the remaining cushion
+        // (a truthful "still cushioned / vulnerable-soon" signal). The juggy's own
+        // client owns the cushion, decides on/off, and broadcasts the flag; every
+        // client renders the bubble from JuggyShieldOn.
+        // Owner computes on/off from its cushion and broadcasts JuggyShieldOn.
         if (player->isLocal)
-            juggyUpdateShieldState(!playerIsDead(player)
-                                   && playerGetHealth(player) > JUGGERNAUT_BASE_HEALTH);
+            juggyUpdateShieldState(!playerIsDead(player) && JuggyCushion > 0);
 
+        // Draw the cosmetic bubble on every client via playerGiveShield -- the
+        // omni-shield moby (0x1b37) has no gameplay callbacks, so it is purely
+        // visual on local AND remote (NOT shieldTrigger, which does a real
+        // networked equip and desynced player state). Because the cushion now
+        // absorbs all damage, the juggy can't die while shielded, so the bubble is
+        // removed on cushion-spent while ALIVE -- not torn down mid-loop on death
+        // (the old "sound loops on death" case, which only happened back when the
+        // cushion didn't work and the juggy died shielded).
         {
             int show = JuggyShieldOn && !playerIsDead(player)
                        && player->pMoby && player->pMoby->pVar;
@@ -825,18 +970,12 @@ static void processPlayer(Player * player)
         }
 #endif
     } else {
-        // Not (or no longer) the juggy: restore base max health. Owner only
-        // (see the raise path above -- never touch a remote mirror's health).
-        // DEFERRED until alive: juggySetMaxHealth won't write a dead player's
-        // moby, and respawn does NOT reset max, so clearing the latch on the
-        // death tick would strand the ex-juggy at buffed max (30) with base
-        // respawn health (15) => a permanent 50% health bar. Keep the latch set
-        // until the restore actually lands on the first alive tick.
+        // Not (or no longer) the juggy: clear the per-life latch. No health to
+        // restore -- we never changed max health. Zero a stale cushion on our own
+        // ex-juggy (harmless otherwise: the hook only absorbs while idx==JuggyIndex).
         // V2 weapons clear naturally on the next respawn.
-        if (MaxHealthSet[idx] && player->isLocal && !playerIsDead(player)) {
-            juggySetMaxHealth(player, JUGGERNAUT_BASE_HEALTH);
-            MaxHealthSet[idx] = 0;
-        }
+        if (player->isLocal)
+            JuggyCushion = 0;
         Buffed[idx] = 0;
     }
 }
@@ -868,9 +1007,12 @@ static void resetState(void)
     memset(HostDropPos, 0, sizeof(HostDropPos));
     HostStaleAtTime = 0;
     HostNextHeartbeat = 0;
+    HostStarted = 0;
+    HostMatchStartTime = 0;
+    HostFirstPickupDone = 0;
 
     memset(Buffed, 0, sizeof(Buffed));
-    memset(MaxHealthSet, 0, sizeof(MaxHealthSet));
+    JuggyCushion = 0;
 
     JuggyShieldOn = 1;
     ShieldLastSent = -1;
@@ -892,12 +1034,19 @@ static void initialize(void)
         HandlerInstalled = 1;
     }
 
+    // Patch the weapon-hit hurt call so the juggy's cushion can absorb damage.
+    juggyInstallHurtHook();
+
     Initialized = 1;
 }
 
 //--------------------------------------------------------------------------
 static void teardown(void)
 {
+    // Restore the original hurt call site before we leave (belt-and-suspenders:
+    // the level overlay is reloaded per match anyway, but our handler lives in
+    // this overlay, so don't leave a live jump into it during the lobby window).
+    juggyUninstallHurtHook();
     resetState();
     Initialized = 0;
 }
@@ -914,8 +1063,18 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
         return;
     }
 
-    if (!Initialized)
+    // Fresh init on first entry, OR when the match changed but teardown never
+    // fired (e.g. a map transition that kept isInGame() true) -- GameLoadStartTime
+    // changes per match load, so a mismatch means a new game and we must clear
+    // stale crown state (otherwise last match's JuggyIndex carries over).
+    if (!Initialized) {
         initialize();
+        LastGameLoadTime = gameSettings->GameLoadStartTime;
+    } else if (gameSettings->GameLoadStartTime != LastGameLoadTime) {
+        teardown();
+        initialize();
+        LastGameLoadTime = gameSettings->GameLoadStartTime;
+    }
 
     if (!gameHasEnded()) {
         int gameTime = gameGetTime();
@@ -937,18 +1096,24 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
         for (i = 0; i < GAME_MAX_PLAYERS; ++i)
             processPlayer(players[i]);
 
+#if JUGGERNAUT_JUGGY_SHIELD
+        // Reap any shield left orphaned by a crown transfer, death, or disconnect
+        // before the engine's shield update dereferences its freed owner.
+        juggySweepStrayShields();
+#endif
+
 #if JUGG_DEBUG
-        // Live status on each local screen: is this client host, is a pickup
-        // active, who's juggy, how many spawn cuboids exist. Reveals exactly
-        // where the crown chain stalls.
+        // Live status on each local screen. "JUGGv3" marker confirms THIS build is
+        // running (vs a stale module). hook=1 means the weapon-hit scan installed;
+        // @=low16 of the site it patched; cush=current cushion. If the popup is
+        // absent or says an older marker, the game is running an old .bin.
         {
             static int nextDbg = 0;
             if (gameTime >= nextDbg) {
                 nextDbg = gameTime + (2 * TIME_SECOND);
-                char b[80];
-                sprintf(b, "JUGGv2 h=%d act=%d jug=%d spn=%d seq=%d mob=%d",
-                        gameAmIHost(), PickupActive, JuggyIndex, spawnPointGetCount(), StateSeq,
-                        (CrownMoby != NULL));
+                char b[96];
+                sprintf(b, "JUGGv5 jug=%d hk=%d cu=%d cl=%d ab=%d ld=%d",
+                        JuggyIndex, HurtHookCount, JuggyCushion, HookCalls, HookAbsorbs, HookLastDmg);
                 for (i = 0; i < GAME_MAX_PLAYERS; ++i)
                     if (players[i] && players[i]->isLocal)
                         uiShowPopup(players[i], b, 2);
