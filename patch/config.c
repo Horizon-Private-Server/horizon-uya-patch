@@ -308,11 +308,11 @@ const int dataCustomMapsWithExclusiveGameModeCount = sizeof(dataCustomMapsWithEx
 MenuElem_OrderedListData_t dataCustomModes = {
   .value = &gameConfig.customModeId,
   .stateHandler = menuStateHandler_SelectedGameModeOverride,
-  .count = 4,
+  .count = 5,
   .items = {
     {CUSTOM_MODE_NONE, "None"},
     // {CUSTOM_MODE_INFECTED, "Infected"},
-    // {CUSTOM_MODE_JUGGERNAUGHT, "Juggernaut"},
+    {CUSTOM_MODE_JUGGERNAUT, "Juggernaut"},
     {CUSTOM_MODE_MIDFLAG, "MidFlag"},
     {CUSTOM_MODE_DOMINATION, "Domination"},
     {CUSTOM_MODE_KOTH, "King of the Hill"},
@@ -325,7 +325,7 @@ MenuElem_OrderedListData_t dataCustomModes = {
 const char* CustomModeShortNames[] = {
   [CUSTOM_MODE_NONE] NULL,
   // [CUSTOM_MODE_INFECTED] "Infected",
-  // [CUSTOM_MODE_JUGGERNAUT] NULL,
+  [CUSTOM_MODE_JUGGERNAUT] "Juggy",
   [CUSTOM_MODE_MIDFLAG] NULL,
   [CUSTOM_MODE_DOMINATION] "Domination",
   [CUSTOM_MODE_KOTH] "KOTH"
@@ -775,27 +775,18 @@ int menuStateHandler_SelectedGameModeOverride(MenuElem_OrderedListData_t* listDa
 
   if (gs) {
     switch (v) {
-/*
-      #ifdef DEBUG
-      case CUSTOM_MODE_INFECTED:
-      case CUSTOM_MODE_JUGGERNAUGHT: {
-        // only allow deathmatch
-        if (gs->GameType == GAMETYPE_DM)
-          return 1;
-        
-        // otherwise reject custom mode
-        *value = CUSTOM_MODE_NONE;
-        return 0;
+      case CUSTOM_MODE_JUGGERNAUT: {
+        // Allowed on any base type -- frag scoring is gated to DM inside the mode;
+        // on CTF/Siege the crown is a pure buff.
+        return 1;
       }
-      #endif
-*/
       case CUSTOM_MODE_MIDFLAG: {
         if (gs->GameType == GAMETYPE_CTF)
           return 1;
-        
-        
+
+
         *value = CUSTOM_MODE_NONE;
-        return 0; 
+        return 0;
       }
       case CUSTOM_MODE_DOMINATION: {
         if (gs->GameType == GAMETYPE_SIEGE || GAMETYPE_CTF)
