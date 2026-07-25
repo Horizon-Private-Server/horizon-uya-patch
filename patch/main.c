@@ -176,12 +176,17 @@ PatchPatches_t patched;
 VoteToEndState_t voteToEndState;
 PatchStateContainer_t patchStateContainer;
 
-PatchPointers_t patchPointers = {
-  .ServerTimeMonth = 0,
-  .ServerTimeDay = 0,
-  .ServerTimeHour = 0,
-  .ServerTimeMinute = 0,
-  .ServerTimeSecond = 0,
+PatchInterop_t interopData = {
+	.config = &config,
+	.gameConfig = &gameConfig,
+	.patchStateContainer = &patchStateContainer,
+	.client = CLIENT_TYPE_NORMAL,
+	.month = 0,
+	.mapLoaderFilename = (char*)MapLoaderState.MapFileName,
+	.getCustomMapDefCount = getCustomMapDefCount,
+	.getCustomMapDef = getCustomMapDef,
+	.readCustomMapExtraData = mapReadCustomMapExtraData,
+	.refreshCustomMapDefs = refreshCustomMapList,
 };
 
 #if DSCRPRINT
@@ -368,12 +373,9 @@ void onServerTimeResponse(void* connection, void* data)
 
 	memcpy(&response, data, sizeof(DateResponse_t));
 	DPRINTF("\nDate: %d/%d\nTime: %02d:%02d", response.Month, response.Day, response.Hour, response.Minute);
-	patchPointers.ServerTimeMonth = response.Month;
+	patchInterop.month = response.Month;
 	// not adding 1 to the date broke things on January 31st.
-	patchPointers.ServerTimeDay = response.Day;
-	patchPointers.ServerTimeHour = response.Hour;
-	patchPointers.ServerTimeMinute = response.Minute;
-	patchPointers.ServerTimeSecond = response.Second;
+	patchInterop.day = response.Day;
 }
 
 //------------------------------------------------------------------------------
@@ -2548,8 +2550,8 @@ void runHolidays(void)
 		return;
 
 	int i;
-	int month = PATCH_POINTERS->ServerTimeMonth;
-	int day = PATCH_POINTERS->ServerTimeDay;
+	int month = PATCH_POINTERS->month;
+	int day = PATCH_POINTERS->day;
 	int skin = -1;
 	switch(month) {
 		case 10: {
@@ -2567,7 +2569,7 @@ void runHolidays(void)
 	}
 
 	// DPRINTF("\nLocation/Month/Day/Skin: l:%d/m:%d/d:%d/s:%d/", location, month, day, skin);
-	// DPRINTF("\nDate: %02d/%02d\nTime: %02d:%02d:%02d", PATCH_POINTERS->ServerTimeMonth,  PATCH_POINTERS->ServerTimeDay,  PATCH_POINTERS->ServerTimeHour, PATCH_POINTERS->ServerTimeMinute, PATCH_POINTERS->ServerTimeSecond);
+	// DPRINTF("\nDate: %02d/%02d\nTime: %02d:%02d:%02d", PATCH_POINTERS->month,  PATCH_POINTERS->day,  PATCH_POINTERS->ServerTimeHour, PATCH_POINTERS->ServerTimeMinute, PATCH_POINTERS->ServerTimeSecond);
 
 	if (location == LOCATION_LOADING) {
 		if (skin > -1) {
@@ -3047,7 +3049,7 @@ int main(void)
 	#endif
 
 	// update patch pointers
-	PATCH_POINTERS = &patchPointers;
+	PATCH_INTEROP = &patchInterop;
 
 	// auto enable pad input to prevent freezing when popup shows
 	if (isInMenus() && lastMenuInvokedTime > 0 && (gameGetTime() - lastMenuInvokedTime) > TIME_SECOND) {

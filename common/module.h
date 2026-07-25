@@ -111,18 +111,4 @@ typedef struct CustomGameModeStats
   u8 Payload[1024 * 6];
 } __attribute__((aligned(16))) CustomGameModeStats_t;
 
-typedef struct PatchStateContainer {
-    int CustomMapId;
-    int SelectedCustomMapChanged;
-    int UpdateGameState;
-    UpdateGameStateRequest_t GameStateUpdate;
-    int UpdateCustomGameStats;
-    CustomGameModeStats_t CustomGameStats;
-    GameSettings GameSettingsAtStart;
-    int CustomGameStatsSize;
-    int ClientsReadyMask;
-    int AllClientsReady;
-    int VoteToEndPassed;
-} PatchStateContainer_t;
-
 #endif // _MODULE_H_

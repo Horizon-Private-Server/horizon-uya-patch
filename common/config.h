@@ -1,10 +1,11 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define HZN_LAUNCHER_MAGIC         (0x314E5A48)
-#define HZN_LAUNCHER_MAGIC_VALUE   (*(u32*)0x000CFFA0)
+#include <libuya/gamesettings.h>>
 
-#define PATCH_POINTERS             (*(PatchPointers_t**)0x000CFFC0)
+#define HZN_LAUNCHER_MAGIC (0x314E5A48)
+#define HZN_LAUNCHER_MAGIC_VALUE (*(u32*)0x000cffc0)
+#define PATCH_INTEROP (*(PatchInterop_t**)0x000cffc4)
 
 
 struct CustomMapDef;
@@ -128,13 +129,35 @@ typedef struct PatchPatches {
   char colorsExtTable;
 } PatchPatches_t;
 
-typedef struct PatchPointers {
-  char ServerTimeMonth;
-  char ServerTimeDay;
-  char ServerTimeHour;
-  char ServerTimeMinute;
-  char ServerTimeSecond;
-} PatchPointers_t;
+typedef struct PatchStateContainer {
+    int CustomMapId;
+    int SelectedCustomMapChanged;
+    int UpdateGameState;
+    UpdateGameStateRequest_t GameStateUpdate;
+    int UpdateCustomGameStats;
+    CustomGameModeStats_t CustomGameStats;
+    GameSettings GameSettingsAtStart;
+    int CustomGameStatsSize;
+    int ClientsReadyMask;
+    int AllClientsReady;
+    int VoteToEndPassed;
+} PatchStateContainer_t;
+
+typedef struct PatchInterop {
+  PatchConfig_t* config;
+  PatchGameConfig_t* gameConfig;
+  char client;
+  char month;
+  char day;
+  char pad0;
+  char* MapLoaderFilename;
+  GetCustomMapDefCountFunc_t getCustomMapDefCount;
+  GetCustomMapDefFunc_t getCustomMapDef;
+  ReadCustomMapExtraDataFunc_t readCustomMapExtraData;
+  RefreshCustomMapDefsFunc_t refreshCustomMapDefs;
+  PatchStateContainer_t* patchStateContainer;
+  int* clientLatency;
+} PatchInterop_t;
 
 typedef struct CustomMapDef {
   int Version;
@@ -167,4 +190,5 @@ enum CLIENT_TYPE {
   CLIENT_TYPE_HZN = 1,
   CLIENT_TYPE_PCSX2 = 2
 };
+
 #endif // _CONFIG_H_
