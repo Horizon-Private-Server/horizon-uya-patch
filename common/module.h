@@ -96,19 +96,4 @@ typedef struct GameModule
 
 } GameModule;
 
-typedef struct UpdateGameStateRequest {
-	char TeamsEnabled;
-    char PADDING;
-    short Version;
-	int TeamScores[GAME_MAX_PLAYERS];
-	char ClientIds[GAME_MAX_PLAYERS];
-	char Teams[GAME_MAX_PLAYERS];
-    int Nodes[2]; // Blue Team, Red Team
-} UpdateGameStateRequest_t;
-
-typedef struct CustomGameModeStats
-{
-  u8 Payload[1024 * 6];
-} __attribute__((aligned(16))) CustomGameModeStats_t;
-
 #endif // _MODULE_H_

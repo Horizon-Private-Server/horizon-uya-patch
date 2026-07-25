@@ -281,7 +281,7 @@ int onSetMapOverride(void * connection, void * data)
 
 	// reset
 	static int lastCustomMapId = 0;
-	patchStateContainer.CustomMapId = 0;
+	patchStateContainer.customMapId = 0;
 
 	if (payload.CustomMap.BaseMapId == 0) {
 		DPRINTF("recv empty map\n");
@@ -300,14 +300,14 @@ int onSetMapOverride(void * connection, void * data)
 		int i = 0;
 		for (i = 0; i < customMapDefCount; ++i) {
 			if (strncmp(customMapDefs[i].Filename, payload.CustomMap.Filename, sizeof(customMapDefs[i].Filename)) == 0) {
-				patchStateContainer.CustomMapId = i + 1;
+				patchStateContainer.customMapId = i + 1;
 				version = customMapDefs[i].Version;
 				break;
 			}
 		}
 
 
-		// if (patchStateContainer.CustomMapId <= 0) version = -2;
+		// if (patchStateContainer.customMapId <= 0) version = -2;
 		if (version < 0)
 			version = -2;
 
@@ -337,8 +337,8 @@ int onSetMapOverride(void * connection, void * data)
 			mapOverrideResponse = version;
 		}
 	}
-	patchStateContainer.SelectedCustomMapChanged = isInMenus() && lastCustomMapId != patchStateContainer.CustomMapId;
-	lastCustomMapId = patchStateContainer.CustomMapId;
+	patchStateContainer.selectedCustomMapChanged = isInMenus() && lastCustomMapId != patchStateContainer.customMapId;
+	lastCustomMapId = patchStateContainer.customMapId;
 	return sizeof(MapOverrideMessage);
 }
 
@@ -898,8 +898,8 @@ void refreshCustomMapList(void)
 	DPRINTF("dataCustomMaps: %08x", dataCustomMaps);
 
   	// clamp
-	if (patchStateContainer.CustomMapId >= dataCustomMaps.count)
-		patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
+	if (patchStateContainer.customMapId >= dataCustomMaps.count)
+		patchStateContainer.customMapId = dataCustomMaps.count - 1;
 
 	actionState = actionStateAtStart;
 }

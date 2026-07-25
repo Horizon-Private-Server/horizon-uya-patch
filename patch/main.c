@@ -74,6 +74,11 @@ void configMenuDisable(void);
 
 void runMapLoader(void);
 void onMapLoaderOnlineMenu(void);
+int getCustomMapDefCount(void);
+CustomMapDef_t* getCustomMapDef(int index);
+int mapReadCurrentCustomMapExtraData(void* dst, int len);
+int mapReadCustomMapExtraData(char* mapFilename, void* dst, int dstLen, int customModeId);
+void refreshCustomMapList(void);
 
 int patchCreateGame(void *ui, long pad);
 int patchStaging(void * ui, long pad);
@@ -105,6 +110,8 @@ char showNoMapPopup = 0;
 int isConfigMenuActive = 0;
 int redownloadCustomModeBinaries = 0;
 char weaponOrderBackup[2][3] = { {0,0,0}, {0,0,0} };
+int lastClientType = -1;
+int lastAccountId = -1;
 float lastFps = 0;
 int renderTimeMs = 0;
 float averageRenderTimeMs = 0;
@@ -174,9 +181,14 @@ PatchGameConfig_t gameConfig;
 PatchGameConfig_t gameConfigHostBackup;
 PatchPatches_t patched;
 VoteToEndState_t voteToEndState;
-PatchStateContainer_t patchStateContainer;
 
-PatchInterop_t interopData = {
+PatchStateContainer_t patchStateContainer = {
+	.config = &config,
+	.gameConfig = &gameConfig,
+	.readExtraDataFunc = mapReadCurrentCustomMapExtraData
+};
+
+PatchInterop_t patchInterop = {
 	.config = &config,
 	.gameConfig = &gameConfig,
 	.patchStateContainer = &patchStateContainer,
@@ -318,44 +330,58 @@ void sendMACAddress(void)
 //------------------------------------------------------------------------------
 void sendClientType(void)
 {
-	static int lastAccountId = -1;
-	static int lastClientType = -1;
 	static int sendCounter = -1;
 	ClientSetClientTypeRequest_t msg;
-	int accountId = gameGetMyAccountId();
-	void* connection = netGetLobbyServerConnection();
 
-	if (HZN_LAUNCHER_MAGIC_VALUE == HZN_LAUNCHER_MAGIC)
-		msg.ClientType = CLIENT_TYPE_HZN;
-	else
-		msg.ClientType = hasSonyMACAddress() ? CLIENT_TYPE_NORMAL : CLIENT_TYPE_PCSX2;
+	if (patchInterop.client == CLIENT_TYPE_NORMAL && !hasSonyMACAddress())
+		patchInterop.client = CLIENT_TYPE_PCSX2;
+
+	// get client type
+	msg.ClientType = patchInterop.client;
+	int accountId = gameGetMyAccountId();
+	void* lobbyConnection = netGetLobbyServerConnection();
+
+	// get mac address
 	getMACAddress(msg.mac);
 
+	// if we're not logged in, update last account id to -1
 	if (accountId < 0)
 		lastAccountId = accountId;
 
-	if (!connection) {
+	// if we're not connected to the server
+	// which can happen as we transition from lobby to game server
+	// or vice-versa, or when we've logged out/disconnected
+	// reset sendCounter, indicating it's time to recheck if we need to send the client type
+	if (!lobbyConnection) {
 		sendCounter = -1;
 		return;
 	}
 
 	if (sendCounter > 0) {
+		// tick down until we hit 0
 		--sendCounter;
 	} else if (sendCounter < 0) {
-		if (accountId > 0 && (lastAccountId != accountId || lastClientType != msg.ClientType))
+		// if relogged in
+		// or client type has changed
+		// trigger send in 60 ticks
+		if (lobbyConnection && accountId > 0 && (lastAccountId != accountId || lastClientType != msg.ClientType)) {
 			sendCounter = 60;
+		}
 	} else {
 		lastClientType = msg.ClientType;
 		lastAccountId = accountId;
-
-		if (netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_CLIENT_TYPE, sizeof(ClientSetClientTypeRequest_t), &msg)) {
+		// keep trying to send until it succeeds
+		if (netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_CLIENT_TYPE, sizeof(ClientSetClientTypeRequest_t), &msg) != 0) {
+			// failed, wait another second
 			sendCounter = 60;
 		} else {
+			// success
 			sendCounter = -1;
-			DPRINTF("sent client type %d\n", msg.ClientType);
+			DPRINTF("sent %d %d\n", gameGetTime(), msg.ClientType);
 		}
 	}
 }
+
 //------------------------------------------------------------------------------
 void requestServerTime(void)
 {
@@ -406,7 +432,7 @@ char * checkMap(void)
 		}
 	} else if (isInGame()) {
 		location = LOCATION_IN_GAME;
-		// if (patchStateContainer.CustomMapId > 0)
+		// if (patchStateContainer.customMapId > 0)
 		// 	return MapLoaderState.MapName;
 
 		return mapGetName(gameGetCurrentMapId());
@@ -1292,7 +1318,7 @@ void patchMapAndScoreboardToggle(void)
 	}
 	// Check to see if Level ID is less than or equal to blackwater docks, or if not on custom map.
 	// This is due to Aquatos and Marcadia not having a mini-map.
-	if (gameSettings->GameLevel <= MAP_ID_BLACKWATER_DOCKS || patchStateContainer.CustomMapId > 0) {
+	if (gameSettings->GameLevel <= MAP_ID_BLACKWATER_DOCKS || patchStateContainer.customMapId > 0) {
 		// If Maps Button Toggle isn't set to "Default"
 		if (MapToggle != -1) {
 			// Run Map Main Logic only if gametype is deathmatch.
@@ -2083,7 +2109,7 @@ int voteToEndNumberOfVotesRequired(void)
  */
 void runVoteToEndLogic(void)
 {
-	if (!isInGame()) { patchStateContainer.VoteToEndPassed = 0; memset(&voteToEndState, 0, sizeof(voteToEndState)); return; }
+	if (!isInGame()) { patchStateContainer.voteToEndPassed = 0; memset(&voteToEndState, 0, sizeof(voteToEndState)); return; }
 	if (gameHasEnded()) return;
 	if (voteToEndState.Count <= 0 || voteToEndState.TimeoutTime <= 0) return;
 
@@ -2099,7 +2125,7 @@ void runVoteToEndLogic(void)
 		// reset
 		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		// pass to modules
-		patchStateContainer.VoteToEndPassed = 1;
+		patchStateContainer.voteToEndPassed = 1;
 		// end game
 		gameEnd(4);
 		return;
@@ -2503,7 +2529,7 @@ int patchSwingshotGunBug_Logic(VECTOR from, VECTOR to, int hitFlag, Moby *pMoby,
 }
 void patchSwingshotGunBug(void)
 {
-	if (patched.swingshotGunBug == 1 || patchStateContainer.CustomMapId == 0)
+	if (patched.swingshotGunBug == 1 || patchStateContainer.customMapId == 0)
 		return;
 
 	HOOK_JAL(GetAddress(&vaPatchSwingshotGunBug_Hook), &patchSwingshotGunBug_Logic);
@@ -2546,12 +2572,12 @@ void onMobyUpdate(Moby* moby)
  */
 void runHolidays(void)
 {
-	if (!PATCH_POINTERS || patched.holidays)
+	if (!PATCH_INTEROP || patched.holidays)
 		return;
 
 	int i;
-	int month = PATCH_POINTERS->month;
-	int day = PATCH_POINTERS->day;
+	int month = PATCH_INTEROP->month;
+	int day = PATCH_INTEROP->day;
 	int skin = -1;
 	switch(month) {
 		case 10: {
@@ -2569,7 +2595,7 @@ void runHolidays(void)
 	}
 
 	// DPRINTF("\nLocation/Month/Day/Skin: l:%d/m:%d/d:%d/s:%d/", location, month, day, skin);
-	// DPRINTF("\nDate: %02d/%02d\nTime: %02d:%02d:%02d", PATCH_POINTERS->month,  PATCH_POINTERS->day,  PATCH_POINTERS->ServerTimeHour, PATCH_POINTERS->ServerTimeMinute, PATCH_POINTERS->ServerTimeSecond);
+	// DPRINTF("\nDate: %02d/%02d\nTime: %02d:%02d:%02d", PATCH_INTEROP->month,  PATCH_INTEROP->day,  PATCH_INTEROP->ServerTimeHour, PATCH_INTEROP->ServerTimeMinute, PATCH_INTEROP->ServerTimeSecond);
 
 	if (location == LOCATION_LOADING) {
 		if (skin > -1) {
@@ -2701,7 +2727,7 @@ void runCheckGameMapInstalled(void)
 
 	// if start game button is enabled
 	// then disable it if maps are enabled
-	int noCustomMAp = patchStateContainer.CustomMapId == 0;
+	int noCustomMAp = patchStateContainer.customMapId == 0;
 	if (gameAmIHost()) {
 		if (mapOverrideResponse < 0) {
 			if (STAGING_START_BUTTON_STATE == 3) {
@@ -2846,59 +2872,59 @@ int runSendGameUpdate(void)
 	lastGameUpdate = gameTime;
 
 	// construct
-	patchStateContainer.GameStateUpdate.TeamsEnabled = gameOptions->GameFlags.MultiplayerGameFlags.Teams;
-	patchStateContainer.GameStateUpdate.Version = 1;
+	patchStateContainer.gameStateUpdate.TeamsEnabled = gameOptions->GameFlags.MultiplayerGameFlags.Teams;
+	patchStateContainer.gameStateUpdate.Version = 1;
 
 	// copy over client ids
-	memcpy(patchStateContainer.GameStateUpdate.ClientIds, gameSettings->PlayerClients, sizeof(patchStateContainer.GameStateUpdate.ClientIds));
+	memcpy(patchStateContainer.gameStateUpdate.ClientIds, gameSettings->PlayerClients, sizeof(patchStateContainer.gameStateUpdate.ClientIds));
 
 	// reset some stuff whenever we enter a new game
 	if (newGame) {
-		memset(patchStateContainer.GameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.GameStateUpdate.TeamScores));
+		memset(patchStateContainer.gameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.gameStateUpdate.TeamScores));
 		newGame = 0;
 	}
 
 	// copy teams over
-	memcpy(patchStateContainer.GameStateUpdate.Teams, gameSettings->PlayerTeams, sizeof(patchStateContainer.GameStateUpdate.Teams));
+	memcpy(patchStateContainer.gameStateUpdate.Teams, gameSettings->PlayerTeams, sizeof(patchStateContainer.gameStateUpdate.Teams));
 
 	// 
 	if (isInGame()) {
 		int i;
 		// reset
-		memset(patchStateContainer.GameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.GameStateUpdate.TeamScores));
-		memset(patchStateContainer.GameStateUpdate.Nodes, 0, sizeof(patchStateContainer.GameStateUpdate.Nodes));
+		memset(patchStateContainer.gameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.gameStateUpdate.TeamScores));
+		memset(patchStateContainer.gameStateUpdate.Nodes, 0, sizeof(patchStateContainer.gameStateUpdate.Nodes));
 
 		if (gameSettings->GameType == GAMETYPE_SIEGE) {	
 			for (i = 0; i < 8; ++i) {
 				if (gameData->allYourBaseGameData->nodeTeam[i] == 0)
-					++patchStateContainer.GameStateUpdate.Nodes[0];
+					++patchStateContainer.gameStateUpdate.Nodes[0];
 				else if (gameData->allYourBaseGameData->nodeTeam[i] == 1)
-					++patchStateContainer.GameStateUpdate.Nodes[1];
+					++patchStateContainer.gameStateUpdate.Nodes[1];
 			}
-			patchStateContainer.GameStateUpdate.TeamScores[0] = gameData->allYourBaseGameData->hudHealth[0];
-			patchStateContainer.GameStateUpdate.TeamScores[1] = gameData->allYourBaseGameData->hudHealth[1];
+			patchStateContainer.gameStateUpdate.TeamScores[0] = gameData->allYourBaseGameData->hudHealth[0];
+			patchStateContainer.gameStateUpdate.TeamScores[1] = gameData->allYourBaseGameData->hudHealth[1];
 		} else if (gameSettings->GameType == GAMETYPE_CTF) {
 			// Check if nodes are on
 			if (gameOptions->GameFlags.MultiplayerGameFlags.Nodes) {
 				for (i = 0; i < 8; ++i) {
 					if (gameData->allYourBaseGameData->nodeTeam[i] == 0)
-						++patchStateContainer.GameStateUpdate.Nodes[0];
+						++patchStateContainer.gameStateUpdate.Nodes[0];
 					else if (gameData->allYourBaseGameData->nodeTeam[i] == 1)
-						++patchStateContainer.GameStateUpdate.Nodes[1];
+						++patchStateContainer.gameStateUpdate.Nodes[1];
 				}	
 			} else {
 				// Nodes are turned off
-				patchStateContainer.GameStateUpdate.Nodes[0] = -1;
-				patchStateContainer.GameStateUpdate.Nodes[1] = -1;
+				patchStateContainer.gameStateUpdate.Nodes[0] = -1;
+				patchStateContainer.gameStateUpdate.Nodes[1] = -1;
 			}
-			patchStateContainer.GameStateUpdate.TeamScores[0] = gameData->CTFGameData->blueTeamCaptures;
-			patchStateContainer.GameStateUpdate.TeamScores[1] = gameData->CTFGameData->redTeamCaptures;
+			patchStateContainer.gameStateUpdate.TeamScores[0] = gameData->CTFGameData->blueTeamCaptures;
+			patchStateContainer.gameStateUpdate.TeamScores[1] = gameData->CTFGameData->redTeamCaptures;
 		} else if (gameSettings->GameType == GAMETYPE_DM) {
 			for (i = 0; i < gameSettings->PlayerCount; ++i) {
 				int team = gameSettings->PlayerTeams[i];
 				int kills = gameData->playerStats.frag[i].kills;
 				int deaths = gameData->playerStats.frag[i].deaths;
-				patchStateContainer.GameStateUpdate.TeamScores[team] += kills - deaths;
+				patchStateContainer.gameStateUpdate.TeamScores[team] += kills - deaths;
 			}
 		}
 	}
@@ -3085,7 +3111,7 @@ int main(void)
 	#endif
 
 	// Run Send Gameupdate for Helga
-	patchStateContainer.UpdateGameState = runSendGameUpdate();
+	patchStateContainer.updateGameState = runSendGameUpdate();
 
 	// 
 	runCameraSpeedPatch();
@@ -3304,8 +3330,8 @@ int main(void)
 			if (gameAmIHost() && !isInStaging) {
 				// copy over last game config as host
 				memcpy(&gameConfig, &gameConfigHostBackup, sizeof(PatchGameConfig_t));
-				// Reset patchStateContainer.CustomMapId to none
-				patchStateContainer.CustomMapId = 0;
+				// Reset patchStateContainer.customMapId to none
+				patchStateContainer.customMapId = 0;
 
 				// send
 				configTrySendGameConfig();
@@ -3323,9 +3349,9 @@ int main(void)
 	// process modules
 	processGameModules();
 
-	if (patchStateContainer.UpdateGameState) {
-		patchStateContainer.UpdateGameState = 0;
-		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_GAME_STATE, sizeof(UpdateGameStateRequest_t), &patchStateContainer.GameStateUpdate);
+	if (patchStateContainer.updateGameState) {
+		patchStateContainer.updateGameState = 0;
+		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_GAME_STATE, sizeof(UpdateGameStateRequest_t), &patchStateContainer.gameStateUpdate);
 	}
 
 	// Call this last

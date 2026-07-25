@@ -285,7 +285,7 @@ MenuElem_ListData_t dataCycleWeapon3 = {
 
 // map select list
 MenuElem_ListData_t dataCustomMaps = {
-  .value = &patchStateContainer.CustomMapId,
+  .value = &patchStateContainer.customMapId,
   .stateHandler = menuStateHandler_SelectedMapOverride,
   .count = 1,
   .rows = 10,
@@ -941,7 +941,7 @@ void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   preset = 0;
   memset(&gameConfig, 0, sizeof(gameConfig));
-  patchStateContainer.CustomMapId = 0;
+  patchStateContainer.customMapId = 0;
 }
 
 // 
@@ -949,7 +949,7 @@ void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   preset = 4;
   memset(&gameConfig, 0, sizeof(gameConfig));
-  patchStateContainer.CustomMapId = 0;
+  patchStateContainer.customMapId = 0;
 
   void * lobbyConnection = netGetLobbyServerConnection();
   netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_INVITE_BOT, sizeof(botConfig), &botConfig);
@@ -1152,7 +1152,7 @@ void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int*
   // hide gamemode for maps with exclusive gamemode
   for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
   {
-    if (patchStateContainer.CustomMapId == dataCustomMapsWithExclusiveGameMode[i])
+    if (patchStateContainer.customMapId == dataCustomMapsWithExclusiveGameMode[i])
     {
       *state = ELEMENT_HIDDEN;
       return;
@@ -2594,8 +2594,8 @@ void onConfigUpdate(void)
     char * modeName = gameGetGameModeName(gameSettings->GameType);
 
     // get map override name
-    if (patchStateContainer.CustomMapId > 0)
-      mapName = dataCustomMaps.items[patchStateContainer.CustomMapId];
+    if (patchStateContainer.customMapId > 0)
+      mapName = dataCustomMaps.items[patchStateContainer.customMapId];
     else if (MapLoaderState.MapName[0])
       mapName = MapLoaderState.MapName;
 
@@ -2676,7 +2676,7 @@ void onConfigInitialize(void)
 //------------------------------------------------------------------------------
 void configSendGameConfig(void)
 {
-  int customMapId = patchStateContainer.CustomMapId;
+  int customMapId = patchStateContainer.customMapId;
   gameConfig.isCustomMap = customMapId > 0 && customMapId < dataCustomMaps.count && customMapDefs;
 
   // backup
