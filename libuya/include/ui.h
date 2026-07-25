@@ -499,7 +499,7 @@ typedef struct UiFineGameElements { // 0x34
 /* 0x18 */ UiElementText_t* searchButton;
 /* 0x1c */ UiElementText_t* resultsText;
 /* 0x20 */ UiElementList_t* gameList;
-/* 0x24 */ UiElementSprite_t* rankSprite;
+/* 0x24 */ UiElementSprite_t* rankSprite[4];
 } UiFineGameElements_t;
 
 typedef struct UiGameDetailsElements { // 0x60
