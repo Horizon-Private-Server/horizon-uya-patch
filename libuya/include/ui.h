@@ -489,7 +489,20 @@ typedef struct UiTipsElements { // 0x8
 /* 0x4 */ UiElementList_t* tips;
 } UiTipsElements_t;
 
-typedef struct UiGameDetailsElements { // 0x8
+typedef struct UiFineGameElements { // 0x34
+/* 0x00 */ UiElementStringSelect_t* type;
+/* 0x04 */ UiElementStringSelect_t* map;
+/* 0x08 */ UiElementStringSelect_t* mode;
+/* 0x0c */ UiElementTextInfo_t* rank;
+/* 0x10 */ UiElementStringSelect_t* maxPlayers;
+/* 0x14 */ UiElementStringSelect_t* city;
+/* 0x18 */ UiElementText_t* searchButton;
+/* 0x1c */ UiElementText_t* resultsText;
+/* 0x20 */ UiElementList_t* gameList;
+/* 0x24 */ UiElementSprite_t* rankSprite;
+} UiFineGameElements_t;
+
+typedef struct UiGameDetailsElements { // 0x60
 /* 0x00 */ UiElementImage_t* image;
 /* 0x04 */ UiElementSprite_t* rankSprite[4];
 /* 0x14 */ UiElementSprite_t* fluxRifleSprite;
