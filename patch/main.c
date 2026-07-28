@@ -142,6 +142,7 @@ extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern VariableAddress_t vaFlagUpdate_Func;
 extern void FlushCache(int);
 extern MenuElem_ListData_t dataCustomMaps;
+extern MenuElem_OrderedListData_t dataCustomModes;
 #ifdef SCAVENGER_HUNT
 extern scavHuntEnabled;
 extern scavHuntShownPopup;
@@ -2837,6 +2838,137 @@ void setupPatchConfigInGame(void)
 	}
 }
 
+void patchGameDetailsUI_SetTextInput(UiElementTextInput_t *element, char *string)
+{
+	char* text = string ? string : "";
+
+	if (!element)
+		return;
+
+	strncpy(element->textInput, text, sizeof(element->textInput) - 1);
+	element->textInput[sizeof(element->textInput) - 1] = 0;
+}
+
+char* patchGameDetailsUI_GetPackedGameName(void)
+{
+	void* ui;
+	void* game;
+
+	asm volatile (
+		"move %0, $s2"
+		: "=r" (ui)
+	);
+
+	if (!ui)
+		return NULL;
+
+	game = *(void**)((u32)ui + 0x2b8);
+	if (!game)
+		return NULL;
+
+	return (char*)((u32)game + 0x134);
+}
+
+int patchGameDetailsUI_ParseGameName(char *string, char** customMap, int* customMode)
+{
+	if (customMap)
+		*customMap = NULL;
+	if (customMode)
+		*customMode = 0;
+
+	if (string) {
+		int len = strlen(string);
+
+		if (len <= 15) {
+			u8 modeHigh = *(u8*)(string + len + 1);
+			u8 modeLow = *(u8*)(string + len + 2);
+			char* packedMap = string + len + 3;
+
+			if (modeHigh <= 0xf && modeLow <= 0xf) {
+				if (customMode)
+					*customMode = (char)((modeHigh << 4) | modeLow);
+
+				if (customMap && packedMap[0])
+					*customMap = packedMap;
+
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * NAME :		patchGameDetailsUI_Map
+ * DESCRIPTION :
+ * 				Updates map string to custom map string, if needced.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchGameDetailsUI_Map(UiElementTextInput_t *element, char *string)
+{
+	char* customMap = NULL;
+
+	if (!patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), &customMap, NULL))
+		patchGameDetailsUI_ParseGameName(string, &customMap, NULL);
+
+	patchGameDetailsUI_SetTextInput(element, customMap ? customMap : string);
+}
+
+/*
+ * NAME :		patchGameDetailsUI_Mode
+ * DESCRIPTION :
+ * 				Updates mode string to custom mode string, if needced.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchGameDetailsUI_Mode(UiElementTextInput_t *element, char *string)
+{
+	int i;
+	int customMode = 0;
+	char* customModeName = NULL;
+
+	if (!patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), NULL, &customMode))
+		patchGameDetailsUI_ParseGameName(string, NULL, &customMode);
+
+	if (customMode) {
+		for (i = 0; i < dataCustomModes.count; ++i) {
+			if (dataCustomModes.items[i].value == customMode) {
+				customModeName = dataCustomModes.items[i].name;
+				break;
+			}
+		}
+	}
+
+	patchGameDetailsUI_SetTextInput(element, customModeName ? customModeName : string);
+}
+
+/*
+ * NAME :		patchGameDetailsUI
+ * DESCRIPTION :
+ * 				Patches various items on the Game Details screen.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchGameDetailsUI(void)
+{
+#ifdef UYA_PAL
+	HOOK_JAL(0x006a47bc, &patchGameDetailsUI_Map);
+	HOOK_JAL(0x006a4978, &patchGameDetailsUI_Mode);
+	HOOK_JAL(0x006a49a0, &patchGameDetailsUI_Mode);
+#else
+	HOOK_JAL(0x006a1fac, &patchGameDetailsUI_Map);
+	HOOK_JAL(0x006a2168, &patchGameDetailsUI_Mode);
+	HOOK_JAL(0x006a2190, &patchGameDetailsUI_Mode);
+#endif
+}
 /*
  * NAME :		runSendGameUpdate
  * DESCRIPTION : Sends the current game info to the server.
@@ -3280,6 +3412,7 @@ int main(void)
 			// POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
 			POKE_U32(UI_PTR_FUNC_KEYBOARD, &patchKeyboard);
 			POKE_U32(STAGING_JALR_HEADSET_SET_COLOR, 0);
+			patchGameDetailsUI();
 			patched.uiModifiers = 1;
 		}
 

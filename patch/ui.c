@@ -564,16 +564,30 @@ int patchStaging(UiMenu_t* ui, int pad)
     static int holdingL1time = 0; 
     int i;
     int j;
-    GameSettings* gs = gameGetSettings();
-    int clientId = gameGetMyClientId();
-    int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
-    int itemSelected = *(int*)((u32)ui + 0x290);
-    int isLoading = *(u8*)((u32)ui + 0x2b6);
-    int isRequstingTeamChange = *(u8*)((u32)ui + 0x2c8);
+    GameSettings* gs;
+    GameOptions* options;
+    int clientId;
+    int isTeams;
+    int itemSelected;
+    int isLoading;
+    int isRequstingTeamChange;
 
-    // check for connetion
+    // check for connection before reading staging/game pointers; the disconnect popup can tear these down.
+    if (!ui)
+        return 0;
     if (!netGetLobbyServerConnection())
         return stagingFunc(ui, pad);
+
+    gs = gameGetSettings();
+    options = gameGetOptions();
+    if (!gs || !options)
+        return stagingFunc(ui, pad);
+
+    clientId = gameGetMyClientId();
+    isTeams = options->GameFlags.MultiplayerGameFlags.Teams;
+    itemSelected = *(int*)((u32)ui + 0x290);
+    isLoading = *(u8*)((u32)ui + 0x2b6);
+    isRequstingTeamChange = *(u8*)((u32)ui + 0x2c8);
 
     // Change pad buttons for all players
     if (pad == UI_PAD_CROSS) {

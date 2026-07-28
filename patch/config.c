@@ -2432,7 +2432,8 @@ void onMenuUpdate(int inGame)
 			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4, FONT_BOLD);
     }
     if (uiGetActiveMenu(UI_MENU_STAGING, 0) > 0 && *(u32*)0x01C5C114 == 0) {
-      int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
+      GameOptions* options = gameGetOptions();
+      int isTeams = options && options->GameFlags.MultiplayerGameFlags.Teams;
       if (gameAmIHost() && isTeams)
         gfxScreenSpaceText(SCREEN_WIDTH * 0.205, SCREEN_HEIGHT * 0.07, 0.7, .85, 0x8069cbf2, "\x14 RANDOM TEAMS", -1, 4, FONT_BOLD);
     }
