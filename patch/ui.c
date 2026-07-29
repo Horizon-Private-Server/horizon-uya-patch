@@ -256,7 +256,13 @@ void setTeams(int numTeams)
 int getPlayerIndex(void * ui,int selectedPlayer)
 {
     GameSettings * gs = gameGetSettings();
+    if (!ui || !gs || selectedPlayer < 0 || selectedPlayer >= GAME_MAX_PLAYERS)
+        return -1;
+
     int uiElement = *(int*)(ui + (selectedPlayer + 0xf) * 4 + 0x110);
+    if (!uiElement)
+        return -1;
+
     long compareNames;
     int i = 0;
     while (((gs == 0 || (gs->PlayerClients[i] == -1)) || (compareNames = strcmp(uiElement + 0x14, gs->PlayerNames[i]), compareNames != 0))) {
@@ -492,7 +498,13 @@ void updateInfo(GameSettings *gs, int selectedIndex)
 int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
 {
     int selectedItem = itemSelected - 0xf;
+    if (!ui || !gs || selectedItem < 0 || selectedItem >= GAME_MAX_PLAYERS)
+        return UI_PAD_CROSS;
+
     int i = getPlayerIndex(ui, selectedItem);
+    if (i < 0 || i >= GAME_MAX_PLAYERS)
+        return UI_PAD_CROSS;
+
     int account_id = gs->PlayerAccountIds[i];
     int client_id = gs->PlayerClients[i];
     int isBot = (account_id >= 883) && (account_id <= 1880);
@@ -611,6 +623,10 @@ int patchStaging(UiMenu_t* ui, int pad)
 
 	// call game function we're replacing
 	int result = stagingFunc(ui, pad);
+
+    // The original staging function may tear down these pointers after Disconnect.
+    if (!netGetLobbyServerConnection() || !gameGetSettings() || !gameGetOptions())
+        return result;
 
     //  init staging if not done already, or equals 2
     if (!init_staging || info.currentWorldId != gameGetWorldId()) {

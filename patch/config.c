@@ -2382,6 +2382,13 @@ void onMenuUpdate(int inGame)
 {
   TabElem_t* tab = &tabElements[selectedTabItem];
 
+  if (!inGame && !netGetLobbyServerConnection())
+  {
+    if (isConfigMenuActive)
+      configMenuDisable();
+    return;
+  }
+
   if (isConfigMenuActive)
   {
     // prevent pad from affecting menus
@@ -2431,10 +2438,10 @@ void onMenuUpdate(int inGame)
 	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.77, scale, scale, 0x80FFFFFF, "Press START to", -1, 4, FONT_BOLD);
 			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4, FONT_BOLD);
     }
-    if (uiGetActiveMenu(UI_MENU_STAGING, 0) > 0 && *(u32*)0x01C5C114 == 0) {
+    if (uiGetActiveMenu(UI_MENU_STAGING, 0) > 0 && *(u32*)0x01C5C114 == 0 && gameGetSettings()) {
       GameOptions* options = gameGetOptions();
       int isTeams = options && options->GameFlags.MultiplayerGameFlags.Teams;
-      if (gameAmIHost() && isTeams)
+      if (options && isTeams && gameAmIHost())
         gfxScreenSpaceText(SCREEN_WIDTH * 0.205, SCREEN_HEIGHT * 0.07, 0.7, .85, 0x8069cbf2, "\x14 RANDOM TEAMS", -1, 4, FONT_BOLD);
     }
 		// check for pad input
@@ -2614,10 +2621,9 @@ void onConfigUpdate(void)
     }
 
     UiMenu_t* uiStaging = uiGetActiveMenu(UI_MENU_STAGING, 0);
-    if (uiStaging > 0) {
-      u32 * stagingChild = uiStaging->pChildren;
-      u32 mapText = (u32)stagingChild[1] + 0x14;
-      u32 modeText = (u32)stagingChild[2] + 0x14;
+    if (uiStaging > 0 && uiStaging->pChildren[1] && uiStaging->pChildren[2]) {
+      u32 mapText = (u32)uiStaging->pChildren[1] + 0x14;
+      u32 modeText = (u32)uiStaging->pChildren[2] + 0x14;
       if (mapName)
         strncpy((char*)mapText, mapName, 32);
       if (modeName)
