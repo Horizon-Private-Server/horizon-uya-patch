@@ -3010,7 +3010,7 @@ int runSendGameUpdate(void)
 	void * connection = netGetLobbyServerConnection();
 
 	// skip if not online, in lobby, or the game host
-	if (!connection || !gameSettings || !gameAmIHost()) {
+	if (!connection || !gameSettings || !gameOptions || !gameAmIHost()) {
 		lastGameUpdate = -GAME_UPDATE_SENDRATE;
 		newGame = 1;
 		return 0;
