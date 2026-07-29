@@ -2977,6 +2977,26 @@ void patchGameDetailsUI(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynopme" Pruitt
  */
+int getBaseHealthPercent(LocalPlayerYourBaseGameData * baseGameData, int team)
+{
+	if (team < 0 || team >= GAME_MAX_PLAYERS)
+		return 0;
+	if (!baseGameData)
+		return 100;
+
+	float totalHealth = baseGameData->totalHudHealth[team];
+	if (totalHealth <= 0)
+		return 100;
+
+	int percent = (int)(((float)baseGameData->baseHealth[team] / totalHealth) * 100.0f + 0.5f);
+	if (percent < 0)
+		return 0;
+	if (percent > 100)
+		return 100;
+
+	return percent;
+}
+
 int runSendGameUpdate(void)
 {
 	static int lastGameUpdate = 0;
@@ -3007,8 +3027,13 @@ int runSendGameUpdate(void)
 	patchStateContainer.gameStateUpdate.TeamsEnabled = gameOptions->GameFlags.MultiplayerGameFlags.Teams;
 	patchStateContainer.gameStateUpdate.Version = 1;
 
-	// copy over client ids
-	memcpy(patchStateContainer.gameStateUpdate.ClientIds, gameSettings->PlayerClients, sizeof(patchStateContainer.gameStateUpdate.ClientIds));
+	// copy over active client ids
+	memset(patchStateContainer.gameStateUpdate.ClientIds, -1, sizeof(patchStateContainer.gameStateUpdate.ClientIds));
+	memset(patchStateContainer.gameStateUpdate.Teams, -1, sizeof(patchStateContainer.gameStateUpdate.Teams));
+	for (i = 0; i < gameSettings->PlayerCount && i < GAME_MAX_PLAYERS; ++i) {
+		patchStateContainer.gameStateUpdate.ClientIds[i] = gameSettings->PlayerClients[i];
+		patchStateContainer.gameStateUpdate.Teams[i] = gameSettings->PlayerTeams[i];
+	}
 
 	// reset some stuff whenever we enter a new game
 	if (newGame) {
@@ -3016,8 +3041,10 @@ int runSendGameUpdate(void)
 		newGame = 0;
 	}
 
-	// copy teams over
-	memcpy(patchStateContainer.gameStateUpdate.Teams, gameSettings->PlayerTeams, sizeof(patchStateContainer.gameStateUpdate.Teams));
+	if (gameSettings->GameType == GAMETYPE_SIEGE) {
+		patchStateContainer.gameStateUpdate.TeamScores[0] = 100;
+		patchStateContainer.gameStateUpdate.TeamScores[1] = 100;
+	}
 
 	// 
 	if (isInGame()) {
@@ -3033,8 +3060,8 @@ int runSendGameUpdate(void)
 				else if (gameData->allYourBaseGameData->nodeTeam[i] == 1)
 					++patchStateContainer.gameStateUpdate.Nodes[1];
 			}
-			patchStateContainer.gameStateUpdate.TeamScores[0] = gameData->allYourBaseGameData->hudHealth[0];
-			patchStateContainer.gameStateUpdate.TeamScores[1] = gameData->allYourBaseGameData->hudHealth[1];
+			patchStateContainer.gameStateUpdate.TeamScores[0] = getBaseHealthPercent(gameData->allYourBaseGameData, 0);
+			patchStateContainer.gameStateUpdate.TeamScores[1] = getBaseHealthPercent(gameData->allYourBaseGameData, 1);
 		} else if (gameSettings->GameType == GAMETYPE_CTF) {
 			// Check if nodes are on
 			if (gameOptions->GameFlags.MultiplayerGameFlags.Nodes) {
