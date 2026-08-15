@@ -34,12 +34,8 @@
 // Disabled: changing a live skin through gameSetClientSkin() crashes mid-match.
 #define JUGGERNAUT_BRUISER_SKIN         0
 
-// Cosmetic shield follows the owner-local damage cushion and is broadcast to
-// remote clients; it does not provide gameplay absorption.
+// Local shields use shieldTrigger while remote shields use playerGiveShield().
 #define JUGGERNAUT_JUGGY_SHIELD         1
-
-// Also render the cosmetic shield on the juggy's own screen.
-#define JUGGERNAUT_JUGGY_SHIELD_LOCAL   1
 
 // Only the current juggy's forwarded kill events are applied.
 #define JUGGERNAUT_JUGGY_ONLY_KILLS     1
@@ -89,18 +85,8 @@
 // Shield state is broadcast by the juggy's own client.
 #define CROWN_MSG_ID_SHIELD             (CUSTOM_MSG_ID_GAME_MODE_START + 1)
 
-// Base weapons upgraded to V2 while juggy (no-op if the player doesn't hold them).
-static const int JUGGERNAUT_WEAPONS[] = {
-    GADGET_ID_N60,
-    GADGET_ID_BLITZ,
-    GADGET_ID_FLUX,
-    GADGET_ID_ROCKET,
-    GADGET_ID_GBOMB,
-    GADGET_ID_MINE,
-    GADGET_ID_LAVA,
-    GADGET_ID_MORPH,
-};
-#define JUGGERNAUT_WEAPON_COUNT (sizeof(JUGGERNAUT_WEAPONS) / sizeof(JUGGERNAUT_WEAPONS[0]))
+// Upgrade only valid weapon IDs decoded from populated inventory slots.
+#define JUGGERNAUT_WEAPON_SLOT_COUNT    (8)
 
 // Billboard frame textures require a temporary per-map getter swap.
 extern VariableAddress_t vaGetFrameTex;
@@ -197,6 +183,7 @@ typedef struct CrownStateMsg {
 
 // Juggy shield state, broadcast by the juggy's own client (health isn't synced).
 typedef struct CrownShieldMsg {
+    int   Seq;            // Crown generation for this owner state.
     short JuggyIdx;       // sender's view of who the juggy is (for validation)
     short ShieldOn;       // 0/1
 } CrownShieldMsg_t;
@@ -279,6 +266,8 @@ static int KillHookCount = 0;   // 0 = not installed
 static int    JuggyShieldOn = 1;
 static int    ShieldLastSent = -1;                  // last value this client broadcast (juggy only)
 static int    ShieldNextResend = 0;                 // periodic re-broadcast time (late joiners / loss)
+static Player * ShieldOwner = NULL;                 // last juggy seen holding a shield (compared, never dereferenced)
+static int    ShieldOwnerIndex = -1;                // its mpIndex, so a slot reused by a new player still counts as a change
 
 // Local cosmetic sprite.
 static Moby * CrownMoby = NULL;
@@ -543,6 +532,7 @@ static void crownBroadcastState(void)
     netBroadcastCustomAppMessage(connection, CROWN_MSG_ID_STATE, sizeof(msg), &msg);
 }
 
+#if JUGGERNAUT_JUGGY_SHIELD
 // The juggy's own client broadcasts this flag.
 static void juggyBroadcastShield(int on)
 {
@@ -551,6 +541,7 @@ static void juggyBroadcastShield(int on)
         return;
 
     CrownShieldMsg_t msg;
+    msg.Seq = StateSeq;
     msg.JuggyIdx = (short)JuggyIndex;
     msg.ShieldOn = (short)(on ? 1 : 0);
     netBroadcastCustomAppMessage(connection, CROWN_MSG_ID_SHIELD, sizeof(msg), &msg);
@@ -567,6 +558,7 @@ static void juggyUpdateShieldState(int want)
         ShieldNextResend = now + CROWN_HEARTBEAT_MS;
     }
 }
+#endif
 
 // A new juggy starts shielded; force an immediate broadcast.
 static void juggyResetShieldForNewJuggy(void)
@@ -578,15 +570,21 @@ static void juggyResetShieldForNewJuggy(void)
 
 static int crownOnReceiveShield(void * connection, void * data)
 {
+    if (!Initialized || !isInGame())
+        return sizeof(CrownShieldMsg_t);
+
     CrownShieldMsg_t * msg = (CrownShieldMsg_t*)data;
-    // Ignore stale or foreign flags.
-    if (msg->JuggyIdx == JuggyIndex)
+    // Reject previous-reign state while periodic resends repair packet reordering.
+    if (msg->Seq == StateSeq && msg->JuggyIdx == JuggyIndex)
         JuggyShieldOn = msg->ShieldOn ? 1 : 0;
     return sizeof(CrownShieldMsg_t);
 }
 
 static int crownOnReceiveState(void * connection, void * data)
 {
+    if (!Initialized || !isInGame())
+        return sizeof(CrownStateMsg_t);
+
     // The host is authoritative.
     if (gameAmIHost())
         return sizeof(CrownStateMsg_t);
@@ -861,6 +859,30 @@ static void juggyRemoveShield(Player * player)
     }
 }
 
+// Drop shields as soon as the crown moves or its holder's slot empties, while
+// the owner pointer is still known. The engine clears the shield's stored owner
+// during player teardown, so a disconnect that is only noticed afterwards
+// leaves a shield the sweep below can no longer attribute to anyone.
+static void juggyTrackShieldOwner(void)
+{
+    Player ** players = playerGetAll();
+    Player * juggy = NULL;
+
+    if (players && JuggyIndex >= 0 && JuggyIndex < GAME_MAX_PLAYERS)
+        juggy = players[JuggyIndex];
+
+    if (juggy == ShieldOwner && JuggyIndex == ShieldOwnerIndex)
+        return;
+
+    // The saved pointer is only ever compared, never dereferenced, so it stays
+    // usable for cleanup after the player it named is gone.
+    if (ShieldOwner)
+        juggyRemoveShield(ShieldOwner);
+
+    ShieldOwner = juggy;
+    ShieldOwnerIndex = JuggyIndex;
+}
+
 // Remove shields whose owner is no longer the live juggy. Compare the stored
 // owner pointer without dereferencing it; this avoids stale-owner TLB faults.
 static void juggySweepStrayShields(void)
@@ -875,12 +897,55 @@ static void juggySweepStrayShields(void)
 
     Moby * shield = mobyListGetStart();
     while ((shield = mobyFindNextByOClass(shield, MOBY_ID_OMNI_SHIELD))) {
-        if (shield->pVar && *(u32*)((u32)shield->pVar + 0x40) != (u32)juggy)
+        // A shield with no live juggy to belong to is stray no matter who owns
+        // it, and an owner the engine already cleared cannot be matched against
+        // anything -- treating either as "not stray" strands the moby.
+        u32 owner = shield->pVar ? *(u32*)((u32)shield->pVar + 0x40) : 0;
+        if (!juggy || !owner || owner != (u32)juggy)
             mobyDestroy(shield);
         ++shield;
     }
 }
+
+// The engine kills the shield moby while its owner rides, so a create attempt
+// never latches and would replay the equip sound every frame. Both checks are
+// needed: the pointer and the state disagree for a frame around entry/exit, and
+// remote occupancy is reconstructed by playersync rather than sent directly.
+static int juggyIsRiding(Player * player)
+{
+    int state = playerDeobfuscate((u32)&player->state, 0);
+    return player->vehicle
+        || state == PLAYER_STATE_VEHICLE
+        || state == PLAYER_STATE_TURRET_DRIVER;
+}
 #endif
+
+// Upgrade guarded inventory entries using the established patch V2 path.
+static void juggyUpgradeOwnedWeapons(Player * player)
+{
+    u8 * slots = (u8*)((u32)player + 0x1a32);
+    u32 upgradedMask = 0;
+    int i;
+
+    for (i = 0; i < JUGGERNAUT_WEAPON_SLOT_COUNT; ++i) {
+        if (!slots[i])
+            continue;
+
+        int weaponId = playerDeobfuscate((u32)&slots[i], DEOBFUSCATE_MODE_GADGET);
+        u32 weaponBit = (weaponId > 0 && weaponId < 32) ? (1u << weaponId) : 0;
+
+        // Reject non-V2 weapons and failed guarded-value decodes.
+        if (!(weaponBit & (GADGET_BIT_N60 | GADGET_BIT_BLITZ | GADGET_BIT_FLUX |
+                           GADGET_BIT_ROCKET | GADGET_BIT_GBOMB | GADGET_BIT_MINE |
+                           GADGET_BIT_LAVA | GADGET_BIT_MORPH)))
+            continue;
+        if (upgradedMask & weaponBit)
+            continue;
+
+        playerGiveWeaponUpgrade(player, weaponId);
+        upgradedMask |= weaponBit;
+    }
+}
 
 static void processPlayer(Player * player)
 {
@@ -900,9 +965,7 @@ static void processPlayer(Player * player)
         if (!Buffed[idx] && !playerIsDead(player) && player->isLocal) {
             JuggyCushion = JUGGERNAUT_CUSHION_HP;
 
-            int w;
-            for (w = 0; w < (int)JUGGERNAUT_WEAPON_COUNT; ++w)
-                playerGiveWeaponUpgrade(player, JUGGERNAUT_WEAPONS[w]);
+            juggyUpgradeOwnedWeapons(player);
 
             Buffed[idx] = 1;
 #if JUGGERNAUT_REFILL_ON_HEAL
@@ -929,23 +992,32 @@ static void processPlayer(Player * player)
         // networked player state.
         {
             int show = JuggyShieldOn && !playerIsDead(player)
-                       && player->pMoby && player->pMoby->pVar;
-#if !JUGGERNAUT_JUGGY_SHIELD_LOCAL
-            if (player->isLocal)
-                show = 0;   // keep the bubble off the juggy's own view
-#endif
+                       && player->pMoby && player->pMoby->pVar
+                       && !juggyIsRiding(player);
             if (show) {
-                if (!playerHasShield(player))
-                    playerGiveShield(player);
-            } else if (playerHasShield(player)) {
-                juggyRemoveShield(player);
+                if (!playerHasShield(player)) {
+                    if (player->isLocal)
+                        player->shieldTrigger = 1;
+                    else
+                        playerGiveShield(player);
+                }
+            } else {
+                // Cancel deferred local creation before removing the live effect.
+                if (player->isLocal)
+                    player->shieldTrigger = 0;
+                if (playerHasShield(player))
+                    juggyRemoveShield(player);
             }
         }
 #endif
     } else {
         // Clear state when this player is no longer the juggy.
-        if (player->isLocal)
+        if (player->isLocal) {
             JuggyCushion = 0;
+#if JUGGERNAUT_JUGGY_SHIELD
+            player->shieldTrigger = 0;
+#endif
+        }
         Buffed[idx] = 0;
     }
 }
@@ -990,6 +1062,8 @@ static void resetState(void)
     JuggyShieldOn = 1;
     ShieldLastSent = -1;
     ShieldNextResend = 0;
+    ShieldOwner = NULL;
+    ShieldOwnerIndex = -1;
 
     crownSpriteDestroy();
     juggMapSetVisible(0);   // hide the minimap icon between matches (widget kept)
@@ -1070,10 +1144,17 @@ void gameStart(struct GameModule * module, PatchConfig_t * config, PatchGameConf
         juggMapInit();
         juggMapUpdate();
 
+#if JUGGERNAUT_JUGGY_SHIELD
+        // Retire the outgoing juggy's shield before the new one is granted.
+        juggyTrackShieldOwner();
+#endif
+
         Player ** players = playerGetAll();
         int i;
-        for (i = 0; i < GAME_MAX_PLAYERS; ++i)
-            processPlayer(players[i]);
+        if (players) {
+            for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+                processPlayer(players[i]);
+        }
 
 #if JUGGERNAUT_JUGGY_SHIELD
         // Remove shields orphaned by transfer, death, or disconnect.

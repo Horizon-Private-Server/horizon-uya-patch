@@ -15,8 +15,18 @@ pickups. It broadcasts a heartbeat containing:
 Clients accept newer snapshots, update `JuggyIndex`, and render the crown
 locally. A migrated host continues from the latest cached state.
 
-The juggy's own client owns the damage cushion because health is not networked.
-It broadcasts the cosmetic shield state; other clients only render it.
+The juggy's client owns the damage cushion and broadcasts shield visibility.
+The local owner uses `shieldTrigger`, while other clients use
+`playerGiveShield` on their remote representation. The shield is only an
+indicator; the custom cushion remains the source of extra durability.
+
+Shield packets carry the crown-state sequence, and periodic resends repair
+packet reordering. Pending local shield requests are cancelled on crown loss or
+death.
+
+Shield is suppressd in vehicle or turret. Eestroyed by engine while occupied
+a create attempt never latches and the per-frame poll would replay the equip sound 
+on remote clients. Its not needed here anyway so just return on exit. 
 
 ## Crown flow
 
@@ -35,6 +45,8 @@ position.
 ## Implementation notes
 
 - `processPlayer` reads `JuggyIndex`; crown ownership is separate from buffs.
+- V2 upgrades are applied only to valid weapon IDs decoded from populated
+  inventory slots; absent weapons are never passed to the engine upgrade path.
 - The health buff uses a guarded damage hook instead of writing obfuscated
   health/max-health fields, which share state with player status.
 - Damage hooks scan all matching call sites because PvP damage does not use one
