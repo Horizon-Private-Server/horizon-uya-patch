@@ -2401,17 +2401,23 @@ void scoreboard(int maxScore, int* scores)
         float slotY = rowYnorm * SCREEN_HEIGHT;
         float slotW = width * SCREEN_WIDTH;
         float slotH = height * SCREEN_HEIGHT;
+        // SPRITE_STOPWATCH not yet supported on PAL, and gfxGetFrameTex() returns bad entry for this idx
+        int showIcon = 1;
+#if UYA_PAL
+        showIcon = 0;
+#endif
         float iconScale = slotH * 0.6f;
         float iconGap = 4.0f;
         int textWidth = kothHudCache.timerTextWidth;
-        float groupWidth = iconScale + iconGap + textWidth;
+        float groupWidth = (showIcon ? (iconScale + iconGap) : 0.0f) + textWidth;
         float groupX = slotX + (slotW - groupWidth) * 0.5f;
         float iconX = groupX;
         float iconY = slotY + (slotH - iconScale) * 0.5f;
-        float timerTextX = iconX + iconScale + iconGap;
+        float timerTextX = showIcon ? (iconX + iconScale + iconGap) : groupX;
 
         gfxScreenSpaceBox(anchorX, rowYnorm, width, height, (opacity << 24) | bgColor);
-        gfxDrawHUDIcon(KOTH_TIMER_ICON_SPRITE, iconX, iconY, iconScale, (opacity << 24) | textColor);
+        if (showIcon)
+            gfxDrawHUDIcon(KOTH_TIMER_ICON_SPRITE, iconX, iconY, iconScale, (opacity << 24) | textColor);
         gfxScreenSpaceText(timerTextX, textYnorm * SCREEN_HEIGHT, 1.0f, 1.0f, (opacity << 24) | textColor, kothHudCache.timerBuf, -1, TEXT_ALIGN_MIDDLELEFT, FONT_BOLD);
     }
 
