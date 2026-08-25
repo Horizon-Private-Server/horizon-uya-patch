@@ -581,21 +581,19 @@ int keepBaseHealthPadActive(void)
  */
 int noPostHitInvinc_Logic(void)
 {
-	// define ntsc and pal timer
-	#if UYA_PAL
+#if UYA_PAL
 	int DEFAULT_TIMER = 0x27;
-	#else
+#else
 	int DEFAULT_TIMER = 0x2f;
-	#endif
-	// if player is getting shot by the gatling turret, set to default timer.
-	// Player *p = playerGetFromSlot(0);
-	// if (!p || !p->pWhoHitMe->oClass)
-	// 	return 1;
+#endif
 
-	// if (p->pWhoHitMe->oClass == MOBY_ID_GATLING_TURRET_SHOT && p->pWhoHitMe->pParent->oClass == MOBY_ID_GATLING_TURRET)
-	// 	return DEFAULT_TIMER;
-	
-	// else return 1
+	if (!gameConfig.grNoCooldown)
+		return DEFAULT_TIMER;
+
+	register Player *p asm("a0");
+	if (p && p->pWhoHitMe && p->pWhoHitMe->oClass == MOBY_ID_GATLING_TURRET_SHOT)
+		return DEFAULT_TIMER;
+
 	return 1;
 }
 void noPostHitInvinc(void)
