@@ -47,3 +47,6 @@ VariableAddress_t vaGadgetEventHook;
 VariableAddress_t vaWaitingForResponse_Addr;
 VariableAddress_t vaPatchSwingshotGunBug_Hook;
 VariableAddress_t vaSetTextureArrow_Hook;
+VariableAddress_t vaPadDeadzone_CompareInput;
+VariableAddress_t vaPadDeadzone_OffsetInput;
+VariableAddress_t vaPadDeadzone_ScaleInput;

@@ -229,6 +229,25 @@ MenuElem_RangeData_t dataQuickSelectTimeDelay = {
     .maxValue = 30,
 };
 
+MenuElem_ListData_t dataDeadzone = {
+    .value = &config.controllerDeadzone,
+    .stateHandler = NULL,
+    .count = 11,
+    .items = {
+      "Vanilla - 38%",      // 37.8%
+      "30%",                // 29.9%
+      "20%",                // 19.7%
+      "15%",                // 15.0%
+      "10%",                // 10.2%
+      "7.5%",               // 7.9%
+      "5%",                 // 4.7%
+      "3%",                 // 3.1%
+      "2%",                 // 2.4%
+      "1%",                 // 0.8%
+      "0%",                 // 0%
+    }
+};
+
 MenuElem_ListData_t dataCycleWeapon1 = {
     .value = &config.cycleWeapon1,
     .stateHandler = NULL,
@@ -555,6 +574,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "Enable Team Info", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableTeamInfo, "Display team health and cycle v2 status on the bottom left of your screen." },
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist, "Toggles code that pulls the camera towards nearby targets when aiming." },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake, "Toggles the camera shake caused by nearby explosions." },
+  { "Controller Dead Zone", listActionHandler, menuStateAlwaysEnabledHandler, &dataDeadzone, "How far either analog stick must move before the game registers it, as a percentage of the stick's travel." },
   { "Disable D-Pad Movement", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.disableDpadMovement, "Disables the d-pad moving your character in game." },
   // { "Disable Strafing Side-Flips", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.dlStyleFlips, "Disables Strafing Side-Flips." },
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },

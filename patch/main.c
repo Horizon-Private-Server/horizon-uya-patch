@@ -88,6 +88,9 @@ void grLoadStart(void);
 
 // void runPing(void);
 // void runSpectate(void);
+
+void patchControllerDeadzone(void);
+
 #ifdef SCAVENGER_HUNT
 void scavHuntRun(void);
 #endif
@@ -168,6 +171,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.kothHillTransparency = 0,
 	.kothHillFxId = FX_VISIBOMB_HORIZONTAL_LINES,
 	.playerSyncRate = 0,
+	.controllerDeadzone = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -2386,6 +2390,57 @@ void patchHideFluxReticle(void)
 }
 
 /*
+ * NAME :		patchControllerDeadzone
+ * DESCRIPTION : Applies the configured analog stick deadzone.
+ * NOTES :
+ *          Analog stick input is a value from 0 to 255 with 127 being considered the center.
+ *          The deadzone value is an int where everything below it is ignored.
+ * 			The input itself is processed in 3 steps:
+ * 				1. Compare the input value to the deadzone value. If the input is less than the deadzone value, it is ignored.
+ * 				2. If the input is greater than the deadzone value, it is re-origined by subtracting the deadzone value from it.
+ * 				3. The re-origined value is then divided by (127 - deadzone value) to scale it to the range of 0 to 1.0. This is done to ensure that the full range of the stick is still usable after applying the deadzone.
+ * 			At each of these steps (CompareInput, OffsetInput and ScaleInput), a word is changed to adjust the deadzone.
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+void patchControllerDeadzone(void)
+{
+	if (!isInGame())
+		return;
+
+	int radius;
+	switch (config.controllerDeadzone)
+	{
+		case 0: radius = 48; break;
+		case 1: radius = 38; break;
+		case 2: radius = 25; break;
+		case 3: radius = 19; break;
+		case 4: radius = 13; break;
+		case 5: radius = 10; break;
+		case 6: radius = 6; break;
+		case 7: radius = 4; break;
+		case 8: radius = 3; break;
+		case 9: radius = 1; break;
+		case 10: radius = 0; break;
+		default: radius = 48; break;
+	}
+
+	u32 compareAddress = GetAddress(&vaPadDeadzone_CompareInput);
+	u32 offsetAddress = GetAddress(&vaPadDeadzone_OffsetInput);
+	u32 scaleAddress = GetAddress(&vaPadDeadzone_ScaleInput);
+
+	// The divisor must be 127 - radius for full travel to reach the 1.0 clamp.
+	float divisor = 127.0f - (float)radius;
+	u32 divisorWord = 0x3C010000 | (*(u32*)&divisor >> 16);
+
+	// The immediates are the low halfword of an I-type instruction.
+	POKE_U16(compareAddress, (u16)radius);
+	POKE_U16(offsetAddress, (u16)(-radius));
+	POKE_U32(scaleAddress, divisorWord);
+}
+
+/*
  * NAME :		patchSideFlipJoystickVal
  * DESCRIPTION :Patches joystick offset value for checking if to side flip or not.
  * NOTES :
@@ -3117,6 +3172,9 @@ int main(void)
 
 		// Patch Level of Detail
 		patchLevelOfDetail();
+
+		// Patch Analog Stick Deadzone
+		patchControllerDeadzone();
 
 		// Patch Weapon Ordering when Respawning
 		patchResurrectWeaponOrdering();
