@@ -40,11 +40,13 @@ typedef struct PatchConfig {
   char dlStyleFlips;
   char enableTeamInfo;
   char preferredGameServer;
+  char controllerDeadzone;
+
+  // Non-serialized config values
   char kothScrollSpeed;
   char kothHillTransparency;
   char kothHillFxId;
   char playerSyncRate;
-  char controllerDeadzone;
 } PatchConfig_t;
 
 // Game Rules Tab
