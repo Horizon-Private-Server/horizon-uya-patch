@@ -44,6 +44,7 @@ typedef struct PatchConfig {
   char kothHillTransparency;
   char kothHillFxId;
   char playerSyncRate;
+  char controllerDeadzone;
 } PatchConfig_t;
 
 // Game Rules Tab

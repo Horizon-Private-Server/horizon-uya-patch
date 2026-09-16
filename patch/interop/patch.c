@@ -1330,3 +1330,87 @@ VariableAddress_t vaSetTextureArrow_Hook = {
 	.MarcadiaPalace = 0x004a1940,
 #endif
 };
+
+VariableAddress_t vaPadDeadzone_CompareInput = {
+#if UYA_PAL
+	.Lobby = 0x005c358c,
+	.Bakisi = 0x00495d44,
+	.Hoven = 0x00497e5c,
+	.OutpostX12 = 0x0048d734,
+	.KorgonOutpost = 0x0048ae04,
+	.Metropolis = 0x0048a21c,
+	.BlackwaterCity = 0x00487ab4,
+	.CommandCenter = 0x00487aac,
+	.BlackwaterDocks = 0x0048a32c,
+	.AquatosSewers = 0x0048962c,
+	.MarcadiaPalace = 0x00488fac,
+#else
+	.Lobby = 0x005c133c,
+	.Bakisi = 0x00493b4c,
+	.Hoven = 0x00495ba4,
+	.OutpostX12 = 0x0048b4bc,
+	.KorgonOutpost = 0x00488c0c,
+	.Metropolis = 0x00488024,
+	.BlackwaterCity = 0x0048583c,
+	.CommandCenter = 0x004859f4,
+	.BlackwaterDocks = 0x00488234,
+	.AquatosSewers = 0x00487574,
+	.MarcadiaPalace = 0x00486eb4,
+#endif
+};
+
+VariableAddress_t vaPadDeadzone_OffsetInput = {
+#if UYA_PAL
+	.Lobby = 0x005c3598,
+	.Bakisi = 0x00495d50,
+	.Hoven = 0x00497e68,
+	.OutpostX12 = 0x0048d740,
+	.KorgonOutpost = 0x0048ae10,
+	.Metropolis = 0x0048a228,
+	.BlackwaterCity = 0x00487ac0,
+	.CommandCenter = 0x00487ab8,
+	.BlackwaterDocks = 0x0048a338,
+	.AquatosSewers = 0x00489638,
+	.MarcadiaPalace = 0x00488fb8,
+#else
+	.Lobby = 0x005c1348,
+	.Bakisi = 0x00493b58,
+	.Hoven = 0x00495bb0,
+	.OutpostX12 = 0x0048b4c8,
+	.KorgonOutpost = 0x00488c18,
+	.Metropolis = 0x00488030,
+	.BlackwaterCity = 0x00485848,
+	.CommandCenter = 0x00485a00,
+	.BlackwaterDocks = 0x00488240,
+	.AquatosSewers = 0x00487580,
+	.MarcadiaPalace = 0x00486ec0,
+#endif
+};
+
+VariableAddress_t vaPadDeadzone_ScaleInput = {
+#if UYA_PAL
+	.Lobby = 0x005c3560,
+	.Bakisi = 0x00495d18,
+	.Hoven = 0x00497e30,
+	.OutpostX12 = 0x0048d708,
+	.KorgonOutpost = 0x0048add8,
+	.Metropolis = 0x0048a1f0,
+	.BlackwaterCity = 0x00487a88,
+	.CommandCenter = 0x00487a80,
+	.BlackwaterDocks = 0x0048a300,
+	.AquatosSewers = 0x00489600,
+	.MarcadiaPalace = 0x00488f80,
+#else
+	.Lobby = 0x005c1310,
+	.Bakisi = 0x00493b20,
+	.Hoven = 0x00495b78,
+	.OutpostX12 = 0x0048b490,
+	.KorgonOutpost = 0x00488be0,
+	.Metropolis = 0x00487ff8,
+	.BlackwaterCity = 0x00485810,
+	.CommandCenter = 0x004859c8,
+	.BlackwaterDocks = 0x00488208,
+	.AquatosSewers = 0x00487548,
+	.MarcadiaPalace = 0x00486e88,
+#endif
+};
