@@ -158,9 +158,9 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableSingleplayerMusic = 0,
 	.quickSelectTimeDelay = 0,
 	.aimAssist = 0,
-	.cycleWeapon1 = GADGET_ID_GBOMB,
-	.cycleWeapon2 = GADGET_ID_BLITZ,
-	.cycleWeapon3 = GADGET_ID_FLUX,
+	.cycleWeapon1 = 0,
+	.cycleWeapon2 = 0,
+	.cycleWeapon3 = 0,
 	.hypershotEquipButton = 0,
 	.disableDpadMovement = 0,
 	.hideFluxReticle = 0,
@@ -855,13 +855,16 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
 	char cycleWeaponCount = 0;
 	int index = player->mpIndex;
 	// Set loadout/cycle weapons.  If not chosen, it will be set to default cycle.
+	// char cycle[] = {
+	// 	config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : GADGET_ID_GBOMB,
+	// 	config.cycleWeapon2 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon2) : GADGET_ID_BLITZ,
+	// 	config.cycleWeapon3 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon3) : GADGET_ID_FLUX
+	// };
+
 	char cycle[] = {
-		// config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : GADGET_ID_GBOMB,
-		// config.cycleWeapon2 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon2) : GADGET_ID_BLITZ,
-		// config.cycleWeapon3 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon3) : GADGET_ID_FLUX
-		config.cycleWeapon1 = GADGET_ID_GBOMB,
-		config.cycleWeapon2 = GADGET_ID_BLITZ,
-		config.cycleWeapon3 = GADGET_ID_FLUX
+		GADGET_ID_GBOMB,
+		GADGET_ID_BLITZ,
+		GADGET_ID_FLUX
 	};
 
 	// if Loadout Weapons Only is not on
