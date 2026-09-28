@@ -467,7 +467,7 @@ MenuElem_ListData_t dataGameConfigPreset = {
     .value = &preset,
     .stateHandler = NULL,
     .count = 6,
-    .items = { "None", "Meta (Base)", "Meta (No Base)", "1v1", "Bot", "Siege"}
+    .items = { "None", "Comp (Base)", "Comp (No Base)", "1v1", "Bot", "Siege"}
 };
 
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
@@ -2754,7 +2754,7 @@ void configMenuDisable(void)
     // force game config to preset
         switch (preset)
     {
-      case 1: // Meta (Base)
+      case 1: // Comp (Base)
       {
         // Game Rules
         gameConfig.grRadarBlipsDistance = 0; // Short
@@ -2789,7 +2789,7 @@ void configMenuDisable(void)
         gameConfig.prSurvivor = 0; // Off
         break;
       }
-      case 2: // Meta (No Base)
+      case 2: // Comp (No Base)
       {
         // Game Rules
         gameConfig.grRadarBlipsDistance = 0; // Short
