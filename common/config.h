@@ -162,4 +162,12 @@ enum CUSTOM_MODE_ID {
   CUSTOM_MODE_COUNT
 };
 
+// same values as deadlocked
+enum CLIENT_TYPE
+{
+  CLIENT_TYPE_NORMAL = 0,
+  CLIENT_TYPE_DZO = 1,
+  CLIENT_TYPE_PCSX2 = 2
+};
+
 #endif // _CONFIG_H_

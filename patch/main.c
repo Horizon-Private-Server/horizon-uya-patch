@@ -266,25 +266,60 @@ int getMACAddress(u8 output[6])
 }
 
 //------------------------------------------------------------------------------
-void sendMACAddress(void)
+int hasSonyMACAddress(void)
+{
+	int i;
+	static int hasSonyMACAddressResult = -1;
+	u8 mac[6];
+
+	// use cached result
+	// since the MAC address isn't going to change in the lifetime of the patch
+	if (hasSonyMACAddressResult >= 0) return hasSonyMACAddressResult;
+
+	// if we can't get the mac address, then assume we're on a PS2
+	// but don't save result so that we run again
+	if (!getMACAddress(mac)) return 1;
+
+	// latest PCSX2 uses fixed 4 bytes (00:04:1F:82) followed by 2 bytes generated from the host net adapter
+	// we'll assume that any client matching the first 4 bytes are on pcsx2
+	// could have false positives
+	// this must be checked before the sony list, which contains 00:04:1F
+	if (mac[0] == 0x00 && mac[1] == 0x04 && mac[2] == 0x1F && mac[3] == 0x82)
+		return hasSonyMACAddressResult = 0;
+
+	// check if the first half of our mac address
+	// matches any known sony mac addresses
+	u32 firstHalfMacAddress = (mac[0] << 16) | (mac[1] << 8) | (mac[2] << 0);
+	for (i = 0; i < SONY_MAC_ADDRESSES_COUNT; ++i) {
+		if (SONY_MAC_ADDRESSES[i] == firstHalfMacAddress) return hasSonyMACAddressResult = 1;
+	}
+
+	return hasSonyMACAddressResult = 0;
+}
+
+//------------------------------------------------------------------------------
+void sendClientType(void)
 {
 	static int sent = 0;
 	static int stall = 0;
-	u8 mac[6];
+	ClientSetClientTypeRequest_t msg;
 
 	void * connection = netGetLobbyServerConnection();
 	if (!connection) { sent = 0; return; }
 
 	if (sent) return;
-	if (!getMACAddress(mac)) return;
+	if (!getMACAddress(msg.mac)) return;
 
 	// stall
 	if (stall) { stall--; return; }
 
+	// a real PS2 has a sony network adapter, anything else is an emulator
+	msg.ClientType = hasSonyMACAddress() ? CLIENT_TYPE_NORMAL : CLIENT_TYPE_PCSX2;
+
 	// send
-	if (netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_MACHINE_ID, sizeof(mac), mac)) { stall = 60; return; }
+	if (netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_CLIENT_TYPE, sizeof(ClientSetClientTypeRequest_t), &msg)) { stall = 60; return; }
 	sent = 1;
-	DPRINTF("sent mac\n");
+	DPRINTF("sent client type %d\n", msg.ClientType);
 }
 
 //------------------------------------------------------------------------------
@@ -3084,7 +3119,7 @@ int main(void)
 	onConfigUpdate();
 
 	// 
-	sendMACAddress();
+	sendClientType();
 
 	// find and hook multiplayer moby to hook
 	static Moby* mpMoby = NULL;
