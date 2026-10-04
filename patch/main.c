@@ -754,6 +754,34 @@ void patchWeaponShotLag(void)
 }
 
 /*
+ * NAME :		patchFluxIllumination
+ * DESCRIPTION :
+ * 			Removes the red point light the flux rifle puts at its muzzle when it fires.
+ * 			The game stores the new light's id over the old one without deleting it, so two
+ * 			shots inside the light's 30 frame life (remote players, shots arriving in a burst)
+ * 			can leave a light on the ground for good, which also lags players near it.
+ * NOTES :
+ * 			First address: "jal CreatePointLight" becomes "li v0, -1" (no light id).
+ * 			Second address: "li v1, 0x1e" becomes "li v1, 0" (no light timer).
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+void patchFluxIllumination(void)
+{
+	u32 createAddr = GetAddress(&vaFluxIllumination1_Addr);
+	u32 timerAddr = GetAddress(&vaFluxIllumination2_Addr);
+	if (!createAddr || !timerAddr)
+		return;
+
+	// only when both still hold the game's own instructions (jal, li v1, 0x1e)
+	if ((*(u32*)createAddr >> 26) == 0x03 && *(u32*)timerAddr == 0x2403001E) {
+		POKE_U32(createAddr, 0x2402FFFF); // li v0, -1
+		POKE_U32(timerAddr, 0x24030000); // li v1, 0
+	}
+}
+
+/*
  * NAME :		patchLevelOfDetail
  * DESCRIPTION :
  * 			Sets the level of detail.
@@ -3292,6 +3320,9 @@ int main(void)
 
 		// Patch sending weapon shots via UDB to TCP.
 		patchWeaponShotLag();
+
+		// Remove the flux muzzle light (it can get stuck on the ground for remote players).
+		patchFluxIllumination();
 
 		// Patch Death Barrier Bug/Teleporter Glitch
 		patchDeathBarrierBug();

@@ -52,3 +52,5 @@ VariableAddress_t vaPadDeadzone_OffsetInput;
 VariableAddress_t vaPadDeadzone_ScaleInput;
 VariableAddress_t vaDisableWrenchAimAssist_Addr;
 VariableAddress_t vaCollDamageMobyDirect_Func;
+VariableAddress_t vaFluxIllumination1_Addr;
+VariableAddress_t vaFluxIllumination2_Addr;

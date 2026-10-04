@@ -1472,3 +1472,61 @@ VariableAddress_t vaDisableWrenchAimAssist_Addr = {
 	.MarcadiaPalace = 0x004f2848,
 #endif
 };
+
+//=============  patchFluxIllumination
+// 1: the jal that creates the muzzle point light.  2: the li that sets its 30 frame timer.
+VariableAddress_t vaFluxIllumination1_Addr = {
+#if UYA_PAL
+	.Lobby = 0x0054f548,
+	.Bakisi = 0x004072c8,
+	.Hoven = 0x00406c30,
+	.OutpostX12 = 0x003feb28,
+	.KorgonOutpost = 0x003fdf08,
+	.Metropolis = 0x003fcac8,
+	.BlackwaterCity = 0x003f98b0,
+	.CommandCenter = 0x00407cb8,
+	.BlackwaterDocks = 0x00409c18,
+	.AquatosSewers = 0x00409820,
+	.MarcadiaPalace = 0x00408898,
+#else
+	.Lobby = 0x0054ec30,
+	.Bakisi = 0x00406c60,
+	.Hoven = 0x00406548,
+	.OutpostX12 = 0x003fe440,
+	.KorgonOutpost = 0x003fd880,
+	.Metropolis = 0x003fc460,
+	.BlackwaterCity = 0x003f91e8,
+	.CommandCenter = 0x00407638,
+	.BlackwaterDocks = 0x00409598,
+	.AquatosSewers = 0x004091a0,
+	.MarcadiaPalace = 0x00408218,
+#endif
+};
+
+VariableAddress_t vaFluxIllumination2_Addr = {
+#if UYA_PAL
+	.Lobby = 0x0054f550,
+	.Bakisi = 0x004072d0,
+	.Hoven = 0x00406c38,
+	.OutpostX12 = 0x003feb30,
+	.KorgonOutpost = 0x003fdf10,
+	.Metropolis = 0x003fcad0,
+	.BlackwaterCity = 0x003f98b8,
+	.CommandCenter = 0x00407cc0,
+	.BlackwaterDocks = 0x00409c20,
+	.AquatosSewers = 0x00409828,
+	.MarcadiaPalace = 0x004088a0,
+#else
+	.Lobby = 0x0054ec38,
+	.Bakisi = 0x00406c68,
+	.Hoven = 0x00406550,
+	.OutpostX12 = 0x003fe448,
+	.KorgonOutpost = 0x003fd888,
+	.Metropolis = 0x003fc468,
+	.BlackwaterCity = 0x003f91f0,
+	.CommandCenter = 0x00407640,
+	.BlackwaterDocks = 0x004095a0,
+	.AquatosSewers = 0x004091a8,
+	.MarcadiaPalace = 0x00408220,
+#endif
+};
