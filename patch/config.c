@@ -248,8 +248,6 @@ MenuElem_ListData_t dataDeadzone = {
     }
 };
 
-/*
-// Loadout Weapons
 MenuElem_ListData_t dataCycleWeapon1 = {
     .value = &config.cycleWeapon1,
     .stateHandler = NULL,
@@ -303,7 +301,6 @@ MenuElem_ListData_t dataCycleWeapon3 = {
       "Holo Shield Glove"
     }
 };
-*/
 
 // map select list
 MenuElem_ListData_t dataCustomMaps = {
@@ -586,9 +583,9 @@ MenuElem_t menuElementsGeneral[] = {
   { "Hypershot Equip Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataHypershotEquipButton, "The button that you will press to take out the hypershot." },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   { "Player Sync Rate", listActionHandler, menuStateAlwaysEnabledHandler, &dataPlayerSyncRate, "Adjusts new player sync update frequency. High sends every tick, Very Low sends least often." },
-  // { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1, "Main Weapon 1.  Defaults to Gravity Bomb if nothing is selected." },
-  // { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2, "Main Weapon 2.  Defaults to Blitz Cannon if nothing is selected." },
-  // { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3, "Main Weapon 3.  Defaults to Flux Rifle if nothing is selected." },
+  { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1, "Main Weapon 1.  Defaults to Gravity Bomb if nothing is selected." },
+  { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2, "Main Weapon 2.  Defaults to Blitz Cannon if nothing is selected." },
+  { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3, "Main Weapon 3.  Defaults to Flux Rifle if nothing is selected." },
   // { "Player Sync (Experimental)", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enablePlayerSync, "Synces players movements for a smoother/less laggy experience." },
   // { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate, "Toggles the custom spectate feature. Use \x13 when dead to spectate.  Some gomemodes may restrict whom you can spectate." },
   { "Quick Select Delay", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataQuickSelectTimeDelay, "Change how short/long you need to hold triangle to open the Quick Select menu." },
@@ -659,7 +656,7 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever, "Double tap and hold R2 to chargeboot forever." },
   // { "Force Strafing Side-Flips", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.prDisableDlStyleFlips, "Forces 'Disable Strafing Side-Flips' to be off, no matter the players setting." },
   { "Gravity Bomb->B6 Obliterator", toggleActionHandler, menuStateHandler_Default, &gameConfig.prGravityBombTweakers, "Changes the Gravity Bomb Physics to that of the B6 Obliterator from Ratchet: Deadlocked!" },
-  // { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly, "Only allow the use of each players Loadout weapons, regardless of what weapons are enabled." },
+  { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly, "Only allow the use of each players Loadout weapons, regardless of what weapons are enabled." },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor, "You only have one life!  Once you die, you can't respawn!" },
 
   // { "Experimental CTF Rules", labelActionHandler, menuLabelStateHandler_CTF, (void*)LABELTYPE_HEADER },
@@ -2788,7 +2785,7 @@ void configMenuDisable(void)
         gameConfig.grNoBaseDefense_SmallTurrets = 2; // Off
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
-        // gameConfig.prLoadoutWeaponsOnly = 0; // Off
+        gameConfig.prLoadoutWeaponsOnly = 0; // Off
         gameConfig.prSurvivor = 0; // Off
         break;
       }
@@ -2823,7 +2820,7 @@ void configMenuDisable(void)
         gameConfig.grNoBaseDefense_SmallTurrets = 2; // Off
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
-        // gameConfig.prLoadoutWeaponsOnly = 0; // Off
+        gameConfig.prLoadoutWeaponsOnly = 0; // Off
         gameConfig.prSurvivor = 0; // Off
         break;
       }
@@ -2877,7 +2874,7 @@ void configMenuDisable(void)
         gameConfig.grNoBaseDefense_SmallTurrets = 2; // Off
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
-        // gameConfig.prLoadoutWeaponsOnly = 0; // Off
+        gameConfig.prLoadoutWeaponsOnly = 0; // Off
         gameConfig.prSurvivor = 0; // Off
         break;
       }
@@ -2917,7 +2914,7 @@ void configMenuDisable(void)
         gameConfig.grNoBaseDefense_SmallTurrets = 2; // Off
         // Party Rules
         gameConfig.prChargebootForever = 0; // Off 
-        // gameConfig.prLoadoutWeaponsOnly = 0; // Off
+        gameConfig.prLoadoutWeaponsOnly = 0; // Off
         gameConfig.prSurvivor = 0; // Off
         break;
       }
