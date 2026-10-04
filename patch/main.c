@@ -172,6 +172,7 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.kothHillFxId = FX_VISIBOMB_HORIZONTAL_LINES,
 	.playerSyncRate = 0,
 	.controllerDeadzone = 0,
+	.wrenchAimAssist = 0,
 };
 
 PatchGameConfig_t gameConfig;
@@ -1903,6 +1904,19 @@ void patchCameraPull(void)
 }
 
 /*
+ * NAME :		patchDisableWrenchAimAssist
+ * DESCRIPTION :	Disables aim assist for the wrench
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :			JelloGiant
+ */
+void patchDisableWrenchAimAssist(void)
+{
+	POKE_U32(GetAddress(&vaDisableWrenchAimAssist_Addr), 0);
+}
+
+/*
  * NAME :		teamInfo
  * DESCRIPTION :	Displays teamate health and cycle weapon upgrade status
  * NOTES :
@@ -3312,6 +3326,9 @@ int main(void)
 
 		if (config.aimAssist)
 			patchCameraPull();
+
+		if (config.wrenchAimAssist)
+			patchDisableWrenchAimAssist();
 
 		// Patch hiding of Flux Reticle
 		patchHideFluxReticle();

@@ -595,6 +595,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "KOTH Scroll Speed", listActionHandler, menuStateAlwaysEnabledHandler, &dataKothScrollSpeed, "Scale hill ring scroll speed." },
   { "KOTH Hill Transparency", listActionHandler, menuStateAlwaysEnabledHandler, &dataKothHillTransparency, "Adjust hill transparency." },
   { "KOTH Wall FX ID", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataKothHillFxId, "Texture FX id for hill walls (0-105)." },
+  { "Disable Wrench Aim Assist", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.wrenchAimAssist, "Disables wrench aim assist." },
 };
 
 // Game Settings

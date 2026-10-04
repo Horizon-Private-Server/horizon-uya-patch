@@ -41,6 +41,7 @@ typedef struct PatchConfig {
   char enableTeamInfo;
   char preferredGameServer;
   char controllerDeadzone;
+  char wrenchAimAssist;
 
   // Non-serialized config values
   char kothScrollSpeed;

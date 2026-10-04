@@ -1413,7 +1413,8 @@ VariableAddress_t vaPadDeadzone_ScaleInput = {
 	.AquatosSewers = 0x00487548,
 	.MarcadiaPalace = 0x00486e88,
 #endif
-};
+};
+
 
 // CollDamageMobyDirect(float damageHp, Moby* pMoby, Moby* pDamager, int damageFlags, VECTOR ip, VECTOR momentum)
 VariableAddress_t vaCollDamageMobyDirect_Func = {
@@ -1441,5 +1442,33 @@ VariableAddress_t vaCollDamageMobyDirect_Func = {
 	.BlackwaterDocks = 0x00477108,
 	.AquatosSewers = 0x00476448,
 	.MarcadiaPalace = 0x00475d88,
+#endif
+};
+
+VariableAddress_t vaDisableWrenchAimAssist_Addr = {
+#if UYA_PAL
+	.Lobby = 0x0062fe08,
+	.Bakisi = 0x00501d00,
+	.Hoven = 0x00503e18,
+	.OutpostX12 = 0x004f96f0,
+	.KorgonOutpost = 0x004f6e88,
+	.Metropolis = 0x004f61d8,
+	.BlackwaterCity = 0x004f3a70,
+	.CommandCenter = 0x004f3a38,
+	.BlackwaterDocks = 0x004f62b8,
+	.AquatosSewers = 0x004f55b8,
+	.MarcadiaPalace = 0x004f4f38,
+#else
+	.Lobby = 0x0062d5c0,
+	.Bakisi = 0x004ff510,
+	.Hoven = 0x00501568,
+	.OutpostX12 = 0x004f6e80,
+	.KorgonOutpost = 0x004f4698,
+	.Metropolis = 0x004f39e8,
+	.BlackwaterCity = 0x004f1200,
+	.CommandCenter = 0x004f1388,
+	.BlackwaterDocks = 0x004f3bc8,
+	.AquatosSewers = 0x004f2f08,
+	.MarcadiaPalace = 0x004f2848,
 #endif
 };

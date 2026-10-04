@@ -49,5 +49,6 @@ VariableAddress_t vaPatchSwingshotGunBug_Hook;
 VariableAddress_t vaSetTextureArrow_Hook;
 VariableAddress_t vaPadDeadzone_CompareInput;
 VariableAddress_t vaPadDeadzone_OffsetInput;
-VariableAddress_t vaPadDeadzone_ScaleInput;
+VariableAddress_t vaPadDeadzone_ScaleInput;
+VariableAddress_t vaDisableWrenchAimAssist_Addr;
 VariableAddress_t vaCollDamageMobyDirect_Func;
