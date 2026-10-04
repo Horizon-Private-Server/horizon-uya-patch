@@ -86,6 +86,8 @@ typedef struct PlayerSyncPlayerData
   u8 CurrentSubStateId; // used to track where we're at in between ticks
   u8 StateUpdateCmdId;
   PlayerSyncStateUpdateUnpacked_t StateUpdates[CMD_BUFFER_SIZE];
+  int LastRecvState; // remote: sender's state at the last StateId we handled (kept last so earlier offsets don't move)
+  int SenderInVehicle; // remote: the sender has reported the vehicle state since this hero got into its vehicle
 } PlayerSyncPlayerData_t;
 
 
@@ -144,8 +146,143 @@ float playerSyncLerpAngleIfDelta(float from, float to, float lerpAmount, float m
   return lerpfAngle(from, to, lerpAmount);
 }
 
-/*
-This was more trouble than its worth, maybe DL handles pad different or dan knows something I don't
+//--------------------------------------------------------------------------
+// set every player's pad buffer to "nothing pressed, sticks centered".
+// buttons are active low, so a zeroed buffer would read as every button pressed.
+void playerSyncResetPads(void)
+{
+  int i;
+  if (!PLAYER_SYNC_DATAS_PTR) return;
+
+  for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+    char* pad = PLAYER_SYNC_DATAS_PTR[i].Pad;
+    pad[2] = 0xFF;
+    pad[3] = 0xFF;
+    pad[4] = 0x7F;
+    pad[5] = 0x7F;
+    pad[6] = 0x7F;
+    pad[7] = 0x7F;
+  }
+}
+
+//--------------------------------------------------------------------------
+// take a remote hero out of its vehicle, the way the game's own exit does
+// (kisi: FUN_00536f80 for the driver, FUN_00536c68 for the passenger).
+// while vehicle->pDriver / pPassenger still points at the hero, the game's vehicle loop
+// (0x0053a7f0 kisi) forces the hero straight back into the vehicle state, so forcing a state alone never sticks.
+void playerSyncLeaveVehicle(Player* player)
+{
+  if (!player || player->isLocal) return;
+
+  Vehicle* vehicle = player->vehicle;
+  if (!vehicle) return;
+
+  // driver leave
+  // do NOT set vehicle->flags |= 2 here. that bit means "come to rest": the game sets it itself
+  // (kisi 0x00537d20) when the sender's final rest position arrives, together with a 30 frame countdown
+  // (vehicle+0x318) and the start / delta positions. set by hand with no countdown, the vehicle is
+  // finalized on the spot (flags | 8) and ignores every later update, so a hovership left mid-air hangs there.
+  // without it the empty vehicle keeps following the sender's vehicle updates down to the ground.
+  if (vehicle->pDriver == player) {
+    vehicle->pDriver = 0;
+  }
+
+  // passenger leave
+  if (vehicle->pPassenger == player) {
+    vehicle->pPassenger = 0;
+  }
+
+  vehicle->justExited = player->mpIndex;
+  player->lastVehicleMoby = vehicle->pMoby;
+  player->timers.lastVehicleTimer = 0x3c;
+  player->vehicleState = 0;
+  player->vehicle = NULL;
+
+  // the vehicle moby keeps a pointer to a rider's moby at +0xb8
+  Moby* vehicleMoby = vehicle->pMoby;
+  if (vehicleMoby) {
+    Player* other = vehicle->pDriver ? vehicle->pDriver : vehicle->pPassenger;
+    if (other) {
+      *(Moby**)((u32)vehicleMoby + 0xb8) = other->pMoby;
+    } else {
+      *(u8*)((u32)vehicleMoby + 0xbe) &= ~0x18;
+      *(Moby**)((u32)vehicleMoby + 0xb8) = 0;
+    }
+  }
+
+  // no longer driving: drop the "driver has pad data" bit right away
+  if (player->pNetPlayer) {
+    *(u32*)((u32)player->pNetPlayer + 0x1ac) &= ~4;
+  }
+
+  // out of the vehicle state, same call the game makes on exit
+  PlayerVTable* vtable = playerGetVTable(player);
+  vtable->UpdateState(player, PLAYER_STATE_IDLE, 1, 0, 1);
+
+  DPRINTF("player %d left vehicle %08x\n", player->fps.vars.camSettingsIndex, (u32)vehicle);
+}
+
+//--------------------------------------------------------------------------
+// jumps are driven by the sender's state, never by this client's copy of the pad.
+// the local copy can be a few frames out of phase with the sender, so a replayed X press
+// can land while the copy is still airborne and turn the sender's hop into a double jump here.
+int playerSyncStateIsJump(int state)
+{
+  return state == PLAYER_STATE_JUMP
+      || state == PLAYER_STATE_RUN_JUMP
+      || state == PLAYER_STATE_LONG_JUMP
+      || state == PLAYER_STATE_FLIP_JUMP
+      || state == PLAYER_STATE_JINK_JUMP
+      || state == PLAYER_STATE_DOUBLE_JUMP
+      || state == PLAYER_STATE_HELI_JUMP;
+}
+
+//--------------------------------------------------------------------------
+// wrench attacks only work with the wrench in the hand slot.
+// ThrowWrench (0x0050b148 kisi) returns without throwing unless gadget.weapon.pMoby is the wrench,
+// and for a remote hero it is only called on the one frame the throw anim passes frame 33.
+int playerSyncStateNeedsWrench(int state)
+{
+  return state == PLAYER_STATE_THROW_ATTACK
+      || state == PLAYER_STATE_COMBO_ATTACK
+      || state == PLAYER_STATE_JUMP_ATTACK;
+}
+
+//--------------------------------------------------------------------------
+// put the wrench in the remote hero's hand slot right now, skipping the game's unequip/equip sequence.
+// the sender switches to the wrench as it starts the attack; this client only gets there through
+// the equip sequence, which can still be holding the gun (or nothing) when the wrench should leave the hand.
+void playerSyncForceWrench(Player* player)
+{
+  if (!player || player->isLocal) return;
+  if (player->gadget.weapon.id == GADGET_ID_WRENCH && player->gadget.weapon.pMoby) return;
+
+  // delete whatever is in the hand slot
+  // state 3 makes processGadgetStates call reset_gadget on slot 0 (moby deleted, id and state cleared)
+  if (player->gadget.weapon.pMoby) {
+    player->gadget.weapon.state = 3;
+    ((void (*)(Player*))GetAddress(&vaProcessGadgetState_Func))(player);
+  }
+
+  // slot still occupied, nothing more we can do this tick
+  if (player->gadget.weapon.pMoby) return;
+
+  // the equip code picks the pending gadget (obfuscated, 0x1a1f) over weaponHeldId,
+  // and refuses to spawn while the pending and current (0x1a19) ids disagree.
+  // that is how the old weapon ended up back in the slot. a zero byte reads as "none".
+  *(char*)((u32)player + 0x1a19) = 0;
+  *(char*)((u32)player + 0x1a1f) = 0;
+
+  // spawn the wrench, keep the player's held weapon as it was
+  int heldId = player->weaponHeldId;
+  player->weaponHeldId = GADGET_ID_WRENCH;
+  ((void (*)(Player*))GetAddress(&vaProcessGadget_Func))(player);
+  player->weaponHeldId = heldId;
+
+  DPRINTF("player %d forced wrench, slot id now %d\n", player->fps.vars.camSettingsIndex, player->gadget.weapon.id);
+}
+
+// This was more trouble than its worth, maybe DL handles pad different or dan knows something I don't
 //--------------------------------------------------------------------------
 int playerSyncHandlePlayerPadHook(Player* player)
 {
@@ -156,20 +293,24 @@ int playerSyncHandlePlayerPadHook(Player* player)
 
     // get player sync data
     PlayerSyncPlayerData_t* data = &PLAYER_SYNC_DATAS_PTR[player->fps.vars.camSettingsIndex];
-    // process input
-    // IN DL DECOMPILED WITH SYMBOLS V6: 00491050 - UpdatePad
-    // ((void (*)(struct PAD*))GetAddress(&vaUpdatePadAddr))(player->pPad); // 0x00494460 kisi
+    // start a new pad frame
+    // do NOT call UpdatePad (0x00494460 kisi) here: in UYA it polls the physical controller port.
+    // this is the same reset the game's own PadRemoteUpdate (0x00533180 kisi) does for remote heroes.
+    struct PAD* pad = player->pPad;
+    pad->bitsPrev = pad->unmaskedBits;
+    pad->bits = 0;
+    pad->digitalBitsPrev = pad->digitalBits;
+    pad->digitalBits = 0;
 
     // update pad
     // IN DL DECOMPILED WITH SYMBOLS V6: 004907c0 - ProcessPadInput
-    // ((void (*)(struct PAD*, void*, int))GetAddress(&vaProcessPadInputAddr))(player->pPad, data->Pad, 0x14); // 0x493a68 kisi
+    ((void (*)(struct PAD*, void*, int))GetAddress(&vaProcessPadInputAddr))(pad, data->Pad, 0x14); // 0x493a68 kisi
   }
   // IN DL DECOMPILED WITH SYMBOLS V6: 00512608 - GadgetTransitions, maybe UpdateGadgetEvents from vtable in uya?
-  int result = ((int (*)(Player*))0x0052c920)(player); // call parent function GadgetTransitions
+  int result = ((int (*)(Player*))GetAddress(&vaGadgetTransitions_Func))(player); // call parent function GadgetTransitions
 
   return result;
 }
-*/
 
 //--------------------------------------------------------------------------
 void playerSyncHandlePostPlayerState(Player* player)
@@ -314,6 +455,30 @@ void playerSyncHandlePlayerState(Player* player)
   }
 
 
+  // vehicles
+  // the game moves a remote vehicle itself (kisi: FUN_00539d10 -> per type remote update, turboslider 0x003df5f0).
+  // with bit 4 of the driver's net player flags (pNetPlayer + 0x1ac) set, it runs the driving sim from the
+  // driver's pad and pulls the vehicle toward the driver's sync position at hero+0x4d30 (yaw at hero+0x4d68).
+  // the game only sets that bit from its own pad messages, which we no longer send, so without this the
+  // vehicle runs with "no driver": speed 0, wheels still, crawling toward the last vehicle update.
+  Vehicle* syncVehicle = (stateInterpolated.State == PLAYER_STATE_VEHICLE) ? player->vehicle : NULL;
+  int isDriving = syncVehicle && syncVehicle->pDriver == player;
+  if (player->pNetPlayer) {
+    u32* netPlayerFlags = (u32*)((u32)player->pNetPlayer + 0x1ac);
+    if (isDriving) {
+      // target first, then the flag: with the flag set and no target the vehicle snaps to 0,0,0
+      // (not RemoteHero.receivedSyncPos / receivedSyncRot: the game reads 0x10 below where the header puts them)
+      vector_copy((float*)((u32)player + 0x4d30), stateCurrentPosition);
+      vector_copy((float*)((u32)player + 0x4d60), stateInterpolated.Rotation);
+      *netPlayerFlags |= 4;
+    } else {
+      *netPlayerFlags &= ~4;
+    }
+  }
+
+  // in a vehicle the hero rides the vehicle moby (the game places it), so don't lerp or snap the hero ourselves
+  if (!syncVehicle) {
+
   // snap position if lerp distance is too much (i.e using teleport pads)
   float snapRadius = (stateInterpolated.GroundMoby != player->ground.pMoby) ? 24 : 49;
   vector_subtract(dt, stateCurrentPosition, player->playerPosition);
@@ -338,6 +503,7 @@ void playerSyncHandlePlayerState(Player* player)
   vector_copy(playerMoby->position, player->playerPosition);
   vector_copy(player->RemoteHero.receivedSyncPos, player->playerPosition);
   vector_copy(player->RemoteHero.posAtSyncFrame, player->playerPosition);
+  } // !syncVehicle
 
   // lerp rotation
   player->playerRotation[0] = lerpfAngle(player->playerRotation[0], stateInterpolated.Rotation[0], tRot);
@@ -396,10 +562,22 @@ void playerSyncHandlePlayerState(Player* player)
   player->pPad->analog[2] = moveX;
   player->pPad->analog[3] = moveY;
 
+  // pad buffer consumed by playerSyncHandlePlayerPadHook (ProcessPadInput).
+  // buttons are active low, so this must be filled every frame: a zeroed buffer reads as every button pressed.
+  data->Pad[2] = stateInterpolated.PadBits & 0xFF;
+  // on foot never X: jumps come from the sender's state (active low, 0x40 = cross).
+  // driving, X is the accelerator and the game's vehicle sim reads it from this pad.
+  int padXMask = isDriving ? 0x00 : 0x40;
+  data->Pad[3] = (stateInterpolated.PadBits >> 8) | padXMask;
+  data->Pad[4] = 0x7F;
+  data->Pad[5] = 0x7F;
+  data->Pad[6] = stateInterpolated.MoveX;
+  data->Pad[7] = stateInterpolated.MoveY;
+
   struct tNW_Player* netPlayer = player->pNetPlayer;
   if (netPlayer) {
     netPlayer->padMessageElems[padIdx].msg.pad_data[2] = stateInterpolated.PadBits & 0xFF;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[3] = stateInterpolated.PadBits >> 8 | 0xc0; // 0x40 | 0x80; // don't let pad handle x or square, process as a state instead
+    netPlayer->padMessageElems[padIdx].msg.pad_data[3] = (stateInterpolated.PadBits >> 8) | padXMask; // see data->Pad
     netPlayer->padMessageElems[padIdx].msg.pad_data[4] = 0x7F;
     netPlayer->padMessageElems[padIdx].msg.pad_data[5] = 0x7F;
     netPlayer->padMessageElems[padIdx].msg.pad_data[6] = stateInterpolated.MoveX;
@@ -416,6 +594,28 @@ void playerSyncHandlePlayerState(Player* player)
   int playerState = player->RemoteHero.remoteState;
   player->RemoteHero.remotePad.ipad[8] = playerState;
   player->RemoteHero.receivedState = stateInterpolated.State;
+
+  // the sender is in a wrench attack: make sure the wrench is in hand before the game needs it
+  if (playerSyncStateNeedsWrench(stateInterpolated.State)) {
+    playerSyncForceWrench(player);
+  }
+
+  // vehicle exit
+  // the old leave code only ran when this patch had forced the vehicle state itself (data->LastState).
+  // normally the game's vehicle message puts the hero in, so it never ran and the hero stayed in the vehicle.
+  // only leave once the sender has been seen in the vehicle state: on the way in, the game seats the hero
+  // before the sender's (buffered) state says vehicle.
+  if (playerState == PLAYER_STATE_VEHICLE && player->vehicle) {
+    if (stateInterpolated.State == PLAYER_STATE_VEHICLE) {
+      data->SenderInVehicle = 1;
+    } else if (data->SenderInVehicle) {
+      data->SenderInVehicle = 0;
+      playerSyncLeaveVehicle(player);
+      playerState = PLAYER_STATE_IDLE;
+    }
+  } else {
+    data->SenderInVehicle = 0;
+  }
 
   // update state
   if (stateInterpolated.StateId != data->LastStateId ) { //&& data->delayedState == 0) {
@@ -437,7 +637,7 @@ void playerSyncHandlePlayerState(Player* player)
           // driver leave
           if (vehicle->pDriver == player) {
             vehicle->pDriver = 0;
-            vehicle->flags |= 2;
+            // no vehicle->flags |= 2, see playerSyncLeaveVehicle
           }
           
           // passenger leave
@@ -468,11 +668,11 @@ void playerSyncHandlePlayerState(Player* player)
     // to
     switch (stateInterpolated.State)
     {
-      // pad does NOT handle square well, just let initbody handle wrench shit TODO - this works 80% of the time, look at 0x00504f88, understand the behavior of hero->unk1a1a[5]
       case PLAYER_STATE_JUMP_ATTACK:
       case PLAYER_STATE_COMBO_ATTACK:
       case PLAYER_STATE_THROW_ATTACK:
       {
+        /*
         if (player->gadget.weapon.id != 10) {
           player->gadget.weapon.state = 3; 
           ((void (*)(Player*))GetAddress(&vaProcessGadgetState_Func))(player); // processgadgetstate, deletes current gadget moby, always succeeds
@@ -480,6 +680,7 @@ void playerSyncHandlePlayerState(Player* player)
           ((void (*)(Player*))GetAddress(&vaProcessGadget_Func))(player); // processgadget creates wrench moby, equips in gadget.weapon slot // sometimes places old weapon in slot...
           // ((void (*)(Player*))0x0050f488)(player); // parent function of function above
         }
+          */
         break;
       }
       case PLAYER_STATE_GET_HIT:
@@ -492,28 +693,43 @@ void playerSyncHandlePlayerState(Player* player)
       {
         // force R1 when on swingshot
         // let game handle the rest
-        //data->Pad[3] &= ~0x08;
+        data->Pad[3] &= ~0x08;
         // player->pNetPlayer->padMessageElems[padIdx].msg.pad_data[3] &= ~0x08;
         skip = 1;
         break;
       }
     }
 
-    if ((!skip) && stateInterpolated.State != playerState) {
-      DPRINTF("player %d new state %d (from %d)\n", player->fps.vars.camSettingsIndex, stateInterpolated.State, playerState);
+    // the sender started the same jump state again (its StateId also changes when its state timer restarts).
+    // the states match, so the check below would do nothing and chained hops would never re-jump here.
+    int reentry = stateInterpolated.State == playerState
+               && stateInterpolated.State == data->LastRecvState
+               && playerSyncStateIsJump(stateInterpolated.State);
+
+    if ((!skip) && (stateInterpolated.State != playerState || reentry)) {
+      DPRINTF("player %d new state %d (from %d)%s\n", player->fps.vars.camSettingsIndex, stateInterpolated.State, playerState, reentry ? " re-entry" : "");
 
       //if (player->subState > 0) {
         //DPRINTF("substate fix %d=>0\n", player->subState);
         //player->subState = 0;
       //}
 
-      int force = playerStateIsDead(playerState) && !playerStateIsDead(stateInterpolated.State);
+      int force = reentry || (playerStateIsDead(playerState) && !playerStateIsDead(stateInterpolated.State));
       DPRINTF("force is %d. Player %08x will be updated to state %d.\n", force, player, stateInterpolated.State);
       vtable->UpdateState(player, stateInterpolated.State, 1, force, 1);
       data->LastStateId = stateInterpolated.StateId;
       data->LastState = stateInterpolated.State;
+      data->LastRecvState = stateInterpolated.State;
     } else {
       data->LastStateTime = player->timers.state;
+
+      // already in the sender's jump state: this StateId is handled.
+      // leaving it stale made the patch force the jump again, late, as soon as the local copy landed.
+      // other states keep the old behaviour (stay stale, so the state is re-applied if the copy drifts out of it).
+      if (!skip && playerSyncStateIsJump(stateInterpolated.State)) {
+        data->LastStateId = stateInterpolated.StateId;
+        data->LastRecvState = stateInterpolated.State;
+      }
     }
   }
 
@@ -679,10 +895,25 @@ void playerSyncBroadcastPlayerState(Player* player)
   msg.CameraYaw = (short)(yaw * 10240.0);
   msg.NoInput = player->timers.noInput;
   msg.Health = (float)playerGetHealth(player);// player->pNetPlayer->pNetPlayerData->hitPoints;
-  msg.MoveX = ((struct PAD*)player->pPad)->rdata[6];
-  msg.MoveY = ((struct PAD*)player->pPad)->rdata[7];
-  msg.PadBits0 = ((struct PAD*)player->pPad)->rdata[2];
-  msg.PadBits1 = ((struct PAD*)player->pPad)->rdata[3]; // << 8
+
+  // send the pad as the game processed it, not the raw controller bytes.
+  // ProcessPadInput masks buttons and zeroes the left stick while pad->hudDivert is set
+  // (e.g. quick select open). hudDivert is only ever set on the local pad, so sending
+  // raw rdata lets remote clients act on input this client ignored.
+  struct PAD* pad = (struct PAD*)player->pPad;
+
+  // pad->bits also has direction bits derived from the left stick (0xf000).
+  // only keep the directions that are real d-pad presses (digitalBits).
+  int padBits = pad->bits & (0x0fff | (pad->digitalBits & 0xf000));
+  padBits = ~padBits & 0xffff; // back to active low, rdata[2] in the high byte
+
+  // left stick: analog[2], analog[3] are zeroed when the stick is diverted
+  int stickLocked = pad->analog[2] == 0 && pad->analog[3] == 0;
+
+  msg.MoveX = stickLocked ? 0x7F : pad->rdata[6];
+  msg.MoveY = stickLocked ? 0x7F : pad->rdata[7];
+  msg.PadBits0 = padBits >> 8;   // rdata[2]
+  msg.PadBits1 = padBits & 0xFF; // rdata[3]
   msg.GadgetId = (u8)player->gadget.weapon.id;
   //msg.GadgetLevel = -1;
   msg.State = playerState; // playerGetState(player);
@@ -773,6 +1004,7 @@ void playerSyncTick(void)
   // reset buffer
   if (!initialized && PLAYER_SYNC_DATAS_PTR) {
     memset(PLAYER_SYNC_DATAS_PTR, 0, sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
+    playerSyncResetPads();
     DPRINTF("freed the player sync datas ptr\n");
   }
 
@@ -783,6 +1015,7 @@ void playerSyncTick(void)
     PLAYER_SYNC_DATAS_PTR = malloc(sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
     if (PLAYER_SYNC_DATAS_PTR) {
       memset(PLAYER_SYNC_DATAS_PTR, 0, sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
+      playerSyncResetPads();
     }
     initialized = 0;
   }
@@ -816,6 +1049,8 @@ void playerSyncTick(void)
 
     // force gadget moby to be created regardless of gsframe
     POKE_U32(GetAddress(&vaForceGadgetMobyCreation_Addr),0);
+
+    HOOK_JAL(GetAddress(&vaGadgetTransitions_Hook), &playerSyncHandlePlayerPadHook);
 
   }
 

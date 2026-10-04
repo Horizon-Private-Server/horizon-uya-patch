@@ -511,6 +511,9 @@ void runCameraSpeedPatch(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
+// set by fluxApplyRemoteHit: the moby we passed as the damager for a flux hit applied from the net message
+Moby* fluxPendingDamager[GAME_MAX_PLAYERS];
+
 int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
 {
 	// if player is already dead return 0
@@ -518,7 +521,19 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
 		return 0;
 
 	// pass through
-	return ((int (*)(Player *, Moby *, u64))GetAddress(&vaWhoHitMeFunc))(target, damageSource, a2);
+	int result = ((int (*)(Player *, Moby *, u64))GetAddress(&vaWhoHitMeFunc))(target, damageSource, a2);
+
+	// WhoHitMe works out the weapon from the damager's moby class (flux gun 0x1096, flux shot 0x1097).
+	// a flux hit applied from the message may have had to use the shooter's hero moby as the damager
+	// (no flux gun or shot exists on this client), which leaves the weapon unknown. say it was the flux.
+	int idx = target->mpIndex;
+	if (damageSource && idx >= 0 && idx < GAME_MAX_PLAYERS && fluxPendingDamager[idx] == damageSource) {
+		fluxPendingDamager[idx] = NULL;
+		if (result)
+			*(int*)((u32)target + 0x24d0) = GADGET_ID_FLUX; // lastDamagedMeGadgetId
+	}
+
+	return result;
 }
 /*
  * NAME :		patchKillStealing
@@ -614,16 +629,15 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
 	// if we've hit a target
 	// we check if we've hit by reading the source guber event
 	// which is passed in 0x5C of the shot's pvars
+	// the shot's pvars hold the shooter (+0x3C) and, for a remote shot, the moby the sender said it hit (+0x4C,
+	// looked up from the message's TargetUID when the shot is created; NULL if it hit nothing with a guber).
+	// this used to read the UID through a pointer saved at +0x5C, but that pointer was to a stack variable of
+	// the function that fires the shot, so it was only valid during the first step.
 	if (shotMoby && shotMoby->pVar) {
-		int shotOwner = *(u32*)((u32)shotMoby + 0x90) >> 28;
-		if (shotOwner != gameGetMyClientId()) {
-		void * event = *(void**)(shotMoby->pVar + 0x5C);
-			if (event) {
-				u32 hitGuberUid = *(u32*)(event + 0x3C);
-				if (hitGuberUid != 0xFFFFFFFF) {
-					return CollLine_Fix(from, to, 1, moby, t0);
-				}
-			}
+		Player* shooter = *(Player**)((u32)shotMoby->pVar + 0x3C);
+		Moby* declaredTarget = *(Moby**)((u32)shotMoby->pVar + 0x4C);
+		if (shooter && !shooter->isLocal && declaredTarget) {
+			return CollLine_Fix(from, to, 1, moby, t0);
 		}
 	}
 
@@ -650,12 +664,8 @@ void patchSniperWallSniping(void)
 			HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
 		}
 
-		// change sniper shot initialization code to write the guber event to the shot's pvars
-		// for use later by patchSniperWallSniping_Hook
-		hookAddr = GetAddress(&vaSniperShotCreatedHook);
-		if (hookAddr) {
-			POKE_U32(hookAddr, 0xAE35005C);
-		}
+		// (the poke at vaSniperShotCreatedHook that saved a pointer in the shot's pvars is gone:
+		// patchSniperWallSniping_Hook now reads the declared target the game already stores at pvars+0x4C)
 	}
 }
 
@@ -1395,6 +1405,17 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 
 	// Handle pickup/return
 	if (player->mpTeam == pvars->team) {
+		// flag is already home, nothing to save.
+		// every flagReturnToBase adds a save for pIdx (the game's flag event handler never checks
+		// where the flag was), and requests from other clients can arrive after the flag is back.
+		// same test customFlagLogic does before it sends the request.
+		VECTOR toBase;
+		vector_subtract(toBase, pvars->basePos, flagMoby->position);
+		if (vector_sqrmag(toBase) <= 0.1) {
+			DPRINTF("ignored return of flag %X by player %d, already at base\n", flagMoby->oClass, pIdx);
+			return;
+		}
+
 		flagReturnToBase(flagMoby, 0, pIdx);
 		flagClearTrackedLastCarrier(flagMoby);
 	} else {
@@ -2104,6 +2125,88 @@ void runVoteToEndLogic(void)
 }
 
 /*
+ * NAME :		fluxApplyRemoteHit
+ * DESCRIPTION :
+ * 			A remote player's flux message says it hit one of this client's own players: apply the hit now.
+ * NOTES :
+ * 			Normally the hit only lands if this client re-fires the shot and that copy reaches the player.
+ * 			That copy is never made if the shooter isn't holding the flux here when the event is taken off
+ * 			the queue (the game drops the event), and it can miss or be blocked.
+ * 			Only the victim's own client applies damage, so this does nothing on other clients.
+ * 			If the re-fired shot also lands, the game's own post-hit window ignores it (same or lower damage).
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+void fluxApplyRemoteHit(struct tNW_GadgetEventMessage * message)
+{
+	int i;
+	u32 uid = message->TargetUID;
+
+	// nothing hit, or what was hit isn't a player (player gubers have these bits clear)
+	if (uid == 0xFFFFFFFF || (uid & 0x0F000000))
+		return;
+
+	Player** players = playerGetAll();
+	int shooterIdx = message->PlayerIndex & 0xF;
+	if (shooterIdx >= GAME_MAX_PLAYERS)
+		return;
+
+	Player* shooter = players[shooterIdx];
+	if (!shooter || shooter->isLocal || !shooter->pMoby)
+		return;
+
+	// find the player that was hit, must be local to this client
+	Player* victim = NULL;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		Player* p = players[i];
+		if (p && p->pMoby && guberGetUID(p->pMoby) == uid) {
+			victim = p;
+			break;
+		}
+	}
+	if (!victim || !victim->isLocal || victim == shooter || playerIsDead(victim))
+		return;
+
+	u32 damageFunc = GetAddress(&vaCollDamageMobyDirect_Func);
+	if (!damageFunc)
+		return;
+
+	// flux damage, v2 if the shooter has the upgrade
+	int defIdx = GADGET_ID_FLUX;
+	if (shooter->pNetPlayer && shooter->pNetPlayer->pNetPlayerData && (shooter->pNetPlayer->pNetPlayerData->rank[1] & 0x080000))
+		defIdx = GADGET_ID_FLUX_V2;
+	float damage = weaponGadgetList()[defIdx].damage;
+
+	// hit point: the message carries it relative to the hit player's moby
+	VECTOR ip, momentum;
+	ip[0] = victim->pMoby->position[0] + message->TargetDir[0];
+	ip[1] = victim->pMoby->position[1] + message->TargetDir[1];
+	ip[2] = victim->pMoby->position[2] + message->TargetDir[2];
+	ip[3] = 0;
+	momentum[0] = ip[0] - message->FiringLoc[0];
+	momentum[1] = ip[1] - message->FiringLoc[1];
+	momentum[2] = ip[2] - message->FiringLoc[2];
+	momentum[3] = 0;
+	vector_normalize(momentum, momentum);
+
+	// damager: the shooter's flux gun if they hold it here, else their hero moby.
+	// the owner of the hit comes from this moby, the weapon id is fixed up in patchKillStealing_Hook.
+	Moby* damager = shooter->pMoby;
+	if (shooter->gadget.weapon.id == GADGET_ID_FLUX && shooter->gadget.weapon.pMoby)
+		damager = shooter->gadget.weapon.pMoby;
+
+	if (victim->mpIndex >= 0 && victim->mpIndex < GAME_MAX_PLAYERS)
+		fluxPendingDamager[victim->mpIndex] = damager;
+
+	// 0x01010001: the flags the game's own remote flux damage uses.
+	// without 0x01000000 the hit player's client does not fully process a flux hit.
+	((void (*)(float, Moby*, Moby*, int, float*, float*))damageFunc)(damage, victim->pMoby, damager, 0x01010001, ip, momentum);
+
+	DPRINTF("flux hit from player %d applied to local player %d (%d dmg x100)\n", shooterIdx, victim->mpIndex, (int)(damage * 100));
+}
+
+/*
  * NAME :		handleGadgetEvent
  * DESCRIPTION :
  * 			Reads gadget events and patches them if needed.
@@ -2117,55 +2220,26 @@ void handleGadgetEvents(int player, char gadgetEventType, int dispatchTime, shor
 	// Force all incoming weapon shot events to happen immediately.
 	const int MAX_DELAY = TIME_SECOND * 0;
 
-	int original_activeTime = -1;
 	if (message) {
-
-		original_activeTime = message->ActiveTime;
 		// put clamp on max delay
+		// (message->ActiveTime is the real time field now, see tNW_GadgetEventMessage. before the struct was
+		// fixed this wrote the time over the message's TargetUID, which is why the flux needed a special case.)
 		int delta = dispatchTime - gameGetTime();
 		if (delta > MAX_DELAY) {
 			dispatchTime = gameGetTime() + MAX_DELAY;
-			if (message) message->ActiveTime = dispatchTime;
+			message->ActiveTime = dispatchTime;
 		} else if (delta < 0) {
 			dispatchTime = gameGetTime() - 1;
-			if (message) message->ActiveTime = dispatchTime;
+			message->ActiveTime = dispatchTime;
 		}
-  } else if (dispatchTime < 0) {
-    dispatchTime = gameGetTime() - TIME_SECOND;
-  }
-	// if (original_activeTime == 0x1 || original_activeTime > 0x10000000 || original_activeTime == 13) // weird bug with flux rifle
-	// the flux's (gadgetId == 3) activeTime is -1 if it doesn't hit and a GuberId if it does hit. Don't override the guberId.
-	if (gadgetId == 3)
-		if (message)
-			if (original_activeTime != -1)
-				message->ActiveTime = original_activeTime; // set it back to the guber ID
-
-/*
-	DPRINTF("handleGadgetEvents called with:\n");
-	DPRINTF("  player: %08x\n", player);
-	DPRINTF("  gadgetEventType: %d\n", (int)gadgetEventType);
-	DPRINTF("  dispatchTime: %d\n", dispatchTime);
-	DPRINTF("  gadgetId: %d\n", gadgetId);
-	DPRINTF("  gadgetType: %d\n", gadgetType);
-
-	if (message) {
-			DPRINTF("  message:\n");
-			DPRINTF("    GadgetId: %d\n", message->GadgetId);
-			DPRINTF("    PlayerIndex: %d\n", (int)message->PlayerIndex);
-			DPRINTF("    GadgetEventType: %d\n", (int)message->GadgetEventType);
-			DPRINTF("    ExtraData: %d\n", (int)message->ExtraData);
-			DPRINTF("		 Original ActiveTime: %d\n", original_activeTime);
-			DPRINTF("    ActiveTime: %d\n", message->ActiveTime);
-			DPRINTF("    TargetUID: %u\n", message->TargetUID);
-			DPRINTF("    FiringLoc: [%.2f, %.2f, %.2f]\n",
-							message->FiringLoc[0], message->FiringLoc[1], message->FiringLoc[2]);
-			DPRINTF("    TargetDir: [%.2f, %.2f, %.2f]\n",
-							message->TargetDir[0], message->TargetDir[1], message->TargetDir[2]);
-			DPRINTF("Broadcasting message from: %p\n", (void*)handleGadgetEvents);
-	} else {
-			DPRINTF("  message: NULL\n");
+	} else if (dispatchTime < 0) {
+		dispatchTime = gameGetTime() - TIME_SECOND;
 	}
-*/
+
+	// a remote flux shot that hit one of our own players always counts
+	if (message && gameConfig.grFluxShotsAlwaysHit && gadgetId == GADGET_ID_FLUX && gadgetEventType == 8)
+		fluxApplyRemoteHit(message);
+
 	// run base command
 	((void (*)(int, char, int, short, int, struct tNW_GadgetEventMessage*))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, dispatchTime, gadgetId, gadgetType, message);
 }

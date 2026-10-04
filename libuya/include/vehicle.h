@@ -120,8 +120,8 @@ struct VehicleInterface {
 };
 
 typedef struct VehicleBase {
-	/* 0x000 */ struct Guber guber;
-	/* 0x020 */ char unk_020[0x2b0]; 
+	/* 0x000 */ struct Guber guber; // 0x18 bytes
+	/* 0x018 */ char unk_018[0x2b8]; // was unk_020[0x2b0]: with an 0x18 byte Guber that put every field below 8 bytes too low (pDriver compiled to 0x2d0)
 	/* 0x2d0 */ struct Moby* pMoby;
 	/* 0x2d4 */ struct Moby* pTarget;
 	/* 0x2d8 */ struct Player* pDriver;

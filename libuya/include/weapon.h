@@ -97,15 +97,17 @@ typedef struct Weapons {
     }
 } Weapons;
 
+// layout checked against the game (kisi: flux_sendshot 0x00408b80 builds it, 0x00548894 reads ActiveTime at +4).
+// this used to have a char ExtraData at +4, which pushed every field after it 4 bytes too far:
+// "ActiveTime" was really TargetUID.
 struct tNW_GadgetEventMessage { // 0x24
 	/*   0 */ short int GadgetId;
-	/*   2 */ char PlayerIndex;
+	/*   2 */ char PlayerIndex; // low 4 bits = player index, 0x40 / 0x80 = flags
 	/*   3 */ char GadgetEventType;
-	/*   4 */ char ExtraData;
-	/*   8 */ int ActiveTime;
-	/*   c */ unsigned int TargetUID;
-	/*  10 */ float FiringLoc[3];
-	/*  1c */ float TargetDir[3];
+	/*   4 */ int ActiveTime;
+	/*   8 */ unsigned int TargetUID; // guber UID of what was hit, 0xFFFFFFFF if none
+	/*   c */ float FiringLoc[3];
+	/*  18 */ float TargetDir[3]; // flux: hit point relative to the hit moby (absolute if TargetUID is none)
 };
 
 typedef struct GadgetEvent { // 0x50

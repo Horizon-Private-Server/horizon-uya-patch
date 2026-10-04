@@ -1414,3 +1414,32 @@ VariableAddress_t vaPadDeadzone_ScaleInput = {
 	.MarcadiaPalace = 0x00486e88,
 #endif
 };
+
+// CollDamageMobyDirect(float damageHp, Moby* pMoby, Moby* pDamager, int damageFlags, VECTOR ip, VECTOR momentum)
+VariableAddress_t vaCollDamageMobyDirect_Func = {
+#if UYA_PAL
+	.Lobby = 0x005b60c8,
+	.Bakisi = 0x00482c00,
+	.Hoven = 0x004847c0,
+	.OutpostX12 = 0x0047b5c0,
+	.KorgonOutpost = 0x00479140,
+	.Metropolis = 0x00478480,
+	.BlackwaterCity = 0x00475a38,
+	.CommandCenter = 0x00476580,
+	.BlackwaterDocks = 0x00478e00,
+	.AquatosSewers = 0x00478100,
+	.MarcadiaPalace = 0x00477a80,
+#else
+	.Lobby = 0x005b4190,
+	.Bakisi = 0x00480e08,
+	.Hoven = 0x00482908,
+	.OutpostX12 = 0x00479748,
+	.KorgonOutpost = 0x00477348,
+	.Metropolis = 0x00476688,
+	.BlackwaterCity = 0x00473bc0,
+	.CommandCenter = 0x004748c8,
+	.BlackwaterDocks = 0x00477108,
+	.AquatosSewers = 0x00476448,
+	.MarcadiaPalace = 0x00475d88,
+#endif
+};
