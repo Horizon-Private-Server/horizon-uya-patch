@@ -2199,9 +2199,15 @@ void fluxApplyRemoteHit(struct tNW_GadgetEventMessage * message)
 	if (victim->mpIndex >= 0 && victim->mpIndex < GAME_MAX_PLAYERS)
 		fluxPendingDamager[victim->mpIndex] = damager;
 
-	// 0x01010001: the flags the game's own remote flux damage uses.
-	// without 0x01000000 the hit player's client does not fully process a flux hit.
-	((void (*)(float, Moby*, Moby*, int, float*, float*))damageFunc)(damage, victim->pMoby, damager, 0x01010001, ip, momentum);
+	// damage flags, same as the game's own flux hits:
+	// v1: 0x10001 (direct hit). other clients flinch the hit player themselves from their copy of the shot,
+	//     and the hit player's client does not announce the hit. adding 0x01000000 here made it announce,
+	//     so observers saw two flinches.
+	// v2: 0x01010001 (the v2 shot also does its splash, which carries 0x01000000). other clients ignore a
+	//     flux hit with that flag on a remote player and wait for the hit player's client to announce it.
+	//     without the flag here nobody announced it, so observers saw no flinch at all.
+	int damageFlags = (defIdx == GADGET_ID_FLUX_V2) ? 0x01010001 : 0x10001;
+	((void (*)(float, Moby*, Moby*, int, float*, float*))damageFunc)(damage, victim->pMoby, damager, damageFlags, ip, momentum);
 
 	DPRINTF("flux hit from player %d applied to local player %d (%d dmg x100)\n", shooterIdx, victim->mpIndex, (int)(damage * 100));
 }
