@@ -130,6 +130,9 @@ char dscrprintlines[MAX_DEBUG_SCR_PRINT_LINES][MAX_DEBUG_SCR_PRINT_LINE_LEN];
 int dscrprintlinescount = 0;
 #endif
 
+extern VariableAddress_t vaFluxShotDrawFunc;
+extern VariableAddress_t vaFluxDrawDispatchA;
+extern VariableAddress_t vaFluxDrawDispatchB;
 extern float _lodScale;
 extern void* _correctTieLod;
 extern int _correctTieLod_Jump;
@@ -164,6 +167,8 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.hypershotEquipButton = 0,
 	.disableDpadMovement = 0,
 	.hideFluxReticle = 0,
+	.fluxShotColor = 0,
+	.fluxGlowColor = 0,
 	.dlStyleFlips = 0,
 	.enableTeamInfo = 0,
 	.preferredGameServer = 0,
@@ -2425,6 +2430,1198 @@ void patchHideFluxReticle(void)
 }
 
 /*
+ * Preset colours, shared by every recolourable effect.
+ *
+ * Each renderer builds its colour word as 0x00RRGGBB from two immediates, so a
+ * preset is a whole colour word. Index 0 leaves the engine's colour alone.
+ */
+static u32 fluxColorList[FLUX_COLOR_COUNT] = {
+	0x00804000,     // Vanilla      (the engine's own colour)
+	0x00FF0000,     // Red          (255,0,0)
+	0x0000FF00,     // Green        (0,255,0)
+	0x000000FF,     // Blue         (0,0,255)
+	0x00000000,     // Black        (0,0,0)
+	0x00FFFFFF,     // White        (255,255,255)
+	0x00800080,     // Purple       (128,0,128)
+	0x00FF62B0,     // Pink         (255,98,176)
+	0x00FFFF00,     // Yellow       (255,255,0)
+	0x0000A0FF,     // Light Blue   (0,160,255)
+	0x0035C835,     // Light Green  (53,200,53)
+	0x00FF4747,     // Light Red    (255,71,71)
+	0x008B0000,     // Dark Red     (139,0,0)
+	0x00006400,     // Dark Green   (0,100,0)
+	0x0000008B,     // Dark Blue    (0,0,139)
+};
+
+/*
+ * NAME :		applyFluxBeamColor
+ * DESCRIPTION :
+ * 			Writes one colour word into the beam trail's three colour builders.
+ * NOTES :
+ *          The trail builds each colour from two immediates; the register numbers
+ *          differ between builds, so only the immediate halves are replaced.
+ *          The shared `lui` at +0x38 is left alone -- its immediate is dropped by
+ *          the per-segment `or` that adds the alpha.
+ * ARGS :
+ *          anchor: the base `lui` of the beam renderer
+ *          color:  0x00RRGGBB
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+static void applyFluxBeamColor(u32 anchor, u32 color)
+{
+	u32 want;
+
+	want = (*(u32*)(anchor + 0x00) & 0xFFFF0000) | (color >> 16);
+	POKE_U32(anchor + 0x00, want);
+
+	want = (*(u32*)(anchor + 0x0C) & 0xFFFF0000) | (color & 0xFFFF);
+	POKE_U32(anchor + 0x0C, want);
+
+	/*
+	 * The two tween colours need their `lui` written too, not just their `ori`.
+	 * Leaving +0x38/+0x44 at the stock 0x00FF pins the red channel to maximum on
+	 * two of the beam's three colour stops, so every picked colour with R < 0xFF
+	 * drifts toward red (blue renders magenta, green renders yellow).
+	 */
+	want = (*(u32*)(anchor + 0x38) & 0xFFFF0000) | (color >> 16);
+	POKE_U32(anchor + 0x38, want);
+
+	want = (*(u32*)(anchor + 0x40) & 0xFFFF0000) | (color & 0xFFFF);
+	POKE_U32(anchor + 0x40, want);
+
+	want = (*(u32*)(anchor + 0x44) & 0xFFFF0000) | (color >> 16);
+	POKE_U32(anchor + 0x44, want);
+
+	want = (*(u32*)(anchor + 0x4C) & 0xFFFF0000) | (color & 0xFFFF);
+	POKE_U32(anchor + 0x4C, want);
+}
+
+/*
+ * NAME :		applyFluxGlowColor
+ * DESCRIPTION :
+ * 			Writes one colour word into the beam's decoration builders.
+ * NOTES :
+ *          FUN_004098d8 builds its colour four separate times, once per quad type
+ *          it draws. Each is `lui rt,0x0080` + `ori rt,rt,0x4020` at a fixed
+ *          offset from the same anchor, with the register r17 in every build and
+ *          the `ori` 0x0C after its `lui`.
+ * ARGS :
+ *          anchor: the base `lui` of the beam renderer
+ *          color:  0x00RRGGBB
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+static void applyFluxGlowColor(u32 anchor, u32 color)
+{
+	static const u16 sites[4][2] = {
+		{ 0x668, 0x66C },
+		{ 0x754, 0x760 },
+		{ 0x844, 0x850 },
+		{ 0x9A0, 0x9AC },
+	};
+	u32 want;
+	int i;
+
+	for (i = 0; i < 4; ++i) {
+		want = (*(u32*)(anchor + sites[i][0]) & 0xFFFF0000) | (color >> 16);
+		POKE_U32(anchor + sites[i][0], want);
+
+		want = (*(u32*)(anchor + sites[i][1]) & 0xFFFF0000) | (color & 0xFFFF);
+		POKE_U32(anchor + sites[i][1], want);
+	}
+}
+
+/*
+ * ============================== MAP SCOPE ==============================
+ * 1 = only Bakisi touches the Flux feature. On any other map the hook is not
+ * installed, no immediate is poked and no colour is broadcast; the log says which
+ * map was seen and that it was skipped.
+ *
+ * This exists because Bakisi is the map under test and several maps in the interop
+ * table share addresses or leave entries zero, so a result gathered across maps
+ * cannot be attributed to one of them.
+ * ======================================================================
+ */
+#define FLUX_MAP_SCOPE_BAKISI 1
+
+#if FLUX_MAP_SCOPE_BAKISI
+/* The one map this build acts on. MAP_ID_BAKISI is 40 (libuya/map.h). */
+#define FLUX_SCOPED_MAP_ID MAP_ID_BAKISI
+
+/*
+ * NAME :		fluxMapInScope
+ * DESCRIPTION :
+ * 			Is the game currently on the map this build acts on?
+ * NOTES :
+ *          gameGetCurrentMapId() is the engine's own value, so this cannot drift out
+ *          of step with the interop table the way a hard-coded slot index would.
+ *
+ *          Only defined when the scope is ON. With the switch off there is no
+ *          function at all -- a `#define fluxMapInScope() (1)` fallback would collide
+ *          with the function name, and an unused static function would be promoted to
+ *          an error by this build.
+ * ARGS :
+ * RETURN :		1 if the feature should act
+ * AUTHOR :			Philip762
+ */
+static int fluxMapInScope(void)
+{
+	return gameGetCurrentMapId() == FLUX_SCOPED_MAP_ID;
+}
+#endif
+
+/*
+ * ---------------------------------------------------------------------------
+ * Per-player Flux colours (beam + glow).
+ *
+ * The beam and glow colours are static instruction immediates, normally written
+ * from the LOCAL player's config. Drawing somebody else's Flux in their colours
+ * means swapping those immediates for the duration of that shot's own draw call,
+ * then putting the local player's back.
+ *
+ * The swap is scoped by intercepting the draw callback rather than the renderer:
+ * the engine registers a per-moby draw function through gfxRegisterDrawFunction, so
+ * redirecting it yields a callback that receives the moby and therefore knows whose
+ * shot it is. Applying the colours any earlier (say at update time) would leave them
+ * latched for whichever shot happened to draw last.
+ *
+ * Colour INDICES travel over the wire, not resolved colours, so a receiver always
+ * resolves them through its own preset table -- a client with a different table then
+ * draws a different-but-valid colour instead of a garbage one.
+ * ---------------------------------------------------------------------------
+ */
+
+#define FLUX_COLOR_RESEND_MS   (2000)
+
+/* The shot's registered draw function, relative to the beam colour anchor:
+ * vaFluxBeamColor - 0x5D0 == FUN_00408d40 on every build. */
+#define FLUX_DRAW_FUNC_DELTA   (0x5D0)
+
+/*
+ * Offset from a shot moby's pVar to the Player who fired it.
+ *
+ * Read, never written. It is a pointer into the player table, so it is validated
+ * before being dereferenced -- see onFluxShotDraw and fluxApplyOwnerColors.
+ */
+#define FLUX_SHOT_OWNER_OFFSET (0x3C)
+
+
+static const u32 fluxBeamVanilla = 0x00FFFF00;
+static const u32 fluxGlowVanilla = 0x00FF1010;
+
+static char fluxPlayerBeam[GAME_MAX_PLAYERS];
+static char fluxPlayerGlow[GAME_MAX_PLAYERS];
+
+static int fluxColorLastBeam = -1;
+static int fluxColorLastGlow = -1;
+static int fluxColorResendTime = 0;
+
+/*
+ * NAME :		fluxColorResolve
+ * DESCRIPTION :
+ * 			Turns preset indices into engine colour words.
+ * NOTES :
+ *          Index 0 means the engine's own colour, which is not in the preset list,
+ *          so it maps to the vanilla word rather than list[0].
+ * ARGS :
+ *          beam/glow:        preset indices
+ *          outBeam/outGlow:  receive the colour words
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+static void fluxColorResolve(int beam, int glow, u32 *outBeam, u32 *outGlow)
+{
+	*outBeam = (beam > 0 && beam < FLUX_COLOR_COUNT)
+	           ? fluxColorList[beam] : fluxBeamVanilla;
+	*outGlow = (glow > 0 && glow < FLUX_COLOR_COUNT)
+	           ? fluxColorList[glow] : fluxGlowVanilla;
+}
+
+/*
+ * NAME :		fluxPlayerIndexFromPtr
+ * DESCRIPTION :
+ * 			Maps a shot owner to the index its colours are stored under.
+ * NOTES :
+ *          THE INDEX IS THE ENGINE'S OWN PlayerId, `owner->fps.vars.camSettingsIndex`.
+ *          player.h documents that field as `camSettingsIndex // aka: PlayerId`, and it
+ *          is exactly what the SEND path broadcasts.
+ *
+ *          It used to scan playerGetFromSlot(i) for a matching pointer instead -- and
+ *          that is a DIFFERENT NUMBERING. Using one numbering to send and the other to
+ *          receive is what made every remote shot render with the local player's
+ *          colour, and the two-client log shows both halves failing at once:
+ *
+ *              client 1 (sends idx=0, receives idx=1)
+ *                  FLUXHOOK   last owner=0x00319F80 slot=-1
+ *              client 2 (sends idx=1, receives idx=0)
+ *                  FLUXHOOK   last owner=0x003151C0 slot=5
+ *
+ *          Client 1 could not resolve the remote owner at all, so fluxApplyOwnerColors
+ *          returned without touching the immediates and the shot kept whatever was
+ *          already in them -- the local player's colours. Client 2 DID resolve it, but
+ *          to slot 5, while client 1's colours had been stored under index 0, so it
+ *          rendered the wrong table entry.
+ *
+ *          Reading the same field on both ends makes them agree BY CONSTRUCTION rather
+ *          than by two independent guesses.
+ *
+ *          The value is RANGE CHECKED, not trusted. It is read out of a moby's pVar
+ *          block, and that block is recycled from shot to shot; a stale or unrelated
+ *          pointer there would otherwise index the colour arrays out of bounds.
+ * ARGS :
+ *          owner: the player to identify
+ * RETURN :		PlayerId (0..GAME_MAX_PLAYERS-1), or -1
+ * AUTHOR :			Philip762
+ */
+static int fluxPlayerIndexFromPtr(Player *owner)
+{
+	int id;
+
+	if (owner == 0)
+		return -1;
+
+	id = (int)owner->fps.vars.camSettingsIndex;
+
+	if (id < 0 || id >= GAME_MAX_PLAYERS)
+		return -1;
+
+	return id;
+}
+
+/*
+ * NAME :		onFluxColorsRemote
+ * DESCRIPTION :
+ * 			Stores a broadcast colour choice for one player.
+ * ARGS :
+ *          connection: unused
+ *          data:       PlayerFluxColors_t
+ * RETURN :		payload size
+ * AUTHOR :			Philip762
+ */
+int onFluxColorsRemote(void *connection, void *data)
+{
+	PlayerFluxColors_t *msg = (PlayerFluxColors_t*)data;
+
+	(void)connection;
+
+	/* data can arrive from a mismatched build; never trust the index */
+	if (data == 0) {
+		DPRINTF("FLUXRECV null payload\n");
+		return sizeof(PlayerFluxColors_t);
+	}
+
+	if (msg->PlayerIdx < 0 || msg->PlayerIdx >= GAME_MAX_PLAYERS) {
+		DPRINTF("FLUXRECV rejected idx=%d (max %d)\n",
+		        (int)msg->PlayerIdx, GAME_MAX_PLAYERS);
+		return sizeof(PlayerFluxColors_t);
+	}
+
+	fluxPlayerBeam[(int)msg->PlayerIdx] = msg->Beam;
+	fluxPlayerGlow[(int)msg->PlayerIdx] = msg->Glow;
+
+	return sizeof(PlayerFluxColors_t);
+}
+
+/*
+ * NAME :		patchFluxColorSync
+ * DESCRIPTION :
+ * 			Publishes the local player's Flux colours to the other clients.
+ * NOTES :
+ *          Broadcast because the DME server relays it to the other clients in the
+ *          game -- the same route the vote-to-end state uses. Sent on change and
+ *          re-sent periodically so a client that missed one converges.
+ *
+ *          The sender identifies itself with its own camera-settings index, which is
+ *          the player id playerSync already sends as its PlayerIdx.
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+void patchFluxColorSync(void)
+{
+	void *connection = netGetDmeServerConnection();
+	Player *local = playerGetFromSlot(0);
+	PlayerFluxColors_t msg;
+	int beam = config.fluxShotColor;
+	int glow = config.fluxGlowColor;
+	int playerId;
+	int changed = (beam != fluxColorLastBeam || glow != fluxColorLastGlow);
+
+	if (!isInGame())
+		return;
+
+	/*
+	 * Bakisi-only scope. Broadcasts stop on other maps too, so a client sitting on a
+	 * different map neither sends nor applies Flux colours.
+	 */
+	if (!fluxMapInScope())
+		return;
+
+	if (connection == 0 || local == 0)
+		return;
+
+	if (!changed) {
+		if (fluxColorResendTime != 0 && gameGetTime() < fluxColorResendTime)
+			return;
+	}
+
+	fluxColorLastBeam = beam;
+	fluxColorLastGlow = glow;
+	fluxColorResendTime = gameGetTime() + FLUX_COLOR_RESEND_MS;
+
+	/*
+	 * PlayerIdx must be the engine's own PlayerId, because the receiver both STORES
+	 * by it and RE-DERIVES it from the owning Player at draw time
+	 * (fluxPlayerIndexFromPtr). Sending anything else -- a slot index, a camera
+	 * setting -- makes the two ends disagree and every remote shot renders with the
+	 * local player's colours, which is the bug this comment exists to prevent.
+	 *
+	 * Bounds-checked here as well as on the receiver: an out-of-range id would be
+	 * rejected by every other client, so it is better to not broadcast at all and say
+	 * so than to have the fault look like a receive-side problem.
+	 */
+	playerId = (int)local->fps.vars.camSettingsIndex;
+
+	if (playerId < 0 || playerId >= GAME_MAX_PLAYERS) {
+		DPRINTF("FLUXSEND refused: local PlayerId %d out of range (max %d)\n",
+		        playerId, GAME_MAX_PLAYERS);
+		return;
+	}
+
+	msg.PlayerIdx = (char)playerId;
+	msg.Beam = (char)beam;
+	msg.Glow = (char)glow;
+	msg.Padding = 0;
+
+	netBroadcastCustomAppMessage(connection, CUSTOM_MSG_ID_PLAYER_FLUX_COLORS,
+	                             sizeof(msg), &msg);
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Per-player Flux rendering -- bisection stage gate.
+ * ---------------------------------------------------------------------------
+ *
+ * The hook address is settled and verified: vaFluxShotDrawFunc ==
+ * vaFluxBeamColor - FLUX_DRAW_FUNC_DELTA (0x5D0), the code there has the moby draw
+ * callback prologue (`daddu s0,a0,zero`, so the moby arrives in a0) and jal's both
+ * renderers from inside. verify_flux_draw_table.py asserts all of that per build.
+ *
+ * Stage 4 is the complete feature: the hook writes the shot owner's colours into the
+ * immediates, lets the original draw through them, then puts the local colours back.
+ * Stages 0-3 were bisection rungs and are gone; every one of them is subsumed here.
+ */
+#define FLUX_DRAW_STAGE 4
+
+/*
+ * Install the shot-draw hook. 0 leaves the hook out entirely (the shot then always
+ * draws with the local player's colours) and is only useful for isolating a fault.
+ *
+ * ============================ BAKISI ONLY ============================
+ * FLUX_MAP_SCOPE_BAKISI restricts the whole feature to Bakisi. Everything else --
+ * Hoven included -- is left alone: the hook is not installed, no immediate is
+ * poked, and the only thing logged is which map was seen. This exists because
+ * Bakisi is the map being worked on and mixing in other maps' addresses makes any
+ * result ambiguous.
+ * =====================================================================
+ *
+ * BAKISI ADDRESSES, VERIFIED TWO WAYS (on-disk ntsc.40.Bakisi.bin AND the Ghidra
+ * program UYA_mp_bakisi_eeMemory.bin -- which for Bakisi agrees with the dump
+ * byte-for-byte, unlike Hoven where Ghidra held a different binary):
+ *
+ *   vaFluxBeamColor     .Bakisi = 0x00409310   3C040080  lui a0,0x0080
+ *   vaFluxShotDrawFunc  .Bakisi = 0x00408D40   27BDFFF0  addiu sp,sp,-16
+ *                                               FFB00000  sd s0,0(sp)
+ *                                               0080802D  daddu s0,a0,zero
+ *   anchor - FLUX_DRAW_FUNC_DELTA  == 0x00409310 - 0x5D0 == 0x00408D40  (matches)
+ *
+ * Ghidra also confirms HOW the callback reaches the engine: the only xref to
+ * 0x00408D40 is a PARAM reference from FUN_00408cc8, where
+ *
+ *     jal 0x00456108          ; gfxRegisterDrawFunction(callback, moby)
+ *      addiu a0, a0, -0x72c0  ; delay slot builds 0x00408D40
+ *
+ * registers it. So the engine learns the callback address by value at registration
+ * time, and HOOK_JAL is effective only because the body at that address is what
+ * actually executes.
+ *
+ * KNOWN UNRESOLVED, reported honestly rather than hidden: sessions with the hook
+ * installed have ended in a PCSX2 recompiler fault. The Bakisi run is the useful
+ * one:
+ *
+ *     FLUXHOOK stage 4: shot draw 0x00408D40 -> 0x000D4280
+ *     FLUXHOOK   remote=0 local=0 no-owner=0 no-slot=0 no-pvar=0 no-moby=0
+ *     [EE] Impossible block clearing failure
+ *     R5900 Exception: Jump to unaligned address (PC: 0x000000fe)
+ *
+ * ALL SIX COUNTERS ZERO means the hook was never entered, on any install, in the
+ * whole session -- so the fault is reached without any of this patch's draw code
+ * running. That is why the diagnostics below now record a ring of events with full
+ * context: the counters alone cannot distinguish "never called" from "called with a
+ * plausible-looking wrong owner".
+ */
+#define FLUX_INSTALL_DRAW_HOOK 1
+
+/*
+ * There is deliberately NO saved "original draw function" pointer any more.
+ *
+ * The previous version overwrote the draw function's entry with HOOK_JAL and cached
+ * the address here so the hook could call through it. That is exactly what crashed on
+ * Bakisi (see the note above), so the draw function is no longer patched at all and
+ * there is nothing to cache. The original callback now arrives as an ARGUMENT, from
+ * the registration wrapper that the engine calls.
+ */
+
+/*
+ * NOTE -- the guard above must stay NARROW.
+ *
+ * Everything the patch calls unconditionally has to live outside it. When the guard
+ * was widened to cover a function that main() calls, the build failed to LINK:
+ *
+ *     main.o: undefined reference to `patchFluxRestoreLocal'
+ *
+ * So anything on the unconditional path does not belong inside FLUX_INSTALL_DRAW_HOOK.
+ * check_guarded_symbols.py now fails the suite for this class of mistake.
+ */
+
+/*
+ * ===========================================================================
+ * Everything from here to the matching #endif belongs to the draw hook.
+ *
+ * It is ALL inside FLUX_INSTALL_DRAW_HOOK on purpose. With the switch at 0 none
+ * of it has a caller, and this build promotes an unused static to an error:
+ *
+ *     main.c:3099: warning: `fluxApplyOwnerColors' defined but not used
+ *     main.c:3141: warning: `fluxRestoreLocalIfSwapped' defined but not used
+ *     make: *** Error 1
+ *
+ * So anything only the hook reaches -- its state, its counters, its colour
+ * helpers -- must be inside this guard. Anything main() calls unconditionally
+ * must stay OUTSIDE it; that is the opposite mistake, and it broke the link once
+ * (see the note above).
+ * ===========================================================================
+ */
+/*
+ * Registered-draw replacement table.
+ *
+ * RegisterDrawFunction caps its own table at 0x40 entries, so this can never need
+ * more than that, and it is only consulted when a shot is registered or drawn.
+ * pMoby is fully aligned, so masking its low bits is a safe way to derive the slot
+ * and means no hashing and no allocation.
+ */
+#define FLUX_REG_MAX 0x40
+
+/*
+ * The engine's own registered-draw table, from RegisterDrawFunction (Bakisi
+ * 0x00456108). Each value is the base-plus-offset arithmetic the instruction actually
+ * performs, and the stores confirm which array is which:
+ *
+ *     lui  a2,0x25 ; lw    a2,-0x7f74(a2)  -> 0x00250000 - 0x7f74 = 0x0024808C count
+ *     lui  a0,0x26 ; addiu a0,a0,-0x5480   -> 0x00260000 - 0x5480 = 0x0025AB80 Func[]
+ *     lui  v1,0x26 ; addiu v1,v1,-0x5380   -> 0x00260000 - 0x5380 = 0x0025AC80 Moby[]
+ *
+ *     sw   a3,0x0(v0)   v0 from a0-base   Func[i] = callback   (a3 = a0 = 1st arg)
+ *     sw   t0,0x0(v1)   v1 from v1-base   Moby[i] = moby       (t0 = a1 = 2nd arg)
+ *
+ * Func[] is what the engine calls through when it draws a registered moby, so writing
+ * it intercepts the draw WITHOUT patching any code.
+ *
+ * ============================ TWO ERRORS WERE MADE HERE ====================
+ * Both silently disabled the entire per-player feature while everything else looked
+ * healthy, and both produced the SAME symptom as "the engine never calls us": no
+ * FLUXHOOK table line, no FLUXDRAW events, and every player seeing local colours.
+ * Nothing crashed, so it read as a feature that simply did not work.
+ *
+ *   1. count was written as 0x0025808C. The correct value is 0x0024808C -- a 64KB
+ *      error, 0x25 instead of 0x24 in the low half. Reading the wrong word produced a
+ *      count that clamped to 0x40, so the scan walked 64 slots of unrelated memory
+ *      and never matched anything.
+ *
+ *   2. Func[] and Moby[] were SWAPPED. The scan then compared a MOBY POINTER against
+ *      the shot-draw address, which can never be equal.
+ *
+ * Because these are easy to get wrong by eye, check_draw_table_swap.py now DERIVES
+ * every value from the instruction encoding instead of trusting these literals.
+ * ==========================================================================
+ */
+#define FLUX_REGDRAW_COUNT   (0x0024808C)
+#define FLUX_REGDRAW_FUNCS   (0x0025AB80)
+#define FLUX_REGDRAW_MOBYS   (0x0025AC80)
+
+/* RegisterDrawFunction itself caps the table at 0x40, so this cannot be exceeded. */
+#define FLUX_REGDRAW_MAX     (0x40)
+
+/*
+ * How many times onFluxDrawWrapper has been ENTERED.
+ *
+ * This exists because "the wrapper was never called" and "the wrapper was called but
+ * took the no-owner path" looked IDENTICAL in the log: both showed drawn=0 and all
+ * counters zero. Without this there is no way to tell whether the redirect works at
+ * all, which is exactly the question that matters.
+ *
+ * Incremented on entry, before any early return, so a call that bails out still counts.
+ */
+static u32 fluxWrapperCalls = 0;
+
+/*
+ * The pre-dispatch hook.
+ *
+ * fluxDispatchTarget is the ORIGINAL destination of the `jal RunDrawRoutines`
+ * instruction this patch replaced, decoded back out of the word it overwrote. It is
+ * stored rather than tabled because it cannot then disagree with the build it was
+ * installed in.
+ *
+ * fluxDispatchSites counts how many of the two call sites are redirecting at us, and
+ * is recomputed every frame rather than latched: GetAddress is indexed by the current
+ * map, so the addresses -- and therefore the answer -- legitimately change on a map
+ * load.
+ */
+static u32 fluxDispatchTarget = 0;
+static int fluxDispatchSites = 0;
+
+/*
+ * How many of the two call sites were REFUSED. A refusal is silent by design (the
+ * installer must not write where its preconditions do not hold), so it is counted
+ * here and reported from the update phase.
+ */
+static int fluxDispatchRefused = 0;
+
+typedef struct {
+	Moby *moby;                    /* the moby the callback was registered for */
+	void (*callback)(Moby*);       /* the engine's own draw callback for it     */
+} FluxRegEntry_t;
+
+static FluxRegEntry_t fluxRegTable[FLUX_REG_MAX];
+
+static FluxRegEntry_t *fluxRegSlot(Moby *moby)
+{
+	return &fluxRegTable[((u32)moby >> 4) & (FLUX_REG_MAX - 1)];
+}
+
+/*
+ * The real draw callback for a moby we wrapped, or 0 if we did not wrap it.
+ */
+static void (*fluxRegLookup(Moby *moby))(Moby*)
+{
+	FluxRegEntry_t *e;
+
+	if (moby == 0)
+		return 0;
+
+	e = fluxRegSlot(moby);
+	if (e->moby != moby)
+		return 0;
+
+	return e->callback;
+}
+
+#if FLUX_INSTALL_DRAW_HOOK
+
+/*
+ * set while a remote shot's colours are in the immediates. Used to make the restore
+ * cheap and idempotent: nothing else in the patch touches these four instructions,
+ * so only the hook ever sets it and only the hook ever clears it.
+ */
+static int fluxColorSwapped = 0;
+
+/*
+ * Per-frame snapshot of everything the DRAW phase needs to know, taken in the UPDATE
+ * phase.
+ *
+ * The pre-dispatch hook and the wrapper both run in the draw phase, and the two values
+ * they need -- the map scope and the resolved addresses -- are exactly the two that
+ * must not be recomputed there. GetAddress resolves through __LocalGetAddress, which is
+ * indexed by the CURRENT map, and an extra engine call in the draw phase is the one
+ * thing this hook has already been shown to be sensitive to (see the DRAW PHASE
+ * MUST NOT PRINT note below).
+ *
+ * Caching them costs three update-phase reads and removes every lookup from the hook.
+ */
+static int fluxScopeCached = 0;
+static u32 fluxShotDrawCached = 0;
+static u32 fluxBeamAnchorCached = 0;
+
+/*
+ * ---------------------------------------------------------------------------
+ * THE DRAW PHASE MUST NOT PRINT.
+ *
+ * Everything below runs either from the engine's draw callback or immediately before
+ * the draw-table dispatch, and a version of this hook that logged from there produced,
+ * every single time:
+ *
+ *     FLUXDRAW[local] call=1 .. call=12
+ *     [EE] Impossible block clearing failure
+ *     TLB Miss, pc=0x408630 addr=0x8 [store]
+ *     Trap exception
+ *
+ * Twelve lines, then dead -- and every one of them was `local`, so no colour had been
+ * applied and nothing had been swapped. The only engine work the hook did was call
+ * printf. Three earlier runs showed the same thing, every trap landing in the engine's
+ * printf (0x00128c70) immediately after a line from the hook.
+ *
+ * So the draw path performs NO logging and NO map lookup: everything it needs is
+ * resolved in the update phase and cached above, and the feature's one remaining log
+ * line is emitted from main(), which runs in the update phase.
+ * ---------------------------------------------------------------------------
+ */
+
+/*
+ * NAME :		fluxApplyOwnerColors
+ * DESCRIPTION :
+ * 			Writes a shot owner's colours into the beam/glow immediates.
+ * NOTES :
+ *          Returns 1 when it wrote, 0 when the owner is local or unknown -- in which
+ *          case the configured colours are already correct and nothing is touched.
+ *          A local shot MUST be skipped rather than written with the local preset,
+ *          because the two are normally the same and rewriting them every draw would
+ *          be pure waste.
+ *
+ *          The four write sites are patched instructions in live engine code; see
+ *          applyFluxBeamColor for the offsets and why they are safe to rewrite.
+ * ARGS :
+ *          anchor: address of the beam colour immediates
+ *          owner:  the player who fired the shot
+ * RETURN :		1 if the immediates were changed
+ * AUTHOR :			Philip762
+ */
+static int fluxApplyOwnerColors(u32 anchor, Player *owner)
+{
+	u32 beam;
+	u32 glow;
+	int slot;
+
+	if (anchor == 0 || owner == 0 || owner->isLocal)
+		return 0;
+
+	slot = fluxPlayerIndexFromPtr(owner);
+	if (slot < 0)
+		return 0;
+
+	fluxColorResolve(fluxPlayerBeam[slot], fluxPlayerGlow[slot], &beam, &glow);
+	applyFluxBeamColor(anchor, beam);
+	applyFluxGlowColor(anchor, glow);
+	fluxColorSwapped = 1;
+
+	return 1;
+}
+
+/*
+ * NAME :		fluxRestoreLocalIfSwapped
+ * DESCRIPTION :
+ * 			Puts the configured colours back once a remote shot has drawn.
+ * NOTES :
+ *          MUST run after the original draw call, not before: the renderers that sit
+ *          on these immediates are jal'd from inside the original, so the colours have
+ *          to still be in place while it runs.
+ *
+ *          The anchor comes from the update-phase cache rather than a fresh
+ *          GetAddress. That is not an optimisation: GetAddress resolves through
+ *          __LocalGetAddress, which is indexed by the CURRENT map, and this runs in the
+ *          DRAW phase. Re-resolving the map here is engine work in the one context the
+ *          hook has been shown to be fragile in, and the value cannot have changed since
+ *          main() ran earlier in the same frame.
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+static void fluxRestoreLocalIfSwapped(void)
+{
+	u32 anchor;
+	u32 beam;
+	u32 glow;
+
+	if (!fluxColorSwapped)
+		return;
+
+	fluxColorSwapped = 0;
+
+	anchor = fluxBeamAnchorCached;
+	if (anchor == 0)
+		return;
+
+	fluxColorResolve(config.fluxShotColor, config.fluxGlowColor, &beam, &glow);
+	applyFluxBeamColor(anchor, beam);
+	applyFluxGlowColor(anchor, glow);
+}
+
+/*
+ * ============================ WHY NOT PATCH THE DRAW FUNCTION ============
+ * An earlier version of this patch hooked the shot draw function by overwriting
+ * its entry instruction with HOOK_JAL. On Bakisi that CRASHED:
+ *
+ *   FLUXHOOK install map=40 anchor=0x00409310 shotDraw=0x00408D40 \
+ *                 was 0x27BDFFF0 -> 0x000D4540
+ *   FLUXHOOK installed, entry now 0x0C035150 (expect jal)
+ *   ... 3.5 seconds later ...
+ *   R5900 Exception: Jump to unmapped recLUT page (PC: 0x7efc0180)
+ *
+ * Every address in that run was verified correct against ntsc.40.Bakisi.bin AND
+ * against Ghidra: anchor 0x00409310, shotDraw 0x00408D40, the JAL encoding, and all
+ * eight colour immediates. The hook function itself was never entered -- there is no
+ * "drawn N time(s)" and no FLUXDRAW line anywhere in the run.
+ *
+ * The reason is visible in the engine (Ghidra, FUN_00408cc8):
+ *
+ *     jal   0x00456108            ; RegisterDrawFunction(callback, moby)
+ *      addiu a0, a0, -0x72c0      ; delay slot builds 0x00408D40
+ *
+ * and RegisterDrawFunction stores that POINTER into a global table. So the engine
+ * reaches the draw code by calling through a saved pointer, and rewriting the first
+ * instruction of the target breaks the recompiler's block dispatch for that address.
+ *
+ * Therefore the draw function's code is NOT touched. Instead the REGISTRATION call
+ * is intercepted: when the Flux shot's callback is registered, this patch registers
+ * a wrapper in its place and remembers the real callback per moby. The draw code is
+ * left byte-identical to the retail game.
+ * ========================================================================
+ */
+
+
+/*
+ * installed by main() inside the FLUX_INSTALL_DRAW_HOOK block, and only there */
+static void onFluxShotDraw(Moby *moby, void (*original)(Moby*));
+
+/*
+ * NAME :		onFluxShotDraw
+ * DESCRIPTION :
+ * 			Replacement for the Flux shot's draw callback: draws each shot with the
+ *          colours of the player who fired it.
+ * NOTES :
+ *          Ordering is the whole trick, and it is not interchangeable:
+ *
+ *            1. read the owner from the shot's pVar
+ *            2. write THAT owner's colours into the beam/glow immediates
+ *            3. call the original, which draws the shot
+ *            4. put the local player's colours back
+ *
+ *          Step 2 must precede step 3 because the beam and glow renderers are jal'd
+ *          from INSIDE the original, so the immediates have to already hold the right
+ *          values when it runs. Step 4 must follow it for the same reason in reverse:
+ *          the next shot drawn may be local, and it must not inherit a remote player's
+ *          colours.
+ *
+ *          A local shot is deliberately left alone (fluxApplyOwnerColors returns 0 for
+ *          it) -- the configured colours are what is already in the immediates, so
+ *          there is nothing to write and nothing to restore.
+ *
+ *          The original is passed in BY THE CALLER -- the wrapper that the engine
+ *          actually registered -- rather than being read from a global. That is what
+ *          lets the draw function's own code stay untouched: nothing here needs the
+ *          original's address, because the registration wrapper captured it.
+ *
+ *          Nothing here prints: the DRAW PHASE MUST NOT PRINT note below records
+ *          why, and it is not a style preference.
+ * ARGS :
+ *          moby:     the Flux shot being drawn
+ *          original: the engine's own draw callback for this moby
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+static void onFluxShotDraw(Moby *moby, void (*original)(Moby*))
+{
+	int swapped = 0;
+
+	/*
+	 * The engine only ever calls a draw callback with a live moby, so this is a
+	 * guard rather than an expected path. It is here because this is the FIRST thing
+	 * reached when the engine calls the address, and passing a null moby on to the
+	 * original -- which dereferences it -- would fault.
+	 */
+	if (moby == 0) {
+		if (original != 0)
+			original(moby);
+		return;
+	}
+
+	/*
+	 * The owner is stored at pVar + FLUX_SHOT_OWNER_OFFSET, so pVar is validated
+	 * BEFORE it is dereferenced. A shot whose pVar is not set up yet is simply drawn
+	 * with whatever colours are already in the immediates.
+	 */
+	if (moby->pVar != 0) {
+		Player *owner = *(Player**)((char*)moby->pVar + FLUX_SHOT_OWNER_OFFSET);
+
+		/*
+		 * Only a REMOTE owner needs anything done. A local shot is the common case and
+		 * the configured colours are already in the immediates, so it is left alone --
+		 * fluxApplyOwnerColors would reject it anyway.
+		 *
+		 * Nothing here prints: see the DRAW PHASE MUST NOT PRINT note below.
+		 */
+		if (owner != 0 && !owner->isLocal) {
+			/*
+			 * The anchor comes from the update-phase cache, not a fresh GetAddress.
+			 * GetAddress resolves through __LocalGetAddress, which is indexed by the
+			 * CURRENT map, and this is the DRAW phase -- the one context the hook has
+			 * been shown to be fragile in. main() already resolved it earlier in this
+			 * same frame, so the value cannot be stale.
+			 *
+			 * This WRITES the owner's colours into the beam/glow immediates.
+			 */
+			swapped = fluxApplyOwnerColors(fluxBeamAnchorCached, owner);
+		}
+	}
+
+	/*
+	 * Draw AFTER the colours are in place: the beam and glow renderers are jal'd from
+	 * inside the original, so the immediates must already hold the right values.
+	 */
+	if (original != 0)
+		original(moby);
+
+	/*
+	 * ...and put the LOCAL player's colours back AFTER it. Without this the next shot
+	 * drawn, which may well be a local one, would inherit a remote player's colours.
+	 */
+	if (swapped)
+		fluxRestoreLocalIfSwapped();
+}
+
+/*
+ * NAME :		onFluxDrawWrapper
+ * DESCRIPTION :
+ * 			The callback the engine actually calls for the Flux shot moby.
+ * NOTES :
+ *          Looks the real callback up in the table and hands it to onFluxShotDraw
+ *          together with the moby. A moby with no entry is simply left undrawn rather
+ *          than called through a null pointer.
+ *
+ *          This lives INSIDE the hook guard because with FLUX_INSTALL_DRAW_HOOK 0 the
+ *          feature is off and nothing registers it.
+ * ARGS :
+ *          moby: the moby being drawn
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+static void onFluxDrawWrapper(Moby *moby)
+{
+	void (*original)(Moby*) = fluxRegLookup(moby);
+
+	/*
+	 * Counted on ENTRY, before any early return. This is the only evidence that the
+	 * engine actually dispatched to us, so it must not sit behind a branch.
+	 */
+	fluxWrapperCalls++;
+
+	if (original == 0) {
+		/*
+		 * The moby is not in our replacement table, so we do not know its real
+		 * callback. FALL BACK TO THE SHOT DRAW FUNCTION ANYWAY.
+		 *
+		 * Returning instead would silently draw NOTHING. That matters more than it
+		 * looks: a shot that is never drawn is a moby the engine still owns, and
+		 * several hundred TLB misses at a single tiny address -- pc values in
+		 * 0x00408xxx and 0x00409xxx, the shot draw function's own range, repeatedly
+		 * loading addr=0x23a0 -- is what a moby left undrawn looks like. Never drop
+		 * the draw.
+		 *
+		 * There is nothing to guess: the engine's own callback for the Flux shot is
+		 * the interop entry, which is exactly what a registered shot's callback is.
+		 * fluxRegLookup normally supplies it; this is the safety net for a table miss
+		 * (hash collision, or a registration we did not observe).
+		 */
+		original = (void (*)(Moby*))fluxShotDrawCached;
+
+		if (original == 0)
+			return;
+
+		/*
+		 * Remember it, so the per-moby lookup hits from the next frame on. The value
+		 * comes from the update-phase cache, so this still resolves no address in the
+		 * draw phase.
+		 */
+		{
+			FluxRegEntry_t *e = fluxRegSlot(moby);
+
+			e->moby = moby;
+			e->callback = original;
+		}
+	}
+
+	onFluxShotDraw(moby, original);
+}
+
+/*
+ * NAME :		fluxRunDrawScan
+ * DESCRIPTION :
+ * 			Points every registered Flux-shot slot in the engine's draw table at
+ * 			onFluxDrawWrapper.
+ * NOTES :
+ *          MUST NOT PRINT. It runs from the DRAW phase (see onFluxPreDrawDispatch),
+ *          and printing there is the one thing that is known to crash -- see the
+ *          measurements recorded in the DRAW PHASE MUST NOT PRINT note below.
+ *
+ *          Idempotent WITHIN a frame: once a slot holds the wrapper it no longer equals
+ *          shotDraw and is skipped, so running this from both the update phase and the
+ *          pre-dispatch hook cannot double-wrap a slot. It is NOT idempotent ACROSS
+ *          frames, because the engine re-registers the original every frame -- which is
+ *          the entire reason the pre-dispatch hook exists.
+ *
+ *          Everything it needs is read from the update-phase cache, so it performs no
+ *          map lookup and calls into the engine not at all.
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+static void fluxRunDrawScan(void)
+{
+	volatile u32 *funcs;
+	volatile u32 *mobys;
+	u32 shotDraw = fluxShotDrawCached;
+	u32 count;
+	u32 i;
+
+	if (!fluxScopeCached || shotDraw == 0)
+		return;
+
+	/*
+	 * RegisterDrawFunction caps the table at 0x40, so a count past that is a read of a
+	 * not-yet-initialised word (observed at map entry: raw=623728696) and walking it
+	 * would touch unrelated memory.
+	 */
+	count = *(volatile u32*)FLUX_REGDRAW_COUNT;
+	if (count > FLUX_REGDRAW_MAX)
+		count = FLUX_REGDRAW_MAX;
+
+	funcs = (volatile u32*)FLUX_REGDRAW_FUNCS;
+	mobys = (volatile u32*)FLUX_REGDRAW_MOBYS;
+
+	for (i = 0; i < count; ++i) {
+		FluxRegEntry_t *e;
+
+		if (funcs[i] != shotDraw)
+			continue;
+
+		e = fluxRegSlot((Moby*)mobys[i]);
+		e->moby = (Moby*)mobys[i];
+		e->callback = (void (*)(Moby*))shotDraw;
+
+		/*
+		 * Only now the actual redirect. Writing Func[i] is a DATA write: the engine's
+		 * own code is untouched, and data writes cannot disturb the recompiler's
+		 * translated blocks -- which is what every crash in this feature has been about.
+		 */
+		funcs[i] = (u32)&onFluxDrawWrapper;
+	}
+}
+
+/*
+ * NAME :		onFluxPreDrawDispatch
+ * DESCRIPTION :
+ * 			Runs immediately before the engine dispatches the draw table: swaps the
+ * 			Flux shot's slots, then performs the dispatch the engine asked for.
+ * NOTES :
+ *          THIS FUNCTION MUST NOT PRINT. It is entered from the DRAW phase.
+ *
+ *          The engine calls this because its own `jal RunDrawRoutines` was replaced by
+ *          `jal onFluxPreDrawDispatch` (vaFluxDrawDispatchA / B). The return address the
+ *          engine pushed still points just past that call site, so returning normally
+ *          resumes the caller exactly as the original call did; fluxDispatchTarget was
+ *          decoded from the instruction that was overwritten, so the original dispatch
+ *          still happens too.
+ *
+ *          WHY HERE AND NOWHERE ELSE. RegisterDrawFunction only appends, and the engine
+ *          zeroes the count before re-registering each frame, so a Func[] write made
+ *          from the patch's own per-frame entry (main) is overwritten before the table
+ *          is drawn. This is the only point in the frame that is provably after the last
+ *          registration and before the dispatch. The log that proved it:
+ *
+ *              FLUXHOOK   slot 2 moby=0x01B2E980 func=0x000D46C4   <- wrapper IN table
+ *              FLUXHOOK drawn 0 time(s)                            <- never dispatched
+ *              FLUXHOOK   ... wcalls=0
+ *
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+static void onFluxPreDrawDispatch(void)
+{
+	void (*runDrawRoutines)(void) = (void (*)(void))fluxDispatchTarget;
+
+	fluxRunDrawScan();
+
+	if (runDrawRoutines != 0)
+		runDrawRoutines();
+}
+
+/*
+ * NAME :		fluxInstallDrawDispatchHook
+ * DESCRIPTION :
+ * 			Redirects the engine's two RunDrawRoutines call sites at
+ * 			onFluxPreDrawDispatch.
+ * NOTES :
+ *          Every precondition is checked BEFORE a byte is written, and a site that fails
+ *          any of them is left completely untouched and counted in fluxDispatchRefused:
+ *
+ *            - the word must not already be our hook (so a repeated call is a no-op and
+ *              never re-encodes -- important because a wrong re-encode would be a
+ *              silent, permanent corruption);
+ *            - the word must BE a jal (opcode 3). A site that is not a call is not the
+ *              site we think it is, and writing there would destroy an instruction;
+ *            - the DELAY SLOT must be nop. HOOK_JAL replaces only the jal itself, so a
+ *              site with a live delay slot would silently change what the caller does;
+ *            - the decoded target must be inside EE RAM.
+ *
+ *          A zero address means the build is not covered (see vaFluxDrawDispatchA) and
+ *          is skipped, NOT defaulted to the NTSC address.
+ *
+ *          This is the ONLY code the Flux feature patches. Compare with what was tried
+ *          and crashed: overwriting a function's ENTRY instruction destroys its prologue
+ *          and re-enters the recompiler on a block that is live. Replacing `jal X` with
+ *          `jal Y` destroys nothing and keeps the block's shape.
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+static void fluxInstallDrawDispatchHook(void)
+{
+	u32 sites[2];
+	int installed = 0;
+	int refused = 0;
+	u32 selfJal = ADDR2JAL((u32)&onFluxPreDrawDispatch);
+	u32 i;
+
+	sites[0] = GetAddress(&vaFluxDrawDispatchA);
+	sites[1] = GetAddress(&vaFluxDrawDispatchB);
+
+	for (i = 0; i < 2; ++i) {
+		u32 site = sites[i];
+		volatile u32 *slot;
+		u32 insn;
+		u32 target;
+
+		if (site == 0)
+			continue;                /* this build is not covered */
+
+		slot = (volatile u32*)site;
+		insn = *slot;
+
+		if (insn == selfJal) {
+			installed++;             /* already redirecting at us */
+			continue;
+		}
+
+		if ((insn >> 26) != 0x03) {
+			refused++;
+			continue;
+		}
+
+		if (*(volatile u32*)(site + 4) != 0x00000000) {
+			refused++;
+			continue;
+		}
+
+		target = JAL2ADDR(insn);
+		if (target < 0x00100000 || target >= 0x02000000) {
+			refused++;
+			continue;
+		}
+
+		fluxDispatchTarget = target;
+
+		HOOK_JAL(site, &onFluxPreDrawDispatch);
+		FlushCache(0);               /* same pair the other hooks use */
+		FlushCache(2);
+
+		installed++;
+	}
+
+	fluxDispatchSites = installed;
+	fluxDispatchRefused = refused;
+}
+
+#endif /* FLUX_INSTALL_DRAW_HOOK */
+
+
+/*
+ * NAME :		patchFluxShotColor
+ * DESCRIPTION :
+ * 			Recolours the Flux Rifle's beam and its decoration band to the
+ *          configured presets.
+ * NOTES :
+ *          Both are written from the one anchor tabled in vaFluxBeamColor, which
+ *          points at the base `lui` of the beam renderer. A zero anchor means the
+ *          layout did not match in this build; the stock colours are kept and
+ *          nothing is written.
+ *
+ *          Each colour is tracked separately, so changing one does not disturb the
+ *          other. The writes are idempotent, so this re-applies after a map change
+ *          without needing to be told one happened.
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Philip762
+ */
+void patchFluxShotColor(void)
+{
+	/*
+	 * Index 0 must RESTORE the engine's own colour, not skip the write -- skipping
+	 * would leave the last custom poke in place. The vanilla words are constant
+	 * across every build (asserted by verify_flux_color.py), so they can simply be
+	 * written like any other preset. They live at file scope now because the
+	 * per-player path has to restore the same values.
+	 */
+	u32 anchor = GetAddress(&vaFluxBeamColor);
+	u32 beam;
+	u32 glow;
+	int changedBeam;
+	int changedGlow;
+
+	if (!isInGame())
+		return;
+
+	/*
+	 * Bakisi-only scope. This early return comes BEFORE any write, so on any other
+	 * map the engine's own immediates are never touched.
+	 */
+	if (!fluxMapInScope())
+		return;
+
+	if (anchor == 0)
+		return;
+
+
+	changedBeam = config.fluxShotColor != patched.fluxShotColor;
+	changedGlow = config.fluxGlowColor != patched.fluxGlowColor;
+
+	/*
+	 * A preset index outside the list would index out of bounds in
+	 * fluxColorResolve, so clamp the config and say so -- a bad config from the
+	 * server should be visible, not silently read past the end of the array.
+	 */
+	if (config.fluxShotColor < 0 || config.fluxShotColor >= FLUX_COLOR_COUNT) {
+		DPRINTF("FLUXWARN beam preset %d out of range 0..%d, clamping to 0\n",
+		        (int)config.fluxShotColor, FLUX_COLOR_COUNT - 1);
+		config.fluxShotColor = 0;
+		changedBeam = 1;
+		patched.fluxShotColor = -1;
+	}
+
+	if (config.fluxGlowColor < 0 || config.fluxGlowColor >= FLUX_COLOR_COUNT) {
+		DPRINTF("FLUXWARN glow preset %d out of range 0..%d, clamping to 0\n",
+		        (int)config.fluxGlowColor, FLUX_COLOR_COUNT - 1);
+		config.fluxGlowColor = 0;
+		changedGlow = 1;
+		patched.fluxGlowColor = -1;
+	}
+
+	if (!changedBeam && !changedGlow)
+		return;
+
+	fluxColorResolve(config.fluxShotColor, config.fluxGlowColor, &beam, &glow);
+
+	if (changedBeam) {
+		patched.fluxShotColor = config.fluxShotColor;
+		applyFluxBeamColor(anchor, beam);
+	}
+
+	if (changedGlow) {
+		patched.fluxGlowColor = config.fluxGlowColor;
+		applyFluxGlowColor(anchor, glow);
+	}
+}
+
+/*
  * NAME :		patchControllerDeadzone
  * DESCRIPTION : Applies the configured analog stick deadzone.
  * NOTES :
@@ -3078,6 +4275,147 @@ int main(void)
 
 	//
   	// netInstallCustomMsgHandler(CUSTOM_MSG_ID_CLIENT_RESPONSE_DATE_SETTINGS, &onServerTimeResponse);
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_FLUX_COLORS, &onFluxColorsRemote);
+	/*
+	 * Redirect the Flux shot's registered draw callback -- by editing the ENGINE'S
+	 * DRAW TABLE, and by redirecting the single call that dispatches that table.
+	 *
+	 * THE WHOLE DESIGN IN ONE PARAGRAPH
+	 * ---------------------------------
+	 * RegisterDrawFunction stores the shot's callback POINTER into a plain data array,
+	 * and the scan below rewrites those entries to point at onFluxDrawWrapper -- so the
+	 * per-shot colour switch happens inside the engine's own draw callback, with the
+	 * moby as the only argument. The scan, however, writes too EARLY on its own: the
+	 * engine zeroes the table count at the start of every frame and re-registers, so the
+	 * per-frame call below is undone before the table is drawn. That is why the hook on
+	 * the dispatch call sites (vaFluxDrawDispatchA/B) exists, and why the scan is run
+	 * from there as well.
+	 *
+	 * The evidence that pinned it down -- the wrapper demonstrably IN the table, and
+	 * demonstrably never called:
+	 *
+	 *     FLUXHOOK table raw=3 count=3 swaps=1 wcalls=0
+	 *     FLUXHOOK   slot 2 moby=0x01B2E980 func=0x000D46C4     <- our wrapper
+	 *     FLUXHOOK drawn 0 time(s)
+	 *
+	 * WHY NOT HOOK RegisterDrawFunction
+	 * ---------------------------------
+	 * That was tried and it crashed. RegisterDrawFunction (0x00456108 on Bakisi) has
+	 * THIRTY-SIX call sites all over the engine, and hooking its entry with HOOK_JAL
+	 * produced, 166 ms after the second install and while the level was still loading:
+	 *
+	 *     R5900 Exception: Jump to unaligned address (PC: 0x000000fe)
+	 *
+	 * 0x000000fe is a jump through a near-NULL pointer, not a real EE address. Any
+	 * code patch on a routine reached from 36 places is a large risk surface, and the
+	 * previous attempt to patch the DRAW function failed the same way.
+	 *
+	 * WHY THE DISPATCH HOOK IS SAFE
+	 * -----------------------------
+	 * RegisterDrawFunction stores the callback POINTER into a plain data array:
+	 *
+	 *     lui  a2,0x25 ; lw   a2,-0x7f74(a2)   RegisteredDrawsCount  @ 0x0024808C
+	 *     lui  a0,0x26 ; addiu a0,a0,-0x5480   RegisteredDrawRoutines_Func  @ 0x0025AB80
+	 *     lui  v1,0x26 ; addiu v1,v1,-0x5380   RegisteredDrawRoutines_Moby  @ 0x0025AC80
+	 *     sw   a3,0x0(v0)                      Func[i] = callback
+	 *     sw   t0,0x0(v1)                      Moby[i] = moby
+	 *
+	 * so the redirect itself is a DATA write, and data writes cannot disturb the
+	 * recompiler's translated blocks -- which is what every crash so far has been about.
+	 *
+	 * The table is only ever APPENDED to (RegisteredDrawsCount increments), so the scan
+	 * stops at the count and never reads uninitialised slots.
+	 *
+	 * The one code patch is `jal RunDrawRoutines` -> `jal onFluxPreDrawDispatch`, at the
+	 * only two call sites the binary has, each with a nop delay slot. It replaces a call
+	 * with a call: no prologue is destroyed and no delay slot is reinterpreted. See
+	 * fluxInstallDrawDispatchHook, which validates the word it is about to overwrite
+	 * before writing it.
+	 */
+#if FLUX_INSTALL_DRAW_HOOK
+	{
+		/*
+		 * Refresh the draw-phase cache and install the pre-dispatch hook, in that
+		 * order.
+		 *
+		 * The hook resolves nothing itself. GetAddress indexes __LocalGetAddress by the
+		 * CURRENT map, and the hook runs in the DRAW phase, so the scope and the two
+		 * addresses are resolved here, once per frame, and the hook only reads them.
+		 *
+		 * Installing must also come after the cache is refreshed: patching while the
+		 * map id is stale would write at one build's addresses before we know they are
+		 * that build's.
+		 */
+		fluxScopeCached = fluxMapInScope();
+		fluxShotDrawCached = fluxScopeCached ? GetAddress(&vaFluxShotDrawFunc) : 0;
+		fluxBeamAnchorCached = fluxScopeCached ? GetAddress(&vaFluxBeamColor) : 0;
+
+		fluxInstallDrawDispatchHook();
+
+		/*
+		 * The scan also runs from here, where it is too early to survive to the
+		 * dispatch -- that is the bug the pre-dispatch hook exists to fix. It is kept
+		 * because it costs nothing, it is idempotent within a frame, and it still
+		 * redirects the table on a build whose dispatch call sites are not tabled. Such
+		 * a build then degrades to "colours apply to the local player only" instead of
+		 * to a patch that does nothing at all.
+		 */
+		fluxRunDrawScan();
+	}
+#endif
+#ifdef DEBUG
+#if FLUX_INSTALL_DRAW_HOOK
+	/*
+	 * The feature's only logging: one line per map change, and one every 5s.
+	 *
+	 * Everything else that used to live here has been removed -- the per-frame table
+	 * dump with its per-slot listing, the draw-event ring and all six of its counters,
+	 * the FLUXDIAG state dump, and the one-shot table probe. Each answered a question
+	 * that is now settled, and the ring sat in the DRAW phase, which is the one context
+	 * this feature has repeatedly crashed in. Removing it takes work out of the hot
+	 * path rather than just noise out of the log.
+	 *
+	 * Wrapped in #ifdef DEBUG TOGETHER WITH ITS LOCALS. DPRINTF compiles to nothing
+	 * when DEBUG is undefined, so a release build would otherwise be left with locals
+	 * that nothing reads -- and this build promotes unused variables to errors. Keeping
+	 * the guard outside the declarations is what makes the whole block vanish.
+	 *
+	 * The three numbers are the ones that actually distinguish a failure:
+	 *
+	 *   sites   how many RunDrawRoutines call sites were redirected. 2 on a covered
+	 *           build. 0 means the interop entry resolved to zero, i.e. the map scope
+	 *           picked the wrong build's table; refused>0 means a site was found but did
+	 *           not look like `jal X` + a nop delay slot, so it was left untouched.
+	 *   run     the address decoded out of the instruction that was overwritten, i.e.
+	 *           what the hook calls to still dispatch the table.
+	 *   wrapper how many times the shot draw callback was dispatched to us. This is the
+	 *           ONLY evidence the redirect works, and it read 0 for several runs while
+	 *           the wrapper sat in the table -- which is exactly why it is reported.
+	 */
+	{
+		static int fluxScopeLogged = -1;
+		static u32 fluxStatusLogged = 0;
+		int mapId = gameGetCurrentMapId();
+		u32 now = gameGetTime();
+
+		if (mapId != fluxScopeLogged) {
+			fluxScopeLogged = mapId;
+			DPRINTF("FLUXMAP now id=%d %s\n", mapId,
+			        fluxMapInScope() ? "(IN SCOPE - Bakisi)"
+			                         : "(out of scope, feature disabled)");
+		}
+
+		if ((now - fluxStatusLogged) >= 5000) {
+			fluxStatusLogged = now;
+			DPRINTF("FLUXHOOK dispatch sites=%d refused=%d run=0x%08X "
+			        "wrapper=%u\n",
+			        fluxDispatchSites, fluxDispatchRefused,
+			        fluxDispatchTarget, fluxWrapperCalls);
+		}
+	}
+#endif
+#endif
+
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, &onClientVoteToEndRemote);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, &onClientVoteToEndStateUpdateRemote);
 	
@@ -3235,6 +4573,19 @@ int main(void)
 
 		// Patch hiding of Flux Reticle
 		patchHideFluxReticle();
+
+		/*
+		 * Publish our Flux colours, and backstop the restore of the local colours if
+		 * a remote shot swapped them. Set PATCH_FLUX_COLOR_SYNC to 0 to disable the
+		 * whole per-player Flux feature (send, receive and rendering).
+		 */
+#define PATCH_FLUX_COLOR_SYNC 1
+#if PATCH_FLUX_COLOR_SYNC
+		patchFluxColorSync();
+#endif
+
+		// Patch Flux Shot Colour
+		patchFluxShotColor();
 
 		if (config.hypershotEquipButton)
 			hypershotEquipButton();

@@ -146,6 +146,13 @@ enum CustomMessageId
     CUSTOM_MSG_ID_CLIENT_SET_GAME_STATE = 25,
 
     /*
+     * Broadcast so every client can draw the Flux Rifle of whoever sent it in that
+     * player's own colours. Carries preset INDICES, not colours, so each receiver
+     * resolves them through its own table and a stale table can't desync values.
+     */
+    CUSTOM_MSG_ID_PLAYER_FLUX_COLORS = 26,
+
+    /*
      * Sent to server for game details/state
      */
     CUSTOM_MSG_PLAYER_SYNC_STATE_UPDATE = 27,
@@ -253,5 +260,19 @@ typedef struct ClientSetClientTypeRequest {
   int ClientType;
   u8 mac[6];
 } ClientSetClientTypeRequest_t;
+
+/*
+ * A player's chosen Flux colours, broadcast so others can render that player's
+ * beam and glow the same way they see their own.
+ *
+ * The sender's index is carried explicitly rather than inferred from the source,
+ * because shared app messages do not reliably identify it.
+ */
+typedef struct PlayerFluxColors {
+  char PlayerIdx;
+  char Beam;        // index into the colour preset list, 0 = vanilla
+  char Glow;        // index into the colour preset list, 0 = vanilla
+  char Padding;
+} PlayerFluxColors_t;
 
 #endif // _MESSAGEID_H_

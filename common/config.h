@@ -41,6 +41,8 @@ typedef struct PatchConfig {
   char enableTeamInfo;
   char preferredGameServer;
   char controllerDeadzone;
+  char fluxShotColor;
+  char fluxGlowColor;
 
   // Non-serialized config values
   char kothScrollSpeed;
@@ -117,6 +119,10 @@ typedef struct PatchPatches {
   char ctfLogic;
   char swingshotGunBug;
 
+  // Applied Flux colours, so the patch only writes on a change.
+  char fluxShotColor;
+  char fluxGlowColor;
+
   // gameConfig misc.
   char spawnWeaponPackOnDeath;
   char disableRespawning;
@@ -169,5 +175,9 @@ enum CLIENT_TYPE
   CLIENT_TYPE_DZO = 1,
   CLIENT_TYPE_PCSX2 = 2
 };
+
+// The Flux colour preset list, shared by the beam and glow options. Index 0 keeps
+// the engine's own colour, so each option defaults to doing nothing.
+#define FLUX_COLOR_COUNT 15
 
 #endif // _CONFIG_H_

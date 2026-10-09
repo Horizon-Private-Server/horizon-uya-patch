@@ -1413,4 +1413,180 @@ VariableAddress_t vaPadDeadzone_ScaleInput = {
 	.AquatosSewers = 0x00487548,
 	.MarcadiaPalace = 0x00486e88,
 #endif
-};
+};
+
+/*
+ * Flux Rifle beam colour.
+ *
+ * The beam renderer builds its three colours at fixed offsets from this anchor:
+ *
+ *   +0x00  lui  rt,0x0080         base high half
+ *   +0x0c  ori  rt,rt,0x4000      base low half   -> 0x00804000
+ *   +0x38  lui  rt,0x00ff         shared high half
+ *   +0x40  ori  rt,rt,0xff00      tween B low half -> 0x00ffff00
+ *   +0x4c  ori  rt,rt,0x1010      tween C low half -> 0x00ff1010
+ *
+ * The register numbers are not the same in every build, so the patch reads the
+ * existing words and rewrites only the immediate halves.
+ *
+ * A zero entry means the layout did not match in that build -- KorgonOutpost,
+ * Metropolis and BlackwaterCity on both regions keep the stock colour.
+ */
+VariableAddress_t vaFluxBeamColor = {
+#if UYA_PAL
+	.Lobby = 0x00551c30,
+	.Bakisi = 0x004099b0,
+	.Hoven = 0x00409318,
+	.OutpostX12 = 0x00401210,
+	.KorgonOutpost = 0x004005f0,
+	.Metropolis = 0x003ff1b0,
+	.BlackwaterCity = 0x003fbf98,
+	.CommandCenter = 0x0040a3a0,
+	.BlackwaterDocks = 0x0040c300,
+	.AquatosSewers = 0x0040bf08,
+	.MarcadiaPalace = 0x0040af80,
+#else
+	.Lobby = 0x005512e0,
+	.Bakisi = 0x00409310,
+	.Hoven = 0x00408bf8,
+	.OutpostX12 = 0x00400af0,
+	.KorgonOutpost = 0x003fff30,
+	.Metropolis = 0x003feb10,
+	.BlackwaterCity = 0x003fb898,
+	.CommandCenter = 0x00409ce8,
+	.BlackwaterDocks = 0x0040bc48,
+	.AquatosSewers = 0x0040b850,
+	.MarcadiaPalace = 0x0040a8c8,
+#endif
+};
+
+/*
+ * Flux shot draw callback.
+ *
+ * The engine registers this as the shot's per-moby draw callback and calls it
+ * with the MOBY in a0 -- its prologue is `addiu sp,sp,-0x10 / sd s0,0(sp) /
+ * daddu s0,a0,zero`. That is the only place the moby is in scope for a Flux
+ * shot, which is what makes per-player colouring possible: the hook reads the
+ * owner from moby->pVar + 0x3C, writes that owner's colours, then calls the
+ * original so the shot still draws.
+ *
+ * Derived from vaFluxBeamColor by FLUX_DRAW_FUNC_DELTA (0x5D0), which
+ * verify_flux_draw_hook.py asserts in every covered build, and the prologue
+ * above is asserted by gen_flux_draw_table.py. A zero entry means the build is
+ * not covered, so its shooting client renders its own colours only.
+ */
+VariableAddress_t vaFluxShotDrawFunc = {
+#if UYA_PAL
+	.Lobby = 0x00551660,
+	.Bakisi = 0x004093e0,
+	.Hoven = 0x00408d48,
+	.OutpostX12 = 0x00400c40,
+	.KorgonOutpost = 0x00400020,
+	.Metropolis = 0x003febe0,
+	.BlackwaterCity = 0x003fb9c8,
+	.CommandCenter = 0x00409dd0,
+	.BlackwaterDocks = 0x0040bd30,
+	.AquatosSewers = 0x0040b938,
+	.MarcadiaPalace = 0x0040a9b0,
+#else
+	.Lobby = 0x00550d10,
+	.Bakisi = 0x00408d40,
+	.Hoven = 0x00408628,
+	.OutpostX12 = 0x00400520,
+	.KorgonOutpost = 0x003ff960,
+	.Metropolis = 0x003fe540,
+	.BlackwaterCity = 0x003fb2c8,
+	.CommandCenter = 0x00409718,
+	.BlackwaterDocks = 0x0040b678,
+	.AquatosSewers = 0x0040b280,
+	.MarcadiaPalace = 0x0040a2f8,
+#endif
+};
+
+/*
+ * ==================== WHY THE FEATURE NEEDS A CALL-SITE HOOK ==============
+ * RegisterDrawFunction only ever APPENDS to the engine's draw table, and the
+ * engine ZEROES the count at the start of every frame before re-registering
+ * (FUN_00453ce0 and FUN_004cbde0 both `sw zero,-0x7f74`). A write to Func[i]
+ * made from the patch's own per-frame entry therefore lands BEFORE the table is
+ * rebuilt, and is gone again before the table is drawn.
+ *
+ * That is exactly what the two-client log showed: the report printed
+ * `FLUXHOOK   slot 2 moby=0x01B2E980 func=0x000D46C4` -- the wrapper WAS in the
+ * table -- while `wcalls=0` never moved, because by dispatch time the engine had
+ * re-registered 0x00408D40 over it.
+ *
+ * The redirect has to land after the LAST registration and before the DISPATCH.
+ * RunDrawRoutines has exactly two callers in the whole binary, and both are
+ * `jal 0x00456158` with a `nop` in the delay slot:
+ *
+ *     Transition_DefaultDraw (0x00454e44):  5658110c  jal 0x00456158 / 00000000
+ *     FUN_004db630           (0x004db744):  5658110c  jal 0x00456158 / 00000000
+ *
+ * Replacing one jal with another jal of the same shape destroys NOTHING -- no
+ * prologue, no live delay slot -- which is precisely why this is safe where the
+ * earlier function-ENTRY patches (which overwrote a prologue) were not. The hook
+ * decodes the original target back out of the word it overwrote, so it needs no
+ * address of its own to call the original.
+ * =========================================================================
+ *
+ * Coverage is Bakisi/NTSC only, matching FLUX_MAP_SCOPE_BAKISI. A ZERO entry means
+ * "this build is not covered", and the installer refuses to write anything for it --
+ * it does NOT fall back to the NTSC address, which on another build would be some
+ * unrelated instruction. Everything outside Bakisi is deliberately zero.
+ */
+VariableAddress_t vaFluxDrawDispatchA = {
+#if UYA_PAL
+	.Lobby = 0x00000000,
+	.Bakisi = 0x00000000,
+	.Hoven = 0x00000000,
+	.OutpostX12 = 0x00000000,
+	.KorgonOutpost = 0x00000000,
+	.Metropolis = 0x00000000,
+	.BlackwaterCity = 0x00000000,
+	.CommandCenter = 0x00000000,
+	.BlackwaterDocks = 0x00000000,
+	.AquatosSewers = 0x00000000,
+	.MarcadiaPalace = 0x00000000,
+#else
+	.Lobby = 0x00000000,
+	.Bakisi = 0x00454e44,
+	.Hoven = 0x00000000,
+	.OutpostX12 = 0x00000000,
+	.KorgonOutpost = 0x00000000,
+	.Metropolis = 0x00000000,
+	.BlackwaterCity = 0x00000000,
+	.CommandCenter = 0x00000000,
+	.BlackwaterDocks = 0x00000000,
+	.AquatosSewers = 0x00000000,
+	.MarcadiaPalace = 0x00000000,
+#endif
+};
+
+VariableAddress_t vaFluxDrawDispatchB = {
+#if UYA_PAL
+	.Lobby = 0x00000000,
+	.Bakisi = 0x00000000,
+	.Hoven = 0x00000000,
+	.OutpostX12 = 0x00000000,
+	.KorgonOutpost = 0x00000000,
+	.Metropolis = 0x00000000,
+	.BlackwaterCity = 0x00000000,
+	.CommandCenter = 0x00000000,
+	.BlackwaterDocks = 0x00000000,
+	.AquatosSewers = 0x00000000,
+	.MarcadiaPalace = 0x00000000,
+#else
+	.Lobby = 0x00000000,
+	.Bakisi = 0x004db744,
+	.Hoven = 0x00000000,
+	.OutpostX12 = 0x00000000,
+	.KorgonOutpost = 0x00000000,
+	.Metropolis = 0x00000000,
+	.BlackwaterCity = 0x00000000,
+	.CommandCenter = 0x00000000,
+	.BlackwaterDocks = 0x00000000,
+	.AquatosSewers = 0x00000000,
+	.MarcadiaPalace = 0x00000000,
+#endif
+};

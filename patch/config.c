@@ -248,6 +248,42 @@ MenuElem_ListData_t dataDeadzone = {
     }
 };
 
+// Shared by every colour option: one list, so they cannot drift apart.
+#define FLUX_COLOR_ITEMS   \
+      "Vanilla",             \
+      "Red",                 \
+      "Green",               \
+      "Blue",                \
+      "Black",               \
+      "White",               \
+      "Purple",              \
+      "Pink",                \
+      "Yellow",              \
+      "Light Blue",          \
+      "Light Green",         \
+      "Light Red",           \
+      "Dark Red",            \
+      "Dark Green",          \
+      "Dark Blue",
+
+MenuElem_ListData_t dataFluxShotColor = {
+    .value = &config.fluxShotColor,
+    .stateHandler = NULL,
+    .count = FLUX_COLOR_COUNT,
+    .items = {
+      FLUX_COLOR_ITEMS
+    }
+};
+
+MenuElem_ListData_t dataFluxGlowColor = {
+    .value = &config.fluxGlowColor,
+    .stateHandler = NULL,
+    .count = FLUX_COLOR_COUNT,
+    .items = {
+      FLUX_COLOR_ITEMS
+    }
+};
+
 MenuElem_ListData_t dataCycleWeapon1 = {
     .value = &config.cycleWeapon1,
     .stateHandler = NULL,
@@ -580,6 +616,8 @@ MenuElem_t menuElementsGeneral[] = {
   { "Field of View", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataFieldOfView },
   { "FPS Counter", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableFpsCounter, "Toggles the in game FPS counter." },
   { "Hide Flux Reticle", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.hideFluxReticle, "Hide the Flux's reticle to show how tough you really are!" },
+  { "Flux Shot Color", listActionHandler, menuStateAlwaysEnabledHandler, &dataFluxShotColor, "Recolours the Flux Rifle's beam. Not available on every map." },
+  { "Flux Glow Color", listActionHandler, menuStateAlwaysEnabledHandler, &dataFluxGlowColor, "Recolours the band drawn around the Flux Rifle's beam. Not available on every map." },
   { "Hypershot Equip Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataHypershotEquipButton, "The button that you will press to take out the hypershot." },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   { "Player Sync Rate", listActionHandler, menuStateAlwaysEnabledHandler, &dataPlayerSyncRate, "Adjusts new player sync update frequency. High sends every tick, Very Low sends least often." },
