@@ -2436,21 +2436,21 @@ void patchHideFluxReticle(void)
  * preset is a whole colour word. Index 0 leaves the engine's colour alone.
  */
 static u32 fluxColorList[FLUX_COLOR_COUNT] = {
-	0x00804000,     // Vanilla      (the engine's own colour)
-	0x00FF0000,     // Red          (255,0,0)
+	0x00804000,     // Vanilla      (128,64,0)   the engine's own colour
+	0x000000FF,     // Red          (255,0,0)
 	0x0000FF00,     // Green        (0,255,0)
-	0x000000FF,     // Blue         (0,0,255)
+	0x00FF0000,     // Blue         (0,0,255)
 	0x00000000,     // Black        (0,0,0)
 	0x00FFFFFF,     // White        (255,255,255)
 	0x00800080,     // Purple       (128,0,128)
-	0x00FF62B0,     // Pink         (255,98,176)
-	0x00FFFF00,     // Yellow       (255,255,0)
-	0x0000A0FF,     // Light Blue   (0,160,255)
+	0x00AC5AFF,     // Pink         (255,90,172)
+	0x0000FFFF,     // Yellow       (255,255,0)
+	0x00FFA000,     // Light Blue   (0,160,255)
 	0x0035C835,     // Light Green  (53,200,53)
-	0x00FF4747,     // Light Red    (255,71,71)
-	0x008B0000,     // Dark Red     (139,0,0)
+	0x004747FF,     // Light Red    (255,71,71)
+	0x0000008B,     // Dark Red     (139,0,0)
 	0x00006400,     // Dark Green   (0,100,0)
-	0x0000008B,     // Dark Blue    (0,0,139)
+	0x008B0000,     // Dark Blue    (0,0,139)
 };
 
 /*
@@ -2534,42 +2534,41 @@ static void applyFluxGlowColor(u32 anchor, u32 color)
 
 /*
  * ============================== MAP SCOPE ==============================
- * 1 = only Bakisi touches the Flux feature. On any other map the hook is not
- * installed, no immediate is poked and no colour is broadcast; the log says which
- * map was seen and that it was skipped.
+ * The feature acts on every build whose beam anchor is tabled in the interop table,
+ * and on no other.
  *
- * This exists because Bakisi is the map under test and several maps in the interop
- * table share addresses or leave entries zero, so a result gathered across maps
- * cannot be attributed to one of them.
+ * This used to be hard-coded to Bakisi (`gameGetCurrentMapId() == MAP_ID_BAKISI`).
+ * That was right while Bakisi was the only verified map, but the anchor is now tabled
+ * and dump-verified for all 22 builds, so the restriction had stopped being a safety
+ * net and become a silent no-op everywhere else: on Hoven, OutpostX12 and the rest
+ * nothing was poked at all and the beam stayed the engine's default colour.
+ *
+ * Asking the interop table instead of a map id is the stronger check anyway. It
+ * cannot drift: a build with no verified address resolves to 0 and is skipped, which
+ * is exactly the "do not poke an address you have not verified" rule the map id was
+ * standing in for.
  * ======================================================================
  */
-#define FLUX_MAP_SCOPE_BAKISI 1
-
-#if FLUX_MAP_SCOPE_BAKISI
-/* The one map this build acts on. MAP_ID_BAKISI is 40 (libuya/map.h). */
-#define FLUX_SCOPED_MAP_ID MAP_ID_BAKISI
 
 /*
  * NAME :		fluxMapInScope
  * DESCRIPTION :
- * 			Is the game currently on the map this build acts on?
+ * 			Does this build have a verified beam anchor to write to?
  * NOTES :
- *          gameGetCurrentMapId() is the engine's own value, so this cannot drift out
- *          of step with the interop table the way a hard-coded slot index would.
+ *          GetAddress resolves through __LocalGetAddress, which is indexed by the
+ *          CURRENT map, so this cannot drift out of step with the map that is loaded.
  *
- *          Only defined when the scope is ON. With the switch off there is no
- *          function at all -- a `#define fluxMapInScope() (1)` fallback would collide
- *          with the function name, and an unused static function would be promoted to
- *          an error by this build.
+ *          UPDATE PHASE ONLY. Resolving an address is the one thing this feature has
+ *          repeatedly crashed on when done from the draw phase; the draw path reads
+ *          fluxBeamAnchorCached instead.
  * ARGS :
  * RETURN :		1 if the feature should act
  * AUTHOR :			Philip762
  */
 static int fluxMapInScope(void)
 {
-	return gameGetCurrentMapId() == FLUX_SCOPED_MAP_ID;
+	return GetAddress(&vaFluxBeamColor) != 0;
 }
-#endif
 
 /*
  * ---------------------------------------------------------------------------
@@ -2752,8 +2751,8 @@ void patchFluxColorSync(void)
 		return;
 
 	/*
-	 * Bakisi-only scope. Broadcasts stop on other maps too, so a client sitting on a
-	 * different map neither sends nor applies Flux colours.
+	 * Only broadcasts from a map the feature can act on. A client on an unverified
+	 * build has nothing to send and nothing to apply.
 	 */
 	if (!fluxMapInScope())
 		return;
@@ -2818,13 +2817,26 @@ void patchFluxColorSync(void)
  * Install the shot-draw hook. 0 leaves the hook out entirely (the shot then always
  * draws with the local player's colours) and is only useful for isolating a fault.
  *
- * ============================ BAKISI ONLY ============================
- * FLUX_MAP_SCOPE_BAKISI restricts the whole feature to Bakisi. Everything else --
- * Hoven included -- is left alone: the hook is not installed, no immediate is
- * poked, and the only thing logged is which map was seen. This exists because
- * Bakisi is the map being worked on and mixing in other maps' addresses makes any
- * result ambiguous.
- * =====================================================================
+ * ================== WHICH MAPS THE HOOK ACTUALLY REACHES ==================
+ * The colour write itself (patchFluxShotColor) now works on every build with a tabled
+ * anchor -- see the MAP SCOPE note above. The HOOK is narrower, because it needs two
+ * more tabled addresses than the colour does:
+ *
+ *   vaFluxShotDrawFunc   tabled for all 22 builds
+ *   vaFluxDrawDispatchA  tabled for NTSC Bakisi only
+ *   vaFluxDrawDispatchB  tabled for NTSC Bakisi only
+ *
+ * fluxInstallDrawDispatchHook skips any build whose dispatch entry is 0, so off
+ * Bakisi the local colour applies but each player's shot draws with the LOCAL
+ * player's colours rather than the shooter's. That is a graceful degradation, not a
+ * fault: the draw-table redirect alone does not survive a frame, because the engine
+ * re-registers the original callback every frame and only the pre-dispatch hook
+ * re-applies the redirect.
+ *
+ * RunDrawRoutines is not at a fixed address across builds -- the literal
+ * `jal 0x00456158` from ntsc.40.Bakisi matches nothing in the other dumps -- so each
+ * build needs its own discovery before its two call sites can be tabled.
+ * =========================================================================
  *
  * BAKISI ADDRESSES, VERIFIED TWO WAYS (on-disk ntsc.40.Bakisi.bin AND the Ghidra
  * program UYA_mp_bakisi_eeMemory.bin -- which for Bakisi agrees with the dump
@@ -3571,8 +3583,8 @@ void patchFluxShotColor(void)
 		return;
 
 	/*
-	 * Bakisi-only scope. This early return comes BEFORE any write, so on any other
-	 * map the engine's own immediates are never touched.
+	 * The scope check comes BEFORE any write, so on a build with no verified anchor
+	 * the engine's own immediates are never touched.
 	 */
 	if (!fluxMapInScope())
 		return;
@@ -4401,8 +4413,8 @@ int main(void)
 		if (mapId != fluxScopeLogged) {
 			fluxScopeLogged = mapId;
 			DPRINTF("FLUXMAP now id=%d %s\n", mapId,
-			        fluxMapInScope() ? "(IN SCOPE - Bakisi)"
-			                         : "(out of scope, feature disabled)");
+			        fluxMapInScope() ? "(anchor tabled, colour active)"
+			                         : "(no tabled anchor, feature idle)");
 		}
 
 		if ((now - fluxStatusLogged) >= 5000) {

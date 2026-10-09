@@ -1530,10 +1530,20 @@ VariableAddress_t vaFluxShotDrawFunc = {
  * address of its own to call the original.
  * =========================================================================
  *
- * Coverage is Bakisi/NTSC only, matching FLUX_MAP_SCOPE_BAKISI. A ZERO entry means
- * "this build is not covered", and the installer refuses to write anything for it --
- * it does NOT fall back to the NTSC address, which on another build would be some
- * unrelated instruction. Everything outside Bakisi is deliberately zero.
+ * Coverage is NTSC Bakisi only. A ZERO entry means "this build is not covered", and
+ * the installer refuses to write anything for it -- it does NOT fall back to the NTSC
+ * address, which on another build would be some unrelated instruction.
+ *
+ * This is narrower than the colour itself. vaFluxBeamColor and vaFluxShotDrawFunc are
+ * tabled for all 22 builds, so the picked colour applies everywhere; only the
+ * per-player swap needs these two, because the hook re-applies the draw-table redirect
+ * every frame and that requires knowing where the table is dispatched from.
+ *
+ * RunDrawRoutines moves between builds -- the literal `jal 0x00456158` from
+ * ntsc.40.Bakisi matches no other dump -- so each build needs its own discovery before
+ * its two call sites can be tabled here. Until then a zero entry is the honest value:
+ * off Bakisi every player's shot draws with the LOCAL player's colour rather than the
+ * shooter's.
  */
 VariableAddress_t vaFluxDrawDispatchA = {
 #if UYA_PAL
