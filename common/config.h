@@ -116,6 +116,7 @@ typedef struct PatchPatches {
   char weaponShotLag;
   char resurrectWeaponOrdering;
   char ctfLogic;
+  char healthBoxLogic;
   char swingshotGunBug;
 
   // gameConfig misc.

@@ -88,6 +88,7 @@ typedef struct PlayerSyncPlayerData
   PlayerSyncStateUpdateUnpacked_t StateUpdates[CMD_BUFFER_SIZE];
   int LastRecvState; // remote: sender's state at the last StateId we handled (kept last so earlier offsets don't move)
   int SenderInVehicle; // remote: the sender has reported the vehicle state since this hero got into its vehicle
+  int WrenchForced; // remote: playerSyncForceWrench ran during the current wrench attack
 } PlayerSyncPlayerData_t;
 
 
@@ -576,12 +577,21 @@ void playerSyncHandlePlayerState(Player* player)
 
   struct tNW_Player* netPlayer = player->pNetPlayer;
   if (netPlayer) {
-    netPlayer->padMessageElems[padIdx].msg.pad_data[2] = stateInterpolated.PadBits & 0xFF;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[3] = (stateInterpolated.PadBits >> 8) | padXMask; // see data->Pad
-    netPlayer->padMessageElems[padIdx].msg.pad_data[4] = 0x7F;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[5] = 0x7F;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[6] = stateInterpolated.MoveX;
-    netPlayer->padMessageElems[padIdx].msg.pad_data[7] = stateInterpolated.MoveY;
+    // the game's remote pad update (kisi: initial_remote_hero_update -> PadRemoteUpdate 0x00533180) copies
+    // pad_data + activePadFrame * 0x14 into pNetPlayer->padFrame every frame and runs ProcessPadInput on it, and it
+    // advances activePadFrame between our updates. fill every frame slot, not just frame 0: an unfilled (zero) frame
+    // reads as every button pressed (active low), so square / circle / R1 fired on their own every few frames and
+    // made the copy swap weapons (wrench after a hyperstrike, the same gun re-equipped over and over).
+    u8* padData = netPlayer->padMessageElems[padIdx].msg.pad_data;
+    for (i = 0; i < 5; ++i) {
+      u8* frame = padData + (i * 0x14);
+      frame[2] = stateInterpolated.PadBits & 0xFF;
+      frame[3] = (stateInterpolated.PadBits >> 8) | padXMask; // see data->Pad
+      frame[4] = 0x7F;
+      frame[5] = 0x7F;
+      frame[6] = stateInterpolated.MoveX;
+      frame[7] = stateInterpolated.MoveY;
+    }
     netPlayer->padMessageElems[padIdx].inUse = 1;
     netPlayer->activePadFrame = 0;
     netPlayer->pActivePadMsg = &netPlayer->padMessageElems[padIdx];
@@ -598,6 +608,17 @@ void playerSyncHandlePlayerState(Player* player)
   // the sender is in a wrench attack: make sure the wrench is in hand before the game needs it
   if (playerSyncStateNeedsWrench(stateInterpolated.State)) {
     playerSyncForceWrench(player);
+    data->WrenchForced = 1;
+  } else if (data->WrenchForced) {
+    // the attack is over: clean up after the forced wrench.
+    // ammo_gadget_1 (0x00534de8 kisi) asks for the sender's hand gadget every frame through the external request
+    // (0x1a19) while it differs from the hand slot. HandleGadgetSwitching (0x0050fe18 kisi) drops that request when it
+    // equals the pending gadget (0x1a1f), taking the swap as already under way. a request that came in during the attack
+    // (e.g. the sender re-equips the swingshot mid hyperstrike) can leave pending = that gadget with the swap cancelled
+    // because the wrench was busy, and then every later request is dropped: the copy keeps the wrench for good.
+    // clear the pending id once so the next request starts a real swap. a zero byte reads as "none".
+    data->WrenchForced = 0;
+    *(char*)((u32)player + 0x1a1f) = 0;
   }
 
   // vehicle exit

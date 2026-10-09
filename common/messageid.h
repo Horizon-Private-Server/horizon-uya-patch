@@ -146,6 +146,11 @@ enum CustomMessageId
     CUSTOM_MSG_ID_CLIENT_SET_GAME_STATE = 25,
 
     /*
+     * Sent from a client to the host when one of its local players is standing on a health box.
+     */
+    CUSTOM_MSG_ID_HEALTH_BOX_REQUEST_PICKUP = 26,
+
+    /*
      * Sent to server for game details/state
      */
     CUSTOM_MSG_PLAYER_SYNC_STATE_UPDATE = 27,
@@ -212,6 +217,13 @@ typedef struct ClientRequestPickUpFlag
     int PlayerId;
     u32 FlagUID;
 } ClientRequestPickUpFlag_t;
+
+typedef struct ClientRequestPickUpHealthBox
+{
+    int GameTime;
+    int PlayerId;
+    u32 HealthBoxUID;
+} ClientRequestPickUpHealthBox_t;
 
 typedef struct ScavengerHuntSettingsResponse
 {

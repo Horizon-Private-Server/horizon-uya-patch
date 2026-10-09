@@ -1415,36 +1415,6 @@ VariableAddress_t vaPadDeadzone_ScaleInput = {
 #endif
 };
 
-
-// CollDamageMobyDirect(float damageHp, Moby* pMoby, Moby* pDamager, int damageFlags, VECTOR ip, VECTOR momentum)
-VariableAddress_t vaCollDamageMobyDirect_Func = {
-#if UYA_PAL
-	.Lobby = 0x005b60c8,
-	.Bakisi = 0x00482c00,
-	.Hoven = 0x004847c0,
-	.OutpostX12 = 0x0047b5c0,
-	.KorgonOutpost = 0x00479140,
-	.Metropolis = 0x00478480,
-	.BlackwaterCity = 0x00475a38,
-	.CommandCenter = 0x00476580,
-	.BlackwaterDocks = 0x00478e00,
-	.AquatosSewers = 0x00478100,
-	.MarcadiaPalace = 0x00477a80,
-#else
-	.Lobby = 0x005b4190,
-	.Bakisi = 0x00480e08,
-	.Hoven = 0x00482908,
-	.OutpostX12 = 0x00479748,
-	.KorgonOutpost = 0x00477348,
-	.Metropolis = 0x00476688,
-	.BlackwaterCity = 0x00473bc0,
-	.CommandCenter = 0x004748c8,
-	.BlackwaterDocks = 0x00477108,
-	.AquatosSewers = 0x00476448,
-	.MarcadiaPalace = 0x00475d88,
-#endif
-};
-
 VariableAddress_t vaDisableWrenchAimAssist_Addr = {
 #if UYA_PAL
 	.Lobby = 0x0062fe08,
@@ -1528,5 +1498,127 @@ VariableAddress_t vaFluxIllumination2_Addr = {
 	.BlackwaterDocks = 0x004095a0,
 	.AquatosSewers = 0x004091a8,
 	.MarcadiaPalace = 0x00408220,
+#endif
+};
+
+//================================================
+//=============  patchHealthBoxPickup
+//================================================
+// pickup eligibility check: int (Player* hero, Moby* pickup)
+// Only NTSC Bakisi is known; 0 disables the health box logic on that map.
+VariableAddress_t vaPickupCanGive_Func = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00422d80,
+	.Hoven = 0x004247d8,
+	.OutpostX12 = 0x0041b708,
+	.KorgonOutpost = 0x00418d78,
+	.Metropolis = 0x00418608,
+	.BlackwaterCity = 0x00414470,
+	.CommandCenter = 0x0041cfd8,
+	.BlackwaterDocks = 0x0041f828,
+	.AquatosSewers = 0x0041eb40,
+	.MarcadiaPalace = 0x0041e4a8,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004224b0,
+	.Hoven = 0x00423e40,
+	.OutpostX12 = 0x0041ad88,
+	.KorgonOutpost = 0x004184a0,
+	.Metropolis = 0x00417d38,
+	.BlackwaterCity = 0x00413b58,
+	.CommandCenter = 0x0041c768,
+	.BlackwaterDocks = 0x0041efa0,
+	.AquatosSewers = 0x0041e2d0,
+	.MarcadiaPalace = 0x0041dc20,
+#endif
+};
+
+// pickup guber master update: "jal pickupCanGive" (grants to any hero through event 1)
+// Only NTSC Bakisi is known; 0 disables the health box logic on that map.
+VariableAddress_t vaPickupCanGive_MasterHook = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00423480,
+	.Hoven = 0x00424ed8,
+	.OutpostX12 = 0x0041be08,
+	.KorgonOutpost = 0x00419478,
+	.Metropolis = 0x00418d08,
+	.BlackwaterCity = 0x00414b70,
+	.CommandCenter = 0x0041d6d8,
+	.BlackwaterDocks = 0x0041ff28,
+	.AquatosSewers = 0x0041f240,
+	.MarcadiaPalace = 0x0041eba8,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00422bb0,
+	.Hoven = 0x00424540,
+	.OutpostX12 = 0x0041b488,
+	.KorgonOutpost = 0x00418ba0,
+	.Metropolis = 0x00418438,
+	.BlackwaterCity = 0x00414258,
+	.CommandCenter = 0x0041ce68,
+	.BlackwaterDocks = 0x0041f6a0,
+	.AquatosSewers = 0x0041e9d0,
+	.MarcadiaPalace = 0x0041e320,
+#endif
+};
+// pickup moby update, state 4: "jal pickupCanGive" (local hero touches -> state 5, 90 frame self heal)
+// Only NTSC Bakisi is known; 0 disables the health box logic on that map.
+VariableAddress_t vaPickupCanGive_LocalHook = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00423a84,
+	.Hoven = 0x004254dc,
+	.OutpostX12 = 0x0041c40c,
+	.KorgonOutpost = 0x00419a7c,
+	.Metropolis = 0x0041930c,
+	.BlackwaterCity = 0x00415174,
+	.CommandCenter = 0x0041dcdc,
+	.BlackwaterDocks = 0x0042052c,
+	.AquatosSewers = 0x0041f844,
+	.MarcadiaPalace = 0x0041f1ac,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004231b4,
+	.Hoven = 0x00424b44,
+	.OutpostX12 = 0x0041ba8c,
+	.KorgonOutpost = 0x004191a4,
+	.Metropolis = 0x00418a3c,
+	.BlackwaterCity = 0x0041485c,
+	.CommandCenter = 0x0041d46c,
+	.BlackwaterDocks = 0x0041fca4,
+	.AquatosSewers = 0x0041efd4,
+	.MarcadiaPalace = 0x0041e924,
+#endif
+};
+
+// GuberEvent::FindEvent(Guber*, int eventId, int pendingOnly)
+// Only NTSC Bakisi is known; 0 disables the health box logic on that map.
+VariableAddress_t vaGuberFindEvent_Func = {
+#if UYA_PAL
+	.Lobby = 0x00662678,
+	.Bakisi = 0x00534778,
+	.Hoven = 0x00536890,
+	.OutpostX12 = 0x0052c168,
+	.KorgonOutpost = 0x00529900,
+	.Metropolis = 0x00528c50,
+	.BlackwaterCity = 0x005264e8,
+	.CommandCenter = 0x005262a8,
+	.BlackwaterDocks = 0x00528b28,
+	.AquatosSewers = 0x00527e28,
+	.MarcadiaPalace = 0x005277a8,
+#else
+	.Lobby = 0x0065fda0,
+	.Bakisi = 0x00531ef8,
+	.Hoven = 0x00533f50,
+	.OutpostX12 = 0x00529868,
+	.KorgonOutpost = 0x00527080,
+	.Metropolis = 0x005263d0,
+	.BlackwaterCity = 0x00523be8,
+	.CommandCenter = 0x00523b68,
+	.BlackwaterDocks = 0x005263a8,
+	.AquatosSewers = 0x005256e8,
+	.MarcadiaPalace = 0x00525028,
 #endif
 };

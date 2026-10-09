@@ -512,9 +512,6 @@ void runCameraSpeedPatch(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-// set by fluxApplyRemoteHit: the moby we passed as the damager for a flux hit applied from the net message
-Moby* fluxPendingDamager[GAME_MAX_PLAYERS];
-
 int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
 {
 	// if player is already dead return 0
@@ -522,19 +519,7 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
 		return 0;
 
 	// pass through
-	int result = ((int (*)(Player *, Moby *, u64))GetAddress(&vaWhoHitMeFunc))(target, damageSource, a2);
-
-	// WhoHitMe works out the weapon from the damager's moby class (flux gun 0x1096, flux shot 0x1097).
-	// a flux hit applied from the message may have had to use the shooter's hero moby as the damager
-	// (no flux gun or shot exists on this client), which leaves the weapon unknown. say it was the flux.
-	int idx = target->mpIndex;
-	if (damageSource && idx >= 0 && idx < GAME_MAX_PLAYERS && fluxPendingDamager[idx] == damageSource) {
-		fluxPendingDamager[idx] = NULL;
-		if (result)
-			*(int*)((u32)target + 0x24d0) = GADGET_ID_FLUX; // lastDamagedMeGadgetId
-	}
-
-	return result;
+	return ((int (*)(Player *, Moby *, u64))GetAddress(&vaWhoHitMeFunc))(target, damageSource, a2);
 }
 /*
  * NAME :		patchKillStealing
@@ -1715,6 +1700,257 @@ void patchCTFFlag(void)
 }
 
 /*
+ * NAME :		healthBoxCanGiveHook
+ * DESCRIPTION :
+ * 			Replaces the game's pickup eligibility check at its two call sites: the pickup's guber
+ * 			master update (grants to any hero, judged on the master's lagged copy of that hero) and the
+ * 			pickup's moby update (a local hero touching it -> state 5, wait for the master, self heal
+ * 			after 90 frames). Health boxes are always refused there, so the game never grants them.
+ * 			patchHealthBoxPickup grants them instead, host authoritative.
+ * 			Every other pickup (weapon crates, ammo) goes to the game's check unchanged.
+ * NOTES :
+ * 			kisi: check 0x004224b0, called from 0x00422bb0 (master) and 0x004231b4 (local).
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+int healthBoxCanGiveHook(Player* player, Moby* moby)
+{
+	if (moby && moby->oClass == MOBY_ID_HEALTH_BOX_MP)
+		return 0;
+
+	return ((int (*)(Player*, Moby*))GetAddress(&vaPickupCanGive_Func))(player, moby);
+}
+
+/*
+ * NAME :		healthBoxIsAvailable
+ * DESCRIPTION :
+ * 			Returns non-zero if the health box can be picked up right now.
+ * NOTES :
+ * 			State 4 is the box sitting there ready. A pickup event (1) already queued for the box,
+ * 			sent or not, means someone already has it.
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+static int healthBoxIsAvailable(Moby* moby)
+{
+	if (!moby || moby->oClass != MOBY_ID_HEALTH_BOX_MP || mobyIsDestroyed(moby))
+		return 0;
+
+	if (moby->state != 4)
+		return 0;
+
+	Guber* guber = guberGetObjectByMoby(moby);
+	if (!guber)
+		return 0;
+
+	void* pendingPickup = ((void* (*)(Guber*, int, int))GetAddress(&vaGuberFindEvent_Func))(guber, 1, 0);
+	return pendingPickup == NULL;
+}
+
+/*
+ * NAME :		healthBoxPlayerCanTake
+ * DESCRIPTION :
+ * 			Same rules as the game's check for a health box: alive, not driving, hurt.
+ * NOTES :
+ * 			Only used for local players, whose health is their own and up to date.
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+static int healthBoxPlayerCanTake(Player* player)
+{
+	if (!player || !player->pMoby)
+		return 0;
+
+	if (playerDeobfuscate(&player->stateType, 0) == PLAYER_TYPE_DEATH || playerIsDead(player))
+		return 0;
+
+	if (player->vehicle && playerDeobfuscate(&player->state, 0) == PLAYER_STATE_VEHICLE)
+		return 0;
+
+	u32 hpBits = playerDeobfuscate(&player->hitPoints, 0);
+	u32 maxHpBits = playerDeobfuscate(&player->maxHP, 0);
+	float hp = *(float*)&hpBits;
+	float maxHp = *(float*)&maxHpBits;
+	return hp > 0 && hp < maxHp;
+}
+
+/*
+ * NAME :		healthBoxGrant
+ * DESCRIPTION :
+ * 			Host only. Gives the health box to the player through the game's own pickup event (1),
+ * 			so every client heals that player and hides the box, and the game's respawn timer runs.
+ * NOTES :
+ * 			The game creates this event with a 250 ms dispatch delay (0xfa) so every client runs it at
+ * 			once. We use 0: it runs here now and on the other clients as soon as it arrives.
+ * 			Event data: the hero's guber UID (what the game's handler looks the hero up by).
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+static void healthBoxGrant(Moby* moby, Player* player)
+{
+	if (!healthBoxIsAvailable(moby) || !player)
+		return;
+
+	Guber* guber = guberGetObjectByMoby(moby);
+	if (!guber)
+		return;
+
+	GuberEvent* event = guberEventCreate(guber, 1, 0, 0);
+	if (!event)
+		return;
+
+	u32 heroUID = player->guber.Id.UID;
+	memcpy(&event->NetEvent.NetData[event->NetDataOffset], &heroUID, sizeof(heroUID));
+	event->NetDataOffset += sizeof(heroUID);
+	if (event->NetEvent.NetDataSize < event->NetDataOffset)
+		event->NetEvent.NetDataSize = event->NetDataOffset;
+
+	DPRINTF("health box %08X given to player %d at %d\n", guber->Id.UID, player->mpIndex, gameGetTime());
+}
+
+/*
+ * NAME :		healthBoxRequestPickup
+ * DESCRIPTION :
+ * 			Asks for the health box for one of our local players.
+ * 			If host, the box is given right away.
+ * 			If not host, a request goes to the host, at most once every 10 frames per player.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+static void healthBoxRequestPickup(Moby* moby, Player* player)
+{
+	static int requestCounters[GAME_MAX_PLAYERS] = {0,0,0,0,0,0,0,0};
+	int pIdx = player->mpIndex;
+	if (pIdx < 0 || pIdx >= GAME_MAX_PLAYERS)
+		return;
+
+	if (gameAmIHost()) {
+		healthBoxGrant(moby, player);
+	} else if (requestCounters[pIdx] == 0) {
+		void* dmeConnection = netGetDmeServerConnection();
+		if (dmeConnection) {
+			ClientRequestPickUpHealthBox_t msg;
+			msg.GameTime = gameGetTime();
+			msg.PlayerId = pIdx;
+			msg.HealthBoxUID = guberGetUID(moby);
+			netSendCustomAppMessage(dmeConnection, gameGetHostId(), CUSTOM_MSG_ID_HEALTH_BOX_REQUEST_PICKUP, sizeof(ClientRequestPickUpHealthBox_t), &msg);
+			requestCounters[pIdx] = 10;
+			DPRINTF("sent request health box pickup %d\n", gameGetTime());
+		}
+	} else {
+		requestCounters[pIdx]--;
+	}
+}
+
+/*
+ * NAME :		onRemoteClientRequestPickUpHealthBox
+ * DESCRIPTION :
+ * 			Host: a client says one of its local players is standing on a health box and is hurt.
+ * 			First request for an available box wins.
+ * NOTES :
+ * 			The client's own position and health are trusted: our copy of that player lags behind
+ * 			(that lag is what delayed the game's pickups). Only the box is checked here.
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+int onRemoteClientRequestPickUpHealthBox(void * connection, void * data)
+{
+	ClientRequestPickUpHealthBox_t msg;
+	memcpy(&msg, data, sizeof(msg));
+
+	if (!isInGame() || !gameAmIHost() || !patched.healthBoxLogic)
+		return sizeof(ClientRequestPickUpHealthBox_t);
+
+	if (msg.PlayerId < 0 || msg.PlayerId >= GAME_MAX_PLAYERS)
+		return sizeof(ClientRequestPickUpHealthBox_t);
+
+	Player** players = playerGetAll();
+	Player* player = players[msg.PlayerId];
+	if (!player)
+		return sizeof(ClientRequestPickUpHealthBox_t);
+
+	GuberMoby* gm = (GuberMoby*)guberGetObjectByUID(msg.HealthBoxUID);
+	if (gm && gm->Moby)
+		healthBoxGrant(gm->Moby, player);
+
+	return sizeof(ClientRequestPickUpHealthBox_t);
+}
+
+/*
+ * NAME :		patchHealthBoxPickup
+ * DESCRIPTION :
+ * 			Host authoritative health box pickups (same pattern as patchCTFFlag).
+ * 			The game only lets a box's guber master grant it, judged on the master's lagged copy of the
+ * 			player, with the master moving between clients; everyone else waits a round trip or more
+ * 			(up to the 90 frame self heal), plus the event's 250 ms dispatch delay.
+ * 			Here each client checks only its own local players against the boxes and asks the host;
+ * 			the host checks the box and sends the game's pickup event.
+ * NOTES :
+ * 			Needs the per-map addresses in interop/patch.c; maps without them keep the game's logic.
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+void patchHealthBoxPickup(void)
+{
+	VECTOR t;
+	int i;
+
+	if (!isInGame())
+		return;
+
+	u32 canGiveFunc = GetAddress(&vaPickupCanGive_Func);
+	u32 masterHook = GetAddress(&vaPickupCanGive_MasterHook);
+	u32 localHook = GetAddress(&vaPickupCanGive_LocalHook);
+	if (!canGiveFunc || !masterHook || !localHook || !GetAddress(&vaGuberFindEvent_Func))
+		return;
+
+	if (!patched.healthBoxLogic) {
+		u32 jalCanGive = 0x0C000000 | (canGiveFunc >> 2);
+		u32 jalHook = 0x0C000000 | ((u32)&healthBoxCanGiveHook >> 2);
+		u32 masterOp = *(u32*)masterHook;
+		u32 localOp = *(u32*)localHook;
+
+		// only over the game's own call (or our hook, if this level's code was already patched)
+		if ((masterOp != jalCanGive && masterOp != jalHook) || (localOp != jalCanGive && localOp != jalHook))
+			return;
+
+		netInstallCustomMsgHandler(CUSTOM_MSG_ID_HEALTH_BOX_REQUEST_PICKUP, &onRemoteClientRequestPickUpHealthBox);
+		HOOK_JAL(masterHook, &healthBoxCanGiveHook);
+		HOOK_JAL(localHook, &healthBoxCanGiveHook);
+		FlushCache(0);
+		FlushCache(2);
+		patched.healthBoxLogic = 1;
+	}
+
+	// our local players only: their position and health are exact here
+	Player** players = playerGetAll();
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		Player* player = players[i];
+		if (!player || !player->isLocal || !healthBoxPlayerCanTake(player))
+			continue;
+
+		Moby* moby = mobyListGetStart();
+		while ((moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP))) {
+			// same reach as the game: within 2 units of the box
+			vector_subtract(t, moby->position, player->playerPosition);
+			if (vector_sqrmag(t) < (2*2) && healthBoxIsAvailable(moby)) {
+				healthBoxRequestPickup(moby, player);
+				break;
+			}
+			++moby;
+		}
+	}
+}
+
+/*
  * NAME :		patchQuickSelectTimer
  * DESCRIPTION :	Uses a timer for quick select, so I can fine tune the delay of opening it.
  * NOTES :
@@ -2161,94 +2397,6 @@ void runVoteToEndLogic(void)
 }
 
 /*
- * NAME :		fluxApplyRemoteHit
- * DESCRIPTION :
- * 			A remote player's flux message says it hit one of this client's own players: apply the hit now.
- * NOTES :
- * 			Normally the hit only lands if this client re-fires the shot and that copy reaches the player.
- * 			That copy is never made if the shooter isn't holding the flux here when the event is taken off
- * 			the queue (the game drops the event), and it can miss or be blocked.
- * 			Only the victim's own client applies damage, so this does nothing on other clients.
- * 			If the re-fired shot also lands, the game's own post-hit window ignores it (same or lower damage).
- * ARGS : 
- * RETURN :
- * AUTHOR :
- */
-void fluxApplyRemoteHit(struct tNW_GadgetEventMessage * message)
-{
-	int i;
-	u32 uid = message->TargetUID;
-
-	// nothing hit, or what was hit isn't a player (player gubers have these bits clear)
-	if (uid == 0xFFFFFFFF || (uid & 0x0F000000))
-		return;
-
-	Player** players = playerGetAll();
-	int shooterIdx = message->PlayerIndex & 0xF;
-	if (shooterIdx >= GAME_MAX_PLAYERS)
-		return;
-
-	Player* shooter = players[shooterIdx];
-	if (!shooter || shooter->isLocal || !shooter->pMoby)
-		return;
-
-	// find the player that was hit, must be local to this client
-	Player* victim = NULL;
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		Player* p = players[i];
-		if (p && p->pMoby && guberGetUID(p->pMoby) == uid) {
-			victim = p;
-			break;
-		}
-	}
-	if (!victim || !victim->isLocal || victim == shooter || playerIsDead(victim))
-		return;
-
-	u32 damageFunc = GetAddress(&vaCollDamageMobyDirect_Func);
-	if (!damageFunc)
-		return;
-
-	// flux damage, v2 if the shooter has the upgrade
-	int defIdx = GADGET_ID_FLUX;
-	if (shooter->pNetPlayer && shooter->pNetPlayer->pNetPlayerData && (shooter->pNetPlayer->pNetPlayerData->rank[1] & 0x080000))
-		defIdx = GADGET_ID_FLUX_V2;
-	float damage = weaponGadgetList()[defIdx].damage;
-
-	// hit point: the message carries it relative to the hit player's moby
-	VECTOR ip, momentum;
-	ip[0] = victim->pMoby->position[0] + message->TargetDir[0];
-	ip[1] = victim->pMoby->position[1] + message->TargetDir[1];
-	ip[2] = victim->pMoby->position[2] + message->TargetDir[2];
-	ip[3] = 0;
-	momentum[0] = ip[0] - message->FiringLoc[0];
-	momentum[1] = ip[1] - message->FiringLoc[1];
-	momentum[2] = ip[2] - message->FiringLoc[2];
-	momentum[3] = 0;
-	vector_normalize(momentum, momentum);
-
-	// damager: the shooter's flux gun if they hold it here, else their hero moby.
-	// the owner of the hit comes from this moby, the weapon id is fixed up in patchKillStealing_Hook.
-	Moby* damager = shooter->pMoby;
-	if (shooter->gadget.weapon.id == GADGET_ID_FLUX && shooter->gadget.weapon.pMoby)
-		damager = shooter->gadget.weapon.pMoby;
-
-	if (victim->mpIndex >= 0 && victim->mpIndex < GAME_MAX_PLAYERS)
-		fluxPendingDamager[victim->mpIndex] = damager;
-
-	// damage flags, same as the game's own flux hits:
-	// v1: 0x10001 (direct hit). other clients flinch the hit player themselves from their copy of the shot,
-	//     and the hit player's client does not announce the hit. adding 0x01000000 here made it announce,
-	//     so observers saw two flinches.
-	// v2: 0x01010001 (the v2 shot also does its splash, which carries 0x01000000). other clients ignore a
-	//     flux hit with that flag on a remote player and wait for the hit player's client to announce it.
-	//     without the flag here nobody announced it, so observers saw no flinch at all.
-	int damageFlags = (defIdx == GADGET_ID_FLUX_V2) ? 0x01010001 : 0x10001;
-	((void (*)(float, Moby*, Moby*, int, float*, float*))damageFunc)(damage, victim->pMoby, damager, damageFlags, ip, momentum);
-
-	DPRINTF("flux hit from player %d applied to local player %d (%d dmg x100)\n", shooterIdx, victim->mpIndex, (int)(damage * 100));
-}
-
-/*
  * NAME :		handleGadgetEvent
  * DESCRIPTION :
  * 			Reads gadget events and patches them if needed.
@@ -2278,10 +2426,30 @@ void handleGadgetEvents(int player, char gadgetEventType, int dispatchTime, shor
 		dispatchTime = gameGetTime() - TIME_SECOND;
 	}
 
-	// a remote flux shot that hit one of our own players always counts
-	if (message && gameConfig.grFluxShotsAlwaysHit && gadgetId == GADGET_ID_FLUX && gadgetEventType == 8)
-		fluxApplyRemoteHit(message);
+/*
+	DPRINTF("handleGadgetEvents called with:\n");
+	DPRINTF("  player: %08x\n", player);
+	DPRINTF("  gadgetEventType: %d\n", (int)gadgetEventType);
+	DPRINTF("  dispatchTime: %d\n", dispatchTime);
+	DPRINTF("  gadgetId: %d\n", gadgetId);
+	DPRINTF("  gadgetType: %d\n", gadgetType);
 
+	if (message) {
+			DPRINTF("  message:\n");
+			DPRINTF("    GadgetId: %d\n", message->GadgetId);
+			DPRINTF("    PlayerIndex: %d\n", (int)message->PlayerIndex);
+			DPRINTF("    GadgetEventType: %d\n", (int)message->GadgetEventType);
+			DPRINTF("    ActiveTime: %d\n", message->ActiveTime);
+			DPRINTF("    TargetUID: %u\n", message->TargetUID);
+			DPRINTF("    FiringLoc: [%.2f, %.2f, %.2f]\n",
+							message->FiringLoc[0], message->FiringLoc[1], message->FiringLoc[2]);
+			DPRINTF("    TargetDir: [%.2f, %.2f, %.2f]\n",
+							message->TargetDir[0], message->TargetDir[1], message->TargetDir[2]);
+			DPRINTF("Broadcasting message from: %p\n", (void*)handleGadgetEvents);
+	} else {
+			DPRINTF("  message: NULL\n");
+	}
+*/
 	// run base command
 	((void (*)(int, char, int, short, int, struct tNW_GadgetEventMessage*))GetAddress(&vaGadgetEventFunc))(player, gadgetEventType, dispatchTime, gadgetId, gadgetType, message);
 }
@@ -3329,6 +3497,9 @@ int main(void)
 
 		// Patch CTF Flag Logic with our own.
 		patchCTFFlag();
+
+		// Patch Health Box pickups: host authoritative, requested by the player's own client.
+		patchHealthBoxPickup();
 
 		// Patch Level of Detail
 		patchLevelOfDetail();

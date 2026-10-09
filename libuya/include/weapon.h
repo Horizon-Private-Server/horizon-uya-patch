@@ -97,7 +97,7 @@ typedef struct Weapons {
     }
 } Weapons;
 
-// layout checked against the game (kisi: flux_sendshot 0x00408b80 builds it, 0x00548894 reads ActiveTime at +4).
+// layout checked against the game (bakisi: flux_sendshot 0x00408b80 builds it, 0x00548894 reads ActiveTime at +4).
 // this used to have a char ExtraData at +4, which pushed every field after it 4 bytes too far:
 // "ActiveTime" was really TargetUID.
 struct tNW_GadgetEventMessage { // 0x24
