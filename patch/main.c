@@ -132,6 +132,7 @@ int dscrprintlinescount = 0;
 
 extern VariableAddress_t vaFluxShotDrawFunc;
 extern VariableAddress_t vaFluxRegDrawCount;
+extern VariableAddress_t vaFluxRegDrawFuncs;
 extern VariableAddress_t vaFluxDrawDispatchA;
 extern VariableAddress_t vaFluxDrawDispatchB;
 extern float _lodScale;
@@ -2955,8 +2956,19 @@ void patchFluxColorSync(void)
  * (that is how the base is identified), so Func[] and Moby[] can be derived from it.
  * ==========================================================================
  */
-#define FLUX_REGDRAW_FUNCS_DELTA (0x12AF4)
-#define FLUX_REGDRAW_MOBYS_DELTA (0x12BF4)
+#define FLUX_REGDRAW_ARR_GAP     (0x100)
+
+/*
+ * Moby[] is always exactly this far past Func[] -- verified in all 20 builds by reading
+ * each one's own RegisterDrawFunction in Ghidra. That gap is the ONLY constant here.
+ *
+ * The three addresses themselves are NOT derivable from one another: they are three
+ * separate statics the linker places independently, and every one of them moves per
+ * build. NTSC Bakisi is 0x0024808C / 0x0025AB80; NTSC Metropolis is 0x0024800C /
+ * 0x0025AA40; NTSC Aquatos is 0x00247D0C / 0x0025A780. Assuming a fixed count->Func[]
+ * offset is what made this feature look Bakisi-only, so both addresses are tabled in
+ * patch.c (vaFluxRegDrawCount, vaFluxRegDrawFuncs) and neither is computed.
+ */
 
 /* RegisterDrawFunction itself caps the table at 0x40, so this cannot be exceeded. */
 #define FLUX_REGDRAW_MAX     (0x40)
@@ -3049,6 +3061,31 @@ static int fluxScopeCached = 0;
 static u32 fluxShotDrawCached = 0;
 static u32 fluxBeamAnchorCached = 0;
 static u32 fluxRegDrawCached = 0;
+static u32 fluxRegDrawFuncsCached = 0;
+
+/*
+ * What the last draw-table scan actually SAW. The scan itself runs in the draw phase
+ * and must not print, so it records these and the update-phase status line reports them.
+ *
+ * This exists because "the redirect never happened" has three completely different
+ * causes and the log could not tell them apart:
+ *
+ *   raw=0                 the base resolved but the count word is empty -- the table is
+ *                         not populated yet, or the base is not the table after all
+ *   raw>0, match=0        the table is real but NO slot equals shotDraw, i.e. the address
+ *                         in vaFluxShotDrawFunc is not the callback the engine registers.
+ *                         f0..f3 show what the table really holds.
+ *   match>0, wrapper=0    the redirect is being overwritten between the scan and the
+ *                         engine's dispatch
+ *
+ * `total` is cumulative so a match at ANY point is provable even if the last scan missed.
+ * `sd` is the address being compared against, so it can be checked against f0..f3.
+ */
+static u32 fluxRegRawCount = 0;
+static u32 fluxRegScanSlots = 0;
+static u32 fluxRegScanMatch = 0;
+static u32 fluxRegMatchTotal = 0;
+static u32 fluxRegFirst[4] = { 0, 0, 0, 0 };
 
 /*
  * ---------------------------------------------------------------------------
@@ -3379,6 +3416,7 @@ static void fluxRunDrawScan(void)
 	volatile u32 *mobys;
 	u32 shotDraw = fluxShotDrawCached;
 	u32 base = fluxRegDrawCached;
+	u32 funcsAddr = fluxRegDrawFuncsCached;
 	u32 count;
 	u32 i;
 
@@ -3387,7 +3425,7 @@ static void fluxRunDrawScan(void)
 	 * whole point of tabling it: the previous hard-coded Bakisi base was read on every
 	 * map, and off Bakisi that meant reading unrelated statics.
 	 */
-	if (!fluxScopeCached || shotDraw == 0 || base == 0)
+	if (!fluxScopeCached || shotDraw == 0 || base == 0 || funcsAddr == 0)
 		return;
 
 	/*
@@ -3396,17 +3434,26 @@ static void fluxRunDrawScan(void)
 	 * would touch unrelated memory.
 	 */
 	count = *(volatile u32*)base;
+	fluxRegRawCount = count;
 	if (count > FLUX_REGDRAW_MAX)
 		count = FLUX_REGDRAW_MAX;
 
-	funcs = (volatile u32*)(base + FLUX_REGDRAW_FUNCS_DELTA);
-	mobys = (volatile u32*)(base + FLUX_REGDRAW_MOBYS_DELTA);
+	funcs = (volatile u32*)funcsAddr;
+	mobys = (volatile u32*)(funcsAddr + FLUX_REGDRAW_ARR_GAP);
+
+	fluxRegScanSlots = count;
+	fluxRegScanMatch = 0;
+	for (i = 0; i < 4; ++i)
+		fluxRegFirst[i] = (i < count) ? funcs[i] : 0;
 
 	for (i = 0; i < count; ++i) {
 		FluxRegEntry_t *e;
 
 		if (funcs[i] != shotDraw)
 			continue;
+
+		fluxRegScanMatch++;
+		fluxRegMatchTotal++;
 
 		e = fluxRegSlot((Moby*)mobys[i]);
 		e->moby = (Moby*)mobys[i];
@@ -4405,6 +4452,7 @@ int main(void)
 		fluxShotDrawCached = fluxScopeCached ? GetAddress(&vaFluxShotDrawFunc) : 0;
 		fluxBeamAnchorCached = fluxScopeCached ? GetAddress(&vaFluxBeamColor) : 0;
 		fluxRegDrawCached = fluxScopeCached ? GetAddress(&vaFluxRegDrawCount) : 0;
+		fluxRegDrawFuncsCached = fluxScopeCached ? GetAddress(&vaFluxRegDrawFuncs) : 0;
 
 		fluxInstallDrawDispatchHook();
 
@@ -4468,15 +4516,23 @@ int main(void)
 		if ((now - fluxStatusLogged) >= 5000) {
 			fluxStatusLogged = now;
 			/*
-			 * regdraw is the registered-draw table base. It must be non-zero and must
-			 * track the build: when it was a hard-coded Bakisi literal this line read
-			 * regdraw=0x0024808C on every map while wrapper stayed 0, which is exactly
-			 * how "per-player colour only works on Bakisi" looked.
+			 * regdraw / funcs are the two registered-draw table addresses. Both must be
+			 * non-zero and must track the build: when they were hard-coded Bakisi
+			 * literals this line read regdraw=0x0024808C on every map while wrapper
+			 * stayed 0, and f0 held a MOBY pointer (0x01C6A040, the same value that
+			 * appears as "sniper hit 01C6A040") because that address is not the table on
+			 * any build but Bakisi. That is exactly how "per-player colour only works on
+			 * Bakisi" looked.
 			 */
 			DPRINTF("FLUXHOOK dispatch sites=%d refused=%d run=0x%08X "
-			        "regdraw=0x%08X wrapper=%u\n",
+			        "regdraw=0x%08X funcs=0x%08X raw=%u slots=%u match=%u total=%u "
+			        "sd=0x%08X f0=0x%08X f1=0x%08X f2=0x%08X f3=0x%08X wrapper=%u\n",
 			        fluxDispatchSites, fluxDispatchRefused,
-			        fluxDispatchTarget, fluxRegDrawCached, fluxWrapperCalls);
+			        fluxDispatchTarget, fluxRegDrawCached,
+			        fluxRegDrawFuncsCached, fluxRegRawCount, fluxRegScanSlots,
+			        fluxRegScanMatch, fluxRegMatchTotal, fluxShotDrawCached,
+			        fluxRegFirst[0], fluxRegFirst[1], fluxRegFirst[2],
+			        fluxRegFirst[3], fluxWrapperCalls);
 		}
 	}
 #endif

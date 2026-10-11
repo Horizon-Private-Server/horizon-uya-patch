@@ -1504,54 +1504,103 @@ VariableAddress_t vaFluxShotDrawFunc = {
 };
 
 /*
- * The engine's registered-draw table: the COUNT word. Func[] and Moby[] follow it at
- * fixed offsets (FLUX_REGDRAW_FUNCS_DELTA / MOBYS_DELTA in main.c).
+ * ==================== THE ENGINE'S REGISTERED-DRAW TABLE ==================
+ * RegisterDrawFunction keeps its table in THREE SEPARATE STATICS whose addresses the
+ * linker places independently, so ALL THREE move per build:
  *
- * THIS MOVES PER BUILD, and that is the whole reason this table exists. It used to be
- * three hard-coded literals taken from Bakisi -- 0x0024808C / 0x0025AB80 / 0x0025AC80.
- * Every other map keeps the same table somewhere else: Hoven at 0x002484CC, OutpostX12
- * at 0x002483CC, CommandCenter at 0x00247C0C, PAL Bakisi at 0x00247F0C. On those builds
- * the scan read an unrelated variable as the count and unrelated memory as Func[], so
- * nothing ever matched, no slot was redirected, and the per-player swap silently did
- * nothing. The two-client log showed it exactly:
+ *   count word   e.g. Bakisi 0x0024808C, Metropolis 0x0024800C, Hoven 0x0024828C
+ *   Func[]       e.g. Bakisi 0x0025AB80, Metropolis 0x0025AA40, Aquatos 0x0025A780
+ *   Moby[]       always exactly 0x100 after Func[] -- the ONE constant (see below)
  *
- *   FLUXGATE id=41 inGame=1 scope=1 anchor=0x00408BF8 shape=1    <- scope and address FINE
- *   FLUXHOOK dispatch sites=2 refused=0 run=0x00457A10 wrapper=0 <- yet never entered
+ * Each entry below was READ OFF the real RegisterDrawFunction in that build's own
+ * memory image, opened in Ghidra under Ratchet 3/PS2/{NTSC-U,PAL}/Online/Levels.
+ * The function is a fixed shape, which is what makes it findable in a build that has
+ * never been analysed:
  *
- * Only two of the 22 builds happened to share Bakisi's layout (NTSC Bakisi and NTSC
- * Metropolis), which is why the feature looked Bakisi-only. These values come from the
- * same scan that locates RunDrawRoutines: it finds this base by requiring
- * {base, base+0x12AF4, base+0x12BF4} to all be referenced in the build, and check_
- * dispatch_sites.py re-derives every one of them from the dumps.
+ *   lui  a2,HI ; lw  a2,LO(a2)          -> the count word
+ *   move a3,a0  ; slti v0,a2,0x40       -> cap
+ *   lui  v1,HI2; addiu v1,v1,LO2        -> Moby[]   (sw t0,0x0(v1), t0 = the moby)
+ *   lui  a0,HI3; addiu a0,a0,LO3        -> Func[]   (sw a3,0x0(v0), a3 = the callback)
+ *   sw   a3,0x0(v0) ; sw t0,0x0(v1) ; sw a1,LO(at)   -> Func[i]=cb; Moby[i]=moby; count++
  *
- * A zero entry means the base was not found (the Lobby, a different build with no
- * combat), and the scan then declines to run rather than read garbage.
+ * The `sw a3,0x0(v0)` + `sw t0,0x0(v1)` pair (bytes AC 47 00 00 AC 68 00 00) identifies
+ * it; the two `lui`/`addiu` pairs immediately before it are the two arrays. The gap is
+ * 0x100 in every build checked, which is why Moby[] needs no table of its own.
+ *
+ * WHAT THIS REPLACES. The table used to be three literals taken from Bakisi and assumed
+ * to hold everywhere -- 0x0024808C / 0x0025AB80 / 0x0025AC80. Only builds that happened
+ * to share Bakisi's statics layout worked; everywhere else the scan read an unrelated
+ * variable as the count and unrelated memory as Func[], matched nothing, redirected
+ * nothing, and per-player colour silently did nothing. The two-client log showed it:
+ *
+ *   FLUXGATE id=44 inGame=1 scope=1 anchor=0x003FEB10 shape=1     <- scope/address FINE
+ *   FLUXHOOK ... regdraw=0x0024808C raw=2 slots=2 match=0 total=0  <- never matched
+ *              sd=0x003FE540 f0=0x01C6A040 f1=0x01C6A640 wrapper=0
+ *
+ * f0 held 0x01C6A040 -- a MOBY pointer (the same value appears as "sniper hit
+ * 01C6A040") -- because 0x0024808C is not Metropolis's count at all.
+ *
+ * A zero entry means the build was not decoded (the Lobby, which is a different image
+ * with no combat); the scan then declines to run rather than read garbage.
  */
 VariableAddress_t vaFluxRegDrawCount = {
 #if UYA_PAL
 	.Lobby = 0x00000000,
 	.Bakisi = 0x00247f0c,
-	.Hoven = 0x0024834c,
-	.OutpostX12 = 0x0024824c,
-	.KorgonOutpost = 0x002480cc,
+	.Hoven = 0x0024810c,
+	.OutpostX12 = 0x0024800c,
+	.KorgonOutpost = 0x00247e8c,
 	.Metropolis = 0x00247f0c,
-	.BlackwaterCity = 0x002480cc,
+	.BlackwaterCity = 0x00247e8c,
 	.CommandCenter = 0x00247a8c,
-	.BlackwaterDocks = 0x00247dcc,
-	.AquatosSewers = 0x00247d0c,
+	.BlackwaterDocks = 0x00247b8c,
+	.AquatosSewers = 0x00247b8c,
 	.MarcadiaPalace = 0x00247b8c,
 #else
 	.Lobby = 0x00000000,
 	.Bakisi = 0x0024808c,
-	.Hoven = 0x002484cc,
-	.OutpostX12 = 0x002483cc,
-	.KorgonOutpost = 0x0024824c,
-	.Metropolis = 0x0024808c,
-	.BlackwaterCity = 0x0024824c,
+	.Hoven = 0x0024828c,
+	.OutpostX12 = 0x0024818c,
+	.KorgonOutpost = 0x0024800c,
+	.Metropolis = 0x0024800c,
+	.BlackwaterCity = 0x0024800c,
 	.CommandCenter = 0x00247c0c,
-	.BlackwaterDocks = 0x00247f4c,
-	.AquatosSewers = 0x00247e8c,
+	.BlackwaterDocks = 0x00247d0c,
+	.AquatosSewers = 0x00247d0c,
 	.MarcadiaPalace = 0x00247d0c,
+#endif
+};
+
+/*
+ * Func[]: the array the callback is stored into, indexed by the count above. Read from
+ * the `lui`/`addiu` pair whose register is the one `sw a3,0x0(v0)` stores through.
+ * Moby[] is always this + FLUX_REGDRAW_ARR_GAP (0x100).
+ */
+VariableAddress_t vaFluxRegDrawFuncs = {
+#if UYA_PAL
+	.Lobby = 0x00000000,
+	.Bakisi = 0x0025aa00,
+	.Hoven = 0x0025ab40,
+	.OutpostX12 = 0x0025aa40,
+	.KorgonOutpost = 0x0025a8c0,
+	.Metropolis = 0x0025a900,
+	.BlackwaterCity = 0x0025a8c0,
+	.CommandCenter = 0x0025a480,
+	.BlackwaterDocks = 0x0025a5c0,
+	.AquatosSewers = 0x0025a600,
+	.MarcadiaPalace = 0x0025a580,
+#else
+	.Lobby = 0x00000000,
+	.Bakisi = 0x0025ab80,
+	.Hoven = 0x0025acc0,
+	.OutpostX12 = 0x0025abc0,
+	.KorgonOutpost = 0x0025aa40,
+	.Metropolis = 0x0025aa40,
+	.BlackwaterCity = 0x0025aa40,
+	.CommandCenter = 0x0025a600,
+	.BlackwaterDocks = 0x0025a740,
+	.AquatosSewers = 0x0025a780,
+	.MarcadiaPalace = 0x0025a700,
 #endif
 };
 
