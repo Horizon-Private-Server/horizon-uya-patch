@@ -52,5 +52,6 @@ VariableAddress_t vaPadDeadzone_OffsetInput;
 VariableAddress_t vaPadDeadzone_ScaleInput;
 VariableAddress_t vaFluxBeamColor;
 VariableAddress_t vaFluxShotDrawFunc;
+VariableAddress_t vaFluxRegDrawCount;
 VariableAddress_t vaFluxDrawDispatchA;
 VariableAddress_t vaFluxDrawDispatchB;

@@ -1504,6 +1504,58 @@ VariableAddress_t vaFluxShotDrawFunc = {
 };
 
 /*
+ * The engine's registered-draw table: the COUNT word. Func[] and Moby[] follow it at
+ * fixed offsets (FLUX_REGDRAW_FUNCS_DELTA / MOBYS_DELTA in main.c).
+ *
+ * THIS MOVES PER BUILD, and that is the whole reason this table exists. It used to be
+ * three hard-coded literals taken from Bakisi -- 0x0024808C / 0x0025AB80 / 0x0025AC80.
+ * Every other map keeps the same table somewhere else: Hoven at 0x002484CC, OutpostX12
+ * at 0x002483CC, CommandCenter at 0x00247C0C, PAL Bakisi at 0x00247F0C. On those builds
+ * the scan read an unrelated variable as the count and unrelated memory as Func[], so
+ * nothing ever matched, no slot was redirected, and the per-player swap silently did
+ * nothing. The two-client log showed it exactly:
+ *
+ *   FLUXGATE id=41 inGame=1 scope=1 anchor=0x00408BF8 shape=1    <- scope and address FINE
+ *   FLUXHOOK dispatch sites=2 refused=0 run=0x00457A10 wrapper=0 <- yet never entered
+ *
+ * Only two of the 22 builds happened to share Bakisi's layout (NTSC Bakisi and NTSC
+ * Metropolis), which is why the feature looked Bakisi-only. These values come from the
+ * same scan that locates RunDrawRoutines: it finds this base by requiring
+ * {base, base+0x12AF4, base+0x12BF4} to all be referenced in the build, and check_
+ * dispatch_sites.py re-derives every one of them from the dumps.
+ *
+ * A zero entry means the base was not found (the Lobby, a different build with no
+ * combat), and the scan then declines to run rather than read garbage.
+ */
+VariableAddress_t vaFluxRegDrawCount = {
+#if UYA_PAL
+	.Lobby = 0x00000000,
+	.Bakisi = 0x00247f0c,
+	.Hoven = 0x0024834c,
+	.OutpostX12 = 0x0024824c,
+	.KorgonOutpost = 0x002480cc,
+	.Metropolis = 0x00247f0c,
+	.BlackwaterCity = 0x002480cc,
+	.CommandCenter = 0x00247a8c,
+	.BlackwaterDocks = 0x00247dcc,
+	.AquatosSewers = 0x00247d0c,
+	.MarcadiaPalace = 0x00247b8c,
+#else
+	.Lobby = 0x00000000,
+	.Bakisi = 0x0024808c,
+	.Hoven = 0x002484cc,
+	.OutpostX12 = 0x002483cc,
+	.KorgonOutpost = 0x0024824c,
+	.Metropolis = 0x0024808c,
+	.BlackwaterCity = 0x0024824c,
+	.CommandCenter = 0x00247c0c,
+	.BlackwaterDocks = 0x00247f4c,
+	.AquatosSewers = 0x00247e8c,
+	.MarcadiaPalace = 0x00247d0c,
+#endif
+};
+
+/*
  * ==================== WHY THE FEATURE NEEDS A CALL-SITE HOOK ==============
  * RegisterDrawFunction only ever APPENDS to the engine's draw table, and the
  * engine ZEROES the count at the start of every frame before re-registering
@@ -1548,55 +1600,55 @@ VariableAddress_t vaFluxShotDrawFunc = {
 VariableAddress_t vaFluxDrawDispatchA = {
 #if UYA_PAL
 	.Lobby = 0x00000000,
-	.Bakisi = 0x00000000,
-	.Hoven = 0x00000000,
-	.OutpostX12 = 0x00000000,
-	.KorgonOutpost = 0x00000000,
-	.Metropolis = 0x00000000,
-	.BlackwaterCity = 0x00000000,
-	.CommandCenter = 0x00000000,
-	.BlackwaterDocks = 0x00000000,
-	.AquatosSewers = 0x00000000,
-	.MarcadiaPalace = 0x00000000,
+	.Bakisi = 0x00455eb4,
+	.Hoven = 0x0045799c,
+	.OutpostX12 = 0x0044e79c,
+	.KorgonOutpost = 0x0044c35c,
+	.Metropolis = 0x0044b69c,
+	.BlackwaterCity = 0x00448e9c,
+	.CommandCenter = 0x00449b1c,
+	.BlackwaterDocks = 0x0044c39c,
+	.AquatosSewers = 0x0044b69c,
+	.MarcadiaPalace = 0x0044b01c,
 #else
 	.Lobby = 0x00000000,
 	.Bakisi = 0x00454e44,
-	.Hoven = 0x00000000,
-	.OutpostX12 = 0x00000000,
-	.KorgonOutpost = 0x00000000,
-	.Metropolis = 0x00000000,
-	.BlackwaterCity = 0x00000000,
-	.CommandCenter = 0x00000000,
-	.BlackwaterDocks = 0x00000000,
-	.AquatosSewers = 0x00000000,
-	.MarcadiaPalace = 0x00000000,
+	.Hoven = 0x0045686c,
+	.OutpostX12 = 0x0044d6ac,
+	.KorgonOutpost = 0x0044b2ec,
+	.Metropolis = 0x0044a62c,
+	.BlackwaterCity = 0x00447dac,
+	.CommandCenter = 0x00448bec,
+	.BlackwaterDocks = 0x0044b42c,
+	.AquatosSewers = 0x0044a76c,
+	.MarcadiaPalace = 0x0044a0ac,
 #endif
 };
 
 VariableAddress_t vaFluxDrawDispatchB = {
 #if UYA_PAL
 	.Lobby = 0x00000000,
-	.Bakisi = 0x00000000,
-	.Hoven = 0x00000000,
-	.OutpostX12 = 0x00000000,
-	.KorgonOutpost = 0x00000000,
-	.Metropolis = 0x00000000,
-	.BlackwaterCity = 0x00000000,
-	.CommandCenter = 0x00000000,
-	.BlackwaterDocks = 0x00000000,
-	.AquatosSewers = 0x00000000,
-	.MarcadiaPalace = 0x00000000,
+	.Bakisi = 0x004dddec,
+	.Hoven = 0x004dfe48,
+	.OutpostX12 = 0x004d5720,
+	.KorgonOutpost = 0x004d2eb8,
+	.Metropolis = 0x004d2208,
+	.BlackwaterCity = 0x004cfaa0,
+	.CommandCenter = 0x004cfa68,
+	.BlackwaterDocks = 0x004d22e8,
+	.AquatosSewers = 0x004d15e8,
+	.MarcadiaPalace = 0x004d0f68,
 #else
 	.Lobby = 0x00000000,
 	.Bakisi = 0x004db744,
-	.Hoven = 0x00000000,
-	.OutpostX12 = 0x00000000,
-	.KorgonOutpost = 0x00000000,
-	.Metropolis = 0x00000000,
-	.BlackwaterCity = 0x00000000,
-	.CommandCenter = 0x00000000,
-	.BlackwaterDocks = 0x00000000,
-	.AquatosSewers = 0x00000000,
-	.MarcadiaPalace = 0x00000000,
+	.Hoven = 0x004dd6e0,
+	.OutpostX12 = 0x004d2ff8,
+	.KorgonOutpost = 0x004d0810,
+	.Metropolis = 0x004cfb60,
+	.BlackwaterCity = 0x004cd378,
+	.CommandCenter = 0x004cd500,
+	.BlackwaterDocks = 0x004cfd40,
+	.AquatosSewers = 0x004cf080,
+	.MarcadiaPalace = 0x004ce9c0,
 #endif
 };
