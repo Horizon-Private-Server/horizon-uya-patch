@@ -249,6 +249,7 @@ MenuElem_ListData_t dataDeadzone = {
 };
 
 // Shared by every colour option: one list, so they cannot drift apart.
+// The index is the index into fluxColorList[] in main.c, so order and count matter.
 #define FLUX_COLOR_ITEMS   \
       "Vanilla",             \
       "Red",                 \
@@ -266,12 +267,34 @@ MenuElem_ListData_t dataDeadzone = {
       "Dark Green",          \
       "Dark Blue",
 
+// The flux SHOT list is the same list minus "Black"; the GLOW list keeps Black.
+//
+// Dropping an entry shifts every later index, and a list index IS an index into
+// fluxColorList[], so the shot path remaps with fluxShotColorRemap[] in main.c. The
+// order below must stay in step with that table: everything before Black is unchanged,
+// everything after is one lower.
+#define FLUX_COLOR_ITEMS_SHOT   \
+      "Vanilla",             \
+      "Red",                 \
+      "Green",               \
+      "Blue",                \
+      "White",               \
+      "Purple",              \
+      "Pink",                \
+      "Yellow",              \
+      "Light Blue",          \
+      "Light Green",         \
+      "Light Red",           \
+      "Dark Red",            \
+      "Dark Green",          \
+      "Dark Blue",
+
 MenuElem_ListData_t dataFluxShotColor = {
     .value = &config.fluxShotColor,
     .stateHandler = NULL,
-    .count = FLUX_COLOR_COUNT,
+    .count = FLUX_COLOR_COUNT - 1,
     .items = {
-      FLUX_COLOR_ITEMS
+      FLUX_COLOR_ITEMS_SHOT
     }
 };
 

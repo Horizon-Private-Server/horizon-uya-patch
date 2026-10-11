@@ -1542,6 +1542,20 @@ VariableAddress_t vaFluxShotDrawFunc = {
  *
  * A zero entry means the build was not decoded (the Lobby, which is a different image
  * with no combat); the scan then declines to run rather than read garbage.
+ *
+ * CORRECTION, measured. These were re-derived from the dumps in
+ * uya_dev/send_to/binary-search_uya_maps via a Ghidra project built from them, by
+ * disassembling each build's own RegisterDrawFunction. Every row matched EXCEPT NTSC
+ * Metropolis, which had been taken from Ratchet-RE's "Metropolis_eeMemory.bin" -- and
+ * that file is a duplicate of the KORGEN build, not Metropolis:
+ *
+ *   it decodes to count 0x0024800C / Func[] 0x0025AA40, which is what NTSC
+ *   KorgonOutpost really is, and Metropolis is count 0x0024808C / Func[] 0x0025AA80.
+ *
+ * Metropolis was in fact correct in the ORIGINAL python-derived table and was broken by
+ * that correction. Both files disagreeing live at 0x0044c6xx for the store site, which is
+ * why it looked plausible. Lesson: a per-map address is only trustworthy if it came from
+ * that map's own dump -- the Ratchet-RE level binaries are not all what they are named.
  */
 VariableAddress_t vaFluxRegDrawCount = {
 #if UYA_PAL
@@ -1562,7 +1576,7 @@ VariableAddress_t vaFluxRegDrawCount = {
 	.Hoven = 0x0024828c,
 	.OutpostX12 = 0x0024818c,
 	.KorgonOutpost = 0x0024800c,
-	.Metropolis = 0x0024800c,
+	.Metropolis = 0x0024808c,
 	.BlackwaterCity = 0x0024800c,
 	.CommandCenter = 0x00247c0c,
 	.BlackwaterDocks = 0x00247d0c,
@@ -1595,7 +1609,7 @@ VariableAddress_t vaFluxRegDrawFuncs = {
 	.Hoven = 0x0025acc0,
 	.OutpostX12 = 0x0025abc0,
 	.KorgonOutpost = 0x0025aa40,
-	.Metropolis = 0x0025aa40,
+	.Metropolis = 0x0025aa80,
 	.BlackwaterCity = 0x0025aa40,
 	.CommandCenter = 0x0025a600,
 	.BlackwaterDocks = 0x0025a740,

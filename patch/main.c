@@ -2456,6 +2456,22 @@ static u32 fluxColorList[FLUX_COLOR_COUNT] = {
 };
 
 /*
+ * Menu index -> fluxColorList[] index for the SHOT colour.
+ *
+ * The shot's list has no "Black" entry (see FLUX_COLOR_ITEMS_SHOT in config.c), so every
+ * colour from White onward sits one lower than its palette index. Black itself is index
+ * 4 in fluxColorList and is simply unreachable from the shot list.
+ *
+ * Index 0 (Vanilla) maps to 0 and stays meaning "leave the engine's colour alone".
+ */
+static const u8 fluxShotColorRemap[FLUX_COLOR_COUNT - 1] = {
+	0,  1,  2,  3,      // Vanilla Red Green Blue
+	5,  6,  7,  8,      // White Purple Pink Yellow          (4 = Black, skipped)
+	9,  10, 11, 12, 13, // Lt Blue Lt Green Lt Red Dk Red Dk Green
+	14                  // Dark Blue
+};
+
+/*
  * NAME :		applyFluxBeamColor
  * DESCRIPTION :
  * 			Writes one colour word into the beam trail's three colour builders.
@@ -2593,8 +2609,6 @@ static int fluxMapInScope(void)
  * ---------------------------------------------------------------------------
  */
 
-#define FLUX_COLOR_RESEND_MS   (2000)
-
 /* The shot's registered draw function, relative to the beam colour anchor:
  * vaFluxBeamColor - 0x5D0 == FUN_00408d40 on every build. */
 #define FLUX_DRAW_FUNC_DELTA   (0x5D0)
@@ -2614,9 +2628,17 @@ static const u32 fluxGlowVanilla = 0x00FF1010;
 static char fluxPlayerBeam[GAME_MAX_PLAYERS];
 static char fluxPlayerGlow[GAME_MAX_PLAYERS];
 
+/*
+ * Last colours SENT. -1 means nothing has been sent yet, which is what makes the first
+ * in-game tick broadcast even though the config has not changed since load.
+ *
+ * There is deliberately no periodic resend: the colours go out when they are SET, not on
+ * a timer. A client that joins after someone picked a colour therefore keeps the default
+ * until that player next touches the setting -- if that matters, the send wants hooking
+ * to the pause menu closing (see the note on patchFluxColorSync).
+ */
 static int fluxColorLastBeam = -1;
 static int fluxColorLastGlow = -1;
-static int fluxColorResendTime = 0;
 
 /*
  * NAME :		fluxColorResolve
@@ -2625,6 +2647,10 @@ static int fluxColorResendTime = 0;
  * NOTES :
  *          Index 0 means the engine's own colour, which is not in the preset list,
  *          so it maps to the vanilla word rather than list[0].
+ *
+ *          The SHOT index comes from a list with no "Black" entry, so from White
+ *          onward it sits one below the palette index and has to be remapped. The
+ *          GLOW index needs no such thing -- its list still has Black.
  * ARGS :
  *          beam/glow:        preset indices
  *          outBeam/outGlow:  receive the colour words
@@ -2633,6 +2659,11 @@ static int fluxColorResendTime = 0;
  */
 static void fluxColorResolve(int beam, int glow, u32 *outBeam, u32 *outGlow)
 {
+	if (beam >= 0 && beam < FLUX_COLOR_COUNT - 1)
+		beam = fluxShotColorRemap[beam];
+	else
+		beam = 0;
+
 	*outBeam = (beam > 0 && beam < FLUX_COLOR_COUNT)
 	           ? fluxColorList[beam] : fluxBeamVanilla;
 	*outGlow = (glow > 0 && glow < FLUX_COLOR_COUNT)
@@ -2762,14 +2793,19 @@ void patchFluxColorSync(void)
 	if (connection == 0 || local == 0)
 		return;
 
-	if (!changed) {
-		if (fluxColorResendTime != 0 && gameGetTime() < fluxColorResendTime)
-			return;
-	}
+	/*
+	 * Send on CHANGE only. Anything else here would be a timer, and a timer means the
+	 * colours are broadcast for the whole match whether or not anyone touched them.
+	 *
+	 * Returning early leaves fluxColorLastBeam alone, so a colour picked while out of
+	 * a map (or out of scope) is still un-sent and goes out on the first tick that can
+	 * carry it -- the same reason the very first in-game tick broadcasts.
+	 */
+	if (!changed)
+		return;
 
 	fluxColorLastBeam = beam;
 	fluxColorLastGlow = glow;
-	fluxColorResendTime = gameGetTime() + FLUX_COLOR_RESEND_MS;
 
 	/*
 	 * PlayerIdx must be the engine's own PlayerId, because the receiver both STORES
@@ -3691,10 +3727,14 @@ void patchFluxShotColor(void)
 	 * A preset index outside the list would index out of bounds in
 	 * fluxColorResolve, so clamp the config and say so -- a bad config from the
 	 * server should be visible, not silently read past the end of the array.
+	 *
+	 * The SHOT list is one shorter than the glow list (it has no Black), so its cap
+	 * is FLUX_COLOR_COUNT - 1. Using the glow cap here would admit an index that
+	 * fluxShotColorRemap cannot cover.
 	 */
-	if (config.fluxShotColor < 0 || config.fluxShotColor >= FLUX_COLOR_COUNT) {
+	if (config.fluxShotColor < 0 || config.fluxShotColor >= FLUX_COLOR_COUNT - 1) {
 		DPRINTF("FLUXWARN beam preset %d out of range 0..%d, clamping to 0\n",
-		        (int)config.fluxShotColor, FLUX_COLOR_COUNT - 1);
+		        (int)config.fluxShotColor, FLUX_COLOR_COUNT - 2);
 		config.fluxShotColor = 0;
 		changedBeam = 1;
 		patched.fluxShotColor = -1;
