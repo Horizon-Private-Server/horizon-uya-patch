@@ -922,7 +922,14 @@ void disableHealthContainer(void)
 	Moby *moby = mobyListGetStart();
 	while ((moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP))) {
 		if (moby->pUpdate){
-			moby->state = 3;
+			// Go straight to state 4 (broken, orb available) and do the game's state 3 work here.
+			// State 3 only turns into 4 when the box's update runs, which happens only near this
+			// client's player (update distance 64). Until then the host refused remote pickups.
+			// State 3's sound stop is skipped: nothing plays at load.
+			moby->state = 4;
+			moby->collData = 0;
+			moby->modeBits = (moby->modeBits & 0xefff) | 0x41;
+			moby->collDamage = -1;
 			*(u16*)((u32)moby->pUpdate + 0x1cc) = 3; // switch state 0, set to breaking state
 			// always set state to 4 (broken stsate) when respawning health
 			*(u32*)((u32)moby->pUpdate - 0x26c) = 0x24050004; // addiu a0, zero, 4;
