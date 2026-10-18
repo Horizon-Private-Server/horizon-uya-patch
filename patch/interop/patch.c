@@ -1622,3 +1622,36 @@ VariableAddress_t vaGuberFindEvent_Func = {
 	.MarcadiaPalace = 0x00525028,
 #endif
 };
+
+//================================================
+//=============  patchHeroNetPlayerGuard
+//================================================
+// HeroUpdate: lw a1,0x16c(a0) with a0 = hero->pNetPlayer, followed by bltz a1 / lui v0.
+// Bakisi NTSC 0x0052fa14 (HeroUpdate_vtable 0x0052ed38). PAL Blackwater Docks 0x00526644 (crash EPC).
+// 0 = not found yet: the guard is left off on that map.
+VariableAddress_t vaHeroNetPlayerGuard_Addr = {
+#if UYA_PAL
+	.Lobby = 0x00660194,
+	.Bakisi = 0x00532294,
+	.Hoven = 0x005343ac,
+	.OutpostX12 = 0x00529c84,
+	.KorgonOutpost = 0x0052741c,
+	.Metropolis = 0x0052676c,
+	.CommandCenter = 0x00523dc4,
+	.BlackwaterDocks = 0x00526644,
+	.AquatosSewers = 0x00525944,
+	.MarcadiaPalace = 0x005252c4,
+#else
+	.Lobby = 0x0065d8bc,
+	.Bakisi = 0x0052fa14,
+	.Hoven = 0x00531a6c,
+	.OutpostX12 = 0x00527384,
+	.KorgonOutpost = 0x00524b9c,
+	.Metropolis = 0x00523eec,
+	.BlackwaterCity = 0x00521704,
+	.CommandCenter = 0x00521684,
+	.BlackwaterDocks = 0x00523ec4,
+	.AquatosSewers = 0x00523204,
+	.MarcadiaPalace = 0x00522b44,
+#endif
+};

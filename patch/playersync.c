@@ -239,6 +239,13 @@ int playerSyncStateIsJump(int state)
 }
 
 //--------------------------------------------------------------------------
+// ids the hand slot can hold (GADGET_ID_N60 .. GADGET_ID_HOLO). 0 is "none", sent while the sender swaps.
+int playerSyncIsHandGadgetId(int id)
+{
+  return id >= GADGET_ID_N60 && id <= GADGET_ID_HOLO;
+}
+
+//--------------------------------------------------------------------------
 // wrench attacks only work with the wrench in the hand slot.
 // ThrowWrench (0x0050b148 kisi) returns without throwing unless gadget.weapon.pMoby is the wrench,
 // and for a remote hero it is only called on the one frame the throw anim passes frame 33.
@@ -771,7 +778,12 @@ void playerSyncHandlePlayerState(Player* player)
 
 
   if (player->pNetPlayer && player->pNetPlayer->pNetPlayerData) {
-    player->pNetPlayer->pNetPlayerData->handGadget = (int)stateInterpolated.GadgetId;
+    // the game turns handGadget into an equip request every frame, and the game's own update of it is
+    // disabled (vaTNW_PlayerData_GadgetIdUpdate). the sender's slot id is 0 while it swaps, and anything that is
+    // not a hand gadget makes the equip code spawn a moby whose class may not be loaded (PostUpdateMoby blue screen).
+    // only pass real hand gadget ids; otherwise keep the last one until the next real id arrives.
+    if (playerSyncIsHandGadgetId(stateInterpolated.GadgetId))
+      player->pNetPlayer->pNetPlayerData->handGadget = (int)stateInterpolated.GadgetId;
     player->pNetPlayer->pNetPlayerData->lastKeepAlive = data->LastNetTime;
     player->pNetPlayer->pNetPlayerData->timeStamp = data->LastNetTime;
     player->pNetPlayer->pNetPlayerData->hitPoints = stateInterpolated.Health;

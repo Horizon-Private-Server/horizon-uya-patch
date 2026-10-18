@@ -1377,6 +1377,49 @@ int flagGetLastCarrierIdx(Moby* flagMoby)
 }
 
 /*
+ * NAME :		flagPlayerIsDead
+ * DESCRIPTION :
+ * 			One dead test for both the requesting client and the host.
+ * 			customFlagLogic used stateType and flagHandlePickup used playerIsDead (state); a player that
+ * 			passed one and failed the other was asked for forever and blocked everyone after him.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+int flagPlayerIsDead(Player* player)
+{
+	return playerDeobfuscate(&player->stateType, 0) == PLAYER_TYPE_DEATH || playerIsDead(player);
+}
+
+/*
+ * NAME :		flagPickupNow
+ * DESCRIPTION :
+ * 			Same event as the game's flagPickup (0x0042f608 kisi: event 0, player index as an int)
+ * 			but with no dispatch delay. flagPickup creates it with 0xfa, so every client ran the pickup
+ * 			250 ms after the host decided, on top of the request's round trip.
+ * NOTES :
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+void flagPickupNow(Moby* flagMoby, int pIdx)
+{
+	Guber* guber = guberGetObjectByMoby(flagMoby);
+	if (!guber)
+		return;
+
+	GuberEvent* event = guberEventCreate(guber, 0, 0, 0);
+	if (!event)
+		return;
+
+	memcpy(&event->NetEvent.NetData[event->NetDataOffset], &pIdx, sizeof(pIdx));
+	event->NetDataOffset += sizeof(pIdx);
+	if (event->NetEvent.NetDataSize < event->NetDataOffset)
+		event->NetEvent.NetDataSize = event->NetDataOffset;
+}
+
+/*
  * NAME :		flagHandlePickup
  * DESCRIPTION :
  * NOTES :
@@ -1407,8 +1450,8 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 	if (flagIsBeingPickedUp(flagMoby))
 		return;
 
-	// only allow actions by living players
-	if (playerIsDead(player))
+	// only allow actions by living players (same test the requesting client uses)
+	if (flagPlayerIsDead(player))
 		return;
 
 	// Handle pickup/return
@@ -1427,10 +1470,14 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
 		flagReturnToBase(flagMoby, 0, pIdx);
 		flagClearTrackedLastCarrier(flagMoby);
 	} else {
+		// already carrying the other flag
+		if (player->flagMoby)
+			return;
+
 		int flagIdx = flagGetTrackerIndex(flagMoby);
 		if (flagIdx >= 0)
 			flagTrackedLastCarrierIdx[flagIdx] = pIdx;
-		flagPickup(flagMoby, pIdx);
+		flagPickupNow(flagMoby, pIdx);
 		player->flagMoby = flagMoby;
 	}
 	DPRINTF("player %d picked up flag %X at %d\n", player->mpIndex, flagMoby->oClass, gameGetTime());
@@ -1449,7 +1496,11 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
  */
 void flagRequestPickup(Moby* flagMoby, int pIdx)
 {
-	static int requestCounters[GAME_MAX_PLAYERS] = {0,0,0,0,0,0,0,0};
+	// last time a request was sent per player; 0 = never. resend at most every 150 ms while still eligible.
+	// (was a frame counter that was only decremented on later attempts and never reset, so the first try
+	// after any earlier request was skipped for up to 10 attempts)
+	static int lastRequestTime[GAME_MAX_PLAYERS] = {0,0,0,0,0,0,0,0};
+	int gameTime = gameGetTime();
 	Player** players = playerGetAll();
 	Player* player = players[pIdx];
 	if (!player || !flagMoby)
@@ -1462,7 +1513,7 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
 	if (gameAmIHost()) {
 		// handle locally
 		flagHandlePickup(flagMoby, pIdx);
-	} else if (requestCounters[pIdx] == 0) {
+	} else if (lastRequestTime[pIdx] == 0 || (gameTime - lastRequestTime[pIdx]) >= (TIME_SECOND * 0.15)) {
 		// send request to host
 		void* dmeConnection = netGetDmeServerConnection();
 		if (dmeConnection) {
@@ -1471,13 +1522,9 @@ void flagRequestPickup(Moby* flagMoby, int pIdx)
 			msg.PlayerId = player->mpIndex;
 			msg.FlagUID = guberGetUID(flagMoby);
 			netSendCustomAppMessage(dmeConnection, gameGetHostId(), CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP, sizeof(ClientRequestPickUpFlag_t), &msg);
-			requestCounters[pIdx] = 10;
-			DPRINTF("sent request flag pickup %d\n", gameGetTime());
+			lastRequestTime[pIdx] = gameTime ? gameTime : 1;
+			DPRINTF("sent request flag pickup %d\n", gameTime);
 		}
-	}
-	else
-	{
-		requestCounters[pIdx]--;
 	}
 }
 
@@ -1545,7 +1592,8 @@ void customFlagLogic(Moby* flagMoby)
         return;
     
 	// return to base if flag has been idle for 40 seconds and not already at base.
-	if ((pvars->timeFlagDropped + (TIME_SECOND * 40)) < gameTime && !flagIsAtBase(flagMoby) && !flagIsAtBase(flagMoby)) {
+	// host only: every client used to send its own return event.
+	if (gameAmIHost() && (pvars->timeFlagDropped + (TIME_SECOND * 40)) < gameTime && !flagIsAtBase(flagMoby)) {
 		flagReturnToBase(flagMoby, 0, 0xff);
 		flagClearTrackedLastCarrier(flagMoby);
 		return;
@@ -1556,8 +1604,14 @@ void customFlagLogic(Moby* flagMoby)
         if (!player)
             continue;
 
-        // Don't allow input from players whom are dead
-        if (playerDeobfuscate(&player->stateType, 0) == PLAYER_TYPE_DEATH)
+        // only our own local players: each client asks for its players, judged on their exact position here.
+        // asking for remote copies let a stale copy take (or block) the flag, and the loop stopped at the
+        // first copy the host then refused, starving everyone after it.
+        if (!player->isLocal)
+            continue;
+
+        // Don't allow input from players whom are dead (same test as the host)
+        if (flagPlayerIsDead(player))
             continue;
 
         // skip player if they've only been alive for < 180ms
@@ -1588,18 +1642,14 @@ void customFlagLogic(Moby* flagMoby)
 
 		// player is on different team than flag and player isn't already holding flag
 		if (player->mpTeam != pvars->team) {
-			if (!player->flagMoby) {
+			if (!player->flagMoby)
 				flagRequestPickup(flagMoby, player->mpIndex);
-				return;
-			}
 		} else {
 			// if player is on same team as flag and close enough to return it
 			vector_subtract(t, pvars->basePos, flagMoby->position);
 			float sqrDistanceToBase = vector_sqrmag(t);
-			if (sqrDistanceToBase > 0.1) {
+			if (sqrDistanceToBase > 0.1)
 				flagRequestPickup(flagMoby, player->mpIndex);
-				return;
-			}
 		}
 	}
 }
@@ -1881,6 +1931,169 @@ int onRemoteClientRequestPickUpHealthBox(void * connection, void * data)
 		healthBoxGrant(gm->Moby, player);
 
 	return sizeof(ClientRequestPickUpHealthBox_t);
+}
+
+/*
+ * NAME :		gadgetMobyCreateHook
+ * DESCRIPTION :
+ * 			Replaces the hero gadget code's CreateMoby calls (hand slot, and both slot 1 mobys).
+ * 			CreateMoby still returns a moby when its class is not loaded in this level: init_moby
+ * 			leaves pClass NULL. The joint update then calls PostUpdateMoby on it, which reads
+ * 			pClass + 0x48 with no check: blue screen, BadVAddr 0x48 (seen in Marcadia Palace,
+ * 			EPC 0x0046ce54, hand slot of hero 0x003278c0).
+ * 			Such a moby is deleted here and NULL returned, which the game already treats as
+ * 			"could not spawn, retry later". A class that failed is not tried again this game,
+ * 			so the slot does not create and delete a moby every frame.
+ * NOTES :
+ * 			Bakisi: equipgadgetmaybe 0x0050f488, calls at 0x0050f7a8, 0x0050fc60, 0x0050fcf0.
+ * ARGS :
+ * RETURN :
+ * AUTHOR :
+ */
+extern VariableAddress_t vaForceGadgetMobyCreation_Addr;
+extern VariableAddress_t vaMobyCreateFunc;
+
+#define GADGET_MOBY_MISSING_CLASSES_MAX		(16)
+short gadgetMobyMissingClasses[GADGET_MOBY_MISSING_CLASSES_MAX];
+int gadgetMobyMissingClassCount = 0;
+
+Moby* gadgetMobyCreateHook(int oclass, int pvarSize)
+{
+	int i;
+
+	for (i = 0; i < gadgetMobyMissingClassCount; ++i)
+		if (gadgetMobyMissingClasses[i] == (short)oclass)
+			return NULL;
+
+	Moby* moby = mobySpawn(oclass, pvarSize);
+	if (moby && !moby->pClass) {
+		DPRINTF("gadget moby class %04X not loaded in this level, not spawned\n", oclass & 0xFFFF);
+		mobyDestroy(moby);
+		if (gadgetMobyMissingClassCount < GADGET_MOBY_MISSING_CLASSES_MAX)
+			gadgetMobyMissingClasses[gadgetMobyMissingClassCount++] = (short)oclass;
+		return NULL;
+	}
+
+	return moby;
+}
+
+/*
+ * NAME :		patchGadgetMobyClassGuard
+ * DESCRIPTION :
+ * 			Hooks the hero gadget CreateMoby calls with gadgetMobyCreateHook.
+ * NOTES :
+ * 			The calls sit at fixed offsets from vaForceGadgetMobyCreation_Addr (same function).
+ * 			Each one is checked to be a jal to CreateMoby before it is replaced.
+ * ARGS :
+ * RETURN :
+ * AUTHOR :
+ */
+void patchGadgetMobyClassGuard(void)
+{
+	static const u32 offsets[] = { 0x2d4, 0x78c, 0x81c };
+	int i;
+
+	if (!isInGame() || patched.gadgetMobyClassGuard)
+		return;
+
+	u32 base = GetAddress(&vaForceGadgetMobyCreation_Addr);
+	u32 createFunc = GetAddress(&vaMobyCreateFunc);
+	if (!base || !createFunc)
+		return;
+
+	u32 jalCreate = 0x0C000000 | (createFunc >> 2);
+	u32 jalHook = 0x0C000000 | ((u32)&gadgetMobyCreateHook >> 2);
+
+	// only over the game's own calls (or our hook, if this level's code was already patched)
+	for (i = 0; i < 3; ++i) {
+		u32 op = *(u32*)(base + offsets[i]);
+		if (op != jalCreate && op != jalHook)
+			return;
+	}
+
+	gadgetMobyMissingClassCount = 0;
+	for (i = 0; i < 3; ++i)
+		HOOK_JAL(base + offsets[i], &gadgetMobyCreateHook);
+
+	FlushCache(0);
+	FlushCache(2);
+	patched.gadgetMobyClassGuard = 1;
+}
+
+/*
+ * NAME :		heroNetPlayerGuardStub / patchHeroNetPlayerGuard
+ * DESCRIPTION :
+ * 			HeroUpdate (0x0052ed38 kisi) reads pNetPlayer + 0x16c right after sending the hero's pad message,
+ * 			with no NULL check (the same function does check pNetPlayer further down, at 0x0052fb70).
+ * 			Blue screen seen with pNetPlayer NULL: PAL Blackwater Docks, EPC 0x00526644, BadVAddr 0x16c.
+ * 			kisi:
+ * 				0x0052fa14  lw   a1,0x16c(a0)     a0 = hero->pNetPlayer
+ * 				0x0052fa18  bltz a1,0x0052fa70    skip the block when the time is < 0
+ * 				0x0052fa1c  lui  v0,0x1a
+ * 			becomes:
+ * 				0x0052fa14  jal  heroNetPlayerGuardStub   a1 = a0 ? *(a0 + 0x16c) : -1
+ * 				0x0052fa18  lui  v0,0x1a                  (moved into the delay slot; the stub keeps v0)
+ * 				0x0052fa1c  bltz a1,0x0052fa70            (same target)
+ * 			The next instruction (addiu v1,v0,0x5e50) becomes the bltz delay slot; on the skip path v1 is
+ * 			overwritten before use, on the other path it ran there anyway.
+ * NOTES :
+ * 			Per-map address of the lw in vaHeroNetPlayerGuard_Addr (interop/patch.c); maps left at 0 keep the
+ * 			game's code. All three words are checked before anything is written.
+ * ARGS :
+ * RETURN :
+ * AUTHOR :
+ */
+void heroNetPlayerGuardStub(void);
+asm(
+	".section .text\n"
+	".align 2\n"
+	".set push\n"
+	".set noreorder\n"
+	".global heroNetPlayerGuardStub\n"
+	"heroNetPlayerGuardStub:\n"
+	"	beq $a0, $0, 1f\n"
+	"	li $a1, -1\n"
+	"	lw $a1, 0x16c($a0)\n"
+	"1:\n"
+	"	jr $ra\n"
+	"	nop\n"
+	".set pop\n"
+	".previous\n"
+);
+
+void patchHeroNetPlayerGuard(void)
+{
+	if (!isInGame() || patched.heroNetPlayerGuard)
+		return;
+
+	u32 site = GetAddress(&vaHeroNetPlayerGuard_Addr);
+	if (!site)
+		return;
+
+	u32 jalStub = 0x0C000000 | ((u32)&heroNetPlayerGuardStub >> 2);
+	u32 op0 = *(u32*)(site + 0x0);
+	u32 op1 = *(u32*)(site + 0x4);
+	u32 op2 = *(u32*)(site + 0x8);
+
+	if (op0 == jalStub) {
+		// this level's code is already patched
+		patched.heroNetPlayerGuard = 1;
+		return;
+	}
+
+	// lw a1,0x16c(a0) / bltz a1,x / lui v0,x
+	if (op0 != 0x8C85016C || (op1 & 0xFFFF0000) != 0x04A00000 || (op2 & 0xFFFF0000) != 0x3C020000)
+		return;
+
+	// bltz moves down one instruction: same target, offset - 1
+	u32 bltz = (op1 & 0xFFFF0000) | ((op1 - 1) & 0xFFFF);
+
+	*(u32*)(site + 0x8) = bltz;
+	*(u32*)(site + 0x4) = op2;
+	*(u32*)(site + 0x0) = jalStub;
+	FlushCache(0);
+	FlushCache(2);
+	patched.heroNetPlayerGuard = 1;
 }
 
 /*
@@ -3500,6 +3713,12 @@ int main(void)
 
 		// Patch Health Box pickups: host authoritative, requested by the player's own client.
 		patchHealthBoxPickup();
+
+		// Never let a hero gadget moby exist without its class (PostUpdateMoby blue screen).
+		patchGadgetMobyClassGuard();
+
+		// Skip HeroUpdate's pNetPlayer + 0x16c read when pNetPlayer is NULL (blue screen, BadVAddr 0x16c).
+		patchHeroNetPlayerGuard();
 
 		// Patch Level of Detail
 		patchLevelOfDetail();
