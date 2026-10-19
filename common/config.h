@@ -118,7 +118,6 @@ typedef struct PatchPatches {
   char ctfLogic;
   char healthBoxLogic;
   char gadgetMobyClassGuard;
-  char heroNetPlayerGuard;
   char swingshotGunBug;
 
   // gameConfig misc.

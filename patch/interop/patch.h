@@ -57,4 +57,3 @@ VariableAddress_t vaPickupCanGive_Func;
 VariableAddress_t vaPickupCanGive_MasterHook;
 VariableAddress_t vaPickupCanGive_LocalHook;
 VariableAddress_t vaGuberFindEvent_Func;
-VariableAddress_t vaHeroNetPlayerGuard_Addr;

@@ -2021,82 +2021,6 @@ void patchGadgetMobyClassGuard(void)
 }
 
 /*
- * NAME :		heroNetPlayerGuardStub / patchHeroNetPlayerGuard
- * DESCRIPTION :
- * 			HeroUpdate (0x0052ed38 kisi) reads pNetPlayer + 0x16c right after sending the hero's pad message,
- * 			with no NULL check (the same function does check pNetPlayer further down, at 0x0052fb70).
- * 			Blue screen seen with pNetPlayer NULL: PAL Blackwater Docks, EPC 0x00526644, BadVAddr 0x16c.
- * 			kisi:
- * 				0x0052fa14  lw   a1,0x16c(a0)     a0 = hero->pNetPlayer
- * 				0x0052fa18  bltz a1,0x0052fa70    skip the block when the time is < 0
- * 				0x0052fa1c  lui  v0,0x1a
- * 			becomes:
- * 				0x0052fa14  jal  heroNetPlayerGuardStub   a1 = a0 ? *(a0 + 0x16c) : -1
- * 				0x0052fa18  lui  v0,0x1a                  (moved into the delay slot; the stub keeps v0)
- * 				0x0052fa1c  bltz a1,0x0052fa70            (same target)
- * 			The next instruction (addiu v1,v0,0x5e50) becomes the bltz delay slot; on the skip path v1 is
- * 			overwritten before use, on the other path it ran there anyway.
- * NOTES :
- * 			Per-map address of the lw in vaHeroNetPlayerGuard_Addr (interop/patch.c); maps left at 0 keep the
- * 			game's code. All three words are checked before anything is written.
- * ARGS :
- * RETURN :
- * AUTHOR :
- */
-void heroNetPlayerGuardStub(void);
-asm(
-	".section .text\n"
-	".align 2\n"
-	".set push\n"
-	".set noreorder\n"
-	".global heroNetPlayerGuardStub\n"
-	"heroNetPlayerGuardStub:\n"
-	"	beq $a0, $0, 1f\n"
-	"	li $a1, -1\n"
-	"	lw $a1, 0x16c($a0)\n"
-	"1:\n"
-	"	jr $ra\n"
-	"	nop\n"
-	".set pop\n"
-	".previous\n"
-);
-
-void patchHeroNetPlayerGuard(void)
-{
-	if (!isInGame() || patched.heroNetPlayerGuard)
-		return;
-
-	u32 site = GetAddress(&vaHeroNetPlayerGuard_Addr);
-	if (!site)
-		return;
-
-	u32 jalStub = 0x0C000000 | ((u32)&heroNetPlayerGuardStub >> 2);
-	u32 op0 = *(u32*)(site + 0x0);
-	u32 op1 = *(u32*)(site + 0x4);
-	u32 op2 = *(u32*)(site + 0x8);
-
-	if (op0 == jalStub) {
-		// this level's code is already patched
-		patched.heroNetPlayerGuard = 1;
-		return;
-	}
-
-	// lw a1,0x16c(a0) / bltz a1,x / lui v0,x
-	if (op0 != 0x8C85016C || (op1 & 0xFFFF0000) != 0x04A00000 || (op2 & 0xFFFF0000) != 0x3C020000)
-		return;
-
-	// bltz moves down one instruction: same target, offset - 1
-	u32 bltz = (op1 & 0xFFFF0000) | ((op1 - 1) & 0xFFFF);
-
-	*(u32*)(site + 0x8) = bltz;
-	*(u32*)(site + 0x4) = op2;
-	*(u32*)(site + 0x0) = jalStub;
-	FlushCache(0);
-	FlushCache(2);
-	patched.heroNetPlayerGuard = 1;
-}
-
-/*
  * NAME :		patchHealthBoxPickup
  * DESCRIPTION :
  * 			Host authoritative health box pickups (same pattern as patchCTFFlag).
@@ -3716,9 +3640,6 @@ int main(void)
 
 		// Never let a hero gadget moby exist without its class (PostUpdateMoby blue screen).
 		patchGadgetMobyClassGuard();
-
-		// Skip HeroUpdate's pNetPlayer + 0x16c read when pNetPlayer is NULL (blue screen, BadVAddr 0x16c).
-		patchHeroNetPlayerGuard();
 
 		// Patch Level of Detail
 		patchLevelOfDetail();
