@@ -239,10 +239,18 @@ int playerSyncStateIsJump(int state)
 }
 
 //--------------------------------------------------------------------------
-// ids the hand slot can hold (GADGET_ID_N60 .. GADGET_ID_HOLO). 0 is "none", sent while the sender swaps.
+// ids the sender's hand slot can hold: GADGET_ID_NONE (0, empty hand: mid-swap, flag, vehicle, dead) and the
+// base weapon ids GADGET_ID_N60 .. GADGET_ID_HOLO, except 8 (no gadget def). the slot always holds the base id;
+// upgrades are resolved from the weapon level. anything else is corrupt: above 24 it indexes past the gadget table.
+// 0 must pass: it is how the remote copy sees an empty hand. dropping it keeps handGadget on the last weapon, and
+// HandleGadgetSwitching ignores a request equal to the pending gadget, so the copy may stay empty-handed (suspected
+// cause of remote guns disappearing / shots not registering after fc6fd7f; not confirmed live).
 int playerSyncIsHandGadgetId(int id)
 {
-  return id >= GADGET_ID_N60 && id <= GADGET_ID_HOLO;
+  if (id == GADGET_ID_NONE)
+    return 1;
+
+  return id >= GADGET_ID_N60 && id <= GADGET_ID_HOLO && id != 8;
 }
 
 //--------------------------------------------------------------------------
@@ -779,9 +787,8 @@ void playerSyncHandlePlayerState(Player* player)
 
   if (player->pNetPlayer && player->pNetPlayer->pNetPlayerData) {
     // the game turns handGadget into an equip request every frame, and the game's own update of it is
-    // disabled (vaTNW_PlayerData_GadgetIdUpdate). the sender's slot id is 0 while it swaps, and anything that is
-    // not a hand gadget makes the equip code spawn a moby whose class may not be loaded (PostUpdateMoby blue screen).
-    // only pass real hand gadget ids; otherwise keep the last one until the next real id arrives.
+    // disabled (vaTNW_PlayerData_GadgetIdUpdate). pass 0 (empty hand) and real hand gadget ids; a corrupt id is
+    // dropped and the last one kept. a hand gadget class that is not loaded is handled by gadgetMobyCreateHook.
     if (playerSyncIsHandGadgetId(stateInterpolated.GadgetId))
       player->pNetPlayer->pNetPlayerData->handGadget = (int)stateInterpolated.GadgetId;
     player->pNetPlayer->pNetPlayerData->lastKeepAlive = data->LastNetTime;

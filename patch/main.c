@@ -2078,7 +2078,7 @@ void patchHealthBoxPickup(void)
 		while ((moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP))) {
 			// same reach as the game: within 2 units of the box
 			vector_subtract(t, moby->position, player->playerPosition);
-			if (vector_sqrmag(t) < (2*2) && healthBoxIsAvailable(moby)) {
+			if (vector_sqrmag(t) < (3*3) && healthBoxIsAvailable(moby)) {
 				healthBoxRequestPickup(moby, player);
 				break;
 			}
