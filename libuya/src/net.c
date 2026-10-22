@@ -22,7 +22,7 @@
 #endif
 
 #define GET_MEDIUS_APP_HANDLER_HOOK         (*(u32*)0x00153248)
-#define NET_GLOBAL_CALLBACKS_PTR            ((NET_CALLBACK_DELEGATE*)(*(u32*)0x000A0000))
+#define NET_GLOBAL_CALLBACKS_PTR            (*(NET_CALLBACK_DELEGATE **)NET_GLOBAL_CALLBACKS_ADDRESS)
 
 int internal_netSendMessage(int transport, void * connection, long clientIndex, int msgClass, int msgId, int msgSize, void * payload);
 int internal_netSendAppMessage(int transport, void * connection, long clientIndex, int msgId, int msgSize, void * payload);

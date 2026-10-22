@@ -14,6 +14,17 @@
 #define NET_CUSTOM_MESSAGE_ID                       (8)
 #define NET_LOBBY_CLIENT_INDEX                      (0xFFFF)
 
+/* Shared callback pointer borrowed from the power-off thread stack, as in libdl.
+ * Slot is stack end - 0xDC; stores a pointer, not the callback array itself.
+ * Assumes this stack word is unused during normal gameplay. The downloader and
+ * patch claim ownership with netInstallCustomMsgHook(1) before registering.
+ * Rebuild all patch/downloader/custom-mode images together when changing it. */
+#if UYA_PAL
+#define NET_GLOBAL_CALLBACKS_ADDRESS                 (0x0022F1A4)
+#else
+#define NET_GLOBAL_CALLBACKS_ADDRESS                 (0x0022F324)
+#endif
+
 // ensures packets arrive in order
 #define NET_ORDER_CRITICAL                          (0x10)
 // sends reliably
