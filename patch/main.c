@@ -1018,17 +1018,13 @@ void runFpsCounter_Logic(void)
 		tickCounter = 0;
 	}
 
-	// render if enabled
-	if (config.enableFpsCounter)
-	{
-		if (averageRenderTimeMs > 0) {
-			snprintf(buf, 64, "EE: %.1fms GS: %.1fms FPS: %.2f", averageUpdateTimeMs, averageRenderTimeMs, lastFps);
-		} else {
-			snprintf(buf, 64, "FPS: %.2f", lastFps);
-		}
-
-		gfxScreenSpaceText(SCREEN_WIDTH - 5, 5, 0.75, 0.75, 0x80FFFFFF, buf, -1, 2, FONT_BOLD);
+	if (averageRenderTimeMs > 0) {
+		snprintf(buf, 64, "EE: %.1fms GS: %.1fms FPS: %.2f", averageUpdateTimeMs, averageRenderTimeMs, lastFps);
+	} else {
+		snprintf(buf, 64, "FPS: %.2f", lastFps);
 	}
+
+	gfxScreenSpaceText(SCREEN_WIDTH - 5, 5, 0.75, 0.75, 0x80FFFFFF, buf, -1, 2, FONT_BOLD);
 }
 
 /*
@@ -1108,6 +1104,9 @@ void runFpsCounter_updateHook(void)
  */
 void runFpsCounter(void)
 {
+	if (!config.enableFpsCounter) 
+		return;
+
 	u32 hook = GetAddress(&vaFpsCounter_Hooks);
 	HOOK_JAL(hook, &runFpsCounter_updateHook);
 	HOOK_JAL(((u32)hook + 0x60), &runFpsCounter_drawHook);
@@ -1492,11 +1491,12 @@ void customFlagLogic(Moby* flagMoby)
 	int i;
 	Player** players = playerGetAll();
 	int gameTime = gameGetTime();
-	GameOptions* gameOptions = gameGetOptions();
-	flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
 
-	// if flag moby or pvars don't exist, stop.
-	if (!flagMoby || !pvars)
+	if (!flagMoby) 
+		return;
+
+	flagPVars_t* pvars = (flagPVars_t*)flagMoby->pVar;
+	if (!pvars)
 		return;
 
 	flagTrackCarrier(flagMoby, pvars);
@@ -1580,9 +1580,7 @@ void customFlagLogic(Moby* flagMoby)
  */
 int onRemoteClientRequestPickUpFlag(void * connection, void * data)
 {
-	int i;
 	ClientRequestPickUpFlag_t msg;
-	Player** players;
 	memcpy(&msg, data, sizeof(msg));
 
 	// ignore if not in game
@@ -1590,9 +1588,6 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
 		return sizeof(ClientRequestPickUpFlag_t);
 
 	DPRINTF("remote player %d requested pick up flag %X at %d\n", msg.PlayerId, msg.FlagUID, msg.GameTime);
-
-	// get list of players
-	players = playerGetAll();
 
 	// get remote player or ignore message
 	Player** allRemote = playerGetAll();
@@ -2846,7 +2841,6 @@ int runSendGameUpdate(void)
 	GameSettings * gameSettings = gameGetSettings();
 	GameOptions * gameOptions = gameGetOptions();
 	GameData * gameData = gameGetData();
-	Player** players = playerGetAll();
 	int gameTime = gameGetTime();
 	int i;
 	void * connection = netGetLobbyServerConnection();
@@ -3143,7 +3137,7 @@ int main(void)
 
 	patchColors();
 
-	if(isInGame()) {
+	if (isInGame()) {
 		// Patch remap buttons configuration
 		HOOK_JAL(0x0013cae0, &patchSceReadPad_memcpy);
 
