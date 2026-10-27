@@ -3,6 +3,27 @@
 #include "time.h"
 #include "interop.h"
 #include "game.h"
+#include <string.h>
+
+/* Native HelpMsgs entry, using the 32-bit EE ABI. */
+typedef struct uiTipMessage {
+	/* 0x00 */ const char *text;
+	/* 0x04 */ int id;
+	/* 0x08 */ int speech;
+	/* 0x0c */ short alternate;
+	/* 0x0e */ short icon;
+} uiTipMessage_t;
+
+/* The native tip renderer owns 0x4c bytes of state. Keep a private copy so
+ * custom tips do not alter tutorial history or consume a queued game tip. */
+static u32 tipState[0x4c / 4];
+static uiTipMessage_t tipMessage;
+static u32 tipInitializeAddress;
+static u32 tipRenderAddress;
+static u32 *tipNativeState;
+static uiTipMessage_t **tipNativeMessages;
+static int tipFrames;
+static int tipElapsed;
 
 int internal_uiDialog(void *, const char *, const char *, int, int, float);
 void internal_uiShowPopup(const char *, int, Player * player);
@@ -104,6 +125,104 @@ int uiShowInputDialog(const char * title, char * value, int maxLength)
 void uiShowPopup(Player * player, const char * message, int seconds)
 {
 	internal_uiShowPopup(message, seconds * 100, player->isLocal2);
+}
+
+int uiShowTipPopup(const char *message, int seconds)
+{
+	u32 initialize;
+	u32 render;
+	u32 state;
+	u32 messages;
+
+	if (!isInGame() || !message || seconds < 1 || seconds > 3600)
+		return 0;
+
+	/* Help initialization and drawing follow uiMsgString in the retail help
+	 * implementation. Validate their instructions before decoding globals;
+	 * an overlay with a different layout is unsupported, never guessed. */
+	initialize = GetAddress(&vaUiMsgStringFunc);
+	if (!initialize)
+		return 0;
+	initialize += 0xc8;
+	render = initialize + 0x9b0;
+	if (*(u32 *)initialize != 0x27bdffa0 ||
+		(*(u32 *)(initialize + 0x0c) & 0xffff0000) != 0x3c040000 ||
+		(*(u32 *)(initialize + 0x2c) & 0xffff0000) != 0x24900000 ||
+		*(u32 *)(initialize + 0x58) != 0x8e020020 ||
+		(*(u32 *)(initialize + 0x60) & 0xffff0000) != 0x3c040000 ||
+		(*(u32 *)(initialize + 0x64) & 0xffff0000) != 0x8c840000 ||
+		*(u32 *)render != 0x27bdff70 ||
+		(*(u32 *)(render + 0x04) & 0xffff0000) != 0x3c030000 ||
+		(*(u32 *)(render + 0x18) & 0xffff0000) != 0x24630000 ||
+		(*(u32 *)(render + 0x280) & 0xffff0000) != 0x3c040000 ||
+		(*(u32 *)(render + 0x284) & 0xffff0000) != 0x8c840000)
+		return 0;
+
+	state = (*(u32 *)(initialize + 0x0c) << 16) + *(s16 *)(initialize + 0x2c);
+	messages = (*(u32 *)(initialize + 0x60) << 16) + *(s16 *)(initialize + 0x64);
+	if (state != ((*(u32 *)(render + 0x04) << 16) + *(s16 *)(render + 0x18)) ||
+		messages != ((*(u32 *)(render + 0x280) << 16) + *(s16 *)(render + 0x284)) ||
+		state < 0x00100000 || state > 0x01ffffb4 ||
+		messages < 0x00100000 || messages > 0x01fffffc || (state & 3) || (messages & 3))
+		return 0;
+
+	tipInitializeAddress = initialize;
+	tipRenderAddress = render;
+	tipNativeState = (u32 *)state;
+	tipNativeMessages = (uiTipMessage_t **)messages;
+	tipMessage.text = message;
+	tipMessage.id = -1;
+	tipMessage.speech = -1;
+	tipMessage.alternate = -1;
+	tipMessage.icon = 0;
+	memset(tipState, 0, sizeof(tipState));
+	tipFrames = seconds * GAME_FPS;
+	tipElapsed = 0;
+	return 1;
+}
+
+void uiUpdateTipPopup(void)
+{
+	u32 savedState[0x4c / 4];
+	uiTipMessage_t *savedMessages;
+
+	if (!tipFrames)
+		return;
+	if (!isInGame() || GetAddress(&vaUiMsgStringFunc) + 0xc8 != tipInitializeAddress) {
+		tipFrames = 0;
+		return;
+	}
+	/* Let native tutorial tips finish before drawing ours. All substitutions
+	 * below are confined to these synchronous game-thread rendering calls. */
+	if (tipNativeState[0] != 0)
+		return;
+	memcpy(savedState, tipNativeState, sizeof(savedState));
+	savedMessages = *tipNativeMessages;
+	memcpy(tipNativeState, tipState, sizeof(tipState));
+	*tipNativeMessages = &tipMessage;
+	if (!tipElapsed) {
+		((void (*)(void))tipInitializeAddress)();
+		tipNativeState[0x30 / 4] = 1;
+	}
+	if (tipElapsed < 8) {
+		tipNativeState[0] = 3;
+		tipNativeState[1] = tipElapsed;
+	} else if (tipElapsed < 12) {
+		tipNativeState[0] = 4;
+		tipNativeState[1] = tipElapsed - 8;
+	} else if (tipFrames <= 8) {
+		tipNativeState[0] = 7;
+		tipNativeState[1] = 8 - tipFrames;
+	} else {
+		tipNativeState[0] = 5;
+		tipNativeState[1] = tipElapsed - 12;
+	}
+	((void (*)(void))tipRenderAddress)();
+	memcpy(tipState, tipNativeState, sizeof(tipState));
+	*tipNativeMessages = savedMessages;
+	memcpy(tipNativeState, savedState, sizeof(savedState));
+	++tipElapsed;
+	--tipFrames;
 }
 
 int uiShowSelectDialog(const char * title, const char * items[], int itemCount, int selectedIndex)
