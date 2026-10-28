@@ -1,385 +1,426 @@
 #include <tamtypes.h>
+#include <stddef.h>
 #include <string.h>
 
-#include <libuya/time.h>
 #include <libuya/math.h>
 #include <libuya/math3d.h>
 #include <libuya/game.h>
 #include <libuya/gamesettings.h>
 #include <libuya/player.h>
-#include <libuya/camera.h>
-#include <libuya/ui.h>
-#include <libuya/stdio.h>
-#include <libuya/graphics.h>
 #include <libuya/pad.h>
-#include <libuya/uya.h>
-#include <libuya/utils.h>
+#include <libuya/ui.h>
+#include <libuya/camera.h>
 #include <libuya/interop.h>
+#include <libuya/hud.h>
 
-const float CAMERA_POSITION_SHARPNESS = 50;
-const float CAMERA_ROTATION_SHARPNESS = 30;
-const float VEHICLE_CAMERA_ROTATION_SHARPNESS = 3;
+/* EE ABI: VECTOR has 16-byte alignment; the structure ends at 0x40. */
+typedef struct playerSpectateData {
+	/* 0x00 */ int Enabled;
+	/* 0x04 */ int Index;
+	/* 0x08 */ int HasShownHelp;
+	/* EE alignment inserts four bytes before the next VECTOR. */
+	/* 0x10 */ VECTOR LastCameraPos;
+	/* 0x20 */ float LastCameraZ;
+	/* 0x24 */ float LastCameraY;
+	/* EE alignment inserts eight bytes before the next VECTOR. */
+	/* 0x30 */ VECTOR FollowOffset;
+} playerSpectateData_t;
 
-const float VEHICLE_DISTANCE[] =
-{
-    3,                  // Turboslider
-    0,                  // Turboslider Passenger
-    2,                  // Hovership
-    0,                  // Hovership Passenger
-	3,					// Tank
-	0,					// Tank Passenger
+typedef char spectateFollowOffsetCheck[(offsetof(playerSpectateData_t, FollowOffset) == 0x30) ? 1 : -1];
+typedef char spectateSizeCheck[(sizeof(playerSpectateData_t) == 0x40) ? 1 : -1];
+Player **playerGetAll(void);
+void FlushCache(int mode);
+static void spectateCameraPost(void);
+static void spectateHudPreRender(void);
+
+/* Deadlocked's follow-camera interpolation, using UYA's FPS camera fields. */
+static const float CAMERA_POSITION_SHARPNESS = 50;
+static const float CAMERA_ROTATION_SHARPNESS = 30;
+static const float VEHICLE_CAMERA_ROTATION_SHARPNESS = 3;
+static const float VEHICLE_DISTANCE[] = { 3, 0, 2, 0, 3, 0 };
+static const float VEHICLE_ELEVATION[] = { 3, 3, 2.5, 3, 3, 3 };
+
+static playerSpectateData_t SpectateData[GAME_MAX_LOCALS];
+
+#if UYA_PAL
+static VariableAddress_t cameraRender = {
+	.Bakisi = 0x447960,
+	.Hoven = 0x4494e0,
+	.OutpostX12 = 0x4402e0,
+	.KorgonOutpost = 0x43dea0,
+	.Metropolis = 0x43d1e0,
+	.BlackwaterCity = 0x43a9e0,
+	.CommandCenter = 0x43b660,
+	.BlackwaterDocks = 0x43dee0,
+	.AquatosSewers = 0x43d1e0,
+	.MarcadiaPalace = 0x43cb60
 };
-
-const float VEHICLE_ELEVATION[] =
-{
-    3,                  // Turboslider
-    3,                  // Turboslider Passenger
-    2.5,                // Hovership
-    3,                  // Hovership Passenger
-	3,					// Tank
-	3,					// Tank Passanger
+#else
+static VariableAddress_t cameraRender = {
+	.Bakisi = 0x446ab8,
+	.Hoven = 0x448578,
+	.OutpostX12 = 0x43f3b8,
+	.KorgonOutpost = 0x43cff8,
+	.Metropolis = 0x43c338,
+	.BlackwaterCity = 0x439ab8,
+	.CommandCenter = 0x43a8f8,
+	.BlackwaterDocks = 0x43d138,
+	.AquatosSewers = 0x43c478,
+	.MarcadiaPalace = 0x43bdb8
 };
-
-struct PlayerSpectateData
-{
-    int Enabled;
-    int Index;
-    int HasShownEnterMsg;
-    int HasShownNavMsg;
-    VECTOR LastCameraPos;
-    float LastCameraZ;
-    float LastCameraY;
-} SpectateData[2];
-
-int InitSpectate = 0;
-
-VariableAddress_t vaGetMissionDefHook = {
+#endif
+static VariableAddress_t scoreboardRender = {
 #if UYA_PAL
 	.Lobby = 0,
-	.Bakisi = 0,
-	.Hoven = 0,
-	.OutpostX12 = 0,
-    .KorgonOutpost = 0,
-	.Metropolis = 0,
-	.BlackwaterCity = 0,
-	.CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
+	.Bakisi = 0x004b16a8,
+	.Hoven = 0x004b37c0,
+	.OutpostX12 = 0x004a9098,
+	.KorgonOutpost = 0x004a6830,
+	.Metropolis = 0x004a5b80,
+	.BlackwaterCity = 0x004a3418,
+	.CommandCenter = 0x004a3410,
+	.BlackwaterDocks = 0x004a5c90,
+	.AquatosSewers = 0x004a4f90,
+	.MarcadiaPalace = 0x004a4910,
 #else
 	.Lobby = 0,
-	.Bakisi = 0x00545210,
-	.Hoven = 0,
-	.OutpostX12 = 0,
-    .KorgonOutpost = 0,
-	.Metropolis = 0,
-	.BlackwaterCity = 0,
-	.CommandCenter = 0,
-    .BlackwaterDocks = 0,
-    .AquatosSewers = 0,
-    .MarcadiaPalace = 0,
+	.Bakisi = 0x004af158,
+	.Hoven = 0x004b11b0,
+	.OutpostX12 = 0x004a6ac8,
+	.KorgonOutpost = 0x004a42e0,
+	.Metropolis = 0x004a3630,
+	.BlackwaterCity = 0x004a0e48,
+	.CommandCenter = 0x004a1000,
+	.BlackwaterDocks = 0x004a3840,
+	.AquatosSewers = 0x004a2b80,
+	.MarcadiaPalace = 0x004a24c0,
 #endif
 };
 
-Player* playerGetFromSlot_Hook(int i)
+static GuiState_t *scoreboardStates[GAME_MAX_LOCALS];
+static u32 cameraPostAddress;
+static u32 cameraRenderAddress;
+static u32 reticleCallAddress;
+static u32 reticleOriginal;
+
+/* Native scoreboard update owns the respawn timer/text. Keep its root and
+ * header container visible: the respawn widget (0x60038) is a child of 0x60001. */
+static void spectateHudPreRender(void)
 {
-    if (SpectateData[i].Enabled) {
-        Player** players = playerGetAll();
-        Player* player = players[SpectateData[i].Index];
-        if (player)
-            return player;
-    }
-    
-    return playerGetFromSlot(0);
+	int localIndex = hudGetCurrentCanvasIndex();
+	u32 widget;
+	if (localIndex < 0 || localIndex >= GAME_MAX_LOCALS || !SpectateData[localIndex].Enabled)
+		return;
+	for (widget = 0x60002; widget <= 0x60007; ++widget)
+		hudSetFlags(widget, 1, 0);
 }
 
-void enableSpectate(Player * player, struct PlayerSpectateData * data)
+static int installScoreboardHook(int localIndex)
 {
-	// if (GetAddress(&vaGetMissionDefHook)) {
-	// 	u32 hookv = 0x0C000000 | ((u32)&playerGetFromSlot_Hook >> 2);
-	// 	*(u32*)GetAddress(&vaGetMissionDefHook) = hookv;
-	// 	*(u32*)0x004CC030 = hookv;
-	// 	*(u32*)0x00547F3C = hookv;
-	// 	*(u32*)0x0048DCA8 = hookv;
-	// 	*(u32*)0x003D6344 = hookv;
-	// 	*(u32*)0x004C1880 = hookv;
-	// 	*(u32*)0x004D5FFC = hookv;
-	// 	*(u32*)0x004D2274 = hookv;
-	// 	*(u32*)0x004B1BAC = hookv;
-	// 	*(u32*)0x00545C0C = hookv;
-	// 	*(u32*)0x004D69A8 = hookv;
-	// 	*(u32*)0x004D7518 = hookv;
-	// 	*(u32*)0x004EC8A0 = hookv;
-	// 	*(u32*)0x00545C0C = hookv;
-	// }
+	u32 render = GetAddress(&scoreboardRender);
+	u32 getState;
+	GuiState_t *state;
 
-    // Fixes void fall bug
-    // *((u8*)0x00171DE0 + player->PlayerId) = 1;
-    // *(u32*)0x004DB88C = 0;
-    // *(u32*)0x005542D8 = 0x10000017; // allow min/max map when dead
-    // *(u32*)0x005F4198 = 0; // disables weird camera yaw when spectated player respawns
-
-    // *(u32*)0x0054F46C = hookv; // healthbar
-    // *(u32*)0x0054f898 = hookv; // healthbar widgets
-    // *(u32*)0x00541708 = hookv; // get current gadget
-    // *(u32*)0x005418c4 = hookv; // get gadget version name
-    // *(u32*)0x00541f3c = hookv; // get player hud team
-    // *(u32*)0x0054209c = hookv; // get gadget color
-    // *(u32*)0x00552bd0 = hookv; // ammo update ammo
-    // *(u32*)0x00555904 = hookv; // radar update map
-    // *(u32*)0x0055615c = hookv; // radar update blip
-
-    data->Enabled = 1;
-    // hudGetPlayerFlags(player->LocalPlayerIndex)->Flags.Weapons = 0;
+	/* hud_RenderScoreboard calls GetDeathmatchScoreHudState at +0x14.
+	 * Decode the native JAL only after checking its surrounding instructions. */
+	if (!render || *(u32 *)render != 0x27bdffe0 ||
+		*(u32 *)(render + 0x04) != 0xffb00000 ||
+		*(u32 *)(render + 0x14) >> 26 != 3 ||
+		*(u32 *)(render + 0x18) != 0x00a0882d)
+		return 0;
+	getState = (*(u32 *)(render + 0x14) & 0x03ffffff) << 2;
+	state = ((GuiState_t *(*)(int))getState)(localIndex);
+	if (!state || (state->pre_render && state->pre_render != spectateHudPreRender))
+		return 0;
+	scoreboardStates[localIndex] = state;
+	state->pre_render = spectateHudPreRender;
+	return 1;
 }
 
-void disableSpectate(Player * player, struct PlayerSpectateData * data)
+static void restoreScoreboardHooks(void)
 {
-    // *((u8*)0x00171DE0 + player->PlayerId) = 0;
-    // *(u32*)0x004DB88C = 0xA48200E0;
-    // *(u32*)0x005542D8 = 0x45010182; // disable min/max map when dead
-    // *(u32*)0x005F4198 = 0x3042FFFD; // re-enable weird camera yaw when spectated player respawns
-
-    data->Enabled = 0;
-    // PlayerHUDFlags* pHUD = hudGetPlayerFlags(player->LocalPlayerIndex);
-    // if (pHUD)
-    //     pHUD->Flags.Weapons = 1;
+	int i;
+	for (i = 0; i < GAME_MAX_LOCALS; ++i) {
+		GuiState_t *state = scoreboardStates[i];
+		if (state && state->pre_render == spectateHudPreRender)
+			state->pre_render = 0;
+		scoreboardStates[i] = 0;
+	}
 }
 
-void spectate(Player * currentPlayer, Player * playerToSpectate)
+static int showSpectateHelp(void)
 {
-    float cameraT;
-    struct PlayerSpectateData * spectateData = SpectateData + currentPlayer->fps.vars.cam_slot;
-    if(!playerToSpectate)
-        return;
+	return uiShowTipPopup("Spectate: \x13 enter / exit\x01"
+		"\x14 / \x15 switch players", 8);
+}
+/* Use Forge's verified post-update epilogue so UYA's death camera cannot
+ * overwrite the interpolated spectate position before rendering. */
+static void spectateCameraPost(void)
+{
+	int i;
+	if (!isInGame())
+		return;
+	for (i = 0; i < GAME_MAX_LOCALS; ++i) {
+		playerSpectateData_t *data = &SpectateData[i];
+		GameCamera *camera;
+		MATRIX matrix;
+		VECTOR offset;
+		if (!data->Enabled)
+			continue;
+		camera = cameraGetGameCamera(i);
+		if (!camera)
+			continue;
+		vector_copy(camera->pos, data->LastCameraPos);
+		camera->rot[0] = 0;
+		camera->rot[1] = data->LastCameraY;
+		camera->rot[2] = data->LastCameraZ;
+		matrix_unit(matrix);
+		matrix_rotate_y(matrix, matrix, data->LastCameraY);
+		matrix_rotate_z(matrix, matrix, data->LastCameraZ);
+		/* UYA stores an eye anchor in fps.cameraPos, unlike DL's final camera position. */
+		vector_apply(offset, data->FollowOffset, matrix);
+		vector_add(camera->pos, camera->pos, offset);
+		memcpy(&camera->uMtx, matrix, sizeof(float) * 12);
+		((void (*)(int))cameraRenderAddress)(i);
+	}
+}
 
-    // Fix void fall spectate bug
-    currentPlayer->fps.vars.flags = 2;
+static void restoreSpectateHook(void)
+{
+	restoreScoreboardHooks();
+	if (cameraPostAddress && *(u32 *)cameraPostAddress == (0x08000000 | ((u32)spectateCameraPost >> 2)) &&
+		*(u32 *)(cameraPostAddress + 4) == 0x27bd0080) {
+		*(u32 *)cameraPostAddress = 0x03e00008;
+		if (reticleCallAddress && *(u32 *)reticleCallAddress == 0)
+			*(u32 *)reticleCallAddress = reticleOriginal;
+		FlushCache(0);
+		FlushCache(2);
+	}
+	cameraPostAddress = 0;
+	cameraRenderAddress = 0;
+	reticleCallAddress = 0;
+	reticleOriginal = 0;
+}
 
-    currentPlayer->fps.vars.min_y_rot = playerToSpectate->fps.vars.min_y_rot;
-    currentPlayer->fps.vars.max_y_rot = playerToSpectate->fps.vars.max_y_rot;
-    currentPlayer->fps.vars.positionOffset[0] = -6;
+static int installSpectateHook(void)
+{
+	u32 render = GetAddress(&cameraRender);
+	u32 address = render + 0x40c;
+	u32 jump = 0x08000000 | ((u32)spectateCameraPost >> 2);
+	u32 reticle = render + 0x15b0;
+	u32 reticleCall = 0x0c000000 | ((render + 0xee0) >> 2);
+	if (cameraPostAddress == address && *(u32 *)address == jump)
+		return 1;
+	if (!render || *(u32 *)render != 0x27bdffd0 ||
+		*(u32 *)address != 0x03e00008 || *(u32 *)(address + 4) != 0x27bd0080 ||
+		*(u32 *)reticle != reticleCall || *(u32 *)(render + 0xee0) != 0x27bdff90)
+		return 0;
+	cameraRenderAddress = render;
+	cameraPostAddress = address;
+	/* Forge verifies this shared reticle call across all regional overlays. */
+	reticleCallAddress = reticle;
+	reticleOriginal = reticleCall;
+	*(u32 *)address = jump;
+	*(u32 *)reticle = 0;
+	FlushCache(0);
+	FlushCache(2);
+	return 1;
+}
 
-    if (playerToSpectate->vehicle) {
-        struct Moby * vehicleMoby = playerToSpectate->vehicle->pMoby;
-        int isPassenger = playerToSpectate->vehicle->pPassenger == playerToSpectate;
-        cameraT = 1 - powf(MATH_E, -(isPassenger ? CAMERA_ROTATION_SHARPNESS : VEHICLE_CAMERA_ROTATION_SHARPNESS) * MATH_DT);
+static void disableSpectate(playerSpectateData_t *data)
+{
+	data->Enabled = 0;
+}
 
-        // Grab rotation
-        float yaw = playerToSpectate->vehicle->netUpdatedRot[2];
-        float pitch = 0.08;
-        float distance = 0;
-        float elevation = 0;
-        
-        // Determine distance and elevation by vehicle id
-        switch (vehicleMoby->oClass) {
-            case MOBY_ID_TURBOSLIDER: {
-                distance = VEHICLE_DISTANCE[0 + isPassenger];
-                elevation = VEHICLE_ELEVATION[0 + isPassenger];
-                if (isPassenger) {
-                    yaw = playerToSpectate->vehicle->netUpdatedPassengerRot[2];
-                    pitch = playerToSpectate->vehicle->netUpdatedPassengerRot[1] + (float)0.08;
-                }
-                break;
-            }
-            case MOBY_ID_HOVERSHIP: {
-                distance = VEHICLE_DISTANCE[2 + isPassenger];
-                elevation = VEHICLE_ELEVATION[2 + isPassenger];
-                if (isPassenger) {
-                    yaw = playerToSpectate->vehicle->netUpdatedPassengerRot[2];
-                    pitch = playerToSpectate->vehicle->netUpdatedPassengerRot[1];
-                }
-                break;
-            }
-			case MOBY_ID_TANK: {
-                distance = VEHICLE_DISTANCE[4 + isPassenger];
-                elevation = VEHICLE_ELEVATION[4 + isPassenger];
-                if (isPassenger) {
-                    yaw = playerToSpectate->vehicle->netUpdatedPassengerRot[2];
-                    pitch = playerToSpectate->vehicle->netUpdatedPassengerRot[1] + (float)0.08;
-                }
-                break;
+static void enableSpectate(playerSpectateData_t *data)
+{
+	data->Enabled = 1;
+}
+static void spectate(Player *currentPlayer, Player *playerToSpectate)
+{
+	float cameraT;
+	playerSpectateData_t * spectateData = SpectateData + currentPlayer->fps.vars.cam_slot;
+	if(!playerToSpectate)
+		return;
+
+	// Do not move UYA's native death-camera anchor: its collision sweep runs before our render hook.
+
+	if (playerToSpectate->vehicle && playerToSpectate->vehicle->pMoby) {
+		vector_write(spectateData->FollowOffset, 0);
+		struct Moby * vehicleMoby = playerToSpectate->vehicle->pMoby;
+		int isPassenger = (void *)playerToSpectate->vehicle->pPassenger == (void *)playerToSpectate;
+		cameraT = 1 - powf(MATH_E, -(isPassenger ? CAMERA_ROTATION_SHARPNESS : VEHICLE_CAMERA_ROTATION_SHARPNESS) * MATH_DT);
+
+		// Grab rotation
+		float yaw = vehicleMoby->rotation[2];
+		float pitch = 0.08;
+		float distance = 0;
+		float elevation = 0;
+
+		// Determine distance and elevation by vehicle id
+		switch (vehicleMoby->oClass) {
+			case MOBY_ID_TURBOSLIDER: {
+				distance = VEHICLE_DISTANCE[0 + isPassenger];
+				elevation = VEHICLE_ELEVATION[0 + isPassenger];
+				if (isPassenger) {
+					yaw = playerToSpectate->fps.vars.cameraZ.rotation;
+					pitch = playerToSpectate->fps.vars.cameraY.rotation + (float)0.08;
+				}
+				break;
 			}
-        }
+			case MOBY_ID_HOVERSHIP: {
+				distance = VEHICLE_DISTANCE[2 + isPassenger];
+				elevation = VEHICLE_ELEVATION[2 + isPassenger];
+				if (isPassenger) {
+					yaw = playerToSpectate->fps.vars.cameraZ.rotation;
+					pitch = playerToSpectate->fps.vars.cameraY.rotation;
+				}
+				break;
+			}
+			case MOBY_ID_TANK: {
+				distance = VEHICLE_DISTANCE[4 + isPassenger];
+				elevation = VEHICLE_ELEVATION[4 + isPassenger];
+				if (isPassenger) {
+					yaw = playerToSpectate->fps.vars.cameraZ.rotation;
+					pitch = playerToSpectate->fps.vars.cameraY.rotation + (float)0.08;
+				}
+				break;
+			}
+		}
 
-        // Interpolate camera rotation towards target player
-        float lerpZ = lerpfAngle(spectateData->LastCameraZ, yaw, cameraT);
-        currentPlayer->fps.vars.cameraZ.rotation = lerpZ;
-        spectateData->LastCameraZ = lerpZ;
-        float lerpY = lerpfAngle(spectateData->LastCameraY, pitch, cameraT);
-        currentPlayer->fps.vars.cameraY.rotation = lerpY;
-        spectateData->LastCameraY = lerpY;
-        
-        // Generate target based off distance and elevation
-        VECTOR target;
-        vector_copy(target, playerToSpectate->vehicle->pMoby->position);
-        target[0] -= cosf(spectateData->LastCameraZ) * distance;
-        target[1] -= sinf(spectateData->LastCameraZ) * distance;
-        target[2] += (sinf(spectateData->LastCameraY) * distance) + elevation;
+		// Interpolate camera rotation towards target player
+		float lerpZ = lerpfAngle(spectateData->LastCameraZ, yaw, cameraT);
+		spectateData->LastCameraZ = lerpZ;
+		float lerpY = lerpfAngle(spectateData->LastCameraY, pitch, cameraT);
+		spectateData->LastCameraY = lerpY;
 
-        // Interpolate camera towards target player
-        vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, target, 1 - powf(MATH_E, -CAMERA_POSITION_SHARPNESS * MATH_DT));
-        vector_copy(currentPlayer->fps.cameraPos, spectateData->LastCameraPos);
-    } else {
-        cameraT = 1 - powf(MATH_E, -CAMERA_ROTATION_SHARPNESS * MATH_DT);
+		// Generate target based off distance and elevation
+		VECTOR target;
+		vector_copy(target, playerToSpectate->vehicle->pMoby->position);
+		target[0] -= cosf(spectateData->LastCameraZ) * distance;
+		target[1] -= sinf(spectateData->LastCameraZ) * distance;
+		target[2] += (sinf(spectateData->LastCameraY) * distance) + elevation;
 
-        // Interpolate camera rotation towards target player
-        float playerToSpectateZ = playerToSpectate->fps.vars.cameraZ.rotation;
-        currentPlayer->fps.vars.cameraZ.rotation = playerToSpectateZ;
-        spectateData->LastCameraZ = playerToSpectateZ;
-        float playerToSpectateY = playerToSpectate->fps.vars.cameraY.rotation;
-        currentPlayer->fps.vars.cameraY.rotation = playerToSpectateY;
-        spectateData->LastCameraY = playerToSpectateY;
+		// Interpolate camera towards target player
+		vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, target, 1 - powf(MATH_E, -CAMERA_POSITION_SHARPNESS * MATH_DT));
+	} else {
+		vector_copy(spectateData->FollowOffset, playerToSpectate->fps.vars.positionOffset);
+		cameraT = 1 - powf(MATH_E, -CAMERA_ROTATION_SHARPNESS * MATH_DT);
 
-        // Interpolate camera towards target player
-        vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, playerToSpectate->fps.cameraPos, .5);
-        vector_copy(currentPlayer->fps.cameraPos, spectateData->LastCameraPos);
-    }
+		// Interpolate camera rotation towards target player
+		float playerToSpectateZ = lerpfAngle(spectateData->LastCameraZ, playerToSpectate->fps.vars.cameraZ.rotation, cameraT);
+		spectateData->LastCameraZ = playerToSpectateZ;
+		float playerToSpectateY = lerpfAngle(spectateData->LastCameraY, playerToSpectate->fps.vars.cameraY.rotation, cameraT);
+		spectateData->LastCameraY = playerToSpectateY;
+
+		// Interpolate camera towards target player
+		vector_lerp(spectateData->LastCameraPos, spectateData->LastCameraPos, playerToSpectate->fps.cameraPos, 1 - powf(MATH_E, -CAMERA_POSITION_SHARPNESS * MATH_DT));
+	}
 }
 
-int findNextPlayerIndex(int currentPlayerIndex, int currentSpectateIndex, int direction)
+static int findNextPlayerIndex(int currentPlayerIndex, int currentSpectateIndex, int direction)
 {
-    Player ** players = playerGetAll();
-    // int teamOnly = gameConfig.customModeId == CUSTOM_MODE_SEARCH_AND_DESTROY || gameConfig.customModeId == CUSTOM_MODE_INFECTED;
-    int teamOnly = 0;
-	int newIndex = currentSpectateIndex;
+	Player **players = playerGetAll();
+	int index = currentSpectateIndex;
+	int count;
 
-    do {
-    loop:
-        newIndex += direction;
-
-        if (newIndex < 0)
-            newIndex = GAME_MAX_PLAYERS - 1;
-        else if (newIndex >= GAME_MAX_PLAYERS)
-            newIndex = 0;
-        // Fail if the only player is us
-        if(newIndex == currentPlayerIndex && newIndex == currentSpectateIndex)
-            return -1;
-        // prevent infinite loop
-        if (newIndex == currentSpectateIndex)
-            return players[currentSpectateIndex] ? currentSpectateIndex : -1;
-        // skip self
-        if (newIndex == currentPlayerIndex)
-            goto loop;
-        // skip enemy team
-        if (teamOnly && players[newIndex] && players[newIndex]->mpTeam != players[currentPlayerIndex]->mpTeam)
-            goto loop;
-    }
-    while(!players[newIndex]);
-    
-    return newIndex;
+	/* A bounded search also handles an empty roster or a disconnected target. */
+	for (count = 0; count < GAME_MAX_PLAYERS; ++count) {
+		index = (index + direction + GAME_MAX_PLAYERS) % GAME_MAX_PLAYERS;
+		if (index != currentPlayerIndex && players[index])
+			return index;
+	}
+	return -1;
 }
 
-void Init(void)
+static Player *spectateLocalPlayer(int localIndex)
 {
-    memset(SpectateData, 0, sizeof(SpectateData));
-    InitSpectate = 1;
+	Player **players = playerGetAll();
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		Player *player = players[i];
+		if (player && player->isLocal && player->pPad && player->pPad->port != 10 &&
+			player->fps.vars.cam_slot == localIndex)
+			return player;
+	}
+	return 0;
 }
 
 void runSpectate(void)
 {
-	GameSettings * gameSettings = gameGetSettings();
-	Player ** players = playerGetAll();
-	struct PlayerSpectateData * spectateData = 0;
-	int i = 0;
-	int direction = 0;
-	int spectateIndex = 0;
+	Player **players;
+	int localIndex;
 
-	// First, we have to ensure we are in-game
-	if (!gameSettings || !isInGame()) {
-		SpectateData->Enabled = 0;
-		InitSpectate = 0;
+	uiUpdateTipPopup();
+
+	if (!gameGetSettings() || !isInGame()) {
+		restoreSpectateHook();
+		memset(SpectateData, 0, sizeof(SpectateData));
 		return;
 	}
 
-	if (InitSpectate != 1)
-		Init();
+	players = playerGetAll();
+	for (localIndex = 0; localIndex < GAME_MAX_LOCALS; ++localIndex) {
+		Player *player = spectateLocalPlayer(localIndex);
+		playerSpectateData_t *data = &SpectateData[localIndex];
+		int direction = 0;
+		int index = data->Index;
 
-	// Loop through every player
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		if (!players[i])
+		/* Simulated heroes have pads too; only actual local slots own a camera. */
+		if (!player) {
+			disableSpectate(data);
+			continue;
+		}
+		if (!playerIsDead(player)) {
+			disableSpectate(data);
+			continue;
+		}
+
+		if (!data->HasShownHelp) {
+			data->HasShownHelp = showSpectateHelp();
+		}
+		if (playerPadGetButtonDown(player, PAD_SQUARE) > 0) {
+			if (data->Enabled) {
+				disableSpectate(data);
+				continue;
+			}
+			index = findNextPlayerIndex(player->mpIndex, player->mpIndex, 1);
+			if (index < 0 || !installSpectateHook() || !installScoreboardHook(localIndex))
+				continue;
+			enableSpectate(data);
+			data->Index = -1;
+		}
+		if (!data->Enabled)
 			continue;
 
-		Player * player = players[i];
+		if (index < 0 || index >= GAME_MAX_PLAYERS || !players[index])
+			direction = 1;
+		else if (playerPadGetButtonDown(player, PAD_R1) > 0)
+			direction = 1;
+		else if (playerPadGetButtonDown(player, PAD_L1) > 0)
+			direction = -1;
 
-		// Next, we have to ensure the player is the local player and they are dead
-		if (player->isLocal || playerGetHealth(player) <= 0) {
-			// Grab player-specific spectate data
-			spectateData = SpectateData + player->mpIndex;
-			spectateIndex = spectateData->Index;
-
-			// If dead
-			if (playerIsDead(player)) {
-				if (!spectateData->Enabled) {
-					// Show help message when player dies
-					if (!spectateData->HasShownEnterMsg) {
-						spectateData->HasShownEnterMsg = 1;
-						uiShowPopup(player, "Press \x13 to enter spectate mode.", 5);
-					}
-
-					// When the player presses square and spectate isn't already enabled. Try to enable it.
-					if (playerPadGetButtonDown(player, PAD_SQUARE) > 0) {
-						// First check if there is a player to spectate
-						spectateIndex = findNextPlayerIndex(i, spectateIndex, 1);
-						if (spectateIndex >= 0) {
-							enableSpectate(player, spectateData);
-							spectateData->Index = spectateIndex;
-							vector_copy(spectateData->LastCameraPos, players[spectateIndex]->fps.cameraPos);
-						}
-					}
-				}
-				// Let the player exit spectate by pressing square
-				else if (playerPadGetButtonDown(player, PAD_SQUARE) > 0) {
-					disableSpectate(player, spectateData);
-				}
-				// If the actively spectated player left find the next player
-				else if (!players[spectateIndex]) {
-					// First check if there is a player to spectate
-					spectateIndex = findNextPlayerIndex(i, spectateIndex, 1);
-					if (spectateIndex < 0)
-						disableSpectate(player, spectateData);
-
-					// Update spectate index
-					spectateData->Index = spectateIndex;
-				} else {
-					// Show nav message
-					if (!spectateData->HasShownNavMsg) {
-						spectateData->HasShownNavMsg = 1;
-						uiShowPopup(player, "Use \x14 and \x15 to navigate between players.", 5);
-					}
-				
-					// If the currently spectated player becomes null, we move forward to the next player            
-					if (!players[spectateIndex])
-						direction = 1;
-					// If the player is pressing R1, move forward
-					else if (playerPadGetButtonDown(player, PAD_R1) > 0) 
-						direction = 1;
-					// If the player is pressing L1, move backward
-					else if (playerPadGetButtonDown(player, PAD_L1) > 0)
-						direction = -1;
-
-					// 
-					if (direction)
-						spectateIndex = findNextPlayerIndex(i, spectateIndex, direction);
-
-					if (spectateIndex >= 0) {
-						Player * nextPlayer = players[spectateIndex];
-						if (nextPlayer) {
-							// Update last camera position to new target
-							// This snaps the camera to the new target instead of lerping
-                            // Commented out due to PAL bug.  I think "spectateIndex" isn't getting the correct data
-							// if (spectateIndex != spectateData->Index)
-							// 	vector_copy(spectateData->LastCameraPos, nextPlayer->fps.cameraPos);
-
-							spectate(player, nextPlayer);
-						}
-					}
-					// Finally update stored index value
-					spectateData->Index = spectateIndex;
-				}
-			} else if (spectateData->Enabled) {
-				disableSpectate(player, spectateData);
-			}
+		if (direction)
+			index = findNextPlayerIndex(player->mpIndex, index, direction);
+		if (index < 0) {
+			disableSpectate(data);
+			continue;
 		}
+		if (index != data->Index) {
+			Vehicle *vehicle = players[index]->vehicle;
+			if (vehicle && vehicle->pMoby)
+				vector_copy(data->LastCameraPos, vehicle->pMoby->position);
+			else
+				vector_copy(data->LastCameraPos, players[index]->fps.cameraPos);
+			data->LastCameraZ = players[index]->fps.vars.cameraZ.rotation;
+			data->LastCameraY = players[index]->fps.vars.cameraY.rotation;
+		}
+		data->Index = index;
+		spectate(player, players[index]);
 	}
+	for (localIndex = 0; localIndex < GAME_MAX_LOCALS; ++localIndex) {
+		if (SpectateData[localIndex].Enabled)
+			return;
+	}
+	restoreSpectateHook();
 }

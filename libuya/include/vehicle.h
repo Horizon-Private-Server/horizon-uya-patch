@@ -1,10 +1,9 @@
 /***************************************************
  * FILENAME :		vehicle.h
  * DESCRIPTION :
- * 		Contains vehicle specific offsets and structures for Deadlocked.
+ * 		Contains vehicle specific offsets and structures for UYA.
  * NOTES :
- * 		Each offset is determined per app id.
- * 		This is to ensure compatibility between versions of Deadlocked/Gladiator.
+ * 		Offsets describe the 32-bit EE ABI.
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 
@@ -120,8 +119,9 @@ struct VehicleInterface {
 };
 
 typedef struct VehicleBase {
-	/* 0x000 */ struct Guber guber; // 0x18 bytes
-	/* 0x018 */ char unk_018[0x2b8]; // was unk_020[0x2b0]: with an 0x18 byte Guber that put every field below 8 bytes too low (pDriver compiled to 0x2d0)
+	/* 0x000 */ struct Guber guber;
+	/* Guber is 0x18 bytes in UYA; native vehicle members begin at 0x2d0. */
+	/* 0x018 */ char unk_018[0x2b8];
 	/* 0x2d0 */ struct Moby* pMoby;
 	/* 0x2d4 */ struct Moby* pTarget;
 	/* 0x2d8 */ struct Player* pDriver;
@@ -140,7 +140,7 @@ typedef struct VehicleBase {
 	/* 0x301 */ char masterInAir;
 	/* 0x302 */ short int inAirTimer;
 	/* 0x304 */ short int vehicleMobyUID;
-	/* 0x3e6 */ short int exitToggle;
+	/* 0x306 */ short int exitToggle;
 	/* 0x308 */ float hitPoints;
 	/* 0x30c */ float maxHP;
 	/* 0x310 */ float speed;

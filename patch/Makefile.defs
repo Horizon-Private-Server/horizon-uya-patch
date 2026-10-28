@@ -10,7 +10,8 @@ EE_LDFLAGS = -fno-builtin -nostdlib -nostartfiles -L. -L../libuya/lib -L$(PS2SDK
 #EE_DEFS += -DTEST
 #EE_DEFS += -DSCAVENGER_HUNT
 EE_DEFS += -DMAPBOOTELF
-EE_DEFS += -DULAUNCHELF
+#EE_DEFS += -DULAUNCHELF
+EE_DEFS += -DSPECTATE
 
 
 ifneq (,$(findstring -DULAUNCHELF,$(EE_DEFS)))
@@ -23,6 +24,10 @@ endif
 
 ifneq (,$(findstring -DSCAVENGER_HUNT,$(EE_DEFS)))
     EE_OBJS += scavengerhunt.o
+endif
+
+ifneq (,$(findstring -DSPECTATE,$(EE_DEFS)))
+    EE_OBJS += spectate.o
 endif
 
 all: $(EE_BIN) clean copy

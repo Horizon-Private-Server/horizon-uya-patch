@@ -562,6 +562,19 @@ int uiShowInvitePlayersDialog(void);
  */
 void uiShowPopup(Player * player, const char * message, int seconds);
 
+/* Queue custom text in the native bottom-screen tutorial-tip style.
+ * Call uiUpdateTipPopup once per game frame, including outside matches so
+ * pending tips are cleared on exit. The message must remain valid until the
+ * tip finishes; a new call replaces the previous custom tip. Duration is in
+ * seconds (1-3600). Native tips take priority and pause the custom timer.
+ * Respects the game's help setting and native HUD visibility rules.
+ * Returns 1 when queued, 0 for invalid arguments or unsupported code layouts.
+ * NTSC-U Bakisi is verified; other retail layouts are signature-checked.
+ * This does not change the game's tutorial playback history.
+ */
+int uiShowTipPopup(const char *message, int seconds);
+void uiUpdateTipPopup(void);
+
 /*
  * NAME :		uiShowHelpPopup
  * DESCRIPTION :
