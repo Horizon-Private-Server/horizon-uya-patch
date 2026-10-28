@@ -3220,7 +3220,7 @@ int main(void)
 		runFpsCounter();
 
 		// Run Spectate
-#if SOECTATE
+#ifdef SPECTATE
 		if (config.enableSpectate)
 			runSpectate();
 #endif
