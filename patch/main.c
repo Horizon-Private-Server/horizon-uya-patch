@@ -87,7 +87,9 @@ void grLobbyStart(void);
 void grLoadStart(void);
 
 // void runPing(void);
-// void runSpectate(void);
+#ifdef SPECTATE
+void runSpectate(void);
+#endif
 
 void patchControllerDeadzone(void);
 
@@ -3218,8 +3220,10 @@ int main(void)
 		runFpsCounter();
 
 		// Run Spectate
-		// if (config.enableSpectate)
-		// 	runSpectate();
+#if SOECTATE
+		if (config.enableSpectate)
+			runSpectate();
+#endif
 
 		if (config.alwaysShowHealth)
 			patchAlwaysShowHealth();
