@@ -80,6 +80,9 @@ void configMenuEnable(void);
 void configMenuDisable(void);
 
 void runMapLoader(void);
+#ifdef JOIN_IN_PROGRESS
+void joinTick(void);
+#endif
 void onMapLoaderOnlineMenu(void);
 
 int patchCreateGame(void *ui, long pad);
@@ -3158,6 +3161,9 @@ int main(void)
 	
 	// Run map loader
 	runMapLoader();
+#ifdef JOIN_IN_PROGRESS
+	joinTick();
+#endif
 
 	// run exception handler
 	runExceptionHandler();
