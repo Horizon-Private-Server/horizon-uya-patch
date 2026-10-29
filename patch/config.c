@@ -304,7 +304,7 @@ MenuElem_ListData_t dataCycleWeapon3 = {
 
 // map select list
 MenuElem_ListData_t dataCustomMaps = {
-  .value = &patchStateContainer.CustomMapId,
+  .value = &patchStateContainer.customMapId,
   .stateHandler = menuStateHandler_SelectedMapOverride,
   .count = 1,
   .rows = 10,
@@ -963,7 +963,7 @@ void gmResetSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   preset = 0;
   memset(&gameConfig, 0, sizeof(gameConfig));
-  patchStateContainer.CustomMapId = 0;
+  patchStateContainer.customMapId = 0;
 }
 
 // 
@@ -971,7 +971,7 @@ void botInviteSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   preset = 4;
   memset(&gameConfig, 0, sizeof(gameConfig));
-  patchStateContainer.CustomMapId = 0;
+  patchStateContainer.customMapId = 0;
 
   void * lobbyConnection = netGetLobbyServerConnection();
   netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_INVITE_BOT, sizeof(botConfig), &botConfig);
@@ -1174,7 +1174,7 @@ void menuStateHandler_GameModeOverride(TabElem_t* tab, MenuElem_t* element, int*
   // hide gamemode for maps with exclusive gamemode
   for (i = 0; i < dataCustomMapsWithExclusiveGameModeCount; ++i)
   {
-    if (patchStateContainer.CustomMapId == dataCustomMapsWithExclusiveGameMode[i])
+    if (patchStateContainer.customMapId == dataCustomMapsWithExclusiveGameMode[i])
     {
       *state = ELEMENT_HIDDEN;
       return;
@@ -2404,6 +2404,13 @@ void onMenuUpdate(int inGame)
 {
   TabElem_t* tab = &tabElements[selectedTabItem];
 
+  if (!inGame && !netGetLobbyServerConnection())
+  {
+    if (isConfigMenuActive)
+      configMenuDisable();
+    return;
+  }
+
   if (isConfigMenuActive)
   {
     // prevent pad from affecting menus
@@ -2453,9 +2460,10 @@ void onMenuUpdate(int inGame)
 	  	gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.77, scale, scale, 0x80FFFFFF, "Press START to", -1, 4, FONT_BOLD);
 			gfxScreenSpaceText(SCREEN_WIDTH * 0.3, SCREEN_HEIGHT * 0.80, scale, scale, 0x80FFFFFF, "Open Config Menu", -1, 4, FONT_BOLD);
     }
-    if (uiGetActiveMenu(UI_MENU_STAGING, 0) > 0 && *(u32*)0x01C5C114 == 0) {
-      int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
-      if (gameAmIHost() && isTeams)
+    if (uiGetActiveMenu(UI_MENU_STAGING, 0) > 0 && *(u32*)0x01C5C114 == 0 && gameGetSettings()) {
+      GameOptions* options = gameGetOptions();
+      int isTeams = options && options->GameFlags.MultiplayerGameFlags.Teams;
+      if (options && isTeams && gameAmIHost())
         gfxScreenSpaceText(SCREEN_WIDTH * 0.205, SCREEN_HEIGHT * 0.07, 0.7, .85, 0x8069cbf2, "\x14 RANDOM TEAMS", -1, 4, FONT_BOLD);
     }
 		// check for pad input
@@ -2616,8 +2624,8 @@ void onConfigUpdate(void)
     char * modeName = gameGetGameModeName(gameSettings->GameType);
 
     // get map override name
-    if (patchStateContainer.CustomMapId > 0)
-      mapName = dataCustomMaps.items[patchStateContainer.CustomMapId];
+    if (patchStateContainer.customMapId > 0)
+      mapName = dataCustomMaps.items[patchStateContainer.customMapId];
     else if (MapLoaderState.MapName[0])
       mapName = MapLoaderState.MapName;
 
@@ -2635,10 +2643,9 @@ void onConfigUpdate(void)
     }
 
     UiMenu_t* uiStaging = uiGetActiveMenu(UI_MENU_STAGING, 0);
-    if (uiStaging > 0) {
-      u32 * stagingChild = uiStaging->pChildren;
-      u32 mapText = (u32)stagingChild[1] + 0x14;
-      u32 modeText = (u32)stagingChild[2] + 0x14;
+    if (uiStaging > 0 && uiStaging->pChildren[1] && uiStaging->pChildren[2]) {
+      u32 mapText = (u32)uiStaging->pChildren[1] + 0x14;
+      u32 modeText = (u32)uiStaging->pChildren[2] + 0x14;
       if (mapName)
         strncpy((char*)mapText, mapName, 32);
       if (modeName)
@@ -2696,6 +2703,28 @@ void onConfigInitialize(void)
 }
 
 //------------------------------------------------------------------------------
+void configSendGameConfig(void)
+{
+  int customMapId = patchStateContainer.customMapId;
+  gameConfig.isCustomMap = customMapId > 0 && customMapId < dataCustomMaps.count && customMapDefs;
+
+  // backup
+  memcpy(&gameConfigHostBackup, &gameConfig, sizeof(PatchGameConfig_t));
+
+  // send
+  void * lobbyConnection = netGetLobbyServerConnection();
+  if (lobbyConnection) {
+    ClientSetGameConfig_t msg;
+
+    memset(&msg, 0, sizeof(msg));
+    if (gameConfig.isCustomMap)
+      memcpy(&msg.CustomMap, &customMapDefs[customMapId-1], sizeof(msg.CustomMap));
+    memcpy(&msg.GameConfig, &gameConfig, sizeof(msg.GameConfig));
+    netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(ClientSetGameConfig_t), &msg);
+  }
+}
+
+//------------------------------------------------------------------------------
 void configTrySendGameConfig(void)
 {
   int state = 0;
@@ -2719,20 +2748,7 @@ void configTrySendGameConfig(void)
       }
     }
 
-    // backup
-    memcpy(&gameConfigHostBackup, &gameConfig, sizeof(PatchGameConfig_t));
-
-    // send
-    void * lobbyConnection = netGetLobbyServerConnection();
-    if (lobbyConnection) {
-      ClientSetGameConfig_t msg;
-
-      memset(&msg, 0, sizeof(msg));
-      if (patchStateContainer.CustomMapId > 0)
-        memcpy(&msg.CustomMap, &customMapDefs[patchStateContainer.CustomMapId-1], sizeof(msg.CustomMap));
-      memcpy(&msg.GameConfig, &gameConfig, sizeof(msg.GameConfig));
-      netSendCustomAppMessage(lobbyConnection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_USER_GAME_CONFIG, sizeof(ClientSetGameConfig_t), &msg);
-    }
+    configSendGameConfig();
   }
 }
 

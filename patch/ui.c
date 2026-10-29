@@ -256,7 +256,13 @@ void setTeams(int numTeams)
 int getPlayerIndex(void * ui,int selectedPlayer)
 {
     GameSettings * gs = gameGetSettings();
+    if (!ui || !gs || selectedPlayer < 0 || selectedPlayer >= GAME_MAX_PLAYERS)
+        return -1;
+
     int uiElement = *(int*)(ui + (selectedPlayer + 0xf) * 4 + 0x110);
+    if (!uiElement)
+        return -1;
+
     long compareNames;
     int i = 0;
     while (((gs == 0 || (gs->PlayerClients[i] == -1)) || (compareNames = strcmp(uiElement + 0x14, gs->PlayerNames[i]), compareNames != 0))) {
@@ -492,7 +498,13 @@ void updateInfo(GameSettings *gs, int selectedIndex)
 int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
 {
     int selectedItem = itemSelected - 0xf;
+    if (!ui || !gs || selectedItem < 0 || selectedItem >= GAME_MAX_PLAYERS)
+        return UI_PAD_CROSS;
+
     int i = getPlayerIndex(ui, selectedItem);
+    if (i < 0 || i >= GAME_MAX_PLAYERS)
+        return UI_PAD_CROSS;
+
     int account_id = gs->PlayerAccountIds[i];
     int client_id = gs->PlayerClients[i];
     int isBot = (account_id >= 883) && (account_id <= 1880);
@@ -564,16 +576,30 @@ int patchStaging(UiMenu_t* ui, int pad)
     static int holdingL1time = 0; 
     int i;
     int j;
-    GameSettings* gs = gameGetSettings();
-    int clientId = gameGetMyClientId();
-    int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
-    int itemSelected = *(int*)((u32)ui + 0x290);
-    int isLoading = *(u8*)((u32)ui + 0x2b6);
-    int isRequstingTeamChange = *(u8*)((u32)ui + 0x2c8);
+    GameSettings* gs;
+    GameOptions* options;
+    int clientId;
+    int isTeams;
+    int itemSelected;
+    int isLoading;
+    int isRequstingTeamChange;
 
-    // check for connetion
+    // check for connection before reading staging/game pointers; the disconnect popup can tear these down.
+    if (!ui)
+        return 0;
     if (!netGetLobbyServerConnection())
         return stagingFunc(ui, pad);
+
+    gs = gameGetSettings();
+    options = gameGetOptions();
+    if (!gs || !options)
+        return stagingFunc(ui, pad);
+
+    clientId = gameGetMyClientId();
+    isTeams = options->GameFlags.MultiplayerGameFlags.Teams;
+    itemSelected = *(int*)((u32)ui + 0x290);
+    isLoading = *(u8*)((u32)ui + 0x2b6);
+    isRequstingTeamChange = *(u8*)((u32)ui + 0x2c8);
 
     // Change pad buttons for all players
     if (pad == UI_PAD_CROSS) {
@@ -597,6 +623,10 @@ int patchStaging(UiMenu_t* ui, int pad)
 
 	// call game function we're replacing
 	int result = stagingFunc(ui, pad);
+
+    // The original staging function may tear down these pointers after Disconnect.
+    if (!netGetLobbyServerConnection() || !gameGetSettings() || !gameGetOptions())
+        return result;
 
     //  init staging if not done already, or equals 2
     if (!init_staging || info.currentWorldId != gameGetWorldId()) {

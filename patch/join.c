@@ -308,7 +308,7 @@ void joinTick(void)
 	int running = settings && isInGame() && !GAME_NET_INFO->onlyLocalPlayers && !gameHasEnded();
 	int supported = running && settings->GameType == GAMETYPE_DM &&
 	    settings->GameLevel >= 40 && settings->GameLevel <= 49 &&
-	    !patchStateContainer.CustomMapId && !gameConfig.customModeId;
+	    !patchStateContainer.customMapId && !gameConfig.customModeId;
 
 	joinSetAdmission(supported && gameAmIHost());
 	if (supported) {
