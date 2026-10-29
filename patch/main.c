@@ -39,6 +39,7 @@
 #define GLOBAL_GAME_MODULES_START							((GameModule*)0x000cf000)
 #define EXCEPTION_HANDLER									(0x000c8000)
 #define GAME_UPDATE_SENDRATE								(5 * TIME_SECOND)
+#define NW_PLAYER_STRIDE (0xc70)
 
 #if UYA_PAL
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006c2d80)
@@ -52,6 +53,9 @@
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dbac)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006c234c)
 #define nwVoiceUpdateFunc									(0x0019c2c0)
+#define NW_PLAYER_ARRAY (0x0022f3d0)
+#define NW_COMPLETE_REMOTE_PLAYER (0x00199878)
+#define NW_PLAYER_LEAVE_CALLBACK (0x00240654)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
 #define RANK_TABLE                              			((u32)0x001a6Be4)
@@ -64,6 +68,9 @@
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dc6c)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006bf834)
 #define nwVoiceUpdateFunc									(0x0019c400)
+#define NW_PLAYER_ARRAY (0x0022f550)
+#define NW_COMPLETE_REMOTE_PLAYER (0x001999b8)
+#define NW_PLAYER_LEAVE_CALLBACK (0x002407d4)
 #endif
 
 void onConfigOnlineMenu(void);
@@ -175,6 +182,9 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.playerSyncRate = 0,
 	.controllerDeadzone = 0,
 };
+
+static void (*nativeBotPlayerLeave)(struct tNW_Player*);
+static int remoteBotMask;
 
 PatchGameConfig_t gameConfig;
 PatchGameConfig_t gameConfigHostBackup;
@@ -2532,6 +2542,68 @@ void patchSwingshotGunBug(void)
 	patched.swingshotGunBug = 1;
 }
 
+/* Keep native hero/equipment cleanup and the named departure notification,
+ * but a bot leaving must not tear down its shared human host's objects. */
+static void remoteBotPlayerLeave(struct tNW_Player* netPlayer)
+{
+	int slot = ((u32)netPlayer - NW_PLAYER_ARRAY) / NW_PLAYER_STRIDE;
+	u32* leave = (u32*)nativeBotPlayerLeave;
+	if (slot >= 0 && slot < GAME_MAX_PLAYERS && (remoteBotMask & (1 << slot)) &&
+	    netPlayer->netClientIndex == GAME_HOST_ID) {
+		u32 clientLeave = leave[0xcc / 4];
+		leave[0xcc / 4] = 0;
+		FlushCache(0);
+		FlushCache(2);
+		nativeBotPlayerLeave(netPlayer);
+		leave[0xcc / 4] = clientLeave;
+		FlushCache(0);
+		FlushCache(2);
+		remoteBotMask &= ~(1 << slot);
+	} else {
+		nativeBotPlayerLeave(netPlayer);
+	}
+}
+
+static void updateRemoteBots(void)
+{
+	GameSettings* settings = gameGetSettings();
+	Player** players = playerGetAll();
+	if (!settings || !players || gameAmIHost() || GAME_NET_INFO->onlyLocalPlayers)
+		return;
+
+	void (**callback)(struct tNW_Player*) = (void*)NW_PLAYER_LEAVE_CALLBACK;
+	if (*callback != remoteBotPlayerLeave) {
+		u32* leave = (u32*)*callback;
+		if (!leave || leave[0] != 0x27bdffd0 || leave[1] != 0x3c02001a ||
+		    (leave[0xcc / 4] & 0xfc000000) != 0x0c000000 || leave[0xd0 / 4] != 0x0280202d)
+			return;
+		nativeBotPlayerLeave = *callback;
+		remoteBotMask = 0;
+		*callback = remoteBotPlayerLeave;
+	}
+
+	/* Native object reception only queues a player. The normal game completes
+	 * that creation during loading, so host-owned bots added later need this
+	 * same callback during gameplay. Existing actors are never replaced. */
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		if (players[i] || settings->PlayerClients[i] != GAME_HOST_ID || settings->PlayerAccountIds[i] != -1)
+			continue;
+		struct tNW_Player* netPlayer = (struct tNW_Player*)(NW_PLAYER_ARRAY + i * NW_PLAYER_STRIDE);
+		struct tNW_PlayerData* data = netPlayer->pNetPlayerData;
+		if (!data || data->playerIndex != i || data->accountId != -1 ||
+		    netPlayer->netClientIndex != GAME_HOST_ID || !netPlayer->bSpawned ||
+		    netPlayer->bCallbackCalled || netPlayer->bUnk_1a4)
+			continue;
+
+		/* Resident regional wrapper; its registered constructor belongs to the
+		 * current map. This creates a remote hero, not a local controller/HUD. */
+		((void (*)(struct tNW_Player*))NW_COMPLETE_REMOTE_PLAYER)(netPlayer);
+		if (players[i])
+			remoteBotMask |= 1 << i;
+	}
+}
+
 /*
  * NAME :		onMobyUpdate
  * DESCRIPTION :Patches the player packets for smoother movement.
@@ -2542,8 +2614,8 @@ void patchSwingshotGunBug(void)
  */
 void onMobyUpdate(Moby* moby)
 {
+	playerSyncTick();
 	if (gameConfig.grNewPlayerSync) {
-		playerSyncTick();
 		// KOTH already runs through the normal main-loop module pass. Skip the
 		// extra NPS-side dispatch so KOTH doesn't tick twice per frame.
 		if (gameConfig.customModeId != CUSTOM_MODE_KOTH)
@@ -2553,7 +2625,8 @@ void onMobyUpdate(Moby* moby)
 
 		playerSyncPostTick();
 	} else {
-		((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);	
+		((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);
+		playerSyncPostTick();
 	}
 }		
 
@@ -3146,6 +3219,8 @@ int main(void)
 	patchColors();
 
 	if(isInGame()) {
+		updateRemoteBots();
+
 		// Patch remap buttons configuration
 		HOOK_JAL(0x0013cae0, &patchSceReadPad_memcpy);
 
