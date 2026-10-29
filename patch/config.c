@@ -603,7 +603,7 @@ MenuElem_t menuElementsGeneral[] = {
 MenuElem_t menuElementsGameSettings[] = {
   { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
 #ifdef JOIN_IN_PROGRESS
-	{ "Allow Mid-Game Joining", toggleActionHandler, menuStateHandler_Default, &gameConfig.allowMidGameJoining, "Allow players to join a running Deathmatch. Custom game modes are not supported yet." },
+	{ "Allow Mid-Game Joining", toggleActionHandler, menuStateHandler_Default, &gameConfig.allowMidGameJoining, "Allow players to join a running Deathmatch or King of the Hill game." },
 #endif
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },

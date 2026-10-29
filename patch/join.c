@@ -7,7 +7,10 @@
 #include <libuya/string.h>
 #include <libuya/ui.h>
 #include <libuya/interop.h>
+#include <libuya/net.h>
+#include <libuya/time.h>
 #include "config.h"
+#include "messageid.h"
 #include "include/config.h"
 
 #define JOIN_GATE_ORIGINAL (0x28420007)
@@ -60,6 +63,7 @@ static const u32 joinGateValues[] = {
 static int joinAdmissionOpen;
 static int joinRosterInitialized;
 static int joinSeenAccounts[GAME_MAX_PLAYERS];
+static int joinLastTimeSent;
 
 static VariableAddress_t vaJoinPlayerLeave = {
 #if UYA_PAL
@@ -89,6 +93,7 @@ static VariableAddress_t vaJoinPlayerLeave = {
 
 #if !UYA_PAL
 static int joinClientLoading;
+static int joinNeedsGameTime;
 static char joinSelectedMap[32];
 
 /* Game Details carries the display name, which may be truncated. Use it only
@@ -124,6 +129,7 @@ static int joinBeginClient(void* context)
 
 	int result = ((int (*)(void*))0x006d25c0)(context);
 	joinClientLoading = result != 0;
+	joinNeedsGameTime = joinClientLoading;
 	joinSetInputReceiver(joinClientLoading);
 	joinSetPlayerUpdates(joinClientLoading);
 	return result;
@@ -132,6 +138,7 @@ static int joinBeginClient(void* context)
 static int joinEndClient(void* context)
 {
 	joinClientLoading = 0;
+	joinNeedsGameTime = 0;
 	joinSetInputReceiver(0);
 	joinSetPlayerUpdates(0);
 	return ((int (*)(void*))0x006d1928)(context);
@@ -176,18 +183,65 @@ static void joinSetPlayerUpdates(int enabled)
 }
 #endif
 
-/* Retail games need no map override. Custom maps reuse the normal loader,
- * including the server's version check; maps requiring a custom mode remain
- * excluded until late joining can download that mode's payload too. */
+/* Keep the whitelist explicit: the plugin supplies KOTH's payload on a late
+ * join, and KOTH periodically resends its hill/timer and owned scores. */
+static int joinSupportsMode(void)
+{
+	int mode = gameConfig.customModeId;
+	int index = patchStateContainer.customMapId - 1;
+	if (gameConfig.isCustomMap && customMapDefs && index >= 0 && index < customMapDefCount &&
+	    customMapDefs[index].ForcedCustomModeId)
+		mode = customMapDefs[index].ForcedCustomModeId;
+	return mode == CUSTOM_MODE_NONE || mode == CUSTOM_MODE_KOTH;
+}
+
+/* Retail games need no override. Custom maps reuse the normal loader and
+ * the server's expected map version. */
 static int joinSupportsMap(void)
 {
 	int index = patchStateContainer.customMapId - 1;
 	if (!gameConfig.isCustomMap)
 		return index < 0 && !MapLoaderState.Enabled;
 	return customMapDefs && index >= 0 && index < customMapDefCount &&
-	    !customMapDefs[index].ForcedCustomModeId && MapLoaderState.Enabled &&
+	    MapLoaderState.Enabled &&
 	    MapLoaderState.MapFileName[0] && expectedMapVersion >= 0 &&
 	    mapOverrideResponse == expectedMapVersion;
+}
+
+/* Preserve the local start timestamp: changing it would reset custom-mode
+ * state. Adjust the duration so the native timer has the host's time left. */
+static int joinReceiveGameTime(void* connection, void* data)
+{
+#if !UYA_PAL
+	if (connection == netGetDmeServerConnection() && joinNeedsGameTime &&
+	    isInGame() && !gameAmIHost()) {
+		GameData* game = gameGetData();
+		int remaining;
+		memcpy(&remaining, data, sizeof(remaining));
+		if (game && game->timeStart > 0 && remaining >= -1) {
+			game->timeEnd = remaining < 0 ? 0 : gameGetTime() - game->timeStart + remaining;
+			joinNeedsGameTime = 0;
+		}
+	}
+#endif
+	return sizeof(int);
+}
+
+static void joinSendGameTime(void)
+{
+	GameData* game = gameGetData();
+	int now = gameGetTime();
+	if (!game || game->timeStart <= 0 || now - joinLastTimeSent < TIME_SECOND)
+		return;
+	int remaining = -1;
+	if (game->timeEnd > 0) {
+		remaining = game->timeEnd - (now - game->timeStart);
+		if (remaining < 0)
+			remaining = 0;
+	}
+	netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_JOIN_GAME_TIME,
+	    sizeof(remaining), &remaining);
+	joinLastTimeSent = now;
 }
 
 /* A running host sends input before the joining client has loaded gameplay's
@@ -322,6 +376,7 @@ static void joinNotifyPlayers(GameSettings* settings)
 
 void joinTick(void)
 {
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_GAME_TIME, &joinReceiveGameTime);
 	if (isInGame())
 		joinSetInputReceiver(0);
 #if !UYA_PAL
@@ -353,13 +408,16 @@ void joinTick(void)
 	int running = settings && isInGame() && !GAME_NET_INFO->onlyLocalPlayers && !gameHasEnded();
 	int supported = running && gameConfig.allowMidGameJoining && settings->GameType == GAMETYPE_DM &&
 	    settings->GameLevel >= 40 && settings->GameLevel <= 49 &&
-	    !gameConfig.customModeId && joinSupportsMap();
+	    joinSupportsMode() && joinSupportsMap();
 
 	joinSetAdmission(supported && gameAmIHost());
 	if (supported) {
+		if (gameAmIHost())
+			joinSendGameTime();
 		joinCompletePlayers(settings);
 		joinNotifyPlayers(settings);
 	} else {
 		joinRosterInitialized = 0;
+		joinLastTimeSent = 0;
 	}
 }

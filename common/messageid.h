@@ -154,7 +154,7 @@ enum CustomMessageId
      */
     CUSTOM_MSG_ID_KOTH_SCORE_UPDATE = 28,
     /*
-     * Sent by host when the active KOTH hill changes to keep clients in sync.
+     * Sent by host on hill changes and periodically for late joiners.
      */
     CUSTOM_MSG_ID_KOTH_HILL_SYNC = 29,
     /*
@@ -171,6 +171,9 @@ enum CustomMessageId
      * Sent from the client to the server with the client's type (PS2/emulator) and machine id (MAC address).
      */
     CUSTOM_MSG_ID_CLIENT_SET_CLIENT_TYPE = 32,
+
+	/* Host's remaining game time for a newly loaded late joiner. */
+	CUSTOM_MSG_ID_JOIN_GAME_TIME = 33,
 
     /*
      * Start of custom message ids reserved for custom game modes.
