@@ -1,9 +1,11 @@
 #include <tamtypes.h>
+#include <stdio.h>
 #include <libuya/game.h>
 #include <libuya/gamesettings.h>
 #include <libuya/player.h>
 #include <libuya/pad.h>
 #include <libuya/string.h>
+#include <libuya/interop.h>
 #include "config.h"
 #include "include/config.h"
 
@@ -53,6 +55,34 @@ static const u32 joinGateValues[] = {
 	JOIN_SETUP_GATE_OPEN
 };
 static int joinAdmissionOpen;
+static int joinRosterInitialized;
+static int joinSeenAccounts[GAME_MAX_PLAYERS];
+
+static VariableAddress_t vaJoinPlayerLeave = {
+#if UYA_PAL
+	.Bakisi = 0x00538f48,
+	.Hoven = 0x0053b060,
+	.OutpostX12 = 0x00530938,
+	.KorgonOutpost = 0x0052e0d0,
+	.Metropolis = 0x0052d420,
+	.BlackwaterCity = 0x0052acb8,
+	.CommandCenter = 0x0052aa78,
+	.BlackwaterDocks = 0x0052d2f8,
+	.AquatosSewers = 0x0052c5f8,
+	.MarcadiaPalace = 0x0052bf78,
+#else
+	.Bakisi = 0x005366c8,
+	.Hoven = 0x00538720,
+	.OutpostX12 = 0x0052e038,
+	.KorgonOutpost = 0x0052b850,
+	.Metropolis = 0x0052aba0,
+	.BlackwaterCity = 0x005283b8,
+	.CommandCenter = 0x00528338,
+	.BlackwaterDocks = 0x0052ab78,
+	.AquatosSewers = 0x00529eb8,
+	.MarcadiaPalace = 0x005297f8,
+#endif
+};
 
 #if !UYA_PAL
 static int joinClientLoading;
@@ -186,6 +216,65 @@ static void joinCompletePlayers(GameSettings* settings)
 	}
 }
 
+/* Reuse the native departure feed, including its duration and oldest-entry
+ * eviction. Resolve its storage from the current map's leave function. */
+static int joinNotifyPlayer(const char* name)
+{
+	u32* leave = (u32*)GetAddress(&vaJoinPlayerLeave);
+	if (!leave || (leave[0x88 / 4] & 0xfc000000) != 0x0c000000)
+		return 0;
+	u32* feed = (u32*)((leave[0x88 / 4] & 0x03ffffff) << 2);
+	if (feed[0] != 0x27bdffe0 || feed[1] != 0x24030030 ||
+	    (feed[3] & 0xffff0000) != 0x3c020000 || feed[4] != 0x3c100025 ||
+	    (feed[5] & 0xffff0000) != 0x8e100000 || (feed[6] & 0xffff0000) != 0x24420000 ||
+	    feed[20] != 0x3c040025 || (feed[21] & 0xffff0000) != 0x24840000)
+		return 0;
+	int* count = (int*)((feed[4] << 16) + (s16)feed[5]);
+	int* timers = (int*)((feed[20] << 16) + (s16)feed[21]);
+	char* messages = (char*)((feed[3] << 16) + (s16)feed[6]);
+	if ((u32)count - (u32)timers != 8 * sizeof(int) || *count < 0 || *count > 8)
+		return 0;
+	if (*count == 8) {
+		int i;
+		for (i = 0; i < 7; ++i) {
+			memcpy(messages + i * 48, messages + (i + 1) * 48, 48);
+			timers[i] = timers[i + 1];
+		}
+		*count = 7;
+	}
+	snprintf(messages + *count * 48, 48, "%.15s joined the game.", name);
+	timers[*count] = 0x708;
+	++*count;
+	return 1;
+}
+
+/* Each existing client observes the same roster. No extra network message is
+ * needed, and a newly loading client seeds its baseline without announcing
+ * everyone who was already present. Negative account IDs belong to bots. */
+static void joinNotifyPlayers(GameSettings* settings)
+{
+	Player** players = playerGetAll();
+	int i;
+	if (!joinRosterInitialized) {
+		for (i = 0; i < GAME_MAX_PLAYERS; ++i)
+			joinSeenAccounts[i] = settings->PlayerClients[i] < 0 ? -1 : settings->PlayerAccountIds[i];
+		joinRosterInitialized = 1;
+		return;
+	}
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		int account = settings->PlayerAccountIds[i];
+		if (settings->PlayerClients[i] < 0 || account < 0) {
+			joinSeenAccounts[i] = -1;
+			continue;
+		}
+		if (joinSeenAccounts[i] == account || !players || !players[i] ||
+		    settings->PlayerStates[i] < 7 || !settings->PlayerNames[i][0])
+			continue;
+		if (joinNotifyPlayer(settings->PlayerNames[i]))
+			joinSeenAccounts[i] = account;
+	}
+}
+
 void joinTick(void)
 {
 	if (isInGame())
@@ -222,6 +311,10 @@ void joinTick(void)
 	    !patchStateContainer.CustomMapId && !gameConfig.customModeId;
 
 	joinSetAdmission(supported && gameAmIHost());
-	if (supported)
+	if (supported) {
 		joinCompletePlayers(settings);
+		joinNotifyPlayers(settings);
+	} else {
+		joinRosterInitialized = 0;
+	}
 }
