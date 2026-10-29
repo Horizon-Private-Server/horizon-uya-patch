@@ -5,6 +5,7 @@
 #include <libuya/player.h>
 #include <libuya/pad.h>
 #include <libuya/string.h>
+#include <libuya/ui.h>
 #include <libuya/interop.h>
 #include "config.h"
 #include "include/config.h"
@@ -41,6 +42,8 @@ static void joinSetPlayerUpdates(int enabled);
 #endif
 
 extern PatchGameConfig_t gameConfig;
+extern int mapOverrideResponse;
+extern int expectedMapVersion;
 
 static const u32 joinGates[] = {
 	JOIN_ADMISSION_GATE,
@@ -86,11 +89,39 @@ static VariableAddress_t vaJoinPlayerLeave = {
 
 #if !UYA_PAL
 static int joinClientLoading;
+static char joinSelectedMap[32];
+
+/* Game Details carries the display name, which may be truncated. Use it only
+ * to check that a map is installed; the server override supplies the actual
+ * filename, base map and version after joining. */
+void joinSetSelectedMap(const char* name)
+{
+	joinSelectedMap[0] = 0;
+	if (name) {
+		strncpy(joinSelectedMap, name, sizeof(joinSelectedMap) - 1);
+		joinSelectedMap[sizeof(joinSelectedMap) - 1] = 0;
+	}
+}
 
 /* These two lobby call sites bracket the native Join request. Keep the
  * loading receivers scoped to that request, including its failure cleanup. */
 static int joinBeginClient(void* context)
 {
+	if (joinSelectedMap[0]) {
+		int i;
+		int installed = 0;
+		for (i = 0; customMapDefs && i < customMapDefCount; ++i) {
+			if (strncmp(customMapDefs[i].Name, joinSelectedMap, strlen(joinSelectedMap)) == 0) {
+				installed = 1;
+				break;
+			}
+		}
+		if (!installed) {
+			uiShowOkDialog("Custom Map", "Install this custom map before joining the game.");
+			return 0;
+		}
+	}
+
 	int result = ((int (*)(void*))0x006d25c0)(context);
 	joinClientLoading = result != 0;
 	joinSetInputReceiver(joinClientLoading);
@@ -144,6 +175,20 @@ static void joinSetPlayerUpdates(int enabled)
 	    (void*)0x00199cb8);
 }
 #endif
+
+/* Retail games need no map override. Custom maps reuse the normal loader,
+ * including the server's version check; maps requiring a custom mode remain
+ * excluded until late joining can download that mode's payload too. */
+static int joinSupportsMap(void)
+{
+	int index = patchStateContainer.customMapId - 1;
+	if (!gameConfig.isCustomMap)
+		return index < 0 && !MapLoaderState.Enabled;
+	return customMapDefs && index >= 0 && index < customMapDefCount &&
+	    !customMapDefs[index].ForcedCustomModeId && MapLoaderState.Enabled &&
+	    MapLoaderState.MapFileName[0] && expectedMapVersion >= 0 &&
+	    mapOverrideResponse == expectedMapVersion;
+}
 
 /* A running host sends input before the joining client has loaded gameplay's
  * receiver. Consume the native compressed format without applying it to a
@@ -306,9 +351,9 @@ void joinTick(void)
 #endif
 	GameSettings* settings = gameGetSettings();
 	int running = settings && isInGame() && !GAME_NET_INFO->onlyLocalPlayers && !gameHasEnded();
-	int supported = running && settings->GameType == GAMETYPE_DM &&
+	int supported = running && gameConfig.allowMidGameJoining && settings->GameType == GAMETYPE_DM &&
 	    settings->GameLevel >= 40 && settings->GameLevel <= 49 &&
-	    !patchStateContainer.customMapId && !gameConfig.customModeId;
+	    !gameConfig.customModeId && joinSupportsMap();
 
 	joinSetAdmission(supported && gameAmIHost());
 	if (supported) {

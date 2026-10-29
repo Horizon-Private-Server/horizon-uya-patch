@@ -602,6 +602,9 @@ MenuElem_t menuElementsGeneral[] = {
 // Game Settings
 MenuElem_t menuElementsGameSettings[] = {
   { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
+#ifdef JOIN_IN_PROGRESS
+	{ "Allow Mid-Game Joining", toggleActionHandler, menuStateHandler_Default, &gameConfig.allowMidGameJoining, "Allow players to join a running Deathmatch. Custom game modes are not supported yet." },
+#endif
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   // { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps, "Play on any of the custom maps from the Horizon Map Pack. Visit https://rac-horizon.com to download the map pack." },

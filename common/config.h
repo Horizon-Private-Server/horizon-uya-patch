@@ -127,6 +127,7 @@ typedef struct PatchGameConfig {
 	char prLoadoutWeaponsOnly;
 	char prGravityBombTweakers;
 	char prDisableDlStyleFlips;
+	/* 0x31 */ u8 allowMidGameJoining;
 } __attribute__((packed)) PatchGameConfig_t;
 
 typedef struct PatchPatches {

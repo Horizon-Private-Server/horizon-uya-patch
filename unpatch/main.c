@@ -45,6 +45,11 @@ const int patches[][3] = {
 	{ 0, 0x0047eab4, 0x006c5cc8 }, // patchStats
 	{ 0, 0x0047dbac, 0x006aaa08 }, // patchKeyboard
 
+	// late-join admission gates (also present outside the lobby overlay)
+	{ -1, 0x0019a750, 0x28420007 },
+	{ -1, 0x0019a564, 0x28420007 },
+	{ -1, 0x0019a5e0, 0x28420007 },
+
 	// maploader
 	{ 0, 0x005a41c8, 0x0c170a90 }, // LOAD_LEVEL_READ_WAD_HOOK
 	{ 0, 0x00194f8c, 0x0c0653b6 }, // LOAD_LEVEL_READ_LEVEL_TOC_HOOK
@@ -63,6 +68,14 @@ const int patches[][3] = {
 	{ 0, 0x0047e50c, 0x006b1f60 }, // patchPlayerDetails
 	{ 0, 0x0047eb74, 0x006c31b8 }, // patchStats
 	{ 0, 0x0047dc6c, 0x006a80b8 }, // patchKeyboard
+
+	// Restore calls before clearing/replacing the patch they currently target.
+	{ 0, 0x006d0d90, 0x0c1b4970 }, // joinBeginClient: native 0x006d25c0
+	{ 0, 0x006d1174, 0x0c1b464a }, // joinEndClient: native 0x006d1928
+	{ 0, 0x006c1a08, 0x0c1664aa }, // joinLoadClient: native 0x005992a8
+	{ -1, 0x0019a890, 0x28420007 }, // late-join admission gates
+	{ -1, 0x0019a6a4, 0x28420007 },
+	{ -1, 0x0019a720, 0x28420007 },
 
 	// maploader
 	{ 0, 0x005a2560, 0x0c17027e }, // LOAD_LEVEL_READ_WAD_HOOK
