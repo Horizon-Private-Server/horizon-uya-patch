@@ -1158,7 +1158,8 @@ static void joinNotifyPlayers(GameSettings* settings)
  */
 static int joinIsReportHost(void)
 {
-	if (isInGame() && !GAME_NET_INFO->onlyLocalPlayers && gameGetSettings())
+	if (gameConfig.allowMidGameJoining && isInGame() &&
+	    !GAME_NET_INFO->onlyLocalPlayers && gameGetSettings())
 		return gameAmIHost();
 	return ((int (*)(void))JOIN_REPORT_HOST)();
 }
@@ -1302,7 +1303,7 @@ void joinTick(void)
 	    settings->GameLevel >= 40 && settings->GameLevel <= 49 &&
 	    joinSupportsMap();
 
-	joinUpdateHost(settings, supported);
+	joinUpdateHost(settings, supported && gameConfig.allowMidGameJoining);
 	if (running && gameHasEnded())
 		supported = 0;
 	joinSetAdmission(supported && gameConfig.allowMidGameJoining && gameAmIHost());

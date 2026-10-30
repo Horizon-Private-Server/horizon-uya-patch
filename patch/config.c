@@ -615,7 +615,7 @@ MenuElem_t menuElementsGeneral[] = {
 MenuElem_t menuElementsGameSettings[] = {
   { "Reset", buttonActionHandler, menuStateAlwaysEnabledHandler, gmResetSelectHandler },
 #ifdef JOIN_IN_PROGRESS
-	{ "Allow Mid-Game Joining", toggleActionHandler, menuStateHandler_Default, &gameConfig.allowMidGameJoining, "Allow players to join a running game when its game mode supports late joining." },
+	{ "Allow Mid-Game Joining", toggleActionHandler, menuStateAlwaysEnabledHandler, &gameConfig.allowMidGameJoining, "Allow players to join a running game when its game mode supports late joining." },
 #endif
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
