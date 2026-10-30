@@ -3197,7 +3197,7 @@ int runSendGameUpdate(void)
 		newGame = 0;
 	}
 
-	if (gameSettings->GameType == GAMETYPE_SIEGE) {
+	if (gameSettings->GameType == GAMETYPE_SIEGE && gameConfig.customModeId != CUSTOM_MODE_KOTH) {
 		patchStateContainer.gameStateUpdate.TeamScores[0] = 100;
 		patchStateContainer.gameStateUpdate.TeamScores[1] = 100;
 	}
@@ -3205,9 +3205,11 @@ int runSendGameUpdate(void)
 	// 
 	if (isInGame()) {
 		int i;
-		// reset
-		memset(patchStateContainer.gameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.gameStateUpdate.TeamScores));
 		memset(patchStateContainer.gameStateUpdate.Nodes, 0, sizeof(patchStateContainer.gameStateUpdate.Nodes));
+		/* KOTH publishes hill points through the same shared score fields. */
+		if (gameConfig.customModeId == CUSTOM_MODE_KOTH)
+			return 1;
+		memset(patchStateContainer.gameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.gameStateUpdate.TeamScores));
 
 		if (gameSettings->GameType == GAMETYPE_SIEGE) {	
 			for (i = 0; i < 8; ++i) {

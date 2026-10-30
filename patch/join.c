@@ -31,6 +31,14 @@
 #define JOIN_INPUT_CALLBACK (0x0024060c)
 #define JOIN_STATE_CALLBACK (0x002405fc)
 #define JOIN_DECODE_INPUT (0x0066f260)
+#define JOIN_GET_TEAM (0x00199c48)
+#define JOIN_TEAM_RESERVE_CALL (0x0019ac1c)
+#define JOIN_TEAM_SETUP_CALL (0x0019a650)
+#define JOIN_REPORT_HOST (0x0019b788)
+#define JOIN_REPORT_UPDATE_CALL (0x00195b38)
+#define JOIN_REPORT_SEND_CALL (0x001964b8)
+#define JOIN_REPORT_LEAVE_CALL (0x00196048)
+#define JOIN_FORCE_WORLD_REPORT (0x00196468)
 #else
 #define JOIN_ADMISSION_GATE (0x0019a890)
 #define JOIN_SETUP_REQUEST_GATE (0x0019a6a4)
@@ -40,6 +48,14 @@
 #define JOIN_INPUT_CALLBACK (0x0024078c)
 #define JOIN_STATE_CALLBACK (0x0024077c)
 #define JOIN_DECODE_INPUT (0x0066c910)
+#define JOIN_GET_TEAM (0x00199d88)
+#define JOIN_TEAM_RESERVE_CALL (0x0019ad5c)
+#define JOIN_TEAM_SETUP_CALL (0x0019a790)
+#define JOIN_REPORT_HOST (0x0019b8c8)
+#define JOIN_REPORT_UPDATE_CALL (0x00195c28)
+#define JOIN_REPORT_SEND_CALL (0x001965a8)
+#define JOIN_REPORT_LEAVE_CALL (0x00196138)
+#define JOIN_FORCE_WORLD_REPORT (0x00196558)
 #endif
 
 typedef struct joinWorldRequest {
@@ -75,6 +91,7 @@ typedef struct joinFlagState {
 Player** playerGetAll(void);
 void FlushCache(int operation);
 int flagGetTrackerIndex(Moby* flagMoby);
+int getBaseHealthPercent(LocalPlayerYourBaseGameData* baseGameData, int team);
 static void joinSetLoadingReceivers(int enabled);
 
 #if !UYA_PAL
@@ -108,6 +125,9 @@ static int joinLastWorldRequest;
 static u16 joinWorldSequence;
 static u16 joinWorldSequences[GAME_MAX_PLAYERS];
 static u32 joinWorldRequests;
+static int joinKeepWorldOnLeave;
+static int joinPreviousHost = -1;
+static int joinHostLoadTime;
 
 static VariableAddress_t vaJoinPlayerLeave = {
 #if UYA_PAL
@@ -301,8 +321,26 @@ static void joinSetPlayerUpdates(int enabled)
 #endif
 
 /*
+ * NAME : joinGetMode
+ * DESCRIPTION : Read the selected custom mode, including a map-forced mode.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int joinGetMode(void)
+{
+	int mode = gameConfig.customModeId;
+	int index = patchStateContainer.customMapId - 1;
+	if (gameConfig.isCustomMap && customMapDefs && index >= 0 && index < customMapDefCount &&
+	    customMapDefs[index].ForcedCustomModeId)
+		mode = customMapDefs[index].ForcedCustomModeId;
+	return mode;
+}
+
+/*
  * NAME : joinSupportsMode
- * DESCRIPTION : Check the late-join whitelist, including a map-forced mode.
+ * DESCRIPTION : Check the late-join whitelist.
  * NOTES :
  * ARGS :
  * RETURN :
@@ -310,11 +348,7 @@ static void joinSetPlayerUpdates(int enabled)
  */
 static int joinSupportsMode(void)
 {
-	int mode = gameConfig.customModeId;
-	int index = patchStateContainer.customMapId - 1;
-	if (gameConfig.isCustomMap && customMapDefs && index >= 0 && index < customMapDefCount &&
-	    customMapDefs[index].ForcedCustomModeId)
-		mode = customMapDefs[index].ForcedCustomModeId;
+	int mode = joinGetMode();
 	/* Mid Flag and Domination reuse native flags, nodes and cranks. Juggernaut
 	 * resends its crown and shield state through its existing heartbeats. */
 	return mode == CUSTOM_MODE_NONE || mode == CUSTOM_MODE_KOTH ||
@@ -859,8 +893,115 @@ static void joinSetLoadingReceivers(int enabled)
 }
 
 /*
+ * NAME : joinTeamScore
+ * DESCRIPTION : Compare current team scores without using account statistics.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int joinTeamScore(GameSettings* settings, int team, int joiningPlayer)
+{
+	GameData* game = gameGetData();
+	if (!game)
+		return 0;
+	if (joinGetMode() == CUSTOM_MODE_KOTH)
+		return patchStateContainer.gameStateUpdate.TeamScores[team];
+	if (settings->GameType == GAMETYPE_CTF && game->CTFGameData)
+		return team == 0 ? game->CTFGameData->blueTeamCaptures : game->CTFGameData->redTeamCaptures;
+	int score = 0;
+	int i;
+	if (settings->GameType == GAMETYPE_SIEGE && game->allYourBaseGameData) {
+		GameOptions* options = gameGetOptions();
+		if (options && options->GameFlags.MultiplayerGameFlags.Nodes) {
+			for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+				if (game->allYourBaseGameData->nodeTeam[i] == team)
+					++score;
+			}
+		}
+		/* Node ownership takes priority; remaining base health breaks its ties. */
+		return score * 101 + getBaseHealthPercent(game->allYourBaseGameData, team);
+	}
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		if (i != joiningPlayer && settings->PlayerClients[i] >= 0 && settings->PlayerTeams[i] == team)
+			score += game->playerStats.frag[i].kills - game->playerStats.frag[i].deaths;
+	}
+	return score;
+}
+
+/*
+ * NAME : joinSelectTeam
+ * DESCRIPTION : Assign a late joiner to an unused color or the smaller trailing team.
+ * NOTES : Runs while the host reserves the slot, before sending its roster.
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int joinSelectTeam(int gameType, int teams, int preferred, int player)
+{
+	GameSettings* settings = gameGetSettings();
+	if (!joinAdmissionOpen || !settings || !gameAmIHost() || !isInGame() ||
+	    player < 0 || player >= GAME_MAX_PLAYERS)
+		return ((int (*)(int, int, int, int))JOIN_GET_TEAM)(gameType, teams, preferred, player);
+	int counts[GAME_MAX_PLAYERS] = { 0 };
+	u32 eligible = 0;
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		int team = settings->PlayerTeams[i];
+		/* Reserved slots count even before their player bodies exist. */
+		if (i == player || settings->PlayerClients[i] < 0 || team < 0 || team >= GAME_MAX_PLAYERS)
+			continue;
+		++counts[team];
+		eligible |= 1 << team;
+	}
+	if (gameType == GAMETYPE_DM && !teams) {
+		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+			if (!counts[i])
+				return i;
+		}
+	} else {
+		if (gameType == GAMETYPE_CTF || gameType == GAMETYPE_SIEGE)
+			eligible = 3;
+		int selected = -1;
+		int bestScore = 0;
+		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+			if (!(eligible & (1 << i)))
+				continue;
+			if (selected >= 0 && counts[i] > counts[selected])
+				continue;
+			int score = joinTeamScore(settings, i, player);
+			if (selected < 0 || counts[i] < counts[selected] || score < bestScore) {
+				selected = i;
+				bestScore = score;
+			}
+		}
+		if (selected >= 0)
+			return selected;
+	}
+	return ((int (*)(int, int, int, int))JOIN_GET_TEAM)(gameType, teams, preferred, player);
+}
+
+/*
+ * NAME : joinKeepTeam
+ * DESCRIPTION : Preserve the host's reservation when the joiner sends its preferred team.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int joinKeepTeam(int gameType, int teams, int preferred, int player)
+{
+	GameSettings* settings = gameGetSettings();
+	if (joinAdmissionOpen && settings && gameAmIHost() && isInGame() &&
+	    player >= 0 && player < GAME_MAX_PLAYERS && settings->PlayerClients[player] >= 0 &&
+	    settings->PlayerTeams[player] >= 0 && settings->PlayerTeams[player] < GAME_MAX_PLAYERS)
+		return settings->PlayerTeams[player];
+	return ((int (*)(int, int, int, int))JOIN_GET_TEAM)(gameType, teams, preferred, player);
+}
+
+/*
  * NAME : joinSetAdmission
- * DESCRIPTION : Toggle host admission gates while preserving native slot and password checks.
+ * DESCRIPTION : Toggle native admission and team hooks while preserving normal lobby behavior.
  * NOTES :
  * ARGS :
  * RETURN :
@@ -877,8 +1018,16 @@ static void joinSetAdmission(int enabled)
 		if (*(volatile u32*)joinGates[i] != expected)
 			return;
 	}
+	u32 original = 0x0c000000 | (JOIN_GET_TEAM >> 2);
+	u32 reserve = 0x0c000000 | (((u32)&joinSelectTeam >> 2) & 0x03ffffff);
+	u32 setup = 0x0c000000 | (((u32)&joinKeepTeam >> 2) & 0x03ffffff);
+	if (*(volatile u32*)JOIN_TEAM_RESERVE_CALL != (joinAdmissionOpen ? reserve : original) ||
+	    *(volatile u32*)JOIN_TEAM_SETUP_CALL != (joinAdmissionOpen ? setup : original))
+		return;
 	for (i = 0; i < 3; ++i)
 		*(volatile u32*)joinGates[i] = enabled ? joinGateValues[i] : JOIN_GATE_ORIGINAL;
+	*(volatile u32*)JOIN_TEAM_RESERVE_CALL = enabled ? reserve : original;
+	*(volatile u32*)JOIN_TEAM_SETUP_CALL = enabled ? setup : original;
 
 	FlushCache(0);
 	FlushCache(2);
@@ -1000,6 +1149,102 @@ static void joinNotifyPlayers(GameSettings* settings)
 }
 
 /*
+ * NAME : joinIsReportHost
+ * DESCRIPTION : Let the elected session host publish the continuing game's world report.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int joinIsReportHost(void)
+{
+	if (isInGame() && !GAME_NET_INFO->onlyLocalPlayers && gameGetSettings())
+		return gameAmIHost();
+	return ((int (*)(void))JOIN_REPORT_HOST)();
+}
+
+/*
+ * NAME : joinShouldCloseWorld
+ * DESCRIPTION : Keep a live world listed when its departing host leaves players behind.
+ * NOTES : The native leave routine still disconnects and cleans up normally.
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int joinShouldCloseWorld(void)
+{
+	int keepWorld = joinKeepWorldOnLeave;
+	joinKeepWorldOnLeave = 0;
+	return keepWorld ? 0 : joinIsReportHost();
+}
+
+/*
+ * NAME : joinInstallHostReports
+ * DESCRIPTION : Patch resident world-report checks without changing other titles' server logic.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static void joinInstallHostReports(void)
+{
+	static const u32 calls[] = { JOIN_REPORT_UPDATE_CALL, JOIN_REPORT_SEND_CALL, JOIN_REPORT_LEAVE_CALL };
+	int changed = 0;
+	int i;
+	for (i = 0; i < 3; ++i) {
+		volatile u32* call = (volatile u32*)calls[i];
+		if (*call != (0x0c000000 | (JOIN_REPORT_HOST >> 2)))
+			continue;
+		u32 function = i == 2 ? (u32)&joinShouldCloseWorld : (u32)&joinIsReportHost;
+		*call = 0x0c000000 | ((function >> 2) & 0x03ffffff);
+		changed = 1;
+	}
+	if (changed) {
+		FlushCache(0);
+		FlushCache(2);
+	}
+}
+
+/*
+ * NAME : joinUpdateHost
+ * DESCRIPTION : Keep continuing games listed after native host migration.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static void joinUpdateHost(GameSettings* settings, int supported)
+{
+	if (!settings || !isInGame()) {
+		joinPreviousHost = -1;
+		return;
+	}
+	joinKeepWorldOnLeave = 0;
+	if (!supported)
+		return;
+	if (joinHostLoadTime != settings->GameLoadStartTime) {
+		joinHostLoadTime = settings->GameLoadStartTime;
+		joinPreviousHost = -1;
+	}
+	int otherClients = 0;
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		int client = settings->PlayerClients[i];
+		if (client < 0 || settings->PlayerAccountIds[i] < 0)
+			continue;
+		if (client != GAME_CLIENT_ID)
+			++otherClients;
+	}
+	joinKeepWorldOnLeave = otherClients > 0;
+	int host = gameGetHostId();
+	if (joinPreviousHost >= 0 && joinPreviousHost != host && gameAmIHost()) {
+		joinLastTimeSent = 0;
+		((void (*)(void))JOIN_FORCE_WORLD_REPORT)();
+	}
+	joinPreviousHost = host;
+}
+
+/*
  * NAME : joinTick
  * DESCRIPTION : Maintain join hooks, admission, player creation and timer synchronization.
  * NOTES :
@@ -1009,6 +1254,7 @@ static void joinNotifyPlayers(GameSettings* settings)
  */
 void joinTick(void)
 {
+	joinInstallHostReports();
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_GAME_TIME, &joinReceiveGameTime);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_WORLD_REQUEST, &joinReceiveWorldRequest);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_WORLD_STATE, &joinReceiveWorldState);
@@ -1048,6 +1294,9 @@ void joinTick(void)
 	    settings->GameLevel >= 40 && settings->GameLevel <= 49 &&
 	    joinSupportsMode() && joinSupportsMap();
 
+	joinUpdateHost(settings, supported);
+	if (running && gameHasEnded())
+		supported = 0;
 	joinSetAdmission(supported && gameConfig.allowMidGameJoining && gameAmIHost());
 	if (supported) {
 		if (gameAmIHost()) {

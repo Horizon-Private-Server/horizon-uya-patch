@@ -2467,6 +2467,30 @@ void scoreboard(int maxScore, int* scores)
 
 }
 
+/*
+ * NAME : kothPublishTeamScores
+ * DESCRIPTION : Share hill totals with host reporting and late-join team selection.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static void kothPublishTeamScores(void)
+{
+	PatchInterop_t* interop = PATCH_INTEROP;
+	GameSettings* settings = gameGetSettings();
+	if (!gameAmIHost() || !settings || !interop || !interop->patchStateContainer)
+		return;
+	int* scores = interop->patchStateContainer->gameStateUpdate.TeamScores;
+	memset(scores, 0, sizeof(int) * GAME_MAX_PLAYERS);
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		int team = settings->PlayerTeams[i];
+		if (settings->PlayerClients[i] >= 0 && team >= 0 && team < GAME_MAX_PLAYERS)
+			scores[team] += kothScores[i];
+	}
+}
+
 static void drawHud(void)
 {
     scoreboard(kothGetScoreLimit(), kothScores);
@@ -2481,6 +2505,7 @@ int kothOnReceiveScore(void *connection, void *data)
         return sizeof(KothScoreUpdate_t);
 
     kothScores[idx] = msg->Score;
+    kothPublishTeamScores();
     kothInvalidateScoreboardCache();
     return sizeof(KothScoreUpdate_t);
 }
@@ -2882,6 +2907,7 @@ void kothTick(void)
 
     if (gameTime >= nextScoreTickTime) {
         updateScores();
+		kothPublishTeamScores();
 		/* A late joiner missed earlier changes. Resend each score from its
 		 * existing owner, including when nobody is currently scoring. */
 		Player **players = playerGetAll();
