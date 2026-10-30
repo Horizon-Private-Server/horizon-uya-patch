@@ -28,6 +28,9 @@
 
 int selectedTabItem = 0;
 u32 padPointer = 0;
+static u16 configOpeningButtons;
+static u16 configClosingButtons;
+static int configReleaseInput;
 int preset = 0;
 
 int dlBytesReceived = 0;
@@ -1710,13 +1713,13 @@ void listVerticalInput(TabElem_t* tab)
 	char previousValue = *activeValue;
 
 	// nav page down
-	if (padGetButtonUp(0, PAD_RIGHT) > 0)
+	if (padGetButtonDown(0, PAD_RIGHT) > 0)
 	{
 		for (i = 0; i < 5; ++i)
 			currentElement->handler(tab, currentElement, ACTIONTYPE_INCREMENT, NULL);
 	}
 	// nav up
-	else if (padGetButtonUp(0, PAD_LEFT) > 0)
+	else if (padGetButtonDown(0, PAD_LEFT) > 0)
 	{
 		for (i = 0; i < 5; ++i)
 			currentElement->handler(tab, currentElement, ACTIONTYPE_DECREMENT, NULL);
@@ -1727,13 +1730,13 @@ void listVerticalInput(TabElem_t* tab)
 			currentElement->handler(tab, currentElement, ACTIONTYPE_SELECT, NULL);
 	}
 	// nav inc
-	else if (padGetButtonUp(0, PAD_DOWN) > 0)
+	else if (padGetButtonDown(0, PAD_DOWN) > 0)
 	{
 		if (state & ELEMENT_EDITABLE)
 			currentElement->handler(tab, currentElement, ACTIONTYPE_INCREMENT, NULL);
 	}
 	// nav dec
-	else if (padGetButtonUp(0, PAD_UP) > 0)
+	else if (padGetButtonDown(0, PAD_UP) > 0)
 	{
 		if (state & ELEMENT_EDITABLE)
 			currentElement->handler(tab, currentElement, ACTIONTYPE_DECREMENT, NULL);
@@ -2520,6 +2523,9 @@ void drawFrame(void)
  */
 void tabInput(TabElem_t* tab)
 {
+	if (configOpeningButtons || !isConfigMenuActive)
+		return;
+
 	int previousIndex = tab ? tab->selectedMenuItemIdx : 0;
   int i;
   if (!tab)
@@ -2529,23 +2535,23 @@ void tabInput(TabElem_t* tab)
   int state = getMenuElementState(tab, currentElement);
 
   // nav down
-  if (padGetButtonUp(0, PAD_DOWN) > 0)
+  if (padGetButtonDown(0, PAD_DOWN) > 0)
   {
     navMenu(tab, 1, 0);
   }
   // nav page down
-  if (padGetButtonUp(0, PAD_R2) > 0)
+  if (padGetButtonDown(0, PAD_R2) > 0)
   {
     for (i = 0; i < 10; ++i)
       navMenu(tab, 1, 0);
   }
   // nav up
-  else if (padGetButtonUp(0, PAD_UP) > 0)
+  else if (padGetButtonDown(0, PAD_UP) > 0)
   {
     navMenu(tab, -1, 0);
   }
   // nav up
-  else if (padGetButtonUp(0, PAD_L2) > 0)
+  else if (padGetButtonDown(0, PAD_L2) > 0)
   {
     for (i = 0; i < 10; ++i)
       navMenu(tab, -1, 0);
@@ -2563,13 +2569,13 @@ void tabInput(TabElem_t* tab)
       currentElement->handler(tab, currentElement, ACTIONTYPE_SELECT_SECONDARY, NULL);
   }
   // nav inc
-  else if (padGetButtonUp(0, PAD_RIGHT) > 0)
+  else if (padGetButtonDown(0, PAD_RIGHT) > 0)
   {
     if (state & ELEMENT_EDITABLE)
       currentElement->handler(tab, currentElement, ACTIONTYPE_INCREMENT, NULL);
   }
   // nav dec
-  else if (padGetButtonUp(0, PAD_LEFT) > 0)
+  else if (padGetButtonDown(0, PAD_LEFT) > 0)
   {
     if (state & ELEMENT_EDITABLE)
       currentElement->handler(tab, currentElement, ACTIONTYPE_DECREMENT, NULL);
@@ -2701,7 +2707,7 @@ void drawTab(TabElem_t* tab)
   if ((state & ELEMENT_VISIBLE) == 0 || (state & ELEMENT_SELECTABLE) == 0)
     navMenu(tab, 1, 1);
 
-  if (currentElement)
+  if (currentElement && isConfigMenuActive && !configOpeningButtons)
     currentElement->handler(tab, currentElement, ACTIONTYPE_INPUT, NULL);
 }
 
@@ -2717,6 +2723,20 @@ void drawTab(TabElem_t* tab)
 void onMenuUpdate(int inGame)
 {
 	static int refreshingMaps;
+	// Consume the closing press and release before restoring native input.
+	if (!isConfigMenuActive && configReleaseInput) {
+		if (configReleaseInput == 2) {
+			configReleaseInput = 0;
+			padEnableInput();
+		} else {
+			padDisableInput();
+			if (((u16)~P1_PAD->btns & configClosingButtons) == 0) {
+				padResetInput(0);
+				configReleaseInput = 2;
+			}
+		}
+		return;
+	}
 	if (refreshingMaps)
 		return;
   TabElem_t* tab = &tabElements[selectedTabItem];
@@ -2733,7 +2753,7 @@ void onMenuUpdate(int inGame)
     // prevent pad from affecting menus
     padDisableInput();
 
-		if (!inGame && tab->elements == menuElementsGameSettingsCustomMaps &&
+		if (!inGame && !configOpeningButtons && tab->elements == menuElementsGameSettingsCustomMaps &&
 		    padGetButtonDown(0, PAD_SQUARE) > 0) {
 			// Refresh callbacks can re-enter this update; keep their input blocked.
 			refreshingMaps = 1;
@@ -2752,6 +2772,14 @@ void onMenuUpdate(int inGame)
 			drawTab(tab);
 		}
 
+		if (!isConfigMenuActive)
+			return;
+		if (configOpeningButtons) {
+			if (((u16)~P1_PAD->btns & configOpeningButtons) == 0)
+				configOpeningButtons = 0;
+			return;
+		}
+
 #ifdef ULAUNCHELF
 		if (!inGame && uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0 && MAIN_LOBBY_SUBPTR == 0 && padGetButton(0, PAD_L3 | PAD_R3) > 0 && padGetButtonDown(0, PAD_SELECT) > 0)
 		{
@@ -2761,17 +2789,17 @@ void onMenuUpdate(int inGame)
 #endif
 
 		// nav tab right
-		if (padGetButtonUp(0, PAD_R1) > 0)
+		if (padGetButtonDown(0, PAD_R1) > 0)
 		{
 			navTab(1);
 		}
 		// nav tab left
-		else if (padGetButtonUp(0, PAD_L1) > 0)
+		else if (padGetButtonDown(0, PAD_L1) > 0)
 		{
 			navTab(-1);
 		}
 		// close
-		else if (padGetButtonUp(0, PAD_TRIANGLE) > 0 || padGetButtonUp(0, PAD_START) > 0)
+		else if (padGetButtonDown(0, PAD_TRIANGLE) > 0 || padGetButtonDown(0, PAD_START) > 0)
 		{
       configMenuDisable();
 		}
@@ -2793,7 +2821,7 @@ void onMenuUpdate(int inGame)
         gfxScreenSpaceText(SCREEN_WIDTH * 0.205, SCREEN_HEIGHT * 0.07, 0.7, .85, 0x8069cbf2, "\x14 RANDOM TEAMS", -1, 4, FONT_BOLD);
     }
 		// check for pad input
-		if (padGetButtonUp(0, PAD_START) > 0)
+		if (padGetButtonDown(0, PAD_START) > 0)
 		{
 			configMenuEnable();
 		}
@@ -3130,7 +3158,6 @@ void onConfigOnlineMenu(void)
 
   if (isConfigMenuActive && !netGetLobbyServerConnection()) {
     configMenuDisable();
-    padEnableInput();
   }
 }
 
@@ -3400,8 +3427,11 @@ void configMenuDisable(void)
     configTrySendGameConfig();
   }
 
-  // re-enable pad
-  padEnableInput();
+	// Keep the closing button out of the native menu underneath.
+	configClosingButtons = (u16)~P1_PAD->btns;
+	configOpeningButtons = 0;
+	configReleaseInput = 1;
+	padDisableInput();
 }
 
 //------------------------------------------------------------------------------
@@ -3419,6 +3449,9 @@ void configMenuEnable(void)
 
   // enable
   isConfigMenuActive = 1;
+	configOpeningButtons = (u16)~P1_PAD->btns;
+	configReleaseInput = 0;
+	padDisableInput();
 
   // return to first tab if current is hidden
   int state = 0;
