@@ -174,8 +174,8 @@ enum CustomMessageId
 
 	/* Host's remaining game time for a newly loaded late joiner. */
 	CUSTOM_MSG_ID_JOIN_GAME_TIME = 33,
-	CUSTOM_MSG_ID_JOIN_SIEGE_REQUEST = 34,
-	CUSTOM_MSG_ID_JOIN_SIEGE_STATE = 35,
+	CUSTOM_MSG_ID_JOIN_WORLD_REQUEST = 34,
+	CUSTOM_MSG_ID_JOIN_WORLD_STATE = 35,
 
     /*
      * Start of custom message ids reserved for custom game modes.

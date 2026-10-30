@@ -11,6 +11,8 @@
 #include <libuya/time.h>
 #include <libuya/moby.h>
 #include <libuya/guber.h>
+#include <libuya/math.h>
+#include <libuya/math3d.h>
 #include "config.h"
 #include "messageid.h"
 #include "include/config.h"
@@ -40,21 +42,21 @@
 #define JOIN_DECODE_INPUT (0x0066c910)
 #endif
 
-typedef struct joinSiegeRequest {
+typedef struct joinWorldRequest {
 	/* 0x00 */ u8 client;
 	/* 0x01 */ u8 level;
 	/* 0x02 */ u16 sequence;
-} joinSiegeRequest_t;
+} joinWorldRequest_t;
 
-typedef struct joinSiegeObject {
-	/* 0x00 */ joinSiegeRequest_t request;
+typedef struct joinWorldObject {
+	/* 0x00 */ joinWorldRequest_t request;
 	/* 0x04 */ u16 uid;
 	/* 0x06 */ u16 oClass;
 	/* 0x08 */ u8 state;
 	/* 0x09 */ s8 team;
 	/* 0x0a */ u16 reserved;
-	/* 0x0c */ float health;
-} joinSiegeObject_t;
+	/* 0x0c */ float value; /* Health, crank progress, or bridge travel. */
+} joinWorldObject_t;
 
 Player** playerGetAll(void);
 void FlushCache(int operation);
@@ -84,12 +86,12 @@ static int joinAdmissionOpen;
 static int joinRosterInitialized;
 static int joinSeenAccounts[GAME_MAX_PLAYERS];
 static int joinLastTimeSent;
-static int joinNeedsSiegeState;
-static int joinSiegeRetry;
-static int joinLastSiegeRequest;
-static u16 joinSiegeSequence;
-static u16 joinSiegeSequences[GAME_MAX_PLAYERS];
-static u32 joinSiegeRequests;
+static int joinNeedsWorldState;
+static int joinWorldRetry;
+static int joinLastWorldRequest;
+static u16 joinWorldSequence;
+static u16 joinWorldSequences[GAME_MAX_PLAYERS];
+static u32 joinWorldRequests;
 
 static VariableAddress_t vaJoinPlayerLeave = {
 #if UYA_PAL
@@ -174,10 +176,10 @@ static int joinBeginClient(void* context)
 	int result = ((int (*)(void*))0x006d25c0)(context);
 	joinClientLoading = result != 0;
 	joinNeedsGameTime = joinClientLoading;
-	joinNeedsSiegeState = joinClientLoading;
-	joinSiegeRetry = 0;
-	joinLastSiegeRequest = gameGetTime();
-	++joinSiegeSequence;
+	joinNeedsWorldState = joinClientLoading;
+	joinWorldRetry = 0;
+	joinLastWorldRequest = gameGetTime();
+	++joinWorldSequence;
 	joinSetLoadingReceivers(joinClientLoading);
 	joinSetPlayerUpdates(joinClientLoading);
 	return result;
@@ -195,7 +197,7 @@ static int joinEndClient(void* context)
 {
 	joinClientLoading = 0;
 	joinNeedsGameTime = 0;
-	joinNeedsSiegeState = 0;
+	joinNeedsWorldState = 0;
 	joinRememberedPlayers = 0;
 	joinSetLoadingReceivers(0);
 	joinSetPlayerUpdates(0);
@@ -371,27 +373,27 @@ static void joinSendGameTime(void)
 }
 
 /*
- * NAME : joinReceiveSiegeRequest
- * DESCRIPTION : Queue a current-roster client's Siege catch-up request.
+ * NAME : joinReceiveWorldRequest
+ * DESCRIPTION : Queue a current-roster client's map-state catch-up request.
  * NOTES :
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
  */
-static int joinReceiveSiegeRequest(void* connection, void* data)
+static int joinReceiveWorldRequest(void* connection, void* data)
 {
-	joinSiegeRequest_t* request = data;
+	joinWorldRequest_t* request = data;
 	GameSettings* settings = gameGetSettings();
 	if (connection != netGetDmeServerConnection() || !settings || !isInGame() ||
-	    !gameAmIHost() || settings->GameType != GAMETYPE_SIEGE ||
+	    !gameAmIHost() ||
 	    request->level != settings->GameLevel || request->client >= GAME_MAX_PLAYERS ||
 	    request->client == GAME_CLIENT_ID)
 		return sizeof(*request);
 	int i;
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		if (settings->PlayerClients[i] == request->client && settings->PlayerAccountIds[i] >= 0) {
-			joinSiegeSequences[request->client] = request->sequence;
-			joinSiegeRequests |= 1 << request->client;
+			joinWorldSequences[request->client] = request->sequence;
+			joinWorldRequests |= 1 << request->client;
 			break;
 		}
 	}
@@ -399,15 +401,77 @@ static int joinReceiveSiegeRequest(void* connection, void* data)
 }
 
 /*
- * NAME : joinApplySiegeObject
+ * NAME : joinWorldObjectEnabled
+ * DESCRIPTION : Let host rules and native options take precedence over object catch-up.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int joinWorldObjectEnabled(u16 oClass, Moby* moby)
+{
+	if (gameConfig.grDestructableBridges &&
+	    (oClass == MOBY_ID_KORGON_BRIDGE_PIECE ||
+	    oClass == MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER ||
+	    oClass == MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_CENTER))
+		return 0;
+	if (oClass == MOBY_ID_PLAYER_TURRET && gameConfig.grDisablePlayerTurrets)
+		return 0;
+	if (gameConfig.grDisableDrones &&
+	    (oClass == MOBY_ID_DRONE_BOT ||
+	    oClass == MOBY_ID_DRONE_BOT_CLUSTER_CONFIG ||
+	    oClass == MOBY_ID_DRONE_BOT_CLUSTER_UPDATER))
+		return 0;
+	/* Removing the glass still leaves health pickups and their respawn cycle.
+	 * Only the fully disabled setting excludes health objects from catch-up. */
+	if (gameConfig.grHealthBoxes == 2 &&
+	    (oClass == MOBY_ID_HEALTH_BOX_MP || oClass == MOBY_ID_HEALTH_ORB_MP))
+		return 0;
+	GameOptions* options = gameGetOptions();
+	if (options && oClass == MOBY_ID_TURBOSLIDER && !options->GameFlags.MultiplayerGameFlags.Turboslider)
+		return 0;
+	if (options && oClass == MOBY_ID_HOVERSHIP && !options->GameFlags.MultiplayerGameFlags.Hovership)
+		return 0;
+	if (options && oClass == MOBY_ID_SIEGE_NODE && !options->GameFlags.MultiplayerGameFlags.Nodes)
+		return 0;
+	if (options && oClass == MOBY_ID_GATLING_TURRET &&
+	    !options->GameFlags.MultiplayerGameFlags.BaseDefense_GatlinTurrets)
+		return 0;
+	if (oClass == MOBY_ID_NODE_TURRET) {
+		if (gameConfig.grNoBaseDefense_SmallTurrets >= 2)
+			return 0;
+		if (moby && moby->pVar) {
+			/* Match the gameplay rule: base turrets belong to BASE_LIGHT,
+			 * while capture-node turrets belong to SIEGE_NODE. */
+			Moby* start = mobyListGetStart();
+			Moby* end = mobyListGetEnd();
+			int parent = *(int*)((u8*)moby->pVar + 0x24c);
+			if (start && end && parent >= 0 && parent < end - start) {
+				if (start[parent].oClass == MOBY_ID_BASE_LIGHT &&
+				    (gameConfig.grNoBaseDefense_SmallTurrets == 1 ||
+				    (options && !options->GameFlags.MultiplayerGameFlags.BaseDefense_SmallTurrets)))
+					return 0;
+				if (start[parent].oClass == MOBY_ID_SIEGE_NODE && options &&
+				    !options->GameFlags.MultiplayerGameFlags.Nodes)
+					return 0;
+			}
+		}
+	}
+	return 1;
+}
+
+/*
+ * NAME : joinApplyWorldObject
  * DESCRIPTION : Restore an authored objective through its native event handler.
  * NOTES :
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
  */
-static int joinApplySiegeObject(joinSiegeObject_t* object)
+static int joinApplyWorldObject(joinWorldObject_t* object)
 {
+	if (!joinWorldObjectEnabled(object->oClass, 0))
+		return 1;
 	Moby* moby;
 	Moby* end = mobyListGetEnd();
 	for (moby = mobyListGetStart(); moby && moby < end; ++moby) {
@@ -416,15 +480,31 @@ static int joinApplySiegeObject(joinSiegeObject_t* object)
 	}
 	if (!moby || moby == end || !moby->pVar || moby->state == 0)
 		return 0;
+	if ((u8)moby->state >= 0x80 || !joinWorldObjectEnabled(object->oClass, moby))
+		return 1;
 
 	u8* vars = moby->pVar;
-	if (object->oClass == MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER) {
+	if (object->oClass == MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER ||
+	    object->oClass == MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_CENTER) {
 		/* Bridges are local controllers, not gubers. Schedule their normal
 		 * break path so collision and linked bridge pieces update together. */
 		if (object->state == 2 && moby->state == 1) {
 			*(int*)vars = gameGetTime() - 1;
 			*(int*)(vars + 0x10) = 0;
 		}
+		return 1;
+	}
+	if (object->oClass == MOBY_ID_KORGON_BRIDGE_PIECE) {
+		float range = *(float*)(vars + 0xbc);
+		if (!(range > 0) || !(object->value >= 0 && object->value <= range))
+			return 0;
+		/* Match the bridge's native eased travel, including collision position.
+		 * Its normal update continues following the linked crank afterward. */
+		*(float*)(vars + 0x88) = object->value;
+		*(float*)(vars + 0xb4) = 0;
+		float progress = object->value / range;
+		float eased = (1.0f - cosf(progress * MATH_PI)) * 0.5f;
+		vector_lerp(moby->position, (float*)(vars + 0x90), (float*)(vars + 0xa0), eased);
 		return 1;
 	}
 
@@ -438,7 +518,16 @@ static int joinApplySiegeObject(joinSiegeObject_t* object)
 	if (moby->guberMoby)
 		event.NetEvent.ObjUID = moby->guberMoby->Guber.Id.UID;
 
-	if (object->oClass == MOBY_ID_SIEGE_NODE) {
+	if (object->oClass == MOBY_ID_BOLT_CRANK) {
+		if (!(object->value >= 0 && object->value <= 1))
+			return 1;
+		/* Native progress event: bias, force, player, release (13 bytes).
+		 * Do not claim or release a player currently operating the crank. */
+		u32 progress[4] = { 0, 0, 0xffffffff, 0 };
+		memcpy(progress, &object->value, sizeof(object->value));
+		event.NetEvent.NetDataSize = 13;
+		memcpy(event.NetEvent.NetData, progress, 13);
+	} else if (object->oClass == MOBY_ID_SIEGE_NODE) {
 		GameData* game = gameGetData();
 		int node = *(int*)(vars + 0x2c);
 		if (!game || !game->allYourBaseGameData || node < 0 || node >= 8)
@@ -449,18 +538,26 @@ static int joinApplySiegeObject(joinSiegeObject_t* object)
 		int capture[2] = { object->team, -1 };
 		event.NetEvent.NetDataSize = sizeof(capture);
 		memcpy(event.NetEvent.NetData, capture, sizeof(capture));
-	} else if (object->oClass == MOBY_ID_GATLING_TURRET || object->oClass == MOBY_ID_BASE_COMPUTER) {
-		int turret = object->oClass == MOBY_ID_GATLING_TURRET;
-		int destroyed = turret ? 5 : 2;
+	} else if (object->oClass == MOBY_ID_GATLING_TURRET || object->oClass == MOBY_ID_BASE_COMPUTER ||
+	    object->oClass == MOBY_ID_NODE_TURRET) {
+		int turret = object->oClass != MOBY_ID_BASE_COMPUTER;
+		int smallTurret = object->oClass == MOBY_ID_NODE_TURRET;
+		int destroyed = smallTurret ? 7 : turret ? 5 : 2;
 		if (moby->state == destroyed)
 			return 1;
-		if (object->state == destroyed || object->health <= 0) {
+		if (object->state == destroyed || object->value <= 0) {
 			event.NetEvent.EventID = turret ? 1 : 0;
 			event.NetEvent.NetDataSize = 8;
 		} else {
-			float damage = *(float*)(vars + 0x30) - object->health;
+			float damage = *(float*)(vars + 0x30) - object->value;
 			if (damage <= 0)
 				return 1;
+			if (smallTurret) {
+				/* Its native damage event carries no health change. Restore
+				 * remaining health directly; destruction uses its event below. */
+				*(float*)(vars + 0x30) = object->value;
+				return 1;
+			}
 			event.NetEvent.EventID = turret ? 2 : 1;
 			event.NetEvent.NetDataSize = 12;
 			memcpy(event.NetEvent.NetData, &damage, sizeof(damage));
@@ -473,96 +570,104 @@ static int joinApplySiegeObject(joinSiegeObject_t* object)
 }
 
 /*
- * NAME : joinReceiveSiegeState
+ * NAME : joinReceiveWorldState
  * DESCRIPTION : Apply only this join attempt's objective snapshot.
  * NOTES :
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
  */
-static int joinReceiveSiegeState(void* connection, void* data)
+static int joinReceiveWorldState(void* connection, void* data)
 {
-	joinSiegeObject_t* object = data;
+	joinWorldObject_t* object = data;
 	GameSettings* settings = gameGetSettings();
 	if (connection != netGetDmeServerConnection() || !settings || !isInGame() ||
-	    gameAmIHost() || !joinNeedsSiegeState || settings->GameType != GAMETYPE_SIEGE ||
+	    gameAmIHost() || !joinNeedsWorldState ||
 	    object->request.client != GAME_CLIENT_ID || object->request.level != settings->GameLevel ||
-	    object->request.sequence != joinSiegeSequence)
+	    object->request.sequence != joinWorldSequence)
 		return sizeof(*object);
 	if (!object->oClass) {
-		joinNeedsSiegeState = joinSiegeRetry;
-		joinSiegeRetry = 0;
-	} else if (!joinApplySiegeObject(object)) {
-		joinSiegeRetry = 1;
+		joinNeedsWorldState = joinWorldRetry;
+		joinWorldRetry = 0;
+	} else if (!joinApplyWorldObject(object)) {
+		joinWorldRetry = 1;
 	}
 	return sizeof(*object);
 }
 
 /*
- * NAME : joinSendSiegeState
- * DESCRIPTION : Send current node, base-defense and bridge state to one newcomer.
+ * NAME : joinSendWorldState
+ * DESCRIPTION : Send active map objects by class and UID, independent of game mode.
  * NOTES :
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
  */
-static void joinSendSiegeState(int client)
+static void joinSendWorldState(int client)
 {
 	GameSettings* settings = gameGetSettings();
 	GameData* game = gameGetData();
-	if (!settings || !game || !game->allYourBaseGameData)
+	if (!settings || !game)
 		return;
-	joinSiegeObject_t object;
+	joinWorldObject_t object;
 	memset(&object, 0, sizeof(object));
 	object.request.client = client;
 	object.request.level = settings->GameLevel;
-	object.request.sequence = joinSiegeSequences[client];
+	object.request.sequence = joinWorldSequences[client];
 	Moby* moby;
 	Moby* end = mobyListGetEnd();
 	for (moby = mobyListGetStart(); moby && moby < end; ++moby) {
 		if (!moby->pVar || (u8)moby->state >= 0x80 || (u16)moby->UID == 0xffff)
 			continue;
+		if (!joinWorldObjectEnabled(moby->oClass, moby))
+			continue;
 		object.team = -1;
-		object.health = 0;
+		object.value = 0;
 		if (moby->oClass == MOBY_ID_SIEGE_NODE) {
 			int node = *(int*)((u8*)moby->pVar + 0x2c);
-			if (node < 0 || node >= 8)
+			if (!game->allYourBaseGameData || node < 0 || node >= 8)
 				continue;
 			object.team = game->allYourBaseGameData->nodeTeam[node];
-		} else if (moby->oClass == MOBY_ID_GATLING_TURRET || moby->oClass == MOBY_ID_BASE_COMPUTER) {
-			object.health = *(float*)((u8*)moby->pVar + 0x30);
-		} else if (moby->oClass != MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER) {
+		} else if (moby->oClass == MOBY_ID_BOLT_CRANK) {
+			object.value = *(float*)moby->pVar;
+		} else if (moby->oClass == MOBY_ID_KORGON_BRIDGE_PIECE) {
+			object.value = *(float*)((u8*)moby->pVar + 0x88);
+		} else if (moby->oClass == MOBY_ID_GATLING_TURRET || moby->oClass == MOBY_ID_BASE_COMPUTER ||
+		    moby->oClass == MOBY_ID_NODE_TURRET) {
+			object.value = *(float*)((u8*)moby->pVar + 0x30);
+		} else if (moby->oClass != MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER &&
+		    moby->oClass != MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_CENTER) {
 			continue;
 		}
 		object.uid = moby->UID;
 		object.oClass = moby->oClass;
 		object.state = moby->state;
-		netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_JOIN_SIEGE_STATE,
+		netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_JOIN_WORLD_STATE,
 		    sizeof(object), &object);
 	}
 	object.oClass = 0;
-	netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_JOIN_SIEGE_STATE,
+	netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_JOIN_WORLD_STATE,
 	    sizeof(object), &object);
 }
 
 /*
- * NAME : joinRequestSiegeState
+ * NAME : joinRequestWorldState
  * DESCRIPTION : Retry catch-up after loading until all objective objects exist.
  * NOTES :
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
  */
-static void joinRequestSiegeState(GameSettings* settings)
+static void joinRequestWorldState(GameSettings* settings)
 {
-	if (!joinNeedsSiegeState || gameAmIHost() || settings->GameType != GAMETYPE_SIEGE ||
-	    gameGetTime() - joinLastSiegeRequest < TIME_SECOND)
+	if (!joinNeedsWorldState || gameAmIHost() ||
+	    gameGetTime() - joinLastWorldRequest < TIME_SECOND)
 		return;
-	joinSiegeRequest_t request = { GAME_CLIENT_ID, settings->GameLevel, joinSiegeSequence };
-	joinSiegeRetry = 0;
-	netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_JOIN_SIEGE_REQUEST,
+	joinWorldRequest_t request = { GAME_CLIENT_ID, settings->GameLevel, joinWorldSequence };
+	joinWorldRetry = 0;
+	netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_JOIN_WORLD_REQUEST,
 	    sizeof(request), &request);
-	joinLastSiegeRequest = gameGetTime();
+	joinLastWorldRequest = gameGetTime();
 }
 
 /*
@@ -774,8 +879,8 @@ static void joinNotifyPlayers(GameSettings* settings)
 void joinTick(void)
 {
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_GAME_TIME, &joinReceiveGameTime);
-	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_SIEGE_REQUEST, &joinReceiveSiegeRequest);
-	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_SIEGE_STATE, &joinReceiveSiegeState);
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_WORLD_REQUEST, &joinReceiveWorldRequest);
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_WORLD_STATE, &joinReceiveWorldState);
 	if (isInGame())
 		joinSetLoadingReceivers(0);
 #if !UYA_PAL
@@ -816,18 +921,18 @@ void joinTick(void)
 			joinSendGameTime();
 			int i;
 			for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-				if (joinSiegeRequests & (1 << i))
-					joinSendSiegeState(i);
+				if (joinWorldRequests & (1 << i))
+					joinSendWorldState(i);
 			}
-			joinSiegeRequests = 0;
+			joinWorldRequests = 0;
 		} else {
-			joinRequestSiegeState(settings);
+			joinRequestWorldState(settings);
 		}
 		joinCompletePlayers(settings);
 		joinNotifyPlayers(settings);
 	} else {
 		joinRosterInitialized = 0;
 		joinLastTimeSent = 0;
-		joinSiegeRequests = 0;
+		joinWorldRequests = 0;
 	}
 }
