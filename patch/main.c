@@ -160,7 +160,7 @@ extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern VariableAddress_t vaFlagUpdate_Func;
 extern void FlushCache(int);
-extern MenuElem_ListData_t dataCustomMaps;
+extern MenuElem_VerticalListData_t dataCustomMaps;
 extern MenuElem_OrderedListData_t dataCustomModes;
 #ifdef SCAVENGER_HUNT
 extern scavHuntEnabled;

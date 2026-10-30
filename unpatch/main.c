@@ -145,11 +145,6 @@ int onServerDownloadDataRequest(void * connection, void * data)
  */
 void onOnlineMenu(void)
 {
-	u32 bgColorDownload = 0x8004223f;
-	u32 textColor = 0x8069cbf2;
-	u32 barBgColor = 0x80123251;
-	u32 barFgColor = 0x8018608f;
-
 	// call normal draw routine
 #ifdef UYA_PAL
     ((void (*)(void))0x0067C9C0)();
@@ -160,15 +155,7 @@ void onOnlineMenu(void)
 	// only show on main menu
 	if (uiGetActiveMenu(UI_MENU_ONLINE_LOBBY, 0) != 0)
 	{
-    gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
-    gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
-    gfxScreenSpaceText(SCREEN_WIDTH * 0.35, SCREEN_HEIGHT * 0.4, 1, 1, textColor, "Downloading patch...", 17 + (gameGetTime()/240 % 4), 3, FONT_BOLD);
-
-    if (totalBytes > 0)
-    {
-      float w = (float)bytesReceived / (float)totalBytes;
-      gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
-    }
+		uiProgressDialog("Downloading patch...", bytesReceived, totalBytes);
   }
 }
 
