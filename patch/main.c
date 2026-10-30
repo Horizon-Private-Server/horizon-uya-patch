@@ -3093,7 +3093,7 @@ void patchGameDetailsUI_Mode(UiElementTextInput_t *element, char *string)
 /*
  * NAME : patchGameDetailsUI
  * DESCRIPTION : Install regional details hooks and preserve packed search names.
- * NOTES :
+ * NOTES : Flush the instruction changes once for real PS2 hardware.
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
@@ -3116,6 +3116,9 @@ void patchGameDetailsUI(void)
 	HOOK_JAL(0x006a2168, &patchGameDetailsUI_Mode);
 	HOOK_JAL(0x006a2190, &patchGameDetailsUI_Mode);
 #endif
+	// Real PS2s must see both the new hooks and metadata-preserving instructions.
+	FlushCache(0);
+	FlushCache(2);
 }
 /*
  * NAME : getBaseHealthPercent
