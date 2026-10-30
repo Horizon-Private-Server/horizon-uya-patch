@@ -58,8 +58,23 @@ typedef struct joinWorldObject {
 	/* 0x0c */ float value; /* Health, crank progress, or bridge travel. */
 } joinWorldObject_t;
 
+typedef struct joinFlagState {
+	/* 0x00 */ joinWorldRequest_t request;
+	/* 0x04 */ u16 uid;
+	/* 0x06 */ u16 oClass;
+	/* 0x08 */ float position[3];
+	/* 0x14 */ int droppedAge;
+	/* 0x18 */ int captures;
+	/* 0x1c */ int saves;
+	/* 0x20 */ s8 carrier;
+	/* 0x21 */ s8 lastCarrier;
+	/* 0x22 */ u8 state;
+	/* 0x23 */ u8 reserved;
+} joinFlagState_t;
+
 Player** playerGetAll(void);
 void FlushCache(int operation);
+int flagGetTrackerIndex(Moby* flagMoby);
 static void joinSetLoadingReceivers(int enabled);
 
 #if !UYA_PAL
@@ -69,6 +84,7 @@ static void joinSetPlayerUpdates(int enabled);
 extern PatchGameConfig_t gameConfig;
 extern int mapOverrideResponse;
 extern int expectedMapVersion;
+extern int flagTrackedLastCarrierIdx[2];
 
 static const u32 joinGates[] = {
 	JOIN_ADMISSION_GATE,
@@ -299,7 +315,11 @@ static int joinSupportsMode(void)
 	if (gameConfig.isCustomMap && customMapDefs && index >= 0 && index < customMapDefCount &&
 	    customMapDefs[index].ForcedCustomModeId)
 		mode = customMapDefs[index].ForcedCustomModeId;
-	return mode == CUSTOM_MODE_NONE || mode == CUSTOM_MODE_KOTH;
+	/* Mid Flag and Domination reuse native flags, nodes and cranks. Juggernaut
+	 * resends its crown and shield state through its existing heartbeats. */
+	return mode == CUSTOM_MODE_NONE || mode == CUSTOM_MODE_KOTH ||
+	    mode == CUSTOM_MODE_MIDFLAG || mode == CUSTOM_MODE_DOMINATION ||
+	    mode == CUSTOM_MODE_JUGGERNAUT;
 }
 
 /*
@@ -596,6 +616,92 @@ static int joinReceiveWorldState(void* connection, void* data)
 }
 
 /*
+ * NAME : joinReceiveFlagState
+ * DESCRIPTION : Restore a late joiner's flags and team totals without awarding captures.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int joinReceiveFlagState(void* connection, void* data)
+{
+	joinFlagState_t* snapshot = data;
+	GameSettings* settings = gameGetSettings();
+	if (connection != netGetDmeServerConnection() || !settings || !isInGame() ||
+	    gameAmIHost() || !joinNeedsWorldState || settings->GameType != GAMETYPE_CTF ||
+	    snapshot->request.client != GAME_CLIENT_ID || snapshot->request.level != settings->GameLevel ||
+	    snapshot->request.sequence != joinWorldSequence)
+		return sizeof(*snapshot);
+	if ((snapshot->oClass != MOBY_ID_CTF_RED_FLAG && snapshot->oClass != MOBY_ID_CTF_BLUE_FLAG) ||
+	    (snapshot->state != 1 && snapshot->state != 2) ||
+	    snapshot->carrier < -1 || snapshot->carrier >= GAME_MAX_PLAYERS ||
+	    (snapshot->state == 2 && snapshot->carrier < 0) ||
+	    (snapshot->state == 1 && snapshot->carrier != -1) || snapshot->droppedAge < 0)
+		return sizeof(*snapshot);
+	Moby* moby;
+	Moby* end = mobyListGetEnd();
+	for (moby = mobyListGetStart(); moby && moby < end; ++moby) {
+		if ((u16)moby->UID == snapshot->uid && moby->oClass == snapshot->oClass)
+			break;
+	}
+	GameData* game = gameGetData();
+	if (!moby || moby == end || !moby->pVar || moby->state == 0 || !game || !game->CTFGameData ||
+	    (snapshot->carrier >= 0 && !playerGetAll()[snapshot->carrier])) {
+		joinWorldRetry = 1;
+		return sizeof(*snapshot);
+	}
+	if ((u8)moby->state >= 0x80)
+		return sizeof(*snapshot);
+	flagPVars_t* vars = moby->pVar;
+	MobyFunctions* functions = mobyGetFunctions(moby);
+	if (!functions || !functions->FUNC_1C) {
+		joinWorldRetry = 1;
+		return sizeof(*snapshot);
+	}
+	GuberEvent event;
+	memset(&event, 0, sizeof(event));
+	event.NetEvent.CreateTime = gameGetTime();
+	event.NetEvent.OriginClientIdx = gameGetHostId();
+	if (moby->guberMoby)
+		event.NetEvent.ObjUID = moby->guberMoby->Guber.Id.UID;
+	if (snapshot->state == 2) {
+		/* Reuse the native pickup handler to bind the existing carrier. The
+		 * host-authoritative pickup code in main.c remains unchanged. */
+		if (moby->state != 2 || vars->carrierIdx != snapshot->carrier) {
+			int carrier = snapshot->carrier;
+			event.NetEvent.NetDataSize = sizeof(carrier);
+			memcpy(event.NetEvent.NetData, &carrier, sizeof(carrier));
+			((void (*)(Moby*, GuberEvent*))functions->FUNC_1C)(moby, &event);
+		}
+	} else {
+		/* The native drop event restores its transform and releases a previous
+		 * carrier. A return/capture event would incorrectly award old points. */
+		VECTOR position = { snapshot->position[0], snapshot->position[1], snapshot->position[2], 0 };
+		VECTOR delta;
+		vector_subtract(delta, moby->position, position);
+		if (moby->state != 1 || vars->carrierIdx != -1 ||
+		    vector_sqrmag(delta) > 0.01f) {
+			event.NetEvent.EventID = 2;
+			event.NetEvent.NetDataSize = sizeof(position);
+			memcpy(event.NetEvent.NetData, position, sizeof(position));
+			((void (*)(Moby*, GuberEvent*))functions->FUNC_1C)(moby, &event);
+		}
+		vars->timeFlagDropped = gameGetTime() - snapshot->droppedAge;
+	}
+	int flag = flagGetTrackerIndex(moby);
+	if (flag >= 0 && snapshot->lastCarrier >= -1 && snapshot->lastCarrier < GAME_MAX_PLAYERS)
+		flagTrackedLastCarrierIdx[flag] = snapshot->lastCarrier;
+	if (snapshot->oClass == MOBY_ID_CTF_BLUE_FLAG) {
+		game->CTFGameData->blueTeamCaptures = snapshot->captures;
+		game->CTFGameData->blueTeamSaves = snapshot->saves;
+	} else {
+		game->CTFGameData->redTeamCaptures = snapshot->captures;
+		game->CTFGameData->redTeamSaves = snapshot->saves;
+	}
+	return sizeof(*snapshot);
+}
+
+/*
  * NAME : joinSendWorldState
  * DESCRIPTION : Send active map objects by class and UID, independent of game mode.
  * NOTES :
@@ -621,6 +727,31 @@ static void joinSendWorldState(int client)
 			continue;
 		if (!joinWorldObjectEnabled(moby->oClass, moby))
 			continue;
+		if (settings->GameType == GAMETYPE_CTF &&
+		    (moby->oClass == MOBY_ID_CTF_RED_FLAG || moby->oClass == MOBY_ID_CTF_BLUE_FLAG)) {
+			if (!game->CTFGameData || (moby->state != 1 && moby->state != 2))
+				continue;
+			flagPVars_t* vars = moby->pVar;
+			joinFlagState_t flag;
+			memset(&flag, 0, sizeof(flag));
+			flag.request = object.request;
+			flag.uid = moby->UID;
+			flag.oClass = moby->oClass;
+			memcpy(flag.position, moby->position, sizeof(flag.position));
+			flag.droppedAge = gameGetTime() - vars->timeFlagDropped;
+			if (flag.droppedAge < 0)
+				flag.droppedAge = 0;
+			flag.carrier = vars->carrierIdx;
+			flag.lastCarrier = flagTrackedLastCarrierIdx[flagGetTrackerIndex(moby)];
+			flag.state = moby->state;
+			flag.captures = moby->oClass == MOBY_ID_CTF_BLUE_FLAG ?
+			    game->CTFGameData->blueTeamCaptures : game->CTFGameData->redTeamCaptures;
+			flag.saves = moby->oClass == MOBY_ID_CTF_BLUE_FLAG ?
+			    game->CTFGameData->blueTeamSaves : game->CTFGameData->redTeamSaves;
+			netBroadcastCustomAppMessage(netGetDmeServerConnection(), CUSTOM_MSG_ID_JOIN_FLAG_STATE,
+			    sizeof(flag), &flag);
+			continue;
+		}
 		object.team = -1;
 		object.value = 0;
 		if (moby->oClass == MOBY_ID_SIEGE_NODE) {
@@ -881,6 +1012,7 @@ void joinTick(void)
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_GAME_TIME, &joinReceiveGameTime);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_WORLD_REQUEST, &joinReceiveWorldRequest);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_WORLD_STATE, &joinReceiveWorldState);
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_FLAG_STATE, &joinReceiveFlagState);
 	if (isInGame())
 		joinSetLoadingReceivers(0);
 #if !UYA_PAL
@@ -911,7 +1043,8 @@ void joinTick(void)
 	GameSettings* settings = gameGetSettings();
 	int running = settings && isInGame() && !GAME_NET_INFO->onlyLocalPlayers && !gameHasEnded();
 	int supported = running &&
-	    (settings->GameType == GAMETYPE_DM || settings->GameType == GAMETYPE_SIEGE) &&
+	    (settings->GameType == GAMETYPE_DM || settings->GameType == GAMETYPE_SIEGE ||
+	    settings->GameType == GAMETYPE_CTF) &&
 	    settings->GameLevel >= 40 && settings->GameLevel <= 49 &&
 	    joinSupportsMode() && joinSupportsMap();
 

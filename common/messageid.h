@@ -176,6 +176,7 @@ enum CustomMessageId
 	CUSTOM_MSG_ID_JOIN_GAME_TIME = 33,
 	CUSTOM_MSG_ID_JOIN_WORLD_REQUEST = 34,
 	CUSTOM_MSG_ID_JOIN_WORLD_STATE = 35,
+	CUSTOM_MSG_ID_JOIN_FLAG_STATE = 36,
 
     /*
      * Start of custom message ids reserved for custom game modes.
