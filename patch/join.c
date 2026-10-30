@@ -93,6 +93,7 @@ void FlushCache(int operation);
 int flagGetTrackerIndex(Moby* flagMoby);
 int getBaseHealthPercent(LocalPlayerYourBaseGameData* baseGameData, int team);
 static void joinSetLoadingReceivers(int enabled);
+static int joinGetMode(void);
 
 #if !UYA_PAL
 static void joinSetPlayerUpdates(int enabled);
@@ -157,6 +158,8 @@ static VariableAddress_t vaJoinPlayerLeave = {
 
 #if !UYA_PAL
 static int joinClientLoading;
+static int joinPendingLevel;
+static int joinPendingMode;
 static int joinNeedsGameTime;
 static char joinSelectedMap[32];
 static int joinPlayerObjectIds[GAME_MAX_PLAYERS];
@@ -189,6 +192,8 @@ void joinSetSelectedMap(const char* name)
  */
 static int joinBeginClient(void* context)
 {
+	customModeDownloadReady = 0;
+	customModeDownloadPending = 0;
 	if (joinSelectedMap[0]) {
 		int i;
 		int installed = 0;
@@ -231,6 +236,8 @@ static int joinBeginClient(void* context)
  */
 static int joinEndClient(void* context)
 {
+	customModeDownloadPending = 0;
+	customModeDownloadReady = 0;
 	joinClientLoading = 0;
 	joinNeedsGameTime = 0;
 	joinNeedsWorldState = 0;
@@ -242,7 +249,7 @@ static int joinEndClient(void* context)
 
 /*
  * NAME : joinLoadClient
- * DESCRIPTION : Supply the local gameplay pad before starting the level load.
+ * DESCRIPTION : Wait for custom-mode code, then supply the gameplay pad and start loading.
  * NOTES :
  * ARGS :
  * RETURN :
@@ -250,6 +257,12 @@ static int joinEndClient(void* context)
  */
 static void joinLoadClient(int level, int mode)
 {
+	if (joinClientLoading && joinGetMode() > 0 && !customModeDownloadReady) {
+		joinPendingLevel = level;
+		joinPendingMode = mode;
+		customModeDownloadPending = 1;
+		return;
+	}
 	if (joinClientLoading && GAME_NET_INFO->numLocalPlayers == 1 &&
 	    !PAD_POINTER[3] && PAD_POINTER[0])
 		PAD_POINTER[3] = PAD_POINTER[0];
@@ -336,24 +349,6 @@ static int joinGetMode(void)
 	    customMapDefs[index].ForcedCustomModeId)
 		mode = customMapDefs[index].ForcedCustomModeId;
 	return mode;
-}
-
-/*
- * NAME : joinSupportsMode
- * DESCRIPTION : Check the late-join whitelist.
- * NOTES :
- * ARGS :
- * RETURN :
- * AUTHOR : Troy "Metroynome" Pruitt
- */
-static int joinSupportsMode(void)
-{
-	int mode = joinGetMode();
-	/* Mid Flag and Domination reuse native flags, nodes and cranks. Juggernaut
-	 * resends its crown and shield state through its existing heartbeats. */
-	return mode == CUSTOM_MODE_NONE || mode == CUSTOM_MODE_KOTH ||
-	    mode == CUSTOM_MODE_MIDFLAG || mode == CUSTOM_MODE_DOMINATION ||
-	    mode == CUSTOM_MODE_JUGGERNAUT;
 }
 
 /*
@@ -943,6 +938,11 @@ static int joinSelectTeam(int gameType, int teams, int preferred, int player)
 	if (!joinAdmissionOpen || !settings || !gameAmIHost() || !isInGame() ||
 	    player < 0 || player >= GAME_MAX_PLAYERS)
 		return ((int (*)(int, int, int, int))JOIN_GET_TEAM)(gameType, teams, preferred, player);
+	// The join request may still carry staging defaults; use the host's live rules.
+	gameType = settings->GameType;
+	GameOptions* options = gameGetOptions();
+	if (options)
+		teams = options->GameFlags.MultiplayerGameFlags.Teams;
 	int counts[GAME_MAX_PLAYERS] = { 0 };
 	u32 eligible = 0;
 	int i;
@@ -1262,6 +1262,14 @@ void joinTick(void)
 	if (isInGame())
 		joinSetLoadingReceivers(0);
 #if !UYA_PAL
+	if (customModeDownloadPending) {
+		if (!joinClientLoading || !netGetLobbyServerConnection() || !gameGetSettings()) {
+			customModeDownloadPending = 0;
+		} else if (customModeDownloadReady) {
+			customModeDownloadPending = 0;
+			joinLoadClient(joinPendingLevel, joinPendingMode);
+		}
+	}
 	if (joinClientLoading && isInGame()) {
 		joinClientLoading = 0;
 		joinSetPlayerUpdates(0);
@@ -1292,7 +1300,7 @@ void joinTick(void)
 	    (settings->GameType == GAMETYPE_DM || settings->GameType == GAMETYPE_SIEGE ||
 	    settings->GameType == GAMETYPE_CTF) &&
 	    settings->GameLevel >= 40 && settings->GameLevel <= 49 &&
-	    joinSupportsMode() && joinSupportsMap();
+	    joinSupportsMap();
 
 	joinUpdateHost(settings, supported);
 	if (running && gameHasEnded())

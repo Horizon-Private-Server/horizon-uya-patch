@@ -180,6 +180,9 @@ extern PatchStateContainer_t patchStateContainer;
 extern u32 SONY_MAC_ADDRESSES[];
 extern int SONY_MAC_ADDRESSES_COUNT;
 
+extern int customModeDownloadReady;
+extern int customModeDownloadPending;
+
 void configRebuildMapList(void);
 
 #endif // __PATCH_CONFIG_H__

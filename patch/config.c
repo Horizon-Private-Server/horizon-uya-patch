@@ -33,6 +33,9 @@ int preset = 0;
 int dlBytesReceived = 0;
 int dlTotalBytes = 0;
 int dlIsActive = 0;
+int customModeDownloadReady;
+int customModeDownloadPending;
+void FlushCache(int operation);
 
 // Config
 extern PatchConfig_t config;
@@ -2886,11 +2889,24 @@ void navTab(int direction)
 }
 
 //------------------------------------------------------------------------------
+/*
+ * NAME : onServerDownloadDataRequest
+ * DESCRIPTION : Receive download chunks and publish completed custom-mode code.
+ * NOTES : Flush the code cache before releasing a waiting late joiner.
+ * ARGS :
+ * RETURN : Number of message bytes consumed.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 int onServerDownloadDataRequest(void * connection, void * data)
 {
 	ServerDownloadDataRequest_t* request = (ServerDownloadDataRequest_t*)data;
 
 	// copy bytes to target
+	if (dlIsActive != request->Id) {
+		dlBytesReceived = 0;
+		if (request->Id == 201)
+			customModeDownloadReady = 0;
+	}
   dlIsActive = request->Id;
 	dlTotalBytes = request->TotalSize;
 	dlBytesReceived += request->DataSize;
@@ -2907,6 +2923,11 @@ int onServerDownloadDataRequest(void * connection, void * data)
 
   // reset at end
   if (dlBytesReceived >= request->TotalSize) {
+		if (request->Id == 201) {
+			FlushCache(0);
+			FlushCache(2);
+			customModeDownloadReady = 1;
+		}
     dlTotalBytes = 0;
     dlBytesReceived = 0;
     dlIsActive = 0;
@@ -2996,7 +3017,7 @@ static void updateStagingPreview(UiElementImage_t* image)
 /*
  * NAME : onConfigUpdate
  * DESCRIPTION : Update download state and staging map details.
- * NOTES : The native image setter refreshes the texture, not just its ID.
+ * NOTES : Update active staging for normal starts and late joins, whose start time is already set.
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
@@ -3017,7 +3038,7 @@ void onConfigUpdate(void)
 
   // in staging, update game info
   GameSettings * gameSettings = gameGetSettings();
-  if (gameSettings && gameSettings->GameLoadStartTime < 0 && netGetLobbyServerConnection())
+  if (gameSettings && netGetLobbyServerConnection() && uiGetActiveMenu(UI_MENU_STAGING, 0))
   {
     // 
     char * mapName = mapGetName(gameSettings->GameLevel);
@@ -3099,7 +3120,10 @@ void onConfigOnlineMenu(void)
 			drawStagingPreview(image);
 	}
 
-	if (dlTotalBytes > 0)
+	if (customModeDownloadPending || dlIsActive == 201)
+		uiProgressDialog("Downloading custom game mode...", dlIsActive == 201 ? dlBytesReceived : 0,
+		    dlIsActive == 201 ? dlTotalBytes : 0);
+	else if (dlTotalBytes > 0)
 		uiProgressDialog("Downloading...", dlBytesReceived, dlTotalBytes);
 
   onMenuUpdate(0);
