@@ -47,6 +47,7 @@
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047cfec)
 #define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d124)
 #define UI_PTR_FUNC_STAGING									(0x0047e9ac)
+#define UI_PTR_FUNC_GAME_DETAILS (0x0047d86c)
 // #define UI_PTR_FUNC_BUDDIES									(0x0047c834)
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
 // #define UI_PTR_FUNC_STATS									(0x0047eab4)
@@ -63,6 +64,7 @@
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047d0ac)
 #define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d1e4)
 #define UI_PTR_FUNC_STAGING									(0x0047ea6c)
+#define UI_PTR_FUNC_GAME_DETAILS (0x0047d92c)
 // #define UI_PTR_FUNC_BUDDIES									(0x0047c8f4)
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
 // #define UI_PTR_FUNC_STATS									(0x0047eb74)
@@ -98,6 +100,7 @@ int patchGameDetailsUI_ParseGameName(char* string, char** customMap, int* custom
 
 int patchCreateGame(void *ui, long pad);
 int patchStaging(void * ui, long pad);
+int patchGameDetails(UiMenu_t* ui, int pad);
 // int patchBuddies(void * ui, long pad);
 // int patchPlayerDetails(void * ui, long pad);
 // int patchStats(void * ui, int pad);
@@ -3602,6 +3605,7 @@ int main(void)
 			// POKE_U32(UI_PTR_FUNC_CREATE_GAME, &patchCreateGame);
 			// POKE_U32(UI_PTR_FUNC_ADVANCED_OPTIONS, &patchAdvancedOptions);
 			POKE_U32(UI_PTR_FUNC_STAGING, &patchStaging);
+			POKE_U32(UI_PTR_FUNC_GAME_DETAILS, &patchGameDetails);
 			// POKE_U32(UI_PTR_FUNC_BUDDIES, &patchBuddies);
 			// POKE_U32(UI_PTR_FUNC_PLAYER_DETAILS, &patchPlayerDetails);
 			// POKE_U32(UI_PTR_FUNC_STATS, &patchStats);

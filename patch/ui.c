@@ -12,12 +12,14 @@
 #include <libuya/graphics.h>
 #include <libuya/utils.h>
 #include <libuya/net.h>
+#include <libuya/team.h>
 #include "messageid.h"
 #include "config.h"
 
 #ifdef UYA_PAL
 // UI Functions
 #define STAGING_BASE_FUNC (0x006c1730)
+#define GAME_DETAILS_BASE_FUNC (0x006a3ab0)
 #define CREATE_GAME_BASE_FUNC (0x0069a630)
 #define ADVANCED_OPTIONS_BASE_FUNC (0x0069ce50)
 // #define BUDDIES_BASE_FUNC (0x00690de8)
@@ -37,6 +39,7 @@
 #else
 // UI Functions
 #define STAGING_BASE_FUNC (0x006bec18)
+#define GAME_DETAILS_BASE_FUNC (0x006a12a0)
 #define CREATE_GAME_BASE_FUNC (0x00697e20)
 #define ADVANCED_OPTIONS_BASE_FUNC (0x0069a640)
 // #define BUDDIES_BASE_FUNC (0x0068e6f8)
@@ -67,6 +70,11 @@
 #define IGNORE_LIST_START (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x10)
 #define IGNORE_LIST_END (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x1c)
 
+typedef struct gameDetailsPlayer {
+	/* 0x000 */ char name[32];
+	/* 0x020 */ s32 accountId;
+	/* 0x024 */ u8 stats[256];
+} gameDetailsPlayer_t;
 typedef enum playerOptions {
     PLAYER_OPTION_CANCEL = -1,
     PLAYER_OPTION_TEAMSKIN = 0,
@@ -127,6 +135,7 @@ typedef int (*uiVTable_Func)(UiMenu_t * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
 uiVTable_Func advancedOptionsFunc = (uiVTable_Func)ADVANCED_OPTIONS_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
+uiVTable_Func gameDetailsFunc = (uiVTable_Func)GAME_DETAILS_BASE_FUNC;
 // uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 // uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
 // uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
@@ -566,6 +575,101 @@ void openTeamsOptions(GameSettings * gs, int isTeams)
     int select = uiShowSelectDialog("Team Options", randomTeamOptions, size, 0);
     if (select > TEAM_OPTION_CANCEL)
         setTeams(select);
+}
+/*
+ * NAME : patchGameDetails
+ * DESCRIPTION : Update the native player list and its staging-style team sprites.
+ * NOTES : Map/mode labels and joining remain in their existing handlers.
+ * ARGS : Details menu and native UI pad action.
+ * RETURN : Native menu update result.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+int patchGameDetails(UiMenu_t* ui, int pad)
+{
+	static UiElementSprite_t teamSprites[GAME_MAX_PLAYERS][2];
+	static int initialized;
+	static int rankHandle;
+	int row;
+	int layer;
+	if (!ui)
+		return 0;
+
+	int result = gameDetailsFunc(ui, pad);
+	// The native menu releases its graphics container when leaving Details.
+	if (!netGetLobbyServerConnection() ||
+		(uiGetActiveMenu(UI_MENU_GAME_DETAILS, 0) != ui &&
+		uiGetActiveMenu(UI_MENU_GAME_DETAILS, 1) != ui)) {
+		initialized = 0;
+		return result;
+	}
+	if (ui->childCount < sizeof(UiGameDetailsElements_t) / sizeof(void*))
+		return result;
+
+	UiGameDetailsElements_t* elements = (UiGameDetailsElements_t*)ui->pChildren;
+	elements->localPlayers->state = 0;
+	UiElementList_t* list = elements->playerList;
+	if (!list || list->type != UI_ELEMENT_LIST || !elements->rankSprite[0])
+		return result;
+
+	// Recreate our handles if the native menu rebuilt its sprite container.
+	if (rankHandle != elements->rankSprite[0]->unk_64) {
+		initialized = 0;
+		rankHandle = elements->rankSprite[0]->unk_64;
+	}
+
+	// Use the same native sprite element and vtable as the rank/skill bolts.
+	for (row = 0; row < GAME_MAX_PLAYERS; ++row) {
+		for (layer = 0; layer < 2; ++layer) {
+			UiElementSprite_t* sprite = &teamSprites[row][layer];
+			if (!initialized) {
+				memcpy(sprite, elements->rankSprite[0], sizeof(*sprite));
+				sprite->unk_64 = -1;
+				sprite->sprite = SPRITE_HUD_DOT;
+				sprite->selectorBoxSize[2] = layer ? 0.021f : 0.030f;
+				sprite->selectorBoxSize[3] = layer ? 0.028f : 0.040f;
+				((UiMenuVTable_t*)sprite->vTable)->return_zero_00c(sprite);
+			}
+			sprite->state = 0;
+			((UiMenuVTable_t*)sprite->vTable)->draw(sprite);
+		}
+	}
+	initialized = 1;
+
+	int count = *(int*)((u8*)ui + 0x2bc);
+	gameDetailsPlayer_t* players = *(gameDetailsPlayer_t**)((u8*)ui + 0x2c4);
+	int first = *(int*)((u8*)list + 0x10580);
+	int visible = *(int*)((u8*)list + 0x1057c);
+	if (!players || count < 1 || count > GAME_MAX_PLAYERS || first < 0 ||
+		visible < 1 || visible > GAME_MAX_PLAYERS)
+		return result;
+
+	// Native list coordinates are centered; its text rows use 0.0505 spacing.
+	float x = list->selectorBoxSize[0] + list->selectorBoxSize[2] * 0.5f - 0.010f;
+	float y = list->selectorBoxSize[1] - list->selectorBoxSize[3] * 0.5f + 0.022f;
+	int i;
+	for (row = 0; row < visible && first + row < list->itemCount && first + row < count; ++row) {
+		// Match by account ID rather than assuming the native list preserves ordering.
+		s32 accountId = *(s32*)((u8*)ui + 0x2d0 + (first + row) * sizeof(s32));
+		for (i = 0; i < count; ++i) {
+			u8* team = &players[i].stats[0xfc];
+			if (players[i].accountId != accountId || team[0] != 'U' ||
+				team[1] != 'Y' || team[2] != 'A' || team[3] >= 8)
+				continue;
+
+			for (layer = 0; layer < 2; ++layer) {
+				UiElementSprite_t* sprite = &teamSprites[row][layer];
+				sprite->state = 1;
+				sprite->selectorBoxSize[0] = x;
+				sprite->selectorBoxSize[1] = y + row * 0.0505f;
+				sprite->sprite = SPRITE_HUD_DOT;
+				sprite->vTable->setColor(sprite, layer ?
+					0x80000000 | TEAM_COLORS[team[3]] : 0x706ec8ff);
+				((UiMenuVTable_t*)sprite->vTable)->draw(sprite);
+			}
+			break;
+		}
+	}
+	return result;
 }
 // extern forceMapOverride;
 int patchStaging(UiMenu_t* ui, int pad)
