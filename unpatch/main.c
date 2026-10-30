@@ -44,6 +44,11 @@ const int patches[][3] = {
 	{ 0, 0x0047e44c, 0x006b48c8 }, // patchPlayerDetails
 	{ 0, 0x0047eab4, 0x006c5cc8 }, // patchStats
 	{ 0, 0x0047dbac, 0x006aaa08 }, // patchKeyboard
+	{ 0, 0x006a2d50, 0xa220005e }, // search name truncation
+	{ 0, 0x006a4694, 0xa0600146 }, // details name truncation
+	{ 0, 0x006a47bc, 0x0040f809 }, // details map setter
+	{ 0, 0x006a4978, 0x0040f809 }, // details mode setters
+	{ 0, 0x006a49a0, 0x0040f809 },
 
 	// late-join admission gates (also present outside the lobby overlay)
 	{ -1, 0x0019a750, 0x28420007 },
@@ -68,6 +73,11 @@ const int patches[][3] = {
 	{ 0, 0x0047e50c, 0x006b1f60 }, // patchPlayerDetails
 	{ 0, 0x0047eb74, 0x006c31b8 }, // patchStats
 	{ 0, 0x0047dc6c, 0x006a80b8 }, // patchKeyboard
+	{ 0, 0x006a0540, 0xa220005e }, // search name truncation
+	{ 0, 0x006a1e84, 0xa0600146 }, // details name truncation
+	{ 0, 0x006a1fac, 0x0040f809 }, // details map setter
+	{ 0, 0x006a2168, 0x0040f809 }, // details mode setters
+	{ 0, 0x006a2190, 0x0040f809 },
 
 	// Restore calls before clearing/replacing the patch they currently target.
 	{ 0, 0x006d0d90, 0x0c1b4970 }, // joinBeginClient: native 0x006d25c0

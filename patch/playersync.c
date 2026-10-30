@@ -585,8 +585,14 @@ void playerSyncHandlePlayerState(Player* player)
 
 
 
-//--------------------------------------------------------------------------
-
+/*
+ * NAME : playerSyncOnReceivePlayerState
+ * DESCRIPTION : Receive player state and initialize late joiners from the first sequence.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 int playerSyncOnReceivePlayerState(void* connection, void* data)
 {
   if (!isInGame() || !PLAYER_SYNC_DATAS_PTR) return sizeof(PlayerSyncStateUpdatePacked_t);
@@ -636,6 +642,14 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
 
   // target sync player data
   PlayerSyncPlayerData_t* pSyncData = &PLAYER_SYNC_DATAS_PTR[msg.PlayerIdx];
+
+	/* A running player's first sequence can be anywhere in the byte range.
+	 * Start there instead of waiting for it to wrap past a zero baseline. */
+	if (!pSyncData->LastNetTime) {
+		pSyncData->StateUpdateCmdId = playerSyncGetCmdId(unpacked.CmdId - 1);
+		pSyncData->CurrentStateUpdateCmdId = unpacked.CmdId;
+		pSyncData->CurrentSubStateId = 0;
+	}
 
   // move into buffer
   int cmdDt = playerSyncCmdDelta(pSyncData->StateUpdateCmdId, unpacked.CmdId);

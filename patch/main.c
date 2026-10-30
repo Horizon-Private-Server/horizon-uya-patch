@@ -56,6 +56,7 @@
 #define NW_PLAYER_ARRAY (0x0022f3d0)
 #define NW_COMPLETE_REMOTE_PLAYER (0x00199878)
 #define NW_PLAYER_LEAVE_CALLBACK (0x00240654)
+#define NW_GUI_POINTER (0x0024d760)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
 #define RANK_TABLE                              			((u32)0x001a6Be4)
@@ -71,6 +72,7 @@
 #define NW_PLAYER_ARRAY (0x0022f550)
 #define NW_COMPLETE_REMOTE_PLAYER (0x001999b8)
 #define NW_PLAYER_LEAVE_CALLBACK (0x002407d4)
+#define NW_GUI_POINTER (0x0024d860)
 #endif
 
 void onConfigOnlineMenu(void);
@@ -92,6 +94,7 @@ CustomMapDef_t* getCustomMapDef(int index);
 int mapReadCurrentCustomMapExtraData(void* dst, int len);
 int mapReadCustomMapExtraData(char* mapFilename, void* dst, int dstLen, int customModeId);
 void refreshCustomMapList(void);
+int patchGameDetailsUI_ParseGameName(char* string, char** customMap, int* customMode);
 
 int patchCreateGame(void *ui, long pad);
 int patchStaging(void * ui, long pad);
@@ -2927,6 +2930,14 @@ void setupPatchConfigInGame(void)
 	}
 }
 
+/*
+ * NAME : patchGameDetailsUI_SetTextInput
+ * DESCRIPTION : Set a details label through its native widget method.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void patchGameDetailsUI_SetTextInput(UiElementTextInput_t *element, char *string)
 {
 	char* text = string ? string : "";
@@ -2934,30 +2945,66 @@ void patchGameDetailsUI_SetTextInput(UiElementTextInput_t *element, char *string
 	if (!element)
 		return;
 
-	strncpy(element->textInput, text, sizeof(element->textInput) - 1);
-	element->textInput[sizeof(element->textInput) - 1] = 0;
+	void (*setText)(UiElementTextInput_t*, const char*) =
+	    *(void**)((u8*)element->vTable + 0xb8);
+	setText(element, text);
 }
 
+/*
+ * NAME : patchGameDetailsUI_GetPackedGameName
+ * DESCRIPTION : Find current packed metadata by the selected game world ID.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 char* patchGameDetailsUI_GetPackedGameName(void)
 {
-	void* ui;
-	void* game;
-
-	asm volatile (
-		"move %0, $s2"
-		: "=r" (ui)
-	);
-
+	UiMenu_t* ui = uiGetMenu(UI_MENU_GAME_DETAILS);
 	if (!ui)
 		return NULL;
 
-	game = *(void**)((u32)ui + 0x2b8);
-	if (!game)
-		return NULL;
+	/* A search result may predate the patch download. Prefer fresh details
+	 * metadata when available; retain the search lookup for plain replies. */
+	void* game = *(void**)((u8*)ui + 0x2b8);
+	char* name = game ? (char*)game + 0x134 : NULL;
+	char* customMap = NULL;
+	int customMode = 0;
+	if (patchGameDetailsUI_ParseGameName(name, &customMap, &customMode) &&
+	    (customMap || customMode))
+		return name;
 
-	return (char*)((u32)game + 0x134);
+	/* Like Deadlocked, use the search result's packed name. Match the world
+	 * ID rather than the visible name, which is shortened for display. */
+	int world = *(int*)((u8*)ui + 0x2a8);
+	u8* root = *(u8**)NW_GUI_POINTER;
+	u8* search = root ? *(u8**)(root + 0x70) : NULL;
+	if (search) {
+		int index = *(int*)(search + 0x18);
+		if (index >= 0 && index < *(int*)(search + 0x28)) {
+			u8* page = search + 0x2c + index * 12;
+			int count = *(int*)(page + 4);
+			u8** records = *(u8***)(page + 8);
+			int i;
+			for (i = 0; records && i < count; ++i) {
+				if (records[i] && *(int*)(records[i] + 0x1c) == world)
+					return (char*)records[i] + 0x4c;
+			}
+		}
+	}
+
+	/* Buddy/invite details may have no search result. */
+	return name;
 }
 
+/*
+ * NAME : patchGameDetailsUI_ParseGameName
+ * DESCRIPTION : Read bounded custom-map and mode metadata from a packed game name.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 int patchGameDetailsUI_ParseGameName(char *string, char** customMap, int* customMode)
 {
 	if (customMap)
@@ -2966,7 +3013,9 @@ int patchGameDetailsUI_ParseGameName(char *string, char** customMap, int* custom
 		*customMode = 0;
 
 	if (string) {
-		int len = strlen(string);
+		int len = 0;
+		while (len < 16 && string[len])
+			++len;
 
 		if (len <= 15) {
 			u8 modeHigh = *(u8*)(string + len + 1);
@@ -2974,6 +3023,11 @@ int patchGameDetailsUI_ParseGameName(char *string, char** customMap, int* custom
 			char* packedMap = string + len + 3;
 
 			if (modeHigh <= 0xf && modeLow <= 0xf) {
+				int end = len + 3;
+				while (end < 64 && string[end])
+					++end;
+				if (end == 64)
+					return 0;
 				if (customMode)
 					*customMode = (char)((modeHigh << 4) | modeLow);
 
@@ -2989,20 +3043,18 @@ int patchGameDetailsUI_ParseGameName(char *string, char** customMap, int* custom
 }
 
 /*
- * NAME :		patchGameDetailsUI_Map
- * DESCRIPTION :
- * 				Updates map string to custom map string, if needced.
+ * NAME : patchGameDetailsUI_Map
+ * DESCRIPTION : Show the custom map name with the retail name as fallback.
  * NOTES :
  * ARGS :
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
 void patchGameDetailsUI_Map(UiElementTextInput_t *element, char *string)
 {
 	char* customMap = NULL;
 
-	if (!patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), &customMap, NULL))
-		patchGameDetailsUI_ParseGameName(string, &customMap, NULL);
+	patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), &customMap, NULL);
 
 #if defined(JOIN_IN_PROGRESS) && !UYA_PAL
 	joinSetSelectedMap(customMap);
@@ -3011,13 +3063,12 @@ void patchGameDetailsUI_Map(UiElementTextInput_t *element, char *string)
 }
 
 /*
- * NAME :		patchGameDetailsUI_Mode
- * DESCRIPTION :
- * 				Updates mode string to custom mode string, if needced.
+ * NAME : patchGameDetailsUI_Mode
+ * DESCRIPTION : Show the custom mode name with the native mode as fallback.
  * NOTES :
  * ARGS :
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
 void patchGameDetailsUI_Mode(UiElementTextInput_t *element, char *string)
 {
@@ -3025,8 +3076,7 @@ void patchGameDetailsUI_Mode(UiElementTextInput_t *element, char *string)
 	int customMode = 0;
 	char* customModeName = NULL;
 
-	if (!patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), NULL, &customMode))
-		patchGameDetailsUI_ParseGameName(string, NULL, &customMode);
+	patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), NULL, &customMode);
 
 	if (customMode) {
 		for (i = 0; i < dataCustomModes.count; ++i) {
@@ -3041,33 +3091,39 @@ void patchGameDetailsUI_Mode(UiElementTextInput_t *element, char *string)
 }
 
 /*
- * NAME :		patchGameDetailsUI
- * DESCRIPTION :
- * 				Patches various items on the Game Details screen.
+ * NAME : patchGameDetailsUI
+ * DESCRIPTION : Install regional details hooks and preserve packed search names.
  * NOTES :
  * ARGS :
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
 void patchGameDetailsUI(void)
 {
 #ifdef UYA_PAL
+	/* Native display code truncates the source record at 18 bytes, which
+	 * destroys the metadata after its first NUL. Its display copies already
+	 * stop at that NUL, so leave the source intact. */
+	POKE_U32(0x006a2d50, 0); // sb zero,0x5e(s1): search result
+	POKE_U32(0x006a4694, 0); // sb zero,0x146(v1): game info
 	HOOK_JAL(0x006a47bc, &patchGameDetailsUI_Map);
 	HOOK_JAL(0x006a4978, &patchGameDetailsUI_Mode);
 	HOOK_JAL(0x006a49a0, &patchGameDetailsUI_Mode);
 #else
+	POKE_U32(0x006a0540, 0);
+	POKE_U32(0x006a1e84, 0);
 	HOOK_JAL(0x006a1fac, &patchGameDetailsUI_Map);
 	HOOK_JAL(0x006a2168, &patchGameDetailsUI_Mode);
 	HOOK_JAL(0x006a2190, &patchGameDetailsUI_Mode);
 #endif
 }
 /*
- * NAME :		runSendGameUpdate
- * DESCRIPTION : Sends the current game info to the server.
+ * NAME : getBaseHealthPercent
+ * DESCRIPTION : Read base health as a percentage for the server game-state report.
  * NOTES :
  * ARGS :
  * RETURN :
- * AUTHOR :			Troy "Metroynopme" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
 int getBaseHealthPercent(LocalPlayerYourBaseGameData * baseGameData, int team)
 {
@@ -3089,6 +3145,14 @@ int getBaseHealthPercent(LocalPlayerYourBaseGameData * baseGameData, int team)
 	return percent;
 }
 
+/*
+ * NAME : runSendGameUpdate
+ * DESCRIPTION : Collect the host game-state summary for Helga.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 int runSendGameUpdate(void)
 {
 	static int lastGameUpdate = 0;
