@@ -12,6 +12,7 @@ EE_LDFLAGS = -fno-builtin -nostdlib -nostartfiles -L. -L../libuya/lib -L$(PS2SDK
 EE_DEFS += -DMAPBOOTELF
 #EE_DEFS += -DULAUNCHELF
 EE_DEFS += -DSPECTATE
+#EE_DEFS += -DJOIN_IN_PROGRESS
 
 
 ifneq (,$(findstring -DULAUNCHELF,$(EE_DEFS)))
@@ -28,6 +29,10 @@ endif
 
 ifneq (,$(findstring -DSPECTATE,$(EE_DEFS)))
     EE_OBJS += spectate.o
+endif
+
+ifneq (,$(findstring -DJOIN_IN_PROGRESS,$(EE_DEFS)))
+EE_OBJS += join.o
 endif
 
 all: $(EE_BIN) clean copy

@@ -547,6 +547,8 @@ __LIBUYA_GETTER__ int gameGetHostId(void);
  */
 __LIBUYA_GETTER__ int gameGetMyClientId(void);
 
+__LIBUYA_GETTER__ int gameGetMyAccountId(void);
+
 /*
  * NAME :		gameGetMyClientId
  * DESCRIPTION :

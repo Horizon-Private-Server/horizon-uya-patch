@@ -39,6 +39,7 @@
 #define GLOBAL_GAME_MODULES_START							((GameModule*)0x000cf000)
 #define EXCEPTION_HANDLER									(0x000c8000)
 #define GAME_UPDATE_SENDRATE								(5 * TIME_SECOND)
+#define NW_PLAYER_STRIDE (0xc70)
 
 #if UYA_PAL
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006c2d80)
@@ -46,24 +47,34 @@
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047cfec)
 #define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d124)
 #define UI_PTR_FUNC_STAGING									(0x0047e9ac)
+#define UI_PTR_FUNC_GAME_DETAILS (0x0047d86c)
 // #define UI_PTR_FUNC_BUDDIES									(0x0047c834)
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
 // #define UI_PTR_FUNC_STATS									(0x0047eab4)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dbac)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006c234c)
 #define nwVoiceUpdateFunc									(0x0019c2c0)
+#define NW_PLAYER_ARRAY (0x0022f3d0)
+#define NW_COMPLETE_REMOTE_PLAYER (0x00199878)
+#define NW_PLAYER_LEAVE_CALLBACK (0x00240654)
+#define NW_GUI_POINTER (0x0024d760)
 #else
 #define STAGING_START_BUTTON_STATE							(*(short*)0x006C0268)
 #define RANK_TABLE                              			((u32)0x001a6Be4)
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047d0ac)
 #define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d1e4)
 #define UI_PTR_FUNC_STAGING									(0x0047ea6c)
+#define UI_PTR_FUNC_GAME_DETAILS (0x0047d92c)
 // #define UI_PTR_FUNC_BUDDIES									(0x0047c8f4)
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
 // #define UI_PTR_FUNC_STATS									(0x0047eb74)
 #define UI_PTR_FUNC_KEYBOARD								(0x0047dc6c)
 #define STAGING_JALR_HEADSET_SET_COLOR						(0x006bf834)
 #define nwVoiceUpdateFunc									(0x0019c400)
+#define NW_PLAYER_ARRAY (0x0022f550)
+#define NW_COMPLETE_REMOTE_PLAYER (0x001999b8)
+#define NW_PLAYER_LEAVE_CALLBACK (0x002407d4)
+#define NW_GUI_POINTER (0x0024d860)
 #endif
 
 void onConfigOnlineMenu(void);
@@ -73,10 +84,22 @@ void configMenuEnable(void);
 void configMenuDisable(void);
 
 void runMapLoader(void);
+#ifdef JOIN_IN_PROGRESS
+void joinTick(void);
+void joinSetSelectedMap(const char* name);
+#endif
 void onMapLoaderOnlineMenu(void);
+int getCustomMapDefCount(void);
+CustomMapDef_t* getCustomMapDef(int index);
+int mapReadCurrentCustomMapExtraData(void* dst, int len);
+int mapReadCustomMapExtraData(char* mapFilename, void* dst, int dstLen, int customModeId);
+void refreshCustomMapList(void);
+int patchGameDetailsUI_ParseGameName(char* string, char** customMap, int* customMode);
 
 int patchCreateGame(void *ui, long pad);
 int patchStaging(void * ui, long pad);
+int patchGameDetails(UiMenu_t* ui, int pad);
+void patchGameDetailsOpen(UiMenu_t* ui);
 // int patchBuddies(void * ui, long pad);
 // int patchPlayerDetails(void * ui, long pad);
 // int patchStats(void * ui, int pad);
@@ -139,7 +162,8 @@ extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern VariableAddress_t vaFlagUpdate_Func;
 extern void FlushCache(int);
-extern MenuElem_ListData_t dataCustomMaps;
+extern MenuElem_VerticalListData_t dataCustomMaps;
+extern MenuElem_OrderedListData_t dataCustomModes;
 #ifdef SCAVENGER_HUNT
 extern scavHuntEnabled;
 extern scavHuntShownPopup;
@@ -176,18 +200,31 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.controllerDeadzone = 0,
 };
 
+static void (*nativeBotPlayerLeave)(struct tNW_Player*);
+static int remoteBotMask;
+
 PatchGameConfig_t gameConfig;
 PatchGameConfig_t gameConfigHostBackup;
 PatchPatches_t patched;
 VoteToEndState_t voteToEndState;
-PatchStateContainer_t patchStateContainer;
 
-PatchPointers_t patchPointers = {
-  .ServerTimeMonth = 0,
-  .ServerTimeDay = 0,
-  .ServerTimeHour = 0,
-  .ServerTimeMinute = 0,
-  .ServerTimeSecond = 0,
+PatchStateContainer_t patchStateContainer = {
+	.config = &config,
+	.gameConfig = &gameConfig,
+	.readExtraDataFunc = mapReadCurrentCustomMapExtraData
+};
+
+PatchInterop_t patchInterop = {
+	.config = &config,
+	.gameConfig = &gameConfig,
+	.patchStateContainer = &patchStateContainer,
+	.client = CLIENT_TYPE_NORMAL,
+	.month = 0,
+	.mapLoaderFilename = (char*)MapLoaderState.MapFileName,
+	.getCustomMapDefCount = getCustomMapDefCount,
+	.getCustomMapDef = getCustomMapDef,
+	.readCustomMapExtraData = mapReadCustomMapExtraData,
+	.refreshCustomMapDefs = refreshCustomMapList,
 };
 
 #if DSCRPRINT
@@ -267,6 +304,7 @@ int getMACAddress(u8 output[6])
 	return hasMACAddress = 1;
 }
 
+
 //------------------------------------------------------------------------------
 int hasSonyMACAddress(void)
 {
@@ -298,7 +336,6 @@ int hasSonyMACAddress(void)
 
 	return hasSonyMACAddressResult = 0;
 }
-
 //------------------------------------------------------------------------------
 void sendClientType(void)
 {
@@ -317,12 +354,14 @@ void sendClientType(void)
 
 	// a real PS2 has a sony network adapter, anything else is an emulator
 	msg.ClientType = hasSonyMACAddress() ? CLIENT_TYPE_NORMAL : CLIENT_TYPE_PCSX2;
+	patchInterop.client = msg.ClientType;
 
 	// send
 	if (netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_CLIENT_TYPE, sizeof(ClientSetClientTypeRequest_t), &msg)) { stall = 60; return; }
 	sent = 1;
 	DPRINTF("sent client type %d\n", msg.ClientType);
 }
+
 
 //------------------------------------------------------------------------------
 void requestServerTime(void)
@@ -341,12 +380,9 @@ void onServerTimeResponse(void* connection, void* data)
 
 	memcpy(&response, data, sizeof(DateResponse_t));
 	DPRINTF("\nDate: %d/%d\nTime: %02d:%02d", response.Month, response.Day, response.Hour, response.Minute);
-	patchPointers.ServerTimeMonth = response.Month;
+	patchInterop.month = response.Month;
 	// not adding 1 to the date broke things on January 31st.
-	patchPointers.ServerTimeDay = response.Day;
-	patchPointers.ServerTimeHour = response.Hour;
-	patchPointers.ServerTimeMinute = response.Minute;
-	patchPointers.ServerTimeSecond = response.Second;
+	patchInterop.day = response.Day;
 }
 
 //------------------------------------------------------------------------------
@@ -377,7 +413,7 @@ char * checkMap(void)
 		}
 	} else if (isInGame()) {
 		location = LOCATION_IN_GAME;
-		// if (patchStateContainer.CustomMapId > 0)
+		// if (patchStateContainer.customMapId > 0)
 		// 	return MapLoaderState.MapName;
 
 		return mapGetName(gameGetCurrentMapId());
@@ -414,7 +450,7 @@ void runExceptionHandler(void)
  * NAME :		botsInGame
  * DESCRIPTION :Returns 1 if bots are in game. returns 0 if not.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -439,7 +475,7 @@ int botsInGame(void)
  * NAME :		runCameraSpeedPatch
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -509,7 +545,7 @@ void runCameraSpeedPatch(void)
  * DESCRIPTION :
  * 			Filters out hits when player is already dead.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -527,7 +563,7 @@ int patchKillStealing_Hook(Player * target, Moby * damageSource, u64 a2)
  * DESCRIPTION :
  * 			Patches who hit me on weapon hit with patchKillStealing_Hook.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -545,7 +581,7 @@ void patchKillStealing(void)
  * DESCRIPTION :
  * 			Patches Dead Jumping by setting the can't move timer.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -575,7 +611,7 @@ void patchDeadJumping(void)
  * DESCRIPTION :
  * 			If player is dead, don't let them shoot.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -597,7 +633,7 @@ int patchDeadShooting_Hook(int pad)
  * DESCRIPTION :
  * 			Patches the shooting hook with patchDeadShooting_Hook
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -638,7 +674,7 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
  * DESCRIPTION :
  * 			Send Weapon Shots more reliably.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -701,7 +737,7 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
  * DESCRIPTION :
  * 			Send Weapon Shots more reliably.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -720,7 +756,7 @@ void patchSniperNiking(void)
  * DESCRIPTION :
  * 			Send Weapon Shots more reliably.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -749,7 +785,7 @@ void patchWeaponShotLag(void)
  * DESCRIPTION :
  * 			Sets the level of detail.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -842,7 +878,7 @@ void patchLevelOfDetail(void)
  * 			Invoked during the resurrection process, when the game wishes to remove all weapons from the given player.
  * 			Before we continue to remove the player's weapons, we backup the list of equipped weapons.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -881,7 +917,7 @@ int patchResurrectWeaponOrdering_ConvertToWeaponId(int id)
  * 			If prLoadoutWeaponsOnly
  * 				Player will only spawn with their selected loadout (or default to cycle weapons)
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -950,7 +986,7 @@ void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int we
  * DESCRIPTION :
  *              Spawns players loudout at start of game.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -972,7 +1008,7 @@ void spawnWithLoadoutWeapons(void)
  * 			Installs necessary hooks such that when respawning with same weapons,
  * 			they are equipped in the same order.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -996,7 +1032,7 @@ void patchResurrectWeaponOrdering(void)
  * DESCRIPTION :
  * 			Logic for the FPS counter and drawing the text to screen.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1038,7 +1074,7 @@ void runFpsCounter_Logic(void)
  * DESCRIPTION :
  * 			Logic for the GS counter.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1071,7 +1107,7 @@ void runFpsCounter_drawHook(void)
  * DESCRIPTION :
  * 			Logic for the EE counter.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1104,7 +1140,7 @@ void runFpsCounter_updateHook(void)
  * DESCRIPTION :
  * 			Hooks functions for showing the EE, GS and FPS.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1121,7 +1157,7 @@ void runFpsCounter(void)
  * NAME :		patchFov
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1159,7 +1195,7 @@ void patchFov(void)
  * 				Patches death barrier bug/teleport glitch
  * 				that let players fall off the map into the base.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1191,7 +1227,7 @@ void patchDeathBarrierBug(void)
  * DESCRIPTION :
  * 				Always shows the players health bar.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1214,7 +1250,7 @@ void patchAlwaysShowHealth(void)
  * 				Lets the player choose how they want to open the
  * 				Scoreboard or Map (via Select, L3 or R3)
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1263,7 +1299,7 @@ void patchMapAndScoreboardToggle(void)
 	}
 	// Check to see if Level ID is less than or equal to blackwater docks, or if not on custom map.
 	// This is due to Aquatos and Marcadia not having a mini-map.
-	if (gameSettings->GameLevel <= MAP_ID_BLACKWATER_DOCKS || patchStateContainer.CustomMapId > 0) {
+	if (gameSettings->GameLevel <= MAP_ID_BLACKWATER_DOCKS || patchStateContainer.customMapId > 0) {
 		// If Maps Button Toggle isn't set to "Default"
 		if (MapToggle != -1) {
 			// Run Map Main Logic only if gametype is deathmatch.
@@ -1283,7 +1319,7 @@ void patchMapAndScoreboardToggle(void)
  * NAME :		flagGetTrackerIndex
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :		
  */
@@ -1303,7 +1339,7 @@ int flagGetTrackerIndex(Moby* flagMoby)
  * NAME :		flagClearTrackedLastCarrier
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :		
  */
@@ -1318,7 +1354,7 @@ void flagClearTrackedLastCarrier(Moby* flagMoby)
  * NAME :		flagTrackCarrier
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :		
  */
@@ -1341,7 +1377,7 @@ void flagTrackCarrier(Moby* flagMoby, flagPVars_t* pvars)
  * NAME :		flagGetLastCarrierIdx
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :		
  */
@@ -1358,7 +1394,7 @@ int flagGetLastCarrierIdx(Moby* flagMoby)
  * NAME :		flagHandlePickup
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -1410,7 +1446,7 @@ void flagHandlePickup(Moby* flagMoby, int pIdx)
  * 			If host, this request is automatically passed to the handler.
  * 			If not host, this request is sent over the net to the host.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -1484,7 +1520,7 @@ static int flagPickupDelayReady(Moby* flagMoby, flagPVars_t* pvars, Player* play
  * DESCRIPTION :
  * 			Reimplements flag pickup logic but runs through our host authoritative logic.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1576,7 +1612,7 @@ void customFlagLogic(Moby* flagMoby)
  * DESCRIPTION :
  * 			Handles when a remote client sends the CUSTOM_MSG_ID_FLAG_REQUEST_PICKUP message.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -1617,7 +1653,7 @@ int onRemoteClientRequestPickUpFlag(void * connection, void * data)
  * DESCRIPTION :
  * 			Patch CTF Flag update function with our own
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1670,7 +1706,7 @@ void patchCTFFlag(void)
  * NAME :		patchQuickSelectTimer
  * DESCRIPTION :	Uses a timer for quick select, so I can fine tune the delay of opening it.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1703,7 +1739,7 @@ void patchQuickSelectTimer(void)
  * NAME :		runCampaignMusic
  * DESCRIPTION :	Adds Singple Player Tracks to Multiplayer
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1868,7 +1904,7 @@ void runCampaignMusic(void)
  * NAME :		patchCameraPull
  * DESCRIPTION :	Disables Camera Pull for player weapons
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1887,7 +1923,7 @@ void patchCameraPull(void)
  * NAME :		teamInfo
  * DESCRIPTION :	Displays teamate health and cycle weapon upgrade status
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			JelloGiant
  */
@@ -1935,7 +1971,7 @@ void teamInfo(void)
  * DESCRIPTION :
  * 			Receives when the host updates the vote to end state.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -1950,7 +1986,7 @@ int onClientVoteToEndStateUpdateRemote(void * connection, void * data)
  * DESCRIPTION :
  * 			Receives when another client has voted to end.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -1967,7 +2003,7 @@ int onClientVoteToEndRemote(void * connection, void * data)
  * DESCRIPTION :
  * 			Handles when a client votes to end.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -2000,7 +2036,7 @@ void onClientVoteToEnd(int playerId)
  * DESCRIPTION :
  * 			Broadcasts to all other clients in lobby that this client has voted to end.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -2022,7 +2058,7 @@ void sendClientVoteForEnd(void)
  * DESCRIPTION :
  * 			Returns the number of votes required for the vote to pass.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -2048,13 +2084,13 @@ int voteToEndNumberOfVotesRequired(void)
  * DESCRIPTION :
  * 			Handles all logic related to when a team Ends.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
 void runVoteToEndLogic(void)
 {
-	if (!isInGame()) { patchStateContainer.VoteToEndPassed = 0; memset(&voteToEndState, 0, sizeof(voteToEndState)); return; }
+	if (!isInGame()) { patchStateContainer.voteToEndPassed = 0; memset(&voteToEndState, 0, sizeof(voteToEndState)); return; }
 	if (gameHasEnded()) return;
 	if (voteToEndState.Count <= 0 || voteToEndState.TimeoutTime <= 0) return;
 
@@ -2068,9 +2104,8 @@ void runVoteToEndLogic(void)
 	int votesNeeded = voteToEndNumberOfVotesRequired();
 	if (voteToEndState.Count >= votesNeeded && gameAmIHost()) {
 		// reset
-		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		// pass to modules
-		patchStateContainer.VoteToEndPassed = 1;
+		patchStateContainer.voteToEndPassed = 1;
 		// end game
 		gameEnd(4);
 		return;
@@ -2104,7 +2139,7 @@ void runVoteToEndLogic(void)
  * DESCRIPTION :
  * 			Reads gadget events and patches them if needed.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2180,7 +2215,7 @@ void patchGadgetEvents(void)
  * DESCRIPTION :
  * 				Retruns the needed value for the hysershot button config
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2203,7 +2238,7 @@ int hypershotGetButton(void)
  * DESCRIPTION :
  * 				Handles the hypershot equip behavior
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2275,7 +2310,7 @@ void patchSceReadPad_memcpy(void * destination, void * source, int num)
  * DESCRIPTION :
  * 				If patch menu is open, do not show the loading popup.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2298,7 +2333,7 @@ int patchLoadingPopup_isConfigMenuOpen(void* a0, long a1)
  * DESCRIPTION :
  * 				Hooks "patchLoadingPopup_isConfigMenuOpen"
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2320,7 +2355,7 @@ void patchLoadingPopup(void)
  * NAME :		runPlayerPositionSmooth
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -2389,7 +2424,7 @@ void runPlayerPositionSmooth(void)
  * NAME :		runPlayerSync
  * DESCRIPTION: Runs various functions to help smooth players movements.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2402,7 +2437,7 @@ void runPlayerSync(void)
  * NAME :		patchHideFluxReticle
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2481,7 +2516,7 @@ void patchControllerDeadzone(void)
  * NAME :		patchSideFlipJoystickVal
  * DESCRIPTION :Patches joystick offset value for checking if to side flip or not.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2499,7 +2534,7 @@ void patchSideFlipJoystickVal(void)
  * NAME :		patchSwingshotGunBug
  * DESCRIPTION :Changes how close/far a player needs to be to a swingshot for the gadget to be taken out.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2525,25 +2560,87 @@ int patchSwingshotGunBug_Logic(VECTOR from, VECTOR to, int hitFlag, Moby *pMoby,
 }
 void patchSwingshotGunBug(void)
 {
-	if (patched.swingshotGunBug == 1 || patchStateContainer.CustomMapId == 0)
+	if (patched.swingshotGunBug == 1 || patchStateContainer.customMapId == 0)
 		return;
 
 	HOOK_JAL(GetAddress(&vaPatchSwingshotGunBug_Hook), &patchSwingshotGunBug_Logic);
 	patched.swingshotGunBug = 1;
 }
 
+/* Keep native hero/equipment cleanup and the named departure notification,
+ * but a bot leaving must not tear down its shared human host's objects. */
+static void remoteBotPlayerLeave(struct tNW_Player* netPlayer)
+{
+	int slot = ((u32)netPlayer - NW_PLAYER_ARRAY) / NW_PLAYER_STRIDE;
+	u32* leave = (u32*)nativeBotPlayerLeave;
+	if (slot >= 0 && slot < GAME_MAX_PLAYERS && (remoteBotMask & (1 << slot)) &&
+	    netPlayer->netClientIndex == GAME_HOST_ID) {
+		u32 clientLeave = leave[0xcc / 4];
+		leave[0xcc / 4] = 0;
+		FlushCache(0);
+		FlushCache(2);
+		nativeBotPlayerLeave(netPlayer);
+		leave[0xcc / 4] = clientLeave;
+		FlushCache(0);
+		FlushCache(2);
+		remoteBotMask &= ~(1 << slot);
+	} else {
+		nativeBotPlayerLeave(netPlayer);
+	}
+}
+
+static void updateRemoteBots(void)
+{
+	GameSettings* settings = gameGetSettings();
+	Player** players = playerGetAll();
+	if (!settings || !players || gameAmIHost() || GAME_NET_INFO->onlyLocalPlayers)
+		return;
+
+	void (**callback)(struct tNW_Player*) = (void*)NW_PLAYER_LEAVE_CALLBACK;
+	if (*callback != remoteBotPlayerLeave) {
+		u32* leave = (u32*)*callback;
+		if (!leave || leave[0] != 0x27bdffd0 || leave[1] != 0x3c02001a ||
+		    (leave[0xcc / 4] & 0xfc000000) != 0x0c000000 || leave[0xd0 / 4] != 0x0280202d)
+			return;
+		nativeBotPlayerLeave = *callback;
+		remoteBotMask = 0;
+		*callback = remoteBotPlayerLeave;
+	}
+
+	/* Native object reception only queues a player. The normal game completes
+	 * that creation during loading, so host-owned bots added later need this
+	 * same callback during gameplay. Existing actors are never replaced. */
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		if (players[i] || settings->PlayerClients[i] != GAME_HOST_ID || settings->PlayerAccountIds[i] != -1)
+			continue;
+		struct tNW_Player* netPlayer = (struct tNW_Player*)(NW_PLAYER_ARRAY + i * NW_PLAYER_STRIDE);
+		struct tNW_PlayerData* data = netPlayer->pNetPlayerData;
+		if (!data || data->playerIndex != i || data->accountId != -1 ||
+		    netPlayer->netClientIndex != GAME_HOST_ID || !netPlayer->bSpawned ||
+		    netPlayer->bCallbackCalled || netPlayer->bUnk_1a4)
+			continue;
+
+		/* Resident regional wrapper; its registered constructor belongs to the
+		 * current map. This creates a remote hero, not a local controller/HUD. */
+		((void (*)(struct tNW_Player*))NW_COMPLETE_REMOTE_PLAYER)(netPlayer);
+		if (players[i])
+			remoteBotMask |= 1 << i;
+	}
+}
+
 /*
  * NAME :		onMobyUpdate
  * DESCRIPTION :Patches the player packets for smoother movement.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			json
  */
 void onMobyUpdate(Moby* moby)
 {
+	playerSyncTick();
 	if (gameConfig.grNewPlayerSync) {
-		playerSyncTick();
 		// KOTH already runs through the normal main-loop module pass. Skip the
 		// extra NPS-side dispatch so KOTH doesn't tick twice per frame.
 		if (gameConfig.customModeId != CUSTOM_MODE_KOTH)
@@ -2553,7 +2650,8 @@ void onMobyUpdate(Moby* moby)
 
 		playerSyncPostTick();
 	} else {
-		((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);	
+		((void (*)(Moby*))GetAddress(&vaOnMobyUpdate_Func))(moby);
+		playerSyncPostTick();
 	}
 }		
 
@@ -2562,18 +2660,18 @@ void onMobyUpdate(Moby* moby)
  * NAME :		runHolidays
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void runHolidays(void)
 {
-	if (!PATCH_POINTERS || patched.holidays)
+	if (!PATCH_INTEROP || patched.holidays)
 		return;
 
 	int i;
-	int month = PATCH_POINTERS->ServerTimeMonth;
-	int day = PATCH_POINTERS->ServerTimeDay;
+	int month = PATCH_INTEROP->month;
+	int day = PATCH_INTEROP->day;
 	int skin = -1;
 	switch(month) {
 		case 10: {
@@ -2591,7 +2689,7 @@ void runHolidays(void)
 	}
 
 	// DPRINTF("\nLocation/Month/Day/Skin: l:%d/m:%d/d:%d/s:%d/", location, month, day, skin);
-	// DPRINTF("\nDate: %02d/%02d\nTime: %02d:%02d:%02d", PATCH_POINTERS->ServerTimeMonth,  PATCH_POINTERS->ServerTimeDay,  PATCH_POINTERS->ServerTimeHour, PATCH_POINTERS->ServerTimeMinute, PATCH_POINTERS->ServerTimeSecond);
+	// DPRINTF("\nDate: %02d/%02d\nTime: %02d:%02d:%02d", PATCH_INTEROP->month,  PATCH_INTEROP->day,  PATCH_INTEROP->ServerTimeHour, PATCH_INTEROP->ServerTimeMinute, PATCH_INTEROP->ServerTimeSecond);
 
 	if (location == LOCATION_LOADING) {
 		if (skin > -1) {
@@ -2609,7 +2707,7 @@ void runHolidays(void)
  * NAME :		patchColors
  * DESCRIPTION : Patches color extended table for new colors
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2629,7 +2727,7 @@ void patchColors(void)
  * NAME :		runGameStartMessager
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -2666,7 +2764,7 @@ void runGameStartMessager(void)
  * NAME :		patchHeadsetSprite
  * DESCRIPTION: Patches staging sprite for custom map detection
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2708,9 +2806,9 @@ void patchHeadsetSprite(GameSettings* gs, int clientId)
 
 /*
  * NAME :		runCheckGameMapInstalled
- * DESCRIPTION :
- * NOTES :
- * ARGS : 
+ * DESCRIPTION : Check custom-map availability in active staging only.
+ * NOTES : -3 means no override and must not trigger the missing-map popup.
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -2718,14 +2816,18 @@ void runCheckGameMapInstalled(void)
 {
 	int i;
 	GameSettings* gs = gameGetSettings();
-	if (!gs || !isInMenus())
+	void* connection = netGetLobbyServerConnection();
+	if (!gs || !isInMenus() || !connection || !uiGetActiveMenu(UI_MENU_STAGING, 0)) {
+		showNoMapPopup = 0;
 		return;
+	}
 
-	// if start game button is enabled
-	// then disable it if maps are enabled
-	int noCustomMAp = patchStateContainer.CustomMapId == 0;
+	// -3 means no custom override, not a missing map.
+	int missingMap = mapOverrideResponse < 0 && mapOverrideResponse != -3;
+	if (!missingMap)
+		showNoMapPopup = 0;
 	if (gameAmIHost()) {
-		if (mapOverrideResponse < 0) {
+		if (missingMap) {
 			if (STAGING_START_BUTTON_STATE == 3) {
 				STAGING_START_BUTTON_STATE = 2;
 				showNoMapPopup = 1;
@@ -2737,55 +2839,32 @@ void runCheckGameMapInstalled(void)
 
 	int clientId = gameGetMyClientId();
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		int isMe = gs->PlayerClients[i] == clientId;
-		if (isMe && i > 0) {
-			switch (gs->PlayerStates[i]) {
-				case GS_PLAYER_STATE_UNREADY: {
-					// Player doesn't have map.
-					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
-						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					// Player has map, but wrong version.
-					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
-						if (mapOverrideResponse > expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
-						} else if (mapOverrideResponse < expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
-						}
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					break;
-				}
-				case GS_PLAYER_STATE_MAP_NONE:
-				case GS_PLAYER_STATE_MAP_VERSION_OLDER:
-				case GS_PLAYER_STATE_MAP_VERSION_NEWER: {
-					if (mapOverrideResponse >= 0 || mapOverrideResponse == -3 || mapOverrideResponse == expectedMapVersion) {
-						gameSetClientState(i, GS_PLAYER_STATE_UNREADY);
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					break;
-				}
-				case GS_PLAYER_STATE_KICK: showNoMapPopup = 0; break;
-				case GS_PLAYER_STATE_READY: {
-					// Player doesn't have map.
-					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
-						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
+		if (gs->PlayerClients[i] == clientId && i > 0) {
+			int state = gs->PlayerStates[i];
+			int requestOverride = 0;
+			if (state == GS_PLAYER_STATE_UNREADY || state == GS_PLAYER_STATE_READY) {
+				if (missingMap) {
+					gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
+					if (state == GS_PLAYER_STATE_READY)
 						showNoMapPopup = 1;
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					// Player has map, but wrong version.
-					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
-						if (mapOverrideResponse > expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
-						} else if (mapOverrideResponse < expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
-						}
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					break;
+					requestOverride = 1;
+				} else if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 &&
+					mapOverrideResponse != expectedMapVersion) {
+					gameSetClientState(i, mapOverrideResponse > expectedMapVersion ?
+						GS_PLAYER_STATE_MAP_VERSION_NEWER : GS_PLAYER_STATE_MAP_VERSION_OLDER);
+					requestOverride = 1;
 				}
+			} else if (state == GS_PLAYER_STATE_MAP_NONE || state == GS_PLAYER_STATE_MAP_VERSION_OLDER ||
+				state == GS_PLAYER_STATE_MAP_VERSION_NEWER) {
+				if (mapOverrideResponse >= 0 || mapOverrideResponse == -3 || mapOverrideResponse == expectedMapVersion) {
+					gameSetClientState(i, GS_PLAYER_STATE_UNREADY);
+					requestOverride = 1;
+				}
+			} else if (state == GS_PLAYER_STATE_KICK) {
+				showNoMapPopup = 0;
 			}
+			if (requestOverride)
+				netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
 		}
 		patchHeadsetSprite(gs, i);
 	}
@@ -2809,7 +2888,7 @@ bool setPlayerHudTexture(HANDLE_ID container, SpriteTex_Hud_e texture) {
  * DESCRIPTION :
  * 				Changes the "CONTINUE" start option to "PATCH MENU"
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -2834,12 +2913,232 @@ void setupPatchConfigInGame(void)
 }
 
 /*
- * NAME :		runSendGameUpdate
- * DESCRIPTION : Sends the current game info to the server.
+ * NAME : patchGameDetailsUI_SetTextInput
+ * DESCRIPTION : Set a details label through its native widget method.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
- * AUTHOR :			Troy "Metroynopme" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void patchGameDetailsUI_SetTextInput(UiElementTextInput_t *element, char *string)
+{
+	char* text = string ? string : "";
+
+	if (!element)
+		return;
+
+	void (*setText)(UiElementTextInput_t*, const char*) =
+	    *(void**)((u8*)element->vTable + 0xb8);
+	setText(element, text);
+}
+
+/*
+ * NAME : patchGameDetailsUI_GetPackedGameName
+ * DESCRIPTION : Find current packed metadata by the selected game world ID.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+char* patchGameDetailsUI_GetPackedGameName(void)
+{
+	UiMenu_t* ui = uiGetMenu(UI_MENU_GAME_DETAILS);
+	if (!ui)
+		return NULL;
+
+	/* A search result may predate the patch download. Prefer fresh details
+	 * metadata when available; retain the search lookup for plain replies. */
+	void* game = *(void**)((u8*)ui + 0x2b8);
+	char* name = game ? (char*)game + 0x134 : NULL;
+	char* customMap = NULL;
+	int customMode = 0;
+	int flags = patchGameDetailsUI_ParseGameName(name, &customMap, &customMode);
+	if (flags &&
+	    (customMap || customMode || (flags & GAME_NAME_FLAGS_VALID)))
+		return name;
+
+	/* Like Deadlocked, use the search result's packed name. Match the world
+	 * ID rather than the visible name, which is shortened for display. */
+	int world = *(int*)((u8*)ui + 0x2a8);
+	u8* root = *(u8**)NW_GUI_POINTER;
+	u8* search = root ? *(u8**)(root + 0x70) : NULL;
+	if (search) {
+		int index = *(int*)(search + 0x18);
+		if (index >= 0 && index < *(int*)(search + 0x28)) {
+			u8* page = search + 0x2c + index * 12;
+			int count = *(int*)(page + 4);
+			u8** records = *(u8***)(page + 8);
+			int i;
+			for (i = 0; records && i < count; ++i) {
+				if (records[i] && *(int*)(records[i] + 0x1c) == world)
+					return (char*)records[i] + 0x4c;
+			}
+		}
+	}
+
+	/* Buddy/invite details may have no search result. */
+	return name;
+}
+
+/*
+ * NAME : patchGameDetailsUI_ParseGameName
+ * DESCRIPTION : Read map/mode metadata and return validity plus availability flags.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+int patchGameDetailsUI_ParseGameName(char *string, char** customMap, int* customMode)
+{
+	if (customMap)
+		*customMap = NULL;
+	if (customMode)
+		*customMode = 0;
+
+	if (string) {
+		int len = 0;
+		while (len < 16 && string[len])
+			++len;
+
+		if (len <= 15) {
+			u8 modeHigh = *(u8*)(string + len + 1);
+			u8 modeLow = *(u8*)(string + len + 2);
+			char* packedMap = string + len + 3;
+
+			if (modeHigh <= 0x7f && modeLow <= 0xf) {
+				int end = len + 3;
+				while (end < 64 && string[end])
+					++end;
+				if (end == 64)
+					return 0;
+				if (customMode)
+					*customMode = ((modeHigh & 0xf) << 4) | modeLow;
+
+
+				if (customMap && packedMap[0])
+					*customMap = packedMap;
+
+				return 1 | (modeHigh & 0x70);
+			}
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * NAME : patchGameDetailsUI_Map
+ * DESCRIPTION : Show the custom map name with the retail name as fallback.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void patchGameDetailsUI_Map(UiElementTextInput_t *element, char *string)
+{
+	char* customMap = NULL;
+
+	patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), &customMap, NULL);
+
+#ifdef JOIN_IN_PROGRESS
+	joinSetSelectedMap(customMap);
+#endif
+	patchGameDetailsUI_SetTextInput(element, customMap ? customMap : string);
+}
+
+/*
+ * NAME : patchGameDetailsUI_Mode
+ * DESCRIPTION : Show the custom mode name with the native mode as fallback.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void patchGameDetailsUI_Mode(UiElementTextInput_t *element, char *string)
+{
+	int i;
+	int customMode = 0;
+	char* customModeName = NULL;
+
+	patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), NULL, &customMode);
+
+	if (customMode) {
+		for (i = 0; i < dataCustomModes.count; ++i) {
+			if (dataCustomModes.items[i].value == customMode) {
+				customModeName = dataCustomModes.items[i].name;
+				break;
+			}
+		}
+	}
+
+	patchGameDetailsUI_SetTextInput(element, customModeName ? customModeName : string);
+}
+
+/*
+ * NAME : patchGameDetailsUI
+ * DESCRIPTION : Install regional details hooks and preserve packed search names.
+ * NOTES : Flush the instruction changes once for real PS2 hardware.
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void patchGameDetailsUI(void)
+{
+#ifdef UYA_PAL
+	/* Native display code truncates the source record at 18 bytes, which
+	 * destroys the metadata after its first NUL. Its display copies already
+	 * stop at that NUL, so leave the source intact. */
+	POKE_U32(0x006a2d50, 0); // sb zero,0x5e(s1): search result
+	POKE_U32(0x006a4694, 0); // sb zero,0x146(v1): game info
+	HOOK_JAL(0x006a47bc, &patchGameDetailsUI_Map);
+	HOOK_JAL(0x006a4978, &patchGameDetailsUI_Mode);
+	HOOK_JAL(0x006a49a0, &patchGameDetailsUI_Mode);
+#else
+	POKE_U32(0x006a0540, 0);
+	POKE_U32(0x006a1e84, 0);
+	HOOK_JAL(0x006a1fac, &patchGameDetailsUI_Map);
+	HOOK_JAL(0x006a2168, &patchGameDetailsUI_Mode);
+	HOOK_JAL(0x006a2190, &patchGameDetailsUI_Mode);
+#endif
+	// Real PS2s must see both the new hooks and metadata-preserving instructions.
+	FlushCache(0);
+	FlushCache(2);
+}
+/*
+ * NAME : getBaseHealthPercent
+ * DESCRIPTION : Read base health as a percentage for the server game-state report.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+int getBaseHealthPercent(LocalPlayerYourBaseGameData * baseGameData, int team)
+{
+	if (team < 0 || team >= GAME_MAX_PLAYERS)
+		return 0;
+	if (!baseGameData)
+		return 100;
+
+	float totalHealth = baseGameData->totalHudHealth[team];
+	if (totalHealth <= 0)
+		return 100;
+
+	int percent = (int)(((float)baseGameData->baseHealth[team] / totalHealth) * 100.0f + 0.5f);
+	if (percent < 0)
+		return 0;
+	if (percent > 100)
+		return 100;
+
+	return percent;
+}
+
+/*
+ * NAME : runSendGameUpdate
+ * DESCRIPTION : Collect the host game-state summary for Helga.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
 int runSendGameUpdate(void)
 {
@@ -2854,7 +3153,7 @@ int runSendGameUpdate(void)
 	void * connection = netGetLobbyServerConnection();
 
 	// skip if not online, in lobby, or the game host
-	if (!connection || !gameSettings || !gameAmIHost()) {
+	if (!connection || !gameSettings || !gameOptions || !gameAmIHost()) {
 		lastGameUpdate = -GAME_UPDATE_SENDRATE;
 		newGame = 1;
 		return 0;
@@ -2868,58 +3167,69 @@ int runSendGameUpdate(void)
 	lastGameUpdate = gameTime;
 
 	// construct
-	patchStateContainer.GameStateUpdate.TeamsEnabled = gameOptions->GameFlags.MultiplayerGameFlags.Teams;
-	patchStateContainer.GameStateUpdate.Version = 1;
+	patchStateContainer.gameStateUpdate.TeamsEnabled = gameOptions->GameFlags.MultiplayerGameFlags.Teams;
+	patchStateContainer.gameStateUpdate.Version = 1;
 
-	// copy over client ids
-	memcpy(patchStateContainer.GameStateUpdate.ClientIds, gameSettings->PlayerClients, sizeof(patchStateContainer.GameStateUpdate.ClientIds));
+	// copy over active client ids
+	memset(patchStateContainer.gameStateUpdate.ClientIds, -1, sizeof(patchStateContainer.gameStateUpdate.ClientIds));
+	memset(patchStateContainer.gameStateUpdate.Teams, -1, sizeof(patchStateContainer.gameStateUpdate.Teams));
+	// Departures leave gaps; a migrated host can occupy a higher player slot.
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		patchStateContainer.gameStateUpdate.ClientIds[i] = gameSettings->PlayerClients[i];
+		patchStateContainer.gameStateUpdate.Teams[i] = gameSettings->PlayerTeams[i];
+	}
 
 	// reset some stuff whenever we enter a new game
 	if (newGame) {
-		memset(patchStateContainer.GameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.GameStateUpdate.TeamScores));
+		memset(patchStateContainer.gameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.gameStateUpdate.TeamScores));
 		newGame = 0;
 	}
 
-	// copy teams over
-	memcpy(patchStateContainer.GameStateUpdate.Teams, gameSettings->PlayerTeams, sizeof(patchStateContainer.GameStateUpdate.Teams));
+	if (gameSettings->GameType == GAMETYPE_SIEGE && gameConfig.customModeId != CUSTOM_MODE_KOTH) {
+		patchStateContainer.gameStateUpdate.TeamScores[0] = 100;
+		patchStateContainer.gameStateUpdate.TeamScores[1] = 100;
+	}
 
 	// 
 	if (isInGame()) {
 		int i;
-		// reset
-		memset(patchStateContainer.GameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.GameStateUpdate.TeamScores));
-		// memset(patchStateContainer.GameStateUpdate.Nodes, 0, sizeof(patchStateContainer.GameStateUpdate.Nodes));
+		memset(patchStateContainer.gameStateUpdate.Nodes, 0, sizeof(patchStateContainer.gameStateUpdate.Nodes));
+		/* KOTH publishes hill points through the same shared score fields. */
+		if (gameConfig.customModeId == CUSTOM_MODE_KOTH)
+			return 1;
+		memset(patchStateContainer.gameStateUpdate.TeamScores, 0, sizeof(patchStateContainer.gameStateUpdate.TeamScores));
 
 		if (gameSettings->GameType == GAMETYPE_SIEGE) {	
 			for (i = 0; i < 8; ++i) {
 				if (gameData->allYourBaseGameData->nodeTeam[i] == 0)
-					++patchStateContainer.GameStateUpdate.Nodes[0];
+					++patchStateContainer.gameStateUpdate.Nodes[0];
 				else if (gameData->allYourBaseGameData->nodeTeam[i] == 1)
-					++patchStateContainer.GameStateUpdate.Nodes[1];
+					++patchStateContainer.gameStateUpdate.Nodes[1];
 			}
-			patchStateContainer.GameStateUpdate.TeamScores[0] = gameData->allYourBaseGameData->hudHealth[0];
-			patchStateContainer.GameStateUpdate.TeamScores[1] = gameData->allYourBaseGameData->hudHealth[1];
+			patchStateContainer.gameStateUpdate.TeamScores[0] = getBaseHealthPercent(gameData->allYourBaseGameData, 0);
+			patchStateContainer.gameStateUpdate.TeamScores[1] = getBaseHealthPercent(gameData->allYourBaseGameData, 1);
 		} else if (gameSettings->GameType == GAMETYPE_CTF) {
-			// Nodes are turned off
-			patchStateContainer.GameStateUpdate.Nodes[0] = -1;
-			patchStateContainer.GameStateUpdate.Nodes[1] = -1;
 			// Check if nodes are on
 			if (gameOptions->GameFlags.MultiplayerGameFlags.Nodes) {
 				for (i = 0; i < 8; ++i) {
 					if (gameData->allYourBaseGameData->nodeTeam[i] == 0)
-						++patchStateContainer.GameStateUpdate.Nodes[0];
+						++patchStateContainer.gameStateUpdate.Nodes[0];
 					else if (gameData->allYourBaseGameData->nodeTeam[i] == 1)
-						++patchStateContainer.GameStateUpdate.Nodes[1];
+						++patchStateContainer.gameStateUpdate.Nodes[1];
 				}	
+			} else {
+				// Nodes are turned off
+				patchStateContainer.gameStateUpdate.Nodes[0] = -1;
+				patchStateContainer.gameStateUpdate.Nodes[1] = -1;
 			}
-			patchStateContainer.GameStateUpdate.TeamScores[0] = gameData->CTFGameData->blueTeamCaptures;
-			patchStateContainer.GameStateUpdate.TeamScores[1] = gameData->CTFGameData->redTeamCaptures;
+			patchStateContainer.gameStateUpdate.TeamScores[0] = gameData->CTFGameData->blueTeamCaptures;
+			patchStateContainer.gameStateUpdate.TeamScores[1] = gameData->CTFGameData->redTeamCaptures;
 		} else if (gameSettings->GameType == GAMETYPE_DM) {
 			for (i = 0; i < gameSettings->PlayerCount; ++i) {
 				int team = gameSettings->PlayerTeams[i];
 				int kills = gameData->playerStats.frag[i].kills;
 				int deaths = gameData->playerStats.frag[i].deaths;
-				patchStateContainer.GameStateUpdate.TeamScores[team] += kills - deaths;
+				patchStateContainer.gameStateUpdate.TeamScores[team] += kills - deaths;
 			}
 		}
 	}
@@ -2930,7 +3240,7 @@ int runSendGameUpdate(void)
  * NAME :		processGameModules
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -2980,7 +3290,7 @@ void processGameModules()
  * DESCRIPTION :
  * 			Called every ui update.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -2999,14 +3309,6 @@ void onOnlineMenu(void)
 	if (uiGetActiveMenu(UI_MENU_ANNOUNCEMENTS, 0) != 0) return;
 
 	lastMenuInvokedTime = gameGetTime();
-	if (!hasInitialized) {
-		padEnableInput();
-		onConfigInitialize();
-		// error location for loading maps: 000d45dc
-		// refreshCustomMapList();
-		memset(&voteToEndState, 0, sizeof(voteToEndState));
-		hasInitialized = 1;
-	}
 	if (hasInitialized == 1) {
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
@@ -3020,14 +3322,16 @@ void onOnlineMenu(void)
 
 	// 
 	if (showNoMapPopup) {
-		if (mapOverrideResponse == -1) {
-			uiShowOkDialog("Custom Maps", "You have not installed the map modules.");
-		} else {
-			char buf[32];
-			sprintf(buf, "Please install %s to play.", MapLoaderState.MapName);
-			uiShowOkDialog("Custom Maps", buf);
-		}
 		showNoMapPopup = 0;
+		if (uiGetActiveMenu(UI_MENU_STAGING, 0)) {
+			if (mapOverrideResponse == -1) {
+				uiShowOkDialog("Custom Maps", "You have not installed the map modules.");
+			} else if (MapLoaderState.MapName[0]) {
+				char buf[64];
+				snprintf(buf, sizeof(buf), "Please install %.32s to play.", MapLoaderState.MapName);
+				uiShowOkDialog("Custom Maps", buf);
+			}
+		}
 	}
 	#ifdef SCAVENGER_HUNT
 	if (!scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled){
@@ -3050,7 +3354,7 @@ void onOnlineMenu(void)
  * DESCRIPTION :
  * 			Applies all patches and modules.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
  */
@@ -3070,7 +3374,18 @@ int main(void)
 	#endif
 
 	// update patch pointers
-	PATCH_POINTERS = &patchPointers;
+	PATCH_INTEROP = &patchInterop;
+
+	if (!hasInitialized) {
+		padEnableInput();
+		onConfigInitialize();
+		// error location for loading maps: 000d45dc
+		// refreshCustomMapList();
+		memset(&voteToEndState, 0, sizeof(voteToEndState));
+		// In-game reloads already displayed download progress; consume the lobby notice.
+		hasInitialized = isInGame() ? 2 : 1;
+	}
+
 
 	// auto enable pad input to prevent freezing when popup shows
 	if (isInMenus() && lastMenuInvokedTime > 0 && (gameGetTime() - lastMenuInvokedTime) > TIME_SECOND) {
@@ -3085,6 +3400,9 @@ int main(void)
 	
 	// Run map loader
 	runMapLoader();
+#ifdef JOIN_IN_PROGRESS
+	joinTick();
+#endif
 
 	// run exception handler
 	runExceptionHandler();
@@ -3106,7 +3424,7 @@ int main(void)
 	#endif
 
 	// Run Send Gameupdate for Helga
-	patchStateContainer.UpdateGameState = runSendGameUpdate();
+	patchStateContainer.updateGameState = runSendGameUpdate();
 
 	// 
 	runCameraSpeedPatch();
@@ -3146,6 +3464,8 @@ int main(void)
 	patchColors();
 
 	if(isInGame()) {
+		updateRemoteBots();
+
 		// Patch remap buttons configuration
 		HOOK_JAL(0x0013cae0, &patchSceReadPad_memcpy);
 
@@ -3268,15 +3588,23 @@ int main(void)
 		playerSyncTick();
 		
 		// Patch Menus (Staging, create game, ect.)
-		if (patched.uiModifiers == 0) {
+		// The lobby overlay restores native vtables when returning from gameplay.
+		if (patched.uiModifiers == 0 ||
+			*(u32*)UI_PTR_FUNC_GAME_DETAILS != (u32)&patchGameDetails ||
+			*(u32*)(UI_PTR_FUNC_GAME_DETAILS + 0xd8) != (u32)&patchGameDetailsOpen ||
+			*(u32*)UI_PTR_FUNC_STAGING != (u32)&patchStaging) {
 			// POKE_U32(UI_PTR_FUNC_CREATE_GAME, &patchCreateGame);
 			// POKE_U32(UI_PTR_FUNC_ADVANCED_OPTIONS, &patchAdvancedOptions);
 			POKE_U32(UI_PTR_FUNC_STAGING, &patchStaging);
+			POKE_U32(UI_PTR_FUNC_GAME_DETAILS, &patchGameDetails);
+			// Native menu-open callback (vtable + 0xec).
+			POKE_U32(UI_PTR_FUNC_GAME_DETAILS + 0xd8, &patchGameDetailsOpen);
 			// POKE_U32(UI_PTR_FUNC_BUDDIES, &patchBuddies);
 			// POKE_U32(UI_PTR_FUNC_PLAYER_DETAILS, &patchPlayerDetails);
 			// POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
 			POKE_U32(UI_PTR_FUNC_KEYBOARD, &patchKeyboard);
 			POKE_U32(STAGING_JALR_HEADSET_SET_COLOR, 0);
+			patchGameDetailsUI();
 			patched.uiModifiers = 1;
 		}
 
@@ -3327,8 +3655,8 @@ int main(void)
 			if (gameAmIHost() && !isInStaging) {
 				// copy over last game config as host
 				memcpy(&gameConfig, &gameConfigHostBackup, sizeof(PatchGameConfig_t));
-				// Reset patchStateContainer.CustomMapId to none
-				patchStateContainer.CustomMapId = 0;
+				// Reset patchStateContainer.customMapId to none
+				patchStateContainer.customMapId = 0;
 
 				// send
 				configTrySendGameConfig();
@@ -3346,9 +3674,9 @@ int main(void)
 	// process modules
 	processGameModules();
 
-	if (patchStateContainer.UpdateGameState) {
-		patchStateContainer.UpdateGameState = 0;
-		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_GAME_STATE, sizeof(UpdateGameStateRequest_t), &patchStateContainer.GameStateUpdate);
+	if (patchStateContainer.updateGameState) {
+		patchStateContainer.updateGameState = 0;
+		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_CLIENT_SET_GAME_STATE, sizeof(UpdateGameStateRequest_t), &patchStateContainer.gameStateUpdate);
 	}
 
 	// Call this last

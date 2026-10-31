@@ -93,6 +93,41 @@ typedef struct PlayerSyncPlayerData
 extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 
+Player** playerGetAll(void);
+
+static int (*nativePadEncode)(void*, void*);
+static void (*nativeCameraUpdate)(Player*);
+
+/* Bots are host-owned guest slots. Human players keep the selected game sync. */
+static int playerSyncIsBot(Player* player)
+{
+	GameSettings* settings = gameGetSettings();
+	int id = player ? player->mpIndex : -1;
+	return settings && id >= 0 && id < GAME_MAX_PLAYERS &&
+	    settings->PlayerClients[id] == GAME_HOST_ID && settings->PlayerAccountIds[id] == -1;
+}
+
+static int playerSyncEncodePad(void* stream, void* output)
+{
+	Player** players = playerGetAll();
+	int i;
+	if (gameConfig.grNewPlayerSync)
+		return 0;
+	for (i = 0; players && i < GAME_MAX_PLAYERS; ++i)
+		if (playerSyncIsBot(players[i]) && players[i]->isLocal &&
+		    (void*)&players[i]->LocalHero.padStream == stream)
+			return 0;
+	return nativePadEncode ? nativePadEncode(stream, output) : 0;
+}
+
+/* The native camera decoder reads native pad packets. Bot state already came
+ * from the indexed sync path, so do not decode that buffer a second time. */
+static void playerSyncUpdateCamera(Player* player)
+{
+	if (!gameConfig.grNewPlayerSync && !playerSyncIsBot(player) && nativeCameraUpdate)
+		nativeCameraUpdate(player);
+}
+
 //--------------------------------------------------------------------------
 int playerSyncCmdDelta(int fromCmdId, int toCmdId)
 {
@@ -175,6 +210,7 @@ int playerSyncHandlePlayerPadHook(Player* player)
 void playerSyncHandlePostPlayerState(Player* player)
 {
   if (!player || player->isLocal || !player->pMoby || !PLAYER_SYNC_DATAS_PTR) return;
+	if (!gameConfig.grNewPlayerSync && !playerSyncIsBot(player)) return;
   
   PlayerSyncPlayerData_t* data = &PLAYER_SYNC_DATAS_PTR[player->fps.vars.camSettingsIndex];
   data->TicksSinceLastUpdate += 1;
@@ -242,6 +278,7 @@ void playerSyncHandlePlayerState(Player* player)
   int i;
   int rate = playerSyncGetSendRate();
   if (!player || player->isLocal || !player->pMoby || !PLAYER_SYNC_DATAS_PTR) return;
+	if (!gameConfig.grNewPlayerSync && !playerSyncIsBot(player)) return;
 
   PlayerSyncPlayerData_t* data = &PLAYER_SYNC_DATAS_PTR[player->fps.vars.camSettingsIndex];
 
@@ -548,12 +585,18 @@ void playerSyncHandlePlayerState(Player* player)
 
 
 
-//--------------------------------------------------------------------------
-
+/*
+ * NAME : playerSyncOnReceivePlayerState
+ * DESCRIPTION : Receive player state and initialize late joiners from the first sequence.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 int playerSyncOnReceivePlayerState(void* connection, void* data)
 {
   if (!isInGame() || !PLAYER_SYNC_DATAS_PTR) return sizeof(PlayerSyncStateUpdatePacked_t);
-  if (!gameConfig.grNewPlayerSync) return sizeof(PlayerSyncStateUpdatePacked_t);
+
  
   PlayerSyncStateUpdatePacked_t msg;
   PlayerSyncStateUpdateUnpacked_t unpacked;
@@ -594,8 +637,19 @@ int playerSyncOnReceivePlayerState(void* connection, void* data)
     unpacked.GroundMoby = mobyFindByUID(msg.GroundMobyUID);
   }
 
+	if (!gameConfig.grNewPlayerSync && !playerSyncIsBot(playerGetAll()[msg.PlayerIdx]))
+		return sizeof(PlayerSyncStateUpdatePacked_t);
+
   // target sync player data
   PlayerSyncPlayerData_t* pSyncData = &PLAYER_SYNC_DATAS_PTR[msg.PlayerIdx];
+
+	/* A running player's first sequence can be anywhere in the byte range.
+	 * Start there instead of waiting for it to wrap past a zero baseline. */
+	if (!pSyncData->LastNetTime) {
+		pSyncData->StateUpdateCmdId = playerSyncGetCmdId(unpacked.CmdId - 1);
+		pSyncData->CurrentStateUpdateCmdId = unpacked.CmdId;
+		pSyncData->CurrentSubStateId = 0;
+	}
 
   // move into buffer
   int cmdDt = playerSyncCmdDelta(pSyncData->StateUpdateCmdId, unpacked.CmdId);
@@ -635,6 +689,8 @@ void playerSyncBroadcastPlayerState(Player* player)
   PlayerSyncStateUpdatePacked_t msg = {0};
   void * connection = netGetDmeServerConnection();
   if (!connection || !player || !player->isLocal || !PLAYER_SYNC_DATAS_PTR) return;
+
+	if (!gameConfig.grNewPlayerSync && !playerSyncIsBot(player)) return;
 
   PlayerSyncPlayerData_t* data = &PLAYER_SYNC_DATAS_PTR[player->fps.vars.camSettingsIndex];
   int rate = playerSyncGetSendRate();
@@ -720,28 +776,18 @@ void playerSyncBroadcastPlayerState(Player* player)
 }
 
 //--------------------------------------------------------------------------
-int playerSyncDisablePlayerStateUpdates(void)
-{
-  return 0;
-}
-
 int playerSyncEnableTurretSync(void)
 {
   return 1;
 }
 
 //--------------------------------------------------------------------------
-int playerSyncDisablePlayerPnetUpdates(void)
-{
-  return 0;
-}
-
 //--------------------------------------------------------------------------
 void playerSyncPostTick(void)
 {
   int i;
   if (!isInGame()) return;
-  if (!gameConfig.grNewPlayerSync) return;
+
 
   // player updates
   Player** players = playerGetAll();
@@ -756,6 +802,7 @@ void playerSyncTick(void)
 
   static int delay = 50;
   static int initialized = 0;
+	static int fullHooks = 0;
   int i;
 
   // net
@@ -764,12 +811,25 @@ void playerSyncTick(void)
   if (!isInGame()) {
     delay = 50;
     initialized = 0;
+		fullHooks = 0;
+		nativePadEncode = 0;
+		nativeCameraUpdate = 0;
     return;
   }
 
-  if (!gameConfig.grNewPlayerSync) return;
+
 
   
+	/* Avoid allocating sync buffers in ordinary games without bot guests. */
+	if (!gameConfig.grNewPlayerSync) {
+		Player** players = playerGetAll();
+		for (i = 0; players && i < GAME_MAX_PLAYERS; ++i)
+			if (playerSyncIsBot(players[i]))
+				break;
+		if (!players || i == GAME_MAX_PLAYERS)
+			return;
+	}
+
   // reset buffer
   if (!initialized && PLAYER_SYNC_DATAS_PTR) {
     memset(PLAYER_SYNC_DATAS_PTR, 0, sizeof(PlayerSyncPlayerData_t) * GAME_MAX_PLAYERS);
@@ -796,11 +856,22 @@ void playerSyncTick(void)
 
 
   // hooks
-  if (!initialized) {
-    DPRINTF("hooked main player sync addresses\n");
-    HOOK_JAL(GetAddress(&vaPlayerStateUpdate_Hook), &playerSyncDisablePlayerStateUpdates); // replaces function in big ass function at 0060e260 (FUN_0060e260)
+	if (!initialized) {
+		u32* call = (u32*)GetAddress(&vaPlayerStateUpdate_Hook);
+		if ((*call & 0xfc000000) != 0x0c000000)
+			return;
+		nativePadEncode = (void*)((*call & 0x03ffffff) << 2);
+		u32* cameraCall = (u32*)GetAddress(&vaPlayerPnetUpdates_Hook);
+		if ((*cameraCall & 0xfc000000) != 0x0c000000)
+			return;
+		nativeCameraUpdate = (void*)((*cameraCall & 0x03ffffff) << 2);
+		HOOK_JAL((u32)call, &playerSyncEncodePad);
+		HOOK_JAL((u32)cameraCall, &playerSyncUpdateCamera);
+	}
+
+	if (!fullHooks && gameConfig.grNewPlayerSync) {
+		fullHooks = 1;
     // HOOK_JAL(GetAddress(&vaHandlePlayerPad_Hook), &playerSyncHandlePlayerPadHook); //GadgetTransitions: symbolsv6: 0053b7f8
-    HOOK_JAL(GetAddress(&vaPlayerPnetUpdates_Hook), &playerSyncDisablePlayerPnetUpdates); // disable function that keeps on overriding camRot, camumtx, camPos
     int EnableTurretSyncAddr = GetAddress(&vaEnableTurretSync_Addr);
     if (EnableTurretSyncAddr != 0){
       HOOK_JAL(EnableTurretSyncAddr, &playerSyncEnableTurretSync);
