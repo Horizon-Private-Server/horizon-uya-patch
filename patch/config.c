@@ -313,7 +313,7 @@ static char customMapsStagingValue;
 static char customMapsSelectedValue;
 /* Positive entries are custom IDs; negative entries are retail map IDs. */
 static short mapListIds[MAX_CUSTOM_MAP_DEFINITIONS + 11];
-static char retailMapNames[10][32];
+static char (*retailMapNames)[32];
 MenuElem_VerticalListData_t dataCustomMaps = {
   .value = &customMapsSelectedValue,
 	.stagingValue = &customMapsStagingValue,
@@ -737,7 +737,14 @@ const int tabsCount = sizeof(tabElements)/sizeof(TabElem_t);
 //------------------------------------------------------------------------------
 #ifdef DEBUG
 
-// 
+/*
+ * NAME : downloadPatchSelectHandler
+ * DESCRIPTION : Request a patch redownload from menus or gameplay.
+ * NOTES : Enabled by DEBUG.
+ * ARGS : Selected menu tab and button.
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element)
 {
   // close menu
@@ -779,6 +786,13 @@ static int mapListCustomId(int row)
  */
 void configRebuildMapList(void)
 {
+	// Keep cached names across overlays without reserving patch arena space.
+	if (!retailMapNames) {
+		retailMapNames = malloc(10 * sizeof(*retailMapNames));
+		if (!retailMapNames)
+			return;
+	}
+
 	int i, j;
 	int selected = patchStateContainer.customMapId;
 	GameSettings* settings = gameGetSettings();
@@ -3173,6 +3187,12 @@ void onConfigInitialize(void)
   // reset game configs
   memset(&gameConfigHostBackup, 0, sizeof(gameConfigHostBackup));
   memset(&gameConfig, 0, sizeof(gameConfig));
+
+	if (isInGame()) {
+		u8 reload = 1;
+		netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX,
+			CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, sizeof(reload), &reload);
+	}
 
   // set defaults
 #if DEFAULT_GAMEMODE > 0

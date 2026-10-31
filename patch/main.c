@@ -2104,7 +2104,6 @@ void runVoteToEndLogic(void)
 	int votesNeeded = voteToEndNumberOfVotesRequired();
 	if (voteToEndState.Count >= votesNeeded && gameAmIHost()) {
 		// reset
-		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		// pass to modules
 		patchStateContainer.voteToEndPassed = 1;
 		// end game
@@ -3310,14 +3309,6 @@ void onOnlineMenu(void)
 	if (uiGetActiveMenu(UI_MENU_ANNOUNCEMENTS, 0) != 0) return;
 
 	lastMenuInvokedTime = gameGetTime();
-	if (!hasInitialized) {
-		padEnableInput();
-		onConfigInitialize();
-		// error location for loading maps: 000d45dc
-		// refreshCustomMapList();
-		memset(&voteToEndState, 0, sizeof(voteToEndState));
-		hasInitialized = 1;
-	}
 	if (hasInitialized == 1) {
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
@@ -3384,6 +3375,17 @@ int main(void)
 
 	// update patch pointers
 	PATCH_INTEROP = &patchInterop;
+
+	if (!hasInitialized) {
+		padEnableInput();
+		onConfigInitialize();
+		// error location for loading maps: 000d45dc
+		// refreshCustomMapList();
+		memset(&voteToEndState, 0, sizeof(voteToEndState));
+		// In-game reloads already displayed download progress; consume the lobby notice.
+		hasInitialized = isInGame() ? 2 : 1;
+	}
+
 
 	// auto enable pad input to prevent freezing when popup shows
 	if (isInMenus() && lastMenuInvokedTime > 0 && (gameGetTime() - lastMenuInvokedTime) > TIME_SECOND) {
