@@ -39,6 +39,16 @@
 #define JOIN_REPORT_SEND_CALL (0x001964b8)
 #define JOIN_REPORT_LEAVE_CALL (0x00196048)
 #define JOIN_FORCE_WORLD_REPORT (0x00196468)
+#define JOIN_PLAYER_TYPE (0x0024063c)
+#define JOIN_PLAYER_DESTROYED (0x00199b78)
+#define JOIN_PLAYER_UPDATED (0x00199b00)
+#define JOIN_PLAYER_CREATED (0x00199a60)
+#define JOIN_LOAD_CLIENT_CALL (0x006c4520)
+#define JOIN_END_CLIENT_CALL (0x006d38fc)
+#define JOIN_BEGIN_CLIENT_CALL (0x006d3518)
+#define JOIN_LOAD_CLIENT (0x0059a578)
+#define JOIN_END_CLIENT (0x006d40b0)
+#define JOIN_BEGIN_CLIENT (0x006d4d48)
 #else
 #define JOIN_ADMISSION_GATE (0x0019a890)
 #define JOIN_SETUP_REQUEST_GATE (0x0019a6a4)
@@ -56,6 +66,16 @@
 #define JOIN_REPORT_SEND_CALL (0x001965a8)
 #define JOIN_REPORT_LEAVE_CALL (0x00196138)
 #define JOIN_FORCE_WORLD_REPORT (0x00196558)
+#define JOIN_PLAYER_TYPE (0x002407bc)
+#define JOIN_PLAYER_DESTROYED (0x00199cb8)
+#define JOIN_PLAYER_UPDATED (0x00199c40)
+#define JOIN_PLAYER_CREATED (0x00199ba0)
+#define JOIN_LOAD_CLIENT_CALL (0x006c1a08)
+#define JOIN_END_CLIENT_CALL (0x006d1174)
+#define JOIN_BEGIN_CLIENT_CALL (0x006d0d90)
+#define JOIN_LOAD_CLIENT (0x005992a8)
+#define JOIN_END_CLIENT (0x006d1928)
+#define JOIN_BEGIN_CLIENT (0x006d25c0)
 #endif
 
 typedef struct joinWorldRequest {
@@ -93,10 +113,9 @@ void FlushCache(int operation);
 int flagGetTrackerIndex(Moby* flagMoby);
 int getBaseHealthPercent(LocalPlayerYourBaseGameData* baseGameData, int team);
 static void joinSetLoadingReceivers(int enabled);
+static int joinGetMode(void);
 
-#if !UYA_PAL
 static void joinSetPlayerUpdates(int enabled);
-#endif
 
 extern PatchGameConfig_t gameConfig;
 extern int mapOverrideResponse;
@@ -115,18 +134,18 @@ static const u32 joinGateValues[] = {
 	JOIN_GATE_OPEN,
 	JOIN_SETUP_GATE_OPEN
 };
-static int joinAdmissionOpen;
-static int joinRosterInitialized;
+static u8 joinAdmissionOpen;
+static u8 joinRosterInitialized;
 static int joinSeenAccounts[GAME_MAX_PLAYERS];
 static int joinLastTimeSent;
-static int joinNeedsWorldState;
-static int joinWorldRetry;
+static u8 joinNeedsWorldState;
+static u8 joinWorldRetry;
 static int joinLastWorldRequest;
 static u16 joinWorldSequence;
 static u16 joinWorldSequences[GAME_MAX_PLAYERS];
-static u32 joinWorldRequests;
-static int joinKeepWorldOnLeave;
-static int joinPreviousHost = -1;
+static u8 joinWorldRequests;
+static u8 joinKeepWorldOnLeave;
+static s8 joinPreviousHost = -1;
 static int joinHostLoadTime;
 
 static VariableAddress_t vaJoinPlayerLeave = {
@@ -155,12 +174,13 @@ static VariableAddress_t vaJoinPlayerLeave = {
 #endif
 };
 
-#if !UYA_PAL
-static int joinClientLoading;
-static int joinNeedsGameTime;
+static u8 joinClientLoading;
+static int joinPendingLevel;
+static int joinPendingMode;
+static u8 joinNeedsGameTime;
 static char joinSelectedMap[32];
 static int joinPlayerObjectIds[GAME_MAX_PLAYERS];
-static u32 joinRememberedPlayers;
+static u8 joinRememberedPlayers;
 
 /*
  * NAME : joinSetSelectedMap
@@ -189,6 +209,8 @@ void joinSetSelectedMap(const char* name)
  */
 static int joinBeginClient(void* context)
 {
+	customModeDownloadReady = 0;
+	customModeDownloadPending = 0;
 	if (joinSelectedMap[0]) {
 		int i;
 		int installed = 0;
@@ -209,7 +231,7 @@ static int joinBeginClient(void* context)
 	joinRememberedPlayers = 0;
 	joinSetLoadingReceivers(1);
 	joinSetPlayerUpdates(1);
-	int result = ((int (*)(void*))0x006d25c0)(context);
+	int result = ((int (*)(void*))JOIN_BEGIN_CLIENT)(context);
 	joinClientLoading = result != 0;
 	joinNeedsGameTime = joinClientLoading;
 	joinNeedsWorldState = joinClientLoading;
@@ -231,18 +253,20 @@ static int joinBeginClient(void* context)
  */
 static int joinEndClient(void* context)
 {
+	customModeDownloadPending = 0;
+	customModeDownloadReady = 0;
 	joinClientLoading = 0;
 	joinNeedsGameTime = 0;
 	joinNeedsWorldState = 0;
 	joinRememberedPlayers = 0;
 	joinSetLoadingReceivers(0);
 	joinSetPlayerUpdates(0);
-	return ((int (*)(void*))0x006d1928)(context);
+	return ((int (*)(void*))JOIN_END_CLIENT)(context);
 }
 
 /*
  * NAME : joinLoadClient
- * DESCRIPTION : Supply the local gameplay pad before starting the level load.
+ * DESCRIPTION : Wait for custom-mode code, then supply the gameplay pad and start loading.
  * NOTES :
  * ARGS :
  * RETURN :
@@ -250,10 +274,16 @@ static int joinEndClient(void* context)
  */
 static void joinLoadClient(int level, int mode)
 {
+	if (joinClientLoading && joinGetMode() > 0 && !customModeDownloadReady) {
+		joinPendingLevel = level;
+		joinPendingMode = mode;
+		customModeDownloadPending = 1;
+		return;
+	}
 	if (joinClientLoading && GAME_NET_INFO->numLocalPlayers == 1 &&
 	    !PAD_POINTER[3] && PAD_POINTER[0])
 		PAD_POINTER[3] = PAD_POINTER[0];
-	((void (*)(int, int))0x005992a8)(level, mode);
+	((void (*)(int, int))JOIN_LOAD_CLIENT)(level, mode);
 }
 
 /*
@@ -266,7 +296,7 @@ static void joinLoadClient(int level, int mode)
  */
 static void joinPlayerObjectCreated(int connection, int objectId)
 {
-	((void (*)(int, int))0x00199ba0)(connection, objectId);
+	((void (*)(int, int))JOIN_PLAYER_CREATED)(connection, objectId);
 	void* object = 0;
 	if (((int (*)(void**, int))0x0016ed00)(&object, objectId) || !object)
 		return;
@@ -297,9 +327,9 @@ static void joinPlayerObjectUpdated(int connection, int objectId, int fields)
 	joinRememberedPlayers |= 1 << data->playerIndex;
 	struct tNW_Player* player = (struct tNW_Player*)(JOIN_PLAYER_ARRAY + data->playerIndex * JOIN_PLAYER_STRIDE);
 	if (!player->pNetPlayerData)
-		((void (*)(int, int))0x00199ba0)(connection, objectId);
+		((void (*)(int, int))JOIN_PLAYER_CREATED)(connection, objectId);
 	if (player->pNetPlayerData == data)
-		((void (*)(int, int, int))0x00199c40)(connection, objectId, fields);
+		((void (*)(int, int, int))JOIN_PLAYER_UPDATED)(connection, objectId, fields);
 }
 
 /*
@@ -312,13 +342,12 @@ static void joinPlayerObjectUpdated(int connection, int objectId, int fields)
  */
 static void joinSetPlayerUpdates(int enabled)
 {
-	int type = *(int*)0x002407bc;
+	int type = *(int*)JOIN_PLAYER_TYPE;
 	((int (*)(int, void*, void*, void*))0x0016eeb0)
-	    (type, enabled ? (void*)&joinPlayerObjectCreated : (void*)0x00199ba0,
-	    enabled ? (void*)&joinPlayerObjectUpdated : (void*)0x00199c40,
-	    (void*)0x00199cb8);
+	    (type, enabled ? (void*)&joinPlayerObjectCreated : (void*)JOIN_PLAYER_CREATED,
+	    enabled ? (void*)&joinPlayerObjectUpdated : (void*)JOIN_PLAYER_UPDATED,
+	    (void*)JOIN_PLAYER_DESTROYED);
 }
-#endif
 
 /*
  * NAME : joinGetMode
@@ -336,24 +365,6 @@ static int joinGetMode(void)
 	    customMapDefs[index].ForcedCustomModeId)
 		mode = customMapDefs[index].ForcedCustomModeId;
 	return mode;
-}
-
-/*
- * NAME : joinSupportsMode
- * DESCRIPTION : Check the late-join whitelist.
- * NOTES :
- * ARGS :
- * RETURN :
- * AUTHOR : Troy "Metroynome" Pruitt
- */
-static int joinSupportsMode(void)
-{
-	int mode = joinGetMode();
-	/* Mid Flag and Domination reuse native flags, nodes and cranks. Juggernaut
-	 * resends its crown and shield state through its existing heartbeats. */
-	return mode == CUSTOM_MODE_NONE || mode == CUSTOM_MODE_KOTH ||
-	    mode == CUSTOM_MODE_MIDFLAG || mode == CUSTOM_MODE_DOMINATION ||
-	    mode == CUSTOM_MODE_JUGGERNAUT;
 }
 
 /*
@@ -385,7 +396,6 @@ static int joinSupportsMap(void)
  */
 static int joinReceiveGameTime(void* connection, void* data)
 {
-#if !UYA_PAL
 	if (connection == netGetDmeServerConnection() && joinNeedsGameTime &&
 	    isInGame() && !gameAmIHost()) {
 		GameData* game = gameGetData();
@@ -397,7 +407,6 @@ static int joinReceiveGameTime(void* connection, void* data)
 			joinNeedsGameTime = 0;
 		}
 	}
-#endif
 	return sizeof(int);
 }
 
@@ -943,6 +952,11 @@ static int joinSelectTeam(int gameType, int teams, int preferred, int player)
 	if (!joinAdmissionOpen || !settings || !gameAmIHost() || !isInGame() ||
 	    player < 0 || player >= GAME_MAX_PLAYERS)
 		return ((int (*)(int, int, int, int))JOIN_GET_TEAM)(gameType, teams, preferred, player);
+	// The join request may still carry staging defaults; use the host's live rules.
+	gameType = settings->GameType;
+	GameOptions* options = gameGetOptions();
+	if (options)
+		teams = options->GameFlags.MultiplayerGameFlags.Teams;
 	int counts[GAME_MAX_PLAYERS] = { 0 };
 	u32 eligible = 0;
 	int i;
@@ -1055,7 +1069,6 @@ static void joinCompletePlayers(GameSettings* settings)
 
 		struct tNW_Player* netPlayer = (struct tNW_Player*)(JOIN_PLAYER_ARRAY + i * JOIN_PLAYER_STRIDE);
 		struct tNW_PlayerData* data = netPlayer->pNetPlayerData;
-#if !UYA_PAL
 		if (!data && (joinRememberedPlayers & (1 << i))) {
 			void* object = 0;
 			int objectId = joinPlayerObjectIds[i];
@@ -1065,10 +1078,9 @@ static void joinCompletePlayers(GameSettings* settings)
 			if (!data || data->playerIndex != i || data->accountId != settings->PlayerAccountIds[i] ||
 			    *(int*)((u8*)object + 8) != client)
 				continue;
-			((void (*)(int, int))0x00199ba0)(client, objectId);
+			((void (*)(int, int))JOIN_PLAYER_CREATED)(client, objectId);
 			data = netPlayer->pNetPlayerData;
 		}
-#endif
 		if (!data || data->playerIndex != i || data->accountId != settings->PlayerAccountIds[i] ||
 		    netPlayer->netClientIndex != client || !netPlayer->bSpawned ||
 		    netPlayer->bCallbackCalled || netPlayer->bUnk_1a4)
@@ -1158,7 +1170,8 @@ static void joinNotifyPlayers(GameSettings* settings)
  */
 static int joinIsReportHost(void)
 {
-	if (isInGame() && !GAME_NET_INFO->onlyLocalPlayers && gameGetSettings())
+	if (gameConfig.allowMidGameJoining && isInGame() &&
+	    !GAME_NET_INFO->onlyLocalPlayers && gameGetSettings())
 		return gameAmIHost();
 	return ((int (*)(void))JOIN_REPORT_HOST)();
 }
@@ -1261,40 +1274,47 @@ void joinTick(void)
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_JOIN_FLAG_STATE, &joinReceiveFlagState);
 	if (isInGame())
 		joinSetLoadingReceivers(0);
-#if !UYA_PAL
+	if (customModeDownloadPending) {
+		if (!joinClientLoading || !netGetLobbyServerConnection() || !gameGetSettings()) {
+			customModeDownloadPending = 0;
+		} else if (customModeDownloadReady) {
+			customModeDownloadPending = 0;
+			joinLoadClient(joinPendingLevel, joinPendingMode);
+		}
+	}
 	if (joinClientLoading && isInGame()) {
 		joinClientLoading = 0;
 		joinSetPlayerUpdates(0);
 	}
 	if (isInMenus()) {
+		static const u32 calls[][3] = {
+			{ JOIN_BEGIN_CLIENT_CALL, JOIN_BEGIN_CLIENT, (u32)&joinBeginClient },
+			{ JOIN_END_CLIENT_CALL, JOIN_END_CLIENT, (u32)&joinEndClient },
+			{ JOIN_LOAD_CLIENT_CALL, JOIN_LOAD_CLIENT, (u32)&joinLoadClient }
+		};
 		int changed = 0;
-		if (*(volatile u32*)0x006d0d90 == (0x0c000000 | (0x006d25c0 >> 2))) {
-			*(volatile u32*)0x006d0d90 = 0x0c000000 | (((u32)&joinBeginClient >> 2) & 0x03ffffff);
-			changed = 1;
-		}
-		if (*(volatile u32*)0x006d1174 == (0x0c000000 | (0x006d1928 >> 2))) {
-			*(volatile u32*)0x006d1174 = 0x0c000000 | (((u32)&joinEndClient >> 2) & 0x03ffffff);
-			changed = 1;
-		}
-		if (*(volatile u32*)0x006c1a08 == (0x0c000000 | (0x005992a8 >> 2))) {
-			*(volatile u32*)0x006c1a08 = 0x0c000000 | (((u32)&joinLoadClient >> 2) & 0x03ffffff);
-			changed = 1;
+		int i;
+		for (i = 0; i < 3; ++i) {
+			volatile u32* call = (volatile u32*)calls[i][0];
+			if (*call == (0x0c000000 | (calls[i][1] >> 2))) {
+				*call = 0x0c000000 | ((calls[i][2] >> 2) & 0x03ffffff);
+				changed = 1;
+			}
 		}
 		if (changed) {
 			FlushCache(0);
 			FlushCache(2);
 		}
 	}
-#endif
 	GameSettings* settings = gameGetSettings();
 	int running = settings && isInGame() && !GAME_NET_INFO->onlyLocalPlayers && !gameHasEnded();
 	int supported = running &&
 	    (settings->GameType == GAMETYPE_DM || settings->GameType == GAMETYPE_SIEGE ||
 	    settings->GameType == GAMETYPE_CTF) &&
 	    settings->GameLevel >= 40 && settings->GameLevel <= 49 &&
-	    joinSupportsMode() && joinSupportsMap();
+	    joinSupportsMap();
 
-	joinUpdateHost(settings, supported);
+	joinUpdateHost(settings, supported && gameConfig.allowMidGameJoining);
 	if (running && gameHasEnded())
 		supported = 0;
 	joinSetAdmission(supported && gameConfig.allowMidGameJoining && gameAmIHost());

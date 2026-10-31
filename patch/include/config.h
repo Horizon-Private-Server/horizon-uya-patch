@@ -38,6 +38,7 @@ struct MenuElem;
 struct TabElem;
 struct MenuElem_ListData;
 struct MenuElem_OrderedListData;
+struct MenuElem_VerticalListData;
 struct MenuElem_RangeData;
 
 typedef void (*ActionHandler)(struct TabElem* tab, struct MenuElem* element, int actionType, void * actionArg);
@@ -178,5 +179,10 @@ extern PatchStateContainer_t patchStateContainer;
 
 extern u32 SONY_MAC_ADDRESSES[];
 extern int SONY_MAC_ADDRESSES_COUNT;
+
+extern int customModeDownloadReady;
+extern int customModeDownloadPending;
+
+void configRebuildMapList(void);
 
 #endif // __PATCH_CONFIG_H__

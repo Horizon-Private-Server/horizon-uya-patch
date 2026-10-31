@@ -3,6 +3,7 @@
 #include "time.h"
 #include "interop.h"
 #include "game.h"
+#include "graphics.h"
 #include <string.h>
 
 /* Native HelpMsgs entry, using the 32-bit EE ABI. */
@@ -31,6 +32,44 @@ int internal_uiSelectDialog_Simple(void *, const char *, const char *, int);
 int internal_uiSelectDialog(void *, const char *, const char **, int, int, int, int);
 int internal_uiChangeTeamSkinDialog(void *, void *, void *, int, int, int, int, int);
 int internal_uiInvitePlayersDialog(void *, void *, int, int);
+
+int internal_uiPlaySound(int soundId, int flags, void* moby);
+
+VariableAddress_t vaUiSetImage = {
+#if UYA_PAL
+	.Lobby = 0x006814b0,
+#else
+	.Lobby = 0x0067e990,
+#endif
+};
+
+VariableAddress_t vaUiPlaySound = {
+#if UYA_PAL
+	.Lobby = 0x005f3548,
+	.Bakisi = 0x004c5be8,
+	.Hoven = 0x004c7d00,
+	.OutpostX12 = 0x004bd5d8,
+	.KorgonOutpost = 0x004bad70,
+	.Metropolis = 0x004ba0c0,
+	.BlackwaterCity = 0x004b7958,
+	.CommandCenter = 0x004b7950,
+	.BlackwaterDocks = 0x004ba1d0,
+	.AquatosSewers = 0x004b94d0,
+	.MarcadiaPalace = 0x004b8e50,
+#else
+	.Lobby = 0x005f0e48,
+	.Bakisi = 0x004c3540,
+	.Hoven = 0x004c5598,
+	.OutpostX12 = 0x004baeb0,
+	.KorgonOutpost = 0x004b86c8,
+	.Metropolis = 0x004b7a18,
+	.BlackwaterCity = 0x004b5230,
+	.CommandCenter = 0x004b53e8,
+	.BlackwaterDocks = 0x004b7c28,
+	.AquatosSewers = 0x004b6f68,
+	.MarcadiaPalace = 0x004b68a8,
+#endif
+};
 
 VariableAddress_t vaUiMsgStringFunc = {
 #ifdef UYA_PAL
@@ -251,4 +290,58 @@ void uiSetBusy(void)
 {
 	if (GAME_NET_INFO->m_GuiSetBusyCallback != 0)
 		((void (*)(void))GAME_NET_INFO->m_GuiSetBusyCallback)();
+}
+
+/*
+ * NAME : uiProgressDialog
+ * DESCRIPTION : Draw a centered, wrapping progress popup in the patch menu's colors.
+ * NOTES : Call each frame; input and operation state remain with the caller.
+ * ARGS : text, completed units, total units (zero or negative when unknown).
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void uiProgressDialog(const char* text, int completed, int total)
+{
+	if (!text)
+		return;
+	float portion = total > 0 ? (float)completed / total : 0.25f;
+	if (portion < 0)
+		portion = 0;
+	if (portion > 1)
+		portion = 1;
+	float barX = 0.3f;
+	if (total <= 0)
+		barX += (gameGetTime() % 1000) * 0.0003f;
+
+	gfxScreenSpaceBox(0, 0, 1, 1, 0x50000000);
+	gfxScreenSpaceBox(0.24f, 0.36f, 0.52f, 0.25f, 0x8018608f);
+	gfxScreenSpaceBox(0.25f, 0.37f, 0.5f, 0.23f, 0x80123251);
+	struct FontWindow window = {
+		.windowLeft = SCREEN_WIDTH * 0.28f,
+		.windowRight = SCREEN_WIDTH * 0.72f,
+		.windowTop = SCREEN_HEIGHT * 0.385f,
+		.windowBottom = SCREEN_HEIGHT * 0.49f,
+		.textX = SCREEN_WIDTH * 0.5f,
+		.textY = SCREEN_HEIGHT * 0.4375f,
+		.lineSpacing = 16,
+		.flags = FONT_WINDOW_FLAGS_H_ALIGN_CENTER | FONT_WINDOW_FLAGS_V_ALIGN_CENTER,
+		.shadowOffsetX = 1,
+		.shadowOffsetY = 1
+	};
+	gfxScreenSpaceTextWindow(&window, 1, 1, 0x8069cbf2, text, -1, 0x80000000);
+	gfxScreenSpaceBox(0.3f, 0.52f, 0.4f, 0.025f, 0x8004223f);
+	gfxScreenSpaceBox(barX, 0.52f, 0.4f * portion, 0.025f, 0x803880af);
+}
+
+/*
+ * NAME : uiPlaySound
+ * DESCRIPTION : Play a native menu sound.
+ * NOTES :
+ * ARGS : soundId, native sound flags.
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void uiPlaySound(int soundId, int flags)
+{
+	internal_uiPlaySound(soundId, flags, NULL);
 }

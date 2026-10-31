@@ -11,6 +11,9 @@
 #include <tamtypes.h>
 #include "player.h"
 
+#define UI_SOUND_ID_NAV_UP_DOWN (3)
+#define UI_SOUND_ID_SELECT (4)
+
 #define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
 #define UI_POINTERS								((u32)0x01c5C064)
 #define UI_ACTIVE_MENU_1						(0x01c5c110)
@@ -662,5 +665,35 @@ void uiRefresh(void);
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void uiSetBusy(void);
+
+/*
+ * NAME : uiProgressDialog
+ * DESCRIPTION : Draw a progress popup with centered, wrapping text at scale 1.0.
+ * NOTES : Call each frame; does not block input or run a modal loop. NULL text draws nothing.
+ * ARGS : text, completed units, total units (zero or negative when unknown).
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void uiProgressDialog(const char* text, int completed, int total);
+
+/*
+ * NAME : uiPlaySound
+ * DESCRIPTION : Play a native menu sound.
+ * NOTES :
+ * ARGS : soundId, native sound flags.
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void uiPlaySound(int soundId, int flags);
+
+/*
+ * NAME : uiSetImage
+ * DESCRIPTION : Reload a menu image when its texture changes.
+ * NOTES : Available in the multiplayer lobby overlay.
+ * ARGS : image element and native texture ID.
+ * RETURN : Native image setter result.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+int uiSetImage(UiElementImage_t* image, int textureId);
 
 #endif // _LIBUYA_UI_H_

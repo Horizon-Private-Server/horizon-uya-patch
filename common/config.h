@@ -5,6 +5,11 @@
 
 #define PATCH_INTEROP (*(PatchInterop_t**)0x000cffc0)
 
+// Flags share the high mode byte after the game-name terminator.
+#define GAME_NAME_JOIN_ENABLED (0x10)
+#define GAME_NAME_FLAGS_VALID (0x20)
+#define GAME_NAME_RUNNING (0x40)
+
 struct CustomMapDef;
 
 typedef void (*SendCustomCommandToClientFunc_t)(int id, int size, void * data);

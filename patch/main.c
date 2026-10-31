@@ -47,6 +47,7 @@
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047cfec)
 #define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d124)
 #define UI_PTR_FUNC_STAGING									(0x0047e9ac)
+#define UI_PTR_FUNC_GAME_DETAILS (0x0047d86c)
 // #define UI_PTR_FUNC_BUDDIES									(0x0047c834)
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e44c)
 // #define UI_PTR_FUNC_STATS									(0x0047eab4)
@@ -63,6 +64,7 @@
 #define UI_PTR_FUNC_CREATE_GAME								(0x0047d0ac)
 #define UI_PTR_FUNC_ADVANCED_OPTIONS						(0x0047d1e4)
 #define UI_PTR_FUNC_STAGING									(0x0047ea6c)
+#define UI_PTR_FUNC_GAME_DETAILS (0x0047d92c)
 // #define UI_PTR_FUNC_BUDDIES									(0x0047c8f4)
 // #define UI_PTR_FUNC_PLAYER_DETAILS							(0x0047e50c)
 // #define UI_PTR_FUNC_STATS									(0x0047eb74)
@@ -84,9 +86,7 @@ void configMenuDisable(void);
 void runMapLoader(void);
 #ifdef JOIN_IN_PROGRESS
 void joinTick(void);
-#if !UYA_PAL
 void joinSetSelectedMap(const char* name);
-#endif
 #endif
 void onMapLoaderOnlineMenu(void);
 int getCustomMapDefCount(void);
@@ -98,6 +98,8 @@ int patchGameDetailsUI_ParseGameName(char* string, char** customMap, int* custom
 
 int patchCreateGame(void *ui, long pad);
 int patchStaging(void * ui, long pad);
+int patchGameDetails(UiMenu_t* ui, int pad);
+void patchGameDetailsOpen(UiMenu_t* ui);
 // int patchBuddies(void * ui, long pad);
 // int patchPlayerDetails(void * ui, long pad);
 // int patchStats(void * ui, int pad);
@@ -160,7 +162,7 @@ extern VariableAddress_t vaPlayerRespawnFunc;
 extern VariableAddress_t vaPlayerSetPosRotFunc;
 extern VariableAddress_t vaFlagUpdate_Func;
 extern void FlushCache(int);
-extern MenuElem_ListData_t dataCustomMaps;
+extern MenuElem_VerticalListData_t dataCustomMaps;
 extern MenuElem_OrderedListData_t dataCustomModes;
 #ifdef SCAVENGER_HUNT
 extern scavHuntEnabled;
@@ -2102,7 +2104,6 @@ void runVoteToEndLogic(void)
 	int votesNeeded = voteToEndNumberOfVotesRequired();
 	if (voteToEndState.Count >= votesNeeded && gameAmIHost()) {
 		// reset
-		memset(&voteToEndState, 0, sizeof(voteToEndState));
 		// pass to modules
 		patchStateContainer.voteToEndPassed = 1;
 		// end game
@@ -2805,8 +2806,8 @@ void patchHeadsetSprite(GameSettings* gs, int clientId)
 
 /*
  * NAME :		runCheckGameMapInstalled
- * DESCRIPTION :
- * NOTES :
+ * DESCRIPTION : Check custom-map availability in active staging only.
+ * NOTES : -3 means no override and must not trigger the missing-map popup.
  * ARGS :
  * RETURN :
  * AUTHOR :			Daniel "Dnawrkshp" Gerendasy
@@ -2815,14 +2816,18 @@ void runCheckGameMapInstalled(void)
 {
 	int i;
 	GameSettings* gs = gameGetSettings();
-	if (!gs || !isInMenus())
+	void* connection = netGetLobbyServerConnection();
+	if (!gs || !isInMenus() || !connection || !uiGetActiveMenu(UI_MENU_STAGING, 0)) {
+		showNoMapPopup = 0;
 		return;
+	}
 
-	// if start game button is enabled
-	// then disable it if maps are enabled
-	int noCustomMAp = patchStateContainer.customMapId == 0;
+	// -3 means no custom override, not a missing map.
+	int missingMap = mapOverrideResponse < 0 && mapOverrideResponse != -3;
+	if (!missingMap)
+		showNoMapPopup = 0;
 	if (gameAmIHost()) {
-		if (mapOverrideResponse < 0) {
+		if (missingMap) {
 			if (STAGING_START_BUTTON_STATE == 3) {
 				STAGING_START_BUTTON_STATE = 2;
 				showNoMapPopup = 1;
@@ -2834,55 +2839,32 @@ void runCheckGameMapInstalled(void)
 
 	int clientId = gameGetMyClientId();
 	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		int isMe = gs->PlayerClients[i] == clientId;
-		if (isMe && i > 0) {
-			switch (gs->PlayerStates[i]) {
-				case GS_PLAYER_STATE_UNREADY: {
-					// Player doesn't have map.
-					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
-						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					// Player has map, but wrong version.
-					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
-						if (mapOverrideResponse > expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
-						} else if (mapOverrideResponse < expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
-						}
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					break;
-				}
-				case GS_PLAYER_STATE_MAP_NONE:
-				case GS_PLAYER_STATE_MAP_VERSION_OLDER:
-				case GS_PLAYER_STATE_MAP_VERSION_NEWER: {
-					if (mapOverrideResponse >= 0 || mapOverrideResponse == -3 || mapOverrideResponse == expectedMapVersion) {
-						gameSetClientState(i, GS_PLAYER_STATE_UNREADY);
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					break;
-				}
-				case GS_PLAYER_STATE_KICK: showNoMapPopup = 0; break;
-				case GS_PLAYER_STATE_READY: {
-					// Player doesn't have map.
-					if (mapOverrideResponse < 0 && mapOverrideResponse != -3) {
-						gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
+		if (gs->PlayerClients[i] == clientId && i > 0) {
+			int state = gs->PlayerStates[i];
+			int requestOverride = 0;
+			if (state == GS_PLAYER_STATE_UNREADY || state == GS_PLAYER_STATE_READY) {
+				if (missingMap) {
+					gameSetClientState(i, GS_PLAYER_STATE_MAP_NONE);
+					if (state == GS_PLAYER_STATE_READY)
 						showNoMapPopup = 1;
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					// Player has map, but wrong version.
-					if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 && mapOverrideResponse != expectedMapVersion) {
-						if (mapOverrideResponse > expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_NEWER);
-						} else if (mapOverrideResponse < expectedMapVersion) {
-							gameSetClientState(i, GS_PLAYER_STATE_MAP_VERSION_OLDER);
-						}
-						netSendCustomAppMessage(netGetLobbyServerConnection(), NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);	
-					}
-					break;
+					requestOverride = 1;
+				} else if (mapOverrideResponse >= 0 && expectedMapVersion >= 0 &&
+					mapOverrideResponse != expectedMapVersion) {
+					gameSetClientState(i, mapOverrideResponse > expectedMapVersion ?
+						GS_PLAYER_STATE_MAP_VERSION_NEWER : GS_PLAYER_STATE_MAP_VERSION_OLDER);
+					requestOverride = 1;
 				}
+			} else if (state == GS_PLAYER_STATE_MAP_NONE || state == GS_PLAYER_STATE_MAP_VERSION_OLDER ||
+				state == GS_PLAYER_STATE_MAP_VERSION_NEWER) {
+				if (mapOverrideResponse >= 0 || mapOverrideResponse == -3 || mapOverrideResponse == expectedMapVersion) {
+					gameSetClientState(i, GS_PLAYER_STATE_UNREADY);
+					requestOverride = 1;
+				}
+			} else if (state == GS_PLAYER_STATE_KICK) {
+				showNoMapPopup = 0;
 			}
+			if (requestOverride)
+				netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_REQUEST_MAP_OVERRIDE, 0, NULL);
 		}
 		patchHeadsetSprite(gs, i);
 	}
@@ -2970,8 +2952,9 @@ char* patchGameDetailsUI_GetPackedGameName(void)
 	char* name = game ? (char*)game + 0x134 : NULL;
 	char* customMap = NULL;
 	int customMode = 0;
-	if (patchGameDetailsUI_ParseGameName(name, &customMap, &customMode) &&
-	    (customMap || customMode))
+	int flags = patchGameDetailsUI_ParseGameName(name, &customMap, &customMode);
+	if (flags &&
+	    (customMap || customMode || (flags & GAME_NAME_FLAGS_VALID)))
 		return name;
 
 	/* Like Deadlocked, use the search result's packed name. Match the world
@@ -2999,7 +2982,7 @@ char* patchGameDetailsUI_GetPackedGameName(void)
 
 /*
  * NAME : patchGameDetailsUI_ParseGameName
- * DESCRIPTION : Read bounded custom-map and mode metadata from a packed game name.
+ * DESCRIPTION : Read map/mode metadata and return validity plus availability flags.
  * NOTES :
  * ARGS :
  * RETURN :
@@ -3022,19 +3005,20 @@ int patchGameDetailsUI_ParseGameName(char *string, char** customMap, int* custom
 			u8 modeLow = *(u8*)(string + len + 2);
 			char* packedMap = string + len + 3;
 
-			if (modeHigh <= 0xf && modeLow <= 0xf) {
+			if (modeHigh <= 0x7f && modeLow <= 0xf) {
 				int end = len + 3;
 				while (end < 64 && string[end])
 					++end;
 				if (end == 64)
 					return 0;
 				if (customMode)
-					*customMode = (char)((modeHigh << 4) | modeLow);
+					*customMode = ((modeHigh & 0xf) << 4) | modeLow;
+
 
 				if (customMap && packedMap[0])
 					*customMap = packedMap;
 
-				return 1;
+				return 1 | (modeHigh & 0x70);
 			}
 		}
 	}
@@ -3056,7 +3040,7 @@ void patchGameDetailsUI_Map(UiElementTextInput_t *element, char *string)
 
 	patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), &customMap, NULL);
 
-#if defined(JOIN_IN_PROGRESS) && !UYA_PAL
+#ifdef JOIN_IN_PROGRESS
 	joinSetSelectedMap(customMap);
 #endif
 	patchGameDetailsUI_SetTextInput(element, customMap ? customMap : string);
@@ -3093,7 +3077,7 @@ void patchGameDetailsUI_Mode(UiElementTextInput_t *element, char *string)
 /*
  * NAME : patchGameDetailsUI
  * DESCRIPTION : Install regional details hooks and preserve packed search names.
- * NOTES :
+ * NOTES : Flush the instruction changes once for real PS2 hardware.
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
@@ -3116,6 +3100,9 @@ void patchGameDetailsUI(void)
 	HOOK_JAL(0x006a2168, &patchGameDetailsUI_Mode);
 	HOOK_JAL(0x006a2190, &patchGameDetailsUI_Mode);
 #endif
+	// Real PS2s must see both the new hooks and metadata-preserving instructions.
+	FlushCache(0);
+	FlushCache(2);
 }
 /*
  * NAME : getBaseHealthPercent
@@ -3186,7 +3173,8 @@ int runSendGameUpdate(void)
 	// copy over active client ids
 	memset(patchStateContainer.gameStateUpdate.ClientIds, -1, sizeof(patchStateContainer.gameStateUpdate.ClientIds));
 	memset(patchStateContainer.gameStateUpdate.Teams, -1, sizeof(patchStateContainer.gameStateUpdate.Teams));
-	for (i = 0; i < gameSettings->PlayerCount && i < GAME_MAX_PLAYERS; ++i) {
+	// Departures leave gaps; a migrated host can occupy a higher player slot.
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
 		patchStateContainer.gameStateUpdate.ClientIds[i] = gameSettings->PlayerClients[i];
 		patchStateContainer.gameStateUpdate.Teams[i] = gameSettings->PlayerTeams[i];
 	}
@@ -3321,14 +3309,6 @@ void onOnlineMenu(void)
 	if (uiGetActiveMenu(UI_MENU_ANNOUNCEMENTS, 0) != 0) return;
 
 	lastMenuInvokedTime = gameGetTime();
-	if (!hasInitialized) {
-		padEnableInput();
-		onConfigInitialize();
-		// error location for loading maps: 000d45dc
-		// refreshCustomMapList();
-		memset(&voteToEndState, 0, sizeof(voteToEndState));
-		hasInitialized = 1;
-	}
 	if (hasInitialized == 1) {
 		uiShowOkDialog("System", "Patch has been successfully loaded.");
 		hasInitialized = 2;
@@ -3342,14 +3322,16 @@ void onOnlineMenu(void)
 
 	// 
 	if (showNoMapPopup) {
-		if (mapOverrideResponse == -1) {
-			uiShowOkDialog("Custom Maps", "You have not installed the map modules.");
-		} else {
-			char buf[32];
-			sprintf(buf, "Please install %s to play.", MapLoaderState.MapName);
-			uiShowOkDialog("Custom Maps", buf);
-		}
 		showNoMapPopup = 0;
+		if (uiGetActiveMenu(UI_MENU_STAGING, 0)) {
+			if (mapOverrideResponse == -1) {
+				uiShowOkDialog("Custom Maps", "You have not installed the map modules.");
+			} else if (MapLoaderState.MapName[0]) {
+				char buf[64];
+				snprintf(buf, sizeof(buf), "Please install %.32s to play.", MapLoaderState.MapName);
+				uiShowOkDialog("Custom Maps", buf);
+			}
+		}
 	}
 	#ifdef SCAVENGER_HUNT
 	if (!scavHuntShownPopup && !config.disableScavengerHunt && scavHuntEnabled){
@@ -3393,6 +3375,17 @@ int main(void)
 
 	// update patch pointers
 	PATCH_INTEROP = &patchInterop;
+
+	if (!hasInitialized) {
+		padEnableInput();
+		onConfigInitialize();
+		// error location for loading maps: 000d45dc
+		// refreshCustomMapList();
+		memset(&voteToEndState, 0, sizeof(voteToEndState));
+		// In-game reloads already displayed download progress; consume the lobby notice.
+		hasInitialized = isInGame() ? 2 : 1;
+	}
+
 
 	// auto enable pad input to prevent freezing when popup shows
 	if (isInMenus() && lastMenuInvokedTime > 0 && (gameGetTime() - lastMenuInvokedTime) > TIME_SECOND) {
@@ -3595,10 +3588,17 @@ int main(void)
 		playerSyncTick();
 		
 		// Patch Menus (Staging, create game, ect.)
-		if (patched.uiModifiers == 0) {
+		// The lobby overlay restores native vtables when returning from gameplay.
+		if (patched.uiModifiers == 0 ||
+			*(u32*)UI_PTR_FUNC_GAME_DETAILS != (u32)&patchGameDetails ||
+			*(u32*)(UI_PTR_FUNC_GAME_DETAILS + 0xd8) != (u32)&patchGameDetailsOpen ||
+			*(u32*)UI_PTR_FUNC_STAGING != (u32)&patchStaging) {
 			// POKE_U32(UI_PTR_FUNC_CREATE_GAME, &patchCreateGame);
 			// POKE_U32(UI_PTR_FUNC_ADVANCED_OPTIONS, &patchAdvancedOptions);
 			POKE_U32(UI_PTR_FUNC_STAGING, &patchStaging);
+			POKE_U32(UI_PTR_FUNC_GAME_DETAILS, &patchGameDetails);
+			// Native menu-open callback (vtable + 0xec).
+			POKE_U32(UI_PTR_FUNC_GAME_DETAILS + 0xd8, &patchGameDetailsOpen);
 			// POKE_U32(UI_PTR_FUNC_BUDDIES, &patchBuddies);
 			// POKE_U32(UI_PTR_FUNC_PLAYER_DETAILS, &patchPlayerDetails);
 			// POKE_U32(UI_PTR_FUNC_STATS, &patchStats);
