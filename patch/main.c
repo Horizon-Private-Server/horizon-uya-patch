@@ -86,9 +86,7 @@ void configMenuDisable(void);
 void runMapLoader(void);
 #ifdef JOIN_IN_PROGRESS
 void joinTick(void);
-#if !UYA_PAL
 void joinSetSelectedMap(const char* name);
-#endif
 #endif
 void onMapLoaderOnlineMenu(void);
 int getCustomMapDefCount(void);
@@ -3043,7 +3041,7 @@ void patchGameDetailsUI_Map(UiElementTextInput_t *element, char *string)
 
 	patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), &customMap, NULL);
 
-#if defined(JOIN_IN_PROGRESS) && !UYA_PAL
+#ifdef JOIN_IN_PROGRESS
 	joinSetSelectedMap(customMap);
 #endif
 	patchGameDetailsUI_SetTextInput(element, customMap ? customMap : string);
