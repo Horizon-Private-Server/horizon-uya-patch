@@ -30,6 +30,8 @@
 #include "include/cheats.h"
 #include "interop/gamerules.h"
 
+void onGameplayLoadHook(void);
+
 extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 extern PatchPatches_t patched;
@@ -91,16 +93,16 @@ void vampireLogic()
 	patched.gameConfig.grVampire = 1;
 }
 
-u32 onGameplayLoad(void* a0, long a1)
+/*
+ * NAME : onGameplayLoad
+ * DESCRIPTION : Apply host rules to gameplay data before native level setup.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+u32 onGameplayLoad(void* a0, long a1, GameplayHeaderDef_t* gameplay)
 {
-	GameplayHeaderDef_t * gameplay;
-
-	// pointer to gameplay data is stored in $s6
-	asm volatile (
-		"move %0, $s6"
-		: : "r" (gameplay)
-	);
-
     if (gameConfig.grHealthBoxes == 2)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_HEALTH_BOX_MP, 0);
 
@@ -300,20 +302,24 @@ void grLobbyStart(void)
  */
 void grLoadStart(void)
 {
-	// only handle when loading level
+	// This hook also runs for a late join, whose start time is already set.
 	GameSettings* gs = gameGetSettings();
-	if (!gs || gs->GameStartTime >= 0)
+	if (!gs)
 		return;
-
-	// Reset Gameplay hook and function each time the we start a new game.
-	Gameplay_Hook = 0;
-	Gameplay_Func = 0;
 
 	// Returns needed hook and needed function.
 	Gameplay_Hook = GetAddressImmediate(&vaGameplayHook);
+	if (!Gameplay_Hook)
+		return;
+	u32 call = *(u32*)Gameplay_Hook;
+	u32 replacement = 0x0c000000 | ((u32)&onGameplayLoadHook >> 2);
+	if (call == replacement || (call & 0xfc000000) != 0x0c000000)
+		return;
 	// Convert the JAL to the function address and save for later.
-	Gameplay_Func = JAL2ADDR(*(u32*)Gameplay_Hook);
+	Gameplay_Func = JAL2ADDR(call);
+	GameRulesInitialized = 0;
+	FirstPass = 1;
+	memset(&patched.gameConfig, 0, sizeof(patched.gameConfig));
 	
-	if (Gameplay_Hook != 0)
-		*(u32*)Gameplay_Hook = 0x0C000000 | (u32)&onGameplayLoad / 4;
+	*(u32*)Gameplay_Hook = replacement;
 }

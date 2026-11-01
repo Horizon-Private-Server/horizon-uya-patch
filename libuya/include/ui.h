@@ -11,6 +11,9 @@
 #include <tamtypes.h>
 #include "player.h"
 
+#define UI_SOUND_ID_NAV_UP_DOWN (3)
+#define UI_SOUND_ID_SELECT (4)
+
 #define UI_DIALOG_A0                            ((void*)0x01C5C000) // NTSC and PAL are the same
 #define UI_POINTERS								((u32)0x01c5C064)
 #define UI_ACTIVE_MENU_1						(0x01c5c110)
@@ -319,8 +322,8 @@ typedef struct UiElementTextInput { // 0x4a8
 /* 0x4c */ int padding;
 /* 0x50 */ float selectorBoxSize[4];
 /* 0x60 */ UiVTable_t* vTable;
-/* 0x064 */ char textInput[16];
-/* 0x074*/ char unk_74[0x434];
+/* 0x064 */ char textInput[0xa0];
+/* 0x104*/ char unk_74[0x3a4];
 } UiElementTextInput_t;
 
 typedef struct UIElementUnk_09 {
@@ -489,6 +492,43 @@ typedef struct UiTipsElements { // 0x8
 /* 0x4 */ UiElementList_t* tips;
 } UiTipsElements_t;
 
+typedef struct UiFineGameElements { // 0x34
+/* 0x00 */ UiElementStringSelect_t* type;
+/* 0x04 */ UiElementStringSelect_t* map;
+/* 0x08 */ UiElementStringSelect_t* mode;
+/* 0x0c */ UiElementTextInfo_t* rank;
+/* 0x10 */ UiElementStringSelect_t* maxPlayers;
+/* 0x14 */ UiElementStringSelect_t* city;
+/* 0x18 */ UiElementText_t* searchButton;
+/* 0x1c */ UiElementText_t* resultsText;
+/* 0x20 */ UiElementList_t* gameList;
+/* 0x24 */ UiElementSprite_t* rankSprite[4];
+} UiFineGameElements_t;
+
+typedef struct UiGameDetailsElements { // 0x60
+/* 0x00 */ UiElementImage_t* image;
+/* 0x04 */ UiElementSprite_t* rankSprite[4];
+/* 0x14 */ UiElementSprite_t* fluxRifleSprite;
+/* 0x18 */ UiElementSprite_t* n60StormSprite;
+/* 0x1c */ UiElementSprite_t* blitzGunSprite;
+/* 0x20 */ UiElementSprite_t* miniRocketTubeSprite;
+/* 0x24 */ UiElementSprite_t* gravityBombSprite;
+/* 0x28 */ UiElementSprite_t* mineGloveSprite;
+/* 0x2c */ UiElementSprite_t* morphORaySprite;
+/* 0x30 */ UiElementSprite_t* lavaGunSprite;
+/* 0x34 */ UiElementTextInput_t* gameName;
+/* 0x38 */ UiElementTextInput_t* map;
+/* 0x3c */ UiElementTextInput_t* type;
+/* 0x40 */ UiElementTextInput_t* city;
+/* 0x44 */ UiElementTextInfo_t* skill;
+/* 0x48 */ UiElementTextInput_t* weapons;
+/* 0x4c */ UiElementText_t* advancedOptions;
+/* 0x50 */ UiElementText_t* playersHeader;
+/* 0x54 */ UiElementList_t* playerList;
+/* 0x58 */ UiElementRangeSelect_t* localPlayers;
+/* 0x5c */ UiElementText_t* join;
+} UiGameDetailsElements_t;
+
 // uiSelectDialog_Simple Defs start at: 0x00248504
 typedef struct UiWidgetDefs {
 /* 0x00 */ float x;
@@ -625,5 +665,35 @@ void uiRefresh(void);
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
 void uiSetBusy(void);
+
+/*
+ * NAME : uiProgressDialog
+ * DESCRIPTION : Draw a progress popup with centered, wrapping text at scale 1.0.
+ * NOTES : Call each frame; does not block input or run a modal loop. NULL text draws nothing.
+ * ARGS : text, completed units, total units (zero or negative when unknown).
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void uiProgressDialog(const char* text, int completed, int total);
+
+/*
+ * NAME : uiPlaySound
+ * DESCRIPTION : Play a native menu sound.
+ * NOTES :
+ * ARGS : soundId, native sound flags.
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void uiPlaySound(int soundId, int flags);
+
+/*
+ * NAME : uiSetImage
+ * DESCRIPTION : Reload a menu image when its texture changes.
+ * NOTES : Available in the multiplayer lobby overlay.
+ * ARGS : image element and native texture ID.
+ * RETURN : Native image setter result.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+int uiSetImage(UiElementImage_t* image, int textureId);
 
 #endif // _LIBUYA_UI_H_

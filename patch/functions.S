@@ -18,3 +18,23 @@ _correctTieLod:
   vmulx.xyz   vf16, vf16, vf2x;
   _correctTieLod_Jump:
   j 0x004c68e0;
+
+/*
+ * NAME : onGameplayLoadHook
+ * DESCRIPTION : Capture the caller's gameplay pointer before entering C.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+	.section .text.functions
+	.set push
+	.set noreorder
+	.align 2
+	.globl onGameplayLoadHook
+	.ent onGameplayLoadHook
+onGameplayLoadHook:
+	j onGameplayLoad
+	move $a2, $s6
+	.end onGameplayLoadHook
+	.set pop

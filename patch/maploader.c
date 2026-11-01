@@ -178,7 +178,7 @@ extern PatchGameConfig_t gameConfig;
 extern struct MenuElem_OrderedListData dataCustomModes;
 
 // map overrides
-extern MenuElem_ListData_t dataCustomMaps;
+extern MenuElem_VerticalListData_t dataCustomMaps;
 
 // custom map defs
 CustomMapDef_t *customMapDefs = NULL;
@@ -281,7 +281,7 @@ int onSetMapOverride(void * connection, void * data)
 
 	// reset
 	static int lastCustomMapId = 0;
-	patchStateContainer.CustomMapId = 0;
+	patchStateContainer.customMapId = 0;
 
 	if (payload.CustomMap.BaseMapId == 0) {
 		DPRINTF("recv empty map\n");
@@ -300,14 +300,14 @@ int onSetMapOverride(void * connection, void * data)
 		int i = 0;
 		for (i = 0; i < customMapDefCount; ++i) {
 			if (strncmp(customMapDefs[i].Filename, payload.CustomMap.Filename, sizeof(customMapDefs[i].Filename)) == 0) {
-				patchStateContainer.CustomMapId = i + 1;
+				patchStateContainer.customMapId = i + 1;
 				version = customMapDefs[i].Version;
 				break;
 			}
 		}
 
 
-		// if (patchStateContainer.CustomMapId <= 0) version = -2;
+		// if (patchStateContainer.customMapId <= 0) version = -2;
 		if (version < 0)
 			version = -2;
 
@@ -337,8 +337,8 @@ int onSetMapOverride(void * connection, void * data)
 			mapOverrideResponse = version;
 		}
 	}
-	patchStateContainer.SelectedCustomMapChanged = isInMenus() && lastCustomMapId != patchStateContainer.CustomMapId;
-	lastCustomMapId = patchStateContainer.CustomMapId;
+	patchStateContainer.selectedCustomMapChanged = isInMenus() && lastCustomMapId != patchStateContainer.customMapId;
+	lastCustomMapId = patchStateContainer.customMapId;
 	return sizeof(MapOverrideMessage);
 }
 
@@ -459,9 +459,18 @@ int readFileLength(char * path)
 }
 
 //------------------------------------------------------------------------------
+/*
+ * NAME : readFile
+ * DESCRIPTION : Read a file range without unnecessary size queries.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 int readFile(char * path, void * buffer, int offset, int length)
 {
 	int r, fd, fSize;
+	int seekToOffset = offset || length < 0;
 
 	// Open
 	rpcUSBopen(path, FIO_O_RDONLY);
@@ -473,16 +482,17 @@ int readFile(char * path, void * buffer, int offset, int length)
 		return -1;
 	}
 	
-	// Get length of file
-	rpcUSBseek(fd, 0, SEEK_END);
-	rpcUSBSync(0, NULL, &fSize);
+	// Fixed-size reads return the bytes available without querying file size.
+	if (length < 0) {
+		rpcUSBseek(fd, 0, SEEK_END);
+		rpcUSBSync(0, NULL, &fSize);
+		length = fSize - offset;
+	}
 
-	if (length < 0 || fSize < (length+offset))
-		length = fSize-offset;
-
-	// Go back to start of file
-	rpcUSBseek(fd, offset, SEEK_SET);
-	rpcUSBSync(0, NULL, NULL);
+	if (seekToOffset) {
+		rpcUSBseek(fd, offset, SEEK_SET);
+		rpcUSBSync(0, NULL, NULL);
+	}
 
 	// Read map
 	if (rpcUSBread(fd, (void*)buffer, length) != 0)
@@ -742,6 +752,14 @@ void checkForHostFs(void)
 }
 
 //------------------------------------------------------------------------------
+/*
+ * NAME : refreshCustomMapList
+ * DESCRIPTION : Scan installed maps and rebuild the selection list.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void refreshCustomMapList(void)
 {
 	int fd, r, i;
@@ -826,7 +844,7 @@ void refreshCustomMapList(void)
 		// we want to parse the .version files
 		// check if filename ends with ".version"
 		int len = strlen(filename);
-		if (strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
+		if (len <= versionExtLen || strncmp(&filename[len-versionExtLen], versionExt, versionExtLen) != 0) continue;
 
 		#if DSCRPRINT
 		snprintf(buf, sizeof(buf), "y %s", filename);
@@ -854,9 +872,10 @@ void refreshCustomMapList(void)
 		// ensure version file has matching .world OR .wad
 		snprintf(fullpath, sizeof(fullpath), fWad, getMapPathPrefix(), filenameWithoutExtension);
 		int fWadLen = readFileLength(fullpath);
-		snprintf(fullpath, sizeof(fullpath), fWorld, getMapPathPrefix(), filenameWithoutExtension);
-		int fWorldLen = readFileLength(fullpath);
-		if (fWadLen <= 0 && fWorldLen <= 0) continue;
+		if (fWadLen <= 0) {
+			snprintf(fullpath, sizeof(fullpath), fWorld, getMapPathPrefix(), filenameWithoutExtension);
+			if (readFileLength(fullpath) <= 0) continue;
+		}
 
 		DPRINTF("(%d) \"%s\" f:\"%s\" v:%d bmap:%d mode:%d\n", customMapDefCount, versionFileDef.Name, filenameWithoutExtension, versionFileDef.Version, versionFileDef.BaseMapId, versionFileDef.ForcedCustomModeId);
 
@@ -889,17 +908,9 @@ void refreshCustomMapList(void)
     //         }
     //     }
     // }
-	// populate config
-	for (i = 0; i < customMapDefCount; ++i) {
-		dataCustomMaps.items[i+1] = (char*)customMapDefs[i].Name;
-		dataCustomMaps.count += 1;
-	}
-
-	DPRINTF("dataCustomMaps: %08x", dataCustomMaps);
-
-  	// clamp
-	if (patchStateContainer.CustomMapId >= dataCustomMaps.count)
-		patchStateContainer.CustomMapId = dataCustomMaps.count - 1;
+	if (patchStateContainer.customMapId > customMapDefCount)
+		patchStateContainer.customMapId = 0;
+	configRebuildMapList();
 
 	actionState = actionStateAtStart;
 }
@@ -1552,16 +1563,7 @@ void runMapLoader(void)
 
 	// if maps are refreshing, show popup.
 	if (actionState == ACTION_REFRESHING_MAPLIST) {
-		u32 bgColorDownload = 0x8004223f;
-		u32 textColor = 0x8069cbf2;
-		u32 barBgColor = 0x80123251;
-		u32 barFgColor = 0x8018608f;
-		gfxScreenSpaceBox(0.2, 0.35, 0.6, 0.125, bgColorDownload);
-		gfxScreenSpaceBox(0.2, 0.45, 0.6, 0.05, barBgColor);
-		sprintf(membuffer, "Scanning USB drive for custom maps...");
-		gfxScreenSpaceText(SCREEN_WIDTH * 0.22, SCREEN_HEIGHT * 0.4, 1, 1, colorText, membuffer, -1, 3, FONT_BOLD);
-		float w = (float)customMapDefCount / (float)MAX_CUSTOM_MAP_DEFINITIONS;
-		gfxScreenSpaceBox(0.2, 0.45, 0.6 * w, 0.05, barFgColor);
+		uiProgressDialog("Scanning USB drive for custom maps...", customMapDefCount, MAX_CUSTOM_MAP_DEFINITIONS);
 	}
 
 	#ifdef DEBUG

@@ -12,12 +12,18 @@
 #include <libuya/graphics.h>
 #include <libuya/utils.h>
 #include <libuya/net.h>
+#include <libuya/team.h>
+#include <libuya/stdlib.h>
 #include "messageid.h"
 #include "config.h"
 
 #ifdef UYA_PAL
 // UI Functions
 #define STAGING_BASE_FUNC (0x006c1730)
+#define GAME_DETAILS_BASE_FUNC (0x006a3ab0)
+#define GAME_DETAILS_OPEN_FUNC (0x006a3690)
+#define PLAYER_LIST_COLOR_CALL (0x0068261c)
+#define PLAYER_LIST_COLOR_FUNC (0x00611838)
 #define CREATE_GAME_BASE_FUNC (0x0069a630)
 #define ADVANCED_OPTIONS_BASE_FUNC (0x0069ce50)
 // #define BUDDIES_BASE_FUNC (0x00690de8)
@@ -37,6 +43,10 @@
 #else
 // UI Functions
 #define STAGING_BASE_FUNC (0x006bec18)
+#define GAME_DETAILS_BASE_FUNC (0x006a12a0)
+#define GAME_DETAILS_OPEN_FUNC (0x006a0e80)
+#define PLAYER_LIST_COLOR_CALL (0x0067fafc)
+#define PLAYER_LIST_COLOR_FUNC (0x0060f120)
 #define CREATE_GAME_BASE_FUNC (0x00697e20)
 #define ADVANCED_OPTIONS_BASE_FUNC (0x0069a640)
 // #define BUDDIES_BASE_FUNC (0x0068e6f8)
@@ -67,6 +77,11 @@
 #define IGNORE_LIST_START (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x10)
 #define IGNORE_LIST_END (*(u32*)(IGNORE_LIST_STACK + 0x40) + 0x1c)
 
+typedef struct gameDetailsPlayer {
+	/* 0x000 */ char name[32];
+	/* 0x020 */ s32 accountId;
+	/* 0x024 */ u8 stats[256];
+} gameDetailsPlayer_t;
 typedef enum playerOptions {
     PLAYER_OPTION_CANCEL = -1,
     PLAYER_OPTION_TEAMSKIN = 0,
@@ -123,10 +138,16 @@ typedef struct keyboardNew { // 0x4
 /* 0x1 */char text[3];
 } keyboardNew_t;
 
+char* patchGameDetailsUI_GetPackedGameName(void);
+int patchGameDetailsUI_ParseGameName(char* string, char** customMap, int* customMode);
+
 typedef int (*uiVTable_Func)(UiMenu_t * ui, int pad);
 uiVTable_Func createGameFunc = (uiVTable_Func)CREATE_GAME_BASE_FUNC;
 uiVTable_Func advancedOptionsFunc = (uiVTable_Func)ADVANCED_OPTIONS_BASE_FUNC;
 uiVTable_Func stagingFunc = (uiVTable_Func)STAGING_BASE_FUNC;
+uiVTable_Func gameDetailsFunc = (uiVTable_Func)GAME_DETAILS_BASE_FUNC;
+static int gameDetailsSpritesInitialized;
+
 // uiVTable_Func buddiesFunc = (uiVTable_Func)BUDDIES_BASE_FUNC;
 // uiVTable_Func playerDetailsFunc = (uiVTable_Func)PLAYER_DETAILS_BASE_FUNC;
 // uiVTable_Func statsFunc = (uiVTable_Func)STATS_BASE_FUNC;
@@ -256,7 +277,13 @@ void setTeams(int numTeams)
 int getPlayerIndex(void * ui,int selectedPlayer)
 {
     GameSettings * gs = gameGetSettings();
+    if (!ui || !gs || selectedPlayer < 0 || selectedPlayer >= GAME_MAX_PLAYERS)
+        return -1;
+
     int uiElement = *(int*)(ui + (selectedPlayer + 0xf) * 4 + 0x110);
+    if (!uiElement)
+        return -1;
+
     long compareNames;
     int i = 0;
     while (((gs == 0 || (gs->PlayerClients[i] == -1)) || (compareNames = strcmp(uiElement + 0x14, gs->PlayerNames[i]), compareNames != 0))) {
@@ -270,12 +297,17 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
 {
     // Get correct player index
     int i =  getPlayerIndex(ui, selectedItem);
+	if (!gs || i < 0 || i >= GAME_MAX_PLAYERS)
+		return;
     // Get the needed number of teams dependent on gametype.
     int numTeams = (gs->GameType == GAMETYPE_DM) ? 8 : 2;
 
     if (isBot) {
         // Open Team/Skin Menu
         uiShowChangeTeamSkinDialog(gs->PlayerTeams[i], gs->PlayerSkins[i], numTeams, isTeams, 1, 1);
+		if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
+			uiGetActiveMenu(UI_MENU_STAGING, 0) != ui)
+			return;
         // Save chosen Team/Skin
         u32 getUI = uiGetMenu(UI_MENU_CHANGE_SKIN_TEAM);
         gs->PlayerTeams[i] = *(int*)(*(u32*)(getUI + 0x110) + 0x146c);
@@ -453,6 +485,9 @@ void updateInfo(GameSettings *gs, int selectedIndex)
     int account_id = gs->PlayerAccountIds[i];
     int client_id = gs->PlayerClients[i];
     int isHost = gameAmIHost();
+	if (!BUDDY_IGNORE_LIST_PTR || !BUDDY_LIST_STACK || !IGNORE_LIST_STACK ||
+		!*(u32*)(BUDDY_LIST_STACK + 0x40) || !*(u32*)(IGNORE_LIST_STACK + 0x40))
+		return;
     struct buddyListInfo_t * buddy = (struct buddyListInfo_t *)(*(u32*)BUDDY_LIST_START);
     struct ignoreListInfo_t * ignore = (struct ignoreListInfo_t*)(*(u32*)IGNORE_LIST_START);
 
@@ -492,7 +527,13 @@ void updateInfo(GameSettings *gs, int selectedIndex)
 int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeams)
 {
     int selectedItem = itemSelected - 0xf;
+    if (!ui || !gs || selectedItem < 0 || selectedItem >= GAME_MAX_PLAYERS)
+        return UI_PAD_CROSS;
+
     int i = getPlayerIndex(ui, selectedItem);
+    if (i < 0 || i >= GAME_MAX_PLAYERS)
+        return UI_PAD_CROSS;
+
     int account_id = gs->PlayerAccountIds[i];
     int client_id = gs->PlayerClients[i];
     int isBot = (account_id >= 883) && (account_id <= 1880);
@@ -522,6 +563,9 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
             optionsSize -= 2;
         }
         int select = uiShowSelectDialog(title, playerOptions, optionsSize, 0);
+		if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
+			uiGetActiveMenu(UI_MENU_STAGING, 0) != ui)
+			return UI_PAD_NONE;
         int selection = -1;
         if (select > PLAYER_OPTION_CANCEL)
             selection = (isHost) ? select : (select + 2);
@@ -533,7 +577,8 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
                 char * kickEm = uiMsgString(0x15ff);
                 snprintf(kickingPlayer, 32, kickEm, gs->PlayerNames[i]);
                 int kickDialog = uiShowYesNoDialog("", kickingPlayer);
-                if (kickDialog == 1) {
+                if (kickDialog == 1 && netGetLobbyServerConnection() && gameGetSettings() == gs &&
+					uiGetActiveMenu(UI_MENU_STAGING, 0) == ui) {
                     gs->PlayerStates[i] = 5;
                 }
                 break;
@@ -552,10 +597,181 @@ void openTeamsOptions(GameSettings * gs, int isTeams)
     int size = sizeof(randomTeamOptions)/sizeof(char*);
     int optionsSize = (gs->GameType == GAMETYPE_DM) ? size : (size - 1);
     int select = uiShowSelectDialog("Team Options", randomTeamOptions, size, 0);
-    if (select > TEAM_OPTION_CANCEL)
+    if (select > TEAM_OPTION_CANCEL && netGetLobbyServerConnection() && gameGetSettings() == gs)
         setTeams(select);
 }
+/*
+ * NAME : setGameDetailsPlayerListColor
+ * DESCRIPTION : Replace only the unfocused details player-list text color.
+ * NOTES : Native list state, vtable, and selection remain unchanged.
+ * ARGS : Native text handle and requested color.
+ * RETURN : Native color setter result.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int setGameDetailsPlayerListColor(int handle, u32 color)
+{
+	UiMenu_t* ui = uiGetActiveMenu(UI_MENU_GAME_DETAILS, 0);
+	if (!ui)
+		ui = uiGetActiveMenu(UI_MENU_GAME_DETAILS, 1);
+	if (ui && color == 0x80808080) {
+		UiGameDetailsElements_t* elements = (UiGameDetailsElements_t*)ui->pChildren;
+		UiElementList_t* list = elements->playerList;
+		if (list && handle == *(int*)((u8*)list + 0x10178))
+			color = 0x8066ccff;
+	}
+	return ((int (*)(int, u32))PLAYER_LIST_COLOR_FUNC)(handle, color);
+}
+
+/*
+ * NAME : patchGameDetailsOpen
+ * DESCRIPTION : Recreate team sprites each time Game Details opens.
+ * NOTES : Native setup reuses sprite handle IDs after discarding the old container.
+ * ARGS : Game Details menu.
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void patchGameDetailsOpen(UiMenu_t* ui)
+{
+	gameDetailsSpritesInitialized = 0;
+	((void (*)(UiMenu_t*))GAME_DETAILS_OPEN_FUNC)(ui);
+}
+
+/*
+ * NAME : patchGameDetails
+ * DESCRIPTION : Update the native player list and its staging-style team sprites.
+ * NOTES : Map/mode labels and joining remain in their existing handlers.
+ * ARGS : Details menu and native UI pad action.
+ * RETURN : Native menu update result.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+int patchGameDetails(UiMenu_t* ui, int pad)
+{
+	static UiElementSprite_t (*teamSprites)[2];
+	int row;
+	int layer;
+	if (!ui)
+		return 0;
+
+	// The selected game's packed name supplies its running/join settings.
+	int flags = patchGameDetailsUI_ParseGameName(patchGameDetailsUI_GetPackedGameName(), NULL, NULL);
+	int blockJoin = (flags & (GAME_NAME_FLAGS_VALID | GAME_NAME_RUNNING)) ==
+		(GAME_NAME_FLAGS_VALID | GAME_NAME_RUNNING);
+#ifdef JOIN_IN_PROGRESS
+	blockJoin = blockJoin && !(flags & GAME_NAME_JOIN_ENABLED);
+#endif
+	if (blockJoin && ui->selectedIndex == 23 && pad == UI_PAD_CROSS)
+		pad = UI_PAD_NONE;
+
+	int previousSelection = ui->selectedIndex;
+	int result = gameDetailsFunc(ui, pad);
+	// The native menu releases its graphics container when leaving Details.
+	if (!netGetLobbyServerConnection() ||
+		(uiGetActiveMenu(UI_MENU_GAME_DETAILS, 0) != ui &&
+		uiGetActiveMenu(UI_MENU_GAME_DETAILS, 1) != ui)) {
+		gameDetailsSpritesInitialized = 0;
+		return result;
+	}
+	if (ui->childCount < sizeof(UiGameDetailsElements_t) / sizeof(void*))
+		return result;
+
+	UiGameDetailsElements_t* elements = (UiGameDetailsElements_t*)ui->pChildren;
+	elements->localPlayers->state = 0;
+	// Up from Join selects Players; X is then handled by the native menu
+	// to enter its list. Down from Players skips the hidden Local Players row.
+	int target = -1;
+	if (previousSelection == 23 && pad == UI_PAD_DPAD_UP)
+		target = 20;
+	else if (previousSelection == 20 && pad == UI_PAD_DPAD_DOWN)
+		target = 23;
+	else if (ui->selectedIndex < 0 &&
+		(pad == UI_PAD_DPAD_UP || pad == UI_PAD_DPAD_DOWN ||
+		pad == UI_PAD_DPAD_LEFT || pad == UI_PAD_DPAD_RIGHT))
+		target = previousSelection == 20 ? 23 : 20;
+
+	if (target >= 0 && ui->selectedIndex != target) {
+		if (ui->selectedIndex >= 0 && ui->selectedIndex < ui->childCount) {
+			UiElementText_t* previous = ui->pChildren[ui->selectedIndex];
+			if (previous->state == 4)
+				((UiMenuVTable_t*)previous->vTable)->setState(previous, 3);
+		}
+		UiElementText_t* child = ui->pChildren[target];
+		((UiMenuVTable_t*)child->vTable)->setState(child, 4);
+		ui->selectedIndex = target;
+	}
+	if (blockJoin)
+		elements->join->state = 2;
+	if (*(int*)((u8*)ui + 0x314) == 22)
+		*(int*)((u8*)ui + 0x314) = 20;
+	UiElementList_t* list = elements->playerList;
+	if (!list || list->type != UI_ELEMENT_LIST || !elements->rankSprite[0])
+		return result;
+
+	HOOK_JAL(PLAYER_LIST_COLOR_CALL, &setGameDetailsPlayerListColor);
+
+	// Keep the native sprite elements on the game heap, outside patch/mode RAM.
+	if (!teamSprites) {
+		teamSprites = malloc(sizeof(*teamSprites) * GAME_MAX_PLAYERS);
+		if (!teamSprites)
+			return result;
+	}
+
+	// Use the same native sprite element and vtable as the rank/skill bolts.
+	for (row = 0; row < GAME_MAX_PLAYERS; ++row) {
+		for (layer = 0; layer < 2; ++layer) {
+			UiElementSprite_t* sprite = &teamSprites[row][layer];
+			if (!gameDetailsSpritesInitialized) {
+				memcpy(sprite, elements->rankSprite[0], sizeof(*sprite));
+				sprite->unk_64 = -1;
+				sprite->sprite = SPRITE_HUD_DOT;
+				sprite->selectorBoxSize[2] = layer ? 0.021f : 0.030f;
+				sprite->selectorBoxSize[3] = layer ? 0.028f : 0.040f;
+				((UiMenuVTable_t*)sprite->vTable)->return_zero_00c(sprite);
+			}
+			sprite->state = 0;
+			((UiMenuVTable_t*)sprite->vTable)->draw(sprite);
+		}
+	}
+	gameDetailsSpritesInitialized = 1;
+
+	int count = *(int*)((u8*)ui + 0x2bc);
+	gameDetailsPlayer_t* players = *(gameDetailsPlayer_t**)((u8*)ui + 0x2c4);
+	int first = *(int*)((u8*)list + 0x10580);
+	int visible = *(int*)((u8*)list + 0x1057c);
+	if (!players || count < 1 || count > GAME_MAX_PLAYERS || first < 0 ||
+		visible < 1 || visible > GAME_MAX_PLAYERS)
+		return result;
+
+	// Native list coordinates are centered; its text rows use 0.0505 spacing.
+	float x = list->selectorBoxSize[0] + list->selectorBoxSize[2] * 0.5f - 0.010f;
+	float y = list->selectorBoxSize[1] - list->selectorBoxSize[3] * 0.5f + 0.022f;
+	for (row = 0; row < visible && first + row < list->itemCount && first + row < count; ++row) {
+		// Native list population uses the same order as these roster records.
+		u8* team = &players[first + row].stats[0xfc];
+		if (team[0] != 'U' || team[1] != 'Y' || team[2] != 'A' || team[3] >= 8)
+			continue;
+
+		for (layer = 0; layer < 2; ++layer) {
+			UiElementSprite_t* sprite = &teamSprites[row][layer];
+			sprite->state = 1;
+			sprite->selectorBoxSize[0] = x;
+			sprite->selectorBoxSize[1] = y + row * 0.0505f;
+			sprite->sprite = SPRITE_HUD_DOT;
+			sprite->vTable->setColor(sprite, layer ?
+				0x80000000 | TEAM_COLORS[team[3]] : 0x706ec8ff);
+			((UiMenuVTable_t*)sprite->vTable)->draw(sprite);
+		}
+	}
+	return result;
+}
 // extern forceMapOverride;
+/*
+ * NAME : patchStaging
+ * DESCRIPTION : Apply staging options while the native lobby session is valid.
+ * NOTES : Recheck session pointers after native updates and modal dialogs.
+ * ARGS : Staging menu and native UI pad action.
+ * RETURN : Native menu update result.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 int patchStaging(UiMenu_t* ui, int pad)
 {
     static int init_staging = 0;
@@ -564,20 +780,41 @@ int patchStaging(UiMenu_t* ui, int pad)
     static int holdingL1time = 0; 
     int i;
     int j;
-    GameSettings* gs = gameGetSettings();
-    int clientId = gameGetMyClientId();
-    int isTeams = gameGetOptions()->GameFlags.MultiplayerGameFlags.Teams;
-    int itemSelected = *(int*)((u32)ui + 0x290);
-    int isLoading = *(u8*)((u32)ui + 0x2b6);
-    int isRequstingTeamChange = *(u8*)((u32)ui + 0x2c8);
+    GameSettings* gs;
+    GameOptions* options;
+    int clientId;
+    int isTeams;
+    int itemSelected;
+    int isLoading;
+    int isRequstingTeamChange;
 
-    // check for connetion
-    if (!netGetLobbyServerConnection())
+    // check for connection before reading staging/game pointers; the disconnect popup can tear these down.
+    if (!ui)
+        return 0;
+	if (!netGetLobbyServerConnection()) {
+		init_staging = 0;
+		allPlayersReady = -1;
+		pressedL1 = -1;
+		return stagingFunc(ui, pad);
+	}
+
+    gs = gameGetSettings();
+    options = gameGetOptions();
+    if (!gs || !options)
         return stagingFunc(ui, pad);
+
+    clientId = gameGetMyClientId();
+    isTeams = options->GameFlags.MultiplayerGameFlags.Teams;
+    itemSelected = *(int*)((u32)ui + 0x290);
+    isLoading = *(u8*)((u32)ui + 0x2b6);
+    isRequstingTeamChange = *(u8*)((u32)ui + 0x2c8);
 
     // Change pad buttons for all players
     if (pad == UI_PAD_CROSS) {
         pad = openPlayerOptions(ui, gs, itemSelected, isTeams);
+		if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
+			uiGetActiveMenu(UI_MENU_STAGING, 0) != ui)
+			return 0;
     }
     // Change pad buttons on for host
     if (gameAmIHost()) {
@@ -598,10 +835,30 @@ int patchStaging(UiMenu_t* ui, int pad)
 	// call game function we're replacing
 	int result = stagingFunc(ui, pad);
 
+    // The original staging function may tear down these pointers after Disconnect.
+	gs = gameGetSettings();
+	options = gameGetOptions();
+	if (!netGetLobbyServerConnection() || !gs || !options ||
+		uiGetActiveMenu(UI_MENU_STAGING, 0) != ui) {
+		init_staging = 0;
+		allPlayersReady = -1;
+		pressedL1 = -1;
+		return result;
+	}
+	isTeams = options->GameFlags.MultiplayerGameFlags.Teams;
+
     //  init staging if not done already, or equals 2
     if (!init_staging || info.currentWorldId != gameGetWorldId()) {
+		// Disconnect cleanup can remove these lists before the lobby connection.
+		if (!BUDDY_IGNORE_LIST_PTR || !BUDDY_LIST_STACK || !IGNORE_LIST_STACK ||
+			!*(u32*)(BUDDY_LIST_STACK + 0x40) || !*(u32*)(IGNORE_LIST_STACK + 0x40))
+			return result;
         getBuddyList(BUDDY_LIST_STACK, 2);
         getIgnoreList(IGNORE_LIST_STACK, 0);
+		if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
+			uiGetActiveMenu(UI_MENU_STAGING, 0) != ui || !BUDDY_IGNORE_LIST_PTR ||
+			!BUDDY_LIST_STACK || !IGNORE_LIST_STACK)
+			return result;
         info.currentWorldId = gameGetWorldId();
         info.buddyCount = BUDDY_LIST_COUNT;
         info.ignoredCount = IGNORE_LIST_COUNT;
@@ -630,6 +887,9 @@ int patchStaging(UiMenu_t* ui, int pad)
             } else if (pressedL1 == 1 && holdingL1time <= gameGetTime() && *(u32*)0x01c5c114 == 0) {
                 pressedL1 = 2;
                 openTeamsOptions(gs, isTeams);
+				if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
+					uiGetActiveMenu(UI_MENU_STAGING, 0) != ui)
+					return result;
             }
         }
 
@@ -639,9 +899,9 @@ int patchStaging(UiMenu_t* ui, int pad)
         
         // Replace "\x11 UNREADY" with "\x11 STSART"
         int str = uiMsgString(0x16d9);
-        if (allPlayersReady)
+        if (str && allPlayersReady)
 	        strncpy((char*)str, "\x11 START", 9);
-        else
+        else if (str)
 	        strncpy((char*)str, "         ", 9);
         
         // check if all players are ready

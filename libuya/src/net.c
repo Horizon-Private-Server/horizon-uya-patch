@@ -2,6 +2,8 @@
 #include "stdio.h"
 #include "net.h"
 #include "string.h"
+#include "game.h"
+#include "gamesettings.h"
 
 #if UYA_PAL
 
@@ -106,15 +108,38 @@ int netSendCustomAppMessage(void * connection, int clientIndex, u8 customMsgId, 
 
 int netBroadcastCustomAppMessage(void * connection, u8 customMsgId, int msgSize, void * payload)
 {
-    if (!connection)
-        return 0;
+	if (!connection)
+		return 0;
 
-    u8 buffer[512];
-    if (payload && msgSize > 0)
-        memcpy(buffer + 4, payload, msgSize);
-        
-    buffer[0] = customMsgId;
-    return netBroadcastMediusAppMessage(connection, NET_CUSTOM_MESSAGE_ID, msgSize + 4, buffer);
+	u8 buffer[512];
+	if (payload && msgSize > 0)
+		memcpy(buffer + 4, payload, msgSize);
+	buffer[0] = customMsgId;
+	buffer[1] = buffer[2] = buffer[3] = 0;
+
+	GameSettings* settings = gameGetSettings();
+	if (connection == NET_DME_CONNECTION && settings && !GAME_NET_INFO->onlyLocalPlayers) {
+		/* The native broadcast route can miss clients added after loading.
+		 * Use the current roster and send once per client, including split
+		 * screen players who share a connection. Keep the native app class. */
+		u32 sent = 0;
+		int result = 0;
+		int i;
+		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+			int client = settings->PlayerClients[i];
+			if (client < 0 || client >= GAME_MAX_PLAYERS || client == GAME_CLIENT_ID ||
+			    (sent & (1 << client)))
+				continue;
+			sent |= 1 << client;
+			int status = internal_netSendAppMessage(0x40, connection, client,
+			    NET_CUSTOM_MESSAGE_ID, msgSize + 4, buffer);
+			if (status && !result)
+				result = status;
+		}
+		return result;
+	}
+
+	return netBroadcastMediusAppMessage(connection, NET_CUSTOM_MESSAGE_ID, msgSize + 4, buffer);
 }
 
 void* netGetLobbyServerConnection(void)

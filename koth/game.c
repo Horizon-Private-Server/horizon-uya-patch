@@ -1873,7 +1873,7 @@ static int kothGetCurrentHillTimeLeftMs(void)
         return duration;
 
     kothEnsureCycleStart();
-    if (hillCycleStartTime <= 0)
+    if (hillCycleStartTime == 0)
         return duration;
 
     int elapsed = gameGetTime() - hillCycleStartTime;
@@ -2467,6 +2467,30 @@ void scoreboard(int maxScore, int* scores)
 
 }
 
+/*
+ * NAME : kothPublishTeamScores
+ * DESCRIPTION : Share hill totals with host reporting and late-join team selection.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static void kothPublishTeamScores(void)
+{
+	PatchInterop_t* interop = PATCH_INTEROP;
+	GameSettings* settings = gameGetSettings();
+	if (!gameAmIHost() || !settings || !interop || !interop->patchStateContainer)
+		return;
+	int* scores = interop->patchStateContainer->gameStateUpdate.TeamScores;
+	memset(scores, 0, sizeof(int) * GAME_MAX_PLAYERS);
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		int team = settings->PlayerTeams[i];
+		if (settings->PlayerClients[i] >= 0 && team >= 0 && team < GAME_MAX_PLAYERS)
+			scores[team] += kothScores[i];
+	}
+}
+
 static void drawHud(void)
 {
     scoreboard(kothGetScoreLimit(), kothScores);
@@ -2481,6 +2505,7 @@ int kothOnReceiveScore(void *connection, void *data)
         return sizeof(KothScoreUpdate_t);
 
     kothScores[idx] = msg->Score;
+    kothPublishTeamScores();
     kothInvalidateScoreboardCache();
     return sizeof(KothScoreUpdate_t);
 }
@@ -2512,8 +2537,10 @@ static int kothOnReceiveHillSync(void *connection, void *data)
     if (elapsed < 0)
         elapsed = 0;
     hillCycleStartTime = gameGetTime() - elapsed;
-    if (hillCycleStartTime < 0)
-        hillCycleStartTime = 0;
+	/* A newcomer may have a younger local clock than the game's elapsed
+	 * time. Negative origins are valid; only zero means uninitialized. */
+	if (hillCycleStartTime == 0)
+		hillCycleStartTime = -1;
     lastActiveHillIdx = idx;
     kothInvalidateTimerDisplayCache();
     KOTH_LOG("[KOTH][DBG] hill sync received idx=%d localIdx=%d seed=%d timeStart=%d elapsed=%d", idx, kothGetActiveHillIndex(), (kothConfig ? kothConfig->grSeed : -1), gameGetData() ? gameGetData()->timeStart : -1, elapsed);
@@ -2880,6 +2907,21 @@ void kothTick(void)
 
     if (gameTime >= nextScoreTickTime) {
         updateScores();
+		kothPublishTeamScores();
+		/* A late joiner missed earlier changes. Resend each score from its
+		 * existing owner, including when nobody is currently scoring. */
+		Player **players = playerGetAll();
+		int hostOwned = kothPointStacking && kothUseTeams();
+		int i;
+		for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+			Player *player = players[i];
+			if (player && (hostOwned ? gameAmIHost() : player->isLocal))
+				broadcastScore(player->mpIndex);
+		}
+#if KOTH_ENABLE_HILL_SYNC
+		if (gameAmIHost())
+			kothBroadcastHillIndex(kothGetActiveHillIndex());
+#endif
         kothInvalidateScoreboardCache();
 #ifdef KOTH_DEBUG
         // KOTHDBUG: trace timer every tick (host only) to see countdown activity

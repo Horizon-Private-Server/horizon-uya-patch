@@ -381,6 +381,8 @@ VARIABLE_FUNCTION(colorLerp, vaColorLerpFunc)
 	FUNCTION(internal_uiChangeTeamSkinDialog, 0x00684dd0)
 	FUNCTION(internal_uiInvitePlayersDialog, 0x006848d0)
 #endif
+VARIABLE_FUNCTION(uiSetImage, vaUiSetImage)
+VARIABLE_FUNCTION(internal_uiPlaySound, vaUiPlaySound)
 VARIABLE_FUNCTION(internal_uiShowPopup, vaUIShowPopup)
 FUNCTION(uiShowHelpPopup, 0x00540140) # Not Ported (For in game)
 VARIABLE_FUNCTION(uiMsgString, vaUiMsgStringFunc)

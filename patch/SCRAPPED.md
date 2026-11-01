@@ -551,3 +551,72 @@ void patchAFK(void)
 	}
 }
 ```
+
+# End Game When the Last Opposing Team Leaves
+path: `horizon-uya-patch/patch/join.c:global variables`
+```c
+static int joinHadOpponents;
+```
+path: `horizon-uya-patch/patch/join.c`
+The previous `joinUpdateHost` implementation is preserved below. The opposing-team departure check worked in the two-player CTF test, but is disabled for now. Host migration and world-report handling remain active.
+```c
+/*
+ * NAME : joinUpdateHost
+ * DESCRIPTION : Keep native host migration and end games whose last opposing team departed.
+ * NOTES : A game that never had opposing teams may continue with one team.
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static void joinUpdateHost(GameSettings* settings, int supported)
+{
+	if (!settings || !isInGame()) {
+		joinHadOpponents = 0;
+		joinPreviousHost = -1;
+		return;
+	}
+	joinKeepWorldOnLeave = 0;
+	if (!supported)
+		return;
+	if (joinHostLoadTime != settings->GameLoadStartTime) {
+		joinHostLoadTime = settings->GameLoadStartTime;
+		joinHadOpponents = 0;
+		joinPreviousHost = -1;
+	}
+	u32 teams = 0;
+	int otherClients = 0;
+	int remaining = -1;
+	int i;
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		int client = settings->PlayerClients[i];
+		int team = settings->PlayerTeams[i];
+		if (client < 0 || settings->PlayerAccountIds[i] < 0)
+			continue;
+		if (client != GAME_CLIENT_ID)
+			++otherClients;
+		if (team >= 0 && team < GAME_MAX_PLAYERS) {
+			teams |= 1 << team;
+			remaining = i;
+		}
+	}
+	joinKeepWorldOnLeave = otherClients > 0;
+	if (teams & (teams - 1))
+		joinHadOpponents = 1;
+	int host = gameGetHostId();
+	if (joinPreviousHost >= 0 && joinPreviousHost != host && gameAmIHost()) {
+		joinLastTimeSent = 0;
+		((void (*)(void))JOIN_FORCE_WORLD_REPORT)();
+	}
+	joinPreviousHost = host;
+	if (joinHadOpponents && teams && !(teams & (teams - 1)) && gameAmIHost()) {
+		GameData* game = gameGetData();
+		GameOptions* options = gameGetOptions();
+		if (!game || !options)
+			return;
+		game->winningTeam = settings->PlayerTeams[remaining];
+		game->winningPlayer = options->GameFlags.MultiplayerGameFlags.Teams ? -1 : remaining;
+		joinKeepWorldOnLeave = 0;
+		gameEnd(GAME_END_TEAM_WIN);
+	}
+}
+```
