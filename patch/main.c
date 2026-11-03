@@ -2133,10 +2133,13 @@ void patchHealthBoxPickup(void)
 /*
  * NAME :		healthBoxRadar
  * DESCRIPTION :
- * 			Placeholder: draws a dot on the radar map at each health box that is spawned (ready to pick up).
+ * 			Placeholder: draws a dot on the radar map at each health box, taken or not.
  * NOTES :
  * 			Same HUD widget pattern as radarInit in koth/game.c: one container under the radar root,
  * 			one rectangle per box, created once and reused. Boxes past HEALTH_BOX_RADAR_MAX are not drawn.
+ * 			A box moby lives for the whole match: a pickup moves it to state 6, the respawn event back to 4
+ * 			(FUN_00422c58 / event handler FUN_00422850, bakisi NTSC); it is only deleted at load (state 0)
+ * 			when the mode has no health boxes, and mobyFindNextByOClass skips deleted mobies.
  * ARGS : 
  * RETURN :
  * AUTHOR :
@@ -2144,7 +2147,7 @@ void patchHealthBoxPickup(void)
 #define HEALTH_BOX_RADAR_MAX			(16)
 #define HEALTH_BOX_RADAR_CONTAINER_ID	(0x48504200) // "HPB" -- unique vs KOTH/Juggernaut ids
 #define HEALTH_BOX_RADAR_SPRITE			(SPRITE_HUD_DOT)
-#define HEALTH_BOX_RADAR_COLOR			(0x80ff0000) // blue (ABGR, as TEAM_COLORS)
+#define HEALTH_BOX_RADAR_COLOR			(0x8000ff00) // green (ABGR, as TEAM_COLORS)
 #define HEALTH_BOX_RADAR_SIZE			(0.015)
 
 extern void hudCreateContainer(HANDLE_ID handle_id);
@@ -2189,10 +2192,10 @@ void healthBoxRadar(void)
 
 	healthBoxRadarInit();
 
-	// one dot per spawned box (state 4 = sitting there, ready); hidden while it respawns
+	// one dot per box for the whole match
 	Moby* moby = mobyListGetStart();
 	while (count < HEALTH_BOX_RADAR_MAX && (moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP))) {
-		if (!mobyIsDestroyed(moby) && moby->state == 4) {
+		if (!mobyIsDestroyed(moby)) {
 			HANDLE_ID id = HEALTH_BOX_RADAR_CONTAINER_ID + 1 + count;
 			gfxWStoMapSpace(moby->position, &x, &y);
 			if (x < 0) x = 0; else if (x > 1) x = 1;
