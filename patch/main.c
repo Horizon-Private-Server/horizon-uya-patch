@@ -785,7 +785,7 @@ void patchWeaponShotLag(void)
  * 			can leave a light on the ground for good, which also lags players near it.
  * NOTES :
  * 			First address: "jal CreatePointLight" becomes "li v0, -1" (no light id).
- * 			Second address: "li v1, 0x1e" becomes "li v1, 0" (no light timer).
+ * 			Second address: "li v1, 0x1e" (NTSC; "li v1, 0x19" on PAL) becomes "li v1, 0" (no light timer).
  * ARGS : 
  * RETURN :
  * AUTHOR :
@@ -797,8 +797,13 @@ void patchFluxIllumination(void)
 	if (!createAddr || !timerAddr)
 		return;
 
-	// only when both still hold the game's own instructions (jal, li v1, 0x1e)
-	if ((*(u32*)createAddr >> 26) == 0x03 && *(u32*)timerAddr == 0x2403001E) {
+	// only when both still hold the game's own instructions (jal, li v1, timer)
+#if UYA_PAL
+	u32 timerOp = 0x24030019; // li v1, 0x19 (25 frames at 50 fps)
+#else
+	u32 timerOp = 0x2403001E; // li v1, 0x1e (30 frames at 60 fps)
+#endif
+	if ((*(u32*)createAddr >> 26) == 0x03 && *(u32*)timerAddr == timerOp) {
 		POKE_U32(createAddr, 0x2402FFFF); // li v0, -1
 		POKE_U32(timerAddr, 0x24030000); // li v1, 0
 	}
@@ -2123,6 +2128,85 @@ void patchHealthBoxPickup(void)
 			++moby;
 		}
 	}
+}
+
+/*
+ * NAME :		healthBoxRadar
+ * DESCRIPTION :
+ * 			Placeholder: draws a dot on the radar map at each health box that is spawned (ready to pick up).
+ * NOTES :
+ * 			Same HUD widget pattern as radarInit in koth/game.c: one container under the radar root,
+ * 			one rectangle per box, created once and reused. Boxes past HEALTH_BOX_RADAR_MAX are not drawn.
+ * ARGS : 
+ * RETURN :
+ * AUTHOR :
+ */
+#define HEALTH_BOX_RADAR_MAX			(16)
+#define HEALTH_BOX_RADAR_CONTAINER_ID	(0x48504200) // "HPB" -- unique vs KOTH/Juggernaut ids
+#define HEALTH_BOX_RADAR_SPRITE			(SPRITE_HUD_DOT)
+#define HEALTH_BOX_RADAR_COLOR			(0x80ff0000) // blue (ABGR, as TEAM_COLORS)
+#define HEALTH_BOX_RADAR_SIZE			(0.015)
+
+extern void hudCreateContainer(HANDLE_ID handle_id);
+
+static int healthBoxRadarInitialized = 0;
+
+static void healthBoxRadarInit(void)
+{
+	int i;
+
+	// Reuse the widgets once they exist; recreating them can corrupt the HUD tree.
+	// Checked even when not initialized: after a patch reload mid-game the widgets from the old patch
+	// are still in the HUD. Rebuild only when the HUD was torn down underneath us (map load/reset).
+	if (hudSetFlags(HEALTH_BOX_RADAR_CONTAINER_ID, 1, true)) {
+		healthBoxRadarInitialized = 1;
+		return;
+	}
+	healthBoxRadarInitialized = 0;
+
+	hudCreateContainer(HEALTH_BOX_RADAR_CONTAINER_ID);
+	hudSetFlags(HEALTH_BOX_RADAR_CONTAINER_ID, 1, true);
+	hudAddToContainer(HUD_RADAR_ROOT, HEALTH_BOX_RADAR_CONTAINER_ID);
+	for (i = 0; i < HEALTH_BOX_RADAR_MAX; ++i) {
+		HANDLE_ID id = HEALTH_BOX_RADAR_CONTAINER_ID + 1 + i;
+		if (hudCreateRectangle(0.05, 0.05, HEALTH_BOX_RADAR_SIZE, HEALTH_BOX_RADAR_SIZE, id, HEALTH_BOX_RADAR_COLOR, HEALTH_BOX_RADAR_SPRITE))
+			hudAddToContainer(HEALTH_BOX_RADAR_CONTAINER_ID, id);
+		hudSetFlags(id, 1, false);
+	}
+
+	healthBoxRadarInitialized = 1;
+}
+
+void healthBoxRadar(void)
+{
+	float x, y;
+	int count = 0;
+
+	if (!isInGame()) {
+		healthBoxRadarInitialized = 0;
+		return;
+	}
+
+	healthBoxRadarInit();
+
+	// one dot per spawned box (state 4 = sitting there, ready); hidden while it respawns
+	Moby* moby = mobyListGetStart();
+	while (count < HEALTH_BOX_RADAR_MAX && (moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP))) {
+		if (!mobyIsDestroyed(moby) && moby->state == 4) {
+			HANDLE_ID id = HEALTH_BOX_RADAR_CONTAINER_ID + 1 + count;
+			gfxWStoMapSpace(moby->position, &x, &y);
+			if (x < 0) x = 0; else if (x > 1) x = 1;
+			if (y < 0) y = 0; else if (y > 1) y = 1;
+			hudSetPosition(x, y, id);
+			hudSetFlags(id, 1, true);
+			++count;
+		}
+		++moby;
+	}
+
+	// hide the slots without a box
+	for (; count < HEALTH_BOX_RADAR_MAX; ++count)
+		hudSetFlags(HEALTH_BOX_RADAR_CONTAINER_ID + 1 + count, 1, false);
 }
 
 /*
@@ -3959,6 +4043,9 @@ int main(void)
 
 		// Patch Health Box pickups: host authoritative, requested by the player's own client.
 		patchHealthBoxPickup();
+
+		// Placeholder: mark spawned health boxes on the radar map.
+		healthBoxRadar();
 
 		// Never let a hero gadget moby exist without its class (PostUpdateMoby blue screen).
 		patchGadgetMobyClassGuard();

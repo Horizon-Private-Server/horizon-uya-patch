@@ -278,7 +278,7 @@ VariableAddress_t vaGadgetTransitions_Hook = {
 	.CommandCenter = 0x005187b4,
 	.BlackwaterDocks = 0x0051aff4,
 	.AquatosSewers = 0x0051a334,
-	.MarcadiaPalace = 0x00519d8c,
+	.MarcadiaPalace = 0x00519c74,
 #endif
 };
 

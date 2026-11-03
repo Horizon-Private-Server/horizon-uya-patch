@@ -1505,7 +1505,6 @@ VariableAddress_t vaFluxIllumination2_Addr = {
 //=============  patchHealthBoxPickup
 //================================================
 // pickup eligibility check: int (Player* hero, Moby* pickup)
-// Only NTSC Bakisi is known; 0 disables the health box logic on that map.
 VariableAddress_t vaPickupCanGive_Func = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -1535,7 +1534,6 @@ VariableAddress_t vaPickupCanGive_Func = {
 };
 
 // pickup guber master update: "jal pickupCanGive" (grants to any hero through event 1)
-// Only NTSC Bakisi is known; 0 disables the health box logic on that map.
 VariableAddress_t vaPickupCanGive_MasterHook = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -1564,7 +1562,6 @@ VariableAddress_t vaPickupCanGive_MasterHook = {
 #endif
 };
 // pickup moby update, state 4: "jal pickupCanGive" (local hero touches -> state 5, 90 frame self heal)
-// Only NTSC Bakisi is known; 0 disables the health box logic on that map.
 VariableAddress_t vaPickupCanGive_LocalHook = {
 #if UYA_PAL
 	.Lobby = 0,
@@ -1594,7 +1591,6 @@ VariableAddress_t vaPickupCanGive_LocalHook = {
 };
 
 // GuberEvent::FindEvent(Guber*, int eventId, int pendingOnly)
-// Only NTSC Bakisi is known; 0 disables the health box logic on that map.
 VariableAddress_t vaGuberFindEvent_Func = {
 #if UYA_PAL
 	.Lobby = 0x00662678,
