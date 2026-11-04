@@ -134,9 +134,7 @@ int isConfigMenuActive = 0;
 int redownloadCustomModeBinaries = 0;
 char weaponOrderBackup[2][3] = { {0,0,0}, {0,0,0} };
 float lastFps = 0;
-int renderTimeMs = 0;
 float averageRenderTimeMs = 0;
-int updateTimeMs = 0;
 float averageUpdateTimeMs = 0;
 const char * patchStr = "PATCH CONFIG";
 #if UYA_PAL
@@ -793,7 +791,7 @@ void patchLevelOfDetail(void)
 {
 	if (!patched.config.levelOfDetail) {
 		u32 hook = GetAddress(&vaLevelOfDetail_Hook);
-		if (*(u32*)hook == 0x02C3B020) {
+		if (*(u32*)hook == 0x02c3b020) {
 			HOOK_J(hook, &_correctTieLod);
 			// patch jump instruction in correctTieLod to jump back to needed address.
 			u32 val = ((u32)hook + 0x8);
@@ -805,70 +803,42 @@ void patchLevelOfDetail(void)
 
 	int lod = config.levelOfDetail;
 	int lodChanged = lod != lastLodLevel;
+	int terrainTiesDistance;
+	int shrubDistance;
 	switch (lod) {
 		case 0: // Potato
-		{
 			_lodScale = 0.2;
-			int TerrainTiesDistance = 320;
-			int ShrubDistance = 500;
-			if (lodChanged) {
-				u32 LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
-				u32 LOD_Ties = GetAddress(&vaLevelOfDetail_Ties);
-				u32 LOD_Terrain = GetAddress(&vaLevelOfDetail_Terrain);
-				*(float*)LOD_Shrubs = ShrubDistance;
-				*(u32*)LOD_Ties = TerrainTiesDistance;
-				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
-			}
+			terrainTiesDistance = 320;
+			shrubDistance = 500;
 			break;
-		}
 		case 1: // Low
-				{
 			_lodScale = 0.4;
-			int TerrainTiesDistance = 480;
-			int ShrubDistance = 250;
-			if (lodChanged) {
-				u32 LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
-				u32 LOD_Ties = GetAddress(&vaLevelOfDetail_Ties);
-				u32 LOD_Terrain = GetAddress(&vaLevelOfDetail_Terrain);
-				*(float*)LOD_Shrubs = ShrubDistance;
-				*(u32*)LOD_Ties = TerrainTiesDistance;
-				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
-			}
+			terrainTiesDistance = 480;
+			shrubDistance = 250;
 			break;
-		}
 		case 2: // Normal
-		{
 			_lodScale = 1.0;
-			int TerrainTiesDistance = 960;
-			int ShrubDistance = 500;
-			if (lodChanged) {
-				u32 LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
-				u32 LOD_Ties = GetAddress(&vaLevelOfDetail_Ties);
-				u32 LOD_Terrain = GetAddress(&vaLevelOfDetail_Terrain);
-				*(float*)LOD_Shrubs = ShrubDistance;
-				*(u32*)LOD_Ties = TerrainTiesDistance;
-				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
-			}
-
+			terrainTiesDistance = 960;
+			shrubDistance = 500;
 			break;
-		}
 		case 3: // High
-		{
 			_lodScale = 5.0;
-			int TerrainTiesDistance = 4800;
-			int ShrubDistance = 2500;
-			if (lodChanged) {
-				u32 LOD_Shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
-				u32 LOD_Ties = GetAddress(&vaLevelOfDetail_Ties);
-				u32 LOD_Terrain = GetAddress(&vaLevelOfDetail_Terrain);
-				*(float*)LOD_Shrubs = ShrubDistance;
-				*(u32*)LOD_Ties = TerrainTiesDistance;
-				*(float*)LOD_Terrain = TerrainTiesDistance * 1024;
-			}
+			terrainTiesDistance = 4800;
+			shrubDistance = 2500;
 			break;
-		}
+		default:
+			lastLodLevel = config.levelOfDetail;
+			return;
 	}
-	// backup lod
+
+	if (lodChanged) {
+		u32 shrubs = GetAddress(&vaLevelOfDetail_Shrubs);
+		u32 ties = GetAddress(&vaLevelOfDetail_Ties);
+		u32 terrain = GetAddress(&vaLevelOfDetail_Terrain);
+		*(float*)shrubs = shrubDistance;
+		*(u32*)ties = terrainTiesDistance;
+		*(float*)terrain = terrainTiesDistance * 1024;
+	}
 	lastLodLevel = config.levelOfDetail;
 }
 
@@ -1088,7 +1058,7 @@ void runFpsCounter_drawHook(void)
 	((void (*)(void))GetAddress(&vaFpsCounter_DrawFunc))();
 	long t1 = timerGetSystemTime();
 
-	renderTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
+	int renderTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
 
 	renderTimeCounterMs += renderTimeMs;
 	++frames;
@@ -1121,7 +1091,7 @@ void runFpsCounter_updateHook(void)
 	((void (*)(void))GetAddress(&vaFpsCounter_UpdateFunc))();
 	long t1 = timerGetSystemTime();
 
-	updateTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
+	int updateTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
 
 	updateTimeCounterMs += updateTimeMs;
 	frames++;
