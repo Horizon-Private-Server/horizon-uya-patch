@@ -33,6 +33,9 @@ static u16 configClosingButtons;
 static int configReleaseInput;
 int preset = 0;
 
+// The game-mode label is rewritten when drawn; other menu labels are immutable.
+static char gameModeOverrideLabel[40] = "Gamemode Override";
+
 int dlBytesReceived = 0;
 int dlTotalBytes = 0;
 int dlIsActive = 0;
@@ -155,7 +158,6 @@ void downloadPatchSelectHandler(TabElem_t* tab, MenuElem_t* element);
 void tabDefaultStateHandler(TabElem_t* tab, int * state);
 void tabGameSettingsStateHandler(TabElem_t* tab, int * state);
 void tabCustomMapsStateHandler(TabElem_t* tab, int * state);
-void tabGameSettingsHelpStateHandler(TabElem_t* tab, int * state);
 
 // navigation functions
 void navMenu(TabElem_t* tab, int direction, int loop);
@@ -177,6 +179,22 @@ void sendClientVoteForEnd(void);
 extern int scavHuntEnabled;
 extern VoteToEndState_t voteToEndState;
 
+static const char * const loadoutWeaponItems[] = {
+	"Off", "N60 Storm", "Blitz Cannon", "Flux Rifle", "Mini Rocket Tube", "Gravity Bomb", "Mine Glove", "Lava Gun", "Morph-O-Ray", "Holo Shield Glove"
+};
+
+static const char * const kothRespawnDistanceItems[] = {
+	"40", "60", "80", "120", "500", "10", "20", "30"
+};
+
+static const char * const mapScoreButtonItems[] = {
+	"Default", "Select", "L3", "R3"
+};
+
+static const char * const pickupRespawnTimerItems[] = {
+	"30", "0", "5", "10", "15", "20", "25"
+};
+
 MenuElem_ListData_t dataLevelOfDetail = {
     .value = &config.levelOfDetail,
     .stateHandler = NULL,
@@ -185,21 +203,21 @@ MenuElem_ListData_t dataLevelOfDetail = {
 #else
     .count = 3,
 #endif
-    .items = { "Potato", "Low", "Normal", "High" }
+    .items = (const char * const[]) { "Potato", "Low", "Normal", "High" }
 };
 
 MenuElem_ListData_t dataPlayerSyncRate = {
     .value = &config.playerSyncRate,
     .stateHandler = NULL,
     .count = 4,
-    .items = { "High", "Med", "Low", "Very Low" }
+    .items = (const char * const[]) { "High", "Med", "Low", "Very Low" }
 };
 
 MenuElem_ListData_t dataGameServers = {
     .value = &config.preferredGameServer,
     .stateHandler = NULL,
     .count = 2,
-    .items = {
+    .items = (const char * const[]) {
       "US Central",
       "Europe"
     }
@@ -216,7 +234,7 @@ MenuElem_ListData_t dataHypershotEquipButton = {
   .value = &config.hypershotEquipButton,
   .stateHandler = NULL,
   .count = 8,
-  .items = {
+  .items = (const char * const[]) {
     "None",
     "Circle",
     "D-Pad Left",
@@ -239,7 +257,7 @@ MenuElem_ListData_t dataDeadzone = {
     .value = &config.controllerDeadzone,
     .stateHandler = NULL,
     .count = 11,
-    .items = {
+    .items = (const char * const[]) {
       "Vanilla - 38%",      // 37.8%
       "30%",                // 29.9%
       "20%",                // 19.7%
@@ -258,54 +276,21 @@ MenuElem_ListData_t dataCycleWeapon1 = {
     .value = &config.cycleWeapon1,
     .stateHandler = NULL,
     .count = 10,
-    .items = {
-      "Off",
-      "N60 Storm",
-      "Blitz Cannon",
-      "Flux Rifle",
-      "Mini Rocket Tube",
-      "Gravity Bomb",
-      "Mine Glove",
-      "Lava Gun",
-      "Morph-O-Ray",
-      "Holo Shield Glove"
-    }
+    .items = loadoutWeaponItems
 };
 
 MenuElem_ListData_t dataCycleWeapon2 = {
     .value = &config.cycleWeapon2,
     .stateHandler = NULL,
     .count = 10,
-    .items = {
-      "Off",
-      "N60 Storm",
-      "Blitz Cannon",
-      "Flux Rifle",
-      "Mini Rocket Tube",
-      "Gravity Bomb",
-      "Mine Glove",
-      "Lava Gun",
-      "Morph-O-Ray",
-      "Holo Shield Glove"
-    }
+    .items = loadoutWeaponItems
 };
 
 MenuElem_ListData_t dataCycleWeapon3 = {
     .value = &config.cycleWeapon3,
     .stateHandler = NULL,
     .count = 10,
-    .items = {
-      "Off",
-      "N60 Storm",
-      "Blitz Cannon",
-      "Flux Rifle",
-      "Mini Rocket Tube",
-      "Gravity Bomb",
-      "Mine Glove",
-      "Lava Gun",
-      "Morph-O-Ray",
-      "Holo Shield Glove"
-    }
+    .items = loadoutWeaponItems
 };
 
 // map select list
@@ -366,14 +351,14 @@ MenuElem_ListData_t dataKothScoreLimit = {
     .value = &gameConfig.grKothScoreLimit,
     .stateHandler = menuStateHandler_KOTH,
     .count = 14,
-    .items = { "Off", "50", "100", "150", "200", "250", "300", "350", "400", "450", "500", "750", "1000", "2000" }
+    .items = (const char * const[]) { "Off", "50", "100", "150", "200", "250", "300", "350", "400", "450", "500", "750", "1000", "2000" }
 };
 
 MenuElem_ListData_t dataKothHillDuration = {
     .value = &gameConfig.grKothHillDuration,
     .stateHandler = menuStateHandler_KOTH,
     .count = 6,
-    .items = { "60", "90", "120", "180", "240", "300" }
+    .items = (const char * const[]) { "60", "90", "120", "180", "240", "300" }
 };
 
 // KOTH hill size scale options (XY). Order must match KOTH_HILL_SCALE_TABLE in koth/game.c.
@@ -381,91 +366,91 @@ MenuElem_ListData_t dataKothHillSize = {
     .value = &gameConfig.grKothHillSizeIdx,
     .stateHandler = menuStateHandler_KOTH,
     .count = 7,
-    .items = { "1x", "1.5x", "2x", "2.5x", "3x", "3.5x", "4x" }
+    .items = (const char * const[]) { "1x", "1.5x", "2x", "2.5x", "3x", "3.5x", "4x" }
 };
 
 MenuElem_ListData_t dataKothRespawnOutside = {
     .value = &gameConfig.grKothRespawnOutside,
     .stateHandler = menuStateHandler_KOTH,
     .count = 8,
-    .items = { "40", "60", "80", "120", "500", "10", "20", "30" }
+    .items = kothRespawnDistanceItems
 };
 
 MenuElem_ListData_t dataKothRespawnInside = {
     .value = &gameConfig.grKothRespawnInside,
     .stateHandler = menuStateHandler_KOTH,
     .count = 8,
-    .items = { "40", "60", "80", "120", "500", "10", "20", "30" }
+    .items = kothRespawnDistanceItems
 };
 
 MenuElem_ListData_t dataV2_Setting = {
     .value = &gameConfig.grV2s,
     .stateHandler = NULL,
     .count = 3,
-    .items = { "On", "Off", "Always" }
+    .items = (const char * const[]) { "On", "Off", "Always" }
 };
 
 MenuElem_ListData_t dataVampire = {
     .value = &gameConfig.grVampire,
     .stateHandler = NULL,
     .count = 5,
-    .items = { "Off", "25%", "50%", "75%", "100%" }
+    .items = (const char * const[]) { "Off", "25%", "50%", "75%", "100%" }
 };
 
 MenuElem_ListData_t dataSetGatlingTurretHealth = {
     .value = &gameConfig.grSetGatlingTurretHealth,
     .stateHandler = NULL,
     .count = 10,
-    .items = { "Default", ".5x", "1.5x", "2x", "3x", "4x", "5x", "6x", "7x", "8x" }
+    .items = (const char * const[]) { "Default", ".5x", "1.5x", "2x", "3x", "4x", "5x", "6x", "7x", "8x" }
 };
 
 MenuElem_ListData_t dataSmallTurrets = {
     .value = &gameConfig.grNoBaseDefense_SmallTurrets,
     .stateHandler = NULL,
     .count = 3,
-    .items = { "On", "No Base Turrets", "Off" }
+    .items = (const char * const[]) { "On", "No Base Turrets", "Off" }
 };
 
 MenuElem_ListData_t dataRespawnTimer_Player = {
     .value = &gameConfig.grRespawnTimer_Player,
     .stateHandler = NULL,
     .count = 13,
-    .items = { "1.5", "2", "2.5", "3", "4", "5", "6", "7", "8", "9", "10", "0", "1", }
+    .items = (const char * const[]) { "1.5", "2", "2.5", "3", "4", "5", "6", "7", "8", "9", "10", "0", "1", }
 };
 
 MenuElem_ListData_t dataRadarBlipsDistance = {
     .value = &gameConfig.grRadarBlipsDistance,
     .stateHandler = NULL,
     .count = 6,
-    .items = { "Short", "2x", "4x", "Always", "Off", ".5x" }
+    .items = (const char * const[]) { "Short", "2x", "4x", "Always", "Off", ".5x" }
 };
 
 MenuElem_ListData_t dataMapScore_MapAccess = {
     .value = &config.mapScoreToggle_MapBtn,
     .stateHandler = NULL,
     .count = 4,
-    .items = { "Default", "Select", "L3", "R3" }
+    .items = mapScoreButtonItems
 };
 
 MenuElem_ListData_t dataMapScore_ScoreboardAccess = {
     .value = &config.mapScoreToggle_ScoreBtn,
     .stateHandler = NULL,
     .count = 4,
-    .items = { "Default", "Select", "L3", "R3" }
+    .items = mapScoreButtonItems
 };
 
 MenuElem_ListData_t dataKothScrollSpeed = {
     .value = &config.kothScrollSpeed,
     .stateHandler = NULL,
     .count = 4,
-    .items = { "100%", "50%", "25%", "0%" }
+    .items = (const char * const[]) { "100%", "50%", "25%", "0%" }
 };
 
 MenuElem_ListData_t dataKothHillTransparency = {
     .value = &config.kothHillTransparency,
     .stateHandler = NULL,
     .count = 5,
-    .items = { "100%", "75%", "50%", "25%", "10%" }
+    .items = (const char * const[]) { "100%", "75%", "50%", "25%", "10%" }
 };
 
 MenuElem_RangeData_t dataKothHillFxId = {
@@ -479,33 +464,33 @@ MenuElem_ListData_t dataGameConfigPreset = {
     .value = &preset,
     .stateHandler = NULL,
     .count = 6,
-    .items = { "None", "Comp (Base)", "Comp (No Base)", "1v1", "Bot", "Siege"}
+    .items = (const char * const[]) { "None", "Comp (Base)", "Comp (No Base)", "1v1", "Bot", "Siege"}
 };
 
 MenuElem_ListData_t dataRespawnTimer_HealthBoxes = {
     .value = &gameConfig.grRespawnTimer_HealthBoxes,
     .stateHandler = NULL,
     .count = 7,
-    .items = { "30", "0", "5", "10", "15", "20", "25" }
+    .items = pickupRespawnTimerItems
 };
 MenuElem_ListData_t dataRespawnTimer_WeaponCrates = {
     .value = &gameConfig.grRespawnTimer_WeaponCrates,
     .stateHandler = NULL,
     .count = 7,
-    .items = { "30", "0", "5", "10", "15", "20", "25" }
+    .items = pickupRespawnTimerItems
 };
 MenuElem_ListData_t dataRespawnTimer_AmmoPickups = {
     .value = &gameConfig.grRespawnTimer_AmmoPickups,
     .stateHandler = NULL,
     .count = 7,
-    .items = { "30", "0", "5", "10", "15", "20", "25" }
+    .items = pickupRespawnTimerItems
 };
 
 MenuElem_ListData_t dataHealthBoxes = {
     .value = &gameConfig.grHealthBoxes,
     .stateHandler = NULL,
     .count = 3,
-    .items = { "On", "No Glass Container", "Off" }
+    .items = (const char * const[]) { "On", "No Glass Container", "Off" }
 };
 
 MenuElem_RangeData_t dataNodeSelectTimer = {
@@ -528,7 +513,7 @@ MenuElem_ListData_t dataAllNodesTimer = {
     .value = &gameConfig.grAllNodesTimer,
     .stateHandler = NULL,
     .count = 9,
-    .items = { "Off", "30 Seconds", "1 Minute", "1.5 Minutes", "2 Minutes", "2.5 Minutes", "3 Minutes", "3.5 Minutes", "4 Minutes" }
+    .items = (const char * const[]) { "Off", "30 Seconds", "1 Minute", "1.5 Minutes", "2 Minutes", "2.5 Minutes", "3 Minutes", "3.5 Minutes", "4 Minutes" }
 };
 
 // Bot options
@@ -536,28 +521,28 @@ MenuElem_ListData_t botNumToInvite = {
     .value = &botConfig.numToInvite,
     .stateHandler = NULL,
     .count = 8,
-    .items = { "All slots", "1", "2", "3", "4", "5", "6", "7" }
+    .items = (const char * const[]) { "All slots", "1", "2", "3", "4", "5", "6", "7" }
 };
 
 MenuElem_ListData_t botMode = {
     .value = &botConfig.mode,
     .stateHandler = NULL,
     .count = 5,
-    .items = { "Dynamic", "Static", "Training Passive", "Training Idle", "God" }
+    .items = (const char * const[]) { "Dynamic", "Static", "Training Passive", "Training Idle", "God" }
 };
 
 MenuElem_ListData_t botDifficulty = {
     .value = &botConfig.difficulty,
     .stateHandler = NULL,
     .count = 10,
-    .items = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
+    .items = (const char * const[]) { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
 };
 
 MenuElem_ListData_t botProfile = {
     .value = &botConfig.profile,
     .stateHandler = NULL,
     .count = 10,
-    .items = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
+    .items = (const char * const[]) { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }
 };
 
 // General
@@ -620,7 +605,7 @@ MenuElem_t menuElementsGameSettings[] = {
 
   // { "Game Settings", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   // { "Map Override", listActionHandler, menuStateAlwaysEnabledHandler, &dataCustomMaps, "Play on any of the custom maps from the Horizon Map Pack. Visit https://rac-horizon.com to download the map pack." },
-  { "Gamemode Override", gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
+	{ gameModeOverrideLabel, gmOverrideListActionHandler, menuStateHandler_GameModeOverride, &dataCustomModes, "Change to one of the Horizon Custom Gamemodes." },
   { "KOTH Points", listActionHandler, menuStateHandler_KOTH, &dataKothScoreLimit, "Points to win (0 uses timer)." },
   { "KOTH Hill Duration", listActionHandler, menuStateHandler_KOTH, &dataKothHillDuration, "Time a hill stays active." },
   { "KOTH Hill Size", listActionHandler, menuStateHandler_KOTH, &dataKothHillSize, "Scale hill radius (XY)." },
@@ -680,13 +665,6 @@ MenuElem_t menuElementsGameSettings[] = {
   // { "CTF: Custom Flag Logic", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Replaces original CTF code for hopefully less lag." },
 };
 
-// Game Settings (not in staging)
-MenuElem_t menuElementsGameSettingsHelp[] = {
-  { "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Please create a game to configure", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "the custom game settings.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-};
-
 char* mapOverrideSelectedMapThumbnail = NULL;
 int mapOverrideSelectedMapHasThumbnail = 0;
 char mapOverrideSelectedMapAuthor[32] = {};
@@ -711,22 +689,30 @@ MenuElem_t menuElementsBotSettings[] = {
   { "Custom Profile", listActionHandler, menuStateAlwaysEnabledHandler, &botProfile, "Bot Profile you want to invite (0=any). Only applies when inviting 1 bot" },
 };
 
-// Bot Settings (not in staging)
-MenuElem_t menuElementsBotSettingsHelp[] = {
-  { "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "Please create a game to configure", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
-  { "bots.", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+// Shared alternate content; the real tabs retain their selection and scroll state.
+static MenuElem_t menuElementsTabHelp[] = {
+	{ "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+	{ "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+	{ "", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_LABEL },
+};
+static TabElem_t helpTab = {
+	NULL, tabDefaultStateHandler, menuElementsTabHelp,
+	sizeof(menuElementsTabHelp) / sizeof(MenuElem_t)
 };
 
+static const char * const gameSettingsHelpLines[] = {
+	"", "Please create a game to configure", "the custom game settings."
+};
+static const char * const botSettingsHelpLines[] = {
+	"", "Please create a game to configure", "bots."
+};
 
 // tab items
 TabElem_t tabElements[] = {
   { "General", tabDefaultStateHandler, menuElementsGeneral, sizeof(menuElementsGeneral)/sizeof(MenuElem_t) },
-  { "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t) },
-  { "Game Settings", tabGameSettingsHelpStateHandler, menuElementsGameSettingsHelp, sizeof(menuElementsGameSettingsHelp)/sizeof(MenuElem_t) },
+	{ "Game Settings", tabGameSettingsStateHandler, menuElementsGameSettings, sizeof(menuElementsGameSettings)/sizeof(MenuElem_t), .helpLines = gameSettingsHelpLines },
   { "Custom Maps", tabCustomMapsStateHandler, menuElementsGameSettingsCustomMaps, sizeof(menuElementsGameSettingsCustomMaps)/sizeof(MenuElem_t) },
-  { "Bots", tabGameSettingsStateHandler, menuElementsBotSettings, sizeof(menuElementsBotSettings)/sizeof(MenuElem_t) },
-  { "Bots", tabGameSettingsHelpStateHandler, menuElementsBotSettingsHelp, sizeof(menuElementsBotSettingsHelp)/sizeof(MenuElem_t) },
+	{ "Bots", tabGameSettingsStateHandler, menuElementsBotSettings, sizeof(menuElementsBotSettings)/sizeof(MenuElem_t), .helpLines = botSettingsHelpLines },
 };
 
 const int tabsCount = sizeof(tabElements)/sizeof(TabElem_t);
@@ -1182,13 +1168,20 @@ void menuStateHandler_BootMapDownloaderStateHandler(TabElem_t* tab, MenuElem_t* 
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
 }
 
-// 
+/*
+ * NAME : tabGameSettingsStateHandler
+ * DESCRIPTION : Keep settings tabs visible and restrict editing after staging.
+ * NOTES : Lobby help uses the same tab without exposing its setting controls.
+ * ARGS : tab, state
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void tabGameSettingsStateHandler(TabElem_t* tab, int * state)
 {
   GameSettings * gameSettings = gameGetSettings();
   if (!gameSettings)
   {
-    *state = ELEMENT_HIDDEN;
+		*state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE | ELEMENT_HELP;
   }
 
   // if game has started or not the host, disable editing
@@ -1215,16 +1208,6 @@ void tabCustomMapsStateHandler(TabElem_t* tab, int * state)
   } else {
     // if host, do all.
     *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
-  }
-}
-
-void tabGameSettingsHelpStateHandler(TabElem_t* tab, int * state)
-{
-  GameSettings * gameSettings = gameGetSettings();
-  if (!gameSettings) {
-    *state = ELEMENT_SELECTABLE | ELEMENT_VISIBLE | ELEMENT_EDITABLE;
-  } else {
-    *state = ELEMENT_HIDDEN;
   }
 }
 
@@ -1376,7 +1359,7 @@ void drawRangeMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_RangeDat
   gfxPixelSpaceBox(x, y - 4, w * v, h - 2, barColor);
 
   // draw name
-  if (strlen(rangeData->appendText) > 0)
+	if (rangeData->appendText && rangeData->appendText[0])
     sprintf(buf, "%d%s", *rangeData->value, rangeData->appendText);
   else
     sprintf(buf, "%d", *rangeData->value);
@@ -2325,7 +2308,7 @@ void gmOverrideListActionHandler(TabElem_t* tab, MenuElem_t* element, int action
   // update name to be based on current gamemode
   GameSettings* gs = gameGetSettings();
   if (gs && actionType == ACTIONTYPE_DRAW)
-    snprintf(element->name, 40, "%s override", gameGetGameModeName(gs->GameType));
+		snprintf(gameModeOverrideLabel, sizeof(gameModeOverrideLabel), "%s override", gameGetGameModeName(gs->GameType));
 
   // pass to default list action handler
   orderedListActionHandler(tab, element, actionType, actionArg);
@@ -2598,11 +2581,29 @@ void tabInput(TabElem_t* tab)
 		uiPlaySound(UI_SOUND_ID_NAV_UP_DOWN, 0);
 }
 
-//------------------------------------------------------------------------------
+/*
+ * NAME : drawTab
+ * DESCRIPTION : Draw tab content or its state-selected help text.
+ * NOTES : The help view preserves the real tab's selection and scroll state.
+ * ARGS : tab
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void drawTab(TabElem_t* tab)
 {
   if (!tab)
     return;
+
+	if (tab->helpLines) {
+		int tabState = 0;
+		tab->stateHandler(tab, &tabState);
+		if (tabState & ELEMENT_HELP) {
+			int line;
+			for (line = 0; line < 3; ++line)
+				menuElementsTabHelp[line].name = tab->helpLines[line];
+			tab = &helpTab;
+		}
+	}
 
   static int helpLastItemIdx = -1;
   static int helpItemCooldown1 = 0;
@@ -3223,14 +3224,20 @@ void configSendGameConfig(void)
   }
 }
 
-//------------------------------------------------------------------------------
+/*
+ * NAME : configTrySendGameConfig
+ * DESCRIPTION : Validate and save settings for the staging host.
+ * NOTES : A visible lobby help tab must not enable saving game settings.
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void configTrySendGameConfig(void)
 {
-  int state = 0;
+	GameSettings * gameSettings = gameGetSettings();
   int i = 0, j = 0;
-  // send game config to server for saving if tab is enabled
-  tabElements[1].stateHandler(&tabElements[1], &state);
-  if (state & ELEMENT_EDITABLE)
+	// Only the staging host can save settings, regardless of the visible tab.
+	if (gameSettings && gameSettings->GameLoadStartTime <= 0 && gameAmIHost())
   {
     // Generate a per-match seed for custom modes that rely on shared RNG (e.g. KOTH hill order).
     gameConfig.grSeed = ((int)gameGetTime() & 0x0FFFFFFF);
@@ -3252,6 +3259,14 @@ void configTrySendGameConfig(void)
 }
 
 //------------------------------------------------------------------------------
+/*
+ * NAME : configMenuDisable
+ * DESCRIPTION : Close the menu, apply the selected preset, and save settings.
+ * NOTES : Presets preserve settings they do not override.
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void configMenuDisable(void)
 {
   if (!isConfigMenuActive)
@@ -3269,173 +3284,66 @@ void configMenuDisable(void)
   if (gameAmIHost())
   {
     // force game config to preset
-        switch (preset)
-    {
-      case 1: // Comp (Base)
-      {
-        // Game Rules
-        gameConfig.grRadarBlipsDistance = 0; // Short
-        gameConfig.grRespawnTimer_Player = 0; // 1.5 Seconds
-        gameConfig.grRespawnInvincibility = 0; // Off
-        gameConfig.grDisablePenaltyTimers = 0; // On
-        gameConfig.grDisableWeaponPacks = 1; // Off
-        gameConfig.grV2s = 0; // On
-        gameConfig.grNoCooldown = 1; // Cooldown disabled
-        gameConfig.grFluxShotsAlwaysHit = 1; // Flux always hits
-        gameConfig.grFluxNikingDisabled = 1; // Niking disabled
-        gameConfig.grAutoRespawn = 0; // Off
-        gameConfig.grVampire = 0; // Off
-        gameConfig.grHealthBoxes = 1; // No glass container
-        gameConfig.grDisableWeaponCrates = 1; // Disabled
-        gameConfig.grDisableAmmoPickups = 1; // Disabled
-        gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
-        gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
-        gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
-        gameConfig.grNewPlayerSync = 1;
-        // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
-        gameConfig.grDisablePlayerTurrets = 1; // Disabled
-        gameConfig.grDestructableBridges = 0; // Enabled
-        // Base / Node mods
-        gameConfig.grSetGatlingTurretHealth = 1; // .5x
-        gameConfig.grBaseHealthPadActive = 0; // Off
-        gameConfig.grNoBaseDefense_Bots = 1; // Off
-        gameConfig.grNoBaseDefense_SmallTurrets = 2; // Off
-        // Party Rules
-        gameConfig.prChargebootForever = 0; // Off 
-        gameConfig.prLoadoutWeaponsOnly = 0; // Off
-        gameConfig.prSurvivor = 0; // Off
-        break;
-      }
-      case 2: // Comp (No Base)
-      {
-        // Game Rules
-        gameConfig.grRadarBlipsDistance = 0; // Short
-        gameConfig.grRespawnTimer_Player = 0; // 1.5 Seconds
-        gameConfig.grRespawnInvincibility = 0; // Off
-        gameConfig.grDisablePenaltyTimers = 1; // Off
-        gameConfig.grDisableWeaponPacks = 1; // Off
-        gameConfig.grV2s = 0; // On
-        gameConfig.grNoCooldown = 1; // Cooldown disabled
-        gameConfig.grFluxShotsAlwaysHit = 1; // Flux always hits
-        gameConfig.grFluxNikingDisabled = 1; // Niking disabled
-        gameConfig.grAutoRespawn = 0; // Off
-        gameConfig.grVampire = 0; // Off
-        gameConfig.grHealthBoxes = 1; // No glass container
-        gameConfig.grDisableWeaponCrates = 1; // Disabled
-        gameConfig.grDisableAmmoPickups = 1; // Disabled
-        gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
-        gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
-        gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
-        gameConfig.grNewPlayerSync = 1;
-        // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
-        gameConfig.grDisablePlayerTurrets = 1; // Disabled
-        gameConfig.grDestructableBridges = 0; // Enabled
-        // Base / Node mods
-        gameConfig.grSetGatlingTurretHealth = 1; // .5x
-        gameConfig.grBaseHealthPadActive = 0; // Off
-        gameConfig.grNoBaseDefense_Bots = 1; // Off
-        gameConfig.grNoBaseDefense_SmallTurrets = 2; // Off
-        // Party Rules
-        gameConfig.prChargebootForever = 0; // Off 
-        gameConfig.prLoadoutWeaponsOnly = 0; // Off
-        gameConfig.prSurvivor = 0; // Off
-        break;
-      }
-      case 3: // 1v1
-      {
-        gameConfig.grRadarBlipsDistance = 1; // Always
-        gameConfig.grRespawnTimer_Player = 11; // 0 Seconds
-        gameConfig.grHealthBoxes = 2; // Disabled
-        gameConfig.grDisableWeaponCrates = 1;
-        gameConfig.grDisableAmmoPickups = 1;
-        gameConfig.grNewPlayerSync = 1;
-        // gameConfig.grDisableDrones = 1;
-        gameConfig.grDisablePlayerTurrets = 1;
-        gameConfig.grDestructableBridges = 0; // Enabled
-        gameConfig.grV2s = 1; // Off
-        gameConfig.grNoCooldown = 1;
-        gameConfig.grVampire = 4; // 100%
-        gameConfig.grDisableWeaponPacks = 1;
-        gameConfig.grFluxShotsAlwaysHit = 1; // Flux always hits
-        gameConfig.grFluxNikingDisabled = 1; // Niking disabled
-        break;
-      }
-      case 4: // Bot
-      {
-        // Game Rules
-        gameConfig.grRadarBlipsDistance = 0; // Short
-        gameConfig.grRespawnTimer_Player = 0; // 1.5 Seconds
-        gameConfig.grRespawnInvincibility = 0; // Off
-        gameConfig.grDisablePenaltyTimers = 0; // On
-        gameConfig.grDisableWeaponPacks = 1; // Off
-        gameConfig.grV2s = 0; // On
-        gameConfig.grNoCooldown = 1; // Cooldown disabled
-        gameConfig.grFluxShotsAlwaysHit = 1; // Flux always hits
-        gameConfig.grFluxNikingDisabled = 1; // Niking disabled
-        gameConfig.grAutoRespawn = 0; // Off
-        gameConfig.grVampire = 0; // Off
-        gameConfig.grHealthBoxes = 1; // No glass container
-        gameConfig.grDisableWeaponCrates = 1; // Disabled
-        gameConfig.grDisableAmmoPickups = 1; // Disabled
-        gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
-        gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
-        gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
-        gameConfig.grNewPlayerSync = 0;
-        // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
-        gameConfig.grDisablePlayerTurrets = 1; // Disabled
-        gameConfig.grDestructableBridges = 1; // Disabled
-        // Base / Node mods
-        gameConfig.grSetGatlingTurretHealth = 1; // .5x
-        gameConfig.grBaseHealthPadActive = 0; // Off
-        gameConfig.grNoBaseDefense_Bots = 1; // Off
-        gameConfig.grNoBaseDefense_SmallTurrets = 2; // Off
-        // Party Rules
-        gameConfig.prChargebootForever = 0; // Off 
-        gameConfig.prLoadoutWeaponsOnly = 0; // Off
-        gameConfig.prSurvivor = 0; // Off
-        break;
-      }
-      case 5: // Siege
-      {
-        // Game Rules
-        gameConfig.grRadarBlipsDistance = 0; // Short
-        gameConfig.grRespawnTimer_Player = 2; // 2.5 Seconds
-        gameConfig.grRespawnInvincibility = 0; // Off
-        gameConfig.grDisablePenaltyTimers = 0; // On
-        gameConfig.grDisableWeaponPacks = 1; // Off
-        gameConfig.grV2s = 0; // On
-        gameConfig.grNoCooldown = 1; // Cooldown disabled
-        gameConfig.grFluxShotsAlwaysHit = 1; // Flux always hits
-        gameConfig.grFluxNikingDisabled = 1; // Niking disabled
-        gameConfig.grAutoRespawn = 0; // Off
-        gameConfig.grVampire = 0; // Off
-        gameConfig.grHealthBoxes = 1; // No glass container
-        gameConfig.grDisableWeaponCrates = 1; // Disabled
-        gameConfig.grDisableAmmoPickups = 1; // Disabled
-        gameConfig.grRespawnTimer_HealthBoxes = 5; // 20 sec
-        gameConfig.grRespawnTimer_WeaponCrates = 0; // 30 sec
-        gameConfig.grRespawnTimer_AmmoPickups = 0; // 30 sec
-        gameConfig.grNewPlayerSync = 0; // Off in case of vehicles
-        // gameConfig.grDisableDrones = 0; // Keep drones on. Not working yet
-        gameConfig.grDisablePlayerTurrets = 1; // Disabled
-        gameConfig.grDestructableBridges = 0; // Enabled
-        // Siege-specific settings
-        gameConfig.grNodeSelectTimer = 7; // 5 seconds to select a node
-        gameConfig.grAllNodesTimer = 2; // 1 minutes countdown when all nodes owned
-        gameConfig.grSiegeNoTies = 1; // No ties - team with most base damage wins
-        gameConfig.grSuicidePenaltyTimer = 3; // 0 seconds suicide penalty
-        // Base / Node mods
-        gameConfig.grSetGatlingTurretHealth = 4; // 3x
-        gameConfig.grBaseHealthPadActive = 0; // Off
-        gameConfig.grNoBaseDefense_Bots = 1; // Off
-        gameConfig.grNoBaseDefense_SmallTurrets = 2; // Off
-        // Party Rules
-        gameConfig.prChargebootForever = 0; // Off 
-        gameConfig.prLoadoutWeaponsOnly = 0; // Off
-        gameConfig.prSurvivor = 0; // Off
-        break;
-      }
-    }
+		switch (preset) {
+			case 1: // Comp (Base)
+			case 2: // Comp (No Base)
+			case 4: // Bot
+			case 5: // Siege
+			{
+				gameConfig.grRadarBlipsDistance = 0;
+				gameConfig.grRespawnInvincibility = 0;
+				gameConfig.grDisableWeaponPacks = 1;
+				gameConfig.grV2s = 0;
+				gameConfig.grNoCooldown = 1;
+				gameConfig.grFluxShotsAlwaysHit = 1;
+				gameConfig.grFluxNikingDisabled = 1;
+				gameConfig.grAutoRespawn = 0;
+				gameConfig.grVampire = 0;
+				gameConfig.grHealthBoxes = 1;
+				gameConfig.grDisableWeaponCrates = 1;
+				gameConfig.grDisableAmmoPickups = 1;
+				gameConfig.grRespawnTimer_HealthBoxes = 5;
+				gameConfig.grRespawnTimer_WeaponCrates = 0;
+				gameConfig.grRespawnTimer_AmmoPickups = 0;
+				gameConfig.grDisablePlayerTurrets = 1;
+				gameConfig.grBaseHealthPadActive = 0;
+				gameConfig.grNoBaseDefense_Bots = 1;
+				gameConfig.grNoBaseDefense_SmallTurrets = 2;
+				gameConfig.prChargebootForever = 0;
+				gameConfig.prLoadoutWeaponsOnly = 0;
+				gameConfig.prSurvivor = 0;
+				gameConfig.grRespawnTimer_Player = preset == 5 ? 2 : 0;
+				gameConfig.grDisablePenaltyTimers = preset == 2;
+				gameConfig.grNewPlayerSync = preset == 1 || preset == 2;
+				gameConfig.grDestructableBridges = preset == 4;
+				gameConfig.grSetGatlingTurretHealth = preset == 5 ? 4 : 1;
+				if (preset == 5) {
+					gameConfig.grNodeSelectTimer = 7;
+					gameConfig.grAllNodesTimer = 2;
+					gameConfig.grSiegeNoTies = 1;
+					gameConfig.grSuicidePenaltyTimer = 3;
+				}
+				break;
+			}
+			case 3: // 1v1; preserve all settings this preset does not override.
+			{
+				gameConfig.grRadarBlipsDistance = 1;
+				gameConfig.grRespawnTimer_Player = 11;
+				gameConfig.grHealthBoxes = 2;
+				gameConfig.grDisableWeaponCrates = 1;
+				gameConfig.grDisableAmmoPickups = 1;
+				gameConfig.grNewPlayerSync = 1;
+				gameConfig.grDisablePlayerTurrets = 1;
+				gameConfig.grDestructableBridges = 0;
+				gameConfig.grV2s = 1;
+				gameConfig.grNoCooldown = 1;
+				gameConfig.grVampire = 4;
+				gameConfig.grDisableWeaponPacks = 1;
+				gameConfig.grFluxShotsAlwaysHit = 1;
+				gameConfig.grFluxNikingDisabled = 1;
+				break;
+			}
+		}
 
     // if (gameConfig.prLoadoutWeaponsOnly) {
     //   gameConfig.grDisableWeaponPacks = 1;

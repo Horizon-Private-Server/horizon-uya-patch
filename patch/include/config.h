@@ -26,6 +26,7 @@ enum ElementState
   ELEMENT_EDITABLE = (1 << 1),
   ELEMENT_SELECTABLE = (1 << 2),
   ELEMENT_FILTERABLE = (1 << 3),
+  ELEMENT_HELP = (1 << 4),
 };
 
 enum LabelType
@@ -50,22 +51,22 @@ typedef int (*MenuElementOrderedListStateHandler)(struct MenuElem_OrderedListDat
 typedef int (*MenuElementRangeStateHandler)(struct MenuElem_RangeData* listData, char* value);
 typedef void (*TabStateHandler)(struct TabElem* tab, int * state);
 
+// Member offsets below use the EE's 32-bit pointer ABI.
 typedef struct MenuElem
 {
-  char name[48];
-  ActionHandler handler;
-  MenuElementStateHandler stateHandler;
-  void * userdata;
-  char * help;
+	/* 0x00 */ const char * name;
+	/* 0x04 */ ActionHandler handler;
+	/* 0x08 */ MenuElementStateHandler stateHandler;
+	/* 0x0c */ void * userdata;
+	/* 0x10 */ char * help;
 } MenuElem_t;
 
 typedef struct MenuElem_ListData
 {
-  char * value;
-  MenuElementListStateHandler stateHandler;
-  int count;
-  int rows;
-  char * items[];
+	/* 0x00 */ char * value;
+	/* 0x04 */ MenuElementListStateHandler stateHandler;
+	/* 0x08 */ int count;
+	/* 0x0c */ const char * const * items;
 } MenuElem_ListData_t;
 
 typedef struct MenuElem_OrderedListDataItem
@@ -94,22 +95,24 @@ typedef struct MenuElem_VerticalListData
 
 typedef struct MenuElem_RangeData
 {
-  char * value;
-  MenuElementRangeStateHandler stateHandler;
-  char minValue;
-  char maxValue;
-  char stepValue;
-  char appendText[16];
+	/* 0x00 */ char * value;
+	/* 0x04 */ MenuElementRangeStateHandler stateHandler;
+	/* 0x08 */ char minValue;
+	/* 0x09 */ char maxValue;
+	/* 0x0a */ char stepValue;
+	/* 0x0c */ const char * appendText;
 } MenuElem_RangeData_t;
 
 typedef struct TabElem
 {
-  char name[32];
-  TabStateHandler stateHandler;
-  MenuElem_t * elements;
-  int elementsCount;
-  int selectedMenuItemIdx;
-  int menuOffset;
+	/* 0x00 */ const char * name;
+	/* 0x04 */ TabStateHandler stateHandler;
+	/* 0x08 */ MenuElem_t * elements;
+	/* 0x0c */ int elementsCount;
+	/* 0x10 */ int selectedMenuItemIdx;
+	/* 0x14 */ int menuOffset;
+	// Three display lines; the state handler selects them with ELEMENT_HELP.
+	/* 0x18 */ const char * const * helpLines;
 } TabElem_t;
 
 typedef struct CustomMapVersionFileDef {
