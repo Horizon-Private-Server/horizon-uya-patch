@@ -1291,43 +1291,67 @@ int getMenuElementState(TabElem_t* tab, MenuElem_t* element)
 }
 
 //------------------------------------------------------------------------------
+/*
+ * NAME : drawMenuElementName
+ * DESCRIPTION : Draw a basic control label and return its state-dependent color.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static u32 drawMenuElementName(TabElem_t* tab, MenuElem_t* element, RECT* rect)
+{
+	int state = getMenuElementState(tab, element);
+	float lerp = (state & ELEMENT_EDITABLE) ? 0.0 : 0.5;
+	u32 color = colorLerp(colorText, 0, lerp);
+	float x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
+	float y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
+	gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
+	return color;
+}
+
+/*
+ * NAME : drawMenuElementValue
+ * DESCRIPTION : Draw a basic control value at the right edge.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static void drawMenuElementValue(RECT* rect, u32 color, const char* text)
+{
+	float x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
+	float y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
+	gfxScreenSpaceText(x, y, 1, 1, color, text, -1, 2, FONT_BOLD);
+}
+
+/*
+ * NAME : drawToggleMenuElement
+ * DESCRIPTION : Draw a toggle without changing its stored value.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void drawToggleMenuElement(TabElem_t* tab, MenuElem_t* element, RECT* rect)
 {
-  // get element state
-  int state = getMenuElementState(tab, element);
-
-  float x,y;
-  float lerp = (state & ELEMENT_EDITABLE) ? 0.0 : 0.5;
-  u32 color = colorLerp(colorText, 0, lerp);
-
-  // draw name
-  x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
-  y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
-
-  // draw value
-  x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, *(char*)element->userdata ? "On" : "Off", -1, 2, FONT_BOLD);
+	u32 color = drawMenuElementName(tab, element, rect);
+	drawMenuElementValue(rect, color, *(char*)element->userdata ? "On" : "Off");
 }
 
 //------------------------------------------------------------------------------
+/*
+ * NAME : drawToggleInvertedMenuElement
+ * DESCRIPTION : Draw a reverse-polarity toggle without changing its stored value.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void drawToggleInvertedMenuElement(TabElem_t* tab, MenuElem_t* element, RECT* rect)
 {
-  // get element state
-  int state = getMenuElementState(tab, element);
-
-  float x,y;
-  float lerp = (state & ELEMENT_EDITABLE) ? 0.0 : 0.5;
-  u32 color = colorLerp(colorText, 0, lerp);
-
-  // draw name
-  x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
-  y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
-
-  // draw value
-  x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, *(char*)element->userdata ? "Off" : "On", -1, 2, FONT_BOLD);
+	u32 color = drawMenuElementName(tab, element, rect);
+	drawMenuElementValue(rect, color, *(char*)element->userdata ? "Off" : "On");
 }
 
 //------------------------------------------------------------------------------
@@ -1369,23 +1393,18 @@ void drawRangeMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_RangeDat
 }
 
 //------------------------------------------------------------------------------
-void drawListMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_ListData_t * listData, RECT* rect)
+/*
+ * NAME : drawListMenuElement
+ * DESCRIPTION : Draw the selected basic-list choice.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void drawListMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_ListData_t* listData, RECT* rect)
 {
-  // get element state
-  int state = getMenuElementState(tab, element);
-
-  float x,y;
-  float lerp = (state & ELEMENT_EDITABLE) ? 0.0 : 0.5;
-  u32 color = colorLerp(colorText, 0, lerp);
-
-  // draw name
-  x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
-  y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
-
-  // draw value
-  x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, listData->items[(int)*listData->value], -1, 2, FONT_BOLD);
+	u32 color = drawMenuElementName(tab, element, rect);
+	drawMenuElementValue(rect, color, listData->items[(int)*listData->value]);
 }
 
 //------------------------------------------------------------------------------
@@ -1602,36 +1621,30 @@ void drawListVerticalMenuElementInfo(TabElem_t* tab, MenuElem_t* element, MenuEl
 }
 
 //------------------------------------------------------------------------------
-void drawOrderedListMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_OrderedListData_t * listData, RECT* rect)
+/*
+ * NAME : drawOrderedListMenuElement
+ * DESCRIPTION : Draw the label and matching ordered-list choice.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void drawOrderedListMenuElement(TabElem_t* tab, MenuElem_t* element, MenuElem_OrderedListData_t* listData, RECT* rect)
 {
-  // get element state
-  int state = getMenuElementState(tab, element);
+	u32 color = drawMenuElementName(tab, element, rect);
+	int selectedIdx = (int)*listData->value;
+	if (selectedIdx < 0)
+		selectedIdx = 0;
 
-  int selectedIdx = (int)*listData->value;
-  if (selectedIdx < 0)
-    selectedIdx = 0;
-  
-  float x,y;
-  float lerp = (state & ELEMENT_EDITABLE) ? 0.0 : 0.5;
-  u32 color = colorLerp(colorText, 0, lerp);
+	int i;
+	for (i = 0; i < listData->count; ++i) {
+		if (listData->items[i].value == selectedIdx)
+			break;
+	}
+	if (i >= listData->count)
+		return;
 
-  // draw name
-  x = (rect->TopLeft[0] * SCREEN_WIDTH) + 5;
-  y = (rect->TopLeft[1] * SCREEN_HEIGHT) + 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, element->name, -1, 0, FONT_BOLD);
-
-  // find name
-  int i;
-  for (i = 0; i < listData->count; ++i) {
-    if (listData->items[i].value == selectedIdx) break;
-  }
-
-  // invalid
-  if (i >= listData->count) return;
-
-  // draw value
-  x = (rect->TopRight[0] * SCREEN_WIDTH) - 5;
-  gfxScreenSpaceText(x, y, 1, 1, color, listData->items[i].name, -1, 2, FONT_BOLD);
+	drawMenuElementValue(rect, color, listData->items[i].name);
 }
 
 //------------------------------------------------------------------------------
@@ -1905,185 +1918,159 @@ void rangeActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, voi
 }
 
 //------------------------------------------------------------------------------
+/*
+ * NAME : listActionHandler
+ * DESCRIPTION : Handle list actions with a shared directional selection loop.
+ * NOTES : Preserve filtering and wraparound for each direction.
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void listActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg)
 {
-  MenuElem_ListData_t* listData = (MenuElem_ListData_t*)element->userdata;
-  int itemCount = listData->count;
+	MenuElem_ListData_t* listData = (MenuElem_ListData_t*)element->userdata;
+	int itemCount = listData->count;
 
-  // get element state
-  int state = getMenuElementState(tab, element);
+	// get element state
+	int state = getMenuElementState(tab, element);
 
-  // do nothing if hidden
-  if ((state & ELEMENT_VISIBLE) == 0)
-    return;
+	// do nothing if hidden
+	if ((state & ELEMENT_VISIBLE) == 0)
+		return;
 
-  switch (actionType)
-  {
-    case ACTIONTYPE_INCREMENT:
-    case ACTIONTYPE_SELECT:
-    {
-      if ((state & ELEMENT_EDITABLE) == 0)
-        break;
-      char newValue = *listData->value;
-
-      do
-      {
-        newValue += 1;
-        if (newValue >= itemCount)
-          newValue = 0;
-        char tValue = newValue;
-        if (listData->stateHandler == NULL || listData->stateHandler(listData, &tValue))
-          break;
-      } while (newValue != *listData->value);
-
-      *listData->value = newValue;
-      break;
-    }
-    case ACTIONTYPE_DECREMENT:
-    {
-      if ((state & ELEMENT_EDITABLE) == 0)
-        break;
-      char newValue = *listData->value;
-
-      do
-      {
-        newValue -= 1;
-        if (newValue < 0)
-          newValue = itemCount - 1;
-        char tValue = newValue;
-        if (listData->stateHandler == NULL || listData->stateHandler(listData, &tValue))
-          break;
-      } while (newValue != *listData->value);
-
-      *listData->value = newValue;
-      break;
-    }
-    case ACTIONTYPE_GETHEIGHT:
-    {
-      *(float*)actionArg = LINE_HEIGHT;
-      break;
-    }
-    case ACTIONTYPE_DRAW:
-    {
-      drawListMenuElement(tab, element, listData, (RECT*)actionArg);
-      break;
-    }
-    case ACTIONTYPE_DRAW_HIGHLIGHT:
-    {
-      gfxScreenSpaceQuad((RECT*)actionArg, colorSelected, colorSelected, colorSelected, colorSelected);
-      break;
-    }
-    case ACTIONTYPE_VALIDATE:
-    {
-      if (listData->stateHandler != NULL)
-        listData->stateHandler(listData, listData->value);
-      break;
-    }
-    case ACTIONTYPE_INPUT:
-    {
-      tabInput(tab);
-      break;
-    }
-  }
+	switch (actionType)
+	{
+		case ACTIONTYPE_INCREMENT:
+		case ACTIONTYPE_SELECT:
+		case ACTIONTYPE_DECREMENT:
+		{
+			if ((state & ELEMENT_EDITABLE) == 0)
+				break;
+			int direction = actionType == ACTIONTYPE_DECREMENT ? -1 : 1;
+			char newValue = *listData->value;
+			do {
+				newValue += direction;
+				if (direction < 0) {
+					if (newValue < 0)
+						newValue = itemCount - 1;
+				} else if (newValue >= itemCount) {
+					newValue = 0;
+				}
+				char tValue = newValue;
+				if (listData->stateHandler == NULL || listData->stateHandler(listData, &tValue))
+					break;
+			} while (newValue != *listData->value);
+			*listData->value = newValue;
+			break;
+		}
+		case ACTIONTYPE_GETHEIGHT:
+		{
+			*(float*)actionArg = LINE_HEIGHT;
+			break;
+		}
+		case ACTIONTYPE_DRAW:
+		{
+			drawListMenuElement(tab, element, listData, (RECT*)actionArg);
+			break;
+		}
+		case ACTIONTYPE_DRAW_HIGHLIGHT:
+		{
+			gfxScreenSpaceQuad((RECT*)actionArg, colorSelected, colorSelected, colorSelected, colorSelected);
+			break;
+		}
+		case ACTIONTYPE_VALIDATE:
+		{
+			if (listData->stateHandler != NULL)
+				listData->stateHandler(listData, listData->value);
+			break;
+		}
+		case ACTIONTYPE_INPUT:
+		{
+			tabInput(tab);
+			break;
+		}
+	}
 }
 
 //------------------------------------------------------------------------------
+/*
+ * NAME : orderedListActionHandler
+ * DESCRIPTION : Handle list actions with a shared directional selection loop.
+ * NOTES : Preserve filtering and wraparound for each direction.
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void orderedListActionHandler(TabElem_t* tab, MenuElem_t* element, int actionType, void * actionArg)
 {
-  MenuElem_OrderedListData_t* listData = (MenuElem_OrderedListData_t*)element->userdata;
-  int itemCount = listData->count;
+	MenuElem_OrderedListData_t* listData = (MenuElem_OrderedListData_t*)element->userdata;
 
-  // get element state
-  int state = getMenuElementState(tab, element);
+	// get element state
+	int state = getMenuElementState(tab, element);
 
-  // do nothing if hidden
-  if ((state & ELEMENT_VISIBLE) == 0)
-    return;
+	// do nothing if hidden
+	if ((state & ELEMENT_VISIBLE) == 0)
+		return;
 
-  switch (actionType)
-  {
-    case ACTIONTYPE_INCREMENT:
-    case ACTIONTYPE_SELECT:
-    {
-      if ((state & ELEMENT_EDITABLE) == 0)
-        break;
-      char value = *listData->value;
+	switch (actionType)
+	{
+		case ACTIONTYPE_INCREMENT:
+		case ACTIONTYPE_SELECT:
+		case ACTIONTYPE_DECREMENT:
+		{
+			if ((state & ELEMENT_EDITABLE) == 0)
+				break;
+			int direction = actionType == ACTIONTYPE_DECREMENT ? -1 : 1;
+			char value = *listData->value;
+			int index;
+			for (index = 0; index < listData->count; ++index) {
+				if (listData->items[index].value == value)
+					break;
+			}
 
-      int index = 0;
-      for (index = 0; index < listData->count; ++index) {
-        if (listData->items[index].value == value) {
-          break;
-        }
-      }
-
-      int startIndex = index;
-      do
-      {
-        index += 1;
-        if (index >= listData->count)
-          index = 0;
-        char tValue = listData->items[index].value;
-        if (listData->items[index].name && (listData->stateHandler == NULL || listData->stateHandler(listData, &tValue)))
-          break;
-      } while (index != startIndex);
-
-      *listData->value = listData->items[index].value;
-      break;
-    }
-    case ACTIONTYPE_DECREMENT:
-    {
-      if ((state & ELEMENT_EDITABLE) == 0)
-        break;
-      char value = *listData->value;
-
-      int index = 0;
-      for (index = 0; index < listData->count; ++index) {
-        if (listData->items[index].value == value) {
-          break;
-        }
-      }
-
-      int startIndex = index;
-      do
-      {
-        index -= 1;
-        if (index < 0)
-          index = listData->count - 1;
-        char tValue = listData->items[index].value;
-        if (listData->items[index].name && (listData->stateHandler == NULL || listData->stateHandler(listData, &tValue)))
-          break;
-      } while (index != startIndex);
-
-      *listData->value = listData->items[index].value;
-      break;
-    }
-    case ACTIONTYPE_GETHEIGHT:
-    {
-      *(float*)actionArg = LINE_HEIGHT;
-      break;
-    }
-    case ACTIONTYPE_DRAW:
-    {
-      drawOrderedListMenuElement(tab, element, listData, (RECT*)actionArg);
-      break;
-    }
-    case ACTIONTYPE_DRAW_HIGHLIGHT:
-    {
-      gfxScreenSpaceQuad((RECT*)actionArg, colorSelected, colorSelected, colorSelected, colorSelected);
-      break;
-    }
-    case ACTIONTYPE_VALIDATE:
-    {
-      if (listData->stateHandler != NULL)
-        listData->stateHandler(listData, listData->value);
-      break;
-    }
-    case ACTIONTYPE_INPUT:
-    {
-      tabInput(tab);
-      break;
-    }
-  }
+			int startIndex = index;
+			do {
+				index += direction;
+				if (direction < 0) {
+					if (index < 0)
+						index = listData->count - 1;
+				} else if (index >= listData->count) {
+					index = 0;
+				}
+				char tValue = listData->items[index].value;
+				if (listData->items[index].name && (listData->stateHandler == NULL || listData->stateHandler(listData, &tValue)))
+					break;
+			} while (index != startIndex);
+			*listData->value = listData->items[index].value;
+			break;
+		}
+		case ACTIONTYPE_GETHEIGHT:
+		{
+			*(float*)actionArg = LINE_HEIGHT;
+			break;
+		}
+		case ACTIONTYPE_DRAW:
+		{
+			drawOrderedListMenuElement(tab, element, listData, (RECT*)actionArg);
+			break;
+		}
+		case ACTIONTYPE_DRAW_HIGHLIGHT:
+		{
+			gfxScreenSpaceQuad((RECT*)actionArg, colorSelected, colorSelected, colorSelected, colorSelected);
+			break;
+		}
+		case ACTIONTYPE_VALIDATE:
+		{
+			if (listData->stateHandler != NULL)
+				listData->stateHandler(listData, listData->value);
+			break;
+		}
+		case ACTIONTYPE_INPUT:
+		{
+			tabInput(tab);
+			break;
+		}
+	}
 }
 
 int listFindNextValidValue(MenuElem_VerticalListData_t* listData, int currentValue, int direction)
