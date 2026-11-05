@@ -14,8 +14,8 @@
 
 variableAddressCompact_t vaGSFrame = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00247ec8,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00247ec8),
 	.Hoven = VA_COMPACT_OFFSET(0x00247ec8, 0x002480c8),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00247ec8, 0x00247fc8),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00247ec8, 0x00247e48),
@@ -26,8 +26,8 @@ variableAddressCompact_t vaGSFrame = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00247ec8, 0x00247b48),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00247ec8, 0x00247b48),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00248048,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00248048),
 	.Hoven = VA_COMPACT_OFFSET(0x00248048, 0x00248248),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00248048, 0x00248148),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00248048, 0x00247fc8),
@@ -42,8 +42,8 @@ variableAddressCompact_t vaGSFrame = {
 
 variableAddressCompact_t vaDeathBarrier = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00248130,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00248130),
 	.Hoven = VA_COMPACT_OFFSET(0x00248130, 0x00248330),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00248130, 0x00248230),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00248130, 0x002480b0),
@@ -54,8 +54,8 @@ variableAddressCompact_t vaDeathBarrier = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00248130, 0x00247db0),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00248130, 0x00247db0),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x002482b0,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x002482b0),
 	.Hoven = VA_COMPACT_OFFSET(0x002482b0, 0x002484b0),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x002482b0, 0x002483b0),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x002482b0, 0x00248230),
@@ -70,8 +70,8 @@ variableAddressCompact_t vaDeathBarrier = {
 
 variableAddressCompact_t vaGAME_DATA = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00357260,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00357260),
 	.Hoven = VA_COMPACT_OFFSET(0x00357260, 0x003573a0),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00357260, 0x0034f2a0),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00357260, 0x0034f120),
@@ -82,8 +82,8 @@ variableAddressCompact_t vaGAME_DATA = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00357260, 0x0035fe60),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00357260, 0x0035fde0),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x003573e0,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x003573e0),
 	.Hoven = VA_COMPACT_OFFSET(0x003573e0, 0x00357520),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x003573e0, 0x0034f420),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x003573e0, 0x0034f2a0),
@@ -98,8 +98,8 @@ variableAddressCompact_t vaGAME_DATA = {
 
 variableAddressCompact_t vaGameEndFunc = {
 #ifdef UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x005445f8,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x005445f8),
 	.Hoven = VA_COMPACT_OFFSET(0x005445f8, 0x005467c0),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x005445f8, 0x0053c098),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x005445f8, 0x00539780),
@@ -110,8 +110,8 @@ variableAddressCompact_t vaGameEndFunc = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x005445f8, 0x00537740),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x005445f8, 0x005370c0),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00541ce8,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00541ce8),
 	.Hoven = VA_COMPACT_OFFSET(0x00541ce8, 0x00543df0),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00541ce8, 0x00539708),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00541ce8, 0x00536e70),

@@ -9,8 +9,8 @@
 
 variableAddressCompact_t vaGAME_CAMERA = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00249fc0,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00249fc0),
 	.Hoven = VA_COMPACT_OFFSET(0x00249fc0, 0x0024a100),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00249fc0, 0x0024a000),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00249fc0, 0x00249e80),
@@ -21,8 +21,8 @@ variableAddressCompact_t vaGAME_CAMERA = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00249fc0, 0x00249bc0),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00249fc0, 0x00249b40),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x0024a140,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x0024a140),
 	.Hoven = VA_COMPACT_OFFSET(0x0024a140, 0x0024a280),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x0024a140, 0x0024a180),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x0024a140, 0x0024a000),

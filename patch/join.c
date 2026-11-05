@@ -150,8 +150,8 @@ static int joinHostLoadTime;
 
 static variableAddressCompact_t vaJoinPlayerLeave = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00538f48,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00538f48),
 	.Hoven = VA_COMPACT_OFFSET(0x00538f48, 0x0053b060),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00538f48, 0x00530938),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00538f48, 0x0052e0d0),
@@ -162,8 +162,8 @@ static variableAddressCompact_t vaJoinPlayerLeave = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00538f48, 0x0052c5f8),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00538f48, 0x0052bf78),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x005366c8,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x005366c8),
 	.Hoven = VA_COMPACT_OFFSET(0x005366c8, 0x00538720),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x005366c8, 0x0052e038),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x005366c8, 0x0052b850),

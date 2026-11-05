@@ -10,8 +10,8 @@
 
 variableAddressCompact_t vaSpawnPointsPtr = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00248500,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00248500),
 	.Hoven = VA_COMPACT_OFFSET(0x00248500, 0x00248700),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00248500, 0x00248600),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00248500, 0x00248480),
@@ -22,8 +22,8 @@ variableAddressCompact_t vaSpawnPointsPtr = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00248500, 0x00248180),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00248500, 0x00248180),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00248680,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00248680),
 	.Hoven = VA_COMPACT_OFFSET(0x00248680, 0x00248880),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00248680, 0x00248780),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00248680, 0x00248600),
@@ -38,8 +38,8 @@ variableAddressCompact_t vaSpawnPointsPtr = {
 
 variableAddressCompact_t vaGetRandomSpawnPointFunc = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00544df0,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00544df0),
 	.Hoven = VA_COMPACT_OFFSET(0x00544df0, 0x00546fb8),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00544df0, 0x0053c890),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00544df0, 0x00539f78),
@@ -50,8 +50,8 @@ variableAddressCompact_t vaGetRandomSpawnPointFunc = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00544df0, 0x00537f38),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00544df0, 0x005378b8),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x005424e0,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x005424e0),
 	.Hoven = VA_COMPACT_OFFSET(0x005424e0, 0x005445e8),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x005424e0, 0x00539f00),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x005424e0, 0x00537668),

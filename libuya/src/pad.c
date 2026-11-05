@@ -26,8 +26,8 @@ PadHistory LocalPadHistory[PAD_PORT_MAX * 2] = {
 
 variableAddressCompact_t vaPadRingBitsOn = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0x005c3120),
-	.Bakisi = 0x004958d8,
+	.Lobby = 0x005c3120,
+	.Bakisi = VA_COMPACT_BASE(0x004958d8),
 	.Hoven = VA_COMPACT_OFFSET(0x004958d8, 0x004979f0),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x004958d8, 0x0048d2c8),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x004958d8, 0x0048a998),
@@ -38,8 +38,8 @@ variableAddressCompact_t vaPadRingBitsOn = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x004958d8, 0x004891c0),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x004958d8, 0x00488b40),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0x005c10d8),
-	.Bakisi = 0x004938e8,
+	.Lobby = 0x005c10d8,
+	.Bakisi = VA_COMPACT_BASE(0x004938e8),
 	.Hoven = VA_COMPACT_OFFSET(0x004938e8, 0x00495940),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x004938e8, 0x0048b258),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x004938e8, 0x004889a8),

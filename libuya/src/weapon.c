@@ -7,8 +7,8 @@
 
 variableAddressCompact_t vaWeaponsPvar = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x003c2ed0,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x003c2ed0),
 	.Hoven = VA_COMPACT_OFFSET(0x003c2ed0, 0x003c2510),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x003c2ed0, 0x003ba410),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x003c2ed0, 0x003ba1d0),
@@ -19,8 +19,8 @@ variableAddressCompact_t vaWeaponsPvar = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x003c2ed0, 0x003cb290),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x003c2ed0, 0x003ca810),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x003c3010,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x003c3010),
 	.Hoven = VA_COMPACT_OFFSET(0x003c3010, 0x003c2650),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x003c3010, 0x003ba550),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x003c3010, 0x003ba310),
@@ -36,8 +36,8 @@ variableAddressCompact_t vaWeaponsPvar = {
 // GadgetBox: Is Weapon Enabled?
 variableAddressCompact_t vaGB_IsWeaponEnabled = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x00545bb0,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00545bb0),
 	.Hoven = VA_COMPACT_OFFSET(0x00545bb0, 0x00547d78),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00545bb0, 0x0053d650),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00545bb0, 0x0053ad38),
@@ -48,8 +48,8 @@ variableAddressCompact_t vaGB_IsWeaponEnabled = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00545bb0, 0x00538cf8),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00545bb0, 0x00538678),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0),
-	.Bakisi = 0x005432a0,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x005432a0),
 	.Hoven = VA_COMPACT_OFFSET(0x005432a0, 0x005453a8),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x005432a0, 0x0053acc0),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x005432a0, 0x00538428),
@@ -64,8 +64,8 @@ variableAddressCompact_t vaGB_IsWeaponEnabled = {
 
 variableAddressCompact_t vaWeapon_GravityBomb_Tweakers = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0x0024b010),
-	.Bakisi = 0x00247100,
+	.Lobby = 0x0024b010,
+	.Bakisi = VA_COMPACT_BASE(0x00247100),
 	.Hoven = VA_COMPACT_OFFSET(0x00247100, 0x00247140),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00247100, 0x00247140),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00247100, 0x002470e0),
@@ -75,8 +75,8 @@ variableAddressCompact_t vaWeapon_GravityBomb_Tweakers = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00247100, 0x002470f0),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00247100, 0x00247090),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0x0024b120),
-	.Bakisi = 0x00247280,
+	.Lobby = 0x0024b120,
+	.Bakisi = VA_COMPACT_BASE(0x00247280),
 	.Hoven = VA_COMPACT_OFFSET(0x00247280, 0x002472c0),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x00247280, 0x002472c0),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x00247280, 0x00247260),

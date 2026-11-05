@@ -3,8 +3,8 @@
 
 variableAddressCompact_t vaColorLerpFunc = {
 #if UYA_PAL
-	.Lobby = VA_COMPACT_LOBBY(0x005915e8),
-	.Bakisi = 0x0045e858,
+	.Lobby = 0x005915e8,
+	.Bakisi = VA_COMPACT_BASE(0x0045e858),
 	.Hoven = VA_COMPACT_OFFSET(0x0045e858, 0x00460408),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x0045e858, 0x00457208),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x0045e858, 0x00454d98),
@@ -15,8 +15,8 @@ variableAddressCompact_t vaColorLerpFunc = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x0045e858, 0x00453d80),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x0045e858, 0x00453700),
 #else
-	.Lobby = VA_COMPACT_LOBBY(0x00590438),
-	.Bakisi = 0x0045d7a8,
+	.Lobby = 0x00590438,
+	.Bakisi = VA_COMPACT_BASE(0x0045d7a8),
 	.Hoven = VA_COMPACT_OFFSET(0x0045d7a8, 0x0045f298),
 	.OutpostX12 = VA_COMPACT_OFFSET(0x0045d7a8, 0x004560d8),
 	.KorgonOutpost = VA_COMPACT_OFFSET(0x0045d7a8, 0x00453ce8),
