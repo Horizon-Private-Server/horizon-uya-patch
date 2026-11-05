@@ -115,8 +115,8 @@ VariableAddress_t vaReplace_GetEffectTexJAL = {
 extern PatchConfig_t config;
 extern PatchGameConfig_t gameConfig;
 extern PatchStateContainer_t patchStateContainer;
-extern VariableAddress_t vaGetFrameTex;
-extern VariableAddress_t vaGetEffectTex;
+extern variableAddressCompact_t vaGetFrameTex;
+extern variableAddressCompact_t vaGetEffectTex;
 
 float scavHuntSpawnFactor = 1;
 float scavHuntSpawnTimerFactor = 1;

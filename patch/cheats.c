@@ -91,9 +91,9 @@ extern PlayerDeaths[GAME_MAX_PLAYERS];
 extern PlayerTeams[GAME_MAX_PLAYERS];
 extern PatchGameConfig_t gameConfig;
 extern PatchPatches_t patched;
-extern VariableAddress_t vaPlayerRespawnFunc;
-extern VariableAddress_t vaGiveWeaponFunc;
-extern VariableAddress_t vaGiveWeaponUpgradeFunc;
+extern variableAddressCompact_t vaPlayerRespawnFunc;
+extern variableAddressCompact_t vaGiveWeaponFunc;
+extern variableAddressCompact_t vaGiveWeaponUpgradeFunc;
 
 /*
  * NAME :		disableWeaponPacks

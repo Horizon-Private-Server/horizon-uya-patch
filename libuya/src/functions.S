@@ -76,8 +76,12 @@ __LocalGetAddress:
 	// if in menus then return lobby address
 	lw $v0, GAME_MAP_ID;
   li $v1, 39;
-	beq $v0, $v1, __LocalGetAddress_exit;
-	lw $v0, 0($a0)
+	bne $v0, $v1, __LocalGetAddress_map;
+	lw $v0, 0($a0);
+	sll $v0, $v0, 1;
+	b __LocalGetAddress_exit;
+	srl $v0, $v0, 1;
+__LocalGetAddress_map:
 
 	// if not in game then no address
 	lw $v0, GAME_ACTIVE;
@@ -99,13 +103,27 @@ __LocalGetAddress:
 	beqzl $v0, __LocalGetAddress_exit;
 	move $v0, $zero;
 
-	// load offset into VariableAddress struct by map id
-	sll $v1, $v1, 2; // multiply map id [0,9] by 4
-	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
-
-	// load address from struct
-	addu $a0, $v0;
+	// Keep full tables compatible; compact tables have a tagged Lobby word.
 	lw $v0, 0($a0);
+	bltz $v0, __LocalGetAddress_compact;
+	nop;
+	sll $v1, $v1, 2;
+	addu $v1, $a0, $v1;
+	b __LocalGetAddress_exit;
+	lw $v0, 4($v1);
+__LocalGetAddress_compact:
+	beqz $v1, __LocalGetAddress_exit;
+	lw $v0, 4($a0);
+	sll $v1, $v1, 1;
+	addu $v1, $a0, $v1;
+	lhu $v1, 6($v1);
+	beqz $v1, __LocalGetAddress_exit;
+	move $v0, $zero;
+	xori $v1, $v1, 0x8000;
+	sll $v1, $v1, 16;
+	sra $v1, $v1, 14;
+	lw $v0, 4($a0);
+	addu $v0, $v0, $v1;
 
 	// return to calling function
 __LocalGetAddress_exit:
@@ -133,8 +151,12 @@ GetAddress:
 	// if in menus then return lobby address
 	lw $v0, GAME_MAP_ID;
   li $v1, 39;
-	beq $v0, $v1, GetAddress_exit;
-	lw $v0, 0($a0)
+	bne $v0, $v1, GetAddress_map;
+	lw $v0, 0($a0);
+	sll $v0, $v0, 1;
+	b GetAddress_exit;
+	srl $v0, $v0, 1;
+GetAddress_map:
 
 	// if not in game then no address
 	lw $v0, GAME_ACTIVE;
@@ -156,13 +178,27 @@ GetAddress:
 	beqzl $v0, GetAddress_exit;
 	move $v0, $zero;
 
-	// load offset into VariableAddress struct by map id
-	sll $v1, $v1, 2; // multiply map id [0,9] by 4
-	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
-
-	// load address from struct
-	addu $a0, $v0;
+	// Keep full tables compatible; compact tables have a tagged Lobby word.
 	lw $v0, 0($a0);
+	bltz $v0, GetAddress_compact;
+	nop;
+	sll $v1, $v1, 2;
+	addu $v1, $a0, $v1;
+	b GetAddress_exit;
+	lw $v0, 4($v1);
+GetAddress_compact:
+	beqz $v1, GetAddress_exit;
+	lw $v0, 4($a0);
+	sll $v1, $v1, 1;
+	addu $v1, $a0, $v1;
+	lhu $v1, 6($v1);
+	beqz $v1, GetAddress_exit;
+	move $v0, $zero;
+	xori $v1, $v1, 0x8000;
+	sll $v1, $v1, 16;
+	sra $v1, $v1, 14;
+	lw $v0, 4($a0);
+	addu $v0, $v0, $v1;
 
 	// return to calling function
 GetAddress_exit:
@@ -190,8 +226,12 @@ GetAddressImmediate:
 	// if in menus then return lobby address
 	lw $v0, GAME_MAP_ID;
   li $v1, 39;
-	beq $v0, $v1, GetAddressImmediate_exit;
-	lw $v0, 0($a0)
+	bne $v0, $v1, GetAddressImmediate_map;
+	lw $v0, 0($a0);
+	sll $v0, $v0, 1;
+	b GetAddressImmediate_exit;
+	srl $v0, $v0, 1;
+GetAddressImmediate_map:
 
 	// if not in game then no address
 	//lw $v0, GAME_ACTIVE;
@@ -213,13 +253,27 @@ GetAddressImmediate:
 	beqzl $v0, GetAddressImmediate_exit;
 	move $v0, $zero;
 
-	// load offset into VariableAddress struct by map id
-	sll $v1, $v1, 2; // multiply map id [0,9] by 4
-	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
-
-	// load address from struct
-	addu $a0, $v0;
+	// Keep full tables compatible; compact tables have a tagged Lobby word.
 	lw $v0, 0($a0);
+	bltz $v0, GetAddressImmediate_compact;
+	nop;
+	sll $v1, $v1, 2;
+	addu $v1, $a0, $v1;
+	b GetAddressImmediate_exit;
+	lw $v0, 4($v1);
+GetAddressImmediate_compact:
+	beqz $v1, GetAddressImmediate_exit;
+	lw $v0, 4($a0);
+	sll $v1, $v1, 1;
+	addu $v1, $a0, $v1;
+	lhu $v1, 6($v1);
+	beqz $v1, GetAddressImmediate_exit;
+	move $v0, $zero;
+	xori $v1, $v1, 0x8000;
+	sll $v1, $v1, 16;
+	sra $v1, $v1, 14;
+	lw $v0, 4($a0);
+	addu $v0, $v0, $v1;
 
 	// return to calling function
 GetAddressImmediate_exit:

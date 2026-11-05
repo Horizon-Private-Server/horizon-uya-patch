@@ -35,6 +35,7 @@
 #include "interop/patch.h"
 #include "include/config.h"
 #include "include/cheats.h"
+#include "include/exception_protocol.h"
 
 #define GLOBAL_GAME_MODULES_START							((GameModule*)0x000cf000)
 #define EXCEPTION_HANDLER									(0x000c8000)
@@ -156,9 +157,9 @@ int dscrprintlinescount = 0;
 extern float _lodScale;
 extern void* _correctTieLod;
 extern int _correctTieLod_Jump;
-extern VariableAddress_t vaPlayerRespawnFunc;
-extern VariableAddress_t vaPlayerSetPosRotFunc;
-extern VariableAddress_t vaFlagUpdate_Func;
+extern variableAddressCompact_t vaPlayerRespawnFunc;
+extern variableAddressCompact_t vaPlayerSetPosRotFunc;
+extern variableAddressCompact_t vaFlagUpdate_Func;
 extern void FlushCache(int);
 extern MenuElem_VerticalListData_t dataCustomMaps;
 extern MenuElem_OrderedListData_t dataCustomModes;
@@ -420,27 +421,64 @@ char * checkMap(void)
 		return "Loading";
 	}
 }
+/*
+ * NAME : runExceptionHandler
+ * DESCRIPTION : Install the exception display and refresh its map/video context.
+ * NOTES : Legacy payloads retain their original text and instruction offsets.
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
 void runExceptionHandler(void)
 {
-	// invoke exception display installer
-	if (*(u32*)EXCEPTION_HANDLER != 0) {
+	if (*(u32*)EXCEPTION_HANDLER == 0)
+		return;
+
+	exceptionPayload_t* payload = (exceptionPayload_t*)EXCEPTION_HANDLER;
+	if (payload->magic == EXCEPTION_DISPLAY_MAGIC) {
+		if (payload->version != EXCEPTION_DISPLAY_VERSION ||
+			(u32)payload->context < EXCEPTION_HANDLER + sizeof(exceptionPayload_t) ||
+			(u32)payload->context > 0x000cb000 - sizeof(exceptionContext_t) ||
+			payload->memoryEnd > 0x000cb000)
+			return;
 		if (!hasInstalledExceptionHandler) {
-			((void (*)(void))EXCEPTION_HANDLER)();
+			if (!((int (*)(void))EXCEPTION_HANDLER)())
+				return;
 			hasInstalledExceptionHandler = 1;
 		}
 
-		char * mapStr = checkMap();		// change "a fatal error as occured." to region and map.
-		strncpy((char*)(EXCEPTION_HANDLER + 0x794), regionStr, 6);
-		strncpy((char*)(EXCEPTION_HANDLER + 0x79a), mapStr, 20);
-		
-		// change display to match progressive scan resolution
-		if (gfxGetIsProgressiveScan()) {
-			*(u16*)(EXCEPTION_HANDLER + 0x9F4) = 0x0083;
-			*(u16*)(EXCEPTION_HANDLER + 0x9F8) = 0x210E;
+		volatile exceptionContext_t* context = payload->context;
+		if (netGetLobbyServerConnection() || netGetDmeServerConnection()) {
+			strncpy((char*)context->region, regionStr, sizeof(context->region) - 1);
+			context->region[sizeof(context->region) - 1] = 0;
+			strncpy((char*)context->map, checkMap(), sizeof(context->map) - 1);
+			context->map[sizeof(context->map) - 1] = 0;
 		} else {
-			*(u16*)(EXCEPTION_HANDLER + 0x9F4) = 0x0183;
-			*(u16*)(EXCEPTION_HANDLER + 0x9F8) = 0x2278;
+			context->region[0] = 0;
+			context->map[0] = 0;
 		}
+		context->progressive = gfxGetIsProgressiveScan() != 0;
+		return;
+	}
+
+	if (!hasInstalledExceptionHandler) {
+		((void (*)(void))EXCEPTION_HANDLER)();
+		hasInstalledExceptionHandler = 1;
+	}
+	if (netGetLobbyServerConnection() || netGetDmeServerConnection()) {
+		strncpy((char*)(EXCEPTION_HANDLER + 0x794), regionStr, 6);
+		strncpy((char*)(EXCEPTION_HANDLER + 0x79a), checkMap(), 20);
+	} else {
+		strncpy((char*)(EXCEPTION_HANDLER + 0x794), "A fatal error has occured.", 26);
+	}
+
+	// change display to match progressive scan resolution
+	if (gfxGetIsProgressiveScan()) {
+		*(u16*)(EXCEPTION_HANDLER + 0x9f4) = 0x0083;
+		*(u16*)(EXCEPTION_HANDLER + 0x9f8) = 0x210e;
+	} else {
+		*(u16*)(EXCEPTION_HANDLER + 0x9f4) = 0x0183;
+		*(u16*)(EXCEPTION_HANDLER + 0x9f8) = 0x2278;
 	}
 }
 

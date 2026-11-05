@@ -89,8 +89,8 @@
 #define JUGGERNAUT_WEAPON_SLOT_COUNT    (8)
 
 // Billboard frame textures require a temporary per-map getter swap.
-extern VariableAddress_t vaGetFrameTex;
-extern VariableAddress_t vaGetEffectTex;
+extern variableAddressCompact_t vaGetFrameTex;
+extern variableAddressCompact_t vaGetEffectTex;
 
 // These draw.c types are mirrored here because no public header exists.
 typedef enum LineStyle {
@@ -232,7 +232,7 @@ static u32  HurtFuncAddr  = 0;                     // resolved vaHurtPlayerFunc 
 
 // Map-resolved trampoline and per-map call-site table.
 extern void internal_HurtPlayer(Player * player, int damage);
-extern VariableAddress_t vaHurtPlayerFunc;
+extern variableAddressCompact_t vaHurtPlayerFunc;
 
 #if JUGGERNAUT_JUGGY_ONLY_KILLS
 // ---- Juggy-only kill credit -----------------------------------------------

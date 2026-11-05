@@ -7,31 +7,31 @@
 #define CAMERA								((Camera_t*)GetAddress(&vaCAMERA));
 #define GAME_CAMERA                         ((GameCamera*)GetAddress(&vaGAME_CAMERA))
 
-VariableAddress_t vaGAME_CAMERA = {
+variableAddressCompact_t vaGAME_CAMERA = {
 #if UYA_PAL
-	.Lobby = 0,
+	.Lobby = VA_COMPACT_LOBBY(0),
 	.Bakisi = 0x00249fc0,
-	.Hoven = 0x0024a100,
-	.OutpostX12 = 0x0024a000,
-    .KorgonOutpost = 0x00249e80,
-	.Metropolis = 0x00249ec0,
-	.BlackwaterCity = 0x00249e80,
-	.CommandCenter = 0x00249a40,
-    .BlackwaterDocks = 0x00249b80,
-    .AquatosSewers = 0x00249bc0,
-    .MarcadiaPalace = 0x00249b40,
+	.Hoven = VA_COMPACT_OFFSET(0x00249fc0, 0x0024a100),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x00249fc0, 0x0024a000),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x00249fc0, 0x00249e80),
+	.Metropolis = VA_COMPACT_OFFSET(0x00249fc0, 0x00249ec0),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x00249fc0, 0x00249e80),
+	.CommandCenter = VA_COMPACT_OFFSET(0x00249fc0, 0x00249a40),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00249fc0, 0x00249b80),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x00249fc0, 0x00249bc0),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00249fc0, 0x00249b40),
 #else
-	.Lobby = 0,
+	.Lobby = VA_COMPACT_LOBBY(0),
 	.Bakisi = 0x0024a140,
-	.Hoven = 0x0024a280,
-	.OutpostX12 = 0x0024a180,
-    .KorgonOutpost = 0x0024a000,
-	.Metropolis = 0x0024a040,
-	.BlackwaterCity = 0x0024a000,
-	.CommandCenter = 0x00249bc0,
-    .BlackwaterDocks = 0x00249d00,
-    .AquatosSewers = 0x00249d40,
-    .MarcadiaPalace = 0x00249cc0,
+	.Hoven = VA_COMPACT_OFFSET(0x0024a140, 0x0024a280),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x0024a140, 0x0024a180),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x0024a140, 0x0024a000),
+	.Metropolis = VA_COMPACT_OFFSET(0x0024a140, 0x0024a040),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x0024a140, 0x0024a000),
+	.CommandCenter = VA_COMPACT_OFFSET(0x0024a140, 0x00249bc0),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x0024a140, 0x00249d00),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x0024a140, 0x00249d40),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x0024a140, 0x00249cc0),
 #endif
 };
 
