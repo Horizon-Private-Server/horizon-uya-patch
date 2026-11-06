@@ -622,7 +622,7 @@ void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay)
  * DESCRIPTION :
  *              Change how far the radarblips can be shown.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -633,32 +633,11 @@ void radarBlips(void)
 
 	u32 float_dist = GetAddress(&vaRadarBlips_FloatVal);
 	if (*(u32*)float_dist == 0x3c014499) {
-		switch (gameConfig.grRadarBlipsDistance) {
-			case 1: { // 2x
-				*(u32*)float_dist = 0x3c014519;
-				*(u32*)(float_dist + 0x4) = 0x34210000;
-				break;	
-			}
-			case 2: { // 4x
-				*(u32*)float_dist = 0x3c014599;
-				*(u32*)(float_dist + 0x4) = 0x34210000;
-				break;	
-			}
-			case 3: { // Always
-				*(u32*)float_dist = 0x3c017fff;
-				*(u32*)(float_dist + 0x4) = 0x3421ffff;
-				break;
-			}
-			case 4: { // Off
-				*(u32*)float_dist = 0x3c010000;
-				*(u32*)(float_dist + 0x4) = 0x34210000;
-				break;	
-			}
-			case 5: { // .5x
-				*(u32*)float_dist = 0x3c014419;
-				*(u32*)(float_dist + 0x4) = 0x34210000;
-				break;	
-			}
+		static const u16 upperDistance[] = { 0x4519, 0x4599, 0x7fff, 0, 0x4419 };
+		int setting = gameConfig.grRadarBlipsDistance;
+		if (setting >= 1 && setting <= 5) {
+			*(u32*)float_dist = 0x3c010000 | upperDistance[setting - 1];
+			*(u32*)(float_dist + 0x4) = setting == 3 ? 0x3421ffff : 0x34210000;
 		}
 		patched.gameConfig.grRadarBlipsDistance = 1;
 	}
@@ -1140,7 +1119,7 @@ void patchDroneSpawning(void)
  * DESCRIPTION :
  *             Checks to see if all nodes are owned by one team, if so, start countdown timer.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1150,7 +1129,6 @@ void runCheckAllNodes(void) {
     GameSettings *gameSettings = gameGetSettings();
     GameData *gameData = gameGetData();
     short nodes[2] = {0, 0};
-    char title[32];
     // get number of nodes and set timer value
     if (maxNodeCount == -1) {
         maxNodeCount = 0;
@@ -1176,10 +1154,8 @@ void runCheckAllNodes(void) {
     int redTeamAll = red == maxNodeCount && blue == 0;
     int teamWithAllNodes = (blueTeamAll && !redTeamAll) ? 0 : (redTeamAll && !blueTeamAll) ? 1 : -1;
     if (teamWithAllNodes > -1 && allNodesTimer.status == -1) {
-		allNodesTimer.timeValue = (gameConfig.grAllNodesTimer * .5) * 60;
-        char *whichTeam = !teamWithAllNodes ? "Blue" : "Red";
-        sprintf(title, "%s Team Wins In", whichTeam);
-        strncpy(allNodesTimer.title, title, 32);
+		allNodesTimer.timeValue = gameConfig.grAllNodesTimer * 30;
+		strncpy(allNodesTimer.title, teamWithAllNodes ? "Red Team Wins In" : "Blue Team Wins In", 32);
         allNodesTimer.colorBase = 0x80000000 | TEAM_COLORS[teamWithAllNodes];
         allNodesTimer.status = 0;
     } else if (teamWithAllNodes == -1 && allNodesTimer.status > -1){
