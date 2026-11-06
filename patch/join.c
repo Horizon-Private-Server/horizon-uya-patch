@@ -289,6 +289,27 @@ static void joinLoadClient(int level, int mode)
 }
 
 /*
+ * NAME : joinRememberPlayerObject
+ * DESCRIPTION : Validate and remember a network player object during loading.
+ * NOTES :
+ * ARGS : Native object identifier.
+ * RETURN : Player data, or NULL when the object or player index is invalid.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static struct tNW_PlayerData* joinRememberPlayerObject(int objectId)
+{
+	void* object = 0;
+	if (((int (*)(void**, int))0x0016ed00)(&object, objectId) || !object)
+		return NULL;
+	struct tNW_PlayerData* data = *(struct tNW_PlayerData**)((u8*)object + 0x1c);
+	if (!data || data->playerIndex < 0 || data->playerIndex >= GAME_MAX_PLAYERS)
+		return NULL;
+	joinPlayerObjectIds[data->playerIndex] = objectId;
+	joinRememberedPlayers |= 1 << data->playerIndex;
+	return data;
+}
+
+/*
  * NAME : joinPlayerObjectCreated
  * DESCRIPTION : Remember initial player objects across staging's player-record reset.
  * NOTES :
@@ -299,14 +320,7 @@ static void joinLoadClient(int level, int mode)
 static void joinPlayerObjectCreated(int connection, int objectId)
 {
 	((void (*)(int, int))JOIN_PLAYER_CREATED)(connection, objectId);
-	void* object = 0;
-	if (((int (*)(void**, int))0x0016ed00)(&object, objectId) || !object)
-		return;
-	struct tNW_PlayerData* data = *(struct tNW_PlayerData**)((u8*)object + 0x1c);
-	if (data && data->playerIndex >= 0 && data->playerIndex < GAME_MAX_PLAYERS) {
-		joinPlayerObjectIds[data->playerIndex] = objectId;
-		joinRememberedPlayers |= 1 << data->playerIndex;
-	}
+	joinRememberPlayerObject(objectId);
 }
 
 /*
@@ -319,14 +333,9 @@ static void joinPlayerObjectCreated(int connection, int objectId)
  */
 static void joinPlayerObjectUpdated(int connection, int objectId, int fields)
 {
-	void* object = 0;
-	if (((int (*)(void**, int))0x0016ed00)(&object, objectId) || !object)
+	struct tNW_PlayerData* data = joinRememberPlayerObject(objectId);
+	if (!data)
 		return;
-	struct tNW_PlayerData* data = *(struct tNW_PlayerData**)((u8*)object + 0x1c);
-	if (!data || data->playerIndex < 0 || data->playerIndex >= GAME_MAX_PLAYERS)
-		return;
-	joinPlayerObjectIds[data->playerIndex] = objectId;
-	joinRememberedPlayers |= 1 << data->playerIndex;
 	struct tNW_Player* player = (struct tNW_Player*)(JOIN_PLAYER_ARRAY + data->playerIndex * JOIN_PLAYER_STRIDE);
 	if (!player->pNetPlayerData)
 		((void (*)(int, int))JOIN_PLAYER_CREATED)(connection, objectId);
@@ -521,6 +530,23 @@ static int joinWorldObjectEnabled(u16 oClass, Moby* moby)
 }
 
 /*
+ * NAME : joinInitEvent
+ * DESCRIPTION : Initialize a snapshot event with native timing and object identity.
+ * NOTES :
+ * ARGS : Event and target moby.
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static void joinInitEvent(GuberEvent* event, Moby* moby)
+{
+	memset(event, 0, sizeof(*event));
+	event->NetEvent.CreateTime = gameGetTime();
+	event->NetEvent.OriginClientIdx = gameGetHostId();
+	if (moby->guberMoby)
+		event->NetEvent.ObjUID = moby->guberMoby->Guber.Id.UID;
+}
+
+/*
  * NAME : joinApplyWorldObject
  * DESCRIPTION : Restore an authored objective through its native event handler.
  * NOTES :
@@ -572,11 +598,7 @@ static int joinApplyWorldObject(joinWorldObject_t* object)
 	if (!functions || !functions->FUNC_1C)
 		return 0;
 	GuberEvent event;
-	memset(&event, 0, sizeof(event));
-	event.NetEvent.CreateTime = gameGetTime();
-	event.NetEvent.OriginClientIdx = gameGetHostId();
-	if (moby->guberMoby)
-		event.NetEvent.ObjUID = moby->guberMoby->Guber.Id.UID;
+	joinInitEvent(&event, moby);
 
 	if (object->oClass == MOBY_ID_BOLT_CRANK) {
 		if (!(object->value >= 0 && object->value <= 1))
@@ -699,11 +721,7 @@ static int joinReceiveFlagState(void* connection, void* data)
 		return sizeof(*snapshot);
 	}
 	GuberEvent event;
-	memset(&event, 0, sizeof(event));
-	event.NetEvent.CreateTime = gameGetTime();
-	event.NetEvent.OriginClientIdx = gameGetHostId();
-	if (moby->guberMoby)
-		event.NetEvent.ObjUID = moby->guberMoby->Guber.Id.UID;
+	joinInitEvent(&event, moby);
 	if (snapshot->state == 2) {
 		/* Reuse the native pickup handler to bind the existing carrier. The
 		 * host-authoritative pickup code in main.c remains unchanged. */
