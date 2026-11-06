@@ -1504,6 +1504,7 @@ VariableAddress_t vaFluxIllumination2_Addr = {
 //================================================
 //=============  patchHealthBoxPickup
 //================================================
+#ifdef HEALTH_BOX_SYNC
 // pickup eligibility check: int (Player* hero, Moby* pickup)
 VariableAddress_t vaPickupCanGive_Func = {
 #if UYA_PAL
@@ -1618,3 +1619,5 @@ VariableAddress_t vaGuberFindEvent_Func = {
 	.MarcadiaPalace = 0x00525028,
 #endif
 };
+
+#endif // HEALTH_BOX_SYNC

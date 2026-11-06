@@ -54,7 +54,9 @@ variableAddressCompact_t vaPadDeadzone_ScaleInput;
 VariableAddress_t vaDisableWrenchAimAssist_Addr;
 VariableAddress_t vaFluxIllumination1_Addr;
 VariableAddress_t vaFluxIllumination2_Addr;
+#ifdef HEALTH_BOX_SYNC
 VariableAddress_t vaPickupCanGive_Func;
 VariableAddress_t vaPickupCanGive_MasterHook;
 VariableAddress_t vaPickupCanGive_LocalHook;
 VariableAddress_t vaGuberFindEvent_Func;
+#endif

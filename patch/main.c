@@ -1804,6 +1804,7 @@ void patchCTFFlag(void)
 	}
 }
 
+#ifdef HEALTH_BOX_SYNC
 /*
  * NAME :		healthBoxCanGiveHook
  * DESCRIPTION :
@@ -1988,6 +1989,8 @@ int onRemoteClientRequestPickUpHealthBox(void * connection, void * data)
 	return sizeof(ClientRequestPickUpHealthBox_t);
 }
 
+#endif
+
 /*
  * NAME :		gadgetMobyCreateHook
  * DESCRIPTION :
@@ -2072,6 +2075,7 @@ void patchGadgetMobyClassGuard(void)
 	patched.gadgetMobyClassGuard = 1;
 }
 
+#ifdef HEALTH_BOX_SYNC
 /*
  * NAME :		patchHealthBoxPickup
  * DESCRIPTION :
@@ -2138,6 +2142,8 @@ void patchHealthBoxPickup(void)
 		}
 	}
 }
+
+#endif
 
 /*
  * NAME :		healthBoxRadar
@@ -4050,8 +4056,10 @@ int main(void)
 		// Patch CTF Flag Logic with our own.
 		patchCTFFlag();
 
+#ifdef HEALTH_BOX_SYNC
 		// Patch Health Box pickups: host authoritative, requested by the player's own client.
 		patchHealthBoxPickup();
+#endif
 
 		// Placeholder: mark spawned health boxes on the radar map.
 		healthBoxRadar();
