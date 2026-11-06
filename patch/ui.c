@@ -293,6 +293,20 @@ int getPlayerIndex(void * ui,int selectedPlayer)
     return i;
 }
 
+/*
+ * NAME : stagingSessionValid
+ * DESCRIPTION : Check that a staging session survived a native update or dialog.
+ * NOTES : Preserve connection, settings, then active-menu check order.
+ * ARGS : Staging menu and expected settings.
+ * RETURN : Nonzero while all three still match.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int stagingSessionValid(void* ui, GameSettings* gs)
+{
+	return netGetLobbyServerConnection() && gameGetSettings() == gs &&
+		uiGetActiveMenu(UI_MENU_STAGING, 0) == ui;
+}
+
 void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int isBot, int isTeams)
 {
     // Get correct player index
@@ -305,8 +319,7 @@ void optionChangeTeamSkin(void * ui, GameSettings * gs, int selectedItem, int is
     if (isBot) {
         // Open Team/Skin Menu
         uiShowChangeTeamSkinDialog(gs->PlayerTeams[i], gs->PlayerSkins[i], numTeams, isTeams, 1, 1);
-		if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
-			uiGetActiveMenu(UI_MENU_STAGING, 0) != ui)
+		if (!stagingSessionValid(ui, gs))
 			return;
         // Save chosen Team/Skin
         u32 getUI = uiGetMenu(UI_MENU_CHANGE_SKIN_TEAM);
@@ -563,8 +576,7 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
             optionsSize -= 2;
         }
         int select = uiShowSelectDialog(title, playerOptions, optionsSize, 0);
-		if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
-			uiGetActiveMenu(UI_MENU_STAGING, 0) != ui)
+		if (!stagingSessionValid(ui, gs))
 			return UI_PAD_NONE;
         int selection = -1;
         if (select > PLAYER_OPTION_CANCEL)
@@ -577,8 +589,7 @@ int openPlayerOptions(void * ui, GameSettings * gs, int itemSelected, int isTeam
                 char * kickEm = uiMsgString(0x15ff);
                 snprintf(kickingPlayer, 32, kickEm, gs->PlayerNames[i]);
                 int kickDialog = uiShowYesNoDialog("", kickingPlayer);
-                if (kickDialog == 1 && netGetLobbyServerConnection() && gameGetSettings() == gs &&
-					uiGetActiveMenu(UI_MENU_STAGING, 0) == ui) {
+                if (kickDialog == 1 && stagingSessionValid(ui, gs)) {
                     gs->PlayerStates[i] = 5;
                 }
                 break;
@@ -812,8 +823,7 @@ int patchStaging(UiMenu_t* ui, int pad)
     // Change pad buttons for all players
     if (pad == UI_PAD_CROSS) {
         pad = openPlayerOptions(ui, gs, itemSelected, isTeams);
-		if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
-			uiGetActiveMenu(UI_MENU_STAGING, 0) != ui)
+		if (!stagingSessionValid(ui, gs))
 			return 0;
     }
     // Change pad buttons on for host
@@ -855,8 +865,7 @@ int patchStaging(UiMenu_t* ui, int pad)
 			return result;
         getBuddyList(BUDDY_LIST_STACK, 2);
         getIgnoreList(IGNORE_LIST_STACK, 0);
-		if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
-			uiGetActiveMenu(UI_MENU_STAGING, 0) != ui || !BUDDY_IGNORE_LIST_PTR ||
+		if (!stagingSessionValid(ui, gs) || !BUDDY_IGNORE_LIST_PTR ||
 			!BUDDY_LIST_STACK || !IGNORE_LIST_STACK)
 			return result;
         info.currentWorldId = gameGetWorldId();
@@ -887,8 +896,7 @@ int patchStaging(UiMenu_t* ui, int pad)
             } else if (pressedL1 == 1 && holdingL1time <= gameGetTime() && *(u32*)0x01c5c114 == 0) {
                 pressedL1 = 2;
                 openTeamsOptions(gs, isTeams);
-				if (!netGetLobbyServerConnection() || gameGetSettings() != gs ||
-					uiGetActiveMenu(UI_MENU_STAGING, 0) != ui)
+				if (!stagingSessionValid(ui, gs))
 					return result;
             }
         }

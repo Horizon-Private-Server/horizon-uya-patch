@@ -12,7 +12,7 @@ path: `horizon-uya-patch/patch/main.c`
  * DESCRIPTION :
  * 			Reads gadget events and patches them if needed.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -45,7 +45,7 @@ void handleGadgetEvents(int player, char gadgetEventType, int activeTime, short 
  * DESCRIPTION :
  * 			Hook for the handleGadgetEVentLag function.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -142,7 +142,7 @@ path: `horizon-uya-patch/patch/cheats.c`
  * NAME :		spawnWeaponPackOnDeath
  * DESCRIPTION :
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -349,7 +349,7 @@ path: `horizon-uya-patch/patch/cheats.c`
  * DESCRIPTION :
  *              Modifies the player's size (and other objects)
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -417,7 +417,7 @@ void playerSize(void)
  * DESCRIPTION :
  *              Modifies the player's size (and other objects) while game is loading.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -619,4 +619,1000 @@ static void joinUpdateHost(GameSettings* settings, int supported)
 		gameEnd(GAME_END_TEAM_WIN);
 	}
 }
+```
+
+# Gravity Bomb -> B6 Obliterator
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+Tweaker_GravityBomb_t gBombTweaker[] = {
+	{12, 0.00001, 12, 15}, // UYA Default
+	{16, 0.00001, 16, 24} // DL Default
+};
+```
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+/*
+ * NAME :		modifyWeaponTweakers
+ * DESCRIPTION :
+ *             Modifies weapon tweakers (behavior)
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void modifyWeaponTweakers(void)
+{
+	if (gameConfig.prGravityBombTweakers && patched.gameConfig.prGravityBombTweakers == 0) {
+		TweakersGravityBomb_t * gBomb = weaponGravityBombTweakers();
+		int i = gameConfig.prGravityBombTweakers;
+		gBomb->maxThrowDist = gBombTweaker[i].maxThrowDist;
+		gBomb->minThrowDist = gBombTweaker[i].minThrowDist;
+		gBomb->gravity = gBombTweaker[i].gravity;
+		gBomb->maxThrowSpeed = gBombTweaker[i].maxThrowSpeed;
+
+		patched.gameConfig.prGravityBombTweakers = 1;
+	}
+}
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  { "Gravity Bomb->B6 Obliterator", toggleActionHandler, menuStateHandler_Default, &gameConfig.prGravityBombTweakers, "Changes the Gravity Bomb Physics to that of the B6 Obliterator from Ratchet: Deadlocked!" },
+```
+path: `horizon-uya-patch/patch/include/cheats.h`
+```c
+void modifyWeaponTweakers(void);
+```
+path: `horizon-uya-patch/patch/include/cheats.h`
+```c
+typedef struct Tweaker_GravityBomb {
+	float maxThrowDist;
+	float minThrowDist;
+	float gravity;
+	float maxThrowSpeed;
+} Tweaker_GravityBomb_t;
+```
+path: `horizon-uya-patch/patch/gamerules.c`
+```c
+	modifyWeaponTweakers();
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+	char prGravityBombTweakers;
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+        public bool prGravityBombTweakers { get; set; }
+                    writer.Write(prGravityBombTweakers);
+            prGravityBombTweakers = reader.ReadBoolean();
+                && prGravityBombTweakers == other.prGravityBombTweakers
+```
+
+
+# Infinite Chargeboot
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+/*
+ * NAME :		ChargebootForever
+ * DESCRIPTION :
+ *              Lets Player keep Chargebooting if R2 is held.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void chargebootForever(void)
+{
+	int i;
+	Player** players = playerGetAll();
+	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		Player* player = players[i];
+		if (!player)
+			continue;
+		// if Is Chargebooting and player is holding R2 and player's state timer is greater than 55
+		if (player->timers.noFpsCamTimer == 1 && playerPadGetButton(player, PAD_R2) > 0 && player->timers.state > 55)
+			player->timers.state = 55;
+	}
+}
+```
+# Respawn Invicibility
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+/*
+ * NAME :		runInvincibilityTimer
+ * DESCRIPTION :
+ *              Adds a small invincibility timer when a player respawns.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int runInvincibilityTimer(Player* player, int a1)
+{
+	int hurtPlayer = a1;
+	// if timer is greater than zero, player can't be hurt.
+	if (player->timers.unkTimer_346 > 0) {
+		timeDecTimerShort(&player->timers.unkTimer_346);
+		hurtPlayer = 0;
+	}
+	// if previous player state was resurrecting, start timer.
+	// Default timer is 2 frames (or 120 because 120/60pfs = 2)
+#if UYA_PAL
+	short timer = 100;
+#else
+	short timer = 120;
+#endif
+	if (playerDeobfuscate(&player->previousState, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
+		player->timers.unkTimer_346 = timer;
+
+	// run base function with our a1
+	DPRINTF("\nhurtPlayer: %d", hurtPlayer);
+	return ((int (*)(Player*, int))GetAddress(&vaPlayerInvincibleTimer_Func))(player, hurtPlayer);
+}
+void respawnInvincTimer(void)
+{
+	if (patched.gameConfig.grRespawnInvincibility)
+		return;
+
+	HOOK_JAL(GetAddress(&vaPlayerInvincibleTimer_Hook), &runInvincibilityTimer);
+	patched.gameConfig.grRespawnInvincibility = 1;
+}
+
+```
+
+# Player Respawn Invincibility
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+/*
+ * NAME :		runInvincibilityTimer
+ * DESCRIPTION :
+ *              Adds a small invincibility timer when a player respawns.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int runInvincibilityTimer(Player* player, int a1)
+{
+	int hurtPlayer = a1;
+	// if timer is greater than zero, player can't be hurt.
+	if (player->timers.unkTimer_346 > 0) {
+		timeDecTimerShort(&player->timers.unkTimer_346);
+		hurtPlayer = 0;
+	}
+	// if previous player state was resurrecting, start timer.
+	// Default timer is 2 frames (or 120 because 120/60pfs = 2)
+#if UYA_PAL
+	short timer = 100;
+#else
+	short timer = 120;
+#endif
+	if (playerDeobfuscate(&player->previousState, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
+		player->timers.unkTimer_346 = timer;
+
+	// run base function with our a1
+	DPRINTF("\nhurtPlayer: %d", hurtPlayer);
+	return ((int (*)(Player*, int))GetAddress(&vaPlayerInvincibleTimer_Func))(player, hurtPlayer);
+}
+```
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+void respawnInvincTimer(void)
+{
+	if (patched.gameConfig.grRespawnInvincibility)
+		return;
+
+	HOOK_JAL(GetAddress(&vaPlayerInvincibleTimer_Hook), &runInvincibilityTimer);
+	patched.gameConfig.grRespawnInvincibility = 1;
+}
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+	char grRespawnInvincibility;
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  { "Respawn Invincibility", toggleActionHandler, menuStateHandler_Default, &gameConfig.grRespawnInvincibility, "Adds a small invincibility timer to players whom have just respawned." },
+				gameConfig.grRespawnInvincibility = 0;
+```
+path: `horizon-uya-patch/patch/interop/cheats.c`
+```c
+//================================================
+//=============  playerInvicibleTimer
+//================================================
+variableAddressCompact_t vaPlayerInvincibleTimer_Hook = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x0052916c),
+	.Hoven = VA_COMPACT_OFFSET(0x0052916c, 0x0052b284),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x0052916c, 0x00520b5c),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x0052916c, 0x0051e2f4),
+	.Metropolis = VA_COMPACT_OFFSET(0x0052916c, 0x0051d644),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x0052916c, 0x0051aedc),
+	.CommandCenter = VA_COMPACT_OFFSET(0x0052916c, 0x0051ac9c),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x0052916c, 0x0051d51c),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x0052916c, 0x0051c81c),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x0052916c, 0x0051c19c),
+#else
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x005268ec),
+	.Hoven = VA_COMPACT_OFFSET(0x005268ec, 0x00528944),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x005268ec, 0x0051e25c),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x005268ec, 0x0051ba74),
+	.Metropolis = VA_COMPACT_OFFSET(0x005268ec, 0x0051adc4),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x005268ec, 0x005185dc),
+	.CommandCenter = VA_COMPACT_OFFSET(0x005268ec, 0x0051855c),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x005268ec, 0x0051ad9c),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x005268ec, 0x0051a0dc),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x005268ec, 0x00519a1c),
+#endif
+};
+```
+path: `horizon-uya-patch/patch/interop/cheats.c`
+```c
+variableAddressCompact_t vaPlayerInvincibleTimer_Func = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x004f8c30),
+	.Hoven = VA_COMPACT_OFFSET(0x004f8c30, 0x004fad48),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x004f8c30, 0x004f0620),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x004f8c30, 0x004eddb8),
+	.Metropolis = VA_COMPACT_OFFSET(0x004f8c30, 0x004ed108),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x004f8c30, 0x004ea9a0),
+	.CommandCenter = VA_COMPACT_OFFSET(0x004f8c30, 0x004ea968),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x004f8c30, 0x004ed1e8),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x004f8c30, 0x004ec4e8),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x004f8c30, 0x004ebe68),
+#else
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x004f64b0),
+	.Hoven = VA_COMPACT_OFFSET(0x004f64b0, 0x004f8508),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x004f64b0, 0x004ede20),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x004f64b0, 0x004eb638),
+	.Metropolis = VA_COMPACT_OFFSET(0x004f64b0, 0x004ea988),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x004f64b0, 0x004e81a0),
+	.CommandCenter = VA_COMPACT_OFFSET(0x004f64b0, 0x004e8328),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x004f64b0, 0x004eab68),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x004f64b0, 0x004e9ea8),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x004f64b0, 0x004e97e8),
+#endif
+};
+```
+path: `horizon-uya-patch/patch/interop/cheats.h`
+```c
+variableAddressCompact_t vaPlayerInvincibleTimer_Hook;
+variableAddressCompact_t vaPlayerInvincibleTimer_Func;
+```
+path: `horizon-uya-patch/patch/include/cheats.h`
+```c
+void respawnInvincTimer(void);
+```
+path: `horizon-uya-patch/patch/gamerules.c`
+```c
+	if (gameConfig.grRespawnInvincibility)
+		respawnInvincTimer();
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+				gameConfig.grRespawnInvincibility = 0;
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+        public bool grRespawnInvicibility { get; set; }
+                    writer.Write(grRespawnInvicibility);
+            grRespawnInvicibility = reader.ReadBoolean();
+                && grRespawnInvicibility == other.grRespawnInvicibility
+```
+
+# Health/Ammo Pads Always Active
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+/*
+ * NAME :		keepBaseHealthPadActive
+ * DESCRIPTION :
+ *              Keeps Base Ammo/Health Pads Active even if Gatlin Turrets are destroyed.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+int keepBaseHealthPadActive(void)
+{
+	int init = 0;
+	Moby * a = mobyListGetStart();
+	// if moby list finds the health pad
+	while ((a = mobyFindNextByOClass(a, MOBY_ID_HEALTH_PAD))) {
+		if (a->pUpdate) {
+			*(u32*)((u32)a->pUpdate + 0x68) = 0x24020001;
+			*(u32*)((u32)a->pUpdate + 0x8C) = 0x24150001;
+		}
+		++a;
+	}
+	Moby * b = mobyListGetStart();
+	// if moby list finds the ammo pad
+	while ((b = mobyFindNextByOClass(b, MOBY_ID_AMMO_PAD))) {
+		if (b->pUpdate) {
+			*(u32*)((u32)b->pUpdate + 0x74) = 0x24020001;
+			*(u32*)((u32)b->pUpdate + 0x90) = 0x24020001;
+		}
+		++b;
+	}
+	init = 1;
+	return init;
+}
+```
+path: `horizon-uya-patch/patch/include/cheats.h`
+```c
+int keepBaseHealthPadActive(void);
+```
+path: `horizon-uya-patch/patch/gamerules.c`
+```c
+int HasKeepBaseHealthPadActive = 0;
+	HasKeepBaseHealthPadActive = 0;
+	if (gameConfig.grBaseHealthPadActive && !HasKeepBaseHealthPadActive && gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth)
+		HasKeepBaseHealthPadActive = keepBaseHealthPadActive();
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive, "Let the Health and Ammo pads in each base always stay active, even if parts of the base are destroyed." },
+				gameConfig.grBaseHealthPadActive = 0;
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+	char grBaseHealthPadActive;
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+        public bool grBaseHealthPadActive { get; set; }
+                    writer.Write(grBaseHealthPadActive);
+            grBaseHealthPadActive = reader.ReadBoolean();
+                && grBaseHealthPadActive == other.grBaseHealthPadActive
+```
+
+# Destructable Bridges
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+/*
+ * NAME :		onGameplayLoad_destructableBridges
+ * DESCRIPTION :
+ *              Updates Various bridge pieces healths to a number thta makes it so it can't be destoyed.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay)
+{
+	int i;
+	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
+	u32 PVarOffsetPtr = ((u32)gameplay + gameplay->PVarTableOffset);
+	u32 PVarDataPtr = ((u32)gameplay + gameplay->PVarDataOffset);
+	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
+		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
+		switch (moby->OClass) {
+			case MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_SIDE:
+			case MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_SIDE: {
+				GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+				u32 data = PVarDataPtr + PVarOffset->Offset;
+				*(u32*)(data + 0x4) = 0x7f7fffff;
+			}
+			case MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_CENTER:
+			case MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER: {
+				GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
+				u32 data = PVarDataPtr + PVarOffset->Offset;
+				*(u32*)(data + 0x10) = 0x7f7fffff;
+			}
+		}
+	}
+}
+```
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+void destructableBridges(void)
+{
+	if (patched.gameConfig.grDestructableBridges)
+		return;
+
+	if (gameGetSettings()->GameLevel == MAP_ID_KORGON) {
+		Moby* moby = mobyListGetStart();
+		Moby* mobyEnd = mobyListGetEnd();
+		while (moby < mobyEnd) {
+			if (moby->oClass == MOBY_ID_KORGON_BRIDGE_PIECE) {
+					// Copy Extended Bridge Locatoin to Retracted Bridge Location
+					void * data = moby->pVar;
+					vector_copy(data + 0x90, data + 0xa0);
+					// Copy Extended Bridge Location to moby
+					vector_copy(moby->position, data + 0xa0);
+
+					// Bolt Crank Code
+					// grab associated bolt crank from bridge peice
+					int boltCrankInstanceNum = *(int*)(data + 0x8c);
+					Moby* list = mobyListGetStart();
+					// delete related bolt crank
+					Moby* boltCrank = list + boltCrankInstanceNum;
+					if (boltCrank->oClass == MOBY_ID_BOLT_CRANK)
+						mobyDestroy(boltCrank);
+					// *(float*)(boltCrank + 0x18) -= 1.5f;
+			}
+			++moby;
+		}
+	}
+	patched.gameConfig.grDestructableBridges = 1;
+}
+```
+path: `horizon-uya-patch/patch/include/cheats.h`
+```c
+void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay);
+void destructableBridges(void);
+```
+path: `horizon-uya-patch/patch/gamerules.c`
+```c
+	if (gameConfig.grDestructableBridges)
+		onGameplayLoad_destructableBridges(gameplay);
+	if (gameConfig.grDestructableBridges)
+		destructableBridges();
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  { "Destructable Bridges", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDestructableBridges, "turn on/off the ability to destroy bridges." },
+				gameConfig.grDestructableBridges = preset == 4;
+				gameConfig.grDestructableBridges = 0;
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+	char grDestructableBridges;
+```
+path: `horizon-uya-patch/patch/join.c`
+```c
+	if (gameConfig.grDestructableBridges &&
+	    (oClass == MOBY_ID_KORGON_BRIDGE_PIECE ||
+	    oClass == MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER ||
+	    oClass == MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_CENTER))
+		return 0;
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+        public bool grDestructableBridges { get; set; }
+                    writer.Write(grDestructableBridges);
+            grDestructableBridges = reader.ReadBoolean();
+                && grDestructableBridges == other.grDestructableBridges
+```
+
+# Always Show Health
+path: `horizon-uya-patch/patch/main.c`
+```c
+/*
+ * NAME :		patchAlwaysShowHealth
+ * DESCRIPTION :
+ * 				Always shows the players health bar.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchAlwaysShowHealth(void)
+{
+	u32 healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);;
+	Player *player = playerGetFromSlot(0);
+	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
+	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
+		*(u32*)healthbar_timer = 0;
+		player->hudHealthTimer = 3 * GAME_FPS;
+	} else if (!config.alwaysShowHealth && *(u32*)healthbar_timer == 0) {
+		*(u32*)healthbar_timer = old_value;
+	}
+}
+```
+path: `horizon-uya-patch/patch/interop/patch.c`
+```c
+//================================================
+//=============  patchAlwaysShowHealthBar
+//================================================
+variableAddressCompact_t vaHealthBarTimerSaveZero = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00548020),
+	.Hoven = VA_COMPACT_OFFSET(0x00548020, 0x0054a1e8),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x00548020, 0x0053fac0),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x00548020, 0x0053c5a8),
+	.Metropolis = VA_COMPACT_OFFSET(0x00548020, 0x0053c5a8),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x00548020, 0x00539d90),
+	.CommandCenter = VA_COMPACT_OFFSET(0x00548020, 0x005395e8),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00548020, 0x0053be68),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x00548020, 0x0053b168),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00548020, 0x0053aae8),
+#else
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00545718),
+	.Hoven = VA_COMPACT_OFFSET(0x00545718, 0x00547820),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x00545718, 0x0053d138),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x00545718, 0x0053a8a0),
+	.Metropolis = VA_COMPACT_OFFSET(0x00545718, 0x00539ca0),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x00545718, 0x00537408),
+	.CommandCenter = VA_COMPACT_OFFSET(0x00545718, 0x00536e38),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00545718, 0x00539678),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x00545718, 0x005389b8),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00545718, 0x005382f8),
+#endif
+};
+```
+path: `horizon-uya-patch/patch/main.c`
+```c
+	.alwaysShowHealth = 0,
+		if (config.alwaysShowHealth)
+			patchAlwaysShowHealth();
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  { "Always Show Health", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.alwaysShowHealth, "Let that health bar hide no longer!  This will make it so the health bar is always visible." },
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+  char alwaysShowHealth;
+```
+path: `horizon-uya-patch/patch/interop/patch.h`
+```c
+variableAddressCompact_t vaHealthBarTimerSaveZero;
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+        public bool alwaysShowHealth { get; set; }
+                    writer.Write(alwaysShowHealth);
+            alwaysShowHealth = reader.ReadBoolean();
+```
+
+# Retired Flux Config Toggles (fixes now always enabled)
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+        public bool grFluxShotsAlwaysHit { get; set; }
+        public bool grFluxNikingDisabled { get; set; }
+                    writer.Write(grFluxShotsAlwaysHit);
+                    writer.Write(grFluxNikingDisabled);
+            grFluxShotsAlwaysHit = reader.ReadBoolean();
+            grFluxNikingDisabled = reader.ReadBoolean();
+                && grFluxShotsAlwaysHit == other.grFluxShotsAlwaysHit
+                && grFluxNikingDisabled == other.grFluxNikingDisabled
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+				gameConfig.grFluxShotsAlwaysHit = 1;
+				gameConfig.grFluxNikingDisabled = 1;
+				gameConfig.grFluxShotsAlwaysHit = 1;
+				gameConfig.grFluxNikingDisabled = 1;
+```
+
+# Player Health Bars Above Names
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+/*
+ * NAME :		healthbar_Logic
+ * DESCRIPTION :
+ *              Shows a healthbar above the players name.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, int strLen)
+{
+	asm(".set noreorder;");
+	// run base function
+	gfxScreenSpaceTextCenter(nameX, nameY, nameColor, nameStr, strLen);
+
+	// get the register and copy name into buff.
+	register u32 nameReg asm("s0");
+	char buff[15];
+	strncpy(buff, nameReg, 15);
+
+	int i;
+	Player ** players = playerGetAll();
+	GameSettings * gs = gameGetSettings();
+	int playercount = ((int)gs->PlayerCount - 1);
+	for(i = 0; i < GAME_MAX_PLAYERS; ++i) {
+		if (!players[i])
+			return;
+
+		// compare strings: if 0, strings match exactly.
+		int comp = strncmp(buff, gs->PlayerNames[i], 0x15);
+		if (!comp) {
+			Player * player = players[i];
+			int CurrentHealth = playerGetHealth(player);
+			if (CurrentHealth > 0 && !playerIsDead(player)) {
+				// printf("\ni: %d, buff: %s, health: %d", i, buff, CurrentHealth);
+				float x = (float)nameX;// / SCREEN_WIDTH;
+				float y = (float)nameY;// / SCREEN_HEIGHT;
+				float health = (float)((int)CurrentHealth / (int)PLAYER_MAX_HEALTH);
+				float w = (0.05 * 1) + 0.02;
+				float h = 0.02;
+				float p = 0.002;
+				float right = w * health;
+				x -= w / 2;
+				gfxScreenSpaceBox(x, y, w - p, h - p, 0x80000000);
+				gfxScreenSpaceBox(x, y, right, h, nameColor);
+			}
+		}
+	}
+}
+```
+path: `horizon-uya-patch/patch/cheats.c`
+```c
+/*
+ * NAME :		healthbars
+ * DESCRIPTION :
+ *              Hooks healthbars_Logic
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void healthbars(void)
+{
+	if (patched.gameConfig.grHealthBars)
+		return;
+
+	HOOK_JAL(GetAddress(&vaHealthbars_Hook), &healthbars_Logic);
+	patched.gameConfig.grHealthBars = 1;
+}
+```
+path: `horizon-uya-patch/patch/interop/cheats.c`
+```c
+//================================================
+//=============  healthbars
+//================================================
+variableAddressCompact_t vaHealthbars_Hook = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00507c70),
+	.Hoven = VA_COMPACT_OFFSET(0x00507c70, 0x00509d88),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x00507c70, 0x004ff660),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x00507c70, 0x004fcdf8),
+	.Metropolis = VA_COMPACT_OFFSET(0x00507c70, 0x004fc148),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x00507c70, 0x004f99e0),
+	.CommandCenter = VA_COMPACT_OFFSET(0x00507c70, 0x004f99a8),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00507c70, 0x004fc228),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x00507c70, 0x004fb528),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00507c70, 0x004faea8),
+#else
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00505480),
+	.Hoven = VA_COMPACT_OFFSET(0x00505480, 0x005074d8),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x00505480, 0x004fcdf0),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x00505480, 0x004fa608),
+	.Metropolis = VA_COMPACT_OFFSET(0x00505480, 0x004f9958),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x00505480, 0x004f7170),
+	.CommandCenter = VA_COMPACT_OFFSET(0x00505480, 0x004f72f8),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00505480, 0x004f9b38),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x00505480, 0x004f8e78),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00505480, 0x004f87b8),
+#endif
+};
+```
+path: `horizon-uya-patch/patch/include/cheats.h`
+```c
+void healthbars(void);
+```
+path: `horizon-uya-patch/patch/interop/cheats.h`
+```c
+variableAddressCompact_t vaHealthbars_Hook;
+```
+path: `horizon-uya-patch/patch/gamerules.c`
+```c
+	if (gameConfig.grHealthBars)
+		healthbars();
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars, "Draws a healthbar above each player's nametag." },
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+	char grHealthBars;
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+        public bool grHealthBars { get; set; }
+                    writer.Write(grHealthBars);
+            grHealthBars = reader.ReadBoolean();
+                && grHealthBars == other.grHealthBars
+```
+
+# Original Loadout and Weapon Cycle Ordering
+path: `horizon-uya-patch/patch/main.c`
+```c
+/*
+ * NAME :		patchResurrectWeaponOrdering_HookWeaponStripMe
+ * DESCRIPTION :
+ * 			Invoked during the resurrection process, when the game wishes to remove all weapons from the given player.
+ * 			Before we continue to remove the player's weapons, we backup the list of equipped weapons.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
+{
+	int i;
+	// backup currently equipped weapons
+	if (player->isLocal) {
+		for (i = 0; i < 3; ++i)
+			weaponOrderBackup[0][i] = playerDeobfuscate(&player->quickSelect.Slot[i], 1);
+	}
+
+	// call hooked WeaponStripMe function after backup
+	playerStripWeapons(player);
+}
+
+int patchResurrectWeaponOrdering_ConvertToWeaponId(int id)
+{
+	int weapon;
+	switch (id) {
+		case 8: return GADGET_ID_MORPH;
+		case 9:	return GADGET_ID_HOLO;
+		default: return id;
+	}
+}
+/*
+ * NAME :		patchResurrectWeaponOrdering_HookGiveMeRandomWeapons
+ * DESCRIPTION :
+ * 			Invoked during the resurrection process, when the game wishes to give the given player a random set of weapons.
+ * 			After the weapons are randomly assigned to the player, we check to see if the given weapons are the same as the last equipped weapon backup.
+ * 			If they contain the same list of weapons (regardless of order), then we force the order of the new set of weapons to match the backup.
+ * 			Consider the scenario:
+ * 				Player dies with 								Fusion, B6, Magma Cannon
+ * 				Player is assigned 							B6, Fusion, Magma Cannon
+ * 				Player resurrects with  				Fusion, B6, Magma Cannon
+ * 			If prLoadoutWeaponsOnly
+ * 				Player will only spawn with their selected loadout (or default to cycle weapons)
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int weaponCount)
+{
+	int i, j;
+	char matchCount = 0;
+	char cycleWeaponCount = 0;
+	int index = player->mpIndex;
+
+	char cycle[] = {
+		config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : GADGET_ID_GBOMB,
+		config.cycleWeapon2 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon2) : GADGET_ID_BLITZ,
+		config.cycleWeapon3 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon3) : GADGET_ID_FLUX
+	};
+
+	// if Loadout Weapons Only is not on
+	if (!gameConfig.prLoadoutWeaponsOnly) {
+		// then try and overwrite given weapon order if weapons match equipped weapons before death
+		playerGiveRandomWeapons(player, weaponCount);
+
+		// restore backup if they match (regardless of order) newly assigned weapons
+		for (i = 0; i < 3; ++i) {
+			// if respawned weapons match backup weapons
+			u8 backedUpSlotValue = weaponOrderBackup[0][i];
+			for(j = 0; j < 3; ++j) {
+				if (backedUpSlotValue == playerDeobfuscate(&player->quickSelect.Slot[j], 1)) {
+					++matchCount;
+					DPRINTF("\ni: %d, j: %d, Matched: %d", i, j, playerDeobfuscate(&player->quickSelect.Slot[j], 1));
+				}
+			}
+		}
+		// if weaponOrderBackup matches respawnd weapons, then check for cycle weapons (regardless of order)
+		if (matchCount == 3) {
+			for (i = 0; i < 3; ++i) {
+				u8 backedUpSlotValue = weaponOrderBackup[0][i];
+				for(j = 0; j < 3; ++j) {
+					if (backedUpSlotValue == cycle[j]) {
+						++cycleWeaponCount;
+						DPRINTF("\ni: %d, j: %d, Cycle: %d", i, j, cycle[j]);
+					}
+				}
+			}
+		}
+		DPRINTF("\nMatch Count: %d; Cycle Count: %d", matchCount, cycleWeaponCount);
+	}
+	// if cycleWeaponCount matches, set backup weapons.
+	// or if Party Rule LoadWeapons Only is on, force set to needed weapons.
+	if (cycleWeaponCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
+		for (i = 0; i < 3; ++i)
+			weaponOrderBackup[0][i] = cycle[i];
+	}
+	// we found a match, or loadout weapons only is on.
+	if (matchCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
+		// set equipped weapon in order
+		for (i = 0; i < 3; ++i)
+			playerGiveWeapon(player, weaponOrderBackup[0][i], 1);
+
+		// equip each weapon from last slot to first slot to keep correct order.
+		for (i = 2; i >= 0; --i)
+			playerEquipWeapon(player, weaponOrderBackup[0][i]);
+	}
+}
+/*
+ * NAME :		spawnWithLoadoutWeapons
+ * DESCRIPTION :
+ *              Spawns players loudout at start of game.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void spawnWithLoadoutWeapons(void)
+{
+	Player *player = playerGetFromSlot(0);
+	// Strip all Weapons
+	patchResurrectWeaponOrdering_HookWeaponStripMe(player);
+	// Give needed weapons
+	patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(player, 3);
+	// Give chargeboots if needed
+	if (gameGetOptions()->GameFlags.MultiplayerGameFlags.Chargeboots == 1)
+		playerGiveWeapon(player, GADGET_ID_CHARGEBOOTS, 0);
+}
+
+/*
+ * NAME :		patchResurrectWeaponOrdering
+ * DESCRIPTION :
+ * 			Installs necessary hooks such that when respawning with same weapons,
+ * 			they are equipped in the same order.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void patchResurrectWeaponOrdering(void)
+{
+	if (patched.resurrectWeaponOrdering)
+		return;
+
+	u32 hook_StripMe = ((u32)GetAddress(&vaPlayerRespawnFunc) + 0x40);
+	u32 hook_RandomWeapons = hook_StripMe + 0x1c;
+	HOOK_JAL(hook_StripMe, &patchResurrectWeaponOrdering_HookWeaponStripMe);
+	HOOK_JAL(hook_RandomWeapons, &patchResurrectWeaponOrdering_HookGiveMeRandomWeapons);
+	// set weapons at start of game.
+	spawnWithLoadoutWeapons();
+
+	patched.resurrectWeaponOrdering = 1;
+}
+```
+
+# Removed Loadout Configuration
+path: `horizon-uya-patch/patch/main.c`
+```c
+	.cycleWeapon1 = 0,
+```
+path: `horizon-uya-patch/patch/main.c`
+```c
+	.cycleWeapon2 = 0,
+```
+path: `horizon-uya-patch/patch/main.c`
+```c
+	.cycleWeapon3 = 0,
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+static const char * const loadoutWeaponItems[] = {
+	"Off", "N60 Storm", "Blitz Cannon", "Flux Rifle", "Mini Rocket Tube", "Gravity Bomb", "Mine Glove", "Lava Gun", "Morph-O-Ray", "Holo Shield Glove"
+};
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+MenuElem_ListData_t dataCycleWeapon1 = {
+    .value = &config.cycleWeapon1,
+    .stateHandler = NULL,
+    .count = 10,
+    .items = loadoutWeaponItems
+};
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+MenuElem_ListData_t dataCycleWeapon2 = {
+    .value = &config.cycleWeapon2,
+    .stateHandler = NULL,
+    .count = 10,
+    .items = loadoutWeaponItems
+};
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+MenuElem_ListData_t dataCycleWeapon3 = {
+    .value = &config.cycleWeapon3,
+    .stateHandler = NULL,
+    .count = 10,
+    .items = loadoutWeaponItems
+};
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+    // if (gameConfig.prLoadoutWeaponsOnly) {
+    //   gameConfig.grDisableWeaponPacks = 1;
+    //   gameConfig.grDisableWeaponCrates = 1;
+    //   gameConfig.grDisableAmmoPickups = 1;
+    // }
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  // { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1, "Main Weapon 1.  Defaults to Gravity Bomb if nothing is selected." },
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  // { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2, "Main Weapon 2.  Defaults to Blitz Cannon if nothing is selected." },
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  // { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3, "Main Weapon 3.  Defaults to Flux Rifle if nothing is selected." },
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+  { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly, "Only allow the use of each players Loadout weapons, regardless of what weapons are enabled." },
+```
+path: `horizon-uya-patch/patch/config.c`
+```c
+				gameConfig.prLoadoutWeaponsOnly = 0;
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+  char cycleWeapon1;
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+  char cycleWeapon2;
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+  char cycleWeapon3;
+```
+path: `horizon-uya-patch/common/config.h`
+```c
+	char prLoadoutWeaponsOnly;
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+        public bool prLoadoutWeaponsOnly { get; set; }
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+                    writer.Write(prLoadoutWeaponsOnly);
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+            prLoadoutWeaponsOnly = reader.ReadBoolean();
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Game.cs`
+```cs
+                && prLoadoutWeaponsOnly == other.prLoadoutWeaponsOnly
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+        public byte cycleWeapon1 { get; set; }
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+        public byte cycleWeapon2 { get; set; }
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+        public byte cycleWeapon3 { get; set; }
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+                    writer.Write(cycleWeapon1);
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+                    writer.Write(cycleWeapon2);
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+                    writer.Write(cycleWeapon3);
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+            cycleWeapon1 = reader.ReadByte();
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+            cycleWeapon2 = reader.ReadByte();
+```
+path: `horizon-uya-plugin/Horizon.Plugin.UYA/Player.cs`
+```cs
+            cycleWeapon3 = reader.ReadByte();
 ```

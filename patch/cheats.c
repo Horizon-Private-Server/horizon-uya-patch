@@ -38,11 +38,6 @@
 #include "interop/cheats.h"
 #include "utils.h"
 
-Tweaker_GravityBomb_t gBombTweaker[] = {
-	{12, 0.00001, 12, 15}, // UYA Default
-	{16, 0.00001, 16, 24} // DL Default
-};
-
 SoundDef TimerTickSoundDef = {1000, 1000, 2000, 2000, 0, 0, 0, 0x10, 133, 0};
 TimerVars_t allNodesTimer = {
     .timer_x = SCREEN_WIDTH / 2,
@@ -248,29 +243,6 @@ int setGatlingTurretHealth(int value)
 	// Init makes this work correctly.  just using "return moby;" doesn't
     init = 1;
     return init;
-}
-
-/*
- * NAME :		ChargebootForever
- * DESCRIPTION :
- *              Lets Player keep Chargebooting if R2 is held.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void chargebootForever(void)
-{
-	int i;
-	Player** players = playerGetAll();
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		Player* player = players[i];
-		if (!player)
-			continue;
-		// if Is Chargebooting and player is holding R2 and player's state timer is greater than 55
-		if (player->timers.noFpsCamTimer == 1 && playerPadGetButton(player, PAD_R2) > 0 && player->timers.state > 55)
-			player->timers.state = 55;
-	}
 }
 
 /*
@@ -538,39 +510,7 @@ void onGameplayLoad_hideTeamNodeTurrets(GameplayHeaderDef_t * gameplay, bool dis
 	}
 }
 
-/*
- * NAME :		keepBaseHealthPadActive
- * DESCRIPTION :
- *              Keeps Base Ammo/Health Pads Active even if Gatlin Turrets are destroyed.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-int keepBaseHealthPadActive(void)
-{
-	int init = 0;
-	Moby * a = mobyListGetStart();
-	// if moby list finds the health pad
-	while ((a = mobyFindNextByOClass(a, MOBY_ID_HEALTH_PAD))) {
-		if (a->pUpdate) {
-			*(u32*)((u32)a->pUpdate + 0x68) = 0x24020001;
-			*(u32*)((u32)a->pUpdate + 0x8C) = 0x24150001;
-		}
-		++a;
-	}
-	Moby * b = mobyListGetStart();
-	// if moby list finds the ammo pad
-	while ((b = mobyFindNextByOClass(b, MOBY_ID_AMMO_PAD))) {
-		if (b->pUpdate) {
-			*(u32*)((u32)b->pUpdate + 0x74) = 0x24020001;
-			*(u32*)((u32)b->pUpdate + 0x90) = 0x24020001;
-		}
-		++b;
-	}
-	init = 1;
-	return init;
-}
+
 
 /*
  * NAME :		noPostHitInvinc
@@ -674,79 +614,15 @@ void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay)
 	}
 }
 
-/*
- * NAME :		healthbar_Logic
- * DESCRIPTION :
- *              Shows a healthbar above the players name.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void healthbars_Logic(float nameX, float nameY, u32 nameColor, char * nameStr, int strLen)
-{
-	asm(".set noreorder;");
-	// run base function
-	gfxScreenSpaceTextCenter(nameX, nameY, nameColor, nameStr, strLen);
 
-	// get the register and copy name into buff.
-	register u32 nameReg asm("s0");
-	char buff[15];
-	strncpy(buff, nameReg, 15);
 
-	int i;
-	Player ** players = playerGetAll();
-	GameSettings * gs = gameGetSettings();
-	int playercount = ((int)gs->PlayerCount - 1);
-	for(i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		if (!players[i])
-			return;
-
-		// compare strings: if 0, strings match exactly.
-		int comp = strncmp(buff, gs->PlayerNames[i], 0x15);
-		if (!comp) {
-			Player * player = players[i];
-			int CurrentHealth = playerGetHealth(player);
-			if (CurrentHealth > 0 && !playerIsDead(player)) {
-				// printf("\ni: %d, buff: %s, health: %d", i, buff, CurrentHealth);
-				float x = (float)nameX;// / SCREEN_WIDTH;
-				float y = (float)nameY;// / SCREEN_HEIGHT;
-				float health = (float)((int)CurrentHealth / (int)PLAYER_MAX_HEALTH);
-				float w = (0.05 * 1) + 0.02;
-				float h = 0.02;
-				float p = 0.002;
-				float right = w * health;
-				x -= w / 2;
-				gfxScreenSpaceBox(x, y, w - p, h - p, 0x80000000);
-				gfxScreenSpaceBox(x, y, right, h, nameColor);
-			}
-		}
-	}
-}
-/*
- * NAME :		healthbars
- * DESCRIPTION :
- *              Hooks healthbars_Logic
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void healthbars(void)
-{
-	if (patched.gameConfig.grHealthBars)
-		return;
-
-	HOOK_JAL(GetAddress(&vaHealthbars_Hook), &healthbars_Logic);
-	patched.gameConfig.grHealthBars = 1;
-}
 
 /*
  * NAME :		radarBlips
  * DESCRIPTION :
  *              Change how far the radarblips can be shown.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -757,32 +633,11 @@ void radarBlips(void)
 
 	u32 float_dist = GetAddress(&vaRadarBlips_FloatVal);
 	if (*(u32*)float_dist == 0x3c014499) {
-		switch (gameConfig.grRadarBlipsDistance) {
-			case 1: { // 2x
-				*(u32*)float_dist = 0x3c014519;
-				*(u32*)(float_dist + 0x4) = 0x34210000;
-				break;	
-			}
-			case 2: { // 4x
-				*(u32*)float_dist = 0x3c014599;
-				*(u32*)(float_dist + 0x4) = 0x34210000;
-				break;	
-			}
-			case 3: { // Always
-				*(u32*)float_dist = 0x3c017fff;
-				*(u32*)(float_dist + 0x4) = 0x3421ffff;
-				break;
-			}
-			case 4: { // Off
-				*(u32*)float_dist = 0x3c010000;
-				*(u32*)(float_dist + 0x4) = 0x34210000;
-				break;	
-			}
-			case 5: { // .5x
-				*(u32*)float_dist = 0x3c014419;
-				*(u32*)(float_dist + 0x4) = 0x34210000;
-				break;	
-			}
+		static const u16 upperDistance[] = { 0x4519, 0x4599, 0x7fff, 0, 0x4419 };
+		int setting = gameConfig.grRadarBlipsDistance;
+		if (setting >= 1 && setting <= 5) {
+			*(u32*)float_dist = 0x3c010000 | upperDistance[setting - 1];
+			*(u32*)(float_dist + 0x4) = setting == 3 ? 0x3421ffff : 0x34210000;
 		}
 		patched.gameConfig.grRadarBlipsDistance = 1;
 	}
@@ -865,46 +720,6 @@ void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay)
 		// 	}
 		// }
 	}
-}
-
-/*
- * NAME :		runInvincibilityTimer
- * DESCRIPTION :
- *              Adds a small invincibility timer when a player respawns.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-int runInvincibilityTimer(Player* player, int a1)
-{
-	int hurtPlayer = a1;
-	// if timer is greater than zero, player can't be hurt.
-	if (player->timers.unkTimer_346 > 0) {
-		timeDecTimerShort(&player->timers.unkTimer_346);
-		hurtPlayer = 0;
-	}
-	// if previous player state was resurrecting, start timer.
-	// Default timer is 2 frames (or 120 because 120/60pfs = 2)
-#if UYA_PAL
-	short timer = 100;
-#else
-	short timer = 120;
-#endif
-	if (playerDeobfuscate(&player->previousState, 0) == PLAYER_STATE_WAIT_FOR_RESURRECT)
-		player->timers.unkTimer_346 = timer;
-
-	// run base function with our a1
-	DPRINTF("\nhurtPlayer: %d", hurtPlayer);
-	return ((int (*)(Player*, int))GetAddress(&vaPlayerInvincibleTimer_Func))(player, hurtPlayer);
-}
-void respawnInvincTimer(void)
-{
-	if (patched.gameConfig.grRespawnInvincibility)
-		return;
-
-	HOOK_JAL(GetAddress(&vaPlayerInvincibleTimer_Hook), &runInvincibilityTimer);
-	patched.gameConfig.grRespawnInvincibility = 1;
 }
 
 // Health arbitration uses reliable lobby messages; native pickup events still own respawning.
@@ -1266,94 +1081,9 @@ void patchHealthPickups(void)
 	patched.gameConfig.grHealthBoxes = found && !pending;
 }
 
-/*
- * NAME :		onGameplayLoad_destructableBridges
- * DESCRIPTION :
- *              Updates Various bridge pieces healths to a number thta makes it so it can't be destoyed.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay)
-{
-	int i;
-	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
-	u32 PVarOffsetPtr = ((u32)gameplay + gameplay->PVarTableOffset);
-	u32 PVarDataPtr = ((u32)gameplay + gameplay->PVarDataOffset);
-	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
-		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
-		switch (moby->OClass) {
-			case MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_SIDE:
-			case MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_SIDE: {
-				GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
-				u32 data = PVarDataPtr + PVarOffset->Offset;
-				*(u32*)(data + 0x4) = 0x7f7fffff;
-			}
-			case MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_CENTER:
-			case MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER: {
-				GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
-				u32 data = PVarDataPtr + PVarOffset->Offset;
-				*(u32*)(data + 0x10) = 0x7f7fffff;
-			}
-		}
-	}
-}
 
-void destructableBridges(void)
-{
-	if (patched.gameConfig.grDestructableBridges)
-		return;
 
-	if (gameGetSettings()->GameLevel == MAP_ID_KORGON) {
-		Moby* moby = mobyListGetStart();
-		Moby* mobyEnd = mobyListGetEnd();
-		while (moby < mobyEnd) {
-			if (moby->oClass == MOBY_ID_KORGON_BRIDGE_PIECE) {
-					// Copy Extended Bridge Locatoin to Retracted Bridge Location
-					void * data = moby->pVar;
-					vector_copy(data + 0x90, data + 0xa0);
-					// Copy Extended Bridge Location to moby
-					vector_copy(moby->position, data + 0xa0);
 
-					// Bolt Crank Code
-					// grab associated bolt crank from bridge peice
-					int boltCrankInstanceNum = *(int*)(data + 0x8c);
-					Moby* list = mobyListGetStart();
-					// delete related bolt crank
-					Moby* boltCrank = list + boltCrankInstanceNum;
-					if (boltCrank->oClass == MOBY_ID_BOLT_CRANK)
-						mobyDestroy(boltCrank);
-					// *(float*)(boltCrank + 0x18) -= 1.5f;
-			}
-			++moby;
-		}
-	}
-	patched.gameConfig.grDestructableBridges = 1;
-}
-
-/*
- * NAME :		modifyWeaponTweakers
- * DESCRIPTION :
- *             Modifies weapon tweakers (behavior)
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void modifyWeaponTweakers(void)
-{
-	if (gameConfig.prGravityBombTweakers && patched.gameConfig.prGravityBombTweakers == 0) {
-		TweakersGravityBomb_t * gBomb = weaponGravityBombTweakers();
-		int i = gameConfig.prGravityBombTweakers;
-		gBomb->maxThrowDist = gBombTweaker[i].maxThrowDist;
-		gBomb->minThrowDist = gBombTweaker[i].minThrowDist;
-		gBomb->gravity = gBombTweaker[i].gravity;
-		gBomb->maxThrowSpeed = gBombTweaker[i].maxThrowSpeed;
-
-		patched.gameConfig.prGravityBombTweakers = 1;
-	}
-}
 
 /*
  * NAME : patchDroneSpawning
@@ -1389,7 +1119,7 @@ void patchDroneSpawning(void)
  * DESCRIPTION :
  *             Checks to see if all nodes are owned by one team, if so, start countdown timer.
  * NOTES :
- * ARGS : 
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -1399,7 +1129,6 @@ void runCheckAllNodes(void) {
     GameSettings *gameSettings = gameGetSettings();
     GameData *gameData = gameGetData();
     short nodes[2] = {0, 0};
-    char title[32];
     // get number of nodes and set timer value
     if (maxNodeCount == -1) {
         maxNodeCount = 0;
@@ -1425,10 +1154,8 @@ void runCheckAllNodes(void) {
     int redTeamAll = red == maxNodeCount && blue == 0;
     int teamWithAllNodes = (blueTeamAll && !redTeamAll) ? 0 : (redTeamAll && !blueTeamAll) ? 1 : -1;
     if (teamWithAllNodes > -1 && allNodesTimer.status == -1) {
-		allNodesTimer.timeValue = (gameConfig.grAllNodesTimer * .5) * 60;
-        char *whichTeam = !teamWithAllNodes ? "Blue" : "Red";
-        sprintf(title, "%s Team Wins In", whichTeam);
-        strncpy(allNodesTimer.title, title, 32);
+		allNodesTimer.timeValue = gameConfig.grAllNodesTimer * 30;
+		strncpy(allNodesTimer.title, teamWithAllNodes ? "Red Team Wins In" : "Blue Team Wins In", 32);
         allNodesTimer.colorBase = 0x80000000 | TEAM_COLORS[teamWithAllNodes];
         allNodesTimer.status = 0;
     } else if (teamWithAllNodes == -1 && allNodesTimer.status > -1){

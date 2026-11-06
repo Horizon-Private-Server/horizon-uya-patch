@@ -180,16 +180,12 @@ PatchConfig_t config __attribute__((section(".config"))) = {
 	.enableFpsCounter = 0,
 	.playerFov = 0,
 	.enableSpectate = 0,
-	.alwaysShowHealth = 0,
 	.mapScoreToggle_MapBtn = 0,
 	.mapScoreToggle_ScoreBtn = 0,
 	.disableScavengerHunt = 0,
 	.enableSingleplayerMusic = 0,
 	.quickSelectTimeDelay = 0,
 	.aimAssist = 0,
-	.cycleWeapon1 = 0,
-	.cycleWeapon2 = 0,
-	.cycleWeapon3 = 0,
 	.hypershotEquipButton = 0,
 	.disableDpadMovement = 0,
 	.hideFluxReticle = 0,
@@ -689,14 +685,6 @@ void patchDeadShooting(void)
 
 int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* moby, u64 t0)
 {
-	// hit through terrain
-	// if we've hit a target
-	// we check if we've hit by reading the source guber event
-	// which is passed in 0x5C of the shot's pvars
-	// the shot's pvars hold the shooter (+0x3C) and, for a remote shot, the moby the sender said it hit (+0x4C,
-	// looked up from the message's TargetUID when the shot is created; NULL if it hit nothing with a guber).
-	// this used to read the UID through a pointer saved at +0x5C, but that pointer was to a stack variable of
-	// the function that fires the shot, so it was only valid during the first step.
 	if (shotMoby && shotMoby->pVar) {
 		Player* shooter = *(Player**)((u32)shotMoby->pVar + 0x3C);
 		Moby* declaredTarget = *(Moby**)((u32)shotMoby->pVar + 0x4C);
@@ -718,21 +706,6 @@ int patchSniperWallSniping_Hook(VECTOR from, VECTOR to, Moby* shotMoby, Moby* mo
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void patchSniperWallSniping(void)
-{
-	if (gameConfig.grFluxShotsAlwaysHit) {
-		// hook when collision checking is done on the sniper shot
-		u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
-		if (hookAddr) {
-			POKE_U32(hookAddr + 0x04, 0x0260302D);
-			HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
-		}
-
-		// (the poke at vaSniperShotCreatedHook that saved a pointer in the shot's pvars is gone:
-		// patchSniperWallSniping_Hook now reads the declared target the game already stores at pvars+0x4C)
-	}
-}
-
 void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 {
 	// call base
@@ -767,6 +740,18 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
 		}
 	}
 }
+void patchSniperWallSniping(void)
+{
+	if (patched.wallSniping)
+		return;
+
+	u32 hookAddr = GetAddress(&vaSniperShotCollLineFixHook);
+	if (hookAddr) {
+		POKE_U32(hookAddr + 0x04, 0x0260302D);
+		HOOK_JAL(hookAddr, &patchSniperWallSniping_Hook);
+		patched.wallSniping = 1;
+	}
+}
 
 /*
  * NAME :		patchSniperNiking
@@ -779,11 +764,15 @@ void patchSniperNiking_Hook(float f12, VECTOR out, VECTOR in, void * event)
  */
 void patchSniperNiking(void)
 {
+	if (patched.fixNiking)
+		return;
+
 	u32 hookAddr = GetAddress(&vaGetSniperShotDirectionHook);
 	if (hookAddr) {
 		POKE_U32(hookAddr - 0x0C, 0x46000306);
 		POKE_U32(hookAddr + 0x04, 0x02803021);
 		HOOK_JAL(hookAddr, &patchSniperNiking_Hook);
+		patched.fixNiking = 1;
 	}
 }
 
@@ -928,119 +917,76 @@ void patchResurrectWeaponOrdering_HookWeaponStripMe(Player * player)
 	int i;
 	// backup currently equipped weapons
 	if (player->isLocal) {
+		int index = player == playerGetFromSlot(1);
 		for (i = 0; i < 3; ++i)
-			weaponOrderBackup[0][i] = playerDeobfuscate(&player->quickSelect.Slot[i], 1);
+			weaponOrderBackup[index][i] = playerDeobfuscate(&player->quickSelect.Slot[i], 1);
 	}
 
 	// call hooked WeaponStripMe function after backup
 	playerStripWeapons(player);
 }
 
-int patchResurrectWeaponOrdering_ConvertToWeaponId(int id)
-{
-	int weapon;
-	switch (id) {
-		case 8: return GADGET_ID_MORPH;
-		case 9:	return GADGET_ID_HOLO;
-		default: return id;
-	}
-}
 /*
- * NAME :		patchResurrectWeaponOrdering_HookGiveMeRandomWeapons
- * DESCRIPTION :
- * 			Invoked during the resurrection process, when the game wishes to give the given player a random set of weapons.
- * 			After the weapons are randomly assigned to the player, we check to see if the given weapons are the same as the last equipped weapon backup.
- * 			If they contain the same list of weapons (regardless of order), then we force the order of the new set of weapons to match the backup.
- * 			Consider the scenario:
- * 				Player dies with 								Fusion, B6, Magma Cannon
- * 				Player is assigned 							B6, Fusion, Magma Cannon
- * 				Player resurrects with  				Fusion, B6, Magma Cannon
- * 			If prLoadoutWeaponsOnly
- * 				Player will only spawn with their selected loadout (or default to cycle weapons)
- * NOTES :
- * ARGS :
+ * NAME : setDefaultWeaponOrder
+ * DESCRIPTION : Order the standard trio as Gravity Bomb, Blitz, then Flux.
+ * NOTES : Only reorders weapons already assigned by the game.
+ * ARGS : player
+ * RETURN : Nonzero when the standard trio was ordered.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+static int setDefaultWeaponOrder(Player* player)
+{
+	int i;
+	u8 weapons = 0;
+	for (i = 0; i < 3; ++i) {
+		switch (playerDeobfuscate(&player->quickSelect.Slot[i], 1)) {
+			case GADGET_ID_GBOMB: weapons |= 1; break;
+			case GADGET_ID_BLITZ: weapons |= 2; break;
+			case GADGET_ID_FLUX: weapons |= 4; break;
+		}
+	}
+	if (weapons != 7)
+		return 0;
+
+	playerEquipWeapon(player, GADGET_ID_FLUX);
+	playerEquipWeapon(player, GADGET_ID_BLITZ);
+	playerEquipWeapon(player, GADGET_ID_GBOMB);
+	return 1;
+}
+
+/*
+ * NAME : patchResurrectWeaponOrdering_HookGiveMeRandomWeapons
+ * DESCRIPTION : Restore the local player's weapon order when the assigned set matches.
+ * NOTES : Native assignment controls available weapons; the standard trio uses its default order.
+ * ARGS : player, weaponCount
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
 void patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(Player* player, int weaponCount)
 {
+	playerGiveRandomWeapons(player, weaponCount);
+	if (!player->isLocal || setDefaultWeaponOrder(player))
+		return;
+
+	int index = player == playerGetFromSlot(1);
 	int i, j;
-	char matchCount = 0;
-	char cycleWeaponCount = 0;
-	int index = player->mpIndex;
-  
-	char cycle[] = {
-		config.cycleWeapon1 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon1) : GADGET_ID_GBOMB,
-		config.cycleWeapon2 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon2) : GADGET_ID_BLITZ,
-		config.cycleWeapon3 > 0 ? patchResurrectWeaponOrdering_ConvertToWeaponId(config.cycleWeapon3) : GADGET_ID_FLUX
-	};
-
-	// if Loadout Weapons Only is not on
-	if (!gameConfig.prLoadoutWeaponsOnly) {
-		// then try and overwrite given weapon order if weapons match equipped weapons before death
-		playerGiveRandomWeapons(player, weaponCount);
-		
-		// restore backup if they match (regardless of order) newly assigned weapons
-		for (i = 0; i < 3; ++i) {
-			// if respawned weapons match backup weapons
-			u8 backedUpSlotValue = weaponOrderBackup[0][i];
-			for(j = 0; j < 3; ++j) {
-				if (backedUpSlotValue == playerDeobfuscate(&player->quickSelect.Slot[j], 1)) {
-					++matchCount;
-					DPRINTF("\ni: %d, j: %d, Matched: %d", i, j, playerDeobfuscate(&player->quickSelect.Slot[j], 1));
-				}
+	u8 matched = 0;
+	for (i = 0; i < 3; ++i) {
+		u8 weapon = weaponOrderBackup[index][i];
+		if (!weapon)
+			return;
+		for (j = 0; j < 3; ++j) {
+			if (!(matched & (1 << j)) && weapon == playerDeobfuscate(&player->quickSelect.Slot[j], 1)) {
+				matched |= 1 << j;
+				break;
 			}
 		}
-		// if weaponOrderBackup matches respawnd weapons, then check for cycle weapons (regardless of order)
-		if (matchCount == 3) {
-			for (i = 0; i < 3; ++i) {
-				u8 backedUpSlotValue = weaponOrderBackup[0][i];
-				for(j = 0; j < 3; ++j) {
-					if (backedUpSlotValue == cycle[j]) {
-						++cycleWeaponCount;
-						DPRINTF("\ni: %d, j: %d, Cycle: %d", i, j, cycle[j]);
-					}
-				}
-			}
-		}
-		DPRINTF("\nMatch Count: %d; Cycle Count: %d", matchCount, cycleWeaponCount);
+		if (j == 3)
+			return;
 	}
-	// if cycleWeaponCount matches, set backup weapons.
-	// or if Party Rule LoadWeapons Only is on, force set to needed weapons.
-	if (cycleWeaponCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
-		for (i = 0; i < 3; ++i)
-			weaponOrderBackup[0][i] = cycle[i];
-	}
-	// we found a match, or loadout weapons only is on.
-	if (matchCount == 3 || gameConfig.prLoadoutWeaponsOnly) {
-		// set equipped weapon in order
-		for (i = 0; i < 3; ++i)
-			playerGiveWeapon(player, weaponOrderBackup[0][i], 1);
 
-		// equip each weapon from last slot to first slot to keep correct order.
-		for (i = 2; i >= 0; --i)
-			playerEquipWeapon(player, weaponOrderBackup[0][i]);
-	}
-}
-/*
- * NAME :		spawnWithLoadoutWeapons
- * DESCRIPTION :
- *              Spawns players loudout at start of game.
- * NOTES :
- * ARGS :
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void spawnWithLoadoutWeapons(void)
-{
-	Player *player = playerGetFromSlot(0);
-	// Strip all Weapons
-	patchResurrectWeaponOrdering_HookWeaponStripMe(player);
-	// Give needed weapons
-	patchResurrectWeaponOrdering_HookGiveMeRandomWeapons(player, 3);
-	// Give chargeboots if needed
-	if (gameGetOptions()->GameFlags.MultiplayerGameFlags.Chargeboots == 1)
-		playerGiveWeapon(player, GADGET_ID_CHARGEBOOTS, 0);
+	for (i = 2; i >= 0; --i)
+		playerEquipWeapon(player, weaponOrderBackup[index][i]);
 }
 
 /*
@@ -1062,8 +1008,14 @@ void patchResurrectWeaponOrdering(void)
 	u32 hook_RandomWeapons = hook_StripMe + 0x1c;
 	HOOK_JAL(hook_StripMe, &patchResurrectWeaponOrdering_HookWeaponStripMe);
 	HOOK_JAL(hook_RandomWeapons, &patchResurrectWeaponOrdering_HookGiveMeRandomWeapons);
-	// set weapons at start of game.
-	spawnWithLoadoutWeapons();
+
+	// Apply the same order at initial spawn without reassigning weapons.
+	int i;
+	for (i = 0; i < 2; ++i) {
+		Player* player = playerGetFromSlot(i);
+		if (player && player->isLocal)
+			setDefaultWeaponOrder(player);
+	}
 
 	patched.resurrectWeaponOrdering = 1;
 }
@@ -1110,70 +1062,62 @@ void runFpsCounter_Logic(void)
 	}
 }
 
+typedef struct frameTiming {
+	/* 0x00 */ int elapsedMs;
+	/* 0x04 */ int frames;
+	/* 0x08 */ long intervalStart;
+} frameTiming_t;
+
 /*
- * NAME :		runFpsCounter_drawHook
- * DESCRIPTION :
- * 			Logic for the GS counter.
- * NOTES :
- * ARGS :
+ * NAME : measureFrameTiming
+ * DESCRIPTION : Measure a native frame callback and update its 500 ms average.
+ * NOTES : Each hook supplies independent timing state.
+ * ARGS : Native function address, timing state, and output average.
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
-void runFpsCounter_drawHook(void)
+static void measureFrameTiming(variableAddressCompact_t* function, frameTiming_t* timing, float* average)
 {
-	static int renderTimeCounterMs = 0;
-	static int frames = 0;
-	static long ticksIntervalStarted = 0;
-
-	long t0 = timerGetSystemTime();
-	((void (*)(void))GetAddress(&vaFpsCounter_DrawFunc))();
-	long t1 = timerGetSystemTime();
-
-	int renderTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
-
-	renderTimeCounterMs += renderTimeMs;
-	++frames;
-
-	// update every 500 ms
-	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500)) {
-		averageRenderTimeMs = renderTimeCounterMs / (float)frames;
-		renderTimeCounterMs = 0;
-		frames = 0;
-		ticksIntervalStarted = t1;
+	long start = timerGetSystemTime();
+	((void (*)(void))GetAddress(function))();
+	long end = timerGetSystemTime();
+	int elapsedMs = (end - start) / SYSTEM_TIME_TICKS_PER_MS;
+	timing->elapsedMs += elapsedMs;
+	++timing->frames;
+	if (end - timing->intervalStart > SYSTEM_TIME_TICKS_PER_MS * 500) {
+		*average = timing->elapsedMs / (float)timing->frames;
+		timing->elapsedMs = 0;
+		timing->frames = 0;
+		timing->intervalStart = end;
 	}
 }
 
 /*
- * NAME :		runFpsCounter_updateHook
- * DESCRIPTION :
- * 			Logic for the EE counter.
+ * NAME : runFpsCounter_drawHook
+ * DESCRIPTION : Measure GS frame timing.
  * NOTES :
  * ARGS :
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void runFpsCounter_drawHook(void)
+{
+	static frameTiming_t timing;
+	measureFrameTiming(&vaFpsCounter_DrawFunc, &timing, &averageRenderTimeMs);
+}
+
+/*
+ * NAME : runFpsCounter_updateHook
+ * DESCRIPTION : Measure EE frame timing.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
 void runFpsCounter_updateHook(void)
 {
-	static int updateTimeCounterMs = 0;
-	static int frames = 0;
-	static long ticksIntervalStarted = 0;
-
-	long t0 = timerGetSystemTime();
-	((void (*)(void))GetAddress(&vaFpsCounter_UpdateFunc))();
-	long t1 = timerGetSystemTime();
-
-	int updateTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
-
-	updateTimeCounterMs += updateTimeMs;
-	frames++;
-
-	// update every 500 ms
-	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500)) {
-		averageUpdateTimeMs = updateTimeCounterMs / (float)frames;
-		updateTimeCounterMs = 0;
-		frames = 0;
-		ticksIntervalStarted = t1;
-	}
+	static frameTiming_t timing;
+	measureFrameTiming(&vaFpsCounter_UpdateFunc, &timing, &averageUpdateTimeMs);
 }
 
 /*
@@ -1263,27 +1207,7 @@ void patchDeathBarrierBug(void)
 	}
 }
 
-/*
- * NAME :		patchAlwaysShowHealth
- * DESCRIPTION :
- * 				Always shows the players health bar.
- * NOTES :
- * ARGS :
- * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
- */
-void patchAlwaysShowHealth(void)
-{
-	u32 healthbar_timer = GetAddress(&vaHealthBarTimerSaveZero);;
-	Player *player = playerGetFromSlot(0);
-	u32 old_value = 0xae002514; // sw zero,0x2514(s0)
-	if (config.alwaysShowHealth && *(u32*)healthbar_timer == old_value) {
-		*(u32*)healthbar_timer = 0;
-		player->hudHealthTimer = 3 * GAME_FPS;
-	} else if (!config.alwaysShowHealth && *(u32*)healthbar_timer == 0) {
-		*(u32*)healthbar_timer = old_value;
-	}
-}
+
 
 /*
  * NAME :		patchMapAndScoreboardToggle
@@ -1308,18 +1232,11 @@ void patchMapAndScoreboardToggle(void)
 	if (!config.mapScoreToggle_ScoreBtn && !config.mapScoreToggle_MapBtn)
 		return;
 
-	switch (config.mapScoreToggle_ScoreBtn) {
-		case 0: ScoreboardToggle = -1; break;
-		case 1: ScoreboardToggle = PAD_SELECT; break;
-		case 2: ScoreboardToggle = PAD_L3; break;
-		case 3: ScoreboardToggle = PAD_R3; break;
-	}
-	switch (config.mapScoreToggle_MapBtn) {
-		case 0: MapToggle = -1; break;
-		case 1: MapToggle = PAD_SELECT; break;
-		case 2: MapToggle = PAD_L3; break;
-		case 3: MapToggle = PAD_R3; break;
-	}
+	static const s8 buttons[] = { -1, PAD_SELECT, PAD_L3, PAD_R3 };
+	if ((u8)config.mapScoreToggle_ScoreBtn < COUNT_OF(buttons))
+		ScoreboardToggle = buttons[(u8)config.mapScoreToggle_ScoreBtn];
+	if ((u8)config.mapScoreToggle_MapBtn < COUNT_OF(buttons))
+		MapToggle = buttons[(u8)config.mapScoreToggle_MapBtn];
 
 	// Disable Select Button for Toggling original Map/Scoreboard
 	if (MapToggle != -1 && ScoreboardToggle != -1)
@@ -2491,16 +2408,9 @@ void patchGadgetEvents(void)
  */
 int hypershotGetButton(void)
 {
-	switch (config.hypershotEquipButton) {
-		case 1: return PAD_CIRCLE;
-		case 2: return PAD_LEFT;
-		case 3: return PAD_DOWN;
-		case 4: return PAD_RIGHT;
-		case 5: return PAD_UP;
-		case 6: return PAD_L3;
-		case 7: return PAD_R3;
-		default: return 0;
-	}
+	static const u16 buttons[] = { PAD_CIRCLE, PAD_LEFT, PAD_DOWN, PAD_RIGHT, PAD_UP, PAD_L3, PAD_R3 };
+	int setting = config.hypershotEquipButton;
+	return setting >= 1 && setting <= COUNT_OF(buttons) ? buttons[setting - 1] : 0;
 }
 
 /*
@@ -3827,8 +3737,6 @@ int main(void)
 			runSpectate();
 #endif
 
-		if (config.alwaysShowHealth)
-			patchAlwaysShowHealth();
 
 		if (config.enableTeamInfo)
 			teamInfo();

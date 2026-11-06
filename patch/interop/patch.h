@@ -21,7 +21,6 @@ variableAddressCompact_t vaFpsCounter_DrawFunc;
 variableAddressCompact_t vaFpsCounter_UpdateFunc;
 variableAddressCompact_t vaFpsCounter_Hooks;
 variableAddressCompact_t vaPauseMenuAddr;
-variableAddressCompact_t vaHealthBarTimerSaveZero;
 variableAddressCompact_t vaMapScore_SelectBtn_Addr;
 VariableAddress_t vaMapScore_SelectBtn_Val;
 variableAddressCompact_t vaMapScore_SeigeCTFMap_AlwaysRun;

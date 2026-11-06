@@ -45,7 +45,6 @@ int GameRulesInitialized = 0;
 int FirstPass = 1;
 int HasSetGatlingTurretHealth = 0;
 int HasDisableSiegeNodeTurrets = 0;
-int HasKeepBaseHealthPadActive = 0;
 int siegeGameOver = 0;
 int maxNodeCount = -1;
 short PlayerKills[GAME_MAX_PLAYERS];
@@ -128,9 +127,6 @@ u32 onGameplayLoad(void* a0, long a1, GameplayHeaderDef_t* gameplay)
 	if (gameConfig.grRespawnTimer_HealthBoxes || gameConfig.grRespawnTimer_WeaponCrates || gameConfig.grRespawnTimer_AmmoPickups)
 		onGameplayLoad_miscRespawnTimers(gameplay);
 
-	if (gameConfig.grDestructableBridges)
-		onGameplayLoad_destructableBridges(gameplay);
-
 	// run base
 	((void (*)(void*, long))Gameplay_Func)(a0, a1);
 }
@@ -159,7 +155,6 @@ void grInitialize(GameSettings *gameSettings, GameOptions *gameOptions)
 
 	HasSetGatlingTurretHealth = 0;
 	HasDisableSiegeNodeTurrets = 0;
-	HasKeepBaseHealthPadActive = 0;
 	healRate = 0;
 	siegeGameOver = 0;
 	maxNodeCount = -1;
@@ -201,9 +196,6 @@ void grGameStart(void)
 	if (gameConfig.grSetGatlingTurretHealth && !HasSetGatlingTurretHealth)
 		HasSetGatlingTurretHealth = setGatlingTurretHealth(gameConfig.grSetGatlingTurretHealth);
 
-	if (gameConfig.prChargebootForever)
-		chargebootForever();
-	
 	if (gameConfig.grVampire){
 		healRate = VampireHealRate[gameConfig.grVampire - 1];
 		vampireLogic();
@@ -218,26 +210,11 @@ void grGameStart(void)
 	if (gameConfig.grRespawnTimer_Player || gameConfig.grDisablePenaltyTimers || gameConfig.grSuicidePenaltyTimer)
 		setRespawnTimer_Player();
 
-	if (gameConfig.grBaseHealthPadActive && !HasKeepBaseHealthPadActive && gameOptions->GameFlags.MultiplayerGameFlags.BaseDefense_BaseAmmoHealth)
-		HasKeepBaseHealthPadActive = keepBaseHealthPadActive();
-
 	if (gameConfig.grNoCooldown)
 		noPostHitInvinc();
 
-	if (gameConfig.grHealthBars)
-		healthbars();
-
 	if (gameConfig.grRadarBlipsDistance)
 		radarBlips();
-
-	if (gameConfig.grRespawnInvincibility)
-		respawnInvincTimer();
-
-	if (gameConfig.grDestructableBridges)
-		destructableBridges();
-	
-	// Always run.  If statements inside to check if values need to change.
-	modifyWeaponTweakers();
 
 	if (gameConfig.grAllNodesTimer)
 		runCheckAllNodes();
