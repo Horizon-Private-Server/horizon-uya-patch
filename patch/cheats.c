@@ -909,9 +909,11 @@ void respawnInvincTimer(void)
 /*
  * NAME :		disableHealthContainer
  * DESCRIPTION :
- *              Removes the health's glass container by setting the state to already broken.
+ * 			Removes health containers while preserving native initialization and pickups.
  * NOTES :
- * ARGS : 
+ * 			State 0 must run before making the orb available. States 5 and 6 retain
+ * 			their pending-pickup and consumed/disabled behavior. Respawn keeps state 4.
+ * ARGS :
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
@@ -920,26 +922,58 @@ void disableHealthContainer(void)
 	if (patched.gameConfig.grHealthBoxes)
 		return;
 
+	int pending = 0;
+	int found = 0;
+	int codeChanged = 0;
 	Moby *moby = mobyListGetStart();
 	while ((moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP))) {
-		if (moby->pUpdate){
-			// Go straight to state 4 (broken, orb available) and do the game's state 3 work here.
-			// State 3 only turns into 4 when the box's update runs, which happens only near this
-			// client's player (update distance 64). Until then the host refused remote pickups.
-			// State 3's sound stop is skipped: nothing plays at load.
-			moby->state = 4;
-			moby->collData = 0;
-			moby->modeBits = (moby->modeBits & 0xefff) | 0x41;
-			moby->collDamage = -1;
-			*(u16*)((u32)moby->pUpdate + 0x1cc) = 3; // switch state 0, set to breaking state
-			// always set state to 4 (broken stsate) when respawning health
-			*(u32*)((u32)moby->pUpdate - 0x26c) = 0x24050004; // addiu a0, zero, 4;
-			*(u32*)((u32)moby->pUpdate - 0x268) = 0xA2050020; // sb a0, 0x20(s0);
-			DPRINTF("\nHealth Box Containers Disabled!");
+		if (!mobyIsDestroyed(moby)) {
+			found = 1;
+			if (!moby->pUpdate || !moby->pVar) {
+				pending = 1;
+				++moby;
+				continue;
+			}
+
+			u32 update = (u32)moby->pUpdate;
+			// Preserve the state-0 initialization; finish its state 3 below.
+			if (*(u16*)(update + 0x1cc) != 3) {
+				*(u16*)(update + 0x1cc) = 3;
+				codeChanged = 1;
+			}
+			// Skip rebuilding the glass on respawn; the native event still creates the orb.
+			if (*(u32*)(update - 0x26c) != 0x24050004 || *(u32*)(update - 0x268) != 0xa2050020) {
+				*(u32*)(update - 0x26c) = 0x24050004;
+				*(u32*)(update - 0x268) = 0xa2050020;
+				codeChanged = 1;
+			}
+			if (codeChanged) {
+				FlushCache(0);
+				FlushCache(2);
+				codeChanged = 0;
+			}
+
+			// Initialize even distant boxes before changing their state. Native code
+			// creates the orb, converts the respawn timer, and handles disabled boxes.
+			if (moby->state == 0)
+				((void (*)(Moby*))moby->pUpdate)(moby);
+
+			if (!mobyIsDestroyed(moby)) {
+				if (moby->state == 0) {
+					pending = 1;
+				} else if (moby->state >= 1 && moby->state <= 3) {
+					// Perform state 3's container cleanup without waiting for proximity.
+					// No breaking sound is started by this initialization path.
+					moby->collData = 0;
+					moby->modeBits = (moby->modeBits & 0xefff) | 0x41;
+					moby->collDamage = -1;
+					mobySetState(moby, 4, -1);
+				}
+			}
 		}
 		++moby;
 	}
-	patched.gameConfig.grHealthBoxes = 1;
+	patched.gameConfig.grHealthBoxes = found && !pending;
 }
 
 /*
