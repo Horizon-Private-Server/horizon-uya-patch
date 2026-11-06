@@ -24,4 +24,4 @@ The first stored word carries the format marker: 0x80000000 for fixed-base compa
 
 `Lobby` is a plain 32-bit address at byte 4 in both compact layouts. You may write its initializer first; designated initializer order does not control struct layout. The fixed layout stores `Bakisi` first internally; the custom layout stores `Base` first.
 
-The unpublished menu/lobby-tagged compact layout has been replaced. Update old compact initializers and rebuild their consumers together with this resolver; old compact binaries are not supported by the revised menu-bearing layouts. Full tables remain compatible. librac3's existing fixed Veldin layout retains its encoding. No live PCSX2 verification was performed for this change.
+The unpublished menu/lobby-tagged compact layout has been replaced. Update old compact initializers and rebuild their consumers together with this resolver; old compact binaries are not supported by the revised menu-bearing layouts. Full tables remain compatible. librac3's existing fixed Veldin layout retains its encoding. Both regional patch builds passed. The user reported successful NTSC-U online patch testing; PAL remains untested in-game.
