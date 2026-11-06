@@ -1062,70 +1062,62 @@ void runFpsCounter_Logic(void)
 	}
 }
 
+typedef struct frameTiming {
+	/* 0x00 */ int elapsedMs;
+	/* 0x04 */ int frames;
+	/* 0x08 */ long intervalStart;
+} frameTiming_t;
+
 /*
- * NAME :		runFpsCounter_drawHook
- * DESCRIPTION :
- * 			Logic for the GS counter.
- * NOTES :
- * ARGS :
+ * NAME : measureFrameTiming
+ * DESCRIPTION : Measure a native frame callback and update its 500 ms average.
+ * NOTES : Each hook supplies independent timing state.
+ * ARGS : Native function address, timing state, and output average.
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
-void runFpsCounter_drawHook(void)
+static void measureFrameTiming(variableAddressCompact_t* function, frameTiming_t* timing, float* average)
 {
-	static int renderTimeCounterMs = 0;
-	static int frames = 0;
-	static long ticksIntervalStarted = 0;
-
-	long t0 = timerGetSystemTime();
-	((void (*)(void))GetAddress(&vaFpsCounter_DrawFunc))();
-	long t1 = timerGetSystemTime();
-
-	int renderTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
-
-	renderTimeCounterMs += renderTimeMs;
-	++frames;
-
-	// update every 500 ms
-	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500)) {
-		averageRenderTimeMs = renderTimeCounterMs / (float)frames;
-		renderTimeCounterMs = 0;
-		frames = 0;
-		ticksIntervalStarted = t1;
+	long start = timerGetSystemTime();
+	((void (*)(void))GetAddress(function))();
+	long end = timerGetSystemTime();
+	int elapsedMs = (end - start) / SYSTEM_TIME_TICKS_PER_MS;
+	timing->elapsedMs += elapsedMs;
+	++timing->frames;
+	if (end - timing->intervalStart > SYSTEM_TIME_TICKS_PER_MS * 500) {
+		*average = timing->elapsedMs / (float)timing->frames;
+		timing->elapsedMs = 0;
+		timing->frames = 0;
+		timing->intervalStart = end;
 	}
 }
 
 /*
- * NAME :		runFpsCounter_updateHook
- * DESCRIPTION :
- * 			Logic for the EE counter.
+ * NAME : runFpsCounter_drawHook
+ * DESCRIPTION : Measure GS frame timing.
  * NOTES :
  * ARGS :
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+void runFpsCounter_drawHook(void)
+{
+	static frameTiming_t timing;
+	measureFrameTiming(&vaFpsCounter_DrawFunc, &timing, &averageRenderTimeMs);
+}
+
+/*
+ * NAME : runFpsCounter_updateHook
+ * DESCRIPTION : Measure EE frame timing.
+ * NOTES :
+ * ARGS :
+ * RETURN :
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
 void runFpsCounter_updateHook(void)
 {
-	static int updateTimeCounterMs = 0;
-	static int frames = 0;
-	static long ticksIntervalStarted = 0;
-
-	long t0 = timerGetSystemTime();
-	((void (*)(void))GetAddress(&vaFpsCounter_UpdateFunc))();
-	long t1 = timerGetSystemTime();
-
-	int updateTimeMs = (t1 - t0) / SYSTEM_TIME_TICKS_PER_MS;
-
-	updateTimeCounterMs += updateTimeMs;
-	frames++;
-
-	// update every 500 ms
-	if ((t1 - ticksIntervalStarted) > (SYSTEM_TIME_TICKS_PER_MS * 500)) {
-		averageUpdateTimeMs = updateTimeCounterMs / (float)frames;
-		updateTimeCounterMs = 0;
-		frames = 0;
-		ticksIntervalStarted = t1;
-	}
+	static frameTiming_t timing;
+	measureFrameTiming(&vaFpsCounter_UpdateFunc, &timing, &averageUpdateTimeMs);
 }
 
 /*
@@ -1240,18 +1232,11 @@ void patchMapAndScoreboardToggle(void)
 	if (!config.mapScoreToggle_ScoreBtn && !config.mapScoreToggle_MapBtn)
 		return;
 
-	switch (config.mapScoreToggle_ScoreBtn) {
-		case 0: ScoreboardToggle = -1; break;
-		case 1: ScoreboardToggle = PAD_SELECT; break;
-		case 2: ScoreboardToggle = PAD_L3; break;
-		case 3: ScoreboardToggle = PAD_R3; break;
-	}
-	switch (config.mapScoreToggle_MapBtn) {
-		case 0: MapToggle = -1; break;
-		case 1: MapToggle = PAD_SELECT; break;
-		case 2: MapToggle = PAD_L3; break;
-		case 3: MapToggle = PAD_R3; break;
-	}
+	static const s8 buttons[] = { -1, PAD_SELECT, PAD_L3, PAD_R3 };
+	if ((u8)config.mapScoreToggle_ScoreBtn < COUNT_OF(buttons))
+		ScoreboardToggle = buttons[(u8)config.mapScoreToggle_ScoreBtn];
+	if ((u8)config.mapScoreToggle_MapBtn < COUNT_OF(buttons))
+		MapToggle = buttons[(u8)config.mapScoreToggle_MapBtn];
 
 	// Disable Select Button for Toggling original Map/Scoreboard
 	if (MapToggle != -1 && ScoreboardToggle != -1)
@@ -2423,16 +2408,9 @@ void patchGadgetEvents(void)
  */
 int hypershotGetButton(void)
 {
-	switch (config.hypershotEquipButton) {
-		case 1: return PAD_CIRCLE;
-		case 2: return PAD_LEFT;
-		case 3: return PAD_DOWN;
-		case 4: return PAD_RIGHT;
-		case 5: return PAD_UP;
-		case 6: return PAD_L3;
-		case 7: return PAD_R3;
-		default: return 0;
-	}
+	static const u16 buttons[] = { PAD_CIRCLE, PAD_LEFT, PAD_DOWN, PAD_RIGHT, PAD_UP, PAD_L3, PAD_R3 };
+	int setting = config.hypershotEquipButton;
+	return setting >= 1 && setting <= COUNT_OF(buttons) ? buttons[setting - 1] : 0;
 }
 
 /*
