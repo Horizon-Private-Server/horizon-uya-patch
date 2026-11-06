@@ -10,6 +10,8 @@
 
 #include <tamtypes.h>
 #include <libuya/string.h>
+#include <libuya/stdlib.h>
+#include <libuya/random.h>
 #include <libuya/game.h>
 #include <libuya/gamesettings.h>
 #include <libuya/pad.h>
@@ -1743,28 +1745,28 @@ void patchQuickSelectTimer(void)
 	}
 }
 
+extern void internal_wadGetSectors(int sector, int count, void* destination);
+
 /*
- * NAME :		runCampaignMusic
- * DESCRIPTION :	Adds Singple Player Tracks to Multiplayer
- * NOTES :
+ * NAME : runCampaignMusic
+ * DESCRIPTION : Add campaign tracks using temporary heap conversion storage.
+ * NOTES : Native music table storage is retained; publish only complete results.
  * ARGS :
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
 void runCampaignMusic(void)
 {
-	static int FinishedConvertingTracks = 0;
-	static int TotalTracks = 0;
-	static short CurrentTrack = -1;
-	static short NextTrack = -1;
-	int DefaultMultiplayerTracks = 13;
-	// We go by each wad because we have to have Multiplayer one first.
-	static short wadArray[][2] = {
+	static u16 totalTracks;
+	static u8 retryFrames;
+	const int customSector = 0x1d8a;
+	const int multiplayerTracks = 14;
+	static const u16 wadArray[][2] = {
 		// wad, song per wad
 		// Commented tracks/sectors are due to them being dialoge or messed up.
 		{0x54d, 14}, // Multiplayer
 		{0x3f9, 2}, // Veldin
-		{0x403, 4}, // Florana
+		{0x403, 3}, // Florana
 		{0x40d, 3}, // Starship Phoenix
 		{0x417, 3}, // Marcadia
 		{0x421, 4}, // Daxx (This doesn't have padding between music and dialog)
@@ -1799,112 +1801,99 @@ void runCampaignMusic(void)
 		{0x543, 1}  // 
 	};
 
-	#if UYA_PAL
-	int CodeSegmentCheck = *(u32*)0x01FFFD00 == 0x00575CC8;
-	#else
-	int CodeSegmentCheck = *(u32*)0x01FFFD00 == 0x00574F88;
-	#endif
-	if (!musicGetSector() || CodeSegmentCheck)
+	// Do not read disc headers repeatedly in the lobby or during overlay loading.
+	if (!isInGame()) {
+		retryFrames = 0;
 		return;
-	
-	if (config.enableSingleplayerMusic) {
-		if (!FinishedConvertingTracks) {
-			int CustomSector = 0x1d8a;
-			u32 NewTracksLocation = 0x001f8588; // Overwrites current tracks too.
-			if (musicGetSector() != CustomSector)
-				musicSetSector(CustomSector);
+	}
+	int sector = musicGetSector();
+	if (!sector)
+		return;
+	// Native level loading replaces the table/sector; rebuild for that new table.
+	if (sector != customSector)
+		totalTracks = 0;
+	if (!config.enableSingleplayerMusic && !totalTracks)
+		return;
 
-			int MultiplayerSector = *(u32*)0x001F8584;
-			int Stack = 0x000269300;
-			// int WAD_Table = 0x001f7f88; // Kept for historical purposes.
-			int a;
-			memset((u32*)Stack, 0, 0x1818);
-
-			// Loop through each WAD ID
-			for(a = 0; a < (sizeof(wadArray)/sizeof(wadArray[0])); a++) {
-				int WAD = wadArray[a][0];
-				// Check if Map Sector is not zero
-				if (WAD != 0) {
-					internal_wadGetSectors(WAD, 1, Stack);
-					int WAD_Sector = *(u32*)(Stack + 0x4);
-
-					// make sure WAD_Sector isn't zero
-					if (WAD_Sector != 0) {
-						DPRINTF("WAD: 0x%X\n", WAD);
-						DPRINTF("WAD Sector: 0x%X\n", WAD_Sector);
-
-						// do music stuffs~
-						// Get SP 2 MP Offset for current WAD_Sector.
-						// In UYA we use our own sector.
-						int SP2MP = WAD_Sector - CustomSector;
-						// Remember we skip the first track because it is the start of the sp track, not the body of it.
-						int b = 0;
-						int Songs = Stack + (a == 0 ? 0x8 : 0x18);
-						int j;
-						for (j = 0; j < wadArray[a][1]; ++j) {
-							int Track_LeftAudio = *(u32*)(Songs + b);
-							int Track_RightAudio = *(u32*)((u32)(Songs + b) + 0x8);
-							int ConvertedTrack_LeftAudio = SP2MP + Track_LeftAudio;
-							int ConvertedTrack_RightAudio = SP2MP + Track_RightAudio;
-							*(u32*)(NewTracksLocation) = (u32)ConvertedTrack_LeftAudio;
-							*(u32*)(NewTracksLocation + 0x8) = (u32)ConvertedTrack_RightAudio;
-							NewTracksLocation += 0x10;
-							b += (a == 0) ? 0x10 : 0x20;
-							++TotalTracks;
-						}
-					}
-				}
-				// Zero out stack to finish the job.
-				memset((u32*)Stack, 0, 0x1818);
-				
-				FinishedConvertingTracks = 1;
-			}
+	if (config.enableSingleplayerMusic && !totalTracks) {
+		if (retryFrames) {
+			--retryFrames;
+			return;
 		}
+		retryFrames = 60;
+		int i;
+		int capacity = 0;
+		for (i = 0; i < sizeof(wadArray) / sizeof(wadArray[0]); ++i)
+			capacity += wadArray[i][1];
+		// 0x1818 was the old scratch reservation at 0x00269300. Allocate it
+		// instead, with a separate staging table so failed reads change nothing.
+		u8* workspace = malloc(0x1818 + capacity * 0x10);
+		if (!workspace)
+			return;
+		u32* converted = (u32*)(workspace + 0x1818);
+		int count = 0;
+		for (i = 0; i < sizeof(wadArray) / sizeof(wadArray[0]); ++i) {
+			memset(workspace, 0, 0x1818);
+			internal_wadGetSectors(wadArray[i][0], 1, workspace);
+			u32 wadSector = ((u32*)workspace)[1];
+			if (wadSector < customSector)
+				break;
+			int j;
+			for (j = 0; j < wadArray[i][1]; ++j) {
+				int offset = (i == 0 ? 0x8 : 0x18) + j * (i == 0 ? 0x10 : 0x20);
+				// These WADs contain padding/mono entries between stereo songs.
+				if (wadArray[i][0] == 0x403 && j == 2)
+					offset = 0x60;
+				if (wadArray[i][0] == 0x421 && j >= 2)
+					offset = j == 2 ? 0x78 : 0xa8;
+				u32* song = (u32*)(workspace + offset);
+				if (!song[0] || !song[2] || !song[1] || song[1] != song[3])
+					break;
+				memcpy(converted + count * 4, song, 0x10);
+				converted[count * 4] += wadSector - customSector;
+				converted[count * 4 + 2] += wadSector - customSector;
+				++count;
+			}
+			if (j != wadArray[i][1])
+				break;
+		}
+		if (count == capacity) {
+			memcpy(musicGetTrackTable(), converted, count * 0x10);
+			musicSetSector(customSector);
+			totalTracks = count;
+		}
+		free(workspace);
+		if (!totalTracks)
+			return;
+		retryFrames = 0;
 	}
 
-	// If in game
-	if (isInGame()) {
-		music_Globals* music = musicGetGlobals();
-		if (config.enableSingleplayerMusic) {
-			if (*(int*)musicTrackRangeMax() != (TotalTracks - 4) || *(int*)musicTrackRangeMin() != 4) {
-				*(int*)musicTrackRangeMin() = 4;
-				*(int*)musicTrackRangeMax() = TotalTracks - 4;
-			}
-		} else {
-			if (*(int*)musicTrackRangeMax() != (DefaultMultiplayerTracks - *(int*)musicTrackRangeMin()) || *(int*)musicTrackRangeMin() != 4) {
-				*(int*)musicTrackRangeMin() = 4;
-				*(int*)musicTrackRangeMax() = DefaultMultiplayerTracks - *(int*)musicTrackRangeMin();
-			}
-		}
-		// Fixes bug where music doesn't always want to start playing at start of game
-		if (music->play.track == -1 && music->play.status == 0) {
-			// plays a random track
-			int randomTrack = randRangeInt(*(int*)musicTrackRangeMin(), *(int*)musicTrackRangeMax()) % *(int*)musicTrackRangeMax();
-			DPRINTF("\nrandomTrack: %d", randomTrack);
-			musicPlayTrack(randomTrack, MUSIC_FLAG_KEEP_PLAYING_AFTER, 1024);
-		}
-		// save current and next track
-		if (music->play.status == MUSIC_STATUS_LOADING && CurrentTrack < 0 && NextTrack < 0 && music->play.track != -1) {
-			CurrentTrack = music->play.track;
-		} else if ((music->play.status == MUSIC_STATUS_KEEP_PLAYING_AFTER || music->play.status == MUSIC_STATUS_STOP_PLAYING_AFTER) && NextTrack < 0) {
-			NextTrack = music->play.track;
-		} else if (NextTrack != music->play.track) {
-			CurrentTrack = NextTrack;
-			NextTrack = music->play.track;
-		}
-		if ((CurrentTrack > DefaultMultiplayerTracks * 2) && CurrentTrack > -1 && (music->play.remain <= 0x3000) && music->play.queuelen == MUSIC_QUEUELEN_PLAYING) {
-			musicTransitionTrack(0 ,0 ,0 ,0);
-		}
-		// printf("\n t: %x c: %x, n: %x", *(int*)musicTrackRangeMax(), CurrentTrack, NextTrack);
-		// R3 + Up: Random Track
-		int randomTrackButton = padGetButtonDown(0, PAD_UP | PAD_R3) > 0;
-		if (randomTrackButton)
-			music->play.status = MUSIC_STATUS_PLAY_NEXT;
-	} else if (isInMenus() && FinishedConvertingTracks) {
-		FinishedConvertingTracks = 0;
-		TotalTracks = 0;
-		CurrentTrack = -1;
-		NextTrack = -1;
+	// The native maximum field is a count, not an inclusive upper bound.
+	int trackCount = config.enableSingleplayerMusic ? totalTracks : multiplayerTracks;
+	*(int*)musicTrackRangeMin() = 4;
+	*(int*)musicTrackRangeMax() = trackCount - 4;
+	music_Globals* music = musicGetGlobals();
+	if (music->play.track == -1 && music->play.status == 0 && !music->off) {
+		int track = randRangeInt(4, trackCount - 1);
+		musicPlayTrack(track * 2, MUSIC_FLAG_KEEP_PLAYING_AFTER, 1024);
+	}
+	int skipTrack = 0;
+	if (config.enableSingleplayerMusic) {
+		// Campaign bodies loop; queue another song through the native fade path.
+		skipTrack = music->play.track >= multiplayerTracks * 2 &&
+			music->play.remain <= 0x3000 &&
+			music->play.queuelen == MUSIC_QUEUELEN_PLAYING &&
+			music->play.status == MUSIC_STATUS_KEEP_PLAYING_AFTER;
+		if (padGetButtonDown(0, PAD_UP | PAD_R3) > 0)
+			skipTrack = 1;
+	} else {
+		skipTrack = music->play.track >= multiplayerTracks * 2;
+	}
+	if (skipTrack && music->transition_track == -1 && music->transition == 0) {
+		int track = randRangeInt(4, trackCount - 1);
+		if (track * 2 == music->play.track)
+			track = track + 1 < trackCount ? track + 1 : 4;
+		musicQueueTrack(track * 2, -1);
 	}
 }
 
@@ -3460,8 +3449,7 @@ int main(void)
 	// } // dont understand this well enough to keep
 
 	// Adds Single Player Music to Multiplayer
-	if (config.enableSingleplayerMusic)
-		runCampaignMusic();
+	runCampaignMusic();
 
 	// 
 	runVoteToEndLogic();

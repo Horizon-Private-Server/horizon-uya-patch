@@ -106,12 +106,7 @@ u32 onGameplayLoad(void* a0, long a1, GameplayHeaderDef_t* gameplay)
     if (gameConfig.grHealthBoxes == 2)
 		onGameplayLoad_disableMoby(gameplay, MOBY_ID_HEALTH_BOX_MP, 0);
 
-	if (gameConfig.grDisableDrones) {
-		onGameplayLoad_disableDrones(gameplay);
-		// GameSettings *gameSettings = gameGetSettings();
-		// if ((patchetStateContainer.CustomMapId == 0) && (gameSettings->GameLevel == MAP_ID_METROPOLIS))
-		// 	onGameplayLoad_disableMoby(gameplay, MOBY_ID_MINI_DRONES_PLATFORM, 0);
-	}
+	patchDroneSpawning();
 
 	if (gameConfig.grDisableWeaponCrates)
 		onGameplayLoad_disableWeaponCrates(gameplay);

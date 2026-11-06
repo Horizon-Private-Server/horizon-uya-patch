@@ -7,6 +7,7 @@
  */
 
 #include <tamtypes.h>
+#include <kernel.h>
 
 #include <libuya/string.h>
 #include <libuya/player.h>
@@ -1024,29 +1025,32 @@ void modifyWeaponTweakers(void)
 }
 
 /*
- * NAME :		onGameplayLoad_disableDrones
- * DESCRIPTION :
- *             Modifies weapon tweakers (behavior)
- * NOTES :
- * ARGS : 
+ * NAME : patchDroneSpawning
+ * DESCRIPTION : Disable cluster creation without changing node/team pvars.
+ * NOTES : Load-time only; reloading the map restores the original spawn call.
+ * ARGS :
  * RETURN :
- * AUTHOR :			Troy "Metroynome" Pruitt
+ * AUTHOR : Troy "Metroynome" Pruitt
  */
-void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay)
+void patchDroneSpawning(void)
 {
-	int i;
-	GameplayMobyHeaderDef_t * mobyInstancesHeader = (GameplayMobyHeaderDef_t*)((u32)gameplay + gameplay->MobyInstancesOffset);
-	u32 PVarOffsetPtr = ((u32)gameplay + gameplay->PVarTableOffset);
-	u32 PVarDataPtr = ((u32)gameplay + gameplay->PVarDataOffset);
-	for (i = 0; i < mobyInstancesHeader->StaticCount; ++i) {
-		GameplayMobyDef_t* moby = &mobyInstancesHeader->MobyInstances[i];
-		if (moby->OClass ==  MOBY_ID_DRONE_BOT_CLUSTER_CONFIG) {
-			GameplayPVarDef_t* PVarOffset = (GameplayPVarDef_t*)(PVarOffsetPtr + (u32)(moby->PVarIndex * 8));
-			u32 data = PVarDataPtr + PVarOffset->Offset;
-			*(int*)(data + 0xb8) = 1;
-			*(int*)(data + 0xa0) = 1;
-		}
-	}
+	if (!gameConfig.grDisableDrones)
+		return;
+
+	u32 hook = GetAddressImmediate(&vaDroneClusterSpawnHook);
+	if (!hook)
+		return;
+
+	u32* code = (u32*)hook;
+	// lw a1,0xbc(s3); jal spawnCluster; lw t1,0xa0(s3).
+	// Verified in all six stock NTSC-U/PAL overlays containing this controller.
+	if (code[-1] != 0x8e6500bc || code[1] != 0x8e6900a0 ||
+		(code[0] & 0xfc000000) != 0x0c000000)
+		return;
+
+	code[0] = 0;
+	FlushCache(0);
+	FlushCache(2);
 }
 
 /*

@@ -547,6 +547,7 @@ VARIABLE_FUNCTION(soundPlay, vaSoundPlayFunc)
 #------------------------ MUSIC -------------------------
 #--------------------------------------------------------
 VARIABLE_FUNCTION(musicPlayTrack, vaPlayTrackFunc)
+VARIABLE_FUNCTION(musicQueueTrack, vaQueueTrackFunc)
 VARIABLE_FUNCTION(musicStopTrack, vaStopTrackFunc)
 VARIABLE_FUNCTION(musicTransitionTrack, vaTransitionTrackFunc)
 

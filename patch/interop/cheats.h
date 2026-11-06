@@ -13,3 +13,5 @@ variableAddressCompact_t vaRadarBlips_FloatVal;
 variableAddressCompact_t vaPlayerInvincibleTimer_Hook;
 variableAddressCompact_t vaPlayerInvincibleTimer_Func;
 variableAddressCompact_t vaGB_UpdateGameController_MasterEndGame_Hook;
+
+extern VariableAddress_t vaDroneClusterSpawnHook;

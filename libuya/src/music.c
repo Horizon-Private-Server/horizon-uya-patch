@@ -16,29 +16,29 @@
 
 variableAddressCompact_t vaPlayTrackFunc = {
 #if UYA_PAL
-	.Lobby = 0x005c1a60,
-	.Bakisi = VA_COMPACT_BASE(0x00494258),
-	.Hoven = VA_COMPACT_OFFSET(0x00494258, 0x00496370),
-	.OutpostX12 = VA_COMPACT_OFFSET(0x00494258, 0x0048bc48),
-	.KorgonOutpost = VA_COMPACT_OFFSET(0x00494258, 0x00489318),
-	.Metropolis = VA_COMPACT_OFFSET(0x00494258, 0x00488730),
-	.BlackwaterCity = VA_COMPACT_OFFSET(0x00494258, 0x00485fc8),
-	.CommandCenter = VA_COMPACT_OFFSET(0x00494258, 0x00485fc0),
-	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00494258, 0x00488840),
-	.AquatosSewers = VA_COMPACT_OFFSET(0x00494258, 0x00487b40),
-	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00494258, 0x004874c0),
+	.Lobby = 0x005c1ac0,
+	.Bakisi = VA_COMPACT_BASE(0x004942b8),
+	.Hoven = VA_COMPACT_OFFSET(0x004942b8, 0x004963d0),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x004942b8, 0x0048bca8),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x004942b8, 0x00489378),
+	.Metropolis = VA_COMPACT_OFFSET(0x004942b8, 0x00488790),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x004942b8, 0x00486028),
+	.CommandCenter = VA_COMPACT_OFFSET(0x004942b8, 0x00486020),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x004942b8, 0x004888a0),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x004942b8, 0x00487ba0),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x004942b8, 0x00487520),
 #else
-	.Lobby = 0x005bfa18,
-	.Bakisi = VA_COMPACT_BASE(0x00492268),
-	.Hoven = VA_COMPACT_OFFSET(0x00492268, 0x004942c0),
-	.OutpostX12 = VA_COMPACT_OFFSET(0x00492268, 0x00489bd8),
-	.KorgonOutpost = VA_COMPACT_OFFSET(0x00492268, 0x00487328),
-	.Metropolis = VA_COMPACT_OFFSET(0x00492268, 0x00486740),
-	.BlackwaterCity = VA_COMPACT_OFFSET(0x00492268, 0x00483f58),
-	.CommandCenter = VA_COMPACT_OFFSET(0x00492268, 0x00484110),
-	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00492268, 0x00486950),
-	.AquatosSewers = VA_COMPACT_OFFSET(0x00492268, 0x00485c90),
-	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00492268, 0x004855d0),
+	.Lobby = 0x005bfa78,
+	.Bakisi = VA_COMPACT_BASE(0x004922c8),
+	.Hoven = VA_COMPACT_OFFSET(0x004922c8, 0x00494320),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x004922c8, 0x00489c38),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x004922c8, 0x00487388),
+	.Metropolis = VA_COMPACT_OFFSET(0x004922c8, 0x004867a0),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x004922c8, 0x00483fb8),
+	.CommandCenter = VA_COMPACT_OFFSET(0x004922c8, 0x00484170),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x004922c8, 0x004869b0),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x004922c8, 0x00485cf0),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x004922c8, 0x00485630),
 #endif
 };
 
@@ -132,3 +132,44 @@ int musicTrackRangeMax(void)
 {
     return TRACK_RANGE_MAX;
 }
+
+/*
+ * NAME : musicGetTrackTable
+ * DESCRIPTION : Return the native stereo-track descriptor table for this region.
+ * NOTES : Entries contain two eight-byte channel descriptors.
+ * ARGS :
+ * RETURN : Native music-table address.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+u32* musicGetTrackTable(void)
+{
+	return (u32*)(MUSIC_SECTOR + 4);
+}
+
+variableAddressCompact_t vaQueueTrackFunc = {
+#if UYA_PAL
+	.Lobby = 0x005c1da0,
+	.Bakisi = VA_COMPACT_BASE(0x00494598),
+	.Hoven = VA_COMPACT_OFFSET(0x00494598, 0x004966b0),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x00494598, 0x0048bf88),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x00494598, 0x00489658),
+	.Metropolis = VA_COMPACT_OFFSET(0x00494598, 0x00488a70),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x00494598, 0x00486308),
+	.CommandCenter = VA_COMPACT_OFFSET(0x00494598, 0x00486300),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00494598, 0x00488b80),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x00494598, 0x00487e80),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00494598, 0x00487800),
+#else
+	.Lobby = 0x005bfd58,
+	.Bakisi = VA_COMPACT_BASE(0x004925a8),
+	.Hoven = VA_COMPACT_OFFSET(0x004925a8, 0x00494600),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x004925a8, 0x00489f18),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x004925a8, 0x00487668),
+	.Metropolis = VA_COMPACT_OFFSET(0x004925a8, 0x00486a80),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x004925a8, 0x00484298),
+	.CommandCenter = VA_COMPACT_OFFSET(0x004925a8, 0x00484450),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x004925a8, 0x00486c90),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x004925a8, 0x00485fd0),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x004925a8, 0x00485910),
+#endif
+};

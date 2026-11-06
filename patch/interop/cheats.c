@@ -394,3 +394,17 @@ variableAddressCompact_t vaGB_UpdateGameController_MasterEndGame_Hook = {
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x005416d4, 0x005342b4),
 #endif
 };
+
+// The cluster controller exists on these three stock multiplayer maps only.
+// Keep a full table because Bakisi has no corresponding function.
+VariableAddress_t vaDroneClusterSpawnHook = {
+#if UYA_PAL
+	.Hoven = 0x00414c40,
+	.OutpostX12 = 0x0040be90,
+	.Metropolis = 0x0040a720,
+#else
+	.Hoven = 0x00414390,
+	.OutpostX12 = 0x0040b5f8,
+	.Metropolis = 0x00409ef0,
+#endif
+};

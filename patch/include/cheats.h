@@ -23,7 +23,7 @@ void respawnInvincTimer(void);
 void onGameplayLoad_disableHealthContainer(GameplayHeaderDef_t * gameplay);
 void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay);
 void destructableBridges(void);
-void onGameplayLoad_disableDrones(GameplayHeaderDef_t * gameplay);
+void patchDroneSpawning(void);
 void runCheckAllNodes(void);
 void runSelectNodeTimer(void);
 void patchSiegeTimeUp(void);
