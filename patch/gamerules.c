@@ -186,8 +186,8 @@ void grGameStart(void)
 	if (GameRulesInitialized != 1)
 		grInitialize(gameSettings, gameOptions);
 
-	if (gameConfig.grHealthBoxes == 1)
-		disableHealthContainer();
+	if (gameConfig.grHealthBoxes != 2)
+		patchHealthPickups();
 
 	if (gameConfig.grDisableWeaponPacks)
 		disableWeaponPacks();

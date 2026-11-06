@@ -25,6 +25,7 @@
 #include <libuya/interop.h>
 #include <libuya/net.h>
 #include <libuya/moby.h>
+#include <libuya/guber.h>
 #include <libuya/gameplay.h>
 #include <libuya/weapon.h>
 #include <libuya/map.h>
@@ -906,10 +907,271 @@ void respawnInvincTimer(void)
 	patched.gameConfig.grRespawnInvincibility = 1;
 }
 
+// Health arbitration uses reliable lobby messages; native pickup events still own respawning.
+#define HEALTH_PICKUP_DISTANCE_SQUARED (9.0f)
+#define HEALTH_REQUEST_INTERVAL_MS (250)
+#define HEALTH_TOKEN_MARKER (0x80000000)
+#define HEALTH_PENDING_TOKEN (0x40000000)
+#define HEALTH_TOKEN_MASK (0x3fffffff)
+static u32 healthSession;
+static u32 healthHelloToken;
+static u32 healthLastAckToken;
+static u32 healthLastAckAction;
+static int healthNextRequest;
+static int healthWasInGame;
+
 /*
- * NAME :		disableHealthContainer
+ * NAME :		healthBoxSend
  * DESCRIPTION :
- * 			Removes health containers while preserving native initialization and pickups.
+ * 			Sends a health transaction to the plugin.
+ * NOTES :
+ *
+ * ARGS :		Message payload.
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+static void healthBoxSend(healthBoxMessage_t *msg)
+{
+	void *connection = netGetLobbyServerConnection();
+	if (connection)
+		netSendCustomAppMessage(connection, NET_LOBBY_CLIENT_INDEX, CUSTOM_MSG_ID_HEALTH_BOX, sizeof(*msg), msg);
+}
+
+/*
+ * NAME :		healthBoxFind
+ * DESCRIPTION :
+ * 			Finds a live health box by its native network UID.
+ * NOTES :
+ *
+ * ARGS :		Box UID.
+ * RETURN :	Health box, or NULL.
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+static Moby *healthBoxFind(u32 uid)
+{
+	if (((uid >> 24) & 0xf) != 7)
+		return NULL;
+	GuberMoby *gm = (GuberMoby*)guberGetObjectByUID(uid);
+	Moby *moby = gm ? gm->Moby : NULL;
+	return moby && !mobyIsDestroyed(moby) && moby->oClass == MOBY_ID_HEALTH_BOX_MP
+		&& moby->pVar && moby->pUpdate ? moby : NULL;
+}
+
+/*
+ * NAME :		healthBoxConsumeLocal
+ * DESCRIPTION :
+ * 			Consumes the box without applying healing a second time.
+ * NOTES :
+ * 			The native state-5 hero UID slot is unused by this protocol. It retains the token across patch reloads.
+ * ARGS :		Box and transaction token.
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+static void healthBoxConsumeLocal(Moby *moby, u32 token)
+{
+	u32 *lastToken = (u32*)((u32)moby->pVar + 0x88);
+	if (*lastToken == (token | HEALTH_TOKEN_MARKER) || ((*lastToken & HEALTH_TOKEN_MARKER)
+		&& (*lastToken & HEALTH_PENDING_TOKEN) && (*lastToken & HEALTH_TOKEN_MASK) != (token & HEALTH_TOKEN_MASK)))
+		return;
+	GuberEvent event;
+	memset(&event, 0, sizeof(event));
+	event.NetEvent.EventID = 1;
+	event.NetEvent.NetDataSize = 4;
+	u32 noPlayer = 0xffffffff;
+	memcpy(event.NetEvent.NetData, &noPlayer, 4);
+	((void (*)(Moby*, GuberEvent*))((u32)moby->pUpdate - 0x408))(moby, &event);
+	*lastToken = token | HEALTH_TOKEN_MARKER;
+}
+
+/*
+ * NAME :		healthBoxOnMessage
+ * DESCRIPTION :
+ * 			Applies grants once and acknowledges the result to the plugin.
+ * NOTES :
+ *
+ * ARGS :		Connection and message payload.
+ * RETURN :	Consumed payload size.
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+static int healthBoxOnMessage(void *connection, void *data)
+{
+	healthBoxMessage_t msg;
+	memcpy(&msg, data, sizeof(msg));
+	if (connection != netGetLobbyServerConnection() || !isInGame())
+		return sizeof(msg);
+	if (msg.action == healthBoxReady) {
+		if (msg.token == healthHelloToken) {
+			if (!healthSession) healthNextRequest = gameGetTime();
+			healthSession = msg.session;
+		}
+		return sizeof(msg);
+	}
+	if (!healthSession || msg.session != healthSession)
+		return sizeof(msg);
+	Moby *moby = healthBoxFind(msg.boxUid);
+	if (msg.action == healthBoxConsume) {
+		if (moby && msg.token)
+			healthBoxConsumeLocal(moby, msg.token);
+	} else if (msg.action == healthBoxRespawn) {
+		if (moby) {
+			u32 *lastToken = (u32*)((u32)moby->pVar + 0x88);
+			if (!(*lastToken & HEALTH_TOKEN_MARKER) || !(*lastToken & HEALTH_PENDING_TOKEN)) {
+				if (moby->state == 6) {
+					GuberEvent event;
+					memset(&event, 0, sizeof(event));
+					event.NetEvent.EventID = 2;
+					((void (*)(Moby*, GuberEvent*))((u32)moby->pUpdate - 0x408))(moby, &event);
+				}
+				*lastToken = msg.token | HEALTH_TOKEN_MARKER;
+			}
+		}
+	} else if (msg.action == healthBoxCatchUp) {
+		if (moby)
+			*(u32*)((u32)moby->pVar + 0x88) = msg.token ? msg.token | HEALTH_TOKEN_MARKER : 0;
+	} else if (msg.action == healthBoxGrant) {
+		if (healthLastAckToken == msg.token) {
+			msg.action = healthLastAckAction;
+		} else {
+			msg.action = healthBoxFailed;
+			if (moby && msg.token) {
+				u32 lastToken = *(u32*)((u32)moby->pVar + 0x88);
+				if ((lastToken & HEALTH_TOKEN_MARKER) && (lastToken & HEALTH_TOKEN_MASK) == msg.token) {
+					msg.action = healthBoxApplied;
+				} else if (moby->state == 4) {
+					Player **players = playerGetAll();
+					int i;
+					for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
+						Player *player = players[i];
+						if (!player || !player->isLocal || player->guber.Id.UID != msg.playerUid)
+							continue;
+						VECTOR delta;
+						vector_subtract(delta, player->playerPosition, moby->position);
+						u32 update = (u32)moby->pUpdate;
+						if (vector_sqrmag(delta) < HEALTH_PICKUP_DISTANCE_SQUARED
+							&& ((int (*)(Player*, Moby*))(update - 0x7a8))(player, moby)
+							&& ((int (*)(Moby*, Player*))(update + 0x968))(moby, player)) {
+							healthBoxConsumeLocal(moby, msg.token | HEALTH_PENDING_TOKEN);
+							msg.action = healthBoxApplied;
+						}
+						break;
+					}
+				}
+			}
+			healthLastAckToken = msg.token;
+			healthLastAckAction = msg.action;
+		}
+		healthBoxSend(&msg);
+	}
+	return sizeof(msg);
+}
+
+/*
+ * NAME :		healthBoxTick
+ * DESCRIPTION :
+ * 			Negotiates plugin support and clears local state between maps.
+ * NOTES :
+ *
+ * ARGS :
+ * RETURN :
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+void healthBoxTick(void)
+{
+	netInstallCustomMsgHandler(CUSTOM_MSG_ID_HEALTH_BOX, &healthBoxOnMessage);
+	if (!isInGame()) {
+		healthSession = 0;
+		healthLastAckToken = 0;
+		healthWasInGame = 0;
+		return;
+	}
+	if (!healthWasInGame) {
+		healthHelloToken = (u32)gameGetTime();
+		healthNextRequest = 0;
+		healthWasInGame = 1;
+	}
+	if (!healthSession && gameGetTime() >= healthNextRequest) {
+		healthBoxMessage_t msg = {0};
+		msg.action = healthBoxHello;
+		msg.token = healthHelloToken;
+		healthBoxSend(&msg);
+		healthNextRequest = gameGetTime() + 1000;
+	}
+}
+
+/*
+ * NAME :		healthPickupMasterHook
+ * DESCRIPTION :
+ * 			Leaves health approval to the plugin after negotiation.
+ * NOTES :
+ *
+ * ARGS :		Player and pickup.
+ * RETURN :	Native eligibility for other pickups.
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+static int healthPickupMasterHook(Player *player, Moby *moby)
+{
+	if (healthSession && moby->oClass == MOBY_ID_HEALTH_BOX_MP)
+		return 0;
+	return ((int (*)(Player*, Moby*))((u32)moby->pUpdate - 0x7a8))(player, moby);
+}
+
+/*
+ * NAME :		healthPickupRespawnHook
+ * DESCRIPTION :
+ * 			Lets the plugin schedule health respawns after a confirmed grant.
+ * NOTES :
+ * 			Other pickups retain the native pending-event check.
+ * ARGS :		Pickup moby.
+ * RETURN :	Nonzero while the plugin owns health respawns.
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+static int healthPickupRespawnHook(Moby *moby)
+{
+	if (healthSession && moby->oClass == MOBY_ID_HEALTH_BOX_MP
+		&& (*(u32*)((u32)moby->pVar + 0x88) & HEALTH_TOKEN_MARKER))
+		return 1;
+	return ((int (*)(Moby*))((u32)moby->pUpdate - 0xb00))(moby);
+}
+
+/*
+ * NAME :		healthPickupLocalHook
+ * DESCRIPTION :
+ * 			Requests a health pickup without healing or consuming it speculatively.
+ * NOTES :
+ *
+ * ARGS :		Local player and pickup.
+ * RETURN :	Native eligibility outside the plugin health path.
+ * AUTHOR :			Troy "Metroynome" Pruitt
+ */
+static int healthPickupLocalHook(Player *player, Moby *moby)
+{
+	u32 update = (u32)moby->pUpdate;
+	if (!healthSession || moby->oClass != MOBY_ID_HEALTH_BOX_MP) {
+		VECTOR delta;
+		vector_subtract(delta, player->playerPosition, moby->position);
+		if (vector_sqrmag(delta) >= 4.0f)
+			return 0;
+		return ((int (*)(Player*, Moby*))(update - 0x7a8))(player, moby);
+	}
+	if (player->isLocal && gameGetTime() >= healthNextRequest
+		&& ((int (*)(Player*, Moby*))(update - 0x7a8))(player, moby)) {
+		healthBoxMessage_t msg = {0};
+		msg.action = healthBoxRequest;
+		msg.session = healthSession;
+		msg.boxUid = guberGetUID(moby);
+		msg.playerUid = player->guber.Id.UID;
+		msg.previousToken = *(u32*)((u32)moby->pVar + 0x88) & HEALTH_TOKEN_MASK;
+		msg.respawnMs = *(int*)((u32)moby->pVar + 0x70);
+		healthBoxSend(&msg);
+		healthNextRequest = gameGetTime() + HEALTH_REQUEST_INTERVAL_MS;
+	}
+	return 0;
+}
+
+/*
+ * NAME :		patchHealthPickups
+ * DESCRIPTION :
+ * 			Installs local health pickups and optionally removes their containers.
  * NOTES :
  * 			State 0 must run before making the orb available. States 5 and 6 retain
  * 			their pending-pickup and consumed/disabled behavior. Respawn keeps state 4.
@@ -917,7 +1179,7 @@ void respawnInvincTimer(void)
  * RETURN :
  * AUTHOR :			Troy "Metroynome" Pruitt
  */
-void disableHealthContainer(void)
+void patchHealthPickups(void)
 {
 	if (patched.gameConfig.grHealthBoxes)
 		return;
@@ -936,16 +1198,42 @@ void disableHealthContainer(void)
 			}
 
 			u32 update = (u32)moby->pUpdate;
-			// Preserve the state-0 initialization; finish its state 3 below.
-			if (*(u16*)(update + 0x1cc) != 3) {
-				*(u16*)(update + 0x1cc) = 3;
-				codeChanged = 1;
+			// Offsets verified in all NTSC-U/PAL multiplayer overlays.
+			u32 localHook = update + 0x55c;
+			u32 masterHook = update - 0xa8;
+			u32 respawnHook = update - 0x54;
+			u32 nativeRespawn = 0x0c000000 | ((update - 0xb00) >> 2);
+			u32 respawnCheck = 0x0c000000 | ((u32)&healthPickupRespawnHook >> 2);
+			u32 nativeCheck = 0x0c000000 | ((update - 0x7a8) >> 2);
+			u32 localCheck = 0x0c000000 | ((u32)&healthPickupLocalHook >> 2);
+			u32 masterCheck = 0x0c000000 | ((u32)&healthPickupMasterHook >> 2);
+			u32 radius = *(u32*)(update + 0x528);
+			if ((*(u32*)localHook == nativeCheck || *(u32*)localHook == localCheck)
+				&& (*(u32*)masterHook == nativeCheck || *(u32*)masterHook == masterCheck)
+				&& (*(u32*)respawnHook == nativeRespawn || *(u32*)respawnHook == respawnCheck)
+				&& (radius == 0x3c014080 || radius == 0x3c014110)
+				&& *(u32*)(update - 0x408) == 0x27bdffd0) {
+				if (*(u32*)localHook != localCheck || *(u32*)masterHook != masterCheck || *(u32*)respawnHook != respawnCheck || radius != 0x3c014110) {
+					*(u32*)localHook = localCheck;
+					*(u32*)masterHook = masterCheck;
+					*(u32*)respawnHook = respawnCheck;
+					*(u32*)(update + 0x528) = 0x3c014110; // Squared distance: 9.0f.
+					codeChanged = 1;
+				}
 			}
-			// Skip rebuilding the glass on respawn; the native event still creates the orb.
-			if (*(u32*)(update - 0x26c) != 0x24050004 || *(u32*)(update - 0x268) != 0xa2050020) {
-				*(u32*)(update - 0x26c) = 0x24050004;
-				*(u32*)(update - 0x268) = 0xa2050020;
-				codeChanged = 1;
+
+			if (gameConfig.grHealthBoxes == 1) {
+				// Preserve the state-0 initialization; finish its state 3 below.
+				if (*(u16*)(update + 0x1cc) != 3) {
+					*(u16*)(update + 0x1cc) = 3;
+					codeChanged = 1;
+				}
+				// Skip rebuilding the glass on respawn; the native event still creates the orb.
+				if (*(u32*)(update - 0x26c) != 0x24050004 || *(u32*)(update - 0x268) != 0xa2050020) {
+					*(u32*)(update - 0x26c) = 0x24050004;
+					*(u32*)(update - 0x268) = 0xa2050020;
+					codeChanged = 1;
+				}
 			}
 			if (codeChanged) {
 				FlushCache(0);
@@ -953,21 +1241,23 @@ void disableHealthContainer(void)
 				codeChanged = 0;
 			}
 
-			// Initialize even distant boxes before changing their state. Native code
-			// creates the orb, converts the respawn timer, and handles disabled boxes.
-			if (moby->state == 0)
-				((void (*)(Moby*))moby->pUpdate)(moby);
+			if (gameConfig.grHealthBoxes == 1) {
+				// Initialize even distant boxes before changing their state. Native code
+				// creates the orb, converts the respawn timer, and handles disabled boxes.
+				if (moby->state == 0)
+					((void (*)(Moby*))moby->pUpdate)(moby);
 
-			if (!mobyIsDestroyed(moby)) {
-				if (moby->state == 0) {
-					pending = 1;
-				} else if (moby->state >= 1 && moby->state <= 3) {
-					// Perform state 3's container cleanup without waiting for proximity.
-					// No breaking sound is started by this initialization path.
-					moby->collData = 0;
-					moby->modeBits = (moby->modeBits & 0xefff) | 0x41;
-					moby->collDamage = -1;
-					mobySetState(moby, 4, -1);
+				if (!mobyIsDestroyed(moby)) {
+					if (moby->state == 0) {
+						pending = 1;
+					} else if (moby->state >= 1 && moby->state <= 3) {
+						// Perform state 3's container cleanup without waiting for proximity.
+						// No breaking sound is started by this initialization path.
+						moby->collData = 0;
+						moby->modeBits = (moby->modeBits & 0xefff) | 0x41;
+						moby->collDamage = -1;
+						mobySetState(moby, 4, -1);
+					}
 				}
 			}
 		}

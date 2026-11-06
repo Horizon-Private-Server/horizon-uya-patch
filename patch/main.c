@@ -1804,193 +1804,6 @@ void patchCTFFlag(void)
 	}
 }
 
-#ifdef HEALTH_BOX_SYNC
-/*
- * NAME :		healthBoxCanGiveHook
- * DESCRIPTION :
- * 			Replaces the game's pickup eligibility check at its two call sites: the pickup's guber
- * 			master update (grants to any hero, judged on the master's lagged copy of that hero) and the
- * 			pickup's moby update (a local hero touching it -> state 5, wait for the master, self heal
- * 			after 90 frames). Health boxes are always refused there, so the game never grants them.
- * 			patchHealthBoxPickup grants them instead, host authoritative.
- * 			Every other pickup (weapon crates, ammo) goes to the game's check unchanged.
- * NOTES :
- * 			kisi: check 0x004224b0, called from 0x00422bb0 (master) and 0x004231b4 (local).
- * ARGS : 
- * RETURN :
- * AUTHOR :
- */
-int healthBoxCanGiveHook(Player* player, Moby* moby)
-{
-	if (moby && moby->oClass == MOBY_ID_HEALTH_BOX_MP)
-		return 0;
-
-	return ((int (*)(Player*, Moby*))GetAddress(&vaPickupCanGive_Func))(player, moby);
-}
-
-/*
- * NAME :		healthBoxIsAvailable
- * DESCRIPTION :
- * 			Returns non-zero if the health box can be picked up right now.
- * NOTES :
- * 			State 4 is the box sitting there ready. A pickup event (1) already queued for the box,
- * 			sent or not, means someone already has it.
- * ARGS : 
- * RETURN :
- * AUTHOR :
- */
-static int healthBoxIsAvailable(Moby* moby)
-{
-	if (!moby || moby->oClass != MOBY_ID_HEALTH_BOX_MP || mobyIsDestroyed(moby))
-		return 0;
-
-	if (moby->state != 4)
-		return 0;
-
-	Guber* guber = guberGetObjectByMoby(moby);
-	if (!guber)
-		return 0;
-
-	void* pendingPickup = ((void* (*)(Guber*, int, int))GetAddress(&vaGuberFindEvent_Func))(guber, 1, 0);
-	return pendingPickup == NULL;
-}
-
-/*
- * NAME :		healthBoxPlayerCanTake
- * DESCRIPTION :
- * 			Same rules as the game's check for a health box: alive, not driving, hurt.
- * NOTES :
- * 			Only used for local players, whose health is their own and up to date.
- * ARGS : 
- * RETURN :
- * AUTHOR :
- */
-static int healthBoxPlayerCanTake(Player* player)
-{
-	if (!player || !player->pMoby)
-		return 0;
-
-	if (playerDeobfuscate(&player->stateType, 0) == PLAYER_TYPE_DEATH || playerIsDead(player))
-		return 0;
-
-	if (player->vehicle && playerDeobfuscate(&player->state, 0) == PLAYER_STATE_VEHICLE)
-		return 0;
-
-	u32 hpBits = playerDeobfuscate(&player->hitPoints, 0);
-	u32 maxHpBits = playerDeobfuscate(&player->maxHP, 0);
-	float hp = *(float*)&hpBits;
-	float maxHp = *(float*)&maxHpBits;
-	return hp > 0 && hp < maxHp;
-}
-
-/*
- * NAME :		healthBoxGrant
- * DESCRIPTION :
- * 			Host only. Gives the health box to the player through the game's own pickup event (1),
- * 			so every client heals that player and hides the box, and the game's respawn timer runs.
- * NOTES :
- * 			The game creates this event with a 250 ms dispatch delay (0xfa) so every client runs it at
- * 			once. We use 0: it runs here now and on the other clients as soon as it arrives.
- * 			Event data: the hero's guber UID (what the game's handler looks the hero up by).
- * ARGS : 
- * RETURN :
- * AUTHOR :
- */
-static void healthBoxGrant(Moby* moby, Player* player)
-{
-	if (!healthBoxIsAvailable(moby) || !player)
-		return;
-
-	Guber* guber = guberGetObjectByMoby(moby);
-	if (!guber)
-		return;
-
-	GuberEvent* event = guberEventCreate(guber, 1, 0, 0);
-	if (!event)
-		return;
-
-	u32 heroUID = player->guber.Id.UID;
-	memcpy(&event->NetEvent.NetData[event->NetDataOffset], &heroUID, sizeof(heroUID));
-	event->NetDataOffset += sizeof(heroUID);
-	if (event->NetEvent.NetDataSize < event->NetDataOffset)
-		event->NetEvent.NetDataSize = event->NetDataOffset;
-
-	DPRINTF("health box %08X given to player %d at %d\n", guber->Id.UID, player->mpIndex, gameGetTime());
-}
-
-/*
- * NAME :		healthBoxRequestPickup
- * DESCRIPTION :
- * 			Asks for the health box for one of our local players.
- * 			If host, the box is given right away.
- * 			If not host, a request goes to the host, at most once every 10 frames per player.
- * NOTES :
- * ARGS : 
- * RETURN :
- * AUTHOR :
- */
-static void healthBoxRequestPickup(Moby* moby, Player* player)
-{
-	static int requestCounters[GAME_MAX_PLAYERS] = {0,0,0,0,0,0,0,0};
-	int pIdx = player->mpIndex;
-	if (pIdx < 0 || pIdx >= GAME_MAX_PLAYERS)
-		return;
-
-	if (gameAmIHost()) {
-		healthBoxGrant(moby, player);
-	} else if (requestCounters[pIdx] == 0) {
-		void* dmeConnection = netGetDmeServerConnection();
-		if (dmeConnection) {
-			ClientRequestPickUpHealthBox_t msg;
-			msg.GameTime = gameGetTime();
-			msg.PlayerId = pIdx;
-			msg.HealthBoxUID = guberGetUID(moby);
-			netSendCustomAppMessage(dmeConnection, gameGetHostId(), CUSTOM_MSG_ID_HEALTH_BOX_REQUEST_PICKUP, sizeof(ClientRequestPickUpHealthBox_t), &msg);
-			requestCounters[pIdx] = 10;
-			DPRINTF("sent request health box pickup %d\n", gameGetTime());
-		}
-	} else {
-		requestCounters[pIdx]--;
-	}
-}
-
-/*
- * NAME :		onRemoteClientRequestPickUpHealthBox
- * DESCRIPTION :
- * 			Host: a client says one of its local players is standing on a health box and is hurt.
- * 			First request for an available box wins.
- * NOTES :
- * 			The client's own position and health are trusted: our copy of that player lags behind
- * 			(that lag is what delayed the game's pickups). Only the box is checked here.
- * ARGS : 
- * RETURN :
- * AUTHOR :
- */
-int onRemoteClientRequestPickUpHealthBox(void * connection, void * data)
-{
-	ClientRequestPickUpHealthBox_t msg;
-	memcpy(&msg, data, sizeof(msg));
-
-	if (!isInGame() || !gameAmIHost() || !patched.healthBoxLogic)
-		return sizeof(ClientRequestPickUpHealthBox_t);
-
-	if (msg.PlayerId < 0 || msg.PlayerId >= GAME_MAX_PLAYERS)
-		return sizeof(ClientRequestPickUpHealthBox_t);
-
-	Player** players = playerGetAll();
-	Player* player = players[msg.PlayerId];
-	if (!player)
-		return sizeof(ClientRequestPickUpHealthBox_t);
-
-	GuberMoby* gm = (GuberMoby*)guberGetObjectByUID(msg.HealthBoxUID);
-	if (gm && gm->Moby)
-		healthBoxGrant(gm->Moby, player);
-
-	return sizeof(ClientRequestPickUpHealthBox_t);
-}
-
-#endif
-
 /*
  * NAME :		gadgetMobyCreateHook
  * DESCRIPTION :
@@ -2074,76 +1887,6 @@ void patchGadgetMobyClassGuard(void)
 	FlushCache(2);
 	patched.gadgetMobyClassGuard = 1;
 }
-
-#ifdef HEALTH_BOX_SYNC
-/*
- * NAME :		patchHealthBoxPickup
- * DESCRIPTION :
- * 			Host authoritative health box pickups (same pattern as patchCTFFlag).
- * 			The game only lets a box's guber master grant it, judged on the master's lagged copy of the
- * 			player, with the master moving between clients; everyone else waits a round trip or more
- * 			(up to the 90 frame self heal), plus the event's 250 ms dispatch delay.
- * 			Here each client checks only its own local players against the boxes and asks the host;
- * 			the host checks the box and sends the game's pickup event.
- * NOTES :
- * 			Needs the per-map addresses in interop/patch.c; maps without them keep the game's logic.
- * ARGS : 
- * RETURN :
- * AUTHOR :
- */
-void patchHealthBoxPickup(void)
-{
-	VECTOR t;
-	int i;
-
-	if (!isInGame())
-		return;
-
-	u32 canGiveFunc = GetAddress(&vaPickupCanGive_Func);
-	u32 masterHook = GetAddress(&vaPickupCanGive_MasterHook);
-	u32 localHook = GetAddress(&vaPickupCanGive_LocalHook);
-	if (!canGiveFunc || !masterHook || !localHook || !GetAddress(&vaGuberFindEvent_Func))
-		return;
-
-	if (!patched.healthBoxLogic) {
-		u32 jalCanGive = 0x0C000000 | (canGiveFunc >> 2);
-		u32 jalHook = 0x0C000000 | ((u32)&healthBoxCanGiveHook >> 2);
-		u32 masterOp = *(u32*)masterHook;
-		u32 localOp = *(u32*)localHook;
-
-		// only over the game's own call (or our hook, if this level's code was already patched)
-		if ((masterOp != jalCanGive && masterOp != jalHook) || (localOp != jalCanGive && localOp != jalHook))
-			return;
-
-		netInstallCustomMsgHandler(CUSTOM_MSG_ID_HEALTH_BOX_REQUEST_PICKUP, &onRemoteClientRequestPickUpHealthBox);
-		HOOK_JAL(masterHook, &healthBoxCanGiveHook);
-		HOOK_JAL(localHook, &healthBoxCanGiveHook);
-		FlushCache(0);
-		FlushCache(2);
-		patched.healthBoxLogic = 1;
-	}
-
-	// our local players only: their position and health are exact here
-	Player** players = playerGetAll();
-	for (i = 0; i < GAME_MAX_PLAYERS; ++i) {
-		Player* player = players[i];
-		if (!player || !player->isLocal || !healthBoxPlayerCanTake(player))
-			continue;
-
-		Moby* moby = mobyListGetStart();
-		while ((moby = mobyFindNextByOClass(moby, MOBY_ID_HEALTH_BOX_MP))) {
-			// same reach as the game: within 2 units of the box
-			vector_subtract(t, moby->position, player->playerPosition);
-			if (vector_sqrmag(t) < (3*3) && healthBoxIsAvailable(moby)) {
-				healthBoxRequestPickup(moby, player);
-				break;
-			}
-			++moby;
-		}
-	}
-}
-
-#endif
 
 /*
  * NAME :		healthBoxRadar
@@ -3925,6 +3668,8 @@ int main(void)
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_PLAYER_VOTED_TO_END, &onClientVoteToEndRemote);
 	netInstallCustomMsgHandler(CUSTOM_MSG_ID_VOTE_TO_END_STATE_UPDATED, &onClientVoteToEndStateUpdateRemote);
 	
+	healthBoxTick();
+
 	// Run map loader
 	runMapLoader();
 #ifdef JOIN_IN_PROGRESS
@@ -4056,10 +3801,7 @@ int main(void)
 		// Patch CTF Flag Logic with our own.
 		patchCTFFlag();
 
-#ifdef HEALTH_BOX_SYNC
-		// Patch Health Box pickups: host authoritative, requested by the player's own client.
-		patchHealthBoxPickup();
-#endif
+
 
 		// Placeholder: mark spawned health boxes on the radar map.
 		healthBoxRadar();

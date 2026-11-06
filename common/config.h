@@ -147,11 +147,7 @@ typedef struct PatchPatches {
   char weaponShotLag;
   char resurrectWeaponOrdering;
   char ctfLogic;
-#ifdef HEALTH_BOX_SYNC
-  char healthBoxLogic;
-#else
   char reservedHealthBoxLogic; // Preserve the shared PatchPatches_t layout.
-#endif
   char gadgetMobyClassGuard;
   char swingshotGunBug;
 

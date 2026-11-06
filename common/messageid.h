@@ -145,12 +145,7 @@ enum CustomMessageId
      */
     CUSTOM_MSG_ID_CLIENT_SET_GAME_STATE = 25,
 
-    /*
-     * Sent from a client to the host when one of its local players is standing on a health box.
-     */
-#ifdef HEALTH_BOX_SYNC
-    CUSTOM_MSG_ID_HEALTH_BOX_REQUEST_PICKUP = 26,
-#endif
+    // Message 26 is retired (former host health-box pickup requests).
 
     /*
      * Sent to server for game details/state
@@ -184,12 +179,28 @@ enum CustomMessageId
 	CUSTOM_MSG_ID_JOIN_WORLD_REQUEST = 34,
 	CUSTOM_MSG_ID_JOIN_WORLD_STATE = 35,
 	CUSTOM_MSG_ID_JOIN_FLAG_STATE = 36,
+	CUSTOM_MSG_ID_HEALTH_BOX = 37,
 
     /*
      * Start of custom message ids reserved for custom game modes.
      */
     CUSTOM_MSG_ID_GAME_MODE_START = 100,
 };
+
+typedef enum healthBoxAction {
+	healthBoxHello, healthBoxReady, healthBoxRequest, healthBoxGrant,
+	healthBoxApplied, healthBoxFailed, healthBoxBusy, healthBoxCatchUp, healthBoxConsume, healthBoxRespawn
+} healthBoxAction_e;
+
+typedef struct healthBoxMessage {
+	/* 0x00 */ u32 action;
+	/* 0x04 */ u32 session;
+	/* 0x08 */ u32 boxUid;
+	/* 0x0c */ u32 playerUid;
+	/* 0x10 */ u32 token;
+	/* 0x14 */ u32 previousToken;
+	/* 0x18 */ int respawnMs;
+} healthBoxMessage_t;
 
 typedef struct ServerDownloadDataRequest
 {
@@ -226,14 +237,7 @@ typedef struct ClientRequestPickUpFlag
     u32 FlagUID;
 } ClientRequestPickUpFlag_t;
 
-#ifdef HEALTH_BOX_SYNC
-typedef struct ClientRequestPickUpHealthBox
-{
-    int GameTime;
-    int PlayerId;
-    u32 HealthBoxUID;
-} ClientRequestPickUpHealthBox_t;
-#endif
+
 
 typedef struct ScavengerHuntSettingsResponse
 {

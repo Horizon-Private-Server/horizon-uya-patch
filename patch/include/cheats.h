@@ -20,6 +20,8 @@ void healthbars(void);
 void radarBlips(void);
 void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay);
 void respawnInvincTimer(void);
+void patchHealthPickups(void);
+void healthBoxTick(void);
 void onGameplayLoad_disableHealthContainer(GameplayHeaderDef_t * gameplay);
 void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay);
 void destructableBridges(void);

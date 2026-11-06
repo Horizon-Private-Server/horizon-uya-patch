@@ -138,7 +138,9 @@ const int patches[][3] = {
 	{ 40, 0x00408bc0, 0x0c11344e }, // SniperShotCollLineFixHook
 	{ 40, 0x00408bc4, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 40, 0x00423480, 0x0c108b60 }, // PickupCanGive_MasterHook
+	{ 40, 0x004234d4, 0x0c108a8a }, // Health pickup respawn gate
 	{ 40, 0x00423a84, 0x0c108b60 }, // PickupCanGive_LocalHook
+	{ 40, 0x00423a50, 0x3c014080 }, // Health pickup local radius
 	{ 40, 0x00424d20, 0x0c1468be }, // EnableTurretSync_Addr
 	{ 40, 0x00430568, 0x0c122f90 }, // vaFlagEventUiPopup_Hook
 	{ 40, 0x004428c8, 0x0c133998 }, // FpsCounter_Hooks
@@ -205,7 +207,9 @@ const int patches[][3] = {
 	{ 41, 0x00408528, 0x0c113b2e }, // SniperShotCollLineFixHook
 	{ 41, 0x0040852c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 41, 0x00424ed8, 0x0c1091f6 }, // PickupCanGive_MasterHook
+	{ 41, 0x00424f2c, 0x0c109120 }, // Health pickup respawn gate
 	{ 41, 0x004254dc, 0x0c1091f6 }, // PickupCanGive_LocalHook
+	{ 41, 0x004254a8, 0x3c014080 }, // Health pickup local radius
 	{ 41, 0x00426778, 0x0c147104 }, // EnableTurretSync_Addr
 	{ 41, 0x00431fc0, 0x0c123708 }, // vaFlagEventUiPopup_Hook
 	{ 41, 0x00444448, 0x0c1341de }, // FpsCounter_Hooks
@@ -272,7 +276,9 @@ const int patches[][3] = {
 	{ 42, 0x00400420, 0x0c1116ae }, // SniperShotCollLineFixHook
 	{ 42, 0x00400424, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 42, 0x0041be08, 0x0c106dc2 }, // PickupCanGive_MasterHook
+	{ 42, 0x0041be5c, 0x0c106cec }, // Health pickup respawn gate
 	{ 42, 0x0041c40c, 0x0c106dc2 }, // PickupCanGive_LocalHook
+	{ 42, 0x0041c3d8, 0x3c014080 }, // Health pickup local radius
 	{ 42, 0x0041d6a8, 0x0c14473a }, // EnableTurretSync_Addr
 	{ 42, 0x00428ef0, 0x0c121288 }, // vaFlagEventUiPopup_Hook
 	{ 42, 0x0043b248, 0x0c131814 }, // FpsCounter_Hooks
@@ -339,7 +345,9 @@ const int patches[][3] = {
 	{ 43, 0x003ff800, 0x0c110d9e }, // SniperShotCollLineFixHook
 	{ 43, 0x003ff804, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 43, 0x00419478, 0x0c10635e }, // PickupCanGive_MasterHook
+	{ 43, 0x004194cc, 0x0c106288 }, // Health pickup respawn gate
 	{ 43, 0x00419a7c, 0x0c10635e }, // PickupCanGive_LocalHook
+	{ 43, 0x00419a48, 0x3c014080 }, // Health pickup local radius
 	{ 43, 0x0041ad18, 0x0c143d20 }, // EnableTurretSync_Addr
 	{ 43, 0x00426a98, 0x0c1208e0 }, // vaFlagEventUiPopup_Hook
 	{ 43, 0x00438e08, 0x0c130dfa }, // FpsCounter_Hooks
@@ -406,7 +414,9 @@ const int patches[][3] = {
 	{ 44, 0x003fe3c0, 0x0c110a6e }, // SniperShotCollLineFixHook
 	{ 44, 0x003fe3c4, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 44, 0x00418d08, 0x0c106182 }, // PickupCanGive_MasterHook
+	{ 44, 0x00418d5c, 0x0c1060ac }, // Health pickup respawn gate
 	{ 44, 0x0041930c, 0x0c106182 }, // PickupCanGive_LocalHook
+	{ 44, 0x004192d8, 0x3c014080 }, // Health pickup local radius
 	{ 44, 0x0041a5a8, 0x0c1439f4 }, // EnableTurretSync_Addr
 	{ 44, 0x00425df0, 0x0c1205e6 }, // vaFlagEventUiPopup_Hook
 	{ 44, 0x00438148, 0x0c130ace }, // FpsCounter_Hooks
@@ -473,7 +483,9 @@ const int patches[][3] = {
 	{ 45, 0x003fb1a8, 0x0c11006e }, // SniperShotCollLineFixHook
 	{ 45, 0x003fb1ac, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 45, 0x00414b70, 0x0c10511c }, // PickupCanGive_MasterHook
+	{ 45, 0x00414bc4, 0x0c105046 }, // Health pickup respawn gate
 	{ 45, 0x00415174, 0x0c10511c }, // PickupCanGive_LocalHook
+	{ 45, 0x00415140, 0x3c014080 }, // Health pickup local radius
 	{ 45, 0x00416410, 0x0c14301a }, // EnableTurretSync_Addr
 	{ 45, 0x00421c58, 0x0c11fb70 }, // vaFlagEventUiPopup_Hook
 	{ 45, 0x00435948, 0x0c1300f4 }, // FpsCounter_Hooks
@@ -540,7 +552,9 @@ const int patches[][3] = {
 	{ 46, 0x004095b0, 0x0c11038e }, // SniperShotCollLineFixHook
 	{ 46, 0x004095b4, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 46, 0x0041d6d8, 0x0c1073f6 }, // PickupCanGive_MasterHook
+	{ 46, 0x0041d72c, 0x0c107320 }, // Health pickup respawn gate
 	{ 46, 0x0041dcdc, 0x0c1073f6 }, // PickupCanGive_LocalHook
+	{ 46, 0x0041dca8, 0x3c014080 }, // Health pickup local radius
 	{ 46, 0x004263e8, 0x0c11fc10 }, // vaFlagEventUiPopup_Hook
 	{ 46, 0x004365c8, 0x0c1300f2 }, // FpsCounter_Hooks
 	{ 46, 0x00436628, 0x0c11280a }, // FpsCounter_Hooks +0x00000060
@@ -606,7 +620,9 @@ const int patches[][3] = {
 	{ 47, 0x0040b510, 0x0c110dae }, // SniperShotCollLineFixHook
 	{ 47, 0x0040b514, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 47, 0x0041ff28, 0x0c107e0a }, // PickupCanGive_MasterHook
+	{ 47, 0x0041ff7c, 0x0c107d34 }, // Health pickup respawn gate
 	{ 47, 0x0042052c, 0x0c107e0a }, // PickupCanGive_LocalHook
+	{ 47, 0x004204f8, 0x3c014080 }, // Health pickup local radius
 	{ 47, 0x00428c38, 0x0c120630 }, // vaFlagEventUiPopup_Hook
 	{ 47, 0x00438e48, 0x0c130b12 }, // FpsCounter_Hooks
 	{ 47, 0x00438ea8, 0x0c11322a }, // FpsCounter_Hooks +0x00000060
@@ -672,7 +688,9 @@ const int patches[][3] = {
 	{ 48, 0x0040b118, 0x0c110a6e }, // SniperShotCollLineFixHook
 	{ 48, 0x0040b11c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 48, 0x0041f240, 0x0c107ad0 }, // PickupCanGive_MasterHook
+	{ 48, 0x0041f294, 0x0c1079fa }, // Health pickup respawn gate
 	{ 48, 0x0041f844, 0x0c107ad0 }, // PickupCanGive_LocalHook
+	{ 48, 0x0041f810, 0x3c014080 }, // Health pickup local radius
 	{ 48, 0x00427f50, 0x0c1202f0 }, // vaFlagEventUiPopup_Hook
 	{ 48, 0x00438148, 0x0c1307d2 }, // FpsCounter_Hooks
 	{ 48, 0x004381a8, 0x0c112eea }, // FpsCounter_Hooks +0x00000060
@@ -738,7 +756,9 @@ const int patches[][3] = {
 	{ 49, 0x0040a190, 0x0c1108ce }, // SniperShotCollLineFixHook
 	{ 49, 0x0040a194, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 49, 0x0041eba8, 0x0c10792a }, // PickupCanGive_MasterHook
+	{ 49, 0x0041ebfc, 0x0c107854 }, // Health pickup respawn gate
 	{ 49, 0x0041f1ac, 0x0c10792a }, // PickupCanGive_LocalHook
+	{ 49, 0x0041f178, 0x3c014080 }, // Health pickup local radius
 	{ 49, 0x004278b8, 0x0c120150 }, // vaFlagEventUiPopup_Hook
 	{ 49, 0x00437ac8, 0x0c130632 }, // FpsCounter_Hooks
 	{ 49, 0x00437b28, 0x0c112d4a }, // FpsCounter_Hooks +0x00000060
@@ -805,7 +825,9 @@ const int patches[][3] = {
 	{ 40, 0x00408540, 0x0c1130a4 }, // SniperShotCollLineFixHook
 	{ 40, 0x00408544, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 40, 0x00422bb0, 0x0c10892c }, // PickupCanGive_MasterHook
+	{ 40, 0x00422c04, 0x0c108856 }, // Health pickup respawn gate
 	{ 40, 0x004231b4, 0x0c10892c }, // PickupCanGive_LocalHook
+	{ 40, 0x00423180, 0x3c014080 }, // Health pickup local radius
 	{ 40, 0x00424428, 0x0c145ebc }, // EnableTurretSync_Addr
 	{ 40, 0x0042fae0, 0x0c1227be }, // vaFlagEventUiPopup_Hook
 	{ 40, 0x00441c88, 0x0c132fc8 }, // FpsCounter_Hooks
@@ -872,7 +894,9 @@ const int patches[][3] = {
 	{ 41, 0x00407e28, 0x0c113754 }, // SniperShotCollLineFixHook
 	{ 41, 0x00407e2c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 41, 0x00424540, 0x0c108f90 }, // PickupCanGive_MasterHook
+	{ 41, 0x00424594, 0x0c108eba }, // Health pickup respawn gate
 	{ 41, 0x00424b44, 0x0c108f90 }, // PickupCanGive_LocalHook
+	{ 41, 0x00424b10, 0x3c014080 }, // Health pickup local radius
 	{ 41, 0x00425db8, 0x0c1466d2 }, // EnableTurretSync_Addr
 	{ 41, 0x00431470, 0x0c122f06 }, // vaFlagEventUiPopup_Hook
 	{ 41, 0x00443748, 0x0c1337de }, // FpsCounter_Hooks
@@ -939,7 +963,9 @@ const int patches[][3] = {
 	{ 42, 0x003ffd20, 0x0c1112e4 }, // SniperShotCollLineFixHook
 	{ 42, 0x003ffd24, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 42, 0x0041b488, 0x0c106b62 }, // PickupCanGive_MasterHook
+	{ 42, 0x0041b4dc, 0x0c106a8c }, // Health pickup respawn gate
 	{ 42, 0x0041ba8c, 0x0c106b62 }, // PickupCanGive_LocalHook
+	{ 42, 0x0041ba58, 0x3c014080 }, // Health pickup local radius
 	{ 42, 0x0041cd00, 0x0c143d18 }, // EnableTurretSync_Addr
 	{ 42, 0x004283b8, 0x0c120a96 }, // vaFlagEventUiPopup_Hook
 	{ 42, 0x0043a588, 0x0c130e24 }, // FpsCounter_Hooks
@@ -1006,7 +1032,9 @@ const int patches[][3] = {
 	{ 43, 0x003ff160, 0x0c1109f4 }, // SniperShotCollLineFixHook
 	{ 43, 0x003ff164, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 43, 0x00418ba0, 0x0c106128 }, // PickupCanGive_MasterHook
+	{ 43, 0x00418bf4, 0x0c106052 }, // Health pickup respawn gate
 	{ 43, 0x004191a4, 0x0c106128 }, // PickupCanGive_LocalHook
+	{ 43, 0x00419170, 0x3c014080 }, // Health pickup local radius
 	{ 43, 0x0041a418, 0x0c14331e }, // EnableTurretSync_Addr
 	{ 43, 0x00426008, 0x0c12010e }, // vaFlagEventUiPopup_Hook
 	{ 43, 0x004381c8, 0x0c13042a }, // FpsCounter_Hooks
@@ -1073,7 +1101,9 @@ const int patches[][3] = {
 	{ 44, 0x003fdd40, 0x0c1106c4 }, // SniperShotCollLineFixHook
 	{ 44, 0x003fdd44, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 44, 0x00418438, 0x0c105f4e }, // PickupCanGive_MasterHook
+	{ 44, 0x0041848c, 0x0c105e78 }, // Health pickup respawn gate
 	{ 44, 0x00418a3c, 0x0c105f4e }, // PickupCanGive_LocalHook
+	{ 44, 0x00418a08, 0x3c014080 }, // Health pickup local radius
 	{ 44, 0x00419cb0, 0x0c142ff2 }, // EnableTurretSync_Addr
 	{ 44, 0x00425368, 0x0c11fe14 }, // vaFlagEventUiPopup_Hook
 	{ 44, 0x00437508, 0x0c1300fe }, // FpsCounter_Hooks
@@ -1140,7 +1170,9 @@ const int patches[][3] = {
 	{ 45, 0x003faac8, 0x0c10fca4 }, // SniperShotCollLineFixHook
 	{ 45, 0x003faacc, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 45, 0x00414258, 0x0c104ed6 }, // PickupCanGive_MasterHook
+	{ 45, 0x004142ac, 0x0c104e00 }, // Health pickup respawn gate
 	{ 45, 0x0041485c, 0x0c104ed6 }, // PickupCanGive_LocalHook
+	{ 45, 0x00414828, 0x3c014080 }, // Health pickup local radius
 	{ 45, 0x00415ad0, 0x0c1425f8 }, // EnableTurretSync_Addr
 	{ 45, 0x00421188, 0x0c11f37e }, // vaFlagEventUiPopup_Hook
 	{ 45, 0x00434c88, 0x0c12f704 }, // FpsCounter_Hooks
@@ -1207,7 +1239,9 @@ const int patches[][3] = {
 	{ 46, 0x00408f18, 0x0c110034 }, // SniperShotCollLineFixHook
 	{ 46, 0x00408f1c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 46, 0x0041ce68, 0x0c1071da }, // PickupCanGive_MasterHook
+	{ 46, 0x0041cebc, 0x0c107104 }, // Health pickup respawn gate
 	{ 46, 0x0041d46c, 0x0c1071da }, // PickupCanGive_LocalHook
+	{ 46, 0x0041d438, 0x3c014080 }, // Health pickup local radius
 	{ 46, 0x00425a38, 0x0c11f48e }, // vaFlagEventUiPopup_Hook
 	{ 46, 0x00435ac8, 0x0c12f772 }, // FpsCounter_Hooks
 	{ 46, 0x00435b28, 0x0c11243e }, // FpsCounter_Hooks +0x00000060
@@ -1273,7 +1307,9 @@ const int patches[][3] = {
 	{ 47, 0x0040ae78, 0x0c110a44 }, // SniperShotCollLineFixHook
 	{ 47, 0x0040ae7c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 47, 0x0041f6a0, 0x0c107be8 }, // PickupCanGive_MasterHook
+	{ 47, 0x0041f6f4, 0x0c107b12 }, // Health pickup respawn gate
 	{ 47, 0x0041fca4, 0x0c107be8 }, // PickupCanGive_LocalHook
+	{ 47, 0x0041fc70, 0x3c014080 }, // Health pickup local radius
 	{ 47, 0x00428270, 0x0c11fe9e }, // vaFlagEventUiPopup_Hook
 	{ 47, 0x00438308, 0x0c130182 }, // FpsCounter_Hooks
 	{ 47, 0x00438368, 0x0c112e4e }, // FpsCounter_Hooks +0x00000060
@@ -1339,7 +1375,9 @@ const int patches[][3] = {
 	{ 48, 0x0040aa80, 0x0c110714 }, // SniperShotCollLineFixHook
 	{ 48, 0x0040aa84, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 48, 0x0041e9d0, 0x0c1078b4 }, // PickupCanGive_MasterHook
+	{ 48, 0x0041ea24, 0x0c1077de }, // Health pickup respawn gate
 	{ 48, 0x0041efd4, 0x0c1078b4 }, // PickupCanGive_LocalHook
+	{ 48, 0x0041efa0, 0x3c014080 }, // Health pickup local radius
 	{ 48, 0x004275a0, 0x0c11fb6e }, // vaFlagEventUiPopup_Hook
 	{ 48, 0x00437648, 0x0c12fe52 }, // FpsCounter_Hooks
 	{ 48, 0x004376a8, 0x0c112b1e }, // FpsCounter_Hooks +0x00000060
@@ -1405,7 +1443,9 @@ const int patches[][3] = {
 	{ 49, 0x00409af8, 0x0c110564 }, // SniperShotCollLineFixHook
 	{ 49, 0x00409afc, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
 	{ 49, 0x0041e320, 0x0c107708 }, // PickupCanGive_MasterHook
+	{ 49, 0x0041e374, 0x0c107632 }, // Health pickup respawn gate
 	{ 49, 0x0041e924, 0x0c107708 }, // PickupCanGive_LocalHook
+	{ 49, 0x0041e8f0, 0x3c014080 }, // Health pickup local radius
 	{ 49, 0x00426ef0, 0x0c11f9be }, // vaFlagEventUiPopup_Hook
 	{ 49, 0x00436f88, 0x0c12fca2 }, // FpsCounter_Hooks
 	{ 49, 0x00436fe8, 0x0c11296e }, // FpsCounter_Hooks +0x00000060
