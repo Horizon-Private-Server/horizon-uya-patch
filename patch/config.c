@@ -3061,6 +3061,7 @@ static void updateStagingPreview(UiElementImage_t* image)
  * NAME : onConfigUpdate
  * DESCRIPTION : Update download state and staging map details.
  * NOTES : Update active staging for normal starts and late joins, whose start time is already set.
+ *         Only access staging UI while the lobby scene is loaded.
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
@@ -3081,7 +3082,7 @@ void onConfigUpdate(void)
 
   // in staging, update game info
   GameSettings * gameSettings = gameGetSettings();
-  if (gameSettings && netGetLobbyServerConnection() && uiGetActiveMenu(UI_MENU_STAGING, 0))
+	if (isInMenus() && gameSettings && netGetLobbyServerConnection() && uiGetActiveMenu(UI_MENU_STAGING, 0))
   {
     // 
     char * mapName = mapGetName(gameSettings->GameLevel);
