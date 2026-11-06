@@ -472,10 +472,10 @@ bool hudSetAligFlags(HANDLE_ID handle_id, unsigned int align_x, unsigned int ali
 
 ConcretePreLoadedImageBuffer_t* gfxGetPreLoadedImageBufferSource(int which);
 
-VariableAddress_t vaCreateWidgdetFrameContainer;
-VariableAddress_t vaCreateWidget3d_2D;
-VariableAddress_t vaCreateWidgetRectangle;
-VariableAddress_t vaCreateWidgetText;
-VariableAddress_t vaCreateWidgetTextArea;
+variableAddressCompact_t vaCreateWidgdetFrameContainer;
+variableAddressCompact_t vaCreateWidget3d_2D;
+variableAddressCompact_t vaCreateWidgetRectangle;
+variableAddressCompact_t vaCreateWidgetText;
+variableAddressCompact_t vaCreateWidgetTextArea;
 
 #endif // _LIBUYA_HUD_H_

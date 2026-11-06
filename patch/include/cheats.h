@@ -37,7 +37,7 @@ void modifyWeaponTweakers(void);
 void disableRespawning(void);
 
 // variable addresses
-VariableAddress_t vaUpdateWeaponKill;
+variableAddressCompact_t vaUpdateWeaponKill;
 
 typedef struct Tweaker_GravityBomb {
 	float maxThrowDist;

@@ -148,29 +148,31 @@ static u8 joinKeepWorldOnLeave;
 static s8 joinPreviousHost = -1;
 static int joinHostLoadTime;
 
-static VariableAddress_t vaJoinPlayerLeave = {
+static variableAddressCompact_t vaJoinPlayerLeave = {
 #if UYA_PAL
-	.Bakisi = 0x00538f48,
-	.Hoven = 0x0053b060,
-	.OutpostX12 = 0x00530938,
-	.KorgonOutpost = 0x0052e0d0,
-	.Metropolis = 0x0052d420,
-	.BlackwaterCity = 0x0052acb8,
-	.CommandCenter = 0x0052aa78,
-	.BlackwaterDocks = 0x0052d2f8,
-	.AquatosSewers = 0x0052c5f8,
-	.MarcadiaPalace = 0x0052bf78,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x00538f48),
+	.Hoven = VA_COMPACT_OFFSET(0x00538f48, 0x0053b060),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x00538f48, 0x00530938),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x00538f48, 0x0052e0d0),
+	.Metropolis = VA_COMPACT_OFFSET(0x00538f48, 0x0052d420),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x00538f48, 0x0052acb8),
+	.CommandCenter = VA_COMPACT_OFFSET(0x00538f48, 0x0052aa78),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00538f48, 0x0052d2f8),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x00538f48, 0x0052c5f8),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00538f48, 0x0052bf78),
 #else
-	.Bakisi = 0x005366c8,
-	.Hoven = 0x00538720,
-	.OutpostX12 = 0x0052e038,
-	.KorgonOutpost = 0x0052b850,
-	.Metropolis = 0x0052aba0,
-	.BlackwaterCity = 0x005283b8,
-	.CommandCenter = 0x00528338,
-	.BlackwaterDocks = 0x0052ab78,
-	.AquatosSewers = 0x00529eb8,
-	.MarcadiaPalace = 0x005297f8,
+	.Lobby = 0,
+	.Bakisi = VA_COMPACT_BASE(0x005366c8),
+	.Hoven = VA_COMPACT_OFFSET(0x005366c8, 0x00538720),
+	.OutpostX12 = VA_COMPACT_OFFSET(0x005366c8, 0x0052e038),
+	.KorgonOutpost = VA_COMPACT_OFFSET(0x005366c8, 0x0052b850),
+	.Metropolis = VA_COMPACT_OFFSET(0x005366c8, 0x0052aba0),
+	.BlackwaterCity = VA_COMPACT_OFFSET(0x005366c8, 0x005283b8),
+	.CommandCenter = VA_COMPACT_OFFSET(0x005366c8, 0x00528338),
+	.BlackwaterDocks = VA_COMPACT_OFFSET(0x005366c8, 0x0052ab78),
+	.AquatosSewers = VA_COMPACT_OFFSET(0x005366c8, 0x00529eb8),
+	.MarcadiaPalace = VA_COMPACT_OFFSET(0x005366c8, 0x005297f8),
 #endif
 };
 

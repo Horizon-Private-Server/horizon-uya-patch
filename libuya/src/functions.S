@@ -61,7 +61,7 @@ name:														\
 // 
 	.set	push;
 	.set	noreorder;
-	.section	.text.##__LocalGetAddress,"ax",@progbits;
+	.section	.text.__LocalGetAddress,"ax",@progbits;
 	.align 2;
 	.globl	__LocalGetAddress;
 	.type	__LocalGetAddress,@function;
@@ -76,8 +76,13 @@ __LocalGetAddress:
 	// if in menus then return lobby address
 	lw $v0, GAME_MAP_ID;
   li $v1, 39;
-	beq $v0, $v1, __LocalGetAddress_exit;
-	lw $v0, 0($a0)
+	bne $v0, $v1, __LocalGetAddress_map;
+	lw $v0, 0($a0);
+	bgez $v0, __LocalGetAddress_exit;
+	nop;
+	b __LocalGetAddress_exit;
+	lw $v0, 4($a0);
+__LocalGetAddress_map:
 
 	// if not in game then no address
 	lw $v0, GAME_ACTIVE;
@@ -99,15 +104,42 @@ __LocalGetAddress:
 	beqzl $v0, __LocalGetAddress_exit;
 	move $v0, $zero;
 
-	// load offset into VariableAddress struct by map id
-	sll $v1, $v1, 2; // multiply map id [0,9] by 4
-	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
-
-	// load address from struct
-	addu $a0, $v0;
+	addiu $v1, $v1, 1;
 	lw $v0, 0($a0);
+	bgez $v0, __LocalGetAddress_full;
+	nop;
+	beqz $v1, __LocalGetAddress_menu;
+	nop;
+	sll $t8, $v0, 1;
+	sll $v0, $v0, 2;
+	srl $v0, $v0, 2;
+	bltz $t8, __LocalGetAddress_offset_load;
+	nop;
+	addiu $v1, $v1, -1;
+	beqz $v1, __LocalGetAddress_exit;
+	nop;
+__LocalGetAddress_offset_load:
+	sll $v1, $v1, 1;
+	addu $v1, $a0, $v1;
+	lhu $v1, 6($v1);
+	beqz $v1, __LocalGetAddress_unavailable;
+	nop;
+	xori $v1, $v1, 0x8000;
+	sll $v1, $v1, 16;
+	sra $v1, $v1, 14;
+	b __LocalGetAddress_exit;
+	addu $v0, $v0, $v1;
+__LocalGetAddress_unavailable:
+	b __LocalGetAddress_exit;
+	move $v0, $zero;
+__LocalGetAddress_menu:
+	b __LocalGetAddress_exit;
+	lw $v0, 4($a0);
+__LocalGetAddress_full:
+	sll $v1, $v1, 2;
+	addu $v1, $a0, $v1;
+	lw $v0, 0($v1);
 
-	// return to calling function
 __LocalGetAddress_exit:
 	jr $a1;
 	nop;
@@ -118,7 +150,7 @@ __LocalGetAddress_exit:
 // 
 	.set	push;
 	.set	noreorder;
-	.section	.text.##GetAddress,"ax",@progbits;
+	.section	.text.GetAddress,"ax",@progbits;
 	.align 2;
 	.globl	GetAddress;
 	.type	GetAddress,@function;
@@ -133,8 +165,13 @@ GetAddress:
 	// if in menus then return lobby address
 	lw $v0, GAME_MAP_ID;
   li $v1, 39;
-	beq $v0, $v1, GetAddress_exit;
-	lw $v0, 0($a0)
+	bne $v0, $v1, GetAddress_map;
+	lw $v0, 0($a0);
+	bgez $v0, GetAddress_exit;
+	nop;
+	b GetAddress_exit;
+	lw $v0, 4($a0);
+GetAddress_map:
 
 	// if not in game then no address
 	lw $v0, GAME_ACTIVE;
@@ -156,15 +193,42 @@ GetAddress:
 	beqzl $v0, GetAddress_exit;
 	move $v0, $zero;
 
-	// load offset into VariableAddress struct by map id
-	sll $v1, $v1, 2; // multiply map id [0,9] by 4
-	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
-
-	// load address from struct
-	addu $a0, $v0;
+	addiu $v1, $v1, 1;
 	lw $v0, 0($a0);
+	bgez $v0, GetAddress_full;
+	nop;
+	beqz $v1, GetAddress_menu;
+	nop;
+	sll $t8, $v0, 1;
+	sll $v0, $v0, 2;
+	srl $v0, $v0, 2;
+	bltz $t8, GetAddress_offset_load;
+	nop;
+	addiu $v1, $v1, -1;
+	beqz $v1, GetAddress_exit;
+	nop;
+GetAddress_offset_load:
+	sll $v1, $v1, 1;
+	addu $v1, $a0, $v1;
+	lhu $v1, 6($v1);
+	beqz $v1, GetAddress_unavailable;
+	nop;
+	xori $v1, $v1, 0x8000;
+	sll $v1, $v1, 16;
+	sra $v1, $v1, 14;
+	b GetAddress_exit;
+	addu $v0, $v0, $v1;
+GetAddress_unavailable:
+	b GetAddress_exit;
+	move $v0, $zero;
+GetAddress_menu:
+	b GetAddress_exit;
+	lw $v0, 4($a0);
+GetAddress_full:
+	sll $v1, $v1, 2;
+	addu $v1, $a0, $v1;
+	lw $v0, 0($v1);
 
-	// return to calling function
 GetAddress_exit:
 	jr $ra;
 	nop;
@@ -175,7 +239,7 @@ GetAddress_exit:
 // 
 	.set	push;
 	.set	noreorder;
-	.section	.text.##GetAddress,"ax",@progbits;
+	.section	.text.GetAddress,"ax",@progbits;
 	.align 2;
 	.globl	GetAddressImmediate;
 	.type	GetAddressImmediate,@function;
@@ -190,8 +254,13 @@ GetAddressImmediate:
 	// if in menus then return lobby address
 	lw $v0, GAME_MAP_ID;
   li $v1, 39;
-	beq $v0, $v1, GetAddressImmediate_exit;
-	lw $v0, 0($a0)
+	bne $v0, $v1, GetAddressImmediate_map;
+	lw $v0, 0($a0);
+	bgez $v0, GetAddressImmediate_exit;
+	nop;
+	b GetAddressImmediate_exit;
+	lw $v0, 4($a0);
+GetAddressImmediate_map:
 
 	// if not in game then no address
 	//lw $v0, GAME_ACTIVE;
@@ -213,15 +282,42 @@ GetAddressImmediate:
 	beqzl $v0, GetAddressImmediate_exit;
 	move $v0, $zero;
 
-	// load offset into VariableAddress struct by map id
-	sll $v1, $v1, 2; // multiply map id [0,9] by 4
-	addiu $v0, $v1, 4; // offset by 4 to skip lobby address
-
-	// load address from struct
-	addu $a0, $v0;
+	addiu $v1, $v1, 1;
 	lw $v0, 0($a0);
+	bgez $v0, GetAddressImmediate_full;
+	nop;
+	beqz $v1, GetAddressImmediate_menu;
+	nop;
+	sll $t8, $v0, 1;
+	sll $v0, $v0, 2;
+	srl $v0, $v0, 2;
+	bltz $t8, GetAddressImmediate_offset_load;
+	nop;
+	addiu $v1, $v1, -1;
+	beqz $v1, GetAddressImmediate_exit;
+	nop;
+GetAddressImmediate_offset_load:
+	sll $v1, $v1, 1;
+	addu $v1, $a0, $v1;
+	lhu $v1, 6($v1);
+	beqz $v1, GetAddressImmediate_unavailable;
+	nop;
+	xori $v1, $v1, 0x8000;
+	sll $v1, $v1, 16;
+	sra $v1, $v1, 14;
+	b GetAddressImmediate_exit;
+	addu $v0, $v0, $v1;
+GetAddressImmediate_unavailable:
+	b GetAddressImmediate_exit;
+	move $v0, $zero;
+GetAddressImmediate_menu:
+	b GetAddressImmediate_exit;
+	lw $v0, 4($a0);
+GetAddressImmediate_full:
+	sll $v1, $v1, 2;
+	addu $v1, $a0, $v1;
+	lw $v0, 0($v1);
 
-	// return to calling function
 GetAddressImmediate_exit:
 	jr $ra;
 	nop;
