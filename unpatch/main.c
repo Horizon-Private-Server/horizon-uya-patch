@@ -16,6 +16,7 @@
 #include <libuya/game.h>
 #include <libuya/time.h>
 #include <libuya/string.h>
+#include <libuya/stdlib.h>
 #include <libuya/stdio.h>
 #include <libuya/ui.h>
 #include <libuya/net.h>
@@ -1678,6 +1679,13 @@ int main (void)
 			(type, (void*)0x00199ba0, (void*)0x00199c40, (void*)0x00199cb8);
 #endif
 		*(u32*)NET_GLOBAL_CALLBACKS_ADDRESS = 0;
+		// Hooks and network callbacks no longer use this allocation. Its layout
+		// can change between patch versions, so the next patch must allocate anew.
+		void* playerSyncData = *(void**)0x000cffb0;
+		*(void**)0x000cffb0 = NULL;
+		if (playerSyncData)
+			free(playerSyncData);
+
 		padEnableInput();
 		for (i = 0; i < clearsSize; ++i)
 			memset((void*)clears[i][0], 0, clears[i][1]);

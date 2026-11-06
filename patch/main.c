@@ -27,6 +27,7 @@
 #include <libuya/utils.h>
 #include <libuya/player.h>
 #include <libuya/map.h>
+#include <libuya/moby.h>
 #include <libuya/guber.h>
 #include <libuya/music.h>
 #include <libuya/team.h>
@@ -35,6 +36,7 @@
 #include "messageid.h"
 #include "config.h"
 #include "interop/patch.h"
+#include "interop/playersync.h"
 #include "include/config.h"
 #include "include/cheats.h"
 #include "include/exception_protocol.h"
@@ -2003,9 +2005,6 @@ int onRemoteClientRequestPickUpHealthBox(void * connection, void * data)
  * RETURN :
  * AUTHOR :
  */
-extern VariableAddress_t vaForceGadgetMobyCreation_Addr;
-extern VariableAddress_t vaMobyCreateFunc;
-
 #define GADGET_MOBY_MISSING_CLASSES_MAX		(16)
 short gadgetMobyMissingClasses[GADGET_MOBY_MISSING_CLASSES_MAX];
 int gadgetMobyMissingClassCount = 0;
@@ -2428,15 +2427,26 @@ void patchCameraPull(void)
 
 /*
  * NAME :		patchDisableWrenchAimAssist
- * DESCRIPTION :	Disables aim assist for the wrench
- * NOTES :
+ * DESCRIPTION :	Apply or restore the wrench aim-assist instruction.
+ * NOTES : Only modify the verified native instruction or its disabled NOP.
  * ARGS : 
  * RETURN :
  * AUTHOR :			JelloGiant
  */
 void patchDisableWrenchAimAssist(void)
 {
-	POKE_U32(GetAddress(&vaDisableWrenchAimAssist_Addr), 0);
+	u32 address = GetAddress(&vaDisableWrenchAimAssist_Addr);
+	if (!address)
+		return;
+
+	u32 original = 0xae111064; // sw s1,0x1064(s0), verified in both regions.
+	u32 current = *(u32*)address;
+	u32 replacement = config.wrenchAimAssist ? 0 : original;
+	if ((current == original || current == 0) && current != replacement) {
+		POKE_U32(address, replacement);
+		FlushCache(0);
+		FlushCache(2);
+	}
 }
 
 /*
@@ -4079,8 +4089,7 @@ int main(void)
 		if (config.aimAssist)
 			patchCameraPull();
 
-		if (config.wrenchAimAssist)
-			patchDisableWrenchAimAssist();
+		patchDisableWrenchAimAssist();
 
 		// Patch hiding of Flux Reticle
 		patchHideFluxReticle();

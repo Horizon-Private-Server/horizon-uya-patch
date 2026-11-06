@@ -15,8 +15,11 @@
 #include "math3d.h"
 #include "common.h"
 #include "gid.h"
+#include "interop.h"
 
 // #include "camera.h"
+
+extern variableAddressCompact_t vaMobyCreateFunc;
 
 struct GuberMoby;
 struct GuberEvent;
