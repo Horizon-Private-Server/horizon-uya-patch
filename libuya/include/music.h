@@ -1,5 +1,5 @@
 #ifndef _LIBUYA_MUSIC_H_
-#define _LIBUYA_MISOC_H_
+#define _LIBUYA_MUSIC_H_
 
 #include <tamtypes.h>
 #include "common.h"
@@ -103,6 +103,16 @@ typedef struct music_Globals { // 0xe4
 int musicGetSector(void);
 
 /*
+ * NAME : musicGetTrackTable
+ * DESCRIPTION : Return the native stereo-track descriptor table for this region.
+ * NOTES : Entries contain two eight-byte channel descriptors.
+ * ARGS :
+ * RETURN : Native music-table address.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+u32* musicGetTrackTable(void);
+
+/*
  * NAME :		musicSetSector
  * DESCRIPTION :    Sets music sector value.
  * NOTES :
@@ -162,7 +172,10 @@ int musicTrackRangeMin(void);
  */
 int musicTrackRangeMax(void);
 
+// Native channel index: use songIndex * 2 for a stereo track.
 void musicPlayTrack(int track, int flags, int volume);
+// Queue a channel index; transition -1 uses the native fade without a jingle.
+void musicQueueTrack(int track, int transition);
 void musicStopTrack(void);
 int musicTransitionTrack(int track, int transition, int flags, int volume);
 

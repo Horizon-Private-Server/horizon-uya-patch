@@ -57,3 +57,6 @@ bin/
 *.bin
 *.elf
 debug.log
+
+# Local patch analysis notes.
+/PATCH_SIZE_ANALYSIS.md

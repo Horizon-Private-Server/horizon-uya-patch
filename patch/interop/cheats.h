@@ -1,15 +1,17 @@
 #include <libuya/interop.h>
 
-VariableAddress_t vaWeaponPackSpawnFunc;
+variableAddressCompact_t vaWeaponPackSpawnFunc;
 VariableAddress_t vaCheckWeaponKill;
-VariableAddress_t vaUpdateWeaponKill;
-VariableAddress_t vaDM_PressXToRespawn;
-VariableAddress_t vaCameraShakeFunc;
-VariableAddress_t vaDM_RespawnUpdater;
+variableAddressCompact_t vaUpdateWeaponKill;
+variableAddressCompact_t vaDM_PressXToRespawn;
+variableAddressCompact_t vaCameraShakeFunc;
+variableAddressCompact_t vaDM_RespawnUpdater;
 VariableAddress_t vaRespawnTimerFunc_Player;
-VariableAddress_t vaPostHitInvinc;
-VariableAddress_t vaHealthbars_Hook;
-VariableAddress_t vaRadarBlips_FloatVal;
-VariableAddress_t vaPlayerInvincibleTimer_Hook;
-VariableAddress_t vaPlayerInvincibleTimer_Func;
-VariableAddress_t vaGB_UpdateGameController_MasterEndGame_Hook;
+variableAddressCompact_t vaPostHitInvinc;
+variableAddressCompact_t vaHealthbars_Hook;
+variableAddressCompact_t vaRadarBlips_FloatVal;
+variableAddressCompact_t vaPlayerInvincibleTimer_Hook;
+variableAddressCompact_t vaPlayerInvincibleTimer_Func;
+variableAddressCompact_t vaGB_UpdateGameController_MasterEndGame_Hook;
+
+extern VariableAddress_t vaDroneClusterSpawnHook;
