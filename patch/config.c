@@ -179,9 +179,6 @@ void sendClientVoteForEnd(void);
 extern int scavHuntEnabled;
 extern VoteToEndState_t voteToEndState;
 
-static const char * const loadoutWeaponItems[] = {
-	"Off", "N60 Storm", "Blitz Cannon", "Flux Rifle", "Mini Rocket Tube", "Gravity Bomb", "Mine Glove", "Lava Gun", "Morph-O-Ray", "Holo Shield Glove"
-};
 
 static const char * const kothRespawnDistanceItems[] = {
 	"40", "60", "80", "120", "500", "10", "20", "30"
@@ -272,26 +269,8 @@ MenuElem_ListData_t dataDeadzone = {
     }
 };
 
-MenuElem_ListData_t dataCycleWeapon1 = {
-    .value = &config.cycleWeapon1,
-    .stateHandler = NULL,
-    .count = 10,
-    .items = loadoutWeaponItems
-};
 
-MenuElem_ListData_t dataCycleWeapon2 = {
-    .value = &config.cycleWeapon2,
-    .stateHandler = NULL,
-    .count = 10,
-    .items = loadoutWeaponItems
-};
 
-MenuElem_ListData_t dataCycleWeapon3 = {
-    .value = &config.cycleWeapon3,
-    .stateHandler = NULL,
-    .count = 10,
-    .items = loadoutWeaponItems
-};
 
 // map select list
 static char customMapsStagingValue;
@@ -567,7 +546,6 @@ MenuElem_t menuElementsGeneral[] = {
   { "Progressive Scan", toggleActionHandler, menuStateAlwaysEnabledHandler, &IS_PROGRESSIVE_SCAN },
 #endif
 */
-  { "Always Show Health", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.alwaysShowHealth, "Let that health bar hide no longer!  This will make it so the health bar is always visible." },
   { "Enable Team Info", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableTeamInfo, "Display team health and cycle v2 status on the bottom left of your screen." },
   { "Camera Pull", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.aimAssist, "Toggles code that pulls the camera towards nearby targets when aiming." },
   { "Camera Shake", toggleInvertedActionHandler, menuStateAlwaysEnabledHandler, &config.disableCameraShake, "Toggles the camera shake caused by nearby explosions." },
@@ -580,9 +558,6 @@ MenuElem_t menuElementsGeneral[] = {
   { "Hypershot Equip Button", listActionHandler, menuStateAlwaysEnabledHandler, &dataHypershotEquipButton, "The button that you will press to take out the hypershot." },
   { "Level of Detail", listActionHandler, menuStateAlwaysEnabledHandler, &dataLevelOfDetail },
   { "Player Sync Rate", listActionHandler, menuStateAlwaysEnabledHandler, &dataPlayerSyncRate, "Adjusts new player sync update frequency. High sends every tick, Very Low sends least often." },
-  // { "Loadout Weapon 1", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon1, "Main Weapon 1.  Defaults to Gravity Bomb if nothing is selected." },
-  // { "Loadout Weapon 2", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon2, "Main Weapon 2.  Defaults to Blitz Cannon if nothing is selected." },
-  // { "Loadout Weapon 3", listActionHandler, menuStateHandler_DisabledInGame, &dataCycleWeapon3, "Main Weapon 3.  Defaults to Flux Rifle if nothing is selected." },
   // { "Player Sync (Experimental)", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enablePlayerSync, "Synces players movements for a smoother/less laggy experience." },
 #if SPECTATE
   { "Spectate", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.enableSpectate, "Toggles the custom spectate feature. Use \x13 when dead to spectate.  Some gomemodes may restrict whom you can spectate." },
@@ -619,13 +594,9 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Game Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
   { "Radar Blips", listActionHandler, menuStateHandler_Default, &dataRadarBlipsDistance, "Toggle the radar blips on the map short (default), Always, or Off (won't show any players on map)" },
   { "Respawn Timer", listActionHandler, menuStateHandler_Default, &dataRespawnTimer_Player, "Time in seconds for the player to respawn." },
-  { "Respawn Invincibility", toggleActionHandler, menuStateHandler_Default, &gameConfig.grRespawnInvincibility, "Adds a small invincibility timer to players whom have just respawned." },
   { "Penalty Timers", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grDisablePenaltyTimers, "Disables longer respawn timers for your team if your teams base turrets have been destroyed." },
   { "V2s", listActionHandler, menuStateHandler_Default, &dataV2_Setting, "Configures V2 weapon upgrades to be disabled, on (default), or always on (spawn with v2 weapons)." },
   { "Damage Cooldown", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grNoCooldown, "Disables the brief hit invincibility after taking damage." },
-  { "Destructable Bridges", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDestructableBridges, "turn on/off the ability to destroy bridges." },
-  { "Fix Wallsniping", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxShotsAlwaysHit, "Forces sniper shots that hit to register on every client. Can result in shots that appear to phase through walls." },
-  { "Fix Flux Niking", toggleActionHandler, menuStateHandler_Default, &gameConfig.grFluxNikingDisabled, "Forces sniper shots to always deal the correct amount of damage." },
   { "Weapon Packs", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableWeaponPacks, "Toggle if weapon packs should spawn when a player dies." },
   { "Health Boxes", listActionHandler, menuStateHandler_Default, &dataHealthBoxes, "Whether health pickups are enabled, or if there is a box enclosure that must be broken first before picking up." },
   { "Drones", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grDisableDrones, "Toggle Drones on or off." },
@@ -638,7 +609,6 @@ MenuElem_t menuElementsGameSettings[] = {
   { "Auto Respawn", toggleActionHandler, menuStateHandler_DM, &gameConfig.grAutoRespawn, "Automatically respawn players once the in game respawn timer hits zero." },
   { "New Player Sync", toggleActionHandler, menuStateHandler_Default, &gameConfig.grNewPlayerSync, "Enable new player sync." },  
   { "Vampire Healing", listActionHandler, menuStateHandler_Default, &dataVampire, "Earn a percentage of health for each kill."},
-  // { "Health Bars", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.grHealthBars, "Draws a healthbar above each player's nametag." },
 #if DEBUG
   { "CTF Flag Returns on Bad Ground", toggleActionHandler, menuStateHandler_CTF, &gameConfig.grFlagHotspots, "Returns a dropped flag if it lands on water, lava, or other non-walkable areas." },
 #endif
@@ -651,15 +621,11 @@ MenuElem_t menuElementsGameSettings[] = {
 
   { "Base/Node Modifications", labelActionHandler, menuLabelStateHandler_CTFandSiege, (void*)LABELTYPE_HEADER },
   { "Gatling Turret Health", listActionHandler, menuStateHandler_BaseDefenses, &dataSetGatlingTurretHealth, "Increase or decrease the amount of health each teams base turrets have." },
-  { "Health/Ammo Pads Always Active", toggleActionHandler, menuStateHandler_BaseDefenses, &gameConfig.grBaseHealthPadActive, "Let the Health and Ammo pads in each base always stay active, even if parts of the base are destroyed." },
   { "Bots (Troopers, Ball Bots, ect.)", toggleInvertedActionHandler, menuStateHandler_CTFandSiege, &gameConfig.grNoBaseDefense_Bots, "toggle Troopers (and other bots) on or off." },
   { "Small Turrets", listActionHandler, menuStateHandler_CTFandSiege, &dataSmallTurrets },
 
   { "Party Rules", labelActionHandler, menuLabelStateHandler, (void*)LABELTYPE_HEADER },
-  { "Chargeboot Forever", toggleActionHandler, menuStateHandler_Default, &gameConfig.prChargebootForever, "Double tap and hold R2 to chargeboot forever." },
   // { "Force Strafing Side-Flips", toggleInvertedActionHandler, menuStateHandler_Default, &gameConfig.prDisableDlStyleFlips, "Forces 'Disable Strafing Side-Flips' to be off, no matter the players setting." },
-  { "Gravity Bomb->B6 Obliterator", toggleActionHandler, menuStateHandler_Default, &gameConfig.prGravityBombTweakers, "Changes the Gravity Bomb Physics to that of the B6 Obliterator from Ratchet: Deadlocked!" },
-  { "Loadout Weapons Only", toggleActionHandler, menuStateHandler_Default, &gameConfig.prLoadoutWeaponsOnly, "Only allow the use of each players Loadout weapons, regardless of what weapons are enabled." },
   { "Survivor", toggleActionHandler, menuStateHandler_Survivor, &gameConfig.prSurvivor, "You only have one life!  Once you die, you can't respawn!" },
 
   // { "Experimental CTF Rules", labelActionHandler, menuLabelStateHandler_CTF, (void*)LABELTYPE_HEADER },
@@ -3280,12 +3246,9 @@ void configMenuDisable(void)
 			case 5: // Siege
 			{
 				gameConfig.grRadarBlipsDistance = 0;
-				gameConfig.grRespawnInvincibility = 0;
 				gameConfig.grDisableWeaponPacks = 1;
 				gameConfig.grV2s = 0;
 				gameConfig.grNoCooldown = 1;
-				gameConfig.grFluxShotsAlwaysHit = 1;
-				gameConfig.grFluxNikingDisabled = 1;
 				gameConfig.grAutoRespawn = 0;
 				gameConfig.grVampire = 0;
 				gameConfig.grHealthBoxes = 1;
@@ -3295,16 +3258,12 @@ void configMenuDisable(void)
 				gameConfig.grRespawnTimer_WeaponCrates = 0;
 				gameConfig.grRespawnTimer_AmmoPickups = 0;
 				gameConfig.grDisablePlayerTurrets = 1;
-				gameConfig.grBaseHealthPadActive = 0;
 				gameConfig.grNoBaseDefense_Bots = 1;
 				gameConfig.grNoBaseDefense_SmallTurrets = 2;
-				gameConfig.prChargebootForever = 0;
-				gameConfig.prLoadoutWeaponsOnly = 0;
 				gameConfig.prSurvivor = 0;
 				gameConfig.grRespawnTimer_Player = preset == 5 ? 2 : 0;
 				gameConfig.grDisablePenaltyTimers = preset == 2;
 				gameConfig.grNewPlayerSync = preset == 1 || preset == 2;
-				gameConfig.grDestructableBridges = preset == 4;
 				gameConfig.grSetGatlingTurretHealth = preset == 5 ? 4 : 1;
 				if (preset == 5) {
 					gameConfig.grNodeSelectTimer = 7;
@@ -3323,22 +3282,14 @@ void configMenuDisable(void)
 				gameConfig.grDisableAmmoPickups = 1;
 				gameConfig.grNewPlayerSync = 1;
 				gameConfig.grDisablePlayerTurrets = 1;
-				gameConfig.grDestructableBridges = 0;
 				gameConfig.grV2s = 1;
 				gameConfig.grNoCooldown = 1;
 				gameConfig.grVampire = 4;
 				gameConfig.grDisableWeaponPacks = 1;
-				gameConfig.grFluxShotsAlwaysHit = 1;
-				gameConfig.grFluxNikingDisabled = 1;
 				break;
 			}
 		}
 
-    // if (gameConfig.prLoadoutWeaponsOnly) {
-    //   gameConfig.grDisableWeaponPacks = 1;
-    //   gameConfig.grDisableWeaponCrates = 1;
-    //   gameConfig.grDisableAmmoPickups = 1;
-    // }
 
     // send
     configTrySendGameConfig();

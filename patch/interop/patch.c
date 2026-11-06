@@ -578,36 +578,6 @@ variableAddressCompact_t vaPauseMenuAddr = {
 #endif
 };
 
-//================================================
-//=============  patchAlwaysShowHealthBar
-//================================================
-variableAddressCompact_t vaHealthBarTimerSaveZero = {
-#if UYA_PAL
-	.Lobby = 0,
-	.Bakisi = VA_COMPACT_BASE(0x00548020),
-	.Hoven = VA_COMPACT_OFFSET(0x00548020, 0x0054a1e8),
-	.OutpostX12 = VA_COMPACT_OFFSET(0x00548020, 0x0053fac0),
-	.KorgonOutpost = VA_COMPACT_OFFSET(0x00548020, 0x0053c5a8),
-	.Metropolis = VA_COMPACT_OFFSET(0x00548020, 0x0053c5a8),
-	.BlackwaterCity = VA_COMPACT_OFFSET(0x00548020, 0x00539d90),
-	.CommandCenter = VA_COMPACT_OFFSET(0x00548020, 0x005395e8),
-	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00548020, 0x0053be68),
-	.AquatosSewers = VA_COMPACT_OFFSET(0x00548020, 0x0053b168),
-	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00548020, 0x0053aae8),
-#else
-	.Lobby = 0,
-	.Bakisi = VA_COMPACT_BASE(0x00545718),
-	.Hoven = VA_COMPACT_OFFSET(0x00545718, 0x00547820),
-	.OutpostX12 = VA_COMPACT_OFFSET(0x00545718, 0x0053d138),
-	.KorgonOutpost = VA_COMPACT_OFFSET(0x00545718, 0x0053a8a0),
-	.Metropolis = VA_COMPACT_OFFSET(0x00545718, 0x00539ca0),
-	.BlackwaterCity = VA_COMPACT_OFFSET(0x00545718, 0x00537408),
-	.CommandCenter = VA_COMPACT_OFFSET(0x00545718, 0x00536e38),
-	.BlackwaterDocks = VA_COMPACT_OFFSET(0x00545718, 0x00539678),
-	.AquatosSewers = VA_COMPACT_OFFSET(0x00545718, 0x005389b8),
-	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00545718, 0x005382f8),
-#endif
-};
 
 //================================================
 //=============  patchMapAndScoreboardToggle

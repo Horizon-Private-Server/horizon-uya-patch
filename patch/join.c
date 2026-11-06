@@ -475,11 +475,6 @@ static int joinReceiveWorldRequest(void* connection, void* data)
  */
 static int joinWorldObjectEnabled(u16 oClass, Moby* moby)
 {
-	if (gameConfig.grDestructableBridges &&
-	    (oClass == MOBY_ID_KORGON_BRIDGE_PIECE ||
-	    oClass == MOBY_ID_HOVEN_AND_OUTPOST_X12_DESTRUCTABLE_BRIDGE_CENTER ||
-	    oClass == MOBY_ID_BLACKWATER_CITY_DESTRUCTABLE_BRIDGE_CENTER))
-		return 0;
 	if (oClass == MOBY_ID_PLAYER_TURRET && gameConfig.grDisablePlayerTurrets)
 		return 0;
 	if (gameConfig.grDisableDrones &&

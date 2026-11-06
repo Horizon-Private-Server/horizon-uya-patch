@@ -12,19 +12,14 @@ int setGatlingTurretHealth(int value);
 void setRespawnTimer_Player(void);
 void onGameplayLoad_disableMoby(GameplayHeaderDef_t * gameplay, int mobyId, int ypos);
 void onGameplayLoad_hideTeamNodeTurrets(GameplayHeaderDef_t * gameplay, bool disableAll);
-int keepBaseHealthPadActive(void);
 void noPostHitInvinc(void);
 void onGameplayLoad_disableWeaponCrates(GameplayHeaderDef_t * gameplay);
 void onGameplayLoad_disableAmmoPickups(GameplayHeaderDef_t * gameplay);
-void healthbars(void);
 void radarBlips(void);
 void onGameplayLoad_miscRespawnTimers(GameplayHeaderDef_t * gameplay);
-void respawnInvincTimer(void);
 void patchHealthPickups(void);
 void healthBoxTick(void);
 void onGameplayLoad_disableHealthContainer(GameplayHeaderDef_t * gameplay);
-void onGameplayLoad_destructableBridges(GameplayHeaderDef_t * gameplay);
-void destructableBridges(void);
 void patchDroneSpawning(void);
 void runCheckAllNodes(void);
 void runSelectNodeTimer(void);
@@ -32,18 +27,9 @@ void patchSiegeTimeUp(void);
 
 // Party Game Rules
 void survivor(void);
-void chargebootForever(void);
-void modifyWeaponTweakers(void);
 
 // Other
 void disableRespawning(void);
 
 // variable addresses
 variableAddressCompact_t vaUpdateWeaponKill;
-
-typedef struct Tweaker_GravityBomb {
-	float maxThrowDist;
-	float minThrowDist;
-	float gravity;
-	float maxThrowSpeed;
-} Tweaker_GravityBomb_t;

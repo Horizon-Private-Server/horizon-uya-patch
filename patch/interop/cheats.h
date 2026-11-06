@@ -8,10 +8,7 @@ variableAddressCompact_t vaCameraShakeFunc;
 variableAddressCompact_t vaDM_RespawnUpdater;
 VariableAddress_t vaRespawnTimerFunc_Player;
 variableAddressCompact_t vaPostHitInvinc;
-variableAddressCompact_t vaHealthbars_Hook;
 variableAddressCompact_t vaRadarBlips_FloatVal;
-variableAddressCompact_t vaPlayerInvincibleTimer_Hook;
-variableAddressCompact_t vaPlayerInvincibleTimer_Func;
 variableAddressCompact_t vaGB_UpdateGameController_MasterEndGame_Hook;
 
 extern VariableAddress_t vaDroneClusterSpawnHook;

@@ -54,16 +54,12 @@ typedef struct PatchConfig {
   char enableFpsCounter;
   char playerFov;
   char enableSpectate;
-  char alwaysShowHealth;
   char mapScoreToggle_MapBtn;
   char mapScoreToggle_ScoreBtn;
   char disableScavengerHunt;
   char enableSingleplayerMusic;
   char quickSelectTimeDelay;
   char aimAssist;
-  char cycleWeapon1;
-  char cycleWeapon2;
-  char cycleWeapon3;
   char hypershotEquipButton;
   char disableDpadMovement;
   char hideFluxReticle;
@@ -89,12 +85,10 @@ typedef struct PatchGameConfig {
 	// Game Rules
 	char grRadarBlipsDistance;
 	char grRespawnTimer_Player;
-	char grRespawnInvincibility;
 	char grDisablePenaltyTimers;
 	char grDisableWeaponPacks;
 	char grV2s;
 	char grNoCooldown;
-	char grHealthBars;
 	char grHealthBoxes;
 	char grDisableWeaponCrates;
 	char grDisableAmmoPickups;
@@ -107,12 +101,8 @@ typedef struct PatchGameConfig {
 	char grDisablePlayerTurrets;
 	char grNoBaseDefense_Bots;
 	char grNoBaseDefense_SmallTurrets;
-	char grBaseHealthPadActive;
 	char grVampire;
-	char grFluxShotsAlwaysHit;
-	char grFluxNikingDisabled;
 	char grFlagHotspots;
-	char grDestructableBridges;
 	char grSuicidePenaltyTimer;
 	char grAllNodesTimer;
 	char grNodeSelectTimer;
@@ -129,11 +119,8 @@ typedef struct PatchGameConfig {
 
 	// Party
 	char prSurvivor;
-	char prChargebootForever;
-	char prLoadoutWeaponsOnly;
-	char prGravityBombTweakers;
 	char prDisableDlStyleFlips;
-	/* 0x31 */ u8 allowMidGameJoining;
+	char allowMidGameJoining;
 } __attribute__((packed)) PatchGameConfig_t;
 
 typedef struct PatchPatches {
@@ -150,6 +137,8 @@ typedef struct PatchPatches {
   char reservedHealthBoxLogic; // Preserve the shared PatchPatches_t layout.
   char gadgetMobyClassGuard;
   char swingshotGunBug;
+  char wallSniping;
+  char fixNiking;
 
 	// gameConfig misc.
 	char spawnWeaponPackOnDeath;
