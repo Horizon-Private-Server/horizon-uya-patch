@@ -8,3 +8,9 @@ variableAddressCompact_t vaEnableTurretSync_Addr;
 variableAddressCompact_t vaTNW_PlayerData_GadgetIdUpdate;
 variableAddressCompact_t vaTNW_PlayerData_TimeUpdate;
 variableAddressCompact_t vaForceGadgetMobyCreation_Addr;
+
+VariableAddress_t vaRemoteProcessPadInput_Addr;
+VariableAddress_t vaUpdatePadAddr;
+VariableAddress_t vaProcessPadInputAddr;
+VariableAddress_t vaGadgetTransitions_Func;
+VariableAddress_t vaGadgetTransitions_Hook;

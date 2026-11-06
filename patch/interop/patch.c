@@ -1413,4 +1413,208 @@ variableAddressCompact_t vaPadDeadzone_ScaleInput = {
 	.AquatosSewers = VA_COMPACT_OFFSET(0x00493b20, 0x00487548),
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x00493b20, 0x00486e88),
 #endif
-};
+};
+
+VariableAddress_t vaDisableWrenchAimAssist_Addr = {
+#if UYA_PAL
+	.Lobby = 0x0062fe08,
+	.Bakisi = 0x00501d00,
+	.Hoven = 0x00503e18,
+	.OutpostX12 = 0x004f96f0,
+	.KorgonOutpost = 0x004f6e88,
+	.Metropolis = 0x004f61d8,
+	.BlackwaterCity = 0x004f3a70,
+	.CommandCenter = 0x004f3a38,
+	.BlackwaterDocks = 0x004f62b8,
+	.AquatosSewers = 0x004f55b8,
+	.MarcadiaPalace = 0x004f4f38,
+#else
+	.Lobby = 0x0062d5c0,
+	.Bakisi = 0x004ff510,
+	.Hoven = 0x00501568,
+	.OutpostX12 = 0x004f6e80,
+	.KorgonOutpost = 0x004f4698,
+	.Metropolis = 0x004f39e8,
+	.BlackwaterCity = 0x004f1200,
+	.CommandCenter = 0x004f1388,
+	.BlackwaterDocks = 0x004f3bc8,
+	.AquatosSewers = 0x004f2f08,
+	.MarcadiaPalace = 0x004f2848,
+#endif
+};
+
+//=============  patchFluxIllumination
+// 1: the jal that creates the muzzle point light.  2: the li that sets its 30 frame timer.
+VariableAddress_t vaFluxIllumination1_Addr = {
+#if UYA_PAL
+	.Lobby = 0x0054f548,
+	.Bakisi = 0x004072c8,
+	.Hoven = 0x00406c30,
+	.OutpostX12 = 0x003feb28,
+	.KorgonOutpost = 0x003fdf08,
+	.Metropolis = 0x003fcac8,
+	.BlackwaterCity = 0x003f98b0,
+	.CommandCenter = 0x00407cb8,
+	.BlackwaterDocks = 0x00409c18,
+	.AquatosSewers = 0x00409820,
+	.MarcadiaPalace = 0x00408898,
+#else
+	.Lobby = 0x0054ec30,
+	.Bakisi = 0x00406c60,
+	.Hoven = 0x00406548,
+	.OutpostX12 = 0x003fe440,
+	.KorgonOutpost = 0x003fd880,
+	.Metropolis = 0x003fc460,
+	.BlackwaterCity = 0x003f91e8,
+	.CommandCenter = 0x00407638,
+	.BlackwaterDocks = 0x00409598,
+	.AquatosSewers = 0x004091a0,
+	.MarcadiaPalace = 0x00408218,
+#endif
+};
+
+VariableAddress_t vaFluxIllumination2_Addr = {
+#if UYA_PAL
+	.Lobby = 0x0054f550,
+	.Bakisi = 0x004072d0,
+	.Hoven = 0x00406c38,
+	.OutpostX12 = 0x003feb30,
+	.KorgonOutpost = 0x003fdf10,
+	.Metropolis = 0x003fcad0,
+	.BlackwaterCity = 0x003f98b8,
+	.CommandCenter = 0x00407cc0,
+	.BlackwaterDocks = 0x00409c20,
+	.AquatosSewers = 0x00409828,
+	.MarcadiaPalace = 0x004088a0,
+#else
+	.Lobby = 0x0054ec38,
+	.Bakisi = 0x00406c68,
+	.Hoven = 0x00406550,
+	.OutpostX12 = 0x003fe448,
+	.KorgonOutpost = 0x003fd888,
+	.Metropolis = 0x003fc468,
+	.BlackwaterCity = 0x003f91f0,
+	.CommandCenter = 0x00407640,
+	.BlackwaterDocks = 0x004095a0,
+	.AquatosSewers = 0x004091a8,
+	.MarcadiaPalace = 0x00408220,
+#endif
+};
+
+//================================================
+//=============  patchHealthBoxPickup
+//================================================
+// pickup eligibility check: int (Player* hero, Moby* pickup)
+VariableAddress_t vaPickupCanGive_Func = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00422d80,
+	.Hoven = 0x004247d8,
+	.OutpostX12 = 0x0041b708,
+	.KorgonOutpost = 0x00418d78,
+	.Metropolis = 0x00418608,
+	.BlackwaterCity = 0x00414470,
+	.CommandCenter = 0x0041cfd8,
+	.BlackwaterDocks = 0x0041f828,
+	.AquatosSewers = 0x0041eb40,
+	.MarcadiaPalace = 0x0041e4a8,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004224b0,
+	.Hoven = 0x00423e40,
+	.OutpostX12 = 0x0041ad88,
+	.KorgonOutpost = 0x004184a0,
+	.Metropolis = 0x00417d38,
+	.BlackwaterCity = 0x00413b58,
+	.CommandCenter = 0x0041c768,
+	.BlackwaterDocks = 0x0041efa0,
+	.AquatosSewers = 0x0041e2d0,
+	.MarcadiaPalace = 0x0041dc20,
+#endif
+};
+
+// pickup guber master update: "jal pickupCanGive" (grants to any hero through event 1)
+VariableAddress_t vaPickupCanGive_MasterHook = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00423480,
+	.Hoven = 0x00424ed8,
+	.OutpostX12 = 0x0041be08,
+	.KorgonOutpost = 0x00419478,
+	.Metropolis = 0x00418d08,
+	.BlackwaterCity = 0x00414b70,
+	.CommandCenter = 0x0041d6d8,
+	.BlackwaterDocks = 0x0041ff28,
+	.AquatosSewers = 0x0041f240,
+	.MarcadiaPalace = 0x0041eba8,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x00422bb0,
+	.Hoven = 0x00424540,
+	.OutpostX12 = 0x0041b488,
+	.KorgonOutpost = 0x00418ba0,
+	.Metropolis = 0x00418438,
+	.BlackwaterCity = 0x00414258,
+	.CommandCenter = 0x0041ce68,
+	.BlackwaterDocks = 0x0041f6a0,
+	.AquatosSewers = 0x0041e9d0,
+	.MarcadiaPalace = 0x0041e320,
+#endif
+};
+// pickup moby update, state 4: "jal pickupCanGive" (local hero touches -> state 5, 90 frame self heal)
+VariableAddress_t vaPickupCanGive_LocalHook = {
+#if UYA_PAL
+	.Lobby = 0,
+	.Bakisi = 0x00423a84,
+	.Hoven = 0x004254dc,
+	.OutpostX12 = 0x0041c40c,
+	.KorgonOutpost = 0x00419a7c,
+	.Metropolis = 0x0041930c,
+	.BlackwaterCity = 0x00415174,
+	.CommandCenter = 0x0041dcdc,
+	.BlackwaterDocks = 0x0042052c,
+	.AquatosSewers = 0x0041f844,
+	.MarcadiaPalace = 0x0041f1ac,
+#else
+	.Lobby = 0,
+	.Bakisi = 0x004231b4,
+	.Hoven = 0x00424b44,
+	.OutpostX12 = 0x0041ba8c,
+	.KorgonOutpost = 0x004191a4,
+	.Metropolis = 0x00418a3c,
+	.BlackwaterCity = 0x0041485c,
+	.CommandCenter = 0x0041d46c,
+	.BlackwaterDocks = 0x0041fca4,
+	.AquatosSewers = 0x0041efd4,
+	.MarcadiaPalace = 0x0041e924,
+#endif
+};
+
+// GuberEvent::FindEvent(Guber*, int eventId, int pendingOnly)
+VariableAddress_t vaGuberFindEvent_Func = {
+#if UYA_PAL
+	.Lobby = 0x00662678,
+	.Bakisi = 0x00534778,
+	.Hoven = 0x00536890,
+	.OutpostX12 = 0x0052c168,
+	.KorgonOutpost = 0x00529900,
+	.Metropolis = 0x00528c50,
+	.BlackwaterCity = 0x005264e8,
+	.CommandCenter = 0x005262a8,
+	.BlackwaterDocks = 0x00528b28,
+	.AquatosSewers = 0x00527e28,
+	.MarcadiaPalace = 0x005277a8,
+#else
+	.Lobby = 0x0065fda0,
+	.Bakisi = 0x00531ef8,
+	.Hoven = 0x00533f50,
+	.OutpostX12 = 0x00529868,
+	.KorgonOutpost = 0x00527080,
+	.Metropolis = 0x005263d0,
+	.BlackwaterCity = 0x00523be8,
+	.CommandCenter = 0x00523b68,
+	.BlackwaterDocks = 0x005263a8,
+	.AquatosSewers = 0x005256e8,
+	.MarcadiaPalace = 0x00525028,
+#endif
+};

@@ -594,6 +594,7 @@ MenuElem_t menuElementsGeneral[] = {
   { "KOTH Scroll Speed", listActionHandler, menuStateAlwaysEnabledHandler, &dataKothScrollSpeed, "Scale hill ring scroll speed." },
   { "KOTH Hill Transparency", listActionHandler, menuStateAlwaysEnabledHandler, &dataKothHillTransparency, "Adjust hill transparency." },
   { "KOTH Wall FX ID", rangeActionHandler, menuStateAlwaysEnabledHandler, &dataKothHillFxId, "Texture FX id for hill walls (0-105)." },
+  { "Disable Wrench Aim Assist", toggleActionHandler, menuStateAlwaysEnabledHandler, &config.wrenchAimAssist, "Disables wrench aim assist." },
 };
 
 // Game Settings
@@ -3048,6 +3049,7 @@ static void updateStagingPreview(UiElementImage_t* image)
  * NAME : onConfigUpdate
  * DESCRIPTION : Update download state and staging map details.
  * NOTES : Update active staging for normal starts and late joins, whose start time is already set.
+ *         Only access staging UI while the lobby scene is loaded.
  * ARGS :
  * RETURN :
  * AUTHOR : Troy "Metroynome" Pruitt
@@ -3068,7 +3070,7 @@ void onConfigUpdate(void)
 
   // in staging, update game info
   GameSettings * gameSettings = gameGetSettings();
-  if (gameSettings && netGetLobbyServerConnection() && uiGetActiveMenu(UI_MENU_STAGING, 0))
+	if (isInMenus() && gameSettings && netGetLobbyServerConnection() && uiGetActiveMenu(UI_MENU_STAGING, 0))
   {
     // 
     char * mapName = mapGetName(gameSettings->GameLevel);

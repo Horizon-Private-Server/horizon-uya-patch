@@ -71,6 +71,7 @@ typedef struct PatchConfig {
   char enableTeamInfo;
   char preferredGameServer;
   char controllerDeadzone;
+  char wrenchAimAssist;
 
   // Non-serialized config values
   char kothScrollSpeed;
@@ -136,17 +137,19 @@ typedef struct PatchGameConfig {
 } __attribute__((packed)) PatchGameConfig_t;
 
 typedef struct PatchPatches {
-	PatchConfig_t config;
-	PatchGameConfig_t gameConfig;
-	char configStartOption;
-	char loadingPopup;
-	char killStealing;
-	char gadgetEvents;
-	char deadShooting;
-	char weaponShotLag;
-	char resurrectWeaponOrdering;
-	char ctfLogic;
-	char swingshotGunBug;
+  PatchConfig_t config;
+  PatchGameConfig_t gameConfig;
+  char configStartOption;
+  char loadingPopup;
+  char killStealing;
+  char gadgetEvents;
+  char deadShooting;
+  char weaponShotLag;
+  char resurrectWeaponOrdering;
+  char ctfLogic;
+  char healthBoxLogic;
+  char gadgetMobyClassGuard;
+  char swingshotGunBug;
 
 	// gameConfig misc.
 	char spawnWeaponPackOnDeath;

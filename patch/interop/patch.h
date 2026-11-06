@@ -49,4 +49,12 @@ variableAddressCompact_t vaPatchSwingshotGunBug_Hook;
 variableAddressCompact_t vaSetTextureArrow_Hook;
 variableAddressCompact_t vaPadDeadzone_CompareInput;
 variableAddressCompact_t vaPadDeadzone_OffsetInput;
-variableAddressCompact_t vaPadDeadzone_ScaleInput;
+variableAddressCompact_t vaPadDeadzone_ScaleInput;
+
+VariableAddress_t vaDisableWrenchAimAssist_Addr;
+VariableAddress_t vaFluxIllumination1_Addr;
+VariableAddress_t vaFluxIllumination2_Addr;
+VariableAddress_t vaPickupCanGive_Func;
+VariableAddress_t vaPickupCanGive_MasterHook;
+VariableAddress_t vaPickupCanGive_LocalHook;
+VariableAddress_t vaGuberFindEvent_Func;

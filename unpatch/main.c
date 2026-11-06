@@ -128,12 +128,16 @@ const int patches[][3] = {
 #if UYA_PAL
 	// Bakisi Isles
 	{ 40, 0x00240654, 0x00538f48 }, // remote bot leave callback
+	{ 40, 0x004072c8, 0x0c11ac90 }, // FluxIllumination1_Addr
+	{ 40, 0x004072d0, 0x24030019 }, // FluxIllumination2_Addr
 	{ 40, 0x00407388, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 40, 0x00407394, 0x0c117674 }, // GetSniperShotDirectionHook
 	{ 40, 0x00407398, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 40, 0x00408508, 0xa2400020 }, // SniperShotCreatedHook
 	{ 40, 0x00408bc0, 0x0c11344e }, // SniperShotCollLineFixHook
 	{ 40, 0x00408bc4, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 40, 0x00423480, 0x0c108b60 }, // PickupCanGive_MasterHook
+	{ 40, 0x00423a84, 0x0c108b60 }, // PickupCanGive_LocalHook
 	{ 40, 0x00424d20, 0x0c1468be }, // EnableTurretSync_Addr
 	{ 40, 0x00430568, 0x0c122f90 }, // vaFlagEventUiPopup_Hook
 	{ 40, 0x004428c8, 0x0c133998 }, // FpsCounter_Hooks
@@ -160,8 +164,12 @@ const int patches[][3] = {
 	{ 40, 0x004fa324, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 40, 0x004fa360, 0x0c13e996 }, // PlayerRespawnFunc +0x00000040
 	{ 40, 0x004fa37c, 0x0c1466f4 }, // PlayerRespawnFunc +0x0000005c
+	{ 40, 0x00501d00, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 40, 0x00507c70, 0x0c118708 }, // Healthbars_Hook
 	{ 40, 0x00511cec, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 40, 0x00511fc0, 0x0c11da40 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 40, 0x00512478, 0x0c11da40 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 40, 0x00512508, 0x0c11da40 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 40, 0x00526d60, 0x0c143536 }, // Juggernaut vaHurtPlayerFunc
 	{ 40, 0x00527458, 0x0c143536 }, // Juggernaut vaHurtPlayerFunc
 	{ 40, 0x00527468, 0x0c143536 }, // Juggernaut vaHurtPlayerFunc
@@ -169,6 +177,7 @@ const int patches[][3] = {
 	{ 40, 0x005274b8, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 40, 0x00527770, 0x0c143536 }, // Juggernaut vaHurtPlayerFunc
 	{ 40, 0x0052916c, 0x0c13e30c }, // PlayerInvincibleTimer_Hook
+	{ 40, 0x005293c4, 0x0c14bc68 }, // GadgetTransitions_Hook
 	{ 40, 0x0052c50c, 0x0c143536 }, // Juggernaut vaHurtPlayerFunc
 	{ 40, 0x00531e34, 0x0c150a0e }, // PlayerStateUpdate_Hook
 	{ 40, 0x00532414, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -186,12 +195,16 @@ const int patches[][3] = {
 	{ 40, 0x0054b2b8, 0x0c151122 }, // Juggernaut vaOnPlayerKill_Func
 	// Hoven Gorge
 	{ 41, 0x00240654, 0x0053b060 }, // remote bot leave callback
+	{ 41, 0x00406c30, 0x0c11b37c }, // FluxIllumination1_Addr
+	{ 41, 0x00406c38, 0x24030019 }, // FluxIllumination2_Addr
 	{ 41, 0x00406cf0, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 41, 0x00406cfc, 0x0c117d60 }, // GetSniperShotDirectionHook
 	{ 41, 0x00406d00, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 41, 0x00407e70, 0xa2400020 }, // SniperShotCreatedHook
 	{ 41, 0x00408528, 0x0c113b2e }, // SniperShotCollLineFixHook
 	{ 41, 0x0040852c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 41, 0x00424ed8, 0x0c1091f6 }, // PickupCanGive_MasterHook
+	{ 41, 0x004254dc, 0x0c1091f6 }, // PickupCanGive_LocalHook
 	{ 41, 0x00426778, 0x0c147104 }, // EnableTurretSync_Addr
 	{ 41, 0x00431fc0, 0x0c123708 }, // vaFlagEventUiPopup_Hook
 	{ 41, 0x00444448, 0x0c1341de }, // FpsCounter_Hooks
@@ -218,8 +231,12 @@ const int patches[][3] = {
 	{ 41, 0x004fc43c, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 41, 0x004fc478, 0x0c13f1dc }, // PlayerRespawnFunc +0x00000040
 	{ 41, 0x004fc494, 0x0c146f3a }, // PlayerRespawnFunc +0x0000005c
+	{ 41, 0x00503e18, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 41, 0x00509d88, 0x0c118df4 }, // Healthbars_Hook
 	{ 41, 0x00513e04, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 41, 0x005140d8, 0x0c11e130 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 41, 0x00514590, 0x0c11e130 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 41, 0x00514620, 0x0c11e130 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 41, 0x00528e78, 0x0c143d7c }, // Juggernaut vaHurtPlayerFunc
 	{ 41, 0x00529570, 0x0c143d7c }, // Juggernaut vaHurtPlayerFunc
 	{ 41, 0x00529580, 0x0c143d7c }, // Juggernaut vaHurtPlayerFunc
@@ -227,6 +244,7 @@ const int patches[][3] = {
 	{ 41, 0x005295d0, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 41, 0x00529888, 0x0c143d7c }, // Juggernaut vaHurtPlayerFunc
 	{ 41, 0x0052b284, 0x0c13eb52 }, // PlayerInvincibleTimer_Hook
+	{ 41, 0x0052b4dc, 0x0c14c4ae }, // GadgetTransitions_Hook
 	{ 41, 0x0052e624, 0x0c143d7c }, // Juggernaut vaHurtPlayerFunc
 	{ 41, 0x00533f4c, 0x0c151280 }, // PlayerStateUpdate_Hook
 	{ 41, 0x0053452c, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -244,12 +262,16 @@ const int patches[][3] = {
 	{ 41, 0x0054d480, 0x0c151994 }, // Juggernaut vaOnPlayerKill_Func
 	// Outpost X12
 	{ 42, 0x00240654, 0x00530938 }, // remote bot leave callback
+	{ 42, 0x003feb28, 0x0c118efc }, // FluxIllumination1_Addr
+	{ 42, 0x003feb30, 0x24030019 }, // FluxIllumination2_Addr
 	{ 42, 0x003febe8, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 42, 0x003febf4, 0x0c1158e0 }, // GetSniperShotDirectionHook
 	{ 42, 0x003febf8, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 42, 0x003ffd68, 0xa2400020 }, // SniperShotCreatedHook
 	{ 42, 0x00400420, 0x0c1116ae }, // SniperShotCollLineFixHook
 	{ 42, 0x00400424, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 42, 0x0041be08, 0x0c106dc2 }, // PickupCanGive_MasterHook
+	{ 42, 0x0041c40c, 0x0c106dc2 }, // PickupCanGive_LocalHook
 	{ 42, 0x0041d6a8, 0x0c14473a }, // EnableTurretSync_Addr
 	{ 42, 0x00428ef0, 0x0c121288 }, // vaFlagEventUiPopup_Hook
 	{ 42, 0x0043b248, 0x0c131814 }, // FpsCounter_Hooks
@@ -276,8 +298,12 @@ const int patches[][3] = {
 	{ 42, 0x004f1d14, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 42, 0x004f1d50, 0x0c13c812 }, // PlayerRespawnFunc +0x00000040
 	{ 42, 0x004f1d6c, 0x0c144570 }, // PlayerRespawnFunc +0x0000005c
+	{ 42, 0x004f96f0, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 42, 0x004ff660, 0x0c116974 }, // Healthbars_Hook
 	{ 42, 0x005096dc, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 42, 0x005099b0, 0x0c11bcb0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 42, 0x00509e68, 0x0c11bcb0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 42, 0x00509ef8, 0x0c11bcb0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 42, 0x0051e750, 0x0c1413b2 }, // Juggernaut vaHurtPlayerFunc
 	{ 42, 0x0051ee48, 0x0c1413b2 }, // Juggernaut vaHurtPlayerFunc
 	{ 42, 0x0051ee58, 0x0c1413b2 }, // Juggernaut vaHurtPlayerFunc
@@ -285,6 +311,7 @@ const int patches[][3] = {
 	{ 42, 0x0051eea8, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 42, 0x0051f160, 0x0c1413b2 }, // Juggernaut vaHurtPlayerFunc
 	{ 42, 0x00520b5c, 0x0c13c188 }, // PlayerInvincibleTimer_Hook
+	{ 42, 0x00520db4, 0x0c149ae4 }, // GadgetTransitions_Hook
 	{ 42, 0x00523efc, 0x0c1413b2 }, // Juggernaut vaHurtPlayerFunc
 	{ 42, 0x00529824, 0x0c14e8b6 }, // PlayerStateUpdate_Hook
 	{ 42, 0x00529e04, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -302,12 +329,16 @@ const int patches[][3] = {
 	{ 42, 0x00542d58, 0x0c14efca }, // Juggernaut vaOnPlayerKill_Func
 	// Korgon Outpost
 	{ 43, 0x00240654, 0x0052e0d0 }, // remote bot leave callback
+	{ 43, 0x003fdf08, 0x0c1185e0 }, // FluxIllumination1_Addr
+	{ 43, 0x003fdf10, 0x24030019 }, // FluxIllumination2_Addr
 	{ 43, 0x003fdfc8, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 43, 0x003fdfd4, 0x0c114fc4 }, // GetSniperShotDirectionHook
 	{ 43, 0x003fdfd8, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 43, 0x003ff148, 0xa2400020 }, // SniperShotCreatedHook
 	{ 43, 0x003ff800, 0x0c110d9e }, // SniperShotCollLineFixHook
 	{ 43, 0x003ff804, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 43, 0x00419478, 0x0c10635e }, // PickupCanGive_MasterHook
+	{ 43, 0x00419a7c, 0x0c10635e }, // PickupCanGive_LocalHook
 	{ 43, 0x0041ad18, 0x0c143d20 }, // EnableTurretSync_Addr
 	{ 43, 0x00426a98, 0x0c1208e0 }, // vaFlagEventUiPopup_Hook
 	{ 43, 0x00438e08, 0x0c130dfa }, // FpsCounter_Hooks
@@ -334,8 +365,12 @@ const int patches[][3] = {
 	{ 43, 0x004ef4ac, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 43, 0x004ef4e8, 0x0c13bdf8 }, // PlayerRespawnFunc +0x00000040
 	{ 43, 0x004ef504, 0x0c143b56 }, // PlayerRespawnFunc +0x0000005c
+	{ 43, 0x004f6e88, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 43, 0x004fcdf8, 0x0c116058 }, // Healthbars_Hook
 	{ 43, 0x00506e74, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 43, 0x00507148, 0x0c11b390 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 43, 0x00507600, 0x0c11b390 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 43, 0x00507690, 0x0c11b390 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 43, 0x0051bee8, 0x0c140998 }, // Juggernaut vaHurtPlayerFunc
 	{ 43, 0x0051c5e0, 0x0c140998 }, // Juggernaut vaHurtPlayerFunc
 	{ 43, 0x0051c5f0, 0x0c140998 }, // Juggernaut vaHurtPlayerFunc
@@ -343,6 +378,7 @@ const int patches[][3] = {
 	{ 43, 0x0051c640, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 43, 0x0051c8f8, 0x0c140998 }, // Juggernaut vaHurtPlayerFunc
 	{ 43, 0x0051e2f4, 0x0c13b76e }, // PlayerInvincibleTimer_Hook
+	{ 43, 0x0051e54c, 0x0c1490ca }, // GadgetTransitions_Hook
 	{ 43, 0x00521694, 0x0c140998 }, // Juggernaut vaHurtPlayerFunc
 	{ 43, 0x00526fbc, 0x0c14de70 }, // PlayerStateUpdate_Hook
 	{ 43, 0x0052759c, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -360,12 +396,16 @@ const int patches[][3] = {
 	{ 43, 0x00540440, 0x0c14e584 }, // Juggernaut vaOnPlayerKill_Func
 	// Metropolis
 	{ 44, 0x00240654, 0x0052d420 }, // remote bot leave callback
+	{ 44, 0x003fcac8, 0x0c1182b0 }, // FluxIllumination1_Addr
+	{ 44, 0x003fcad0, 0x24030019 }, // FluxIllumination2_Addr
 	{ 44, 0x003fcb88, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 44, 0x003fcb94, 0x0c114c94 }, // GetSniperShotDirectionHook
 	{ 44, 0x003fcb98, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 44, 0x003fdd08, 0xa2400020 }, // SniperShotCreatedHook
 	{ 44, 0x003fe3c0, 0x0c110a6e }, // SniperShotCollLineFixHook
 	{ 44, 0x003fe3c4, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 44, 0x00418d08, 0x0c106182 }, // PickupCanGive_MasterHook
+	{ 44, 0x0041930c, 0x0c106182 }, // PickupCanGive_LocalHook
 	{ 44, 0x0041a5a8, 0x0c1439f4 }, // EnableTurretSync_Addr
 	{ 44, 0x00425df0, 0x0c1205e6 }, // vaFlagEventUiPopup_Hook
 	{ 44, 0x00438148, 0x0c130ace }, // FpsCounter_Hooks
@@ -392,8 +432,12 @@ const int patches[][3] = {
 	{ 44, 0x004ee7fc, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 44, 0x004ee838, 0x0c13bacc }, // PlayerRespawnFunc +0x00000040
 	{ 44, 0x004ee854, 0x0c14382a }, // PlayerRespawnFunc +0x0000005c
+	{ 44, 0x004f61d8, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 44, 0x004fc148, 0x0c115d28 }, // Healthbars_Hook
 	{ 44, 0x005061c4, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 44, 0x00506498, 0x0c11b060 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 44, 0x00506950, 0x0c11b060 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 44, 0x005069e0, 0x0c11b060 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 44, 0x0051b238, 0x0c14066c }, // Juggernaut vaHurtPlayerFunc
 	{ 44, 0x0051b930, 0x0c14066c }, // Juggernaut vaHurtPlayerFunc
 	{ 44, 0x0051b940, 0x0c14066c }, // Juggernaut vaHurtPlayerFunc
@@ -401,6 +445,7 @@ const int patches[][3] = {
 	{ 44, 0x0051b990, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 44, 0x0051bc48, 0x0c14066c }, // Juggernaut vaHurtPlayerFunc
 	{ 44, 0x0051d644, 0x0c13b442 }, // PlayerInvincibleTimer_Hook
+	{ 44, 0x0051d89c, 0x0c148d9e }, // GadgetTransitions_Hook
 	{ 44, 0x005209e4, 0x0c14066c }, // Juggernaut vaHurtPlayerFunc
 	{ 44, 0x0052630c, 0x0c14db70 }, // PlayerStateUpdate_Hook
 	{ 44, 0x005268ec, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -418,12 +463,16 @@ const int patches[][3] = {
 	{ 44, 0x0053f840, 0x0c14e284 }, // Juggernaut vaOnPlayerKill_Func
 	// Blackwater City
 	{ 45, 0x00240654, 0x0052acb8 }, // remote bot leave callback
+	{ 45, 0x003f98b0, 0x0c1178bc }, // FluxIllumination1_Addr
+	{ 45, 0x003f98b8, 0x24030019 }, // FluxIllumination2_Addr
 	{ 45, 0x003f9970, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 45, 0x003f997c, 0x0c1142a0 }, // GetSniperShotDirectionHook
 	{ 45, 0x003f9980, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 45, 0x003faaf0, 0xa2400020 }, // SniperShotCreatedHook
 	{ 45, 0x003fb1a8, 0x0c11006e }, // SniperShotCollLineFixHook
 	{ 45, 0x003fb1ac, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 45, 0x00414b70, 0x0c10511c }, // PickupCanGive_MasterHook
+	{ 45, 0x00415174, 0x0c10511c }, // PickupCanGive_LocalHook
 	{ 45, 0x00416410, 0x0c14301a }, // EnableTurretSync_Addr
 	{ 45, 0x00421c58, 0x0c11fb70 }, // vaFlagEventUiPopup_Hook
 	{ 45, 0x00435948, 0x0c1300f4 }, // FpsCounter_Hooks
@@ -450,8 +499,12 @@ const int patches[][3] = {
 	{ 45, 0x004ec094, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 45, 0x004ec0d0, 0x0c13b0f2 }, // PlayerRespawnFunc +0x00000040
 	{ 45, 0x004ec0ec, 0x0c142e50 }, // PlayerRespawnFunc +0x0000005c
+	{ 45, 0x004f3a70, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 45, 0x004f99e0, 0x0c115334 }, // Healthbars_Hook
 	{ 45, 0x00503a5c, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 45, 0x00503d30, 0x0c11a670 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 45, 0x005041e8, 0x0c11a670 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 45, 0x00504278, 0x0c11a670 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 45, 0x00518ad0, 0x0c13fc92 }, // Juggernaut vaHurtPlayerFunc
 	{ 45, 0x005191c8, 0x0c13fc92 }, // Juggernaut vaHurtPlayerFunc
 	{ 45, 0x005191d8, 0x0c13fc92 }, // Juggernaut vaHurtPlayerFunc
@@ -459,6 +512,7 @@ const int patches[][3] = {
 	{ 45, 0x00519228, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 45, 0x005194e0, 0x0c13fc92 }, // Juggernaut vaHurtPlayerFunc
 	{ 45, 0x0051aedc, 0x0c13aa68 }, // PlayerInvincibleTimer_Hook
+	{ 45, 0x0051b134, 0x0c1483c4 }, // GadgetTransitions_Hook
 	{ 45, 0x0051e27c, 0x0c13fc92 }, // Juggernaut vaHurtPlayerFunc
 	{ 45, 0x00523ba4, 0x0c14d16a }, // PlayerStateUpdate_Hook
 	{ 45, 0x00524184, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -476,12 +530,16 @@ const int patches[][3] = {
 	{ 45, 0x0053d028, 0x0c14d87e }, // Juggernaut vaOnPlayerKill_Func
 	// Command Center
 	{ 46, 0x00240654, 0x0052aa78 }, // remote bot leave callback
+	{ 46, 0x00407cb8, 0x0c117afa }, // FluxIllumination1_Addr
+	{ 46, 0x00407cc0, 0x24030019 }, // FluxIllumination2_Addr
 	{ 46, 0x00407d78, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 46, 0x00407d84, 0x0c1144de }, // GetSniperShotDirectionHook
 	{ 46, 0x00407d88, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 46, 0x00408ef8, 0xa2400020 }, // SniperShotCreatedHook
 	{ 46, 0x004095b0, 0x0c11038e }, // SniperShotCollLineFixHook
 	{ 46, 0x004095b4, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 46, 0x0041d6d8, 0x0c1073f6 }, // PickupCanGive_MasterHook
+	{ 46, 0x0041dcdc, 0x0c1073f6 }, // PickupCanGive_LocalHook
 	{ 46, 0x004263e8, 0x0c11fc10 }, // vaFlagEventUiPopup_Hook
 	{ 46, 0x004365c8, 0x0c1300f2 }, // FpsCounter_Hooks
 	{ 46, 0x00436628, 0x0c11280a }, // FpsCounter_Hooks +0x00000060
@@ -507,8 +565,12 @@ const int patches[][3] = {
 	{ 46, 0x004ec05c, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 46, 0x004ec098, 0x0c13b0e4 }, // PlayerRespawnFunc +0x00000040
 	{ 46, 0x004ec0b4, 0x0c142dc0 }, // PlayerRespawnFunc +0x0000005c
+	{ 46, 0x004f3a38, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 46, 0x004f99a8, 0x0c115572 }, // Healthbars_Hook
 	{ 46, 0x00503a24, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 46, 0x00503cf8, 0x0c11a8a0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 46, 0x005041b0, 0x0c11a8a0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 46, 0x00504240, 0x0c11a8a0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 46, 0x00518890, 0x0c13fc84 }, // Juggernaut vaHurtPlayerFunc
 	{ 46, 0x00518f88, 0x0c13fc84 }, // Juggernaut vaHurtPlayerFunc
 	{ 46, 0x00518f98, 0x0c13fc84 }, // Juggernaut vaHurtPlayerFunc
@@ -516,6 +578,7 @@ const int patches[][3] = {
 	{ 46, 0x00518fe8, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 46, 0x005192a0, 0x0c13fc84 }, // Juggernaut vaHurtPlayerFunc
 	{ 46, 0x0051ac9c, 0x0c13aa5a }, // PlayerInvincibleTimer_Hook
+	{ 46, 0x0051aef4, 0x0c148334 }, // GadgetTransitions_Hook
 	{ 46, 0x0051e03c, 0x0c13fc84 }, // Juggernaut vaHurtPlayerFunc
 	{ 46, 0x00523964, 0x0c14cf80 }, // PlayerStateUpdate_Hook
 	{ 46, 0x00523f44, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -533,12 +596,16 @@ const int patches[][3] = {
 	{ 46, 0x0053c880, 0x0c14d694 }, // Juggernaut vaOnPlayerKill_Func
 	// Blackwater Docks
 	{ 47, 0x00240654, 0x0052d2f8 }, // remote bot leave callback
+	{ 47, 0x00409c18, 0x0c11851a }, // FluxIllumination1_Addr
+	{ 47, 0x00409c20, 0x24030019 }, // FluxIllumination2_Addr
 	{ 47, 0x00409cd8, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 47, 0x00409ce4, 0x0c114efe }, // GetSniperShotDirectionHook
 	{ 47, 0x00409ce8, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 47, 0x0040ae58, 0xa2400020 }, // SniperShotCreatedHook
 	{ 47, 0x0040b510, 0x0c110dae }, // SniperShotCollLineFixHook
 	{ 47, 0x0040b514, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 47, 0x0041ff28, 0x0c107e0a }, // PickupCanGive_MasterHook
+	{ 47, 0x0042052c, 0x0c107e0a }, // PickupCanGive_LocalHook
 	{ 47, 0x00428c38, 0x0c120630 }, // vaFlagEventUiPopup_Hook
 	{ 47, 0x00438e48, 0x0c130b12 }, // FpsCounter_Hooks
 	{ 47, 0x00438ea8, 0x0c11322a }, // FpsCounter_Hooks +0x00000060
@@ -564,8 +631,12 @@ const int patches[][3] = {
 	{ 47, 0x004ee8dc, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 47, 0x004ee918, 0x0c13bb04 }, // PlayerRespawnFunc +0x00000040
 	{ 47, 0x004ee934, 0x0c1437e0 }, // PlayerRespawnFunc +0x0000005c
+	{ 47, 0x004f62b8, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 47, 0x004fc228, 0x0c115f92 }, // Healthbars_Hook
 	{ 47, 0x005062a4, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 47, 0x00506578, 0x0c11b2c0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 47, 0x00506a30, 0x0c11b2c0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 47, 0x00506ac0, 0x0c11b2c0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 47, 0x0051b110, 0x0c1406a4 }, // Juggernaut vaHurtPlayerFunc
 	{ 47, 0x0051b808, 0x0c1406a4 }, // Juggernaut vaHurtPlayerFunc
 	{ 47, 0x0051b818, 0x0c1406a4 }, // Juggernaut vaHurtPlayerFunc
@@ -573,6 +644,7 @@ const int patches[][3] = {
 	{ 47, 0x0051b868, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 47, 0x0051bb20, 0x0c1406a4 }, // Juggernaut vaHurtPlayerFunc
 	{ 47, 0x0051d51c, 0x0c13b47a }, // PlayerInvincibleTimer_Hook
+	{ 47, 0x0051d774, 0x0c148d54 }, // GadgetTransitions_Hook
 	{ 47, 0x005208bc, 0x0c1406a4 }, // Juggernaut vaHurtPlayerFunc
 	{ 47, 0x005261e4, 0x0c14d9a0 }, // PlayerStateUpdate_Hook
 	{ 47, 0x005267c4, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -590,12 +662,16 @@ const int patches[][3] = {
 	{ 47, 0x0053f100, 0x0c14e0b4 }, // Juggernaut vaOnPlayerKill_Func
 	// Aquatos Sewers
 	{ 48, 0x00240654, 0x0052c5f8 }, // remote bot leave callback
+	{ 48, 0x00409820, 0x0c1181da }, // FluxIllumination1_Addr
+	{ 48, 0x00409828, 0x24030019 }, // FluxIllumination2_Addr
 	{ 48, 0x004098e0, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 48, 0x004098ec, 0x0c114bbe }, // GetSniperShotDirectionHook
 	{ 48, 0x004098f0, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 48, 0x0040aa60, 0xa2400020 }, // SniperShotCreatedHook
 	{ 48, 0x0040b118, 0x0c110a6e }, // SniperShotCollLineFixHook
 	{ 48, 0x0040b11c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 48, 0x0041f240, 0x0c107ad0 }, // PickupCanGive_MasterHook
+	{ 48, 0x0041f844, 0x0c107ad0 }, // PickupCanGive_LocalHook
 	{ 48, 0x00427f50, 0x0c1202f0 }, // vaFlagEventUiPopup_Hook
 	{ 48, 0x00438148, 0x0c1307d2 }, // FpsCounter_Hooks
 	{ 48, 0x004381a8, 0x0c112eea }, // FpsCounter_Hooks +0x00000060
@@ -620,8 +696,12 @@ const int patches[][3] = {
 	{ 48, 0x004edbdc, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 48, 0x004edc18, 0x0c13b7c4 }, // PlayerRespawnFunc +0x00000040
 	{ 48, 0x004edc34, 0x0c1434a0 }, // PlayerRespawnFunc +0x0000005c
+	{ 48, 0x004f55b8, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 48, 0x004fb528, 0x0c115c52 }, // Healthbars_Hook
 	{ 48, 0x005055a4, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 48, 0x00505878, 0x0c11af80 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 48, 0x00505d30, 0x0c11af80 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 48, 0x00505dc0, 0x0c11af80 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 48, 0x0051a410, 0x0c140364 }, // Juggernaut vaHurtPlayerFunc
 	{ 48, 0x0051ab08, 0x0c140364 }, // Juggernaut vaHurtPlayerFunc
 	{ 48, 0x0051ab18, 0x0c140364 }, // Juggernaut vaHurtPlayerFunc
@@ -629,6 +709,7 @@ const int patches[][3] = {
 	{ 48, 0x0051ab68, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 48, 0x0051ae20, 0x0c140364 }, // Juggernaut vaHurtPlayerFunc
 	{ 48, 0x0051c81c, 0x0c13b13a }, // PlayerInvincibleTimer_Hook
+	{ 48, 0x0051ca74, 0x0c148a14 }, // GadgetTransitions_Hook
 	{ 48, 0x0051fbbc, 0x0c140364 }, // Juggernaut vaHurtPlayerFunc
 	{ 48, 0x005254e4, 0x0c14d660 }, // PlayerStateUpdate_Hook
 	{ 48, 0x00525ac4, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -647,12 +728,16 @@ const int patches[][3] = {
 	{ 48, 0x01795ffc, 0x0c0fe17c }, // RespawnTimerFunc_Player
 	// Marcadia Palace
 	{ 49, 0x00240654, 0x0052bf78 }, // remote bot leave callback
+	{ 49, 0x00408898, 0x0c11803a }, // FluxIllumination1_Addr
+	{ 49, 0x004088a0, 0x24030019 }, // FluxIllumination2_Addr
 	{ 49, 0x00408958, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 49, 0x00408964, 0x0c114a1e }, // GetSniperShotDirectionHook
 	{ 49, 0x00408968, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 49, 0x00409ad8, 0xa2400020 }, // SniperShotCreatedHook
 	{ 49, 0x0040a190, 0x0c1108ce }, // SniperShotCollLineFixHook
 	{ 49, 0x0040a194, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 49, 0x0041eba8, 0x0c10792a }, // PickupCanGive_MasterHook
+	{ 49, 0x0041f1ac, 0x0c10792a }, // PickupCanGive_LocalHook
 	{ 49, 0x004278b8, 0x0c120150 }, // vaFlagEventUiPopup_Hook
 	{ 49, 0x00437ac8, 0x0c130632 }, // FpsCounter_Hooks
 	{ 49, 0x00437b28, 0x0c112d4a }, // FpsCounter_Hooks +0x00000060
@@ -678,8 +763,12 @@ const int patches[][3] = {
 	{ 49, 0x004ed55c, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 49, 0x004ed598, 0x0c13b624 }, // PlayerRespawnFunc +0x00000040
 	{ 49, 0x004ed5b4, 0x0c143300 }, // PlayerRespawnFunc +0x0000005c
+	{ 49, 0x004f4f38, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 49, 0x004faea8, 0x0c115ab2 }, // Healthbars_Hook
 	{ 49, 0x00504f24, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 49, 0x005051f8, 0x0c11ade0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 49, 0x005056b0, 0x0c11ade0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 49, 0x00505740, 0x0c11ade0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 49, 0x00519d90, 0x0c1401c4 }, // Juggernaut vaHurtPlayerFunc
 	{ 49, 0x0051a488, 0x0c1401c4 }, // Juggernaut vaHurtPlayerFunc
 	{ 49, 0x0051a498, 0x0c1401c4 }, // Juggernaut vaHurtPlayerFunc
@@ -687,6 +776,7 @@ const int patches[][3] = {
 	{ 49, 0x0051a4e8, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 49, 0x0051a7a0, 0x0c1401c4 }, // Juggernaut vaHurtPlayerFunc
 	{ 49, 0x0051c19c, 0x0c13af9a }, // PlayerInvincibleTimer_Hook
+	{ 49, 0x0051c3f4, 0x0c148874 }, // GadgetTransitions_Hook
 	{ 49, 0x0051f53c, 0x0c1401c4 }, // Juggernaut vaHurtPlayerFunc
 	{ 49, 0x00524e64, 0x0c14d4c0 }, // PlayerStateUpdate_Hook
 	{ 49, 0x00525444, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -705,12 +795,16 @@ const int patches[][3] = {
 #else
 	// Bakisi Isles
 	{ 40, 0x002407d4, 0x005366c8 }, // remote bot leave callback
+	{ 40, 0x00406c60, 0x0c11a5b6 }, // FluxIllumination1_Addr
+	{ 40, 0x00406c68, 0x2403001e }, // FluxIllumination2_Addr
 	{ 40, 0x00406d20, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 40, 0x00406d2c, 0x0c117248 }, // GetSniperShotDirectionHook
 	{ 40, 0x00406d30, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 40, 0x00407e90, 0xa2400020 }, // SniperShotCreatedHook
 	{ 40, 0x00408540, 0x0c1130a4 }, // SniperShotCollLineFixHook
 	{ 40, 0x00408544, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 40, 0x00422bb0, 0x0c10892c }, // PickupCanGive_MasterHook
+	{ 40, 0x004231b4, 0x0c10892c }, // PickupCanGive_LocalHook
 	{ 40, 0x00424428, 0x0c145ebc }, // EnableTurretSync_Addr
 	{ 40, 0x0042fae0, 0x0c1227be }, // vaFlagEventUiPopup_Hook
 	{ 40, 0x00441c88, 0x0c132fc8 }, // FpsCounter_Hooks
@@ -737,8 +831,12 @@ const int patches[][3] = {
 	{ 40, 0x004f7ba4, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 40, 0x004f7be0, 0x0c13dfb6 }, // PlayerRespawnFunc +0x00000040
 	{ 40, 0x004f7bfc, 0x0c145cf2 }, // PlayerRespawnFunc +0x0000005c
+	{ 40, 0x004ff510, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 40, 0x00505480, 0x0c11829c }, // Healthbars_Hook
 	{ 40, 0x0050f4d4, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 40, 0x0050f7a8, 0x0c11d2e0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 40, 0x0050fc60, 0x0c11d2e0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 40, 0x0050fcf0, 0x0c11d2e0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 40, 0x005244e0, 0x0c142b3a }, // Juggernaut vaHurtPlayerFunc
 	{ 40, 0x00524bd8, 0x0c142b3a }, // Juggernaut vaHurtPlayerFunc
 	{ 40, 0x00524be8, 0x0c142b3a }, // Juggernaut vaHurtPlayerFunc
@@ -746,6 +844,7 @@ const int patches[][3] = {
 	{ 40, 0x00524c38, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 40, 0x00524ef0, 0x0c142b3a }, // Juggernaut vaHurtPlayerFunc
 	{ 40, 0x005268ec, 0x0c13d92c }, // PlayerInvincibleTimer_Hook
+	{ 40, 0x00526b44, 0x0c14b248 }, // GadgetTransitions_Hook
 	{ 40, 0x00529c8c, 0x0c142b3a }, // Juggernaut vaHurtPlayerFunc
 	{ 40, 0x0052f5b4, 0x0c14ffca }, // PlayerStateUpdate_Hook
 	{ 40, 0x0052fb94, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -763,12 +862,16 @@ const int patches[][3] = {
 	{ 40, 0x00548910, 0x0c1506de }, // Juggernaut vaOnPlayerKill_Func
 	// Hoven Gorge
 	{ 41, 0x002407d4, 0x00538720 }, // remote bot leave callback
+	{ 41, 0x00406548, 0x0c11ac72 }, // FluxIllumination1_Addr
+	{ 41, 0x00406550, 0x2403001e }, // FluxIllumination2_Addr
 	{ 41, 0x00406608, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 41, 0x00406614, 0x0c117904 }, // GetSniperShotDirectionHook
 	{ 41, 0x00406618, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 41, 0x00407778, 0xa2400020 }, // SniperShotCreatedHook
 	{ 41, 0x00407e28, 0x0c113754 }, // SniperShotCollLineFixHook
 	{ 41, 0x00407e2c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 41, 0x00424540, 0x0c108f90 }, // PickupCanGive_MasterHook
+	{ 41, 0x00424b44, 0x0c108f90 }, // PickupCanGive_LocalHook
 	{ 41, 0x00425db8, 0x0c1466d2 }, // EnableTurretSync_Addr
 	{ 41, 0x00431470, 0x0c122f06 }, // vaFlagEventUiPopup_Hook
 	{ 41, 0x00443748, 0x0c1337de }, // FpsCounter_Hooks
@@ -795,8 +898,12 @@ const int patches[][3] = {
 	{ 41, 0x004f9bfc, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 41, 0x004f9c38, 0x0c13e7cc }, // PlayerRespawnFunc +0x00000040
 	{ 41, 0x004f9c54, 0x0c146508 }, // PlayerRespawnFunc +0x0000005c
+	{ 41, 0x00501568, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 41, 0x005074d8, 0x0c118958 }, // Healthbars_Hook
 	{ 41, 0x0051152c, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 41, 0x00511800, 0x0c11d9a0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 41, 0x00511cb8, 0x0c11d9a0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 41, 0x00511d48, 0x0c11d9a0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 41, 0x00526538, 0x0c143350 }, // Juggernaut vaHurtPlayerFunc
 	{ 41, 0x00526c30, 0x0c143350 }, // Juggernaut vaHurtPlayerFunc
 	{ 41, 0x00526c40, 0x0c143350 }, // Juggernaut vaHurtPlayerFunc
@@ -804,6 +911,7 @@ const int patches[][3] = {
 	{ 41, 0x00526c90, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 41, 0x00526f48, 0x0c143350 }, // Juggernaut vaHurtPlayerFunc
 	{ 41, 0x00528944, 0x0c13e142 }, // PlayerInvincibleTimer_Hook
+	{ 41, 0x00528b9c, 0x0c14ba5e }, // GadgetTransitions_Hook
 	{ 41, 0x0052bce4, 0x0c143350 }, // Juggernaut vaHurtPlayerFunc
 	{ 41, 0x0053160c, 0x0c15080c }, // PlayerStateUpdate_Hook
 	{ 41, 0x00531bec, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -821,12 +929,16 @@ const int patches[][3] = {
 	{ 41, 0x0054aa18, 0x0c150f20 }, // Juggernaut vaOnPlayerKill_Func
 	// Outpost X12
 	{ 42, 0x002407d4, 0x0052e038 }, // remote bot leave callback
+	{ 42, 0x003fe440, 0x0c118802 }, // FluxIllumination1_Addr
+	{ 42, 0x003fe448, 0x2403001e }, // FluxIllumination2_Addr
 	{ 42, 0x003fe500, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 42, 0x003fe50c, 0x0c115494 }, // GetSniperShotDirectionHook
 	{ 42, 0x003fe510, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 42, 0x003ff670, 0xa2400020 }, // SniperShotCreatedHook
 	{ 42, 0x003ffd20, 0x0c1112e4 }, // SniperShotCollLineFixHook
 	{ 42, 0x003ffd24, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 42, 0x0041b488, 0x0c106b62 }, // PickupCanGive_MasterHook
+	{ 42, 0x0041ba8c, 0x0c106b62 }, // PickupCanGive_LocalHook
 	{ 42, 0x0041cd00, 0x0c143d18 }, // EnableTurretSync_Addr
 	{ 42, 0x004283b8, 0x0c120a96 }, // vaFlagEventUiPopup_Hook
 	{ 42, 0x0043a588, 0x0c130e24 }, // FpsCounter_Hooks
@@ -853,8 +965,12 @@ const int patches[][3] = {
 	{ 42, 0x004ef514, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 42, 0x004ef550, 0x0c13be12 }, // PlayerRespawnFunc +0x00000040
 	{ 42, 0x004ef56c, 0x0c143b4e }, // PlayerRespawnFunc +0x0000005c
+	{ 42, 0x004f6e80, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 42, 0x004fcdf0, 0x0c1164e8 }, // Healthbars_Hook
 	{ 42, 0x00506e44, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 42, 0x00507118, 0x0c11b530 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 42, 0x005075d0, 0x0c11b530 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 42, 0x00507660, 0x0c11b530 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 42, 0x0051be50, 0x0c140996 }, // Juggernaut vaHurtPlayerFunc
 	{ 42, 0x0051c548, 0x0c140996 }, // Juggernaut vaHurtPlayerFunc
 	{ 42, 0x0051c558, 0x0c140996 }, // Juggernaut vaHurtPlayerFunc
@@ -862,6 +978,7 @@ const int patches[][3] = {
 	{ 42, 0x0051c5a8, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 42, 0x0051c860, 0x0c140996 }, // Juggernaut vaHurtPlayerFunc
 	{ 42, 0x0051e25c, 0x0c13b788 }, // PlayerInvincibleTimer_Hook
+	{ 42, 0x0051e4b4, 0x0c1490a4 }, // GadgetTransitions_Hook
 	{ 42, 0x005215fc, 0x0c140996 }, // Juggernaut vaHurtPlayerFunc
 	{ 42, 0x00526f24, 0x0c14de52 }, // PlayerStateUpdate_Hook
 	{ 42, 0x00527504, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -879,12 +996,16 @@ const int patches[][3] = {
 	{ 42, 0x00540330, 0x0c14e566 }, // Juggernaut vaOnPlayerKill_Func
 	// Korgon Outpost
 	{ 43, 0x002407d4, 0x0052b850 }, // remote bot leave callback
+	{ 43, 0x003fd880, 0x0c117f06 }, // FluxIllumination1_Addr
+	{ 43, 0x003fd888, 0x2403001e }, // FluxIllumination2_Addr
 	{ 43, 0x003fd940, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 43, 0x003fd94c, 0x0c114b98 }, // GetSniperShotDirectionHook
 	{ 43, 0x003fd950, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 43, 0x003feab0, 0xa2400020 }, // SniperShotCreatedHook
 	{ 43, 0x003ff160, 0x0c1109f4 }, // SniperShotCollLineFixHook
 	{ 43, 0x003ff164, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 43, 0x00418ba0, 0x0c106128 }, // PickupCanGive_MasterHook
+	{ 43, 0x004191a4, 0x0c106128 }, // PickupCanGive_LocalHook
 	{ 43, 0x0041a418, 0x0c14331e }, // EnableTurretSync_Addr
 	{ 43, 0x00426008, 0x0c12010e }, // vaFlagEventUiPopup_Hook
 	{ 43, 0x004381c8, 0x0c13042a }, // FpsCounter_Hooks
@@ -911,8 +1032,12 @@ const int patches[][3] = {
 	{ 43, 0x004ecd2c, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 43, 0x004ecd68, 0x0c13b418 }, // PlayerRespawnFunc +0x00000040
 	{ 43, 0x004ecd84, 0x0c143154 }, // PlayerRespawnFunc +0x0000005c
+	{ 43, 0x004f4698, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 43, 0x004fa608, 0x0c115bec }, // Healthbars_Hook
 	{ 43, 0x0050465c, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 43, 0x00504930, 0x0c11ac30 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 43, 0x00504de8, 0x0c11ac30 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 43, 0x00504e78, 0x0c11ac30 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 43, 0x00519668, 0x0c13ff9c }, // Juggernaut vaHurtPlayerFunc
 	{ 43, 0x00519d60, 0x0c13ff9c }, // Juggernaut vaHurtPlayerFunc
 	{ 43, 0x00519d70, 0x0c13ff9c }, // Juggernaut vaHurtPlayerFunc
@@ -920,6 +1045,7 @@ const int patches[][3] = {
 	{ 43, 0x00519dc0, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 43, 0x0051a078, 0x0c13ff9c }, // Juggernaut vaHurtPlayerFunc
 	{ 43, 0x0051ba74, 0x0c13ad8e }, // PlayerInvincibleTimer_Hook
+	{ 43, 0x0051bccc, 0x0c1486aa }, // GadgetTransitions_Hook
 	{ 43, 0x0051ee14, 0x0c13ff9c }, // Juggernaut vaHurtPlayerFunc
 	{ 43, 0x0052473c, 0x0c14d42c }, // PlayerStateUpdate_Hook
 	{ 43, 0x00524d1c, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -937,12 +1063,16 @@ const int patches[][3] = {
 	{ 43, 0x0053da98, 0x0c14db40 }, // Juggernaut vaOnPlayerKill_Func
 	// Metropolis
 	{ 44, 0x002407d4, 0x0052aba0 }, // remote bot leave callback
+	{ 44, 0x003fc460, 0x0c117bd6 }, // FluxIllumination1_Addr
+	{ 44, 0x003fc468, 0x2403001e }, // FluxIllumination2_Addr
 	{ 44, 0x003fc520, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 44, 0x003fc52c, 0x0c114868 }, // GetSniperShotDirectionHook
 	{ 44, 0x003fc530, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 44, 0x003fd690, 0xa2400020 }, // SniperShotCreatedHook
 	{ 44, 0x003fdd40, 0x0c1106c4 }, // SniperShotCollLineFixHook
 	{ 44, 0x003fdd44, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 44, 0x00418438, 0x0c105f4e }, // PickupCanGive_MasterHook
+	{ 44, 0x00418a3c, 0x0c105f4e }, // PickupCanGive_LocalHook
 	{ 44, 0x00419cb0, 0x0c142ff2 }, // EnableTurretSync_Addr
 	{ 44, 0x00425368, 0x0c11fe14 }, // vaFlagEventUiPopup_Hook
 	{ 44, 0x00437508, 0x0c1300fe }, // FpsCounter_Hooks
@@ -969,8 +1099,12 @@ const int patches[][3] = {
 	{ 44, 0x004ec07c, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 44, 0x004ec0b8, 0x0c13b0ec }, // PlayerRespawnFunc +0x00000040
 	{ 44, 0x004ec0d4, 0x0c142e28 }, // PlayerRespawnFunc +0x0000005c
+	{ 44, 0x004f39e8, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 44, 0x004f9958, 0x0c1158bc }, // Healthbars_Hook
 	{ 44, 0x005039ac, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 44, 0x00503c80, 0x0c11a900 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 44, 0x00504138, 0x0c11a900 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 44, 0x005041c8, 0x0c11a900 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 44, 0x005189b8, 0x0c13fc70 }, // Juggernaut vaHurtPlayerFunc
 	{ 44, 0x005190b0, 0x0c13fc70 }, // Juggernaut vaHurtPlayerFunc
 	{ 44, 0x005190c0, 0x0c13fc70 }, // Juggernaut vaHurtPlayerFunc
@@ -978,6 +1112,7 @@ const int patches[][3] = {
 	{ 44, 0x00519110, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 44, 0x005193c8, 0x0c13fc70 }, // Juggernaut vaHurtPlayerFunc
 	{ 44, 0x0051adc4, 0x0c13aa62 }, // PlayerInvincibleTimer_Hook
+	{ 44, 0x0051b01c, 0x0c14837e }, // GadgetTransitions_Hook
 	{ 44, 0x0051e164, 0x0c13fc70 }, // Juggernaut vaHurtPlayerFunc
 	{ 44, 0x00523a8c, 0x0c14d12c }, // PlayerStateUpdate_Hook
 	{ 44, 0x0052406c, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -995,12 +1130,16 @@ const int patches[][3] = {
 	{ 44, 0x0053ce98, 0x0c14d840 }, // Juggernaut vaOnPlayerKill_Func
 	// Blackwater City
 	{ 45, 0x002407d4, 0x005283b8 }, // remote bot leave callback
+	{ 45, 0x003f91e8, 0x0c1171c2 }, // FluxIllumination1_Addr
+	{ 45, 0x003f91f0, 0x2403001e }, // FluxIllumination2_Addr
 	{ 45, 0x003f92a8, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 45, 0x003f92b4, 0x0c113e54 }, // GetSniperShotDirectionHook
 	{ 45, 0x003f92b8, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 45, 0x003fa418, 0xa2400020 }, // SniperShotCreatedHook
 	{ 45, 0x003faac8, 0x0c10fca4 }, // SniperShotCollLineFixHook
 	{ 45, 0x003faacc, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 45, 0x00414258, 0x0c104ed6 }, // PickupCanGive_MasterHook
+	{ 45, 0x0041485c, 0x0c104ed6 }, // PickupCanGive_LocalHook
 	{ 45, 0x00415ad0, 0x0c1425f8 }, // EnableTurretSync_Addr
 	{ 45, 0x00421188, 0x0c11f37e }, // vaFlagEventUiPopup_Hook
 	{ 45, 0x00434c88, 0x0c12f704 }, // FpsCounter_Hooks
@@ -1027,8 +1166,12 @@ const int patches[][3] = {
 	{ 45, 0x004e9894, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 45, 0x004e98d0, 0x0c13a6f2 }, // PlayerRespawnFunc +0x00000040
 	{ 45, 0x004e98ec, 0x0c14242e }, // PlayerRespawnFunc +0x0000005c
+	{ 45, 0x004f1200, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 45, 0x004f7170, 0x0c114ea8 }, // Healthbars_Hook
 	{ 45, 0x005011c4, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 45, 0x00501498, 0x0c119ef0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 45, 0x00501950, 0x0c119ef0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 45, 0x005019e0, 0x0c119ef0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 45, 0x005161d0, 0x0c13f276 }, // Juggernaut vaHurtPlayerFunc
 	{ 45, 0x005168c8, 0x0c13f276 }, // Juggernaut vaHurtPlayerFunc
 	{ 45, 0x005168d8, 0x0c13f276 }, // Juggernaut vaHurtPlayerFunc
@@ -1036,6 +1179,7 @@ const int patches[][3] = {
 	{ 45, 0x00516928, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 45, 0x00516be0, 0x0c13f276 }, // Juggernaut vaHurtPlayerFunc
 	{ 45, 0x005185dc, 0x0c13a068 }, // PlayerInvincibleTimer_Hook
+	{ 45, 0x00518834, 0x0c147984 }, // GadgetTransitions_Hook
 	{ 45, 0x0051b97c, 0x0c13f276 }, // Juggernaut vaHurtPlayerFunc
 	{ 45, 0x005212a4, 0x0c14c706 }, // PlayerStateUpdate_Hook
 	{ 45, 0x00521884, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -1053,12 +1197,16 @@ const int patches[][3] = {
 	{ 45, 0x0053a600, 0x0c14ce1a }, // Juggernaut vaOnPlayerKill_Func
 	// Command Center
 	{ 46, 0x002407d4, 0x00528338 }, // remote bot leave callback
+	{ 46, 0x00407638, 0x0c117470 }, // FluxIllumination1_Addr
+	{ 46, 0x00407640, 0x2403001e }, // FluxIllumination2_Addr
 	{ 46, 0x004076f8, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 46, 0x00407704, 0x0c114102 }, // GetSniperShotDirectionHook
 	{ 46, 0x00407708, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 46, 0x00408868, 0xa2400020 }, // SniperShotCreatedHook
 	{ 46, 0x00408f18, 0x0c110034 }, // SniperShotCollLineFixHook
 	{ 46, 0x00408f1c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 46, 0x0041ce68, 0x0c1071da }, // PickupCanGive_MasterHook
+	{ 46, 0x0041d46c, 0x0c1071da }, // PickupCanGive_LocalHook
 	{ 46, 0x00425a38, 0x0c11f48e }, // vaFlagEventUiPopup_Hook
 	{ 46, 0x00435ac8, 0x0c12f772 }, // FpsCounter_Hooks
 	{ 46, 0x00435b28, 0x0c11243e }, // FpsCounter_Hooks +0x00000060
@@ -1084,8 +1232,12 @@ const int patches[][3] = {
 	{ 46, 0x004e9a1c, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 46, 0x004e9a58, 0x0c13a754 }, // PlayerRespawnFunc +0x00000040
 	{ 46, 0x004e9a74, 0x0c14240e }, // PlayerRespawnFunc +0x0000005c
+	{ 46, 0x004f1388, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 46, 0x004f72f8, 0x0c115156 }, // Healthbars_Hook
 	{ 46, 0x0050134c, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 46, 0x00501620, 0x0c11a190 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 46, 0x00501ad8, 0x0c11a190 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 46, 0x00501b68, 0x0c11a190 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 46, 0x00516150, 0x0c13f2d8 }, // Juggernaut vaHurtPlayerFunc
 	{ 46, 0x00516848, 0x0c13f2d8 }, // Juggernaut vaHurtPlayerFunc
 	{ 46, 0x00516858, 0x0c13f2d8 }, // Juggernaut vaHurtPlayerFunc
@@ -1093,6 +1245,7 @@ const int patches[][3] = {
 	{ 46, 0x005168a8, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 46, 0x00516b60, 0x0c13f2d8 }, // Juggernaut vaHurtPlayerFunc
 	{ 46, 0x0051855c, 0x0c13a0ca }, // PlayerInvincibleTimer_Hook
+	{ 46, 0x005187b4, 0x0c147964 }, // GadgetTransitions_Hook
 	{ 46, 0x0051b8fc, 0x0c13f2d8 }, // Juggernaut vaHurtPlayerFunc
 	{ 46, 0x00521224, 0x0c14c592 }, // PlayerStateUpdate_Hook
 	{ 46, 0x00521804, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -1110,12 +1263,16 @@ const int patches[][3] = {
 	{ 46, 0x0053a030, 0x0c14cca6 }, // Juggernaut vaOnPlayerKill_Func
 	// Blackwater Docks
 	{ 47, 0x002407d4, 0x0052ab78 }, // remote bot leave callback
+	{ 47, 0x00409598, 0x0c117e80 }, // FluxIllumination1_Addr
+	{ 47, 0x004095a0, 0x2403001e }, // FluxIllumination2_Addr
 	{ 47, 0x00409658, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 47, 0x00409664, 0x0c114b12 }, // GetSniperShotDirectionHook
 	{ 47, 0x00409668, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 47, 0x0040a7c8, 0xa2400020 }, // SniperShotCreatedHook
 	{ 47, 0x0040ae78, 0x0c110a44 }, // SniperShotCollLineFixHook
 	{ 47, 0x0040ae7c, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 47, 0x0041f6a0, 0x0c107be8 }, // PickupCanGive_MasterHook
+	{ 47, 0x0041fca4, 0x0c107be8 }, // PickupCanGive_LocalHook
 	{ 47, 0x00428270, 0x0c11fe9e }, // vaFlagEventUiPopup_Hook
 	{ 47, 0x00438308, 0x0c130182 }, // FpsCounter_Hooks
 	{ 47, 0x00438368, 0x0c112e4e }, // FpsCounter_Hooks +0x00000060
@@ -1141,8 +1298,12 @@ const int patches[][3] = {
 	{ 47, 0x004ec25c, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 47, 0x004ec298, 0x0c13b164 }, // PlayerRespawnFunc +0x00000040
 	{ 47, 0x004ec2b4, 0x0c142e1e }, // PlayerRespawnFunc +0x0000005c
+	{ 47, 0x004f3bc8, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 47, 0x004f9b38, 0x0c115b66 }, // Healthbars_Hook
 	{ 47, 0x00503b8c, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 47, 0x00503e60, 0x0c11aba0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 47, 0x00504318, 0x0c11aba0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 47, 0x005043a8, 0x0c11aba0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 47, 0x00518990, 0x0c13fce8 }, // Juggernaut vaHurtPlayerFunc
 	{ 47, 0x00519088, 0x0c13fce8 }, // Juggernaut vaHurtPlayerFunc
 	{ 47, 0x00519098, 0x0c13fce8 }, // Juggernaut vaHurtPlayerFunc
@@ -1150,6 +1311,7 @@ const int patches[][3] = {
 	{ 47, 0x005190e8, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 47, 0x005193a0, 0x0c13fce8 }, // Juggernaut vaHurtPlayerFunc
 	{ 47, 0x0051ad9c, 0x0c13aada }, // PlayerInvincibleTimer_Hook
+	{ 47, 0x0051aff4, 0x0c148374 }, // GadgetTransitions_Hook
 	{ 47, 0x0051e13c, 0x0c13fce8 }, // Juggernaut vaHurtPlayerFunc
 	{ 47, 0x00523a64, 0x0c14cfa2 }, // PlayerStateUpdate_Hook
 	{ 47, 0x00524044, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -1167,12 +1329,16 @@ const int patches[][3] = {
 	{ 47, 0x0053c870, 0x0c14d6b6 }, // Juggernaut vaOnPlayerKill_Func
 	// Aquatos Sewers
 	{ 48, 0x002407d4, 0x00529eb8 }, // remote bot leave callback
+	{ 48, 0x004091a0, 0x0c117b50 }, // FluxIllumination1_Addr
+	{ 48, 0x004091a8, 0x2403001e }, // FluxIllumination2_Addr
 	{ 48, 0x00409260, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 48, 0x0040926c, 0x0c1147e2 }, // GetSniperShotDirectionHook
 	{ 48, 0x00409270, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 48, 0x0040a3d0, 0xa2400020 }, // SniperShotCreatedHook
 	{ 48, 0x0040aa80, 0x0c110714 }, // SniperShotCollLineFixHook
 	{ 48, 0x0040aa84, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 48, 0x0041e9d0, 0x0c1078b4 }, // PickupCanGive_MasterHook
+	{ 48, 0x0041efd4, 0x0c1078b4 }, // PickupCanGive_LocalHook
 	{ 48, 0x004275a0, 0x0c11fb6e }, // vaFlagEventUiPopup_Hook
 	{ 48, 0x00437648, 0x0c12fe52 }, // FpsCounter_Hooks
 	{ 48, 0x004376a8, 0x0c112b1e }, // FpsCounter_Hooks +0x00000060
@@ -1198,8 +1364,12 @@ const int patches[][3] = {
 	{ 48, 0x004eb59c, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 48, 0x004eb5d8, 0x0c13ae34 }, // PlayerRespawnFunc +0x00000040
 	{ 48, 0x004eb5f4, 0x0c142aee }, // PlayerRespawnFunc +0x0000005c
+	{ 48, 0x004f2f08, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 48, 0x004f8e78, 0x0c115836 }, // Healthbars_Hook
 	{ 48, 0x00502ecc, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 48, 0x005031a0, 0x0c11a870 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 48, 0x00503658, 0x0c11a870 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 48, 0x005036e8, 0x0c11a870 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 48, 0x00517cd0, 0x0c13f9b8 }, // Juggernaut vaHurtPlayerFunc
 	{ 48, 0x005183c8, 0x0c13f9b8 }, // Juggernaut vaHurtPlayerFunc
 	{ 48, 0x005183d8, 0x0c13f9b8 }, // Juggernaut vaHurtPlayerFunc
@@ -1207,6 +1377,7 @@ const int patches[][3] = {
 	{ 48, 0x00518428, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 48, 0x005186e0, 0x0c13f9b8 }, // Juggernaut vaHurtPlayerFunc
 	{ 48, 0x0051a0dc, 0x0c13a7aa }, // PlayerInvincibleTimer_Hook
+	{ 48, 0x0051a334, 0x0c148044 }, // GadgetTransitions_Hook
 	{ 48, 0x0051d47c, 0x0c13f9b8 }, // Juggernaut vaHurtPlayerFunc
 	{ 48, 0x00522da4, 0x0c14cc72 }, // PlayerStateUpdate_Hook
 	{ 48, 0x00523384, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
@@ -1224,12 +1395,16 @@ const int patches[][3] = {
 	{ 48, 0x0053bbb0, 0x0c14d386 }, // Juggernaut vaOnPlayerKill_Func
 	// Marcadia Palace
 	{ 49, 0x002407d4, 0x005297f8 }, // remote bot leave callback
+	{ 49, 0x00408218, 0x0c1179a0 }, // FluxIllumination1_Addr
+	{ 49, 0x00408220, 0x2403001e }, // FluxIllumination2_Addr
 	{ 49, 0x004082d8, 0x44816000 }, // GetSniperShotDirectionHook -0x0000000c
 	{ 49, 0x004082e4, 0x0c114632 }, // GetSniperShotDirectionHook
 	{ 49, 0x004082e8, 0x460c0302 }, // GetSniperShotDirectionHook +0x00000004
 	{ 49, 0x00409448, 0xa2400020 }, // SniperShotCreatedHook
 	{ 49, 0x00409af8, 0x0c110564 }, // SniperShotCollLineFixHook
 	{ 49, 0x00409afc, 0x0000302d }, // SniperShotCollLineFixHook +0x00000004
+	{ 49, 0x0041e320, 0x0c107708 }, // PickupCanGive_MasterHook
+	{ 49, 0x0041e924, 0x0c107708 }, // PickupCanGive_LocalHook
 	{ 49, 0x00426ef0, 0x0c11f9be }, // vaFlagEventUiPopup_Hook
 	{ 49, 0x00436f88, 0x0c12fca2 }, // FpsCounter_Hooks
 	{ 49, 0x00436fe8, 0x0c11296e }, // FpsCounter_Hooks +0x00000060
@@ -1255,8 +1430,12 @@ const int patches[][3] = {
 	{ 49, 0x004eaedc, 0xffb20040 }, // PlayerRespawnFunc +0x00000004
 	{ 49, 0x004eaf18, 0x0c13ac84 }, // PlayerRespawnFunc +0x00000040
 	{ 49, 0x004eaf34, 0x0c14293e }, // PlayerRespawnFunc +0x0000005c
+	{ 49, 0x004f2848, 0xae111064 }, // DisableWrenchAimAssist_Addr
 	{ 49, 0x004f87b8, 0x0c115686 }, // Healthbars_Hook
 	{ 49, 0x0050280c, 0x504001c5 }, // ForceGadgetMobyCreation_Addr
+	{ 49, 0x00502ae0, 0x0c11a6c0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x000002d4)
+	{ 49, 0x00502f98, 0x0c11a6c0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000078c)
+	{ 49, 0x00503028, 0x0c11a6c0 }, // GadgetMobyCreateHook (ForceGadgetMobyCreation_Addr +0x0000081c)
 	{ 49, 0x00517610, 0x0c13f808 }, // Juggernaut vaHurtPlayerFunc
 	{ 49, 0x00517d08, 0x0c13f808 }, // Juggernaut vaHurtPlayerFunc
 	{ 49, 0x00517d18, 0x0c13f808 }, // Juggernaut vaHurtPlayerFunc
@@ -1264,6 +1443,7 @@ const int patches[][3] = {
 	{ 49, 0x00517d68, 0x01252818 }, // PostHitInvinc +0x00000004
 	{ 49, 0x00518020, 0x0c13f808 }, // Juggernaut vaHurtPlayerFunc
 	{ 49, 0x00519a1c, 0x0c13a5fa }, // PlayerInvincibleTimer_Hook
+	{ 49, 0x00519c74, 0x0c147e94 }, // GadgetTransitions_Hook
 	{ 49, 0x0051cdbc, 0x0c13f808 }, // Juggernaut vaHurtPlayerFunc
 	{ 49, 0x005226e4, 0x0c14cac2 }, // PlayerStateUpdate_Hook
 	{ 49, 0x00522cc4, 0xac430048 }, // TNW_PlayerData_GadgetIdUpdate
