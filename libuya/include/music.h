@@ -179,4 +179,8 @@ void musicQueueTrack(int track, int transition);
 void musicStopTrack(void);
 int musicTransitionTrack(int track, int transition, int flags, int volume);
 
+u32 musicGetPlayAddress(void);
+u32 musicGetQueueAddress(void);
+u32 musicGetTransitionAddress(void);
+
 #endif // _LIBUYA_MUSIC_H_
