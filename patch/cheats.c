@@ -1012,6 +1012,12 @@ void patchHealthPickups(void)
 				continue;
 			}
 
+			// pVar+0x88 is the native state-5 hero UID slot, which this protocol reuses for its token.
+			// Level data starts it at -1, which reads as MARKER | PENDING and makes every Consume and
+			// Respawn for the box drop until this client's own Request gets a CatchUp. Start at no token.
+			if (*(u32*)((u32)moby->pVar + 0x88) == 0xffffffff)
+				*(u32*)((u32)moby->pVar + 0x88) = 0;
+
 			u32 update = (u32)moby->pUpdate;
 			// Offsets verified in all NTSC-U/PAL multiplayer overlays.
 			u32 localHook = update + 0x55c;
