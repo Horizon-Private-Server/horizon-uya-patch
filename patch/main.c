@@ -336,9 +336,13 @@ int hasSonyMACAddress(void)
 
 	return hasSonyMACAddressResult = 0;
 }
+
 //------------------------------------------------------------------------------
 void sendClientType(void)
 {
+	// Horizon Lancher Client checks.
+	#define CLIENT_HZN_ADDR (0x000cffa0)
+	#define CLIENT_HZN_MAGIC (0x314e5a48)
 	static int sent = 0;
 	static int stall = 0;
 	ClientSetClientTypeRequest_t msg;
@@ -347,13 +351,19 @@ void sendClientType(void)
 	if (!connection) { sent = 0; return; }
 
 	if (sent) return;
-	if (!getMACAddress(msg.mac)) return;
+	// if (!getMACAddress(msg.mac)) return;
 
 	// stall
 	if (stall) { stall--; return; }
 
-	// a real PS2 has a sony network adapter, anything else is an emulator
-	msg.ClientType = hasSonyMACAddress() ? CLIENT_TYPE_NORMAL : CLIENT_TYPE_PCSX2;
+	// a real PS2 has a sony network adapter, horizon launcher usese special magic bytes, anything else is pcsx2.
+	int the_type = CLIENT_TYPE_PCSX2;
+	if (hasSonyMACAddress()) {
+		the_type = CLIENT_TYPE_NORMAL;
+	} else if (*(u32*)CLIENT_HZN_ADDR == CLIENT_HZN_MAGIC) {
+		the_type = CLIENT_TYPE_HZN;
+	}
+	msg.ClientType = the_type;
 	patchInterop.client = msg.ClientType;
 
 	// send
@@ -361,7 +371,6 @@ void sendClientType(void)
 	sent = 1;
 	DPRINTF("sent client type %d\n", msg.ClientType);
 }
-
 
 //------------------------------------------------------------------------------
 void requestServerTime(void)
