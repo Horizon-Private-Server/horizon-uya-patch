@@ -173,3 +173,42 @@ variableAddressCompact_t vaQueueTrackFunc = {
 	.MarcadiaPalace = VA_COMPACT_OFFSET(0x004925a8, 0x00485910),
 #endif
 };
+
+/*
+ * NAME : musicGetPlayAddress
+ * DESCRIPTION : Resolve the native music entry point for the current overlay.
+ * NOTES : The caller must check that the overlay is loaded before using it.
+ * ARGS :
+ * RETURN : Native function address, or zero when unavailable.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+u32 musicGetPlayAddress(void)
+{
+	return GetAddressImmediate(&vaPlayTrackFunc);
+}
+
+/*
+ * NAME : musicGetQueueAddress
+ * DESCRIPTION : Resolve the native music entry point for the current overlay.
+ * NOTES : The caller must check that the overlay is loaded before using it.
+ * ARGS :
+ * RETURN : Native function address, or zero when unavailable.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+u32 musicGetQueueAddress(void)
+{
+	return GetAddressImmediate(&vaQueueTrackFunc);
+}
+
+/*
+ * NAME : musicGetTransitionAddress
+ * DESCRIPTION : Resolve the native music entry point for the current overlay.
+ * NOTES : The caller must check that the overlay is loaded before using it.
+ * ARGS :
+ * RETURN : Native function address, or zero when unavailable.
+ * AUTHOR : Troy "Metroynome" Pruitt
+ */
+u32 musicGetTransitionAddress(void)
+{
+	return GetAddressImmediate(&vaTransitionTrackFunc);
+}
